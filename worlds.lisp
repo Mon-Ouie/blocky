@@ -18,12 +18,12 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-(in-package :xe2)
+(in-package :gluon)
 
 (define-prototype world
     (:parent =page=
-	     :documentation "An XE2 game world filled with cells and sprites.
-Worlds are the focus of the action in XE2. A world is a 3-D grid of
+	     :documentation "An GLUON game world filled with cells and sprites.
+Worlds are the focus of the action in GLUON. A world is a 3-D grid of
 interacting cells. The world object performs the following tasks:
 
   - Keeps track of a single player in a world of cells
@@ -107,7 +107,7 @@ At the moment, only 0=off and 1=on are supported.")
     
 (define-method pause world (&optional always)
   "Toggle the pause state of the world."
-  (clon:with-fields (paused) self
+  (proton:with-fields (paused) self
     (setf paused (if (null paused)
 		     t (when always t)))
     (if (null paused)
@@ -160,7 +160,7 @@ At the moment, only 0=off and 1=on are supported.")
 PARAMETERS and interpreting the world's grammar field <GRAMMAR>."
   (declare (ignore parameters))
   (with-fields (grammar stack) self
-    (setf xe2:*grammar* grammar)
+    (setf gluon:*grammar* grammar)
     (let ((program (generate 'world)))
       (or program (message "WARNING: Nothing was generated from this grammar."))
       (message (prin1-to-string program))
@@ -168,7 +168,7 @@ PARAMETERS and interpreting the world's grammar field <GRAMMAR>."
 	(/create-default-grid self))
       (dolist (op program)
 	(typecase op
-	  (keyword (if (clon:has-method op self)
+	  (keyword (if (proton:has-method op self)
 		       (send nil op self)
 		       (message "WARNING: Found keyword without corresponding method in turtle program.")))
 	  (symbol (when (null (keywordp op))
@@ -191,23 +191,23 @@ PARAMETERS and interpreting the world's grammar field <GRAMMAR>."
   "Set the color to =FOO= where FOO is the prototype symbol on top of
 the stack."
   (let ((prototype (pop <stack>)))
-    (if (clon:object-p prototype)
+    (if (proton:object-p prototype)
 	(setf <paint> prototype)
 	(error "Must pass a =FOO= prototype symbol as a COLOR."))))
 
 (define-method push-color world ()
   "Push the symbol name of the current <paint> object onto the stack."
-  (clon:with-fields (paint stack) self
-      (if (clon:object-p paint)
-	  (prog1 (message "PUSHING PAINT ~S" (clon:object-name paint))
+  (proton:with-fields (paint stack) self
+      (if (proton:object-p paint)
+	  (prog1 (message "PUSHING PAINT ~S" (proton:object-name paint))
 	    (push paint stack))
 	  (error "No paint to save on stack during PUSH-COLOR."))))
 
 (define-method drop world ()
   "Clone the current <paint> object and drop it at the current turtle
 location."
-  (clon:with-field-values (paint row column) self
-    (if (clon:object-p paint)
+  (proton:with-field-values (paint row column) self
+    (if (proton:object-p paint)
 	(/drop-cell self (clone paint) row column)
 	(error "Nothing to drop. Use =FOO= :COLOR to set the paint color."))))
 
@@ -225,8 +225,8 @@ location."
 (define-method draw world ()
   "Move N squares forward while painting cells. Clones N cells where N
 is the integer on the top of the stack."
-  (clon:with-fields (paint stack) self
-    (if (not (clon:object-p paint))
+  (proton:with-fields (paint stack) self
+    (if (not (proton:object-p paint))
 	(error "No paint set.")
 	(let ((distance (pop stack)))
 	  (if (integerp distance)
@@ -279,7 +279,7 @@ is the integer on the top of the stack."
   (setf <browser> browser))
 
 (define-method random-place world (&optional &key avoiding distance)
-  (clon:with-field-values (width height) self
+  (proton:with-field-values (width height) self
     (let ((limit 10000)
 	  (n 0)
 	  found r c)
@@ -398,14 +398,14 @@ cell is placed; nil otherwise."
 
 (define-method player-row world ()
   "Return the grid row the player is on."
-  (clon:with-field-values (player tile-size) self
+  (proton:with-field-values (player tile-size) self
     (ecase (field-value :type player)
       (:sprite (truncate (/ (field-value :y player) tile-size))) 
       (:cell (field-value :row player)))))
 
 (define-method player-column world ()
   "Return the grid column the player is on."
-  (clon:with-field-values (player tile-size) self
+  (proton:with-field-values (player tile-size) self
     (ecase (field-value :type player)
       (:sprite (truncate (/ (field-value :x player) tile-size))) 
       (:cell (field-value :column player)))))
@@ -505,7 +505,7 @@ so on, until no more messages are generated."
 					;(when (not (/in-category player :dead))
 	       ;;
 	       ;; don't blow up when no narrator, etc
-	       ;; (if (not (clon:object-p receiver))
+	       ;; (if (not (proton:object-p receiver))
 	       ;; 	   (message "Warning: null receiver in message processing. ~S" 
 	       ;; 		    (list (object-name (object-parent sender)) method-key rec))
 		   (apply #'send sender method-key rec args)))))))
@@ -847,7 +847,7 @@ Sends a :do-collision message for every detected collision."
 		(loop do (let ((a (aref collision i))
 			       (b (aref collision ix)))
 			   (incf ix)
-			   (assert (and (clon:object-p a) (clon:object-p b)))
+			   (assert (and (proton:object-p a) (proton:object-p b)))
 			   (when (and (not (eq a b)) (/collide a b))
 			     (collide-first a b)))
 		      while (< ix num-sprites))))))))))
