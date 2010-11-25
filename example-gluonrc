@@ -1,0 +1,11 @@
+;; -*- Mode: lisp -*-
+
+;; You can copy this file to ~/.xe2 and edit it to get XE2 working 
+
+;; Edit the following line to reflect the path where you installed XE2
+(setf xe2:*module-directories* '(#P"/home/dto/xe2/"))
+(setf xe2:*user-keyboard-layout* :qwerty)
+(setf xe2:*use-sound* t)
+(setf xe2:*message-logging* t)
+;; fullscreen is a pain if XE2 hangs
+(setf xe2:*fullscreen* nil)

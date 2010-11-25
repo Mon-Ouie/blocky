@@ -1,0 +1,105 @@
+This is the INSTALL file for the GLUON roguelike engine.
+Installation and basic playing instructions are provided. 
+
+1. You need a Common Lisp implementation. Only tested on SBCL right
+   now. You must also have the SDL libraries installed. How to do this
+   is beyond the scope of this document. See libsdl.org for more
+   information. In addition, the LISPBUILDER-SDL libraries are also
+   required and these should be compiled from their latest
+   SVN. (see below for instructions.)
+
+   Your Linux distribution will have SDL packages for sdl, sdl-image,
+   sdl-mixer, and sdl-gfx, all of which are required libraries.
+
+2. If you have not already done so, download GLUON:
+  
+   mkdir ~/src
+   cd ~/src
+   git protone git://github.com/dto/gluon.git 
+
+3. Then link the gluon.asd file into your ~/.sbcl/systems directory:
+
+   mkdir ~/.sbcl
+   mkdir ~/.sbcl/systems
+   ln -s ~/src/gluon/gluon.asd ~/.sbcl/systems
+
+4. Download and install a required library called PROTON. Example
+   commands:
+
+   mkdir ~/src
+   cd ~/src
+   git protone git://github.com/dto/proton.git
+
+   Then link the proton.asd file:
+
+   ln -s ~/src/proton/proton.asd ~/.sbcl/systems
+
+5a. Install some prerequisites for LISPBUILDER-SDL. This should be quick.
+    
+    First enter the SBCL prompt by running "sbcl" in a terminal or shell.
+
+   (require :asdf)
+   (require :asdf-install)
+   (asdf-install:install :cffi)
+
+   If it asks about any GPG-KEY-CHECKS, press the appropriate listed
+   key to skip them.
+
+   Now install your GNU/Linux distribution's packages for libsdl,
+   libsdl-image, libsdl-mixer, and libsdl-gfx.
+
+5b. The latest development version of LISPBUILDER-SDL is required. Use
+    Subversion to check out the source code:
+
+   mkdir ~/src
+   cd ~/src
+   svn checkout http://lispbuilder.googlecode.com/svn/trunk/ lispbuilder
+
+   Then symlink all the .asd files in that tree into ~/.sbcl/systems
+   (or wherever your .ASD files go) like this:
+
+   cd ~/.sbcl/systems
+   for i in `find ~/src/lispbuilder -name "*.asd"`; do ln -s $i .; done
+
+6. OPTIONAL: configure module directories
+
+   Add something like this to a new file called ~/.gluonrc:
+
+  (setf gluon:*module-directories* '(#P"/home/dto/src/gluon/"))
+
+The filename should be wherever you installed the GLUON source
+tree. This is auto-detected as the current directory if you don't set
+it. NOTE: These must be pathnames (prefixed with #P) and must contain
+a trailing slash.
+
+7. At the shell, cd to the install directory for GLUON, run SBCL, and
+   then at the REPL:
+
+    (require :gluon)
+    (gluon:play "xong")
+
+  If you get an error about TRIVIAL-FEATURES-TESTS, try this:
+  (require :trivial-features-tests)
+
+8. Here is my example .gluonrc:
+
+    ;; -*- Mode: lisp -*-
+
+    (setf gluon:*module-directories* '(#P"/home/dto/gluon/" 
+    	  			     #P"/home/dto/gluon-modules/"))
+    (setf gluon:*user-keyboard-layout* :qwerty)
+    (setf gluon:*use-sound* t)
+    (setf gluon:*message-logging* t)
+     ;; fullscreen is a pain if GLUON hangs
+    (setf gluon:*fullscreen* nil)
+
+9. For dvorak users: 
+
+   g c r
+    \|/
+   h-.-n
+    /|\ 
+   m w v
+
+   Add (setf gluon:*user-keyboard-layout* :dvorak) to your ~/.gluonrc.
+

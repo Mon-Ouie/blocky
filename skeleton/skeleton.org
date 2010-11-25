@@ -1,0 +1,354 @@
+# Lines beginning with a "#" sign are comments.
+# Special comments begin with "#+" and are used to control document settings.
+#+startup: showall
+
+#+title: 
+#+author: 
+
+* Tasks
+
+** TODO NEVERENDING PUZZLE GAME with infinite level generator, like original XONG
+** TODO 1280x720 window
+** TODO continuously falling blocks through some vertical band of varying width/pos
+** TODO no mans land
+** TODO falling blocks with a snake pong element
+** TODO enemies chase and eat the ball
+** TODO pulsating beat blocks
+** TODO 8-way breakout firing
+** TODO SKINS to create and share, skin determines BPM and audiovisual aspects
+** TODO DANCE MODE
+
+** TODO breakout world
+
+** TODO desctructible bricks for control rods.
+
+** TODO clickable popup help and descriptions on everything
+
+* Overview
+
+
+* Header
+
+#+source: copyright-notice
+#+begin_src lisp
+;; Copyright (C) 2010  David O'Toole
+
+;; Author: David O'Toole <dto@gnu.org>
+;; Keywords: 
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#+end_src
+
+#+tags: Interface Player Structure Environment Controls Combat Enemies Planning Story
+#+property: tangle no
+#+property: cache no
+#+property: session yes
+#+property: results silent
+#+property: no-expand yes
+#+property: noweb yes
+#+startup: hideblocks
+
+#+source: xe2-lisp-file
+#+begin_src lisp :tangle yes
+<<copyright-notice>>
+<<package-definition>>
+<<settings>>
+<<global-objects>>
+<<keybindings>>
+<<physics-function>>
+<<title-screen>>
+<<player-definition>>
+<<game-definition>>
+#+end_src
+
+#+source: package-definition
+#+begin_src lisp 
+  (defpackage :void
+    (:use :xe2 :common-lisp)
+    (:export physics))
+  
+  (in-package :void)
+#+end_src
+
+#+source: global-objects
+#+begin_src lisp
+  (defvar *pager*)
+  (defvar *narrator*)
+  (defvar *prompt*)
+  (defvar *player*)
+  (defvar *status*)
+  (defvar *viewport*)
+#+end_src
+
+#+source: physics-function
+#+begin_src lisp
+  (defun physics (&rest ignore)
+    (when *world* [run-cpu-phase *world* t])
+    (when *status* [update *status*]))
+#+end_src
+
+#+source: settings
+#+begin_src lisp
+  (defparameter *timestep* 20)
+  (defparameter *grid-size* 16)
+  (defparameter *width* 1280)
+  (defparameter *height* 720)
+#+end_src
+
+#+source: player-definition
+#+begin_src lisp 
+#+end_src
+
+#+source: status-display
+#+begin_src lisp
+      (defvar *status* nil)
+      (defparameter *status-height* 20)
+      (defparameter *status-bar-character* " ")
+            
+      (define-prototype status (:parent xe2:=formatter=)
+        (character :documentation "The character cell."))
+      
+      (define-method set-character status (character)
+        (setf <character> character))
+      
+      (define-method print-stat status (stat-name &key warn-below show-max label)
+        (let* ((stat (field-value stat-name <character>))
+               (value [stat-value <character> stat-name]))
+          (destructuring-bind (&key min max base delta unit) stat
+            (let ((color (if (and (numberp warn-below)
+                                  (< value warn-below))
+                             ".red"
+                             ".black")))
+              [print self (or label (symbol-name stat-name))
+                     :foreground ".white"]
+              [print self ": "]
+              [print self (format nil "~S" value) 
+                     :foreground ".white"
+                     :background color]
+              (when show-max
+                [print self (format nil "/~S" max)
+                       :foreground ".white"
+                       :background color])
+              (when unit 
+                [print self " "]
+                [print self (symbol-name unit)])
+              [print self " "]
+              ))))
+      
+      (define-method print-stat-bar status (stat &key 
+                                                 (color ".yellow")
+                                                 (background-color ".gray18")
+                                                 (divisor 1))
+        (let ((value (truncate (/ [stat-value <character> stat] divisor)))
+              (max (truncate (/ [stat-value <character> stat :max] divisor))))
+          (dotimes (i max)
+            [print self *status-bar-character*
+                   :foreground ".yellow"
+                   :background (if (< i value)
+                                   color
+                                 background-color)])))
+      
+    (define-method print-item status (item)
+      [print self nil :image (field-value :tile item)]
+      [print self "  "]
+      [print self (get-some-object-name item)]
+      [print self "  "])
+      
+    (define-method update status ()
+      (let* ((char <character>))
+        (when char
+          [clear-line self]
+          [print self " PRESS F1 FOR HELP       "]
+          [print-stat self :hit-points :warn-below 7 :show-max t :label "SHIELD"]
+          [print-stat-bar self :hit-points :color ".blue"]
+          [space self]
+          [space self]
+          [print-stat self :energy :warn-below 10 :show-max t :label "ENERGY"]
+          [print-stat-bar self :energy :color ".yellow" :divisor 2]
+          [space self]
+          [space self]
+          (dolist (item (field-value :items char))
+            [print-item self item]))))
+       
+    (define-method render status ()
+      ;; draw on viewport
+      (with-fields (x y current-line) self
+        (let ((image (field-value :image *viewport*))
+              (line (coerce current-line 'list)))
+          (when (plusp (length line))
+            (render-formatted-line line x y :destination image)))))
+#+end_src 
+
+#+source: game-definition
+#+begin_src lisp 
+  (defgame :void
+      (:title "Void Mission"
+       :description "A sci-fi roguelike game in Common Lisp."
+       :creator "David T. O'Toole <dto@gnu.org>"
+       :screen-width *width*
+       :screen-height *height*
+       :timestep *timestep*
+       :physics-function #'void:physics)
+      ;; create some objects
+      (setf *prompt* (clone =void-prompt=))
+      (setf *universe* (clone =universe=))
+      (setf *player* (clone =agent=))
+      (setf *narrator* (clone =narrator=))
+      (setf *status* (clone =status=))
+      [set-player *universe* *player*]
+      (setf *viewport* (clone =viewport=))
+      ;; status
+      [resize *status* :height *status-height* :width *width*]
+      [move *status* :x 8 :y (- *height* *status-height*)]
+      [hide *status*]
+      ;; configure the view
+      [resize *viewport* :height *height* :width *width*]
+      [move *viewport* :x 0 :y 0]
+      [set-origin *viewport* :x 0 :y 0 
+                  :height (truncate (/ *height* *grid-size*))
+                  :width (truncate (/ *width* *grid-size*))]
+      [resize *prompt* :height 20 :width 100]
+      [move *prompt* :x 0 :y 0]
+      [hide *prompt*]
+      [resize *narrator* :height 80 :width *width*]
+      [move *narrator* :x 0 :y (- *height* 80)]
+      [set-verbosity *narrator* 0]
+      [install-keybindings *prompt*]
+      (xe2:install-widgets *prompt* *viewport* *status*)
+      (xe2:enable-classic-key-repeat 100 60)
+      ;; now play!
+      (let ((mission (clone =start-game=)))
+      ;;(let ((mission (clone =gather-cloud-data=)))
+        [configure *universe*
+                   :narrator *narrator*
+                   :prompt *prompt*
+                   :viewport *viewport*]
+        [begin mission *player*])
+      [loadout *player*])
+#+end_src
+
+* Title screen
+
+#+source: title-screen
+#+begin_src lisp
+  (defworld title-screen
+    (edge-condition :initform :block)
+    (title-screen :initform t)
+    (background :initform "title")
+    (ambient-light :initform :total)
+    (description :initform "foo"))
+  
+  (define-method begin-ambient-loop title-screen ()
+    (play-music "theme" :loop t))
+  
+  (define-method generate title-screen (&rest args)
+    (let ((g1 (clone =gateway= :destination '=gather-cloud-data=))
+          (g2 (clone =gateway= :destination '=enter-dvo-orbit=))
+          (g3 (clone =gateway= :destination '=prologue=)))
+      [resize-to-background self]
+      [drop-cell self g1 30 20]
+      [emote g1 "Mission 1.1: Gather cloud data" :timeout nil]
+      [drop-cell self g2 35 32]
+      [emote g2 "Mission 1.2: Enter DVO orbit" :timeout nil]
+      [drop-cell self g3 40 40]
+      [emote g3 "Xioceptor home base" :timeout nil]
+      [drop-cell self (clone =launchpad=) 18 18]))
+  
+  (defmission start-game
+      (:address '(=title-screen=)))
+#+end_src 
+
+* Controls					       :Controls:
+
+  - Arrow keys (or numeric keypad) for player movement.
+  - Shift-arrow for activating the selected inventory item.
+    If this is a gun for example, you fire in that direction.
+  - Z to change the selected inventory item
+  - X for picking up items, activating switches, and so on.
+  - C to drop the selected inventory item
+
+** Default keybindings
+
+The CALL method is not actually triggered by the shift-direction
+keybindings. Instead, to obtain satisfactory behavior, the shift key
+is polled every physics timestep. See the player's RUN method.
+
+#+source: keybindings
+#+begin_src lisp
+  (defparameter *numpad-keybindings* 
+    '(("KP8" nil "move :north .")
+      ("KP4" nil "move :west .")
+      ("KP6" nil "move :east .")
+      ("KP2" nil "move :south .")
+      ;; 
+      ("UP" nil "move :north .")
+      ("LEFT" nil "move :west .")
+      ("RIGHT" nil "move :east .")
+      ("DOWN" nil "move :south .")
+      ;; 
+      ("KP8" (:shift) "move :north .")
+      ("KP4" (:shift) "move :west .")
+      ("KP6" (:shift) "move :east .")
+      ("KP2" (:shift) "move :south .")
+      ;; 
+      ("UP" (:shift) "move :north .")
+      ("LEFT" (:shift) "move :west .")
+      ("RIGHT" (:shift) "move :east .")
+      ("DOWN" (:shift) "move :south .")))
+  
+  (defparameter *qwerty-keybindings*
+    (append *numpad-keybindings*
+            '(("K" nil "move :north .")
+              ("H" nil "move :west .")
+              ("L" nil "move :east .")
+              ("J" nil "move :south .")
+              ;;
+              ("K" (:shift) "move :north .")
+              ("H" (:shift) "move :west .")
+              ("L" (:shift) "move :east .")
+              ("J" (:shift) "move :south .")
+              ;;
+              ("Z" nil "rotate .")
+              ("X" nil "act .")
+              ("C" nil "pop .")
+              ("0" (:control) "do-exit .")
+              ;;
+	      ("F1" nil "help .")
+	      ("H" (:control) "help .")
+              ("P" (:control) "pause .")
+              ("PAUSE" nil "pause .")
+              ("ESCAPE" nil "restart .")
+              ("Q" (:control) "quit ."))))
+    
+  (define-prototype void-prompt (:parent xe2:=prompt=))
+  
+  (define-method install-keybindings void-prompt ()
+  (message "installing keybindings...")
+    (dolist (k *qwerty-keybindings*)
+      (apply #'bind-key-to-prompt-insertion self k)))
+  
+  ;; (define-method handle-key void-prompt (keylist)
+  ;;   (message "handling ~S" keylist)
+  ;;   [parent>>handle-key self keylist])
+  
+  ;; (define-method install-keybindings void-prompt ()
+  ;;   (let ((keys (ecase xe2:*user-keyboard-layout* 
+  ;;              (:qwerty *qwerty-keybindings*)
+  ;;              (:alternate-qwerty *alternate-qwerty-keybindings*)
+  ;;              (:dvorak *dvorak-keybindings*))))
+  ;;     (dolist (k keys)
+  ;;       (apply #'bind-key-to-prompt-insertion self k))))
+#+end_src
+
+** TODO Joystick control
