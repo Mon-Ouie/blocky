@@ -28,12 +28,12 @@
 
 ;;; Code:
 
-(in-package :xe2)
+(in-package :gluon)
 
 (defstruct overlay func parameters clock)
 
 (define-prototype viewport 
-    (:parent =widget= :documentation "A map display for XE2 worlds.")
+    (:parent =widget= :documentation "A map display for GLUON worlds.")
   (world :documentation "The world object to be displayed.")
   (overlays :documentation "List of closures.")
   (use-overlays :initform t)
@@ -316,7 +316,7 @@
                                      :destination image 
                                      :color ".yellow"))
                       (when (member category categories)
-                        (xe2:draw-box (* tile-size j) 
+                        (gluon:draw-box (* tile-size j) 
                                       (* tile-size i)
                                       tile-size tile-size
                                       :destination image 

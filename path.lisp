@@ -1,4 +1,4 @@
-;;; path.lisp --- A* pathfinding for XE2
+;;; path.lisp --- A* pathfinding for GLUON
 
 ;; Copyright (C) 2009  David O'Toole
 
@@ -27,7 +27,7 @@
 
 ;;; Code:
 
-(in-package :xe2)
+(in-package :gluon)
 
 (defstruct path
   world ;; Pointer to associated world. 
@@ -51,7 +51,7 @@
   )
 
 (defun create-path (&key height width world)
-  (assert (clon:object-p world))
+  (assert (proton:object-p world))
   (let ((path (make-path :world world
 			 :grid (make-array (list height width))
 			 :heap (make-array (* height width))

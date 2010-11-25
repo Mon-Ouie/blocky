@@ -1,4 +1,4 @@
-;;; rgb.lisp --- X11 color data for XE2
+;;; rgb.lisp --- X11 color data for GLUON
 
 ;; This file has been reformatted from its original version so as to
 ;; be directly readable by Common Lisp, and is under the MIT
@@ -33,7 +33,7 @@
 
 ;; :. colors > 
 
-(in-package :xe2)
+(in-package :gluon)
 
 (defvar *x11-color-data*
 '(("snow" 255 250 250)

@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :xe2)
+(in-package :gluon)
 
 ;;; Pages are grids of cells.
 ;;; Pages also ARE cells!
@@ -131,7 +131,7 @@ replacing them with the single cell (or vector of cells) DATA."
     (setf (aref <grid> row column)
 	  (etypecase data
 	    (vector data)
-	    (clon:object (let ((cells (make-array *default-page-z-size* 
+	    (proton:object (let ((cells (make-array *default-page-z-size* 
 						  :adjustable t
 						  :fill-pointer 0)))
 			   (prog1 cells
@@ -174,26 +174,26 @@ The cells' :cancel method is invoked."
 		       (aref grid row column))))))
  
 (define-method serialize page ()
-  (clon:with-field-values (width height) self
+  (proton:with-field-values (width height) self
     (let ((grid <grid>)
 	  (sgrid (make-array (list height width) :initial-element nil :adjustable nil)))
       (dotimes (i height)
 	(dotimes (j width)
 	  (map nil #'(lambda (cell)
 		       (when cell 
-			 (push (clon:serialize cell) 
+			 (push (proton:serialize cell) 
 			       (aref sgrid i j))))
 	       (aref grid i j))))
       (setf <serialized-grid> sgrid))))
     
 (define-method deserialize page ()
     (/create-default-grid self)
-    (clon:with-field-values (width height grid serialized-grid) self
+    (proton:with-field-values (width height grid serialized-grid) self
       (dotimes (i height)
 	(dotimes (j width)
 	  (map nil #'(lambda (cell)
 		       (when cell
-			 (vector-push-extend (clon:deserialize cell)
+			 (vector-push-extend (proton:deserialize cell)
 					     (aref grid i j))))
 	       (reverse (aref serialized-grid i j)))))
       (setf <serialized-grid> nil)))
@@ -243,7 +243,7 @@ initialize the arrays for a page of the size specified there."
 (define-method clone-onto page (other-page &optional deepcopy)
   (let ((other (etypecase other-page
 		 (string (find-resource-object other-page))
-		 (clon:object other-page))))
+		 (proton:object other-page))))
     (with-fields (height width) other
       (/create-grid self :height height :width width)
       (let ((*page* other))
@@ -260,7 +260,7 @@ initialize the arrays for a page of the size specified there."
 
 (defun find-page (page)
   (etypecase page
-    (clon:object 
+    (proton:object 
        ;; check for name collision
        (let* ((old-name (or (field-value :name page)
 			    (generate-page-name page)))
@@ -505,7 +505,7 @@ initialize the arrays for a page of the size specified there."
     (:parent =widget= :documentation  "An interactive graphical spreadsheet.")
   prompt narrator computing
   (page-name :initform nil)
-  (page :documentation "The xe2:=page= of objects to be displayed.")
+  (page :documentation "The gluon:=page= of objects to be displayed.")
   rows columns
   (entered :initform nil :documentation "When non-nil, forward key events to the entry and/or any attached widget.")
   (cursor-row :initform 0) 
@@ -589,7 +589,7 @@ initialize the arrays for a page of the size specified there."
 at the current cursor location. See also APPLY-LEFT and APPLY-RIGHT."
   (if (and (symbolp data)
 	   (boundp data)
-	   (clon:object-p (symbol-value data)))
+	   (proton:object-p (symbol-value data)))
       (/drop-cell <page> (clone (symbol-value data)) <cursor-row> <cursor-column>)
       (/say self "Cannot clone.")))
 
@@ -716,12 +716,12 @@ Type HELP :COMMANDS for a list of available commands."
 
 (define-method save-all form ()
   (/say self "Saving objects...")
-  (xe2:save-modified-objects t)
+  (gluon:save-modified-objects t)
   (/say self "Saving objects... Done."))
 
 (define-method save-modified form ()
   (/say self "Saving objects...")
-  (xe2:save-modified-objects)
+  (gluon:save-modified-objects)
   (/say self "Saving objects... Done."))
   
 (define-method create-page form (&key height width name object)
@@ -783,13 +783,13 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	(/say self "Finished entering data.")))))
     
 (define-method load-module form (name)
-  "Load the XE2 module NAME for development."
+  "Load the GLUON module NAME for development."
   (/say self (format nil "Loading module ~S" name))
-  (xe2:load-module name))
+  (gluon:load-module name))
 
 (define-method quit form ()
   "Quit XIOMACS."
-  (xe2:quit t))
+  (gluon:quit t))
 
 (define-method cancel form ()
   (/clear-mark self)

@@ -30,7 +30,7 @@
 ;; `send-queue'); these messages are queued and processed by the
 ;; world for delivery to their recipients. 
 
-(in-package :xe2)
+(in-package :gluon)
 
 ;;; "gCells" implement a 2D game engine.
 
@@ -75,7 +75,7 @@ Sprites are also based on cells. See `defsprite'.")
   (auto-deepcopy :initform nil)
   (team :initform nil :documentation "Keyword symbol of team, if any.")
   (weight :documentation "Weight of the cell, in kilograms.")
-  (widget :initform nil :documentation "XE2 widget object, if any.")
+  (widget :initform nil :documentation "GLUON widget object, if any.")
   (tile :initform ".asterisk" :documentation "Resource name of image. 
 When nil, the method DRAW is invoked instead of using a tile.")
   (render-cell :initform nil :documentation "Subcell to render. See load-sprite-sheet-resource.")
@@ -234,7 +234,7 @@ You must provide at least a :base value."
 ;;; Custom rendering
 
 (define-method draw gcell (x y image)
-  "Use XE2 drawing commands to render a presentation of this cell at
+  "Use GLUON drawing commands to render a presentation of this cell at
 X, Y to the offscreen image IMAGE.  This method is invoked to draw a
 cell when its TILE field is nil, or when it is in the
 category :drawn. See also viewport.lisp." 
@@ -249,7 +249,7 @@ Cells may be placed into categories that influence their processing by
 the engine. The field `<categories>' is a set of keyword symbols; if a
 symbol `:foo' is in the list, then the cell is in the category `:foo'.
 
-Although a game built on XE2 can define whatever categories are
+Although a game built on GLUON can define whatever categories are
 needed, certain base categories are built-in and have a fixed
 interpretation:
 
@@ -328,7 +328,7 @@ negative, then you'll come up that much short."
   "Determine whether the cell has enough action points to take some
 action during PHASE.
 
-The Action Points system is XE2's model of roguelike time; Time is
+The Action Points system is GLUON's model of roguelike time; Time is
 divided into discrete episodes called phases.  Each phase consists
 of one or more actions, each of which lasts a certain number of
 action points' worth of time. During an action, the cell may modify
@@ -341,12 +341,12 @@ actions during a phase. The AP score for a cell's phase starts at
  (/stat-value cell :speed). The AP cost of an action is determined by
 the corresponding method's use of `expend-action-points'; see below. 
 
-First your turn comes up, and XE2 waits for your input.  Once you
+First your turn comes up, and GLUON waits for your input.  Once you
 issue a command, some AP may be used up. When your AP is gone, the
 computer's phase begins. The results are displayed, and if you're
 still alive, the player phase begins again.
 
- (In realtime mode, XE2 does not wait for input.)
+ (In realtime mode, GLUON does not wait for input.)
 
 The queued messages' targets can be keywords like :world, :browser,
 or :narrator instead of direct references to objects; the world
@@ -697,7 +697,7 @@ slot."
 		 (/find self :direction reference :category category)
 		 (/equipment-slot self reference)))
     (integer (/item-at self reference))
-    (xe2:object reference)))
+    (gluon:object reference)))
 
 ;;; Knowledge of objects
 
@@ -885,8 +885,8 @@ to reflect its disappearance; this is different from a dying cell." nil)
 May be affected by the player's :hearing-range stat, if any."
   (when (/get-player *world*)
     (let* ((player (/get-player *world*))
-	   (range (if (clon:has-field :hearing-range player)
-		      (clon:field-value :hearing-range player)
+	   (range (if (proton:has-field :hearing-range player)
+		      (proton:field-value :hearing-range player)
 		      *default-sample-hearing-range*))
 	   (dist (multiple-value-bind (row col) 
 		     (/grid-coordinates self)
@@ -900,7 +900,7 @@ May be affected by the player's :hearing-range stat, if any."
   "Print a string to the message narration window. Arguments
 are as with `format'."
   (unless (/in-category self :dead)
-    (let ((range (if (clon:has-field :hearing-range self)
+    (let ((range (if (proton:has-field :hearing-range self)
 		     <hearing-range>
 		     *default-sample-hearing-range*))
 	  (dist (distance (or <column> 0) (or <row> 0)
@@ -971,7 +971,7 @@ are as with `format'."
 
 (define-prototype sprite (:parent =cell=
 				  :documentation 
-"Sprites are XE2 game objects derived from cells. Although most
+"Sprites are GLUON game objects derived from cells. Although most
 behaviors are compatible, sprites can take any pixel location in the
 world, and collision detection is performed between sprites and cells.")
   (x :initform nil :documentation "The world x-coordinate of the sprite.") 
@@ -1000,7 +1000,7 @@ world, and collision detection is performed between sprites and cells.")
   (when (eq :gcell (field-value :type ob))))
 
 (define-method update-dimensions sprite ()
-  (clon:with-fields (image height width) self
+  (proton:with-fields (image height width) self
     (when image
       (setf width (image-width image))
       (setf height (image-height image)))))
@@ -1036,7 +1036,7 @@ world, and collision detection is performed between sprites and cells.")
     (let ((y <y>)
 	  (x <x>))
       (when (and y x)
-	(multiple-value-bind (y0 x0) (xe2:step-in-direction y x direction dist)
+	(multiple-value-bind (y0 x0) (gluon:step-in-direction y x direction dist)
 	  (assert (and y0 x0))
 	    (/update-position self x0 y0))))))
 
@@ -1051,8 +1051,8 @@ world, and collision detection is performed between sprites and cells.")
     (/collide-* self y0 x0 w h)))
     
 (define-method would-collide sprite (x0 y0)
-  (clon:with-field-values (tile-size grid sprite-grid) *world*
-    (clon:with-field-values (width height x y) self
+  (proton:with-field-values (tile-size grid sprite-grid) *world*
+    (proton:with-field-values (width height x y) self
       ;; determine squares sprite would intersect
       (let ((left (1- (floor (/ x0 tile-size))))
 	    (right (1+ (floor (/ (+ x0 width) tile-size))))
@@ -1093,7 +1093,7 @@ world, and collision detection is performed between sprites and cells.")
 			    (loop do (let ((a (aref collision i))
 					   (b (aref collision ix)))
 				       (incf ix)
-				       (assert (and (clon:object-p a) (clon:object-p b)))
+				       (assert (and (proton:object-p a) (proton:object-p b)))
 				       (when (not (eq a b))
 					 (let ((bt (field-value :y b))
 					       (bl (field-value :x b))
@@ -1186,13 +1186,13 @@ world, and collision detection is performed between sprites and cells.")
   (setf <timeout> (if (floatp timeout)
 		      ;; specify in (roughly) seconds if floating
 		      (truncate (/ (* timeout 1000)
-				   xe2:*dt*))
+				   gluon:*dt*))
 		      ;; leave as frames if integer
 		      timeout)))
   
 (define-method draw balloon (x y image)
-  (clon:with-field-values (text style scale) self
-    (clon:with-field-values (tile-size) *world*
+  (proton:with-field-values (text style scale) self
+    (proton:with-field-values (tile-size) *world*
       (let* ((offset (ecase style
 		       (:balloon tile-size)
 		       (:clear 0)

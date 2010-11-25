@@ -22,7 +22,7 @@
 
 ;;; Code:
 
-(in-package :xe2)
+(in-package :gluon)
 
 ;;; Probability
 

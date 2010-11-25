@@ -686,8 +686,8 @@ normally."
 
 (define-method history-item prompt (n)
   (assert (integerp n))
-  (nth (- (clon:queue-count <history>) n)
-       (clon:queue-head <history>)))
+  (nth (- (proton:queue-count <history>) n)
+       (proton:queue-head <history>)))
 
 (define-method forward-history prompt ()
   (when (> <history-position> 0)
@@ -798,7 +798,7 @@ normally."
 
 (define-method page-up textbox ()
   "Scroll up one page, only when <max-displayed-rows> is set."
-  (clon:with-field-values (max-displayed-rows) self
+  (proton:with-field-values (max-displayed-rows) self
     (when (integerp max-displayed-rows)
       (setf <point-row> (max 0
 			   (- <point-row> (- max-displayed-rows
@@ -806,7 +806,7 @@ normally."
 
 (define-method page-down textbox ()
   "Scroll down one page, only when <max-displayed-rows> is set."
-  (clon:with-field-values (max-displayed-rows) self
+  (proton:with-field-values (max-displayed-rows) self
     (when (integerp max-displayed-rows)
       (setf <point-row> (min (- (length <buffer>) max-displayed-rows)
 			     (+ <point-row> (- max-displayed-rows
@@ -814,7 +814,7 @@ normally."
 
 (define-method auto-center textbox ()
   "Automatically center the textbox on the screen."
-  (clon:with-field-values (x y width height) self
+  (proton:with-field-values (x y width height) self
     (let ((center-x (truncate (/ *screen-width* 2)))
 	  (center-y (truncate (/ *screen-height* 2))))
       (setf <x> (- center-x (truncate (/ width 2)))

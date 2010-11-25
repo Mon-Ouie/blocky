@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :xe2)
+(in-package :gluon)
 
 ;; todo show parent name if any
 
@@ -184,7 +184,7 @@
     (document-package package-name stream preamble-file)))
 			    
 ;; (document-package :clon t)
-;; (document-package-to-file :xe2 #P"/home/dto/notebook/xe2-reference.org" #P"/home/dto/xe2/doc-preamble.org")
-;; (document-package :xe2 t #P"/home/dto/xe2/doc-preamble.org")
+;; (document-package-to-file :gluon #P"/home/dto/notebook/gluon-reference.org" #P"/home/dto/gluon/doc-preamble.org")
+;; (document-package :gluon t #P"/home/dto/gluon/doc-preamble.org")
 
 ;;; ldoc.lisp ends here

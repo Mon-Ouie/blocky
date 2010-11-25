@@ -1,4 +1,4 @@
-;;; util.lisp --- handy utilities for xe2 users
+;;; util.lisp --- handy utilities for gluon users
 
 ;; Copyright (C) 2010  David O'Toole
 
@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :xe2)
+(in-package :gluon)
 
 (defmacro defgame (module-name 
 		   (&key title description
@@ -31,10 +31,10 @@
 			 &allow-other-keys)
  		   &body startup-forms)
   `(progn
-     (xe2:set-screen-height ,screen-height)
-     (xe2:set-screen-width ,screen-width)
-     (setf xe2:*physics-function* ,physics-function)
-     (setf xe2:*dt* ,timestep)
+     (gluon:set-screen-height ,screen-height)
+     (gluon:set-screen-width ,screen-width)
+     (setf gluon:*physics-function* ,physics-function)
+     (setf gluon:*dt* ,timestep)
      ,@startup-forms))
 
 ;;; util.lisp ends here

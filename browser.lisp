@@ -36,7 +36,7 @@
 
 ;;; Code:
 
-(in-package :xe2)
+(in-package :gluon)
 
 (define-prototype menu-item (:parent =widget=)
   (tile :initform ".asterisk")
@@ -90,7 +90,7 @@
   (let* ((item (/cursor-item self)))
     (push <collection> <history>)
     (multiple-value-bind (result sub-menu) (/open item)
-      (cond ((and (vectorp result) (every #'clon:object-p result))
+      (cond ((and (vectorp result) (every #'proton:object-p result))
 	     (/set-collection self result))
 	    ((stringp result)
 	     (assert <prompt>)

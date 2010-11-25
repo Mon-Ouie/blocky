@@ -1,4 +1,4 @@
-;;; console.lisp --- core operations for XE2
+;;; console.lisp --- core operations for GLUON
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010  David O'Toole
 
@@ -22,18 +22,18 @@
 
 ;;; Commentary:
 
-;; The "console" is the library which provides all XE2 system
+;; The "console" is the library which provides all GLUON system
 ;; services. Primitive operations such as setting the resolution,
 ;; displaying bitmaps, drawing lines, playing sounds, file access, and
 ;; keyboard/mouse input are handled here. 
 
 ;; Currently it uses the cross-platform SDL library (via
 ;; LISPBUILDER-SDL) as its device driver, and wraps the library for
-;; use by the rest of XE2.
+;; use by the rest of GLUON.
 
 ;; http://lispbuilder.sourceforge.net/
 
-(in-package :xe2) 
+(in-package :gluon) 
 
 ;;; Platform detection
 
@@ -48,13 +48,13 @@
 ;;; Keyboard state
 
 (defun keyboard-id (key)
-  "Look up the SDL symbol corresponding to the XE2 symbol KEY. See keys.lisp."
+  "Look up the SDL symbol corresponding to the GLUON symbol KEY. See keys.lisp."
   (let* ((entry (find key *key-identifiers* :key #'first))
 	 (entry2 (find (second entry) *sdl-key-identifiers* :key #'second)))
     (first entry2)))
 
 (defun keyboard-mod (mod)
-  "Look up the SDL symbol corresponding to the XE2 symbol MOD. See keys.lisp."
+  "Look up the SDL symbol corresponding to the GLUON symbol MOD. See keys.lisp."
   (let* ((entry (find mod *key-modifiers* :key #'first))
 	 (entry2 (find (second entry) *sdl-key-modifiers* :key #'second)))
     (first entry2)))
@@ -208,7 +208,7 @@ Do not set this variable directly from a module; instead, call
 
 (defun install-widgets (&rest widgets)
   "User-level function for setting the active widget set. Note that
-XE2 may override the current widget set at any time for system menus
+GLUON may override the current widget set at any time for system menus
 and the like."
   (setf *module-widgets* widgets)
   (setf *active-widgets* widgets))
@@ -247,7 +247,7 @@ and the like."
   "Enable key repeat on every frame when held. Arguments are ignored
 for backward-compatibility."
   (when args 
-    (message "Warning. DELAY and INTERVAL arguments to XE2:ENABLE-HELD-KEYS are deprecated and ignored."))
+    (message "Warning. DELAY and INTERVAL arguments to GLUON:ENABLE-HELD-KEYS are deprecated and ignored."))
   (setf *key-table* (make-hash-table :test 'equal))
   (setf *held-keys* t))
 
@@ -333,7 +333,7 @@ The modifier list is sorted; thus, events can be compared for
 equality with `equal' and used as hashtable keys.
 
 The default event handler is `send-event-to-widgets', which see. An
-XE2 game can use the widget framework to do its drawing and event
+GLUON game can use the widget framework to do its drawing and event
 handling, or override `*event-handler-function*' and do something
 else.")
 
@@ -357,7 +357,7 @@ else.")
 	    (send nil :hit widget x y))
 	(reverse widgets)))
 
-;;; Translating SDL key events into XE2 event lists
+;;; Translating SDL key events into GLUON event lists
 
 (defparameter *other-modifier-symbols* '(:button-down :button-up :axis))
 
@@ -637,7 +637,7 @@ window. Set this in the game startup file.")
 (defun set-screen-height (height)
   (setf *screen-height* height))
 
-;;; The main loop of XE2
+;;; The main loop of GLUON
 
 (defvar *next-module* "standard")
 
@@ -645,7 +645,7 @@ window. Set this in the game startup file.")
 
 (defvar *fullscreen* nil "When non-nil, attempt to use fullscreen mode.")
 
-(defvar *window-title* "XE2")
+(defvar *window-title* "GLUON")
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
 
@@ -771,12 +771,12 @@ display."
 		     (sdl:update-display))))))))
   
   
-;;; The .xe2rc user init file
+;;; The .gluonrc user init file
 
-(defparameter *user-init-file-name* ".xe2rc")
+(defparameter *user-init-file-name* ".gluonrc")
 
 (defvar *initialization-hook* nil 
-"This hook is run after the XE2 console is initialized.
+"This hook is run after the GLUON console is initialized.
 Set timer parameters and other settings here.")
 
 (defun load-user-init-file ()
@@ -949,7 +949,7 @@ resource is stored; see also `find-resource'."
 							    *load-truename*))
 			     :directory (pathname-directory #.(or *compile-file-truename*
 								  *load-truename*)))))))
-  "List of directories where XE2 will search for modules.
+  "List of directories where GLUON will search for modules.
 Directories are searched in list order.")
 ;; (load-time-value 
 ;; (or #.*compile-file-truename* *load-truename*))))
@@ -968,7 +968,7 @@ name MODULE-NAME. Returns the pathname if found, otherwise nil."
 			    :defaults dir))
        when path return path)
      (error "Cannot find module ~s in paths ~S. 
-You must set the variable XE2:*MODULE-DIRECTORIES* in the configuration file ~~/.xe2rc
+You must set the variable GLUON:*MODULE-DIRECTORIES* in the configuration file ~~/.gluonrc
 Please see the included file BINARY-README for instructions."
 	    module-name dirs))))
 
@@ -1050,7 +1050,7 @@ table."
 ;; again. Each page is stored in one PAK file, containing a single
 ;; resource with the serialized data stored in the :DATA field of the
 ;; resource record. Page-names are resource-names, and therefore must
-;; be unique within a given XE2 module. A page's PAK file is stored in
+;; be unique within a given GLUON module. A page's PAK file is stored in
 ;; {MODULENAME}/{PAGENAME}.pak, and for a given module these PAKs will
 ;; all be included by {MODULENAME}/OBJECTS.PAK, which is an
 ;; automatically generated PAK index linking to all the serialized
@@ -1070,8 +1070,8 @@ OBJECT as the data."
   "Save an object resource to disk as {RESOURCE-NAME}.PAK."
   (let ((name (resource-name resource)))
     (message "Serializing resource ~S..." name)
-;    (assert (clon:object-p (resource-object resource)))
-    (setf (resource-data resource) (clon:serialize (resource-object resource)))
+;    (assert (proton:object-p (resource-object resource)))
+    (setf (resource-data resource) (proton:serialize (resource-object resource)))
     (message "Saving resource ~S..." name)
     (write-pak (find-module-file module 
 				 (concatenate 'string (resource-name resource)
@@ -1108,9 +1108,9 @@ OBJECT as the data."
 (defun load-object-resource (resource)
   "Loads a serialized :OBJECT resource from the Lisp data in the 
 :DATA field of the RESOURCE argument. Returns the rebuilt object. See
-also the documentation for CLON:DESERIALIZE."
-  (let ((object (clon:deserialize (resource-data resource))))
-    (assert (clon:object-p object))
+also the documentation for PROTON:DESERIALIZE."
+  (let ((object (proton:deserialize (resource-data resource))))
+    (assert (proton:object-p object))
     (setf (resource-data resource) nil) ;; no longer needed
     object))
 
@@ -1651,15 +1651,15 @@ found."
 
 ;;; Creating and displaying images
 
-;; The "driver dependent objects" for XE2 images are just SDL:SURFACE
-;; objects. (The situation is the same for XE2 colors, fonts, and so
+;; The "driver dependent objects" for GLUON images are just SDL:SURFACE
+;; objects. (The situation is the same for GLUON colors, fonts, and so
 ;; on). So long as the clients treat the driver-dependent resource
 ;; objects as opaque, this thin wrapper is sufficient.
 
 ;; Below are some image handling functions.
 
 (defun create-image (width height)
-  "Create a new XE2 image of size (* WIDTH HEIGHT)."
+  "Create a new GLUON image of size (* WIDTH HEIGHT)."
   (assert (and (integerp width) (integerp height)))
   (sdl:create-surface width height))
 
@@ -1739,7 +1739,7 @@ The default destination is the main window."
   (sdl:push-quit-event))
 
 (defvar *copyright-text*
-"XE2 Game Engine
+"GLUON Game Engine
 Copyright (C) 2006, 2007, 2008, 2009, 2010 David O'Toole
 <dto@gnu.org>
 
@@ -1820,14 +1820,14 @@ also the file LIBSDL-LICENSE for details.
     (cffi:use-foreign-library sdl-image))
 
 (defun play (&optional (module-name "standard") &rest args)
-  "This is the main entry point to XE2. MODULE-NAME is loaded 
+  "This is the main entry point to GLUON. MODULE-NAME is loaded 
 and its .startup resource is loaded."
   (format t "~A" *copyright-text*)
   (initialize-resource-table)
   (setf *module-package-name* nil)
   (setf *physics-function* nil)
   (setf *world* nil)
-  (clon:initialize)
+  (proton:initialize)
   (setf *timesteps* 0)
   (setf *keyboard-timestep-number* 0)
   (setf *initialization-hook* nil)

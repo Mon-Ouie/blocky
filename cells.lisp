@@ -20,7 +20,7 @@
 
 ;;; Code:
 
-(in-package :xe2)
+(in-package :gluon)
 
 ;;; Base cell prototype
 
@@ -33,7 +33,7 @@
   (label :initform nil :documentation "Optional string or formatted line to display.")
   row column
   (widget :initform nil)
-  (image :initform nil :documentation "Image to display. either a resource name string, or an XE2 image object.")
+  (image :initform nil :documentation "Image to display. either a resource name string, or an GLUON image object.")
   (excluded-fields :initform '(:widget)))
   
 (define-method in-category cell (category)
