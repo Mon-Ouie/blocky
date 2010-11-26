@@ -155,6 +155,30 @@ At the moment, only 0=off and 1=on are supported.")
 ;; turtle commands, or generate them programmatically in other ways.
 ;; See also grammars.lisp.
 
+(define-method create-grid world (&key width height)
+  "Initialize all the arrays for a world of WIDTH by HEIGHT cells."
+  (let ((dims (list height width)))
+    (let ((grid (make-array dims 
+		 :element-type 'vector :adjustable nil))
+	  (light-grid (make-array dims :element-type 'integer))
+	  (sprite-grid (make-array dims :element-type 'vector)))
+      (dotimes (i height)
+	(dotimes (j width)
+	  ;; now put a vector in each square to represent the z-axis
+	  (setf (aref grid i j)
+		(make-array *default-page-z-size* 
+			    :adjustable t
+			    :fill-pointer 0))
+	  (setf (aref sprite-grid i j)
+		(make-array *default-page-z-size*
+			    :adjustable t
+			    :fill-pointer 0))))
+      (setf <grid> grid
+	    <sprite-grid> sprite-grid
+	    <sprite-grid> sprite-grid
+	    <height> height
+	    <width> width))))
+
 (define-method generate world (&rest parameters)
   "Generate a world, reading generation parameters from the plist
 PARAMETERS and interpreting the world's grammar field <GRAMMAR>."
@@ -302,7 +326,7 @@ non-nil, the :loadout method is invoked on the sprite after
 placement."
   (assert (eq :sprite (field-value :type sprite)))
   (/add-sprite self sprite)
-  (/update-position sprite x y)
+  (/move-to sprite x y)
   (when loadout
     (/loadout sprite))
   (unless no-collisions
@@ -338,9 +362,9 @@ cell is placed; nil otherwise."
 			(setf (field-value :row cell) row)
 			(setf (field-value :column cell) column)
 			(when (or loadout auto-loadout)
-			  (/loadout cell))
-			(unless no-stepping
-			  (/step-on-current-square cell)))))
+			  (/loadout cell)))))
+			;; (unless no-stepping
+			;;   (/step-on-current-square cell)))))
 	     (if (or no-collisions exclusive)
 		 (progn 
 		   (when no-collisions
@@ -360,9 +384,9 @@ cell is placed; nil otherwise."
 	;; handle sprites
 	(:sprite
 	   (/add-sprite self cell)
-	   (/update-position cell 
-			    (* column tile-size)
-			    (* row tile-size)))))))
+	   (/move-to cell 
+		     (* column tile-size)
+		     (* row tile-size)))))))
   
 (define-method drop-player-at-entry world (player)
   "Drop the PLAYER at the first entry point."
@@ -682,9 +706,10 @@ sources and ray casting."
 (define-method clear-light-grid world ()
   (unless <automapped>
     (let ((light-grid <light-grid>))
-      (dotimes (i <height>)
-	(dotimes (j <width>)	
-	  (setf (aref light-grid i j) 0))))))
+      (when (arrayp light-grid)
+	(dotimes (i <height>)
+	  (dotimes (j <width>)	
+	    (setf (aref light-grid i j) 0)))))))
 
 (define-method begin-ambient-loop world ()
   "Begin looping your music for this world here."
@@ -985,6 +1010,7 @@ narrator, and VIEWPORT as the viewport."
     ;; make the new world the current world
     (push world <stack>)
     (setf *world* world)
+    (setf *page* world)
     (setf *universe* self)
     (/set-viewport world <viewport>)
     (/set-world <viewport> world)
@@ -1044,7 +1070,7 @@ narrator, and VIEWPORT as the viewport."
   (/exit *universe* :player (/get-player *world*)))
 
 (define-method drop-entry-point world (row column)
-  (/replace-cells-at self row column (clone =launchpad=)))
+  (/replace-grid-location self row column (clone =launchpad=)))
 
 ;;; Convenience macro for defining worlds:
 

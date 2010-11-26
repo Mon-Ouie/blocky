@@ -1,0 +1,207 @@
+;;; gsprites.lisp --- defining sprite objects
+
+;; Copyright (C) 2008, 2009, 2010  David O'Toole
+
+;; Author: David O'Toole <dto@gnu.org>
+;; Keywords: 
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Sprites are not restricted to the grid
+
+;; These sit in a different layer, the <sprite> layer in the world
+;; object.
+
+(in-package :gluon)
+
+(define-prototype gsprite (:parent =gcell=
+				  :documentation 
+"Sprites are GLUON game objects derived from gcells. Although most
+behaviors are compatible, sprites can take any pixel location in the
+world, and collision detection is performed between sprites and cells.")
+  (x :initform 0 :documentation "The world x-coordinate of the sprite.") 
+  (y :initform 0 :documentation "The world y-coordinate of the sprite.") 
+  (saved-x :initform nil :documentation "Saved x-coordinate used to jump back from a collision.")
+  (saved-y :initform nil :documentation "Saved y-coordinate used to jump back from a collision.")
+  (image :initform nil :documentation "The arbitrarily sized image
+  resource. This determines the bounding box.")
+  (width :initform nil :documentation "The cached width of the bounding box.")
+  (height :initform nil :documentation "The cached height of the bounding box.")
+  (type :initform :sprite))
+
+(define-method image-coordinates gsprite ()
+  (/get-viewport-coordinates-* (field-value :viewport *world*) <x> <y>))
+
+;; Convenience macro for defining cells:
+
+(defmacro defgsprite (name &body args)
+  `(define-prototype ,name (:parent =gsprite=)
+     ,@args))
+
+(defun is-sprite (ob)
+  (when (eq :sprite (field-value :type ob))))
+
+(defun is-cell (ob)
+  (when (eq :cell (field-value :type ob))))
+
+(define-method resize gsprite ()
+  (proton:with-fields (image height width) self
+    (when image
+      (setf width (image-width image))
+      (setf height (image-height image)))))
+    
+(define-method initialize gsprite ()
+  (when <image>
+    (/update-image self <image>)))
+
+(define-method die gsprite ()
+  (/remove-sprite *world* self))
+
+(define-method update-image gsprite (image)
+  (setf <image> image)
+  (/resize self))
+
+(define-method move-to gsprite (x y &optional ignore-obstacles)
+  (declare (ignore ignore-obstacles))
+  (assert (and (integerp x) (integerp y)))
+  (with-field-values (grid tile-size width height) *world*
+    (let ((world-height (* tile-size height))
+	  (world-width (* tile-size width)))
+      (when (and (plusp x)
+		 (plusp y)
+		 (< x world-width)
+		 (< y world-height))
+	(setf <x> x
+	      <y> y)))))
+;;	  (setf <x> 0 <y> 0)))))
+;;	  (/do-collision self nil)))))
+
+(define-method move gsprite (direction &optional movement-distance)
+  (let ((dist (or movement-distance 1)))
+    (let ((y <y>)
+	  (x <x>))
+      (when (and y x)
+	(multiple-value-bind (y0 x0) (gluon:step-in-direction y x direction dist)
+	  (assert (and y0 x0))
+	    (/move-to self x0 y0))))))
+
+(define-method collide gsprite (gsprite)
+  ;; (message "COLLIDING A=~S B=~S"
+  ;; 	   (object-name (object-parent self))
+  ;; 	   (object-name (object-parent gsprite)))
+  (let ((x0 (field-value :x gsprite))
+	(y0 (field-value :y gsprite))
+	(w (field-value :width gsprite))
+	(h (field-value :height gsprite)))
+    (/collide-* self y0 x0 w h)))
+    
+(define-method would-collide gsprite (x0 y0)
+  (proton:with-field-values (tile-size grid sprite-grid) *world*
+    (proton:with-field-values (width height x y) self
+      ;; determine squares gsprite would intersect
+      (let ((left (1- (floor (/ x0 tile-size))))
+	    (right (1+ (floor (/ (+ x0 width) tile-size))))
+	    (top (1- (floor (/ y0 tile-size))))
+	    (bottom (1+ (floor (/ (+ y0 height) tile-size)))))
+	;; search intersected squares for any obstacle
+	(or (block colliding
+	      (let (found)
+		(dotimes (i (max 0 (- bottom top)))
+		  (dotimes (j (max 0 (- right left)))
+		    (let ((i0 (+ i top))
+			  (j0 (+ j left)))
+		      (when (array-in-bounds-p grid i0 j0)
+			(when (/collide-* self
+					 (* i0 tile-size) 
+					 (* j0 tile-size)
+					 tile-size tile-size)
+			  ;; save this intersection information
+			  (vector-push-extend self (aref sprite-grid i0 j0))
+			  ;; quit when obstacle found
+			  (let ((obstacle (/obstacle-at-p *world* i0 j0)))
+			    (when obstacle
+			      (setf found obstacle))))))))
+		(return-from colliding found)))
+	    ;; scan for gsprite intersections
+	    (block intersecting 
+	      (let (collision num-gsprites ix)
+		(dotimes (i (max 0 (- bottom top)))
+		  (dotimes (j (max 0 (- right left)))
+		    (let ((i0 (+ i top))
+			  (j0 (+ j left)))
+		      (when (array-in-bounds-p grid i0 j0)
+			(setf collision (aref sprite-grid i0 j0))
+			(setf num-gsprites (length collision))
+			(when (< 1 num-gsprites)
+			  (dotimes (i (- num-gsprites 1))
+			    (setf ix (1+ i))
+			    (loop do (let ((a (aref collision i))
+					   (b (aref collision ix)))
+				       (incf ix)
+				       (assert (and (proton:object-p a) (proton:object-p b)))
+				       (when (not (eq a b))
+					 (let ((bt (field-value :y b))
+					       (bl (field-value :x b))
+					       (bh (field-value :height b))
+					       (bw (field-value :width b)))
+					   (when (collide y0 x0 width height bt bl bw bh)
+					     (return-from intersecting t)))))
+				  while (< ix num-gsprites)))))))))
+	      nil))))))
+	    
+(define-method collide-* gsprite (o-top o-left o-width o-height)
+  (with-field-values (x y width height) self
+    (collide x y width height o-top o-left o-width o-height)))
+
+(defun collide (x y width height o-top o-left o-width o-height)
+  (let ((o-right (+ o-left o-width))
+	(o-bottom (+ o-top o-height)))
+    (not (or 
+	  ;; is the top below the other bottom?
+	  (< o-bottom y)
+	  ;; is bottom above other top?
+	  (< (+ y height) o-top)
+	  ;; is right to left of other left?
+	  (< (+ x width) o-left)
+	  ;; is left to right of other right?
+	  (< o-right x)))))
+
+(define-method do-collision gsprite (object)
+  "Respond to a collision detected with OBJECT."
+  nil)
+
+(define-method save-excursion gsprite ()
+  (setf <saved-x> <x>)
+  (setf <saved-y> <y>))
+
+(define-method undo-excursion gsprite ()
+  (/move-to self <saved-x> <saved-y>))
+
+(define-method viewport-coordinates gsprite ()
+  (/get-viewport-coordinates-* (field-value :viewport *world*)
+			      <x> <y>))
+
+(define-method grid-coordinates gsprite ()
+  (values (truncate (/ <y> (field-value :tile-size *world*)))
+	  (truncate (/ <x> (field-value :tile-size *world*)))))
+
+(define-method xy-coordinates gsprite ()
+  (values <x> <y>))
+
+(define-method drop gsprite (cell &optional (delta-row 0) (delta-column 0))
+  (multiple-value-bind (r c)
+      (/grid-coordinates self)
+    (/drop-cell *world* cell (+ r delta-row) (+ c delta-column))))
+  
+;;; gsprites.lisp ends here

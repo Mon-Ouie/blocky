@@ -29,6 +29,7 @@
 (define-prototype cell ()
   (row :documentation "When non-nil, the current row location of the cell.")
   (column :documentation "When non-nil, the current column of the cell.")
+  (type :initform :cell)
   (name :initform nil :documentation "The name of this cell.")
   (description :initform nil :documentation "A description of the cell.") 
   (categories :initform nil :documentation "List of category keyword symbols.") 
@@ -220,7 +221,7 @@ is in the way. Returns non-nil if a move occurred."
     (multiple-value-bind (r c) 
 	(step-in-direction <row> <column> direction)
       ;; 
-      (cond ((null (/cells-at world r c)) ;; are we at the edge?
+      (cond ((null (/grid-location world r c)) ;; are we at the edge?
 	     ;; return nil because we didn't move
 	     (prog1 nil
 	     ;; edge conditions only affect player for now
@@ -235,7 +236,7 @@ is in the way. Returns non-nil if a move occurred."
 	       ;; return t because we moved
 	       (prog1 t
 		 (/expend-action-points self (/stat-value self :movement-cost))
-		 (/move-cell world self r c))))))))
+		 (/move world self r c))))))))
 		 ;; (when <stepping>
 		 ;;   (/step-on-current-square self)))))))))
 
@@ -263,7 +264,10 @@ When LOADOUT is non-nil, call the :loadout method."
 	  (y1 (or y y0)))
       (/add-sprite *world* sprite)
       (assert (and x1 y1))
-      (/update-position sprite x1 y1))))
+      (/move-to sprite x1 y1))))
+
+(define-method is-player cell ()
+  (/in-category self :player))
 
 ;;; Finding and manipulating objects
 
@@ -273,7 +277,7 @@ When LOADOUT is non-nil, call the :loadout method."
 	(step-in-direction <row> <column> direction)
       (if (/in-bounds-p world nrow ncol)
 	  (let (cell)
-	    (let* ((cells (/cells-at world nrow ncol))
+	    (let* ((cells (/grid-location world nrow ncol))
 		   (index2 (cond 
 			     ((not (null category))
 				(setf cell (/category-at-p world nrow ncol category))
@@ -326,206 +330,19 @@ world or have a location."
   "This method is invoked on a player cell when it leaves a world."
   nil)
 
-;;; Sprites are not restricted to the grid
-
-;; These sit in a different layer, the <sprite> layer in the world
-;; object.
-
-(define-prototype sprite (:parent =cell=
-				  :documentation 
-"Sprites are GLUON game objects derived from cells. Although most
-behaviors are compatible, sprites can take any pixel location in the
-world, and collision detection is performed between sprites and cells.")
-  (x :initform nil :documentation "The world x-coordinate of the sprite.") 
-  (y :initform nil :documentation "The world y-coordinate of the sprite.") 
-  (saved-x :initform nil :documentation "Saved x-coordinate used to jump back from a collision.")
-  (saved-y :initform nil :documentation "Saved y-coordinate used to jump back from a collision.")
-  (image :initform nil :documentation "The arbitrarily sized image
-  resource. This determines the bounding box.")
-  (width :initform nil :documentation "The cached width of the bounding box.")
-  (height :initform nil :documentation "The cached height of the bounding box.")
-  (type :initform :sprite))
-
-(define-method image-coordinates sprite ()
-  (/get-viewport-coordinates-* (field-value :viewport *world*) <x> <y>))
-
-;; Convenience macro for defining cells:
-
-(defmacro defsprite (name &body args)
-  `(define-prototype ,name (:parent =sprite=)
-     ,@args))
-
-(defun is-sprite (ob)
-  (when (eq :sprite (field-value :type ob))))
-
-(defun is-cell (ob)
-  (when (eq :cell (field-value :type ob))))
-
-(define-method update-dimensions sprite ()
-  (proton:with-fields (image height width) self
-    (when image
-      (setf width (image-width image))
-      (setf height (image-height image)))))
-    
-(define-method initialize sprite ()
-  (when <image>
-    (/update-image self <image>)))
-
-(define-method die sprite ()
-  (/remove-sprite *world* self))
-
-(define-method update-image sprite (image)
-  (setf <image> image)
-  (/update-dimensions self))
-
-(define-method update-position sprite (x y &optional ignore-obstacles)
-  (declare (ignore ignore-obstacles))
-  (assert (and (integerp x) (integerp y)))
-  (with-field-values (grid tile-size width height) *world*
-    (let ((world-height (* tile-size height))
-	  (world-width (* tile-size width)))
-      (when (and (plusp x)
-		 (plusp y)
-		 (< x world-width)
-		 (< y world-height))
-	(setf <x> x
-	      <y> y)))))
-;;	  (setf <x> 0 <y> 0)))))
-;;	  (/do-collision self nil)))))
-
-(define-method move sprite (direction &optional movement-distance)
-  (let ((dist (or movement-distance <movement-distance>)))
-    (let ((y <y>)
-	  (x <x>))
-      (when (and y x)
-	(multiple-value-bind (y0 x0) (gluon:step-in-direction y x direction dist)
-	  (assert (and y0 x0))
-	    (/update-position self x0 y0))))))
-
-(define-method collide sprite (sprite)
-  ;; (message "COLLIDING A=~S B=~S"
-  ;; 	   (object-name (object-parent self))
-  ;; 	   (object-name (object-parent sprite)))
-  (let ((x0 (field-value :x sprite))
-	(y0 (field-value :y sprite))
-	(w (field-value :width sprite))
-	(h (field-value :height sprite)))
-    (/collide-* self y0 x0 w h)))
-    
-(define-method would-collide sprite (x0 y0)
-  (proton:with-field-values (tile-size grid sprite-grid) *world*
-    (proton:with-field-values (width height x y) self
-      ;; determine squares sprite would intersect
-      (let ((left (1- (floor (/ x0 tile-size))))
-	    (right (1+ (floor (/ (+ x0 width) tile-size))))
-	    (top (1- (floor (/ y0 tile-size))))
-	    (bottom (1+ (floor (/ (+ y0 height) tile-size)))))
-	;; search intersected squares for any obstacle
-	(or (block colliding
-	      (let (found)
-		(dotimes (i (max 0 (- bottom top)))
-		  (dotimes (j (max 0 (- right left)))
-		    (let ((i0 (+ i top))
-			  (j0 (+ j left)))
-		      (when (array-in-bounds-p grid i0 j0)
-			(when (/collide-* self
-					 (* i0 tile-size) 
-					 (* j0 tile-size)
-					 tile-size tile-size)
-			  ;; save this intersection information
-			  (vector-push-extend self (aref sprite-grid i0 j0))
-			  ;; quit when obstacle found
-			  (let ((obstacle (/obstacle-at-p *world* i0 j0)))
-			    (when obstacle
-			      (setf found obstacle))))))))
-		(return-from colliding found)))
-	    ;; scan for sprite intersections
-	    (block intersecting 
-	      (let (collision num-sprites ix)
-		(dotimes (i (max 0 (- bottom top)))
-		  (dotimes (j (max 0 (- right left)))
-		    (let ((i0 (+ i top))
-			  (j0 (+ j left)))
-		      (when (array-in-bounds-p grid i0 j0)
-			(setf collision (aref sprite-grid i0 j0))
-			(setf num-sprites (length collision))
-			(when (< 1 num-sprites)
-			  (dotimes (i (- num-sprites 1))
-			    (setf ix (1+ i))
-			    (loop do (let ((a (aref collision i))
-					   (b (aref collision ix)))
-				       (incf ix)
-				       (assert (and (proton:object-p a) (proton:object-p b)))
-				       (when (not (eq a b))
-					 (let ((bt (field-value :y b))
-					       (bl (field-value :x b))
-					       (bh (field-value :height b))
-					       (bw (field-value :width b)))
-					   (when (collide y0 x0 width height bt bl bw bh)
-					     (return-from intersecting t)))))
-				  while (< ix num-sprites)))))))))
-	      nil))))))
-	    
-(define-method collide-* sprite (o-top o-left o-width o-height)
-  (with-field-values (x y width height) self
-    (collide x y width height o-top o-left o-width o-height)))
-
-(defun collide (x y width height o-top o-left o-width o-height)
-  (let ((o-right (+ o-left o-width))
-	(o-bottom (+ o-top o-height)))
-    (not (or 
-	  ;; is the top below the other bottom?
-	  (< o-bottom y)
-	  ;; is bottom above other top?
-	  (< (+ y height) o-top)
-	  ;; is right to left of other left?
-	  (< (+ x width) o-left)
-	  ;; is left to right of other right?
-	  (< o-right x)))))
+;;; Collision; see also gsprites.lisp
 
 (define-method do-collision cell (object)
   "Respond to a collision detected with OBJECT."
   nil)
 
-(define-method do-collision sprite (object)
-  "Respond to a collision detected with OBJECT."
-  nil)
-
-(define-method save-excursion sprite ()
-  (setf <saved-x> <x>)
-  (setf <saved-y> <y>))
-
-(define-method distance-to-player sprite ()
-  "Calculate the distance from the current location to the player."
-  (multiple-value-bind (r c) (/grid-coordinates self)
-    (/distance-to-player *world* r c)))
-
-(define-method undo-excursion sprite ()
-  (/update-position self <saved-x> <saved-y>))
-
-(define-method viewport-coordinates sprite ()
-  (/get-viewport-coordinates-* (field-value :viewport *world*)
-			      <x> <y>))
-
 (define-method grid-coordinates cell ()
   (values <row> <column>))
-
-(define-method grid-coordinates sprite ()
-  (values (truncate (/ <y> (field-value :tile-size *world*)))
-	  (truncate (/ <x> (field-value :tile-size *world*)))))
 
 (define-method xy-coordinates cell ()
   (values (* <column> (field-value :tile-size *world*))
 	  (* <row> (field-value :tile-size *world*))))
 
-(define-method xy-coordinates sprite ()
-  (values <x> <y>))
-
-(define-method drop sprite (cell &optional (delta-row 0) (delta-column 0))
-  (multiple-value-bind (r c)
-      (/grid-coordinates self)
-    (/drop-cell *world* cell (+ r delta-row) (+ c delta-column))))
-  
 
 
 ;;; cells.lisp ends here

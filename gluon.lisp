@@ -56,8 +56,8 @@
   (:export *default-frame-width* *default-frame-height* =viewport=
 *frequency* *output-chunksize* *output-channels* halt-sample *dt*
 defgame *physics-function* =equipment= *default-world-axis-size*
-generic-keybind *default-world-z-size* =browser= install-widgets
-=balloon= =form= keyboard-held-p keyboard-pressed-p
+defgsprite generic-keybind *default-world-z-size* =browser=
+install-widgets =balloon= =form= keyboard-held-p keyboard-pressed-p
 keyboard-released-p keyboard-time-in-current-state
 keyboard-time-in-previous-state *timesteps* keyboard-down-p
 keyboard-keys-down keyboard-modifier-down-p keyboard-modifiers
@@ -130,13 +130,13 @@ enable-timer disable-timer while defmission enable-held-keys
 disable-held-keys do-cells draw-box *resizable* achieve *resize-hook*
 draw-rectangle *quitting* *after-load-module-hook* *mission*
 mission-variable set-mission-variable with-mission-locals =mission=
-set-sample-callback set-music-callback cffi-chunk-buffer =command-cell=
-convert-cffi-sample get-sample-buffer register-sample-generator
-=voice= register-voice unregister-voice register-voice-mixer mix-voices
-convert-cffi-sample-to-internal convert-internal-sample-to-cffi
-get-ticks
-page-variable set-page-variable with-pages with-mission-locals
-*module* quit reset seek-music))
+set-sample-callback set-music-callback cffi-chunk-buffer
+=command-cell= convert-cffi-sample get-sample-buffer
+register-sample-generator =voice= register-voice unregister-voice
+register-voice-mixer mix-voices convert-cffi-sample-to-internal *page*
+convert-internal-sample-to-cffi get-ticks page-variable with-page-variables
+set-page-variable with-pages with-mission-locals *module* quit reset
+seek-music))
 
 (in-package :gluon)
 

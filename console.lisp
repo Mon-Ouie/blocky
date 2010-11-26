@@ -471,6 +471,7 @@ as hash keys."
 				    state))))
 	
 (defun update-joystick-axis (axis value)
+  (message "axis ~S value ~S" axis value)
   (let ((state (if (< (abs value) *joystick-dead-zone*)
 		   :button-up :button-down)))
     (setf (aref *joystick-axis-values* axis) value)))
@@ -1666,7 +1667,10 @@ found."
 (defun draw-image (image x y &key (destination sdl:*default-surface*) (render-cell nil))
   "Draw the IMAGE at offset (X Y) on the image DESTINATION.
 The default destination is the main window."
-  (sdl:draw-surface-at-* image x y :cell render-cell :surface destination))
+  (when render-cell
+    (destructuring-bind (x0 y0 w h) render-cell
+      (sdl:set-cell-* x0 y0 w h :surface image :index 0)))
+  (sdl:draw-surface-at-* image x y :cell 0 :surface destination))
 
 (defun draw-resource-image (name x y &key (destination sdl:*default-surface*) (render-cell nil))
   "Draw the image named by NAME at offset (X Y) on the image DESTINATION.

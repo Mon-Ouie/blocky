@@ -1,6 +1,6 @@
 ;;; gcells.lisp --- defining objects
 
-;; Copyright (C) 2008  David O'Toole
+;; Copyright (C) 2008, 2009, 2010  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: 
@@ -360,7 +360,7 @@ unproxying. By default, it does nothing."
   (if (and (/is-player self)
 	   (not (has-method method self))
 	   (null <occupant>))
-      (/say self (format nil "The ~S command is not applicable." method) )
+;;      (/say self (format nil "The ~S command is not applicable." method) )
       ;; otherwise maybe we're a vehicle
       (let ((occupant <occupant>))
 	(when (null occupant)
@@ -386,7 +386,7 @@ unproxying. By default, it does nothing."
 (define-method step-on-current-square gcell ()
   "Send :step events to all the cells on the current square."
   (when <stepping>
-    (do-cells (gcell (/cells-at *world* <row> <column>))
+    (do-cells (gcell (/grid-location *world* <row> <column>))
       (unless (eq cell self) 
 	(/step cell self)))))
 
@@ -703,6 +703,10 @@ May be affected by the player's :hearing-range stat, if any."
       (when (> range dist)
 	(play-sample sample-name)))))
 
+(define-method distance-to-player gcell ()
+  (multiple-value-bind (r c) (/grid-coordinates self)
+    (/distance-to-player *world* r c)))
+
 (define-method say gcell (format-string &rest args)
   "Print a string to the message narration window. Arguments
 are as with `format'."
@@ -710,9 +714,7 @@ are as with `format'."
     (let ((range (if (proton:has-field :hearing-range self)
 		     <hearing-range>
 		     *default-sample-hearing-range*))
-	  (dist (distance (or <column> 0) (or <row> 0)
-			  (/player-column *world*)
-			  (/player-row *world*))))
+	  (dist (/distance-to-player self)))
       (when (> range dist)
 	(apply #'send-queue self :say :narrator format-string args)))))
 
@@ -824,7 +826,9 @@ are as with `format'."
 			:scale 2)))
     (/play-sample self "talk")
     ;; get rid of any previous balloons first
-    (/delete-category-at *world* <row> <column> :balloon)
+    (multiple-value-bind (row column)
+	(/grid-coordinates self)
+      (/delete-category-at *world* row column :balloon))
     ;; drop it
     (/drop self balloon)))
 

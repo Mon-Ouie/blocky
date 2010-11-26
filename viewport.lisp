@@ -133,9 +133,7 @@
 		(y-offset (* tile-size origin-y))
 		(width (* tile-size origin-width))
 		(height (* tile-size origin-height)))
-	    (setf (sdl:cells surface)
-		  (list (list x-offset y-offset width height)))
-	    (draw-resource-image background 0 0 :render-cell 0 :destination image)))
+	    (draw-resource-image background 0 0 :render-cell (list x-offset y-offset width height) :destination image)))
         ;; draw the tiles
         (dotimes (i origin-height)
           (dotimes (j origin-width)

@@ -25,6 +25,8 @@
 
 (defparameter *default-page-z-size* 8)
 
+(defvar *page* nil)
+
 (defcell page 
   (name :initform nil :documentation "Name of the page.")
   (width :initform 16) 
