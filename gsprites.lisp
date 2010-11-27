@@ -32,6 +32,8 @@ behaviors are compatible, sprites can take any pixel location in the
 world, and collision detection is performed between sprites and cells.")
   (x :initform 0 :documentation "The world x-coordinate of the sprite.") 
   (y :initform 0 :documentation "The world y-coordinate of the sprite.") 
+  (proxy :initform nil)
+  (occupant :initform nil)
   (saved-x :initform nil :documentation "Saved x-coordinate used to jump back from a collision.")
   (saved-y :initform nil :documentation "Saved y-coordinate used to jump back from a collision.")
   (image :initform nil :documentation "The arbitrarily sized image
@@ -217,8 +219,7 @@ world, and collision detection is performed between sprites and cells.")
     (/add-category occupant :proxied)
     (setf (field-value :proxy occupant) self)
     ;; Hide the proxy if it's in a world already.
-    (when (numberp (field-value :row occupant))
-      (/remove-sprite world occupant))
+    (/remove-sprite world occupant)
     ;; Don't let anyone step on occupied vehicle.
     (/add-category self :obstacle)
     ;; Don't light up the map 
