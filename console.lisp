@@ -471,7 +471,6 @@ as hash keys."
 				    state))))
 	
 (defun update-joystick-axis (axis value)
-  (message "axis ~S value ~S" axis value)
   (let ((state (if (< (abs value) *joystick-dead-zone*)
 		   :button-up :button-down)))
     (setf (aref *joystick-axis-values* axis) value)))
@@ -533,8 +532,7 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 		       :east)
 		      ((pressed :left)
 		       :west))
-		:here)))
-    (message "UPDATE-JOYSTICK: BUTTON(~S) STATE(~S)" button state)))
+		:here)))))
 
 (defun poll-joystick-button (button)
   "Return 1 if the button numbered BUTTON is pressed, otherwise 0."
@@ -1398,7 +1396,7 @@ object save directory (by setting the current `*module*'. See also
 
 (defvar *frequency* 44100)
 
-(defvar *output-chunksize* 256)
+(defvar *output-chunksize* 512)
 
 (defvar *output-channels* 2)
 

@@ -39,13 +39,15 @@
   (use-overlays :initform t)
   (pending-draws :initform (make-array 100 :initial-element nil 
 				       :adjustable t :fill-pointer 0))
-  (margin :initform 8 :documentation "Scroll margin.")
+  (margin :initform 15 :documentation "Scroll margin.")
   (origin-x :initform 0 
 	    :documentation "The world x-coordinate of the tile at the viewport's origin.")
   (origin-y :initform 0 
 	    :documentation "The world y-coordinate of the tile at the viewport's origin.")
   (origin-width :initform 10 :documentation "The width in tiles of the viewport.")
   (origin-height :initform 10 :documentation "The height in tiles of the viewport.")
+  (drag-x :initform 0)
+  (drag-y :initform 0)
   (tile-size :initform 16 :documentation "Size in pixels of a tile. They must be square.")
   (excluded-fields :initform '(:world)))
 
@@ -115,6 +117,8 @@
            (origin-height <origin-height>)
            (origin-x <origin-x>)
            (origin-y <origin-y>)
+	   (drag-x <drag-x>)
+	   (drag-y <drag-y>)
            (pending-draws <pending-draws>)
            (image <image>)
            (tile nil)
@@ -133,7 +137,11 @@
 		(y-offset (* tile-size origin-y))
 		(width (* tile-size origin-width))
 		(height (* tile-size origin-height)))
-	    (draw-resource-image background 0 0 :render-cell (list x-offset y-offset width height) :destination image)))
+	    (draw-resource-image background 0 0 
+				 :render-cell (list (+ x-offset drag-x)
+						    (+ y-offset drag-y)
+						    width height) 
+				 :destination image)))
         ;; draw the tiles
         (dotimes (i origin-height)
           (dotimes (j origin-width)
@@ -148,10 +156,10 @@
                   (dotimes (k (fill-pointer objects))
                     (setf cell (aref objects k))
                     (when (object-p cell)
-                      (let ((j0 (* j tile-size))
-                            (i0 (* i tile-size)))
-                        (setf tile (field-value :tile cell))
-                        (if (or (member :drawn (field-value :categories cell))
+                      (let ((j0 (+ (- drag-x) (* j tile-size)))
+                            (i0 (+ (- drag-y) (* i tile-size))))
+			(setf tile (field-value :tile cell))
+			(if (or (member :drawn (field-value :categories cell))
 				(null tile))
 			    (vector-push-extend cell pending-draws)
 			    (when tile 
@@ -166,9 +174,9 @@
           ;; pull image and calculate screen coordinates
           (let* ((graphics (field-value :image sprite))
                  (x0 (field-value :x sprite))
-                 (x1 (- x0 (* tile-size origin-x)))
+                 (x1 (+ (- drag-x) (- x0 (* tile-size origin-x))))
                  (y0 (field-value :y sprite))
-                 (y1 (- y0 (* tile-size origin-y))))
+                 (y1 (+ (- drag-y) (- y0 (* tile-size origin-y)))))
             (when graphics (draw-resource-image graphics x1 y1 :destination image))))
         ;; draw the pending ops
         (map nil #'(lambda (cell)
@@ -213,47 +221,58 @@
 
 (define-method adjust viewport (&optional snap)
   "Move the viewport's origin if required to keep the player onscreen."
-  (let* ((world (or <world> *world*))
-	 (world-width (field-value :width world))
-	 (world-height (field-value :height world))
-	 (player (field-value :player world))
-	 (player-x (/player-column world))
-	 (player-y (/player-row world))
-	 (margin <margin>))
-    (with-fields (origin-x origin-y origin-height origin-width) self
-      ;; are we outside the "comfort zone"?
-      (when (or 
-	     ;; too far left
-	     (> (+ origin-x margin) 
-		player-x)
-	     ;; too far right
-	     (> player-x
-		(- (+ origin-x origin-width)
-		   margin))
-	     ;; too far up
-	     (> (+ origin-y margin) 
-		player-y)
-	     ;; too far down 
-	     (> player-y 
-		(- (+ origin-y origin-height)
-		   margin)))
-	;; yes. recenter.
-	(let ((new-x (max 0
-			  (min (- world-width origin-width)
-			       (- player-x 
-				  (truncate (/ origin-width 2))))))
-	      (new-y (max 0 
-			  (min (- world-height origin-height)
-			       (- player-y 
-				  (truncate (/ origin-height 2)))))))
-	  (if snap
-	      (setf origin-x new-x origin-y new-y)
-	      (progn (if (not (= origin-x new-x))
-			 (incf origin-x
-			       (if (> new-x origin-x) 1 -1)))
-		     (if (not (= origin-y new-y))
-			 (incf origin-y
-			       (if (> new-y origin-y) 1 -1))))))))))
+  (with-fields (drag-x drag-y tile-size) self
+    (let* ((world (or <world> *world*))
+	   (world-width (field-value :width world))
+	   (world-height (field-value :height world))
+	   (player (field-value :player world))
+	   (player-x (/player-column world))
+	   (player-y (/player-row world))
+	   (margin <margin>))
+      (with-fields (origin-x origin-y origin-height origin-width) self
+	;; are we outside the "comfort zone"?
+	(if (or 
+	       ;; too far left
+	       (> (+ origin-x margin) 
+		  player-x)
+	       ;; too far right
+	       (> player-x
+		  (- (+ origin-x origin-width)
+		     margin))
+	       ;; too far up
+	       (> (+ origin-y margin) 
+		  player-y)
+	       ;; too far down 
+	       (> player-y 
+		  (- (+ origin-y origin-height)
+		     margin)))
+	    ;; yes. recenter.
+	    (let ((new-x (max 0
+			      (min (- world-width origin-width)
+				   (- player-x 
+				      (truncate (/ origin-width 2))))))
+		  (new-y (max 0 
+			      (min (- world-height origin-height)
+				   (- player-y 
+				      (truncate (/ origin-height 2)))))))
+	      (if snap
+		  ;; either abruptly
+		  (setf origin-x new-x origin-y new-y)
+		  ;; otherwise drag
+		  (let ((dx (if (> new-x origin-x) 1 -1))
+			(dy (if (> new-y origin-y) 1 -1)))
+		    (when (not (= origin-x new-x))
+		      (incf drag-x (* 2 dx))
+		      (when (= tile-size (abs drag-x))
+			(setf drag-x 0))
+		      (when (zerop drag-x)
+			  (incf origin-x dx)))
+		    (when (not (= origin-y new-y))
+		      (incf drag-y (* 2 dy))
+		      (when (= tile-size (abs drag-y))
+			(setf drag-y 0))
+		      (when (zerop drag-y)
+			(incf origin-y dy)))))))))))
 
 ;;; The minimap
 
