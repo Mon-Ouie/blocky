@@ -46,6 +46,7 @@
 	    :documentation "The world y-coordinate of the tile at the viewport's origin.")
   (origin-width :initform 10 :documentation "The width in tiles of the viewport.")
   (origin-height :initform 10 :documentation "The height in tiles of the viewport.")
+  ;; pixel-perfect scrolling "drag"
   (drag-x :initform 0)
   (drag-y :initform 0)
   (tile-size :initform 16 :documentation "Size in pixels of a tile. They must be square.")
