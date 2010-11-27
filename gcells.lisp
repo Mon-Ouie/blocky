@@ -103,9 +103,6 @@ Sprites are also based on cells. See `defsprite'.")
   (parent-container :documentation "Link to containing cell, if any.")
   ;; forms-related fields. see forms.lisp
   (label :initform nil :documentation "Label (string or formatted line) to be used as display in forms.")
-  ;; proxying
-  (occupant :documentation "Occupant cell, used to implement drivable vehicles.")
-  (proxy :documentation "Link to the proxying cell for this occupant cell.")
   ;; other
   (combination-amount :initform 0 :documentation "Amount of item this cell represents.")
   (combination-key :initform nil :documentation "Only items matching this key will be combined.")
@@ -298,90 +295,6 @@ place. (See also worlds.lisp)
 (define-method end-phase gcell ()
   "End this cell's phase."
   (setf <phase-number> (/get-phase-number *world*)))
-
-;;; Proxying and vehicles
-
-(define-method proxy gcell (occupant)
-  "Make this cell a proxy for OCCUPANT."
-  (let ((world *world*))
-    (when <occupant> 
-      (error "Attempt to overwrite existing occupant cell in proxying."))
-    (setf <occupant> occupant)
-    ;; The cell should know when it is proxied, and who its proxy is.
-    (/add-category occupant :proxied)
-    (setf (field-value :proxy occupant) self)
-    ;; Hide the proxy if it's in a world already.
-    (when (numberp (field-value :row occupant))
-      (/delete-cell world occupant <row> <column>))
-    ;; Don't let anyone step on occupied vehicle.
-    (/add-category self :obstacle)
-    ;; Don't light up the map 
-    (/add-category self :light-source)
-    ;; If it's the player register self as player.
-    (when (/is-player occupant)
-      (message "OCCPU")
-      (/add-category self :player)
-      (/set-player world self)
-      (setf <phase-number> (1- (/get-phase-number world))))))
-
-(define-method unproxy gcell (&key dr dc dx dy)
-  "Remove the occupant from this cell, dropping it on top."  
-  (let ((world *world*)
-	(occupant <occupant>))
-    (when (null occupant)
-      (error "Attempt to unproxy empty cell."))
-    (ecase (field-value :type occupant)
-      (:cell
-	 (multiple-value-bind (r c) (/grid-coordinates self)
-	   (/drop-cell world occupant r c)))
-      (:sprite
-	 (multiple-value-bind (x y) (/xy-coordinates self)
-	   (/drop-sprite self occupant 
-			(+ x (or dx 0))
-			(+ y (or dy 0))))))
-    (/delete-category occupant :proxied)
-    (setf (field-value :proxy occupant) nil)
-    (/do-post-unproxied occupant)
-    (when (/is-player occupant)
-      (/delete-category self :light-source)
-      (/delete-category self :player)
-      (/delete-category self :obstacle)
-      (/set-player world occupant)
-      (/run occupant))
-    (setf <occupant> nil)))
-
-(define-method do-post-unproxied gcell ()
-  "This method is invoked on the unproxied former occupant cell after
-unproxying. By default, it does nothing."
-  nil)
-
-(define-method forward gcell (method &rest args)
-  "Attempt to deliver the failed message to the occupant, if any."
-  (if (and (/is-player self)
-	   (not (has-method method self))
-	   (null <occupant>))
-;;      (/say self (format nil "The ~S command is not applicable." method) )
-      ;; otherwise maybe we're a vehicle
-      (let ((occupant <occupant>))
-	(when (null occupant)
-	  (error "Cannot forward message ~S. No implementation found." method))
-	(apply #'send self method occupant args))))
-  
-(define-method embark gcell (&optional v)
-  "Enter a vehicle V."
-  (let ((vehicle (or v (/category-at-p *world* <row> <column> :vehicle))))
-    (if (null vehicle)
-	(/>>say :narrator "No vehicle to embark.")
-	(if (null (field-value :occupant vehicle))
-	    (progn (/>>say :narrator "Entering vehicle.")
-		   (/proxy vehicle self))
-	    (/>>say :narrator "Already in vehicle.")))))
-
-(define-method disembark gcell ()
-  "Eject the occupant."
-  (let ((occupant <occupant>))
-    (when (and occupant (/in-category self :proxy))
-	  (/unproxy self))))
 
 (define-method step-on-current-square gcell ()
   "Send :step events to all the cells on the current square."
