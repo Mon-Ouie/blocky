@@ -671,7 +671,7 @@ are as with `format'."
 
 ;;; Popup text balloons
 
-(defcell balloon 
+(defgcell balloon 
   (categories :initform '(:drawn :actor :balloon))
   (auto-loadout :initform t)
   text stroke-color background-color timeout following scale)

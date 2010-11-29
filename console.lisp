@@ -1396,7 +1396,7 @@ object save directory (by setting the current `*module*'. See also
 
 (defvar *frequency* 44100)
 
-(defvar *output-chunksize* 512)
+(defvar *output-chunksize* 2048)
 
 (defvar *output-channels* 2)
 

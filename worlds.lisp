@@ -60,7 +60,7 @@ required for travel here." )
   ;; sprite cells
   (sprites :initform nil :documentation "A list of sprites.")
   (sprite-grid :initform nil :documentation "Grid for collecting sprite collision information.")
-  (sprite-table :initform nil :documentation "Hash table to prevent redundant collisions.")
+  (sprite-table :initform (make-hash-table :test 'equal) :documentation "Hash table to prevent redundant collisions.")
   ;; environment 
   (environment-grid :documentation "A two-dimensional array of environment data cells.")
   ;; lighting 
@@ -174,7 +174,6 @@ At the moment, only 0=off and 1=on are supported.")
 			    :adjustable t
 			    :fill-pointer 0))))
       (setf <grid> grid
-	    <sprite-grid> sprite-grid
 	    <sprite-grid> sprite-grid
 	    <height> height
 	    <width> width))))
@@ -327,7 +326,7 @@ placement."
   (assert (eq :sprite (field-value :type sprite)))
   (/add-sprite self sprite)
   (/move-to sprite x y)
-  (when loadout
+  (when (or loadout (field-value :auto-loadout sprite))
     (/loadout sprite))
   (unless no-collisions
     ;; TODO do collision test
@@ -823,60 +822,59 @@ along grid squares between R1,C1 and R2,C2."
 Sends a :do-collision message for every detected collision."
   (with-field-values (width height tile-size sprite-grid sprite-table grid) self
     (dolist (sprite (or sprites <sprites>))
-      
       ;; figure out which grid squares we really need to scan
       (let* ((x (field-value :x sprite)) 
-	     (y (field-value :y sprite)) 
-	     (left (1- (floor (/ x tile-size))))
-	     (right (1+ (floor (/ (+ x (field-value :width sprite)) tile-size))))
-	     (top (1- (floor (/ y tile-size))))
-	     (bottom (1+ (floor (/ (+ y (field-value :height sprite)) tile-size)))))
-	;; find out which scanned squares actually intersect the sprite
-;;	(message "COLLIDE-SPRITES DEBUG: ~S" (list x y left right top bottom))
-	(block colliding
-	  (dotimes (i (max 0 (- bottom top)))
-	    (dotimes (j (max 0 (- right left)))
-	      (let ((i0 (+ i top))
-		    (j0 (+ j left)))
-		(when (array-in-bounds-p grid i0 j0)
-		  (when (/collide-* sprite 
-				   (* i0 tile-size) 
-				   (* j0 tile-size)
-				   tile-size tile-size)
-		    ;; save this intersection information
-		    (vector-push-extend sprite (aref sprite-grid i0 j0))
-		    ;; collide the sprite with the cells on this square
-		    (do-cells (cell (aref grid i0 j0))
-		      (when (and (or (/in-category cell :target)
-				     (/in-category cell :obstacle))
-				 (/is-located cell))
-			(/do-collision sprite cell)))))))))))
-    ;; now find collisions with other sprites
-    ;; we can re-use the sprite-grid data from earlier.
-    (let (collision num-sprites ix)
-      ;; prepare to detect redundant collisions
-      (clrhash sprite-table)
-      (labels ((collide-first (&rest args)
-		 (unless (gethash args sprite-table)
-		   (setf (gethash args sprite-table) t)
-		   (destructuring-bind (a b) args
-		     (/do-collision a b)))))
-	;; iterate over grid, reporting collisions
-	(dotimes (i height)
-	  (dotimes (j width)
-	    (setf collision (aref sprite-grid i j))
-	    (setf num-sprites (length collision))
-	    (when (< 1 num-sprites)
-	      (dotimes (i (- num-sprites 1))
-		(setf ix (1+ i))
-		(loop do (let ((a (aref collision i))
-			       (b (aref collision ix)))
-			   (incf ix)
-			   (assert (and (proton:object-p a) (proton:object-p b)))
-			   (when (and (not (eq a b)) (/collide a b))
-			     (collide-first a b)))
-		      while (< ix num-sprites))))))))))
-
+	     (y (field-value :y sprite)))
+	(when (and (numberp x) (numberp y))
+	  (let* ((left (1- (floor (/ x tile-size))))
+		 (right (1+ (floor (/ (+ x (field-value :width sprite)) tile-size))))
+		 (top (1- (floor (/ y tile-size))))
+		 (bottom (1+ (floor (/ (+ y (field-value :height sprite)) tile-size)))))
+	    ;; find out which scanned squares actually intersect the sprite
+	    (block colliding
+	      (dotimes (i (max 0 (- bottom top)))
+		(dotimes (j (max 0 (- right left)))
+		  (let ((i0 (+ i top))
+			(j0 (+ j left)))
+		    (when (array-in-bounds-p grid i0 j0)
+		      (when (/collide-* sprite 
+					(* i0 tile-size) 
+					(* j0 tile-size)
+					tile-size tile-size)
+			;; save this intersection information
+			(vector-push-extend sprite (aref sprite-grid i0 j0))
+			;; collide the sprite with the cells on this square
+			(do-cells (cell (aref grid i0 j0))
+			  (when (and (or (/in-category cell :target)
+					 (/in-category cell :obstacle))
+				     (/is-located cell))
+			    (/do-collision sprite cell)))))))))))
+	;; now find collisions with other sprites
+	;; we can re-use the sprite-grid data from earlier.
+	(let (collision num-sprites ix)
+	  ;; prepare to detect redundant collisions
+	  (clrhash sprite-table)
+	  (labels ((collide-first (&rest args)
+		     (unless (gethash args sprite-table)
+		       (setf (gethash args sprite-table) t)
+		       (destructuring-bind (a b) args
+			 (/do-collision a b)))))
+	    ;; iterate over grid, reporting collisions
+	    (dotimes (i height)
+	      (dotimes (j width)
+		(setf collision (aref sprite-grid i j))
+		(setf num-sprites (length collision))
+		(when (< 1 num-sprites)
+		  (dotimes (i (- num-sprites 1))
+		    (setf ix (1+ i))
+		    (loop do (let ((a (aref collision i))
+				   (b (aref collision ix)))
+			       (incf ix)
+			       (assert (and (proton:object-p a) (proton:object-p b)))
+			       (when (and (not (eq a b)) (/collide a b))
+				 (collide-first a b)))
+			  while (< ix num-sprites))))))))))))
+    
 ;;; Universes are composed of connected worlds.
 
 (defvar *universe* nil)

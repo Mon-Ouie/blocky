@@ -74,6 +74,11 @@ world, and collision detection is performed between sprites and cells.")
   (setf <image> image)
   (/resize self))
 
+(define-method direction-to-player gsprite ()
+  (multiple-value-bind (r c) (/grid-coordinates self)
+    (multiple-value-bind (pr pc) (/grid-coordinates (/get-player *world*))
+      (direction-to r c pr pc))))
+
 (define-method move-to gsprite (x y &optional ignore-obstacles)
   (declare (ignore ignore-obstacles))
   (assert (and (integerp x) (integerp y)))
@@ -90,14 +95,15 @@ world, and collision detection is performed between sprites and cells.")
 ;;	  (/do-collision self nil)))))
 
 (define-method move gsprite (direction &optional movement-distance)
-  (let ((dist (or movement-distance 1)))
-    (let ((y <y>)
-	  (x <x>))
-      (when (and y x)
-	(multiple-value-bind (y0 x0) (gluon:step-in-direction y x direction dist)
-	  (assert (and y0 x0))
-	    (/move-to self x0 y0))))))
-
+  (when direction
+    (let ((dist (or movement-distance 1)))
+      (let ((y <y>)
+	    (x <x>))
+	(when (and y x)
+	  (multiple-value-bind (y0 x0) (gluon:step-in-direction y x direction dist)
+	    (assert (and y0 x0))
+	    (/move-to self x0 y0)))))))
+  
 (define-method collide gsprite (gsprite)
   ;; (message "COLLIDING A=~S B=~S"
   ;; 	   (object-name (object-parent self))
