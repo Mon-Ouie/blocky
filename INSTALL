@@ -15,7 +15,7 @@ Installation and basic playing instructions are provided.
   
    mkdir ~/src
    cd ~/src
-   git protone git://github.com/dto/gluon.git 
+   git clone git://github.com/dto/gluon.git 
 
 3. Then link the gluon.asd file into your ~/.sbcl/systems directory:
 
@@ -28,7 +28,7 @@ Installation and basic playing instructions are provided.
 
    mkdir ~/src
    cd ~/src
-   git protone git://github.com/dto/proton.git
+   git clone git://github.com/dto/proton.git
 
    Then link the proton.asd file:
 
@@ -65,18 +65,24 @@ Installation and basic playing instructions are provided.
 
    Add something like this to a new file called ~/.gluonrc:
 
-  (setf gluon:*module-directories* '(#P"/home/dto/src/gluon/"))
+  (setf gluon:*module-directories* '(#P"/home/USERNAME/src/gluon/" #P"/home/USERNAME/modules/"))
 
-The filename should be wherever you installed the GLUON source
-tree. This is auto-detected as the current directory if you don't set
-it. NOTE: These must be pathnames (prefixed with #P) and must contain
-a trailing slash.
+The first item should be the pathname of wherever you installed the
+GLUON source tree. This is auto-detected as the current directory if
+you don't set it. NOTE: These must be pathnames (prefixed with #P) and
+must contain a trailing slash.
+
+The other directory should contain game modules. For example:
+
+    cd ~/modules
+    git clone git://github.com/dto/terahertz.git
+    mv terahertz thz
 
 7. At the shell, cd to the install directory for GLUON, run SBCL, and
    then at the REPL:
 
     (require :gluon)
-    (gluon:play "xong")
+    (gluon:play "thz")  ;; or the name of a module in ~/modules
 
   If you get an error about TRIVIAL-FEATURES-TESTS, try this:
   (require :trivial-features-tests)
@@ -86,20 +92,11 @@ a trailing slash.
     ;; -*- Mode: lisp -*-
 
     (setf gluon:*module-directories* '(#P"/home/dto/gluon/" 
-    	  			     #P"/home/dto/gluon-modules/"))
+    	  			     #P"/home/dto/modules/"))
     (setf gluon:*user-keyboard-layout* :qwerty)
     (setf gluon:*use-sound* t)
     (setf gluon:*message-logging* t)
      ;; fullscreen is a pain if GLUON hangs
     (setf gluon:*fullscreen* nil)
 
-9. For dvorak users: 
-
-   g c r
-    \|/
-   h-.-n
-    /|\ 
-   m w v
-
-   Add (setf gluon:*user-keyboard-layout* :dvorak) to your ~/.gluonrc.
-
+  
