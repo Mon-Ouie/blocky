@@ -1472,9 +1472,9 @@ object save directory (by setting the current `*module*'. See also
 
 (defvar *foo* nil)
 
-(defun music-mixer-callback (user output size)
-  (setf *foo* t)
-  (format t "XXXX ~S" *foo*))
+;; (defun music-mixer-callback (user output size)
+;;   (setf *foo* t)
+;;   (format t "XXXX ~S" *foo*))
 
   ;; (let ((type (cffi-sample-type *sample-format*)))
   ;;   (dotimes (n size)
@@ -1487,10 +1487,10 @@ object save directory (by setting the current `*module*'. See also
   ;;   (convert-internal-sample-to-cffi *buffer* output size)
   ;;   ))
 
-(defun register-sample-generator (generator)
-  (message "Registering sample generator...")
-  (setf *sample-generator* generator)
-  (sdl-mixer:register-music-mixer #'music-mixer-callback))
+;; (defun register-sample-generator (generator)
+;;   (message "Registering sample generator...")
+;;   (setf *sample-generator* generator)
+;;   (sdl-mixer:register-music-mixer #'music-mixer-callback))
 
 (defun mix-voices (output)
   (message "Mixing voices...")
@@ -1505,10 +1505,10 @@ object save directory (by setting the current `*module*'. See also
 	(incf (aref output n)
 	      (aref input n))))))
 
-(defun register-voice-mixer () 
-  (message "Registering voice mixer...")
-  (setf *voices* nil)
-  (register-sample-generator #'mix-voices))
+;; (defun register-voice-mixer () 
+;;   (message "Registering voice mixer...")
+;;   (setf *voices* nil)
+;;   (register-sample-generator #'mix-voices))
 
 (defvar *buffer-cache* nil)
 
@@ -1528,17 +1528,17 @@ object save directory (by setting the current `*module*'. See also
 
 ;;; Regular music/sample functions
 
-(defvar *sample-callback* nil)
+;; (defvar *sample-callback* nil)
 
-(defun set-sample-callback (func)
-  (assert (functionp func))
-  (setf *sample-callback* func))
+;; (defun set-sample-callback (func)
+;;   (assert (functionp func))
+;;   (setf *sample-callback* func))
 
-(defvar *music-callback* nil)
+;; (defvar *music-callback* nil)
 
-(defun set-music-callback (func)
-  (assert (functionp func))
-  (setf *music-callback* func))
+;; (defun set-music-callback (func)
+;;   (assert (functionp func))
+;;   (setf *music-callback* func))
 
 (defvar *channels* 128 "Number of audio mixer channels to use.")
 

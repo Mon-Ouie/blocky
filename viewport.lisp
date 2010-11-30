@@ -110,9 +110,9 @@
 	(when resize (/resize self :height new-height :width new-width))))))
 
 (define-method render viewport ()
-  (declare (optimize (speed 3)))
+;;  (declare (optimize (speed 3)))
   (when <visible>
-    (/adjust self) ;; hehe
+    (/adjust self) 
     (let* ((world (or <world> *world*))
            (origin-width <origin-width>)
            (origin-height <origin-height>)

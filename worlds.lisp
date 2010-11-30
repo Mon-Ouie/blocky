@@ -349,9 +349,9 @@ cell is placed; nil otherwise."
   (let ((grid <grid>)
 	(tile-size <tile-size>)
 	(auto-loadout (field-value :auto-loadout cell)))
-    (declare (optimize (speed 3)) 
-	     (type (simple-array vector (* *)) grid)
-	     (fixnum tile-size row column))
+    ;; (declare (optimize (speed 3)) 
+    ;; 	     (type (simple-array vector (* *)) grid)
+    ;; 	     (fixnum tile-size row column))
     (when (array-in-bounds-p grid row column)
       (ecase (field-value :type cell)
 	(:cell
@@ -568,26 +568,25 @@ realtime mode."
 
 (define-method run-cpu-phase world (&optional phase-p)
   "Run all non-player actor cells."
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (when (not <paused>)
     (when phase-p
       (incf <phase-number>))
     (with-message-queue <message-queue> 
     (when *mission*
       (/run *mission*))
-      (let ((cell nil)
-	    (phase-number <phase-number>)
-	    (player <player>)
-	    (grid <grid>)
-	    (categories nil))
-	(declare (type (simple-array vector (* *)) grid))
+    (let ((cell nil)
+	  (phase-number <phase-number>)
+	  (player <player>)
+	  (grid <grid>)
+	  (categories nil))
+;;	(declare (type (simple-array vector (* *)) grid))
 	(/run player) 
 	(/clear-light-grid self)
-	(/clear-sprite-grid self)
 	(dotimes (i <height>)
 	  (dotimes (j <width>)
 	    (let ((cells (aref grid i j)))
-	      (declare (vector cells))
+;;	      (declare (vector cells))
 	      (dotimes (z (fill-pointer cells))
 		(setf cell (aref cells z))
 		(setf categories (field-value :categories cell))
@@ -615,7 +614,9 @@ realtime mode."
 		(/end-phase sprite)))
 	;; do sprite collisions
 	(when <sprite-table>
-	  (/collide-sprites self))))))
+	  (/clear-sprite-grid self)
+	  (/collide-sprites self)
+	  )))))
 
 (defvar *lighting-hack-function* nil)
   
@@ -632,7 +633,7 @@ sources and ray casting."
 		   (if (numberp ambient) ambient 0)))
 	 (octagon (make-array 100 :initial-element nil :adjustable t :fill-pointer 0))
 	 (line (make-array 100 :initial-element nil :adjustable t :fill-pointer 0)))
-    (declare (type (simple-array vector (* *)) grid) (optimize (speed 3)))
+;;    (declare (type (simple-array vector (* *)) grid) (optimize (speed 3)))
     ;; don't bother lighting if everything is lit.
     (when (not (eq :total ambient))
       ;; draw only odd-radius octagons that have a center pixel
