@@ -156,7 +156,7 @@ replacing them with the single cell (or vector of cells) DATA."
     (:sprite
        (/remove-sprite self cell))))
     
-(define-method move page (cell row column)
+(define-method move-cell page (cell row column)
   "Move CELL to ROW, COLUMN."
   (let* ((old-row (field-value :row cell))
 	 (old-column (field-value :column cell)))

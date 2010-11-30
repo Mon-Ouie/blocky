@@ -343,11 +343,11 @@ the goal."
 	;; return nil
 	nil)))
 
-(defun path-to (grid from to)
-  (find-path grid 
-	     (field-value :row from)
-	     (field-value :column from)
-	     (field-value :row to)
-	     (field-value :column to)))
+;; (defun path-to (grid from to)
+;;   (find-path grid 
+;; 	     (field-value :row from)
+;; 	     (field-value :column from)
+;; 	     (field-value :row to)
+;; 	     (field-value :column to)))
 
 ;;; path.lisp ends here
