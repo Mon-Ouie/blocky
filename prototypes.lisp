@@ -101,7 +101,7 @@ make the names of the objects made with `define-prototype'."
 
 ;; An object's field collection is either a hash table or plist. The
 ;; function `field-value' implements the chaining field lookups that
-;; make inheritance work in PROTON.
+;; make inheritance work in IOMACS.
 
 ;; If a field value is not present in a given object's field
 ;; collection, the object's parent is also checked for a value, and
@@ -367,7 +367,7 @@ argument is ignored for now."
 ;;; Message forwarding
 
 ;; When a message cannot be delivered because no corresponding
-;; function was found, PROTON attempts to re-send the message via the
+;; function was found, IOMACS attempts to re-send the message via the
 ;; object's `forward' method (if any).
 
 ;; An object's `forward' method should accept the method-key as the
@@ -868,9 +868,9 @@ evaluated, then any applicable initializer is triggered."
 ;;; Serialization support
 
 ;; The functions SERIALIZE and DESERIALIZE convert
-;; (almost abitrary) trees of Lisp objects (including PROTON objects)
+;; (almost abitrary) trees of Lisp objects (including IOMACS objects)
 ;; into printable S-expressions for storing as plain text, and from
-;; this printed representation back into living PROTON objects.
+;; this printed representation back into living IOMACS objects.
 
 ;; The method names :SERIALIZE and :DESERIALIZE are reserved for
 ;; serialization use. :SERIALIZE, if such a method is present, is
@@ -882,14 +882,13 @@ evaluated, then any applicable initializer is triggered."
 ;; are not serialized; typically these will be properly re-initialized
 ;; by the :DESERIALIZE method. 
 
-(defconstant +object-type-key+ :%PROTON%OBJECT%)
-(defconstant +hash-type-key+ :%PROTON%HASH-TABLE%)
+(defconstant +object-type-key+ :%IOMACS%OBJECT%)
+(defconstant +hash-type-key+ :%IOMACS%HASH-TABLE%)
 
 (defun serialize (object)
-  "Convert a Lisp object (possibly PROTON-derived) to a print-ready
-S-expression. Invokes :SERIALIZE on PROTON objects whenever present.
-Any fields named in the list <EXCLUDED-FIELDS> of said object will be
-ignored."
+  "Convert a Lisp object a print-ready S-expression.
+Invokes :SERIALIZE on IOMACS objects whenever present. Any fields
+named in the list <EXCLUDED-FIELDS> of said object will be ignored."
   ;; use labels here so we can call #'serialize
   (labels ((hash-to-list (hash)
 	     (let (plist)
@@ -931,11 +930,11 @@ ignored."
       (otherwise object))))
 
 (defun deserialize (data)
-  "Reconstruct Lisp objects (including PROTON-derived objects) from an
-S-expression made by SERIALIZE. Invokes :DESERIALIZE on PROTON
+  "Reconstruct Lisp objects (including IOMACS-derived objects) from an
+S-expression made by SERIALIZE. Invokes :DESERIALIZE on IOMACS
 objects after reconstruction, wherever present."
   (cond 
-    ;; handle PROTON objects
+    ;; handle IOMACS objects
     ((and (listp data) (eq +object-type-key+ (first data)))
      (destructuring-bind (&key parent fields &allow-other-keys)
 	 (rest data)
@@ -961,4 +960,4 @@ objects after reconstruction, wherever present."
     ;; passthru
     (t data)))
       
-;;; proton.lisp ends here
+;;; prototypes.lisp ends here
