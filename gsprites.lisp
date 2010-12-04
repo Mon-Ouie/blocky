@@ -58,7 +58,7 @@ world, and collision detection is performed between sprites and cells.")
   (when (eq :cell (field-value :type ob))))
 
 (define-method resize gsprite ()
-  (proton:with-fields (image height width) self
+  (with-fields (image height width) self
     (when image
       (setf width (image-width image))
       (setf height (image-height image)))))
@@ -115,8 +115,8 @@ world, and collision detection is performed between sprites and cells.")
     (/collide-* self y0 x0 w h)))
     
 (define-method would-collide gsprite (x0 y0)
-  (proton:with-field-values (tile-size grid sprite-grid) *world*
-    (proton:with-field-values (width height x y) self
+  (with-field-values (tile-size grid sprite-grid) *world*
+    (with-field-values (width height x y) self
       ;; determine squares gsprite would intersect
       (let ((left (1- (floor (/ x0 tile-size))))
 	    (right (1+ (floor (/ (+ x0 width) tile-size))))
@@ -157,7 +157,7 @@ world, and collision detection is performed between sprites and cells.")
 			    (loop do (let ((a (aref collision i))
 					   (b (aref collision ix)))
 				       (incf ix)
-				       (assert (and (proton:object-p a) (proton:object-p b)))
+				       (assert (and (object-p a) (object-p b)))
 				       (when (not (eq a b))
 					 (let ((bt (field-value :y b))
 					       (bl (field-value :x b))

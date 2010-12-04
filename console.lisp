@@ -1069,8 +1069,8 @@ OBJECT as the data."
   "Save an object resource to disk as {RESOURCE-NAME}.PAK."
   (let ((name (resource-name resource)))
     (message "Serializing resource ~S..." name)
-;    (assert (proton:object-p (resource-object resource)))
-    (setf (resource-data resource) (proton:serialize (resource-object resource)))
+;    (assert (object-p (resource-object resource)))
+    (setf (resource-data resource) (serialize (resource-object resource)))
     (message "Saving resource ~S..." name)
     (write-pak (find-module-file module 
 				 (concatenate 'string (resource-name resource)
@@ -1107,9 +1107,9 @@ OBJECT as the data."
 (defun load-object-resource (resource)
   "Loads a serialized :OBJECT resource from the Lisp data in the 
 :DATA field of the RESOURCE argument. Returns the rebuilt object. See
-also the documentation for PROTON:DESERIALIZE."
-  (let ((object (proton:deserialize (resource-data resource))))
-    (assert (proton:object-p object))
+also the documentation for DESERIALIZE."
+  (let ((object (deserialize (resource-data resource))))
+    (assert (object-p object))
     (setf (resource-data resource) nil) ;; no longer needed
     object))
 
@@ -1829,7 +1829,7 @@ and its .startup resource is loaded."
   (setf *module-package-name* nil)
   (setf *physics-function* nil)
   (setf *world* nil)
-  (proton:initialize)
+  (initialize)
   (setf *timesteps* 0)
   (setf *keyboard-timestep-number* 0)
   (setf *initialization-hook* nil)

@@ -90,7 +90,7 @@
   (let* ((item (/cursor-item self)))
     (push <collection> <history>)
     (multiple-value-bind (result sub-menu) (/open item)
-      (cond ((and (vectorp result) (every #'proton:object-p result))
+      (cond ((and (vectorp result) (every #'object-p result))
 	     (/set-collection self result))
 	    ((stringp result)
 	     (assert <prompt>)

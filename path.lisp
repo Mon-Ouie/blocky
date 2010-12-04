@@ -51,7 +51,7 @@
   )
 
 (defun create-path (&key height width world)
-  (assert (proton:object-p world))
+  (assert (object-p world))
   (let ((path (make-path :world world
 			 :grid (make-array (list height width))
 			 :heap (make-array (* height width))

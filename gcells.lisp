@@ -605,8 +605,8 @@ to reflect its disappearance; this is different from a dying cell." nil)
 May be affected by the player's :hearing-range stat, if any."
   (when (/get-player *world*)
     (let* ((player (/get-player *world*))
-	   (range (if (proton:has-field :hearing-range player)
-		      (proton:field-value :hearing-range player)
+	   (range (if (has-field :hearing-range player)
+		      (field-value :hearing-range player)
 		      *default-sample-hearing-range*))
 	   (dist (multiple-value-bind (row col) 
 		     (/grid-coordinates self)
@@ -624,7 +624,7 @@ May be affected by the player's :hearing-range stat, if any."
   "Print a string to the message narration window. Arguments
 are as with `format'."
   (unless (/in-category self :dead)
-    (let ((range (if (proton:has-field :hearing-range self)
+    (let ((range (if (has-field :hearing-range self)
 		     <hearing-range>
 		     *default-sample-hearing-range*))
 	  (dist (/distance-to-player self)))
@@ -696,8 +696,8 @@ are as with `format'."
 		      timeout)))
   
 (define-method draw balloon (x y image)
-  (proton:with-field-values (text style scale) self
-    (proton:with-field-values (tile-size) *world*
+  (with-field-values (text style scale) self
+    (with-field-values (tile-size) *world*
       (let* ((offset (ecase style
 		       (:balloon tile-size)
 		       (:clear 0)

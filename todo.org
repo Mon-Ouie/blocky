@@ -1,20 +1,21 @@
-* TODO get editor working again
-* TODO iomacs.el, for launching iomacs via SLIME and running them in tandem
-* TODO automatic window switching
+* TODO [#B] get editor working again
+* TODO [#A] iomacs.el, for launching iomacs via SLIME and running them in tandem
+* TODO [#A] automatic window switching
 (05:08:52 PM) David O'Toole: (suspend-frame)
 (05:08:56 PM) David O'Toole: let me look for the pop up one
 (05:09:11 PM) David O'Toole: iconify-or-deiconify-frame
 (05:09:12 PM) David O'Toole: etc
 (05:09:34 PM) ericbb: hmm.. i just realized that won't work for me since i run emacs in a terminal
 (05:09:35 PM) David O'Toole: select-frame-set-input-focus
-* TODO define simple faces and themes
-* TODO more modern (lighter gray) appearance for editor
-* TODO antialiased text? find free sans serif
-* TODO RIGHT CLICK ON ANY PART OF THE WINDOW FOR INFORMATION/HELP
-* TODO better looking, clickable pager tabs (at top?)
-* TODO better mouse support overall
-* TODO drag and drop objects to/from palette
-* TODO auto-updated palette pages by category
-* TODO Visual Proton
+* TODO [#B] define simple faces and themes
+* TODO [#B] more modern (lighter gray) appearance for editor
+* TODO [#B] antialiased text? find free sans serif
+* TODO [#B] RIGHT CLICK ON ANY PART OF THE WINDOW FOR INFORMATION/HELP
+* TODO [#B] better looking, clickable pager tabs (at top?)
+* TODO [#A] better mouse support overall
+* TODO [#B] drag and drop objects to/from palette
+* TODO [#B] auto-updated palette pages by category
 * TODO read visual lisp clos paper pdf
+* TODO read programming pdf
+* TODO CL blox interface for elisp DAM processes 
 * TODO "session" i.e. the particular play session's persistent data objects, which get saved in a separate per-user per-game per-session.pak

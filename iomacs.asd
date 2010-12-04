@@ -8,18 +8,19 @@
 
 (asdf:defsystem iomacs
   :name "iomacs"
-  :version "1.9"
+  :version "1.99"
   :maintainer "David O'Toole"
   :author "David O'Toole"
   :license "General Public License (GPL) Version 3"
   :description "An object-oriented graphical 2D game engine."
   :serial t
-  :depends-on (:trivial-features :trivial-features-tests 
-				 :lispbuilder-sdl :lispbuilder-sdl-image 
-				 :lispbuilder-sdl-gfx
-				 :lispbuilder-sdl-mixer
-				 :proton)
+  :depends-on (;; :trivial-features :trivial-features-tests 
+	       :lispbuilder-sdl 
+	       :lispbuilder-sdl-image 
+	       :lispbuilder-sdl-gfx
+	       :lispbuilder-sdl-mixer)
   :components ((:file "iomacs")
+	       (:file "prototypes")
 	       (:file "math")
 	       (:file "rgb")
 	       (:file "keys")

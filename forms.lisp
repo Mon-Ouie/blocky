@@ -133,7 +133,7 @@ replacing them with the single cell (or vector of cells) DATA."
     (setf (aref <grid> row column)
 	  (etypecase data
 	    (vector data)
-	    (proton:object (let ((cells (make-array *default-page-z-size* 
+	    (object (let ((cells (make-array *default-page-z-size* 
 						  :adjustable t
 						  :fill-pointer 0)))
 			   (prog1 cells
@@ -176,26 +176,26 @@ The cells' :cancel method is invoked."
 		       (aref grid row column))))))
  
 (define-method serialize page ()
-  (proton:with-field-values (width height) self
+  (with-field-values (width height) self
     (let ((grid <grid>)
 	  (sgrid (make-array (list height width) :initial-element nil :adjustable nil)))
       (dotimes (i height)
 	(dotimes (j width)
 	  (map nil #'(lambda (cell)
 		       (when cell 
-			 (push (proton:serialize cell) 
+			 (push (serialize cell) 
 			       (aref sgrid i j))))
 	       (aref grid i j))))
       (setf <serialized-grid> sgrid))))
     
 (define-method deserialize page ()
     (/create-default-grid self)
-    (proton:with-field-values (width height grid serialized-grid) self
+    (with-field-values (width height grid serialized-grid) self
       (dotimes (i height)
 	(dotimes (j width)
 	  (map nil #'(lambda (cell)
 		       (when cell
-			 (vector-push-extend (proton:deserialize cell)
+			 (vector-push-extend (deserialize cell)
 					     (aref grid i j))))
 	       (reverse (aref serialized-grid i j)))))
       (setf <serialized-grid> nil)))
@@ -245,7 +245,7 @@ initialize the arrays for a page of the size specified there."
 (define-method clone-onto page (other-page &optional deepcopy)
   (let ((other (etypecase other-page
 		 (string (find-resource-object other-page))
-		 (proton:object other-page))))
+		 (object other-page))))
     (with-fields (height width) other
       (/create-grid self :height height :width width)
       (let ((*page* other))
@@ -262,7 +262,7 @@ initialize the arrays for a page of the size specified there."
 
 (defun find-page (page)
   (etypecase page
-    (proton:object 
+    (object 
        ;; check for name collision
        (let* ((old-name (or (field-value :name page)
 			    (generate-page-name page)))
@@ -591,7 +591,7 @@ initialize the arrays for a page of the size specified there."
 at the current cursor location. See also APPLY-LEFT and APPLY-RIGHT."
   (if (and (symbolp data)
 	   (boundp data)
-	   (proton:object-p (symbol-value data)))
+	   (object-p (symbol-value data)))
       (/drop-cell <page> (clone (symbol-value data)) <cursor-row> <cursor-column>)
       (/say self "Cannot clone.")))
 
