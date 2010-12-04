@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :gluon)
+(in-package :iomacs)
 
 ;; todo show parent name if any
 
@@ -184,7 +184,7 @@
     (document-package package-name stream preamble-file)))
 			    
 ;; (document-package :clon t)
-;; (document-package-to-file :gluon #P"/home/dto/notebook/gluon-reference.org" #P"/home/dto/gluon/doc-preamble.org")
-;; (document-package :gluon t #P"/home/dto/gluon/doc-preamble.org")
+;; (document-package-to-file :iomacs #P"/home/dto/notebook/iomacs-reference.org" #P"/home/dto/iomacs/doc-preamble.org")
+;; (document-package :iomacs t #P"/home/dto/iomacs/doc-preamble.org")
 
 ;;; ldoc.lisp ends here

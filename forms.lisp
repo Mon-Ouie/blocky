@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :gluon)
+(in-package :iomacs)
 
 ;;; Pages are grids of cells.
 ;;; Pages also ARE cells!
@@ -507,7 +507,7 @@ initialize the arrays for a page of the size specified there."
     (:parent =widget= :documentation  "An interactive graphical spreadsheet.")
   prompt narrator computing
   (page-name :initform nil)
-  (page :documentation "The gluon:=page= of objects to be displayed.")
+  (page :documentation "The iomacs:=page= of objects to be displayed.")
   rows columns
   (entered :initform nil :documentation "When non-nil, forward key events to the entry and/or any attached widget.")
   (cursor-row :initform 0) 
@@ -718,12 +718,12 @@ Type HELP :COMMANDS for a list of available commands."
 
 (define-method save-all form ()
   (/say self "Saving objects...")
-  (gluon:save-modified-objects t)
+  (iomacs:save-modified-objects t)
   (/say self "Saving objects... Done."))
 
 (define-method save-modified form ()
   (/say self "Saving objects...")
-  (gluon:save-modified-objects)
+  (iomacs:save-modified-objects)
   (/say self "Saving objects... Done."))
   
 (define-method create-page form (&key height width name object)
@@ -785,13 +785,13 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	(/say self "Finished entering data.")))))
     
 (define-method load-module form (name)
-  "Load the GLUON module NAME for development."
+  "Load the IOMACS module NAME for development."
   (/say self (format nil "Loading module ~S" name))
-  (gluon:load-module name))
+  (iomacs:load-module name))
 
 (define-method quit form ()
   "Quit XIOMACS."
-  (gluon:quit t))
+  (iomacs:quit t))
 
 (define-method cancel form ()
   (/clear-mark self)

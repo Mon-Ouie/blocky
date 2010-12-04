@@ -20,7 +20,7 @@
 
 ;;; Code:
 
-(in-package :gluon)
+(in-package :iomacs)
 
 ;;; Verbosity determines when a message is important enough to output.
 
@@ -140,10 +140,10 @@ http://en.wikipedia.org/wiki/Passive_voice"
 
 (define-method narrate-message narrator (sender action receiver args &optional force)
   (unless (zerop <verbosity>)
-    (let ((A (or sender gluon:=asterisk=))
+    (let ((A (or sender iomacs:=asterisk=))
 	  (B (if (has-field :tile receiver) 
 		 receiver 
-		 gluon:=gray-asterisk=))
+		 iomacs:=gray-asterisk=))
 	  (action-verbosity (getf *message-verbosities* action t)))
       (when (member action <passive-voice-actions>)
 	(rotatef A B))

@@ -22,7 +22,7 @@
 
 ;;; Code:
 
-(in-package :gluon)
+(in-package :iomacs)
 
 ;;; Probability
 

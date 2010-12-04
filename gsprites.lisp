@@ -23,11 +23,11 @@
 ;; These sit in a different layer, the <sprite> layer in the world
 ;; object.
 
-(in-package :gluon)
+(in-package :iomacs)
 
 (define-prototype gsprite (:parent =gcell=
 				  :documentation 
-"Sprites are GLUON game objects derived from gcells. Although most
+"Sprites are IOMACS game objects derived from gcells. Although most
 behaviors are compatible, sprites can take any pixel location in the
 world, and collision detection is performed between sprites and cells.")
   (x :initform 0 :documentation "The world x-coordinate of the sprite.") 
@@ -100,7 +100,7 @@ world, and collision detection is performed between sprites and cells.")
       (let ((y <y>)
 	    (x <x>))
 	(when (and y x)
-	  (multiple-value-bind (y0 x0) (gluon:step-in-direction y x direction dist)
+	  (multiple-value-bind (y0 x0) (iomacs:step-in-direction y x direction dist)
 	    (assert (and y0 x0))
 	    (/move-to self x0 y0)))))))
   

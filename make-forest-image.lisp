@@ -3,7 +3,7 @@
 (push (merge-pathnames "lib/" (values *default-pathname-defaults*))
       asdf:*central-registry*)
 
-(asdf:oos 'asdf:load-op 'gluon)
+(asdf:oos 'asdf:load-op 'iomacs)
 
 (cffi:close-foreign-library 'sdl-gfx-cffi::sdl-gfx)
 (cffi:close-foreign-library 'sdl-mixer-cffi::sdl-mixer)
@@ -15,8 +15,8 @@
 				      (sb-posix:putenv
 				       (format nil "SBCL_HOME=~A" 
 					       #.(sb-ext:posix-getenv "SBCL_HOME")))
-				      (let ((gluon:*executable* t))
-					(gluon:play "forest"))
+				      (let ((iomacs:*executable* t))
+					(iomacs:play "forest"))
 				      0)
 			  :executable t)
   

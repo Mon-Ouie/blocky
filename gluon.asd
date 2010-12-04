@@ -2,12 +2,12 @@
 
 ;; ASDF Manual: http://constantly.at/lisp/asdf/
 
-(defpackage :gluon-asd)
+(defpackage :iomacs-asd)
 
-(in-package :gluon-asd)
+(in-package :iomacs-asd)
 
-(asdf:defsystem gluon
-  :name "gluon"
+(asdf:defsystem iomacs
+  :name "iomacs"
   :version "1.9"
   :maintainer "David O'Toole"
   :author "David O'Toole"
@@ -19,7 +19,7 @@
 				 :lispbuilder-sdl-gfx
 				 :lispbuilder-sdl-mixer
 				 :proton)
-  :components ((:file "gluon")
+  :components ((:file "iomacs")
 	       (:file "math")
 	       (:file "rgb")
 	       (:file "keys")

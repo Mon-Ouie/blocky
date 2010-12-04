@@ -1,4 +1,4 @@
-;;; gluon.lisp --- retro-esque 2d game engine for Common Lisp
+;;; iomacs.lisp --- retro-esque 2d game engine for Common Lisp
                
 ;; Copyright (C) 2006, 2007, 2008, 2009  David O'Toole
 
@@ -51,7 +51,7 @@
 
 (defpackage :xiomacs-engine-2 
   (:documentation "A 2D game engine in Common Lisp.")
-  (:nicknames :gluon)
+  (:nicknames :iomacs)
   (:use :common-lisp :proton) 
   (:export *default-frame-width* *default-frame-height* =viewport=
 *frequency* *output-chunksize* *output-channels* halt-sample *dt*
@@ -138,11 +138,11 @@ convert-internal-sample-to-cffi get-ticks page-variable with-page-variables
 set-page-variable with-pages with-mission-locals *module* quit reset
 seek-music))
 
-(in-package :gluon)
+(in-package :iomacs)
 
 ;;; Emacs Lisp compatibilty macro 
 
 (defmacro while (test &body body)
   `(loop while ,test do ,@body))
 
-;;; gluon.lisp ends here
+;;; iomacs.lisp ends here

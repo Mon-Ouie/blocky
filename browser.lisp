@@ -36,7 +36,7 @@
 
 ;;; Code:
 
-(in-package :gluon)
+(in-package :iomacs)
 
 (define-prototype menu-item (:parent =widget=)
   (tile :initform ".asterisk")

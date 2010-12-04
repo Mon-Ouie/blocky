@@ -1,4 +1,4 @@
-;;; util.lisp --- handy utilities for gluon users
+;;; util.lisp --- handy utilities for iomacs users
 
 ;; Copyright (C) 2010  David O'Toole
 
@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :gluon)
+(in-package :iomacs)
 
 (defmacro defgame (module-name 
 		   (&key title description
@@ -31,10 +31,10 @@
 			 &allow-other-keys)
  		   &body startup-forms)
   `(progn
-     (gluon:set-screen-height ,screen-height)
-     (gluon:set-screen-width ,screen-width)
-     (setf gluon:*physics-function* ,physics-function)
-     (setf gluon:*dt* ,timestep)
+     (iomacs:set-screen-height ,screen-height)
+     (iomacs:set-screen-width ,screen-width)
+     (setf iomacs:*physics-function* ,physics-function)
+     (setf iomacs:*dt* ,timestep)
      ,@startup-forms))
 
 ;;; util.lisp ends here

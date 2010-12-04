@@ -1,4 +1,4 @@
-;;; console.lisp --- core operations for GLUON
+;;; console.lisp --- core operations for IOMACS
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010  David O'Toole
 
@@ -22,18 +22,18 @@
 
 ;;; Commentary:
 
-;; The "console" is the library which provides all GLUON system
+;; The "console" is the library which provides all IOMACS system
 ;; services. Primitive operations such as setting the resolution,
 ;; displaying bitmaps, drawing lines, playing sounds, file access, and
 ;; keyboard/mouse input are handled here. 
 
 ;; Currently it uses the cross-platform SDL library (via
 ;; LISPBUILDER-SDL) as its device driver, and wraps the library for
-;; use by the rest of GLUON.
+;; use by the rest of IOMACS.
 
 ;; http://lispbuilder.sourceforge.net/
 
-(in-package :gluon) 
+(in-package :iomacs) 
 
 ;;; Platform detection
 
@@ -48,13 +48,13 @@
 ;;; Keyboard state
 
 (defun keyboard-id (key)
-  "Look up the SDL symbol corresponding to the GLUON symbol KEY. See keys.lisp."
+  "Look up the SDL symbol corresponding to the IOMACS symbol KEY. See keys.lisp."
   (let* ((entry (find key *key-identifiers* :key #'first))
 	 (entry2 (find (second entry) *sdl-key-identifiers* :key #'second)))
     (first entry2)))
 
 (defun keyboard-mod (mod)
-  "Look up the SDL symbol corresponding to the GLUON symbol MOD. See keys.lisp."
+  "Look up the SDL symbol corresponding to the IOMACS symbol MOD. See keys.lisp."
   (let* ((entry (find mod *key-modifiers* :key #'first))
 	 (entry2 (find (second entry) *sdl-key-modifiers* :key #'second)))
     (first entry2)))
@@ -208,7 +208,7 @@ Do not set this variable directly from a module; instead, call
 
 (defun install-widgets (&rest widgets)
   "User-level function for setting the active widget set. Note that
-GLUON may override the current widget set at any time for system menus
+IOMACS may override the current widget set at any time for system menus
 and the like."
   (setf *module-widgets* widgets)
   (setf *active-widgets* widgets))
@@ -247,7 +247,7 @@ and the like."
   "Enable key repeat on every frame when held. Arguments are ignored
 for backward-compatibility."
   (when args 
-    (message "Warning. DELAY and INTERVAL arguments to GLUON:ENABLE-HELD-KEYS are deprecated and ignored."))
+    (message "Warning. DELAY and INTERVAL arguments to IOMACS:ENABLE-HELD-KEYS are deprecated and ignored."))
   (setf *key-table* (make-hash-table :test 'equal))
   (setf *held-keys* t))
 
@@ -333,7 +333,7 @@ The modifier list is sorted; thus, events can be compared for
 equality with `equal' and used as hashtable keys.
 
 The default event handler is `send-event-to-widgets', which see. An
-GLUON game can use the widget framework to do its drawing and event
+IOMACS game can use the widget framework to do its drawing and event
 handling, or override `*event-handler-function*' and do something
 else.")
 
@@ -357,7 +357,7 @@ else.")
 	    (send nil :hit widget x y))
 	(reverse widgets)))
 
-;;; Translating SDL key events into GLUON event lists
+;;; Translating SDL key events into IOMACS event lists
 
 (defparameter *other-modifier-symbols* '(:button-down :button-up :axis))
 
@@ -636,7 +636,7 @@ window. Set this in the game startup file.")
 (defun set-screen-height (height)
   (setf *screen-height* height))
 
-;;; The main loop of GLUON
+;;; The main loop of IOMACS
 
 (defvar *next-module* "standard")
 
@@ -644,7 +644,7 @@ window. Set this in the game startup file.")
 
 (defvar *fullscreen* nil "When non-nil, attempt to use fullscreen mode.")
 
-(defvar *window-title* "GLUON")
+(defvar *window-title* "IOMACS")
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
 
@@ -770,12 +770,12 @@ display."
 		     (sdl:update-display))))))))
   
   
-;;; The .gluonrc user init file
+;;; The .iomacsrc user init file
 
-(defparameter *user-init-file-name* ".gluonrc")
+(defparameter *user-init-file-name* ".iomacsrc")
 
 (defvar *initialization-hook* nil 
-"This hook is run after the GLUON console is initialized.
+"This hook is run after the IOMACS console is initialized.
 Set timer parameters and other settings here.")
 
 (defun load-user-init-file ()
@@ -948,7 +948,7 @@ resource is stored; see also `find-resource'."
 							    *load-truename*))
 			     :directory (pathname-directory #.(or *compile-file-truename*
 								  *load-truename*)))))))
-  "List of directories where GLUON will search for modules.
+  "List of directories where IOMACS will search for modules.
 Directories are searched in list order.")
 ;; (load-time-value 
 ;; (or #.*compile-file-truename* *load-truename*))))
@@ -967,7 +967,7 @@ name MODULE-NAME. Returns the pathname if found, otherwise nil."
 			    :defaults dir))
        when path return path)
      (error "Cannot find module ~s in paths ~S. 
-You must set the variable GLUON:*MODULE-DIRECTORIES* in the configuration file ~~/.gluonrc
+You must set the variable IOMACS:*MODULE-DIRECTORIES* in the configuration file ~~/.iomacsrc
 Please see the included file BINARY-README for instructions."
 	    module-name dirs))))
 
@@ -1049,7 +1049,7 @@ table."
 ;; again. Each page is stored in one PAK file, containing a single
 ;; resource with the serialized data stored in the :DATA field of the
 ;; resource record. Page-names are resource-names, and therefore must
-;; be unique within a given GLUON module. A page's PAK file is stored in
+;; be unique within a given IOMACS module. A page's PAK file is stored in
 ;; {MODULENAME}/{PAGENAME}.pak, and for a given module these PAKs will
 ;; all be included by {MODULENAME}/OBJECTS.PAK, which is an
 ;; automatically generated PAK index linking to all the serialized
@@ -1650,15 +1650,15 @@ found."
 
 ;;; Creating and displaying images
 
-;; The "driver dependent objects" for GLUON images are just SDL:SURFACE
-;; objects. (The situation is the same for GLUON colors, fonts, and so
+;; The "driver dependent objects" for IOMACS images are just SDL:SURFACE
+;; objects. (The situation is the same for IOMACS colors, fonts, and so
 ;; on). So long as the clients treat the driver-dependent resource
 ;; objects as opaque, this thin wrapper is sufficient.
 
 ;; Below are some image handling functions.
 
 (defun create-image (width height)
-  "Create a new GLUON image of size (* WIDTH HEIGHT)."
+  "Create a new IOMACS image of size (* WIDTH HEIGHT)."
   (assert (and (integerp width) (integerp height)))
   (sdl:create-surface width height))
 
@@ -1741,7 +1741,7 @@ The default destination is the main window."
   (sdl:push-quit-event))
 
 (defvar *copyright-text*
-"GLUON Game Engine
+"IOMACS Game Engine
 Copyright (C) 2006, 2007, 2008, 2009, 2010 David O'Toole
 <dto@gnu.org>
 
@@ -1822,7 +1822,7 @@ also the file LIBSDL-LICENSE for details.
     (cffi:use-foreign-library sdl-image))
 
 (defun play (&optional (module-name "standard") &rest args)
-  "This is the main entry point to GLUON. MODULE-NAME is loaded 
+  "This is the main entry point to IOMACS. MODULE-NAME is loaded 
 and its .startup resource is loaded."
   (format t "~A" *copyright-text*)
   (initialize-resource-table)

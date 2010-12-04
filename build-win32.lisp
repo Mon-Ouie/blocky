@@ -3,9 +3,9 @@
 
 (require :asdf)
 
-(defvar *dll-pathname* #p"c:/Users/Sandy/gluon/")
+(defvar *dll-pathname* #p"c:/Users/Sandy/iomacs/")
 (defvar *game* "xiotank")
-(defvar *executable* #p"c:/Users/Sandy/gluon/app.exe")
+(defvar *executable* #p"c:/Users/Sandy/iomacs/app.exe")
 (defvar *base-pathname* (make-pathname :name nil :type nil :defaults *load-pathname*))
 
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/cffi_0.10.3/") asdf:*central-registry*)
@@ -20,18 +20,18 @@
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/lispbuilder/lispbuilder-sdl-gfx/") asdf:*central-registry*)
 
 (pushnew (translate-pathname *base-pathname* "**/" "**/clon/") asdf:*central-registry*)
-(pushnew (translate-pathname *base-pathname* "**/" "**/gluon/") asdf:*central-registry*)
+(pushnew (translate-pathname *base-pathname* "**/" "**/iomacs/") asdf:*central-registry*)
 
 (asdf:oos 'asdf:load-op :cffi)
 (require 'sb-posix)
 (sb-posix:chdir *dll-pathname*)
 ;;(setf *default-pathname-defaults* (make-pathname :directory '(:relative)))
-(asdf:oos 'asdf:load-op :gluon)
+(asdf:oos 'asdf:load-op :iomacs)
 (pop cffi:*foreign-library-directories*)
 
 (defun main ()
-  (setf gluon:*module-directories* (list (make-pathname :directory '(:relative))))
-  (gluon:play *game*)
+  (setf iomacs:*module-directories* (list (make-pathname :directory '(:relative))))
+  (iomacs:play *game*)
   0)
 
 (sb-ext:save-lisp-and-die *executable* :toplevel #'main :executable t)
