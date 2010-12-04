@@ -137,8 +137,6 @@ method call that references a non-existent field will signal a
 ;; Next come the main user-level functions for setting/getting field
 ;; values. 
 
-;;; field-value
-
 (defun fref (fields key)
   (etypecase fields
     (list (getf fields key *lookup-failure*))
@@ -151,16 +149,6 @@ method call that references a non-existent field will signal a
   (values value fields))
   
 (defsetf fref set-fref)
-
-;; (define-prototype foo () (a :initform 5) (b :initform 7) (c :initform nil) d e)
-;; (serialize =foo=)
-;; (setf bar (clone =foo=))
-;; (setf (field-value :b bar) 10)
-;; (field-value :b bar)
-;; (setf baz nil)
-;; (setf (getf baz :a) 8)
-;; baz
-;; (fref baz :a)
 
 (defun field-value (field object &optional noerror)
   "Return the value of FIELD in OBJECT.
@@ -531,87 +519,6 @@ message queue resulting from the evaluation of EXPR."
   "Queue a message. Returns nil."
   (queue-message sender method-key object args))
 
-;;; Message send syntax
-
-;; We use reader macros to enable cleaner-looking message sends. With
-;; the following definitions you can type
-;;
-;;   [message-name object arg1 arg2 ...]
-;; 
-;; instead of
-;; 
-;;   (send sender :message-name object arg1 arg2 ...)
-;;
-;; This works both inside and outside of method bodies.
-;;
-;; Several other shortcuts are provided:
-;; 
-;;   (send-parent sender :message-name object arg1 arg2 ...)
-;;
-;; can be abbreviated
-;;
-;;   [parent>>message-name object arg1 arg2 ...]
-;;
-;; For example:
-;;
-;;   [parent>>initialize self]
-;;
-;; One may also write
-;; 
-;;   [queue>>foo ...]
-;;
-;; To have a message queued for later delivery.
-
-;; Note: the included file "proton.el" has Emacs settings for syntax
-;; highlighting and proper parenthesis/bracket matching.
-
-;; The reader macro picks apart the first symbol in the [a b c ...]
-;; to determine the message being sent, and also which of
-;; `send-queue', `send-parent', or `send' to use in sending it.
-
-(defun message-symbol (string delimiter)
-  (let ((index (search delimiter string)))
-    (make-keyword (if (numberp index)
-		      (subseq string (+ 2 index))
-		      string))))
-
-(defun operation-symbol (string delimiter)
-  (let* ((index (search delimiter string))
-	 (op-name (if (numberp index)
-		      (concatenate 'string
-				   "send-"
-				   ;; allow >>foo as a shorthand for queue>>foo
-				   (if (zerop index) 
-				       "queue"
-				       (subseq string 0 index)))
-		      "send")))
-    (intern (string-upcase op-name) :iomacs)))
-
-(defvar *sender* nil "This variable is bound to the object (if any) to
-receive sent messages.")
-
-;;; reader macro
-
-(defun message-reader (stream char)
-  (declare (ignore char))
-  (let* ((elements (read-delimited-list #\] stream t))
-	 (message-symbol (first elements))
-	 (arguments (rest elements))
-	 (send-selector (symbol-name message-symbol))
-	 (delimiter ">>"))
-    ;; The rewritten method call is produced.
-    (append (list 
-	     (operation-symbol send-selector delimiter) 
-	     '*sender*
-	     (message-symbol send-selector delimiter))
-	    arguments)))
-
-;; Install the reader macro.
-
-(set-macro-character #\[ #'message-reader)
-(set-macro-character #\] (get-macro-character #\)))
-(set-syntax-from-char #\] #\))
-
 ;;; Field reference syntax
 
 ;; Within method bodies, you can access the fields of `self' with the
@@ -628,9 +535,8 @@ receive sent messages.")
 ;;   (princ <name>)
 ;;   (setf <width> 10)
 ;; 
-;; Because `self' is not bound outside of method bodies, we need a
-;; code-walker to implement the syntax described above. (Reader macros
-;; can't be made to apply only within the body of a macro call.)
+;; Because `self' is not bound outside of method bodies, we use a
+;; code-walker to implement the syntax described above. 
 
 (defun transform-tree (tester transformer tree)
   (cond ((consp tree)
@@ -749,6 +655,12 @@ was invoked."
 					    (symbol-name prototype-name))))
 	 (slash-defun-symbol (intern (concatenate 'string
 						  "/"
+						  (symbol-name method-name))))
+	 (queue-defun-symbol (intern (concatenate 'string
+						  "/queue/"
+						  (symbol-name method-name))))
+	 (parent-defun-symbol (intern (concatenate 'string
+						  "/parent/"
 						  (symbol-name method-name)))))
     (let ((name (gensym)))
       `(progn 
@@ -777,8 +689,18 @@ was invoked."
 	   (let ((,name ,(make-keyword method-name)))
 	     (defun ,slash-defun-symbol (self &rest args)
 	       ,@(if documentation (list documentation))
-	       (apply #'send nil ,name self args)))
-	   (export ',slash-defun-symbol))))))
+	       (apply #'send nil ,name self args))
+	     (export ',slash-defun-symbol)
+	     ;; and for message queueing
+	     (defun ,queue-defun-symbol (self &rest args)
+	       ,@(if documentation (list documentation))
+	       (apply #'send-queue nil ,name self args))
+	     (export ',queue-defun-symbol)
+	     ;; and for parent calls.
+	     (defun ,parent-defun-symbol (self &rest args)
+	       ,@(if documentation (list documentation))
+	       (apply #'send-parent nil ,name self args)))
+	     (export ',parent-defun-symbol))))))
 
 ;;; Defining prototypes
 
