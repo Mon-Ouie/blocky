@@ -1,0 +1,548 @@
+* iomacs.org --- hypermedia metaprogramming with org-babel
+
+# Lines beginning with a "#" sign are comments.
+# Special comments begin with "#+" and are used to control Org settings.
+#+title: IOMACS
+#+author: David T. O'Toole 
+#+email: dto@gnu.org
+
+IOMACS is a format-agnostic media creation and processing tool
+suitable for making games and other interactive applications. 
+
+IOMACS is based on [[http://www.gnu.org/software/emacs][GNU Emacs]]. It delegates content processing to
+external [[http://lispgames.ath.cx/index.php/UsefulApplications][applications]] like the GIMP, Pure Data, ImageMagick, FFMPEG,
+SBCL, and so on. IOMACS uses [[http://en.wikipedia.org/wiki/Digital_asset_management][Digital Asset Management]] (DAM)
+techniques to tag, annotate, store, and search a project's various
+text and binary files (code, images, sounds) as well as metadata
+describing the files. Because IOMACS knows what applications are
+available to edit and process data of various formats, the user can
+forget about organizing hundreds of files and instead launch their
+favorite editors from a hierarchical [[http://orgmode.org][org-mode]] tree view of the
+assets. The use of plain text files for metadata enables simple
+grep-based searches.
+
+With [[http://en.wikipedia.org/wiki/Dataflow][dataflow]] and [[http://en.wikipedia.org/wiki/Literate_programming][literate programming]] concepts from [[http://orgmode.org/worg/org-contrib/babel/][org-babel]], one
+can write Lisp programs that create or process assets automatically or
+semi-interactively. For example:
+
+ - Generating thumbnails for images. Image-dired already does this.
+ - Using ImageMagick to resample or otherwise process images
+ - Using Ecasound to play back or record sound via ecasound.el
+ - Converting an HD source video to lower definition and automatically
+   updating the result when the original is changed
+ - Converting Milkytracker XM to Ogg Vorbis automatically
+ - Control JACKD from emacs
+ - Live streaming
+
+Asset metadata can conform to the [[http://en.wikipedia.org/wiki/Dublin_Core][Dublin Core metadata]] standard, and
+may also contain application-specific Lisp data meant for use by game
+engines. This metadata can be exported to a very simple text file
+format called PAK. PAK is trivially readable by both Common Lisp and
+Emacs Lisp, and simple reading/writing routines are included.
+
+Because Emacs' version control support is integrated with org-mode,
+you can version all the assets in a project from within Emacs.
+
+#+source: legal-notices
+#+begin_src emacs-lisp
+  ;; Copyright (C) 2010  David O'Toole
+  
+  ;; Author: David O'Toole <dto@gnu.org>
+  
+  ;; This program is free software; you can redistribute it and/or modify
+  ;; it under the terms of the GNU General Public License as published by
+  ;; the Free Software Foundation, either version 3 of the License, or
+  ;; (at your option) any later version.
+  
+  ;; This program is distributed in the hope that it will be useful,
+  ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ;; GNU General Public License for more details.
+  
+  ;; You should have received a copy of the GNU General Public License
+  ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#+end_src
+
+* Introduction
+:PROPERTIES:
+:ID: eb7a8142-57e9-4dc2-b67b-5b6b328cdaa4
+:END:
+
+This work-in-progress article describes my approach to designing and
+developing games in Common Lisp, in a so-called [[http://en.wikipedia.org/wiki/Literate_programming][literate]] style using
+[[http://www.gnu.org/software/emacs][GNU Emacs]] and [[http://orgmode.org/worg/org-contrib/babel/][Org Babel.]] My configurations and custom code are
+collected here in an org-mode essay containing executable Emacs Lisp
+code for a simple [[http://en.wikipedia.org/wiki/Digital_asset_management][Digital Asset Management]] (DAM) system called
+"Iomacs". The name is short for "[[http://en.wikipedia.org/wiki/Hypermedia][hypermedia]] programming".
+
+Although this workbook is readable as a web page, it is best
+used interactively by opening it within GNU Emacs. Please download
+the raw version of this workbook, [[http://dto.github.com/notebook/iomacs.org][iomacs.org]]
+
+The github page for this workbook is http://github.com/dto/iomacs.
+
+* Motivation
+
+In games development, especially solo or small-team scenarios,
+organizing assets becomes a significant problem. The "assets" of most
+programming projects are just code, and, if you're lucky, some
+documentation. Each object of the programmer's problem domain is
+associated with (probably) a chunk of code and a chunk of
+documentation.
+
+The typical literate programming solution covers writing and
+transforming related chunks of documentation and code, but there is no
+general notion of asset management where related assets can be of
+different types: Lisp code, Emacs Lisp code, C code, PNG images, WAV
+sounds, OGG music, plain text, formatted text, and more.
+
+In a video game, a game object (for example, an enemy spaceship) may
+be associated with any number of such resources. There will certainly
+be AI code (C, Lisp, etc), images, 3d models, textures, sounds, and so
+on. Creating, re-using, and re-mixing hundreds of game objects is hard
+when you have to maintain all these associations between files and
+code manually.  So that when I want to edit "the image associated with
+that yellow alien over there", I often have to hunt down the actual
+PNG files to edit, because the name of the PNG file never appears in
+the Lisp code---there's a third file mapping resource names to
+files. The indirection makes the engine more flexible, but it's
+another file to maintain.
+
+My experiments with Iomacs are an attempt to apply [[http://orgmode.org/][Orgmode]]
+organizational, publishing, and workflow tools to the problems of solo
+and small-group games development, with custom code and the unifying
+theme of literate programming.
+
+* Prerequisites
+
+Iomacs is based on [[http://orgmode.org][Orgmode]] and [[http://orgmode.org/worg/org-contrib/babel/][Org Babel]], which are both [[http://www.gnu.org/software/emacs][GNU Emacs]]
+packages. Being familiar with these programs will help understanding
+the rest of this document.
+
+* Hypermedia programming with Iomacs
+
+There are a few new terms to worry about: workbook, entry, asset,
+attachment, and chunk.
+
+Each "workbook" is just an org file---a collection of org entries
+describing collections of related assets and metadata. An asset is any
+relevant fragment of data, whether an external binary file (PNG, WAV)
+or data embedded in the entry itself (lisp, html, plaintext.) Each
+entry is given a unique UUID ([[http://en.wikipedia.org/wiki/Universally_Unique_Identifier][Universally Unique Identifier)]] and the
+org entry with that UUID contains related asset data:
+
+     1. Properties: for metadata. stored in the org properties drawer
+     2. Attachments: to external asset chunks, with operations possible on those.
+	       This is based on org's existing link/attachment
+	       functionality. 
+*** TODO does this work with binary files?  
+     3. Chunks: of embedded asset text (lisp code, plain text, c
+        code, etc) with org-babel
+
+I use the term "workbook" because with Babel the workflow and project
+management features of Org are now integrated into the programming
+process. You can use org tags to categorize and search entries by
+category across multiple workbooks. You can use TODO and work logging,
+version control, and launch external editors like the Gimp and
+Audacity. Publishing support means you can share workbooks easily on
+the Web, and Babel's noweb-style tangling means you can use true
+Literate Programming (in the classic Knuthian sense). Collaboration is
+possible with worg, and so on. And using org properties drawers to
+store metadata enables property search and processing via the org
+Properties API. Command-line media transcoding tools can be triggered
+by Babel, allowing further media workflow management.
+
+Because different kinds of media are being linked/embedded into one
+document, and because Org Babel can actually use external programs to
+execute and process all kinds of program data and files and commands,
+this could be a step toward a kind of language-agnostic "hypermedia
+programming".
+
+There will also be support for managing asset libraries, and packaging
+workbooks into self-contained tarballs for Web collaboration and
+publishing.
+
+These links provide some more background information:
+
+  - [[http://en.wikipedia.org/wiki/Hypermedia][Wikipedia page on Hypermedia]]
+  - [[http://en.wikipedia.org/wiki/Digital_asset_management][Digital Asset Management]]
+  - [[http://en.wikipedia.org/wiki/Dublin_Core][Dublin Core metadata on wikipedia]]
+  - [[http://dublincore.org/documents/usageguide/][Official Dublin Core users guide]]
+  - [[http://www.jboecker.de/2010/04/14/general-reference-filing-with-org-mode.html][General reference filing with Org Mode]]
+
+* Entries: the building blocks of workbooks
+
+"Entry" is just a general term for an org heading and its content,
+which can of course contain any arrangement of further entries, each
+with its own properties and attachments. 
+
+See also [[info:org:Document%20Structure][info:org:Document Structure]] for more information on how Org
+files are organized.
+
+Entries are assigned UUID's (Universally Unique Identifiers)
+automatically when needed by org-mode.
+
+** TODO tempo configuration and usage
+
+#+source: auto-inserting-chunks
+#+begin_src emacs-lisp
+  (tempo-define-template "chunk"
+    '(n "#+source: " (p "Chunk name: ") 
+      n "#+begin_src " (p "Language: ")
+      n "#+end_src ")
+    "##chunk")
+#+end_src
+
+** TODO interactive function to create new entry
+** TODO automatic ID upon creation
+** TODO automatic metadata properties template
+
+* Chunks
+
+Chunks are the basic building blocks of hypermedia programs. Chunks
+can be of different media types, and may be stored either as an
+attached file (see "Attachments", below), or inline (as text between
+"#+begin_src" and "#+end_src" tags, see also [[info:org:Literal%20examples][info:org:Literal
+examples]].) Examples of file chunks are PNG, OGG, and OGV files. Inline
+data chunks may be in any text format, such as Common Lisp, HTML, or
+C++.
+
+Each chunk has a unique UUID---the UUID of the entry containing the
+chunk.
+
+The following data structure stores information about a chunk. This
+can be used for caching metadata and also for export. See "Data
+Interchange" below.
+
+#+source: chunk-info-structure
+#+begin_src emacs-lisp
+(defstruct chunk-info 
+  name ;; Unique string name (or UUID) for the described chunk.
+  properties ;; List of :keyword value pairs.
+  file ;; Filename of file chunk, if any.
+  data ;; A string with text data, if any (i.e. inline chunks.) 
+  )
+#+end_src
+
+** Properties for metadata
+
+Any ontology can be used to describe chunks via
+ [[info:org:Properties%20and%20Columns][info:org:Properties and Columns]]. 
+The Dublin Core metadata standard is a reasonable
+starting place, and defines these basic fields for use in describing
+and indexing resources of almost any kind:
+
+#+source: dublin-core-template
+#+begin_src emacs-lisp
+:Title:
+  :Creator:
+  :Subject:
+  :Description:
+  :Publisher:
+  :Contributor:
+  :Date:
+  :Type:
+  :Format:
+  :Identifier:
+  :Source:
+  :Language:
+  :Relation:
+  :Coverage:
+  :Rights:
+#+end_src
+
+#+source: auto-inserting-properties-templates
+#+begin_src emacs-lisp
+  (defvar iomacs-properties-template "
+  <<dublin-core-template>>
+  "
+  "Text of org properties drawer entries to insert upon creating a new entry.")
+  
+  (defun iomacs-insert-properties-template ()
+    (interactive)
+      (save-excursion
+        (destructuring-bind (beg . end) 
+            (org-get-property-block nil nil :force)
+          (goto-char beg)
+          (insert iomacs-properties-template))))
+#+end_src
+
+For more information about Dublin Core, see these pages:
+
+  - [[http://en.wikipedia.org/wiki/Dublin_Core][Dublin Core metadata on wikipedia]]
+  - [[http://dublincore.org/documents/usageguide/][Official Dublin Core users guide]]
+
+** Application-specific metadata
+:PROPERTIES:
+:END:
+
+Chunk properties may be used to embed control data for other
+applications. See "Resource data interchange" below.
+
+** Operations on chunks
+*** Open in program
+
+#+begin_src emacs-lisp
+(describe-variable 'org-file-apps)
+#+end_src
+
+*** Process to create an output (wav->ogg)
+
+* Attachments
+:PROPERTIES:
+:ID: 24d5addc-a73c-4471-86e3-aaaefc88e0a2
+:END:
+
+Attachments are version-controlled external files associated with an
+entry. The entry's properties data and other content are taken to
+describe the attachment. See also [[info:org:Attachments]]. 
+
+Orgmode will automatically commit changes to git-controlled
+attachments, if the current workbook's =org-attach-directory= is also
+under git control.
+
+** TODO Exporting workbooks as compressed binaries with all attachments
+
+* 
+* Interface enhancements
+:PROPERTIES:
+:ID: 955c44fc-c271-472c-ac24-1df1edaccad4
+:END:
+
+** TODO Consistent global key layout on F9-F12
+
+Because viewing and browsing workbooks may involve various Org tree
+views and hidden source block bodies, there will be many hidden
+sections represented by an ellipsis at the end of the text
+line. Pressing TAB on most such lines will toggle display of the
+hidden text.
+
+To make these hidden portions of text more obvious we can highlight
+chunks headers, and also the ellipses used to indicate hidden text.
+
+#+source: visible-chunks
+#+begin_src emacs-lisp
+(defface iomacs-chunk-header-face '((t (:foreground "red" :bold t :weight bold))) "Face for chunk header lines.")
+(defvar iomacs-chunk-header-face 'iomacs-chunk-header-face)
+  
+  (defvar iomacs-chunk-regexp "^#\\+\\(source:\\|srcname:\\|function:\\)")
+  
+  (defun* iomacs-fontify-chunk (limit)
+    (while (re-search-forward iomacs-chunk-regexp limit :noerror)
+      (let ((beg (match-beginning 1))
+            (end (match-end 1)))
+        (add-text-properties beg end (list 'display (propertize (match-string 1) 'face iomacs-chunk-header-face)
+                                           'font-lock-fontified t)))))
+#+end_src
+
+#+source: visible-ellipsis
+#+begin_src emacs-lisp
+  (defface iomacs-hidden-face '((t (:foreground "yellow" :underline "red"))) "Face for hidden iomacs text.")
+  (defvar iomacs-hidden-face 'iomacs-hidden-face)
+#+end_src
+
+
+#+source: fontified-chunks
+#+begin_src emacs-lisp
+  (defun iomacs-fontify-blocks ()
+    (interactive)
+    (save-excursion 
+      (goto-char (point-min))
+      (while (re-search-forward "^#\\+begin_src[ ]+\\(\\(\\w\\|-\\)+\\)" nil t)
+        (forward-line)
+        (let* ((begin (point))
+               (end nil)
+               (language (match-string 1))
+               (mode-command (intern (concat language "-mode")))
+               (fontified-output
+                (when (re-search-forward "^#\\+end_src" nil t)
+                  (forward-line -1)
+                  (setf end (point))
+                  (let ((string (buffer-substring-no-properties begin end)))
+                    (with-temp-buffer
+                      (insert string)
+                      (funcall mode-command)
+                      (font-lock-fontify-buffer)
+                      (buffer-substring (point-min) (point-max)))))))
+          (when fontified-output
+            (goto-char begin)
+            (delete-region begin end)
+            (insert fontified-output))))))
+#+end_src
+
+#+results: fontified-chunks
+: iomacs-fontify-blocks
+
+* Mouse menus
+
+#+source: basic-imenu-support
+#+begin_src emacs-lisp
+(add-hook 'org-mode-hook
+                    (lambda () (imenu-add-to-menubar "Imenu")))
+(setf org-imenu-depth 5)
+#+end_src
+
+** TODO [#B] get mouse menus working for code blocks
+#+source: blocks-imenu-support
+#+begin_src emacs-lisp
+  (push (list "Source code chunks" "^#\\+\\(source:\\|srcname:\\|function:\\) \\(.*\\)$" 2)
+        imenu-generic-expression)
+#+end_src 
+
+* Configuration
+:PROPERTIES:
+:ID: 4d7eb09f-11a8-4db0-8ab1-627e7800d57d
+:END:
+
+You can use the following elisp chunks to activate the visibility
+enhancements---either interactively with C-c C-c, or by copying the
+code to your emacs initialization file.
+
+#+source: turn-on-visible-chunks
+#+begin_src emacs-lisp
+ (add-hook 'org-font-lock-hook #'iomacs-fontify-chunk)
+#+end_src
+
+#+source: turn-off-visible-chunks
+#+begin_src emacs-lisp
+ (remove-hook 'org-font-lock-hook #'iomacs-fontify-chunk)
+#+end_src
+
+#+source: turn-on-visible-ellipsis
+#+begin_src emacs-lisp
+ (setf org-ellipsis iomacs-hidden-face)
+#+end_src
+
+* Processes for creating and transforming chunks
+
+* How the Iomacs source is made
+:PROPERTIES:
+:ID: 13a1e5df-8185-4633-9d62-ae9cab244f07
+:END:
+
+Using Babel, the Emacs Lisp source code for Iomacs itself is extracted
+from this workbook (or "tangled", in literate programming
+terminology), to produce an output file called =iomacs.el=. 
+
+There are also configuration chunks, snippets of elisp code you can
+execute in place (with C-c C-c) or copy to your emacs init file. 
+
+To make =iomacs.el= from this workbook, execute the following elisp code
+chunk by placing point on it and pressing C-c C-c:
+
+#+begin_src emacs-lisp
+  (org-babel-tangle)
+#+end_src
+
+Assuming =iomacs.el= is somewhere in your Emacs load-path, you can load
+it by executing this chunk:
+
+#+begin_src emacs-lisp
+  (require 'iomacs)
+#+end_src
+
+However, you can do a shortcut and use the following command to tangle
+the elisp code and load it into emacs in one step:
+
+#+begin_src emacs-lisp
+  (org-babel-load-file (buffer-file-name))
+#+end_src
+
+Here is an overview of the output file's organization. 
+
+#+source: outline
+#+begin_src emacs-lisp :tangle yes
+<<legal-notices>>
+<<prerequisites>>
+<<chunk-info-structure>>
+<<auto-inserting-properties-templates>>
+<<auto-inserting-chunks>>
+<<visible-chunks>>
+<<visible-ellipsis>>
+<<postamble>>
+#+end_src
+
+The =<<chunk-name>>= tags above will be replaced by their
+corresponding definition chunks, defined elsewhere in this workbook,
+during the tangle process. Notice the ":tangle yes" argument; this is
+the only such block in this workbook. It means that in order to appear
+in the output file "iomacs.el", a chunk must be referenced somewhere in
+the expansion of this tangled chunk.
+
+If you want the opposite behavior, use "#+property: tangle yes" as a
+control line in your org file, and ":tangle no" to turn it off for
+particular chunks.
+
+Now we move on to some required libraries and other snippets needed in
+the final elisp file:
+
+#+source: prerequisites
+#+begin_src emacs-lisp
+  (require 'cl) 
+  (require 'ob-lisp)
+  (require 'tempo)
+#+end_src
+
+#+source: postamble
+#+begin_src emacs-lisp
+  (provide 'iomacs)
+#+end_src
+
+* Recommended reading
+
+The ideas, techniques, and terminology used in this paper have a
+variety of sources. 
+
+  - Donald Knuth, /Literate Programming/. This book is a reprinting of
+    Knuth's original papers on the subject.
+
+  - Tim Evans, [[http://www.cosc.canterbury.ac.nz/research/reports/HonsReps/1999/hons_9902.pdf][A meta-model for literate programming.]] This research
+    paper generalizes literate programming practice by abstracting
+    away the details of media type and processing behavior. In this
+    model, "chunks" of content appear as nodes in an [[http://en.wikipedia.org/wiki/Directed_acyclic_graph][directed acyclic graph]], 
+    with edges as relations between chunks. Attached to these
+    edges are "processes" transforming chunks of one type into one or 
+    more other chunks or files.
+
+    The resulting object model can be used to specify literate
+    programming tools and actually generate them, and a simple example
+    is given in Python.
+
+    Emacs Lisp is ideal for this sort of work, and I believe I'll
+    benefit especially from Emacs Lisp's portability, its excellent
+    text processing tools, and its knack for gluing together diverse
+    formats and programs.
+
+    The meta model in Evans' paper can be mapped more or less directly
+    into org-mode's features, and on top of this I've layered some
+    more ideas and code. I've simplified some parts and elaborated on
+    others, often re-using Emacs Lisp code from other projects of
+    mine.
+
+    - 
+
+* Footer
+:PROPERTIES:
+:ID: 5032e227-8a3f-4226-b5c8-efcd5746b22e
+:END:
+
+The last entry in a workbook is a good place to put odd pieces of
+text, TODO notes that aren't part of the document, and any control
+data that needs to be at the end of the file (for example file-local
+Emacs variables; see [[info:emacs:Specifying%20File%20Variables][info:emacs:Specifying File Variables]].)
+
+#+source: htmlfontify-this-workbook
+#+begin_src emacs-lisp
+  (htmlfontify-buffer nil "iomacs-pretty.html")
+#+end_src 
+
+# By default, all chunks in a workbook are exported during tangling. 
+# (for a definition of "tangle", see below.)
+
+** Ideas						   :meta:
+*** TODO [#B] org-file-apps
+*** TODO [#B] preview with inline-images / image-dired
+*** TODO [#C] org-icons
+*** TODO [#C] button toolbar? IDE? CEDET? 
+
+
