@@ -577,48 +577,13 @@ message queue resulting from the evaluation of EXPR."
     (list 'field-value (make-keyword (subseq name 1 
 					     (- (length name) 1))) 'self)))
 
-;;; New-style message sends
-
-(defparameter +message-symbol-prefix-string+ "/") 
-
-(defun message-symbol-p (form)
-  (and (symbolp form) 
-       (not (member form '(/ /=)))
-       (string= +message-symbol-prefix-string+ 
-		(subseq (symbol-name form) 0 1))))
-
-(defun message-method-key (form)
-  (make-keyword (subseq (symbol-name form) 1)))
-
-(defun message-send-p (form)
-  "Return non-nil if FORM is a Lisp list like (>method object arg1 arg2...)."
-  (and (listp form)
-       (message-symbol-p (first form))
-       (rest form)))
-
-(defun transform-message-send (form)
-  (if (not (message-send-p form))
-      form
-      (destructuring-bind (method object &rest arguments) form
-	(append (list 'send 
-		      '*sender*
-		      (message-method-key method)
-		      object)
-		(transform-tree #'message-send-p
-				#'transform-message-send
-				arguments)))))
-
 (defun transform-method-body (body)
-  "Process the forms in BODY to transform field references and
-new-style message sends.."
-  (let ((tree2 (transform-tree #'field-reference-p
-			       #'transform-field-reference
-			       body)))
-    (transform-tree #'message-send-p
-		    #'transform-message-send
-		    tree2)))
+  "Process the forms in BODY to transform field references."
+  (transform-tree #'field-reference-p
+		  #'transform-field-reference
+		  body))
 
-;;; define-method
+;;; Definining methods
 
 ;; The `define-method' macro defined below is the main top-level facility
 ;; for adding methods to prototypes.
