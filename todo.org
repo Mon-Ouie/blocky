@@ -1,3 +1,6 @@
+* TODO UI font http://dejavu-fonts.org/wiki/Main_Page
+* TODO click and drag
+* TODO http://thread.gmane.org/gmane.lisp.slime.devel/7339/focus=7341
 * TODO [#B] get editor working again
 * TODO [#A] iomacs.el, for launching iomacs via SLIME and running them in tandem
 * TODO [#A] automatic window switching

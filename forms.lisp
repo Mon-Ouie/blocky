@@ -21,7 +21,7 @@
 (in-package :iomacs)
 
 ;;; Pages are grids of cells.
-;;; Pages also ARE cells!
+;;; Pages also ARE cells! ?
 
 (defparameter *default-page-z-size* 8)
 
