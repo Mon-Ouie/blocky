@@ -236,7 +236,7 @@ is in the way. Returns non-nil if a move occurred."
 		       (not (/obstacle-at-p *world* r c)))
 	       ;; return t because we moved
 	       (prog1 t
-		 (/expend-action-points self (/stat-value self :movement-cost))
+;;		 (/expend-action-points self (/stat-value self :movement-cost))
 		 (/move world self r c))))))))
 		 ;; (when <stepping>
 		 ;;   (/step-on-current-square self)))))))))

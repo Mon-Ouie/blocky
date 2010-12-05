@@ -113,7 +113,8 @@ CATEGORY may be a list of keyword symbols or one keyword symbol."
       (aref cells (- (fill-pointer cells) 1)))))
 
 (define-method drop-cell page (cell row column)
-  (vector-push-extend cell (aref <grid> row column)))
+  (vector-push-extend cell (aref <grid> row column))
+  (/set-location cell row column))
 
 (define-method replace-cell page (cell new-cell row column
 					&optional &key loadout no-collisions)

@@ -95,7 +95,7 @@
 
 (define-method execute block (recipient)
   "Send the appropriate message to the RECIPIENT object."
-  (apply #'iomacs:send nil <operation> <tokens>))
+  (apply #'iomacs:send nil <operation> recipient <tokens>))
 
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
@@ -183,10 +183,47 @@
 ;; intervene between the "then" and "else" clauses in that row.
 
 (define-prototype program (:parent iomacs:=page=)
-  xrow xcolumn ;; grid location of block being executed, if any
-  stops ;; stack of column numbers to return execution to when exiting an indentation.
-        ;; easy to detect improper indentation. 
+  ;; grid location of block being executed, if any
+  (owner :documentation "Game object associated with script.")
+  (row :initform 0) 
+  (column :initform 0)
+  positions
   )
 
+(defun is-event-block (thing)
+  (and (not (null thing))
+       (iomacs:object-p thing)
+       (has-field :operation thing)
+       (eq :do (field-value :operation thing))))
+
+(define-method begin program (start-row start-column)
+  (with-fields (row column owner positions height width grid) self
+    (push )))
+
+(define-method end program)
+
+(define-method do-event program (event-name)
+  (with-fields (row column owner positions height width grid) self
+    (let ((event-block 
+	   (block searching
+	     (dotimes (i height) 
+	       (dotimes (j width)
+		 (let ((it (/top-cell self i j)))
+		   (when (and (is-event-block it)
+			      ;; is it a DO block?
+			      (eq :do (field-value :operation it)
+				  (return-from searching it))))))))))
+      (setf row (field-value :row event-block))
+      (setf column (field-value :column event-block))
+      ;; move down to first block  
+      (incf row)
+      ())))
+      
+;; when you reach a blank square moving down:
+;;        reduce nesting by 1 level
+;;        move left until non-blank is found
+;;        begin executing 
+      
+      
 
 ;;; blocks.lisp ends here

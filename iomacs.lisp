@@ -156,7 +156,7 @@
 	   compose-blank-fields make-field-initializer initialize
 	   object-address-string
 	   =block= *token-types* *block-categories* *block-colors* *block-text-colors*
-	   defblock =beep= =program=
+	   defblock =beep= =program= make-program
 	   ))
 
 ;;; iomacs.lisp ends here
