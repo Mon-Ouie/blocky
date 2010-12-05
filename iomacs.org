@@ -1,4 +1,4 @@
-* iomacs.org --- hypermedia metaprogramming with org-babel
+* Overview
 
 # Lines beginning with a "#" sign are comments.
 # Special comments begin with "#+" and are used to control Org settings.
