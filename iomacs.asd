@@ -34,6 +34,7 @@
 	       (:file "browser")
 	       (:file "mission")
 	       (:file "forms")
+	       (:file "blocks")
 	       (:file "worlds")
 ;;	       (:file "path")
 	       (:file "util")))
