@@ -600,7 +600,7 @@ to reflect its disappearance; this is different from a dying cell." nil)
 
 (defparameter *default-sample-hearing-range* 15)
 
-(define-method play-sample gcell (sample-name)
+(define-method play-sound gcell (sample-name)
   "Play the sample SAMPLE-NAME.
 May be affected by the player's :hearing-range stat, if any."
   (when (/get-player *world*)
@@ -615,6 +615,10 @@ May be affected by the player's :hearing-range stat, if any."
 			     (/player-row *world*)))))
       (when (> range dist)
 	(play-sample sample-name)))))
+
+(define-method play-music gcell (music-name &optional loop-keyword loop)
+  (assert (eq :loop loop-keyword))
+  (play-music music-name :loop (ecase loop (:yes t) (:no nil))))
 
 (define-method distance-to-player gcell ()
   (multiple-value-bind (r c) (/grid-coordinates self)

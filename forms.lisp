@@ -888,19 +888,7 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	      (setf <cursor-row> selected-row
 		    <cursor-column> selected-column))))))))
   
-(define-method compute form ()
-  (with-fields (rows columns) self
-    (let (data cell)
-      (dotimes (row rows)
-	(setf data nil)
-	(dotimes (column columns)
-	  (setf cell (/cell-at self row column))
-	  (if (null cell)
-	      (setf data nil)
-	      (progn 
-		(when data (/set cell data))
-		(/compute cell)
-		(setf data (/get cell)))))))))
+(define-method compute form ())
 
 ;; TODO break up this method.
 

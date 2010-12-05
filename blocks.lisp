@@ -54,12 +54,12 @@
   (column :documentation "Column number of this block in the enclosing program.")
   (tokens :documentation "List of expression data arguments.")
   (token-types :documentation "List of CL type specifiers for corresponding expressions in <tokens>.")
-  (display-name :initform "block" :documentation "String to show as block name." )
-  (category :documentation "Category name of block. See also `*block-categories*'."))
+  (operation :initform "block" :documentation "Symbol name of block's operation, i.e. message key.")
+  (topic :documentation "Topic name of block. See also `*block-topics*'."))
 
 ;; blocks can be arguments to blocks
 (defparameter *token-types* '(iomacs:object integer float number string keyword))
-(defparameter *block-categories* '(:system :motion :event :message :looks :sound :control :sensing :operators :variables))
+(defparameter *block-topics* '(:system :motion :event :message :looks :sound :control :sensing :operators :variables))
 (defparameter *block-colors* '(:motion ".cornflower blue"
 			       :system ".gray50"
 			       :event ".white"
@@ -70,7 +70,7 @@
 			       :variables ".DarkOrange2"
 			       :operators ".green1"
 			       :sensing ".DeepSkyBlue3")
-  "X11 color names of the different block categories.")
+  "X11 color names of the different block topics.")
 (defparameter *block-text-colors* '(:motion ".white"
 				    :system ".white"
 				    :event ".gray50"
@@ -81,47 +81,52 @@
 				    :variables ".white"
 				    :operators ".white"
 				    :sensing ".white")
-  "X11 color names of the text used for different block categories.")
+  "X11 color names of the text used for different block topics.")
 
 (define-method move block (row column)
   (setf <row> row)
   (setf <column> column))
 
 (define-method get-token block (index)
-  (with-fields (tokens token-types) self
-    (assert (not (null token-types)))
-    (let ((value (nth index tokens)))
-      (prog1 value
-	(assert (typep value (nth index token-types)))))))
+  (nth index <tokens>))
 
 (define-method set-token block (index value)
-  (with-fields (tokens token-types) self
-    (assert (not (null token-types)))
-    (assert (typep value (nth index token-types)))
-    (setf (nth index tokens) value)))
+    (setf (nth index <tokens>) value))
 
 (define-method execute block (recipient)
   "Send the appropriate message to the RECIPIENT object."
-  (error "This block doesn't do anything. Try defining blocks with `defblock'."))
+  (apply #'iomacs:send nil <operation> <tokens>))
 
-(define-method describe block ())
+(define-method describe block ()
+  "Show name and comprehensive help for this block.")
 
-(define-method draw block (x y &key image))
+(define-method draw block (x y image)) ;; themed blocks with AA sans fonts
 
 (defmacro defblock (name &body args)
   `(define-prototype ,name (:parent =block=)
-     (display-name :initform ,(string-downcase (symbol-name (make-keyword name))))
+     (operation :initform ,(make-keyword name))
      ,@args))
 
-;;; tiny example.
+;;; Predefined blocks for sending various common messages to cells
 
-(defblock beep
-    (category :initform :system))
+;; See also cells.lisp
 
-(define-method execute beep (recipient)
-  (message "BEEP"))
+(defblock move
+  (topic :initform :motion)
+  (token-types :initform '(:direction :distance :unit))
+  (tokens :initform '(:north 10 :pixels)))
 
-;;; Executing programs
+(defblock move-to
+  (topic :initform :motion)
+  (token-types :initform '(:unit :integer :integer))
+  (tokens :initform '(:space 0 0)))
+
+(defblock play-music 
+  (topic :initform :sound)
+  (token-types :initform '(:string :keyword :keyword))
+  (tokens :initform '("fanfare" :loop :no)))
+
+;;; Executing programs composed of blocks
 
 ;; Execution of a program begins with an event. If an event block's
 ;; name (for example "do mouse" or "do timer") matches a real event
@@ -177,15 +182,11 @@
 ;; NOTE: The ">>>" above indicates that more than one column may
 ;; intervene between the "then" and "else" clauses in that row.
 
-;; TODO Compile the diagrams for speed
-
 (define-prototype program (:parent iomacs:=page=)
   xrow xcolumn ;; grid location of block being executed, if any
   stops ;; stack of column numbers to return execution to when exiting an indentation.
         ;; easy to detect improper indentation. 
   )
 
-;; TODO Fix spreadsheet GUI to support drag and drop
-;; TODO Drag and drop fun colored blocks!
 
 ;;; blocks.lisp ends here

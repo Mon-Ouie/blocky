@@ -79,7 +79,7 @@ world, and collision detection is performed between sprites and cells.")
     (multiple-value-bind (pr pc) (/grid-coordinates (/get-player *world*))
       (direction-to r c pr pc))))
 
-(define-method move-to gsprite (x y &optional ignore-obstacles)
+(define-method move-to gsprite (unit x y)
   (declare (ignore ignore-obstacles))
   (assert (and (integerp x) (integerp y)))
   (with-field-values (grid tile-size width height) *world*
@@ -94,7 +94,7 @@ world, and collision detection is performed between sprites and cells.")
 ;;	  (setf <x> 0 <y> 0)))))
 ;;	  (/do-collision self nil)))))
 
-(define-method move gsprite (direction &optional movement-distance)
+(define-method move gsprite (direction &optional movement-distance unit)
   (when direction
     (let ((dist (or movement-distance 1)))
       (let ((y <y>)

@@ -213,10 +213,11 @@ cells."
 
 ;;; Cell movement
 
-(define-method move cell (direction &optional ignore-obstacles)
+(define-method move cell (direction &optional (distance 1) unit)
   "Move this cell one step in DIRECTION on the grid. If
 IGNORE-OBSTACLES is non-nil, the move will occur even if an obstacle
 is in the way. Returns non-nil if a move occurred."
+  (declare (ignore unit))
   (let ((world *world*))
     (multiple-value-bind (r c) 
 	(step-in-direction <row> <column> direction)
@@ -244,7 +245,8 @@ is in the way. Returns non-nil if a move occurred."
   "Set the row R and column C of the cell."
   (setf <row> r <column> c))
 
-(define-method move-to cell (r c)
+(define-method move-to cell (unit r c)
+  (assert (member unit '(:space :spaces)))
   (/delete-cell *world* self <row> <column>)
   (/drop-cell *world* self r c))
 
@@ -299,6 +301,10 @@ When LOADOUT is non-nil, call the :loadout method."
 
 (define-method delete-from-world cell ()
   (/delete-cell *world* self <row> <column>))
+
+(define-method quit cell ()
+  "Leave the gameworld."
+  (/delete-from-world self))
 
 ;;; Custom rendering
 
