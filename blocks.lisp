@@ -253,12 +253,6 @@
   (schema :initform '(:string :keyword :keyword))
   (arguments :initform '("fanfare" :loop :no)))
 
-(defblock do
-  (type :initform :event)
-  (schema :initform '(:symbol :body))
-  (body :initform nil)
-  (arguments :initform nil))
-
 (defblock when 
   (type :initform :control)
   (schema :initform '(:predicate :block))
@@ -269,7 +263,17 @@
   (schema :initform '(:predicate :block :block))
   (arguments :initform '(nil nil nil)))
 
-;; (defblock my)     ;; (my field) == <field>
+(defblock do
+  (type :initform :event)
+  (schema :initform '(:symbol :body))
+  (body :initform nil)
+  (arguments :initform nil))
+
+(defun is-event-block (thing)
+  (and (not (null thing))
+       (iosketch:object-p thing)
+       (has-field :operation thing)
+       (eq :do (field-value :operation thing))))
 
 ;;; Composing blocks into larger programs
 
@@ -294,12 +298,6 @@
 
 (define-method get script (var)
   (gethash var <variables>))
-
-(define-method get-blocks script ()
-  <blocks>)
-
-(define-method get-variables script ()
-  <variables>)
 
 (defun script-variable (var-name)
   (/get *script* var-name))
@@ -337,11 +335,5 @@
 	(/clear self :color *background-color*)
 	(map nil #'/arrange blocks)
 	(map nil #'/draw blocks)))))
-
-(defun is-event-block (thing)
-  (and (not (null thing))
-       (iosketch:object-p thing)
-       (has-field :operation thing)
-       (eq :do (field-value :operation thing))))
       
 ;;; blocks.lisp ends here
