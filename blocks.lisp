@@ -28,8 +28,8 @@
 
 (in-package :iomacs)
 
-;; For the design I've followed a motto associated with another visual
-;; programming language, Pure Data: "The diagram is the program."
+;; For the design I've followed a motto associated with the visual
+;; programming language Pure Data: "The diagram is the program."
 ;; Since the diagram is 2D, the program must therefore be
 ;; two-dimensional as well. That means every block in the program
 ;; (i.e. every expression) must have an X,Y position and that
@@ -128,6 +128,8 @@
 
 ;;; Executing programs composed of blocks
 
+;; TODO rethink use of cells? nested sprites instead?
+
 ;; Execution of a program begins with an event. If an event block's
 ;; name (for example "do mouse" or "do timer") matches a real event
 ;; (such as mouse movement, message, or button press), we begin
@@ -164,23 +166,38 @@
 ;; widths are dynamically adjusted according to block display result
 ;; widths.
 
+;; First-class functions are supported (as in Scratch/BYOB) but
+;; instead of little graphical sockets in the block that you plug
+;; other blocks into, any block arguments are instead placed to the
+;; right of the original block. Leftward << are shown at the right
+;; edge of such blocks to indicate the presence and number of block
+;; arguments.
+
+;; TODO Balloon values.
+
 ;; An event "do" block with no name token is an anonymous subprogram.
 ;; It enables this syntax for conditionals:
 ;;
-;;   [when <conditional>] [move west 10 pixels]
+;;   [when <condition>] [move west 10 pixels]
 ;;
-;;   [when <conditional>] [explode]
+;;   [when <condition>] [explode]
 ;;
-;;   [unless <conditional>] [do]
+;;   [unless <condition>] [do]
 ;;                          [play-sound "beep"]
 ;;                          [music "scary"]
 ;;
-;;   [if <conditional>] [do]                        >>> [do]
+;;   [if <condition>] [do]                        >>> [do]
 ;;                      [move north 1 space]            [move south 1 space]
 ;;                      [say "hello!" for 2 seconds]    [........
 ;;
+;;   [when <condition>] [run] [
+;;
+;;
 ;; NOTE: The ">>>" above indicates that more than one column may
 ;; intervene between the "then" and "else" clauses in that row.
+;; TODO: scan for all required block args first?
+
+;; TODO not based on pages/rows: instead do it CLFRAME style
 
 (define-prototype program (:parent iomacs:=page=)
   ;; grid location of block being executed, if any

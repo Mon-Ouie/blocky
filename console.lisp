@@ -1207,6 +1207,9 @@ control the size of the individual frames or subimages."
 					       "*"))))
     (sdl:initialise-font (symbol-value (intern font-name :lispbuilder-sdl)))))
 
+(defun load-ttf-resource (resource)
+  (sdl-ttf:initialise-font (namestring (resource-file resource))))
+
 (defun load-music-resource (resource)
   (when *use-sound*
     (sdl-mixer:load-music (namestring (resource-file resource)))))
@@ -1231,6 +1234,7 @@ control the size of the individual frames or subimages."
 				  :formatted-text #'load-formatted-text-resource
 				  :sample #'load-sample-resource
 				  :canvas #'load-canvas-resource
+				  :ttf #'load-ttf-resource
 				  :font #'load-font-resource)
   "A property list mapping resource type keywords to handler functions.
 Each function should accept one resource record, and return an

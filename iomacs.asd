@@ -18,6 +18,7 @@
 	       :lispbuilder-sdl 
 	       :lispbuilder-sdl-image 
 	       :lispbuilder-sdl-gfx
+	       :lispbuilder-sdl-ttf
 	       :lispbuilder-sdl-mixer)
   :components ((:file "iomacs")
 	       (:file "prototypes")
