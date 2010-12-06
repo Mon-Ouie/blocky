@@ -1,4 +1,4 @@
-;;; iomacs.lisp --- retro-esque 2d game engine for Common Lisp
+;;; iosketch.lisp --- retro-esque 2d game engine for Common Lisp
                
 ;; Copyright (C) 2006, 2007, 2008, 2009  David O'Toole
 
@@ -49,7 +49,7 @@
 
 ;;; Code:
 
-(defpackage :iomacs
+(defpackage :iosketch
     (:documentation "A 2D game engine in Common Lisp.")
   (:use :common-lisp) 
   (:export *default-frame-width* *default-frame-height* =viewport=
@@ -159,4 +159,4 @@
 	   defblock =beep= =program= make-program
 	   ))
 
-;;; iomacs.lisp ends here
+;;; iosketch.lisp ends here

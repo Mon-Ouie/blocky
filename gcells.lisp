@@ -30,7 +30,7 @@
 ;; `send-queue'); these messages are queued and processed by the
 ;; world for delivery to their recipients. 
 
-(in-package :iomacs)
+(in-package :iosketch)
 
 ;;; "gCells" implement a 2D game engine.
 
@@ -73,7 +73,7 @@ Sprites are also based on cells. See `defsprite'.")
   (type :initform :cell)
   (team :initform nil :documentation "Keyword symbol of team, if any.")
   (weight :documentation "Weight of the cell, in kilograms.")
-  (widget :initform nil :documentation "IOMACS widget object, if any.")
+  (widget :initform nil :documentation "IOSKETCH widget object, if any.")
   (light-radius :initform 0 :documentation "Strength of light cast by this object.") 
   (speed :initform '(:base 10) :documentation "The number of action points alloted each phase.")
   (phase-number :initform 0
@@ -253,7 +253,7 @@ negative, then you'll come up that much short."
   "Determine whether the cell has enough action points to take some
 action during PHASE.
 
-The Action Points system is IOMACS's model of roguelike time; Time is
+The Action Points system is IOSKETCH's model of roguelike time; Time is
 divided into discrete episodes called phases.  Each phase consists
 of one or more actions, each of which lasts a certain number of
 action points' worth of time. During an action, the cell may modify
@@ -266,12 +266,12 @@ actions during a phase. The AP score for a cell's phase starts at
  (/stat-value cell :speed). The AP cost of an action is determined by
 the corresponding method's use of `expend-action-points'; see below. 
 
-First your turn comes up, and IOMACS waits for your input.  Once you
+First your turn comes up, and IOSKETCH waits for your input.  Once you
 issue a command, some AP may be used up. When your AP is gone, the
 computer's phase begins. The results are displayed, and if you're
 still alive, the player phase begins again.
 
- (In realtime mode, IOMACS does not wait for input.)
+ (In realtime mode, IOSKETCH does not wait for input.)
 
 The queued messages' targets can be keywords like :world, :browser,
 or :narrator instead of direct references to objects; the world
@@ -436,7 +436,7 @@ slot."
 		 (/find self :direction reference :category category)
 		 (/equipment-slot self reference)))
     (integer (/item-at self reference))
-    (iomacs:object reference)))
+    (iosketch:object reference)))
 
 ;;; Knowledge of objects
 
@@ -695,7 +695,7 @@ are as with `format'."
   (setf <timeout> (if (floatp timeout)
 		      ;; specify in (roughly) seconds if floating
 		      (truncate (/ (* timeout 1000)
-				   iomacs:*dt*))
+				   iosketch:*dt*))
 		      ;; leave as frames if integer
 		      timeout)))
   

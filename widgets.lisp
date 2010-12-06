@@ -18,12 +18,9 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary:
-
-
 ;;; Code:
 
-(in-package :iomacs)
+(in-package :iosketch)
 
 (define-prototype widget
     (:documentation "A graphical element that responds to events and renders to an offscreen image.
@@ -34,7 +31,7 @@ image. Widgets are also designed to receive input events via the
 `handle-key' method; `define-key' and `undefine-key' can be used to
 manage keybindings.
 
-The main IOMACS loop is set up to dispatch event messages to
+The main IOSKETCH loop is set up to dispatch event messages to
 widgets. After the events have been processed and the widgets have
 drawn their images to their respective offscreen buffers, the
 engine copies the buffers to the screen. (see console.lisp)
@@ -341,7 +338,7 @@ Example: (/print my-formatter \"hello\" :foreground \"red\")"
 
 (define-method println formatter (&rest args)
   "Print the ARGS as a formatted string, following up with a newline."
-  (apply #'iomacs:send self :print self args)
+  (apply #'iosketch:send self :print self args)
   (/newline self))
 
 (define-method space formatter ()
@@ -447,7 +444,7 @@ auto-updated displays."
 (defvar *numeric-characters* "0123456789")
 
 (define-prototype prompt
-    (:parent iomacs:=widget= :documentation 
+    (:parent iosketch:=widget= :documentation 
 "The command prompt widget is a text input area with Emacs-like
 keybindings. It is used to send messages to objects. (For ease of
 use, prompt commands may also be bound to single keystrokes.)
@@ -1112,11 +1109,11 @@ text INSERTION to be inserted at point."
 	      (enable-held-keys)
 	      (disable-held-keys))
 	  ;; insert self always as first widget
-	  (apply #'iomacs:install-widgets self (cdr (assoc newpage <pages>)))))))
+	  (apply #'iosketch:install-widgets self (cdr (assoc newpage <pages>)))))))
 
-(define-method auto-position pager (&key (width iomacs:*screen-width*))
+(define-method auto-position pager (&key (width iosketch:*screen-width*))
   (/resize self :width width :height <pager-height>)
-  (/move self :x 0 :y (- iomacs:*screen-height* <pager-height>)))
+  (/move self :x 0 :y (- iosketch:*screen-height* <pager-height>)))
 
 (define-method add-page pager (keyword widgets &rest properties)
   (assert (listp widgets))

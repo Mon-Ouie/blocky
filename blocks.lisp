@@ -26,7 +26,7 @@
 
 ;;; Code:
 
-(in-package :iomacs)
+(in-package :iosketch)
 
 ;; For the design I've followed a motto associated with the visual
 ;; programming language Pure Data: "The diagram is the program."
@@ -49,16 +49,14 @@
 ;; [music "piano" loop no]
 ;; [drop new bomb]
 
-(defcell block ()
-  (row :documentation "Row number of this block in the enclosing program.")
-  (column :documentation "Column number of this block in the enclosing program.")
+(define-prototype block ()
   (tokens :documentation "List of expression data arguments.")
   (token-types :documentation "List of CL type specifiers for corresponding expressions in <tokens>.")
   (operation :initform "block" :documentation "Symbol name of block's operation, i.e. message key.")
   (topic :documentation "Topic name of block. See also `*block-topics*'."))
 
 ;; blocks can be arguments to blocks
-(defparameter *token-types* '(iomacs:object integer float number string keyword))
+(defparameter *token-types* '(iosketch:object integer float number string keyword))
 (defparameter *block-topics* '(:system :motion :event :message :looks :sound :control :sensing :operators :variables))
 (defparameter *block-colors* '(:motion ".cornflower blue"
 			       :system ".gray50"
@@ -95,7 +93,7 @@
 
 (define-method execute block (recipient)
   "Send the appropriate message to the RECIPIENT object."
-  (apply #'iomacs:send nil <operation> recipient <tokens>))
+  (apply #'iosketch:send nil <operation> recipient <tokens>))
 
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
@@ -199,7 +197,7 @@
 
 ;; TODO not based on pages/rows: instead do it CLFRAME style
 
-(define-prototype program (:parent iomacs:=page=)
+(define-prototype program (:parent iosketch:=page=)
   ;; grid location of block being executed, if any
   (owner :documentation "Game object associated with script.")
   (row :initform 0) 
@@ -209,7 +207,7 @@
 
 (defun is-event-block (thing)
   (and (not (null thing))
-       (iomacs:object-p thing)
+       (iosketch:object-p thing)
        (has-field :operation thing)
        (eq :do (field-value :operation thing))))
 

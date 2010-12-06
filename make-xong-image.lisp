@@ -3,7 +3,7 @@
 (push (merge-pathnames "lib/" (values *default-pathname-defaults*))
       asdf:*central-registry*)
 
-(asdf:oos 'asdf:load-op 'iomacs)
+(asdf:oos 'asdf:load-op 'iosketch)
 
 (cffi:close-foreign-library 'sdl-gfx-cffi::sdl-gfx)
 (cffi:close-foreign-library 'sdl-mixer-cffi::sdl-mixer)
@@ -15,7 +15,7 @@
 				      (sb-posix:putenv
 				       (format nil "SBCL_HOME=~A" 
 					       #.(sb-ext:posix-getenv "SBCL_HOME")))
-				      (iomacs:play "xong")
+				      (iosketch:play "xong")
 				      0)
 			  :executable t)
 

@@ -1,4 +1,4 @@
-;;; util.lisp --- handy utilities for iomacs users
+;;; util.lisp --- handy utilities for iosketch users
 
 ;; Copyright (C) 2010  David O'Toole
 
@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :iomacs)
+(in-package :iosketch)
 
 (defmacro defgame (module-name 
 		   (&key title description
@@ -31,10 +31,10 @@
 			 &allow-other-keys)
  		   &body startup-forms)
   `(progn
-     (iomacs:set-screen-height ,screen-height)
-     (iomacs:set-screen-width ,screen-width)
-     (setf iomacs:*physics-function* ,physics-function)
-     (setf iomacs:*dt* ,timestep)
+     (iosketch:set-screen-height ,screen-height)
+     (iosketch:set-screen-width ,screen-width)
+     (setf iosketch:*physics-function* ,physics-function)
+     (setf iosketch:*dt* ,timestep)
      ,@startup-forms))
 
 ;;; util.lisp ends here
