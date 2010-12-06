@@ -50,72 +50,118 @@
 (define-prototype block ()
   (x :documentation "Integer X coordinate of this block's position.")
   (y :documentation "Integer Y coordinate of this block's position.")
+  (width :documentation "Cached pixel width of block.")
+  (height :documentation "Cached pixel height of block.")
   (arguments :documentation "List of block argument values.")
   (schema :documentation "List of CL type specifiers for corresponding expressions in <arguments>.")
   (operation :initform "block" :documentation "Symbol name of block's operation, i.e. message key.")
-  (topic :documentation "Topic name of block. See also `*block-topics*'."))
+  (type :documentation "Type name of block. See also `*block-types*'."))
+
+(defmacro defblock (name &body args)
+  `(define-prototype ,name (:parent =block=)
+     (operation :initform ,(make-keyword name))
+     ,@args))
 
 (defparameter *argument-types*
   '(:block :sprite :integer :float :number 
     :string :symbol :unit :direction :body))
 
-(defparameter *block-topics* '(:system :motion :event :message :looks :sound :control :comment :sensing :operators :variables))
+(defparameter *block-types* '(:system :motion :event :message :looks :sound :control :comment :sensing :operators :variables))
 
 (defparameter *background-color* ".white")
 
 (defparameter *block-font* "sans-condensed-bold-12")
 
-(defparameter *block-colors* '(:motion ".cornflower blue"
-			       :system ".gray50"
-			       :event ".white"
-			       :comment ".grey70"
-			       :looks ".purple"
-			       :sound ".orchid"
-			       :message ".sienna3"
-			       :control ".orange1"
-			       :variables ".DarkOrange2"
-			       :operators ".green1"
-			       :sensing ".DeepSkyBlue3")
-  "X11 color names of the different block topics.")
+(defvar *dash-size* 3)
 
-(defparameter *block-highlight-colors* '(:motion ".sky blue"
-			       :system ".gray80"
-			       :event ".white"
-			       :comment ".grey90"
-			       :looks ".medium orchid"
-			       :sound ".plum"
-			       :message ".sienna2"
-			       :control ".gold"
-			       :variables ".DarkOrange1"
-			       :operators ".chartreuse3"
-			       :sensing ".DeepSkyBlue2")
-  "X11 color names of the different block topics.")
+(defvar *space-size* nil
+  "Size of the basic spacer layout distance, in pixels.
+  Should be just a bit more than the height of `*block-font*'")
 
-(defparameter *block-shadow-colors* '(:motion ".dark slate blue"
-			       :system ".gray50"
-			       :event ".white"
-			       :comment ".grey40"
-			       :looks ".dark orchid"
-			       :sound ".violet red"
-			       :message ".chocolate3"
-			       :control ".dark orange"
-			       :variables ".OrangeRed2"
-			       :operators ".green3"
-			       :sensing ".turquoise3")
-  "X11 color names of the different block topics.")
+(defun spacer (&optional (size 1))
+  (* size *space-size*))
 
-(defparameter *block-text-colors* '(:motion ".white"
-				    :system ".white"
-				    :event ".gray50"
-				    :comment ".gray30"
-				    :message ".white"
-				    :looks ".white"
-				    :sound ".white"
-				    :control ".white"
-				    :variables ".white"
-				    :operators ".white"
-				    :sensing ".white")
-  "X11 color names of the text used for different block topics.")
+(defparameter *block-colors* 
+  '(:motion ".cornflower blue"
+    :system ".gray50"
+    :event ".white"
+    :comment ".grey70"
+    :looks ".purple"
+    :sound ".orchid"
+    :message ".sienna3"
+    :control ".orange1"
+    :variables ".DarkOrange2"
+    :operators ".green1"
+    :sensing ".DeepSkyBlue3")
+  "X11 color names of the different block types.")
+
+(defparameter *block-highlight-colors*
+  '(:motion ".sky blue"
+    :system ".gray80"
+    :event ".white"
+    :comment ".grey90"
+    :looks ".medium orchid"
+    :sound ".plum"
+    :message ".sienna2"
+    :control ".gold"
+    :variables ".DarkOrange1"
+    :operators ".chartreuse3"
+    :sensing ".DeepSkyBlue2")
+  "X11 color names of the different block types.")
+
+(defparameter *block-shadow-colors* 
+  '(:motion ".dark slate blue"
+    :system ".gray50"
+    :event ".white"
+    :comment ".grey40"
+    :looks ".dark orchid"
+    :sound ".violet red"
+    :message ".chocolate3"
+    :control ".dark orange"
+    :variables ".OrangeRed2"
+    :operators ".green3"
+    :sensing ".turquoise3")
+  "X11 color names of the different block types.")
+
+(defparameter *block-foreground-colors* 
+  '(:motion ".white"
+    :system ".white"
+    :event ".gray50"
+    :comment ".gray30"
+    :message ".white"
+    :looks ".white"
+    :sound ".white"
+    :control ".white"
+    :variables ".white"
+    :operators ".white"
+    :sensing ".white")
+  "X11 color names of the text used for different block types.")
+
+(defun block-color (color &optional (part :background))
+  (let ((colors (ecase part
+		  (:background *block-colors*)
+		  (:highlight *block-highlight-colors*)
+		  (:shadow *block-shadow-colors*)
+		  (:foreground *block-text-colors*))))
+    (getf colors color)))
+
+(defparameter *small-block-corners* '(:top-left ".top-left-corner-small"
+				      :top-right ".top-right-corner-small"
+				      :bottom-right ".bottom-right-corner-small"
+				      :bottom-left ".bottom-left-corner-small"))
+
+(defparameter *medium-block-corners* '(:top-left ".top-left-corner-medium"
+				       :top-right ".top-right-corner-medium"
+				       :bottom-right ".bottom-right-corner-medium"
+				       :bottom-left ".bottom-left-corner-medium"))
+
+(defparameter *default-block-corner-size* :small)
+
+(defun block-corner (corner &optional (size *default-block-corner-size*))
+  (let ((images (ecase size
+		  (:medium *medium-block-corners*)
+		  (:small *small-block-corners*))))
+    (getf images corner)))
 
 (define-method move block (x y)
   (setf <x> x)
@@ -128,9 +174,12 @@
 			(+ y height))
     self))
 
-(define-method resize block (height width)
-  (setf <height> height)
-  (setf <width> width)) 
+(define-method resize block ()
+  (let ((font *block-font*)
+	(line (format nil "~{~a~^ ~}" <arguments>)))
+    (setf <width> (+ (* 2 *dash-size*) ;; spacing
+		     (font-text-extents line font)))
+    (setf <height> (font-height font))))
 
 (define-method get-argument block (index)
   (nth index <arguments>))
@@ -145,43 +194,46 @@
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
 
-(define-method draw block (x y image)) ;; themed blocks with AA sans fonts
-
-(defmacro defblock (name &body args)
-  `(define-prototype ,name (:parent =block=)
-     (operation :initform ,(make-keyword name))
-     ,@args))
+(define-method draw block (dx dy image)
+  (with-field-values (x y type height width schema) self
+    (let ((foreground (block-color self :foreground))
+	  (background (block-color self :background))
+	  (highlight (block-color self :highlight))
+	  (shadow (block-color self :shadow))
+	  
+	  (format nil "~{~a~^ ~}" <arguments>)
+	  ))))
 
 ;;; Predefined blocks for sending various common messages 
 
 (defblock move
-  (topic :initform :motion)
+  (type :initform :motion)
   (schema :initform '(:direction :integer :unit))
   (arguments :initform '(:north 10 :pixels)))
 
 (defblock move-to
-  (topic :initform :motion)
+  (type :initform :motion)
   (schema :initform '(:unit :integer :integer))
   (arguments :initform '(:space 0 0)))
 
 (defblock play-music 
-  (topic :initform :sound)
+  (type :initform :sound)
   (schema :initform '(:string :keyword :keyword))
   (arguments :initform '("fanfare" :loop :no)))
 
 (defblock do
-  (topic :initform :event)
+  (type :initform :event)
   (schema :initform '(:symbol :body))
   (body :initform nil)
   (arguments :initform nil))
 
 (defblock when 
-  (topic :initform :control)
+  (type :initform :control)
   (schema :initform '(:predicate :block))
   (arguments :initform '(nil nil)))
 
 (defblock if 
-  (topic :initform :control)
+  (type :initform :control)
   (schema :initform '(:predicate :block :block))
   (arguments :initform '(nil nil nil)))
 
@@ -189,7 +241,7 @@
 
 ;;; Composing blocks into larger programs
 
-(define-prototype script ()
+(defwidget script
   blocks
   selection
   focus)
