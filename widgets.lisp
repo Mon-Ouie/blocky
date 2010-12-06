@@ -237,7 +237,7 @@ possibly return one of them."
     (or width
 	(if image 
 	    (image-width image)
-	    (* (font-width font) (length string))))))
+	    (* (font-text-extents string font))))))
 
 (defun formatted-line-height (line)
   (apply #'max (mapcar #'formatted-string-height line)))
@@ -245,10 +245,12 @@ possibly return one of them."
 (defun formatted-line-width (line)
   (apply #'+ (mapcar #'formatted-string-width line)))
 
-(defun render-formatted-string (formatted-string x y &key (text-offset 0) destination)
+(defun render-formatted-string (formatted-string x y 
+				&key (text-offset 0) blended destination)
   "Render the FORMATTED-STRING to position X,Y on the image DESTINATION.
-If TEXT-OFFSET is provided, add that many pixels to the Y coordinate
-for rendered text in the line. (This is used to make text align with
+If BLENDED is non-nil, use TrueType antialiasing. If an integer
+TEXT-OFFSET is provided, add that many pixels to the Y coordinate for
+rendered text in the line. (This is used to make text align with
 inline images that are larger than the text height---see also
 `render-formatted-line')."
   (destructuring-bind (string &key (foreground ".white") 
@@ -268,15 +270,18 @@ inline images that are larger than the text height---see also
 		      (otherwise image))
 		    x y :destination destination)
 	(if (null string)
-	    nil ;; WARNING
-	    ;; draw the text.
-	    (if background
-		(draw-string-shaded string x (+ text-offset y)
-				    foreground background
-				    :destination destination
-				    :font font)
-		(draw-string-solid string x (+ text-offset y) :font font
-				   :color foreground :destination destination))))))
+	    (message "Warning: no string to render.")
+	    (if blended
+		(draw-string-blended string x (+ text-offset y)
+				     :font font :color foreground
+				     :destination destination)
+		(if background
+		    (draw-string-shaded string x (+ text-offset y)
+					foreground background
+					:destination destination
+					:font font)
+		    (draw-string-solid string x (+ text-offset y) :font font
+				       :color foreground :destination destination)))))))
 
 (defun render-formatted-line (line x y &key destination (font *default-font*))
   "Render the formatted LINE at position X,Y on the image DESTINATION.
