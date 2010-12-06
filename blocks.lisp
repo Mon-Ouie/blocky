@@ -37,15 +37,7 @@
 ;; Besides a 2D position, each block has a (possibly empty) list of
 ;; arguments. Arguments are symbols like :move or :play-sound, or data
 ;; arguments such as numbers, strings, or symbols. Arguments may also be
-;; objects.
-
-;; Example block ideas, where [....] is a picture of a block:
-
-;; [move forward 1 space]
-;; [move west 10 pixels]
-;; [play "beep"]
-;; [music "piano" loop no]
-;; [drop new bomb]
+;; objects and this involves nested blocks in the diagram.
 
 (define-prototype block ()
   (x :documentation "Integer X coordinate of this block's position.")
@@ -107,7 +99,7 @@
     :variables ".DarkOrange1"
     :operators ".chartreuse3"
     :sensing ".DeepSkyBlue2")
-  "X11 color names of the different block types.")
+  "X11 color names of highlights on the different block types.")
 
 (defparameter *block-shadow-colors* 
   '(:motion ".dark slate blue"
@@ -121,7 +113,7 @@
     :variables ".OrangeRed2"
     :operators ".green3"
     :sensing ".turquoise3")
-  "X11 color names of the different block types.")
+  "X11 color names of shadows on the different block types.")
 
 (defparameter *block-foreground-colors* 
   '(:motion ".white"
@@ -163,6 +155,11 @@
 		  (:small *small-block-corners*))))
     (getf images corner)))
 
+(defun block-corner-size (&optional (size *default-block-corner-size*))
+  (ecase size
+    (:small 5)
+    (:medium 9)))
+
 (define-method move block (x y)
   (setf <x> x)
   (setf <y> y))
@@ -185,7 +182,8 @@
   (nth index <arguments>))
 
 (define-method set-argument block (index value)
-    (setf (nth index <arguments>) value))
+    (setf (nth index <arguments>) value)
+    (/resize self))
 
 (define-method execute block (recipient)
   "Send the appropriate message to the RECIPIENT object."
@@ -196,13 +194,46 @@
 
 (define-method draw block (dx dy image)
   (with-field-values (x y type height width schema) self
-    (let ((foreground (block-color self :foreground))
-	  (background (block-color self :background))
-	  (highlight (block-color self :highlight))
-	  (shadow (block-color self :shadow))
-	  
-	  (format nil "~{~a~^ ~}" <arguments>)
-	  ))))
+    (let* ((foreground (block-color self :foreground))
+	   (background (block-color self :background))
+	   (highlight (block-color self :highlight))
+	   (shadow (block-color self :shadow))
+	   (space *space-size*)
+	   (label (format nil "~{~a~^ ~}" <arguments>))
+	   (box-width (+ space width space))
+	   (box-height (+ space height space))
+	   (corner-size (block-corner-size))
+	   (bottom (+ y box-height))
+	   (right (+ x box-width)))
+      (draw-box x y box-width box-height
+		:color background
+		:stroke-color shadow
+		:destination image)
+      (draw-line 0 0 right 0 
+		 :color highlight
+		 :destination image)
+      (draw-line 0 0 0 bottom
+		 :color highlight
+		 :destination image)
+      (draw-string-blended label 
+			   (+ x space)
+			   (+ y space)
+			   :foreground foreground
+			   :background background
+			   :destination image
+			   :font *block-font*)
+      (draw-image (block-corner :top-left)
+		  x y :destination image)
+      (draw-image (block-corner :top-right)
+		  (- right corner-size) y 
+		  :destination image)
+      (draw-image (block-corner :bottom-right)
+		  (- right corner-size)
+		  (- bottom corner-size)
+		  :destination image)
+      (draw-image (block-corner :bottom-left)
+		  x (- bottom corner-size)
+		  :destination image))))
 
 ;;; Predefined blocks for sending various common messages 
 

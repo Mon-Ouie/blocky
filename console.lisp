@@ -1210,7 +1210,7 @@ control the size of the individual frames or subimages."
 (defun load-ttf-resource (resource)
   (let ((size (getf (resource-properties resource) :size)))  
     (assert (integerp size))
-    (sdl-ttf:initialise-font (namestring (resource-file resource)) size)))
+    (sdl:initialise-font (namestring (resource-file resource)) size)))
 
 (defun load-music-resource (resource)
   (when *use-sound*
@@ -1602,7 +1602,7 @@ of the music."
   (let ((resource (find-resource font)))
     (ecase (resource-type resource)
       (:font (find-resource-property font :height))
-      (:ttf (sdl-ttf:get-font-height :font (resource-object font))))))
+      (:ttf (sdl:get-font-height :font (resource-object font))))))
 
 (defun font-width (font)
   (let ((resource (find-resource font)))
@@ -1615,8 +1615,8 @@ of the music."
     (ecase (resource-type resource)
       (:font (* (length string)
 		(font-width font)))
-      (:ttf (values (sdl-ttf:get-font-size string :font (resource-object font))
-		    (sdl-ttf:get-font-height :font (resource-object font)))))))
+      (:ttf (values (sdl:get-font-size string :font (resource-object font))
+		    (sdl:get-font-height :font (resource-object font)))))))
 
 (defun draw-string-solid (string x y 
 			  &key destination (font *default-font*) (color ".white"))

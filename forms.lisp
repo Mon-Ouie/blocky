@@ -278,7 +278,7 @@ initialize the arrays for a page of the size specified there."
        ;; it's an address
        (destructuring-bind (prototype-name &rest parameters) page
 	 (let ((page (clone (symbol-value prototype-name))))
-	   [make-with-parameters page parameters]
+	   (/make-with-parameters page parameters)
 	   (find-page page))))
     (string (or (find-resource-object page :noerror)
 		(progn (make-object-resource page (create-blank-page :name page))

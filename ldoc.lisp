@@ -74,7 +74,7 @@
 		   (remove-delimiters symbol)
 		   (if (clon-method-p symbol)
 		       (multiple-value-bind (method-name prototype-name) (clon-method-p symbol)
-			 (format nil "~A [~A]" method-name prototype-name))
+			 (format nil "~A (/~A)" method-name prototype-name))
 		       (symbol-name symbol))))
 	 (args (when (fboundp symbol) (sb-introspect:function-lambda-list (fdefinition symbol)))))
     (format stream "** ~A (~A)" name type-name)
