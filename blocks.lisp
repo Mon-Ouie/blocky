@@ -58,7 +58,9 @@
   '(:block :sprite :integer :float :number 
     :string :symbol :unit :direction :body))
 
-(defparameter *block-types* '(:system :motion :event :message :looks :sound :control :comment :sensing :operators :variables))
+(defparameter *block-types*
+  '(:system :motion :event :message :looks :sound 
+    :control :comment :sensing :operators :variables))
 
 (defparameter *background-color* ".white")
 
@@ -69,9 +71,6 @@
 (defvar *space-size* nil
   "Size of the basic spacer layout distance, in pixels.
   Should be just a bit more than the height of `*block-font*'")
-
-(defun spacer (&optional (size 1))
-  (* size *space-size*))
 
 (defparameter *block-colors* 
   '(:motion ".cornflower blue"
@@ -160,6 +159,8 @@
     (:small 5)
     (:medium 9)))
 
+(define-method count block () 1)
+
 (define-method move block (x y)
   (setf <x> x)
   (setf <y> y))
@@ -171,7 +172,7 @@
 			(+ y height))
     self))
 
-(define-method resize block ()
+(define-method arrange block ()
   (let ((font *block-font*)
 	(line (format nil "~{~a~^ ~}" <arguments>)))
     (setf <width> (+ (* 2 *dash-size*) ;; spacing
@@ -183,7 +184,7 @@
 
 (define-method set-argument block (index value)
     (setf (nth index <arguments>) value)
-    (/resize self))
+    (/arrange self))
 
 (define-method execute block (recipient)
   "Send the appropriate message to the RECIPIENT object."
@@ -192,7 +193,7 @@
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
 
-(define-method draw block (dx dy image)
+(define-method draw block (image)
   (with-field-values (x y type height width schema) self
     (let* ((foreground (block-color self :foreground))
 	   (background (block-color self :background))
@@ -272,16 +273,75 @@
 
 ;;; Composing blocks into larger programs
 
-(defwidget script
-  blocks
-  selection
-  focus)
+(define-prototype script ()
+  (blocks :initform ()
+	  :documentation "List of blocks in the script.")
+  (variables :initform (make-hash-table :test 'eq)))
+
+(defvar *script*)
+
+(define-method add script (block x y)
+  (with-fields (blocks) self
+    (setf blocks (adjoin block blocks))
+    (/move block x y)))
+
+(define-method delete script (block)
+  (with-fields (blocks) self
+    (setf blocks (delete block blocks))))
+
+(define-method set script (var value)
+  (setf (gethash var <variables>) value))
+
+(define-method get script (var)
+  (gethash var <variables>))
+
+(define-method get-blocks script ()
+  <blocks>)
+
+(define-method get-variables script ()
+  <variables>)
+
+(defun script-variable (var-name)
+  (/get *script* var-name))
+
+(defun set-script-variable (var-name value)
+  (/set *script* var-name value))
+
+(defsetf script-variable set-script-variable)
+
+(defmacro with-script-variables (vars &rest body)
+  (labels ((make-clause (sym)
+	     `(,sym (script-variable ,(make-keyword sym)))))
+    (let* ((symbols (mapcar #'make-non-keyword vars))
+	   (clauses (mapcar #'make-clause symbols)))
+      `(symbol-macrolet ,clauses ,@body))))
+
+;;; Script editor widget
+
+(defwidget editor
+  (script :initform nil 
+	  :documentation "The IOSKETCH:=SCRIPT= object being edited.")
+  (selection :initform ()
+  	     :documentation "Subset of selected blocks.")
+  (focus :initform nil
+  	 :documentation "Block with current focus.")
+  (drag :initform nil 
+  	:documentation "Block being dragged, if any.")
+  (modified :initform nil 
+  	    :documentation "Non-nil when modified since last save."))
+
+(define-method render editor (image)
+  (with-fields (script selection focus drag modified) self   
+    (when script
+      (with-fields (blocks) script
+	(/clear self :color *background-color*)
+	(map nil #'/arrange blocks)
+	(map nil #'/draw blocks)))))
 
 (defun is-event-block (thing)
   (and (not (null thing))
        (iosketch:object-p thing)
        (has-field :operation thing)
        (eq :do (field-value :operation thing))))
-
       
 ;;; blocks.lisp ends here

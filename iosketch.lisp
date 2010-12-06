@@ -75,7 +75,7 @@
 	   *user-init-file-name* distance icon-resource icon-image
 	   *compass-directions* *compass-opposites* find-resource-property
 	   compose-blank-fields font-width font-height *browser* browser
-	   set-browser find-page *windows* transform-field-reference defwidget
+	   set-browser find-object *windows* transform-field-reference defwidget
 	   *screen-height* =inventory= formatted-line-width *last-event*
 	   formatted-line-height formatted-string-height formatted-string-width
 	   get-color create-image draw-image play define-prototype has-field
@@ -133,6 +133,7 @@
 	   =command-cell= convert-cffi-sample get-sample-buffer
 	   register-sample-generator =voice= register-voice unregister-voice
 	   register-voice-mixer mix-voices convert-cffi-sample-to-internal *page*
+	   *script*
 	   convert-internal-sample-to-cffi get-ticks page-variable with-page-variables
 	   set-page-variable with-pages with-mission-locals *module* quit reset
 	   seek-music make-keyword make-special-variable-name object field-value

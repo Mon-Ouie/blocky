@@ -261,30 +261,30 @@ initialize the arrays for a page of the size specified there."
       (setf (field-value :name page)
 	    (or name (generate-page-name page))))))
 
-(defun find-page (page)
-  (etypecase page
+(defun find-object (object)
+  (etypecase object
     (object 
        ;; check for name collision
-       (let* ((old-name (or (field-value :name page)
-			    (generate-page-name page)))
+       (let* ((old-name (or (field-value :name object)
+			    (generate-object-name object)))
 	      (new-name (if (find-resource old-name :noerror)
-			    (generate-page-name page)
+			    (generate-object-name object)
 			    old-name)))
-	 (message "Indexing new page ~S as ~S" old-name new-name)
-	 (prog1 page 
-	   (make-object-resource new-name page)
-	   (setf (field-value :name page) new-name))))
+	 (message "Indexing new object ~S as ~S" old-name new-name)
+	 (prog1 object 
+	   (make-object-resource new-name object)
+	   (setf (field-value :name object) new-name))))
     (list 
        ;; it's an address
-       (destructuring-bind (prototype-name &rest parameters) page
-	 (let ((page (clone (symbol-value prototype-name))))
-	   (/make-with-parameters page parameters)
-	   (find-page page))))
-    (string (or (find-resource-object page :noerror)
-		(progn (make-object-resource page (create-blank-page :name page))
-		       (let ((object (find-resource-object page)))
+       (destructuring-bind (prototype-name &rest parameters) object
+	 (let ((object (clone (symbol-value prototype-name))))
+	   (/make-with-parameters object parameters)
+	   (find-object object))))
+    (string (or (find-resource-object object :noerror)
+		(progn (make-object-resource object (create-blank-object :name object))
+		       (let ((object (find-resource-object object)))
 			 (prog1 object
-			   (setf (field-value :name object) page))))))))
+			   (setf (field-value :name object) object))))))))
 
 ;; (maphash #'(lambda (k v) (when (resource-p v)
 ;; 			   (when (eq :object (resource-type v))
