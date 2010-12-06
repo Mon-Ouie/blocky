@@ -1,25 +1,32 @@
-* Overview
-
 # Lines beginning with a "#" sign are comments.
 # Special comments begin with "#+" and are used to control Org settings.
-#+title: IOMACS
+#+title: IOSKETCH
 #+author: David T. O'Toole 
 #+email: dto@gnu.org
 
-IOMACS is a format-agnostic media creation and processing tool
-suitable for making games and other interactive applications. 
+* Overview
 
-IOMACS is based on [[http://www.gnu.org/software/emacs][GNU Emacs]]. It delegates content processing to
-external [[http://lispgames.ath.cx/index.php/UsefulApplications][applications]] like the GIMP, Pure Data, ImageMagick, FFMPEG,
-SBCL, and so on. IOMACS uses [[http://en.wikipedia.org/wiki/Digital_asset_management][Digital Asset Management]] (DAM)
-techniques to tag, annotate, store, and search a project's various
-text and binary files (code, images, sounds) as well as metadata
-describing the files. Because IOMACS knows what applications are
-available to edit and process data of various formats, the user can
-forget about organizing hundreds of files and instead launch their
-favorite editors from a hierarchical [[http://orgmode.org][org-mode]] tree view of the
-assets. The use of plain text files for metadata enables simple
-grep-based searches.
+IOSKETCH is a visual game programming language suitable for making
+games and other interactive media. With the mouse and keyboard (or
+touchscreen) the user connects color coded blocks to create
+event-driven programs in the style of [[http://scratch.mit.edu][MIT Scratch]]. Full extensibility
+is provided with Common Lisp for defining new blocks and
+extending the engine's base capabilities. IOSKETCH projects can be
+saved, compressed, and published on the internet as standalone files;
+the IOSKETCH player is available on Windows, Mac OSX, and
+GNU/Linux. (Applications may also embed the GPL-licensed player.)
+
+IOSKETCH can take advantage of [[http://www.gnu.org/software/emacs][GNU Emacs]] if you have it installed. It
+delegates content processing to external [[http://lispgames.ath.cx/index.php/UsefulApplications][applications]] like the GIMP,
+Pure Data, ImageMagick, FFMPEG, SBCL, and so on. IOSKETCH uses [[http://en.wikipedia.org/wiki/Digital_asset_management][Digital
+Asset Management]] (DAM) techniques to tag, annotate, store, and search
+a project's various text and binary files (code, images, sounds) as
+well as metadata describing the files. Because IOSKETCH knows what
+applications are available to edit and process data of various
+formats, the user can forget about organizing hundreds of files and
+instead launch their favorite editors from a hierarchical [[http://orgmode.org][org-mode]]
+tree view of the assets. The use of plain text files for metadata
+enables simple grep-based searches.
 
 With [[http://en.wikipedia.org/wiki/Dataflow][dataflow]] and [[http://en.wikipedia.org/wiki/Literate_programming][literate programming]] concepts from [[http://orgmode.org/worg/org-contrib/babel/][org-babel]], one
 can write Lisp programs that create or process assets automatically or
@@ -73,13 +80,13 @@ developing games in Common Lisp, in a so-called [[http://en.wikipedia.org/wiki/L
 [[http://www.gnu.org/software/emacs][GNU Emacs]] and [[http://orgmode.org/worg/org-contrib/babel/][Org Babel.]] My configurations and custom code are
 collected here in an org-mode essay containing executable Emacs Lisp
 code for a simple [[http://en.wikipedia.org/wiki/Digital_asset_management][Digital Asset Management]] (DAM) system called
-"Iomacs". The name is short for "[[http://en.wikipedia.org/wiki/Hypermedia][hypermedia]] programming".
+"Iosketch". The name is short for "[[http://en.wikipedia.org/wiki/Hypermedia][hypermedia]] programming".
 
 Although this workbook is readable as a web page, it is best
 used interactively by opening it within GNU Emacs. Please download
-the raw version of this workbook, [[http://dto.github.com/notebook/iomacs.org][iomacs.org]]
+the raw version of this workbook, [[http://dto.github.com/notebook/iosketch.org][iosketch.org]]
 
-The github page for this workbook is http://github.com/dto/iomacs.
+The github page for this workbook is http://github.com/dto/iosketch.
 
 * Motivation
 
@@ -108,18 +115,18 @@ the Lisp code---there's a third file mapping resource names to
 files. The indirection makes the engine more flexible, but it's
 another file to maintain.
 
-My experiments with Iomacs are an attempt to apply [[http://orgmode.org/][Orgmode]]
+My experiments with Iosketch are an attempt to apply [[http://orgmode.org/][Orgmode]]
 organizational, publishing, and workflow tools to the problems of solo
 and small-group games development, with custom code and the unifying
 theme of literate programming.
 
 * Prerequisites
 
-Iomacs is based on [[http://orgmode.org][Orgmode]] and [[http://orgmode.org/worg/org-contrib/babel/][Org Babel]], which are both [[http://www.gnu.org/software/emacs][GNU Emacs]]
+Iosketch is based on [[http://orgmode.org][Orgmode]] and [[http://orgmode.org/worg/org-contrib/babel/][Org Babel]], which are both [[http://www.gnu.org/software/emacs][GNU Emacs]]
 packages. Being familiar with these programs will help understanding
 the rest of this document.
 
-* Hypermedia programming with Iomacs
+* Hypermedia programming with Iosketch
 
 There are a few new terms to worry about: workbook, entry, asset,
 attachment, and chunk.
@@ -253,18 +260,18 @@ and indexing resources of almost any kind:
 
 #+source: auto-inserting-properties-templates
 #+begin_src emacs-lisp
-  (defvar iomacs-properties-template "
+  (defvar iosketch-properties-template "
   <<dublin-core-template>>
   "
   "Text of org properties drawer entries to insert upon creating a new entry.")
   
-  (defun iomacs-insert-properties-template ()
+  (defun iosketch-insert-properties-template ()
     (interactive)
       (save-excursion
         (destructuring-bind (beg . end) 
             (org-get-property-block nil nil :force)
           (goto-char beg)
-          (insert iomacs-properties-template))))
+          (insert iosketch-properties-template))))
 #+end_src
 
 For more information about Dublin Core, see these pages:
@@ -322,29 +329,29 @@ chunks headers, and also the ellipses used to indicate hidden text.
 
 #+source: visible-chunks
 #+begin_src emacs-lisp
-(defface iomacs-chunk-header-face '((t (:foreground "red" :bold t :weight bold))) "Face for chunk header lines.")
-(defvar iomacs-chunk-header-face 'iomacs-chunk-header-face)
+(defface iosketch-chunk-header-face '((t (:foreground "red" :bold t :weight bold))) "Face for chunk header lines.")
+(defvar iosketch-chunk-header-face 'iosketch-chunk-header-face)
   
-  (defvar iomacs-chunk-regexp "^#\\+\\(source:\\|srcname:\\|function:\\)")
+  (defvar iosketch-chunk-regexp "^#\\+\\(source:\\|srcname:\\|function:\\)")
   
-  (defun* iomacs-fontify-chunk (limit)
-    (while (re-search-forward iomacs-chunk-regexp limit :noerror)
+  (defun* iosketch-fontify-chunk (limit)
+    (while (re-search-forward iosketch-chunk-regexp limit :noerror)
       (let ((beg (match-beginning 1))
             (end (match-end 1)))
-        (add-text-properties beg end (list 'display (propertize (match-string 1) 'face iomacs-chunk-header-face)
+        (add-text-properties beg end (list 'display (propertize (match-string 1) 'face iosketch-chunk-header-face)
                                            'font-lock-fontified t)))))
 #+end_src
 
 #+source: visible-ellipsis
 #+begin_src emacs-lisp
-  (defface iomacs-hidden-face '((t (:foreground "yellow" :underline "red"))) "Face for hidden iomacs text.")
-  (defvar iomacs-hidden-face 'iomacs-hidden-face)
+  (defface iosketch-hidden-face '((t (:foreground "yellow" :underline "red"))) "Face for hidden iosketch text.")
+  (defvar iosketch-hidden-face 'iosketch-hidden-face)
 #+end_src
 
 
 #+source: fontified-chunks
 #+begin_src emacs-lisp
-  (defun iomacs-fontify-blocks ()
+  (defun iosketch-fontify-blocks ()
     (interactive)
     (save-excursion 
       (goto-char (point-min))
@@ -371,7 +378,7 @@ chunks headers, and also the ellipses used to indicate hidden text.
 #+end_src
 
 #+results: fontified-chunks
-: iomacs-fontify-blocks
+: iosketch-fontify-blocks
 
 * Mouse menus
 
@@ -400,45 +407,45 @@ code to your emacs initialization file.
 
 #+source: turn-on-visible-chunks
 #+begin_src emacs-lisp
- (add-hook 'org-font-lock-hook #'iomacs-fontify-chunk)
+ (add-hook 'org-font-lock-hook #'iosketch-fontify-chunk)
 #+end_src
 
 #+source: turn-off-visible-chunks
 #+begin_src emacs-lisp
- (remove-hook 'org-font-lock-hook #'iomacs-fontify-chunk)
+ (remove-hook 'org-font-lock-hook #'iosketch-fontify-chunk)
 #+end_src
 
 #+source: turn-on-visible-ellipsis
 #+begin_src emacs-lisp
- (setf org-ellipsis iomacs-hidden-face)
+ (setf org-ellipsis iosketch-hidden-face)
 #+end_src
 
 * Processes for creating and transforming chunks
 
-* How the Iomacs source is made
+* How the Iosketch source is made
 :PROPERTIES:
 :ID: 13a1e5df-8185-4633-9d62-ae9cab244f07
 :END:
 
-Using Babel, the Emacs Lisp source code for Iomacs itself is extracted
+Using Babel, the Emacs Lisp source code for Iosketch itself is extracted
 from this workbook (or "tangled", in literate programming
-terminology), to produce an output file called =iomacs.el=. 
+terminology), to produce an output file called =iosketch.el=. 
 
 There are also configuration chunks, snippets of elisp code you can
 execute in place (with C-c C-c) or copy to your emacs init file. 
 
-To make =iomacs.el= from this workbook, execute the following elisp code
+To make =iosketch.el= from this workbook, execute the following elisp code
 chunk by placing point on it and pressing C-c C-c:
 
 #+begin_src emacs-lisp
   (org-babel-tangle)
 #+end_src
 
-Assuming =iomacs.el= is somewhere in your Emacs load-path, you can load
+Assuming =iosketch.el= is somewhere in your Emacs load-path, you can load
 it by executing this chunk:
 
 #+begin_src emacs-lisp
-  (require 'iomacs)
+  (require 'iosketch)
 #+end_src
 
 However, you can do a shortcut and use the following command to tangle
@@ -466,7 +473,7 @@ The =<<chunk-name>>= tags above will be replaced by their
 corresponding definition chunks, defined elsewhere in this workbook,
 during the tangle process. Notice the ":tangle yes" argument; this is
 the only such block in this workbook. It means that in order to appear
-in the output file "iomacs.el", a chunk must be referenced somewhere in
+in the output file "iosketch.el", a chunk must be referenced somewhere in
 the expansion of this tangled chunk.
 
 If you want the opposite behavior, use "#+property: tangle yes" as a
@@ -485,7 +492,7 @@ the final elisp file:
 
 #+source: postamble
 #+begin_src emacs-lisp
-  (provide 'iomacs)
+  (provide 'iosketch)
 #+end_src
 
 * Recommended reading
@@ -533,7 +540,7 @@ Emacs variables; see [[info:emacs:Specifying%20File%20Variables][info:emacs:Spec
 
 #+source: htmlfontify-this-workbook
 #+begin_src emacs-lisp
-  (htmlfontify-buffer nil "iomacs-pretty.html")
+  (htmlfontify-buffer nil "iosketch-pretty.html")
 #+end_src 
 
 # By default, all chunks in a workbook are exported during tangling. 
