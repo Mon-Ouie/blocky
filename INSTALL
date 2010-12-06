@@ -1,4 +1,4 @@
-This is the INSTALL file for the IOSKETCH roguelike engine.
+This is the INSTALL file for the IOSKETCH engine.
 Installation and basic playing instructions are provided. 
 
 1. You need a Common Lisp implementation. Only tested on SBCL right
@@ -36,6 +36,8 @@ Installation and basic playing instructions are provided.
 
 5a. Install some prerequisites for LISPBUILDER-SDL. This should be quick.
     
+    (It'll be even quicker if you use Quicklisp: see http://www.quicklisp.org/)
+
     First enter the SBCL prompt by running "sbcl" in a terminal or shell.
 
    (require :asdf)
