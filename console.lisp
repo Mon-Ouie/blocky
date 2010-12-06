@@ -1208,7 +1208,9 @@ control the size of the individual frames or subimages."
     (sdl:initialise-font (symbol-value (intern font-name :lispbuilder-sdl)))))
 
 (defun load-ttf-resource (resource)
-  (sdl-ttf:initialise-font (namestring (resource-file resource))))
+  (let ((size (getf (resource-properties resource) :size)))  
+    (assert (integerp size))
+    (sdl-ttf:initialise-font (namestring (resource-file resource)) size)))
 
 (defun load-music-resource (resource)
   (when *use-sound*
@@ -1594,18 +1596,27 @@ of the music."
 ;;        :properties (:height 14 :width 7) 
 ;;        :data "7x14")
 
-;; Right now you can only specify built-in LISPBUILDER-SDL fonts.
-;; See also `load-font-resource'.
+;; Or use type :ttf for Truetype fonts.
 
 (defun font-height (font)
-  (find-resource-property font :height))
+  (let ((resource (find-resource font)))
+    (ecase (resource-type resource)
+      (:font (find-resource-property font :height))
+      (:ttf (sdl-ttf:get-font-height :font (resource-object font))))))
 
 (defun font-width (font)
-  (find-resource-property font :width))
+  (let ((resource (find-resource font)))
+    (ecase (resource-type resource)
+      (:font (find-resource-property font :width))
+      (:ttf (error "Cannot get width of a TTF font.")))))
 
 (defun font-text-extents (string font)
-  (* (length string)
-     (font-width font)))
+  (let ((resource (find-resource font)))  
+    (ecase (resource-type resource)
+      (:font (* (length string)
+		(font-width font)))
+      (:ttf (values (sdl-ttf:get-font-size string :font (resource-object font))
+		    (sdl-ttf:get-font-height :font (resource-object font)))))))
 
 (defun draw-string-solid (string x y 
 			  &key destination (font *default-font*) (color ".white"))
@@ -1615,6 +1626,12 @@ of the music."
 (defun draw-string-shaded (string x y &optional (foreground ".white") (background ".black")
 			  &key destination (font *default-font*))
   (sdl:draw-string-shaded-* string x y (find-resource-object foreground)
+			    (find-resource-object background)
+			    :surface destination :font (find-resource-object font)))
+
+(defun draw-string-blended (string x y &optional (foreground ".white") (background ".black")
+			  &key destination (font *default-font*))
+  (sdl:draw-string-blended-* string x y (find-resource-object foreground)
 			    (find-resource-object background)
 			    :surface destination :font (find-resource-object font)))
 
