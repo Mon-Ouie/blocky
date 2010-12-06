@@ -248,7 +248,7 @@
   (schema :initform '(:unit :integer :integer))
   (arguments :initform '(:space 0 0)))
 
-(defblock play-music 
+(defblock music 
   (type :initform :sound)
   (schema :initform '(:string :keyword :keyword))
   (arguments :initform '("fanfare" :loop :no)))
