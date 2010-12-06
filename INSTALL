@@ -1,4 +1,4 @@
-This is the INSTALL file for the IOMACS roguelike engine.
+This is the INSTALL file for the IOSKETCH roguelike engine.
 Installation and basic playing instructions are provided. 
 
 1. You need a Common Lisp implementation. Only tested on SBCL right
@@ -11,17 +11,17 @@ Installation and basic playing instructions are provided.
    Your Linux distribution will have SDL packages for sdl, sdl-image,
    sdl-mixer, and sdl-gfx, all of which are required libraries.
 
-2. If you have not already done so, download IOMACS:
+2. If you have not already done so, download IOSKETCH:
   
    mkdir ~/src
    cd ~/src
-   git clone git://github.com/dto/iomacs.git 
+   git clone git://github.com/dto/iosketch.git 
 
-3. Then link the iomacs.asd file into your ~/.sbcl/systems directory:
+3. Then link the iosketch.asd file into your ~/.sbcl/systems directory:
 
    mkdir ~/.sbcl
    mkdir ~/.sbcl/systems
-   ln -s ~/src/iomacs/iomacs.asd ~/.sbcl/systems
+   ln -s ~/src/iosketch/iosketch.asd ~/.sbcl/systems
 
 4. Download and install a required library called PROTON. Example
    commands:
@@ -63,12 +63,12 @@ Installation and basic playing instructions are provided.
 
 6. OPTIONAL: configure module directories
 
-   Add something like this to a new file called ~/.iomacsrc:
+   Add something like this to a new file called ~/.iosketchrc:
 
-  (setf iomacs:*module-directories* '(#P"/home/USERNAME/src/iomacs/" #P"/home/USERNAME/modules/"))
+  (setf iosketch:*module-directories* '(#P"/home/USERNAME/src/iosketch/" #P"/home/USERNAME/modules/"))
 
 The first item should be the pathname of wherever you installed the
-IOMACS source tree. This is auto-detected as the current directory if
+IOSKETCH source tree. This is auto-detected as the current directory if
 you don't set it. NOTE: These must be pathnames (prefixed with #P) and
 must contain a trailing slash.
 
@@ -78,25 +78,25 @@ The other directory should contain game modules. For example:
     git clone git://github.com/dto/terahertz.git
     mv terahertz thz
 
-7. At the shell, cd to the install directory for IOMACS, run SBCL, and
+7. At the shell, cd to the install directory for IOSKETCH, run SBCL, and
    then at the REPL:
 
-    (require :iomacs)
-    (iomacs:play "thz")  ;; or the name of a module in ~/modules
+    (require :iosketch)
+    (iosketch:play "thz")  ;; or the name of a module in ~/modules
 
   If you get an error about TRIVIAL-FEATURES-TESTS, try this:
   (require :trivial-features-tests)
 
-8. Here is my example .iomacsrc:
+8. Here is my example .iosketchrc:
 
     ;; -*- Mode: lisp -*-
 
-    (setf iomacs:*module-directories* '(#P"/home/dto/iomacs/" 
+    (setf iosketch:*module-directories* '(#P"/home/dto/iosketch/" 
     	  			     #P"/home/dto/modules/"))
-    (setf iomacs:*user-keyboard-layout* :qwerty)
-    (setf iomacs:*use-sound* t)
-    (setf iomacs:*message-logging* t)
-     ;; fullscreen is a pain if IOMACS hangs
-    (setf iomacs:*fullscreen* nil)
+    (setf iosketch:*user-keyboard-layout* :qwerty)
+    (setf iosketch:*use-sound* t)
+    (setf iosketch:*message-logging* t)
+     ;; fullscreen is a pain if IOSKETCH hangs
+    (setf iosketch:*fullscreen* nil)
 
   
