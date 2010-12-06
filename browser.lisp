@@ -36,7 +36,7 @@
 
 ;;; Code:
 
-(in-package :iomacs)
+(in-package :iosketch)
 
 (define-prototype menu-item (:parent =widget=)
   (tile :initform ".asterisk")

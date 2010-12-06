@@ -22,7 +22,7 @@
 
 ;;; Code:
 
-(in-package :iomacs)
+(in-package :iosketch)
 
 ;;; Probability
 

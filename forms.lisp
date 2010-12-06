@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :iomacs)
+(in-package :iosketch)
 
 ;;; Pages are grids of cells.
 ;;; Pages also ARE cells! ?
@@ -261,30 +261,30 @@ initialize the arrays for a page of the size specified there."
       (setf (field-value :name page)
 	    (or name (generate-page-name page))))))
 
-(defun find-page (page)
-  (etypecase page
+(defun find-object (object)
+  (etypecase object
     (object 
        ;; check for name collision
-       (let* ((old-name (or (field-value :name page)
-			    (generate-page-name page)))
+       (let* ((old-name (or (field-value :name object)
+			    (generate-object-name object)))
 	      (new-name (if (find-resource old-name :noerror)
-			    (generate-page-name page)
+			    (generate-object-name object)
 			    old-name)))
-	 (message "Indexing new page ~S as ~S" old-name new-name)
-	 (prog1 page 
-	   (make-object-resource new-name page)
-	   (setf (field-value :name page) new-name))))
+	 (message "Indexing new object ~S as ~S" old-name new-name)
+	 (prog1 object 
+	   (make-object-resource new-name object)
+	   (setf (field-value :name object) new-name))))
     (list 
        ;; it's an address
-       (destructuring-bind (prototype-name &rest parameters) page
-	 (let ((page (clone (symbol-value prototype-name))))
-	   [make-with-parameters page parameters]
-	   (find-page page))))
-    (string (or (find-resource-object page :noerror)
-		(progn (make-object-resource page (create-blank-page :name page))
-		       (let ((object (find-resource-object page)))
+       (destructuring-bind (prototype-name &rest parameters) object
+	 (let ((object (clone (symbol-value prototype-name))))
+	   (/make-with-parameters object parameters)
+	   (find-object object))))
+    (string (or (find-resource-object object :noerror)
+		(progn (make-object-resource object (create-blank-object :name object))
+		       (let ((object (find-resource-object object)))
 			 (prog1 object
-			   (setf (field-value :name object) page))))))))
+			   (setf (field-value :name object) object))))))))
 
 ;; (maphash #'(lambda (k v) (when (resource-p v)
 ;; 			   (when (eq :object (resource-type v))
@@ -508,7 +508,7 @@ initialize the arrays for a page of the size specified there."
     (:parent =widget= :documentation  "An interactive graphical spreadsheet.")
   prompt narrator computing
   (page-name :initform nil)
-  (page :documentation "The iomacs:=page= of objects to be displayed.")
+  (page :documentation "The iosketch:=page= of objects to be displayed.")
   rows columns
   (entered :initform nil :documentation "When non-nil, forward key events to the entry and/or any attached widget.")
   (cursor-row :initform 0) 
@@ -719,12 +719,12 @@ Type HELP :COMMANDS for a list of available commands."
 
 (define-method save-all form ()
   (/say self "Saving objects...")
-  (iomacs:save-modified-objects t)
+  (iosketch:save-modified-objects t)
   (/say self "Saving objects... Done."))
 
 (define-method save-modified form ()
   (/say self "Saving objects...")
-  (iomacs:save-modified-objects)
+  (iosketch:save-modified-objects)
   (/say self "Saving objects... Done."))
   
 (define-method create-page form (&key height width name object)
@@ -786,13 +786,13 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	(/say self "Finished entering data.")))))
     
 (define-method load-module form (name)
-  "Load the IOMACS module NAME for development."
+  "Load the IOSKETCH module NAME for development."
   (/say self (format nil "Loading module ~S" name))
-  (iomacs:load-module name))
+  (iosketch:load-module name))
 
 (define-method quit form ()
-  "Quit XIOMACS."
-  (iomacs:quit t))
+  "Quit XIOSKETCH."
+  (iosketch:quit t))
 
 (define-method cancel form ()
   (/clear-mark self)

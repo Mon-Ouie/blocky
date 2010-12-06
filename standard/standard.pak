@@ -66,6 +66,16 @@
 (:name "serif-14" :type :ttf :file "DejaVuSerif.ttf" :properties (:size 14))
 
 
+(:name ".top-left-corner-small" :type :image :file "corner-small.png")
+(:name ".top-right-corner-small" :type :alias :data ":rotate 90:corner-small")
+(:name ".bottom-right-corner-small" :type :alias :data ":rotate 180:corner-small")
+(:name ".bottom-left-corner-small" :type :alias :data ":rotate 270:corner-small")
+
+(:name ".top-left-corner-medium" :type :image :file "corner-medium.png")
+(:name ".top-right-corner-medium" :type :alias :data ":rotate 90:corner-medium")
+(:name ".bottom-right-corner-medium" :type :alias :data ":rotate 180:corner-medium")
+(:name ".bottom-left-corner-medium" :type :alias :data ":rotate 270:corner-medium")
+ 
 
 (:name ".default-font" :type :font :properties (:height 14 :width 7) :data "7x14")
 (:name ".startup" :type :lisp :file "standard.lisp" :properties (:autoload t))

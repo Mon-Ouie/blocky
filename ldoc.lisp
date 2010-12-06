@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :iomacs)
+(in-package :iosketch)
 
 ;; todo show parent name if any
 
@@ -74,7 +74,7 @@
 		   (remove-delimiters symbol)
 		   (if (clon-method-p symbol)
 		       (multiple-value-bind (method-name prototype-name) (clon-method-p symbol)
-			 (format nil "~A [~A]" method-name prototype-name))
+			 (format nil "~A (/~A)" method-name prototype-name))
 		       (symbol-name symbol))))
 	 (args (when (fboundp symbol) (sb-introspect:function-lambda-list (fdefinition symbol)))))
     (format stream "** ~A (~A)" name type-name)
@@ -184,7 +184,7 @@
     (document-package package-name stream preamble-file)))
 			    
 ;; (document-package :clon t)
-;; (document-package-to-file :iomacs #P"/home/dto/notebook/iomacs-reference.org" #P"/home/dto/iomacs/doc-preamble.org")
-;; (document-package :iomacs t #P"/home/dto/iomacs/doc-preamble.org")
+;; (document-package-to-file :iosketch #P"/home/dto/notebook/iosketch-reference.org" #P"/home/dto/iosketch/doc-preamble.org")
+;; (document-package :iosketch t #P"/home/dto/iosketch/doc-preamble.org")
 
 ;;; ldoc.lisp ends here

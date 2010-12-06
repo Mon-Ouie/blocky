@@ -28,12 +28,12 @@
 
 ;;; Code:
 
-(in-package :iomacs)
+(in-package :iosketch)
 
 (defstruct overlay func parameters clock)
 
 (define-prototype viewport 
-    (:parent =widget= :documentation "A map display for IOMACS worlds.")
+    (:parent =widget= :documentation "A map display for IOSKETCH worlds.")
   (world :documentation "The world object to be displayed.")
   (overlays :documentation "List of closures.")
   (use-overlays :initform t)
@@ -334,7 +334,7 @@
                                      :destination image 
                                      :color ".yellow"))
                       (when (member category categories)
-                        (iomacs:draw-box (* tile-size j) 
+                        (iosketch:draw-box (* tile-size j) 
                                       (* tile-size i)
                                       tile-size tile-size
                                       :destination image 

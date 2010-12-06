@@ -1,4 +1,4 @@
-;;; editor.lisp --- IOMACS dev module
+;;; editor.lisp --- IOSKETCH dev module
 
 ;; Copyright (C) 2010  David O'Toole
 
@@ -19,13 +19,13 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (defpackage :editor
-  (:use :iomacs :common-lisp)
+  (:use :iosketch :common-lisp)
   (:export editor))
 
 (in-package :editor)
 
-(setf iomacs:*dt* 20)
-(setf iomacs:*resizable* t)
+(setf iosketch:*dt* 20)
+(setf iosketch:*resizable* t)
 
 ;;; Main program. 
 
@@ -50,26 +50,9 @@
   (/insert *prompt* command)
   (/execute *prompt*))
 
-(setf iomacs:*form-command-handler-function* #'handle-editor-command)
+(defvar *command-handler-function* #'handle-editor-command)
 
-(define-prototype help-prompt (:parent =prompt=)
-  (default-keybindings :initform '(("N" nil "page-down .")
-				   ("P" nil "page-up ."))))
-
-(define-prototype help-textbox (:parent =textbox=))
-
-(define-method render help-textbox ()
-  (/parent>>render self)
-  (/message *pager* 
-	   (list (format nil " --- Showing lines ~A-~A of ~A. Use PAGE UP and PAGE DOWN to scroll the text." 
-			 <point-row> (+ <point-row> <max-displayed-rows>) (length <buffer>)))))
-
-(add-hook '*after-load-module-hook* (lambda ()
-				      (/message *pager* (list (format nil "  CURRENT MODULE: ~S." *module*)))
-				      (when (string= *module* "editor")
-					(/visit *form* "FrontPage"))))
-
-(define-prototype editor-prompt (:parent iomacs:=prompt=))
+(define-prototype editor-prompt (:parent iosketch:=prompt=))
 
 (define-method say editor-prompt (&rest args)
   (apply #'send nil :say *terminal* args))
@@ -87,7 +70,9 @@
   (/parent>>exit self)
   (/refocus *forms*))
 
-(define-prototype editor-split (:parent iomacs:=split=))
+;;; The frame where everything is displayed
+
+(define-prototype frame (:parent iosketch:=stack=))
 
 (defparameter *qwerty-keybindings*
   '(;; arrow key cursor movement
@@ -145,89 +130,39 @@
     ("X" (:meta) :goto-prompt)
     ("T" (:control) :next-tool)))
 
-(define-method install-keybindings editor-split ()
+(define-method install-keybindings frame ()
   (dolist (binding (case *user-keyboard-layout*
 		     (:qwerty *qwerty-keybindings*)
 		     (otherwise *qwerty-keybindings*)))
     (/generic-keybind self binding)))
 
-(define-method left-form editor-split ()
+(define-method palette-pane frame ()
   (nth 0 <children>))
 
-(define-method right-form editor-split ()
+(define-method script-pane frame ()
   (nth 1 <children>))
 
-(define-method other-form editor-split ()
+(define-method world-pane frame ()
+  (nth 2 <children>))
+
+(define-method other-pane frame ()
   (ecase <focus>
-    (0 (/right-form self))
-    (1 (/left-form self))))
+    (0 (/script-pane self))
+    (1 (/world-pane self))
+    (2 (/palette-pane self))))
 
-(define-method left-world editor-split ()
-  (field-value :world (/left-form self)))
-
-(define-method right-world editor-split ()
-  (field-value :world (/right-form self)))
-
-(define-method selected-form editor-split ()
+(define-method selected-pane frame ()
   (nth <focus> <children>))
 
-(define-method left-selected-data editor-split ()
-  (/get-selected-cell-data (/left-form self)))
-
-(define-method right-selected-data editor-split ()
-  (/get-selected-cell-data (/right-form self)))
-
-(define-method focus-left editor-split ()
-  (/focus (/left-form self))
-  (/unfocus (/right-form self)))
-
-(define-method focus-right editor-split ()
-  (/focus (/right-form self))
-  (/unfocus (/left-form self)))
-
-(define-method refocus editor-split ()
-  (ecase <focus>
-    (0 (/focus-left self))
-    (1 (/focus-right self))))
-
-(define-method left-pane editor-split ()
-  "Select the left spreadsheet pane."
-  (/say self "Selecting left pane.")
-  (/focus-left self)
-  (setf <focus> 0))
-
-(define-method right-pane editor-split ()
-  "Select the right spreadsheet pane."
-  (/say self "Selecting right pane.")
-  (/focus-right self)
-  (setf <focus> 1))
-
-(define-method switch-panes editor-split ()
+(define-method switch-panes frame ()
   (let ((newpos (mod (1+ <focus>) (length <children>))))
     (setf <focus> newpos)
     (ecase newpos
-      (0 (/left-pane self))
-      (1 (/right-pane self)))))
+      (0 (/palette-pane self))
+      (1 (/script-pane self))
+      (2 (/world-page self)))))
 
-(define-method apply-left editor-split ()
-  "Move data LEFTWARD from right pane to left pane, applying current
-left side tool to the right side data."
-  (let* ((form (/left-form self))
-	 (tool (field-value :tool form))
-	 (data (/right-selected-data self)))
-    (/say self (format nil "Applying LEFT tool ~S to data ~S in LEFT form." tool data))
-    (/apply-tool form data)))
-
-(define-method apply-right editor-split ()
-  "Move data RIGHTWARD from left pane to right pane, applying current
-right side tool to the left side data."
-  (let* ((form (/right-form self))
-	 (tool (field-value :tool form))
-	 (data (/left-selected-data self)))
-    (/say self (format nil "Applying RIGHT tool ~S to data ~S in RIGHT form." tool data))
-    (/apply-tool form data)))
-
-(define-method paste editor-split (&optional page)
+(define-method paste frame (&optional page)
   (let ((source (if page 
 		    (find-page page)
 		    (field-value :world (/other-form self))))
@@ -251,7 +186,7 @@ right side tool to the left side data."
 		   (sc (or left0 0)))
 	      (/paste-region destination source r0 c0 sr sc height width))))))))
   
-(define-method commands editor-split ()
+(define-method commands frame ()
   "Syntax: command-name arg1 arg2 ...
 Available commands: HELP EVAL SWITCH-PANES LEFT-PANE RIGHT-PANE
 NEXT-TOOL SET-TOOL APPLY-LEFT APPLY-RIGHT VISIT SELECT SAVE-ALL
@@ -260,13 +195,13 @@ CLONE ERASE CREATE-WORLD PASTE QUIT ENTER EXIT"
  nil)
 
 (defun editor ()
-  (setf iomacs:*screen-width* *window-width*)
-  (setf iomacs:*screen-height* *window-height*)
-  (iomacs:message "Initializing EDITOR...")
-  (setf iomacs:*window-title* "EDITOR")
+  (setf iosketch:*screen-width* *window-width*)
+  (setf iosketch:*screen-height* *window-height*)
+  (iosketch:message "Initializing EDITOR...")
+  (setf iosketch:*window-title* "EDITOR")
   (clon:initialize)
-  (iomacs:set-screen-height *window-height*)
-  (iomacs:set-screen-width *window-width*)
+  (iosketch:set-screen-height *window-height*)
+  (iosketch:set-screen-width *window-width*)
   (let* ((prompt (clone =editor-prompt=))
 	 (help (clone =help-textbox=))
 	 (help-prompt (clone =help-prompt=))
@@ -274,7 +209,7 @@ CLONE ERASE CREATE-WORLD PASTE QUIT ENTER EXIT"
 	 (form (clone =form=))
 	 (form2 (clone =form= "*scratch*"))
 	 (terminal (clone =narrator=))
-	 (split (clone =editor-split=))
+	 (split (clone =frame=))
 	 (stack (clone =stack=)))
     ;;
     (setf *form* form)
@@ -295,7 +230,7 @@ CLONE ERASE CREATE-WORLD PASTE QUIT ENTER EXIT"
 	       (/resize quickhelp :height *quickhelp-height* :width *quickhelp-width*)
 	       (/move quickhelp :y (- *screen-height* *quickhelp-height* *pager-height*) :x (- *screen-width* *quickhelp-width* *quickhelp-spacer*))
 	       (/auto-position *pager*)))
-      (add-hook 'iomacs:*resize-hook* #'resize-widgets))
+      (add-hook 'iosketch:*resize-hook* #'resize-widgets))
     ;;
     (/resize prompt :height *prompt-height* :width *screen-width*)
     (/move prompt :x 0 :y 0)
@@ -331,7 +266,7 @@ CLONE ERASE CREATE-WORLD PASTE QUIT ENTER EXIT"
     (/set-prompt form2 prompt)
     (/set-narrator form2 terminal)
     ;;
-    (iomacs:halt-music 1000)
+    (iosketch:halt-music 1000)
     ;;
     ;; (/resize help :height 540 :width 800) 
     ;; (/move help :x 0 :y 0)
@@ -367,10 +302,10 @@ CLONE ERASE CREATE-WORLD PASTE QUIT ENTER EXIT"
     (/add-page *pager* :edit (list prompt stack split terminal quickhelp))
     (/add-page *pager* :help (list help-prompt help))
     (/select *pager* :edit)
-    (iomacs:enable-classic-key-repeat 100 100)
-    (in-package :iomacs)
+    (iosketch:enable-classic-key-repeat 100 100)
+    (in-package :iosketch)
     (/focus-left *forms*)
-;;    (run-hook 'iomacs:*resize-hook*)
+;;    (run-hook 'iosketch:*resize-hook*)
 ))
 
 (editor)

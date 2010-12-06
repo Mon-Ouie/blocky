@@ -24,7 +24,7 @@
 
 ;;; Code:
 
-(in-package :iomacs)
+(in-package :iosketch)
 
 (defstruct goal 
   name 
@@ -124,7 +124,7 @@
 		 `(setf (gethash ,(make-keyword var-name) ,hash) (make-goal ,@goal-props)))))
       `(let ((,hash (make-hash-table)))
 	 (progn ,@(mapcar #'set-goal goals))
-	 (define-prototype ,name (:parent iomacs:=mission=)
+	 (define-prototype ,name (:parent iosketch:=mission=)
 	   (name :initform ,(make-keyword name))
 	   (description :initform ,description)
 	   (address :initform ,address)

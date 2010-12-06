@@ -26,221 +26,314 @@
 
 ;;; Code:
 
-(in-package :iomacs)
+(in-package :iosketch)
 
 ;; For the design I've followed a motto associated with the visual
 ;; programming language Pure Data: "The diagram is the program."
 ;; Since the diagram is 2D, the program must therefore be
 ;; two-dimensional as well. That means every block in the program
-;; (i.e. every expression) must have an X,Y position and that
-;; positioning of blocks---for example, indentation by
-;; columns---influences the interpretation of the program. (This is
-;; analogous how nesting is indicated in the Python language.)
+;; (i.e. every expression) must have an X,Y position.
 
 ;; Besides a 2D position, each block has a (possibly empty) list of
-;; tokens. Tokens are symbols like :move or :play-sound, or data
-;; arguments such as numbers, strings, or symbols. 
+;; arguments. Arguments are symbols like :move or :play-sound, or data
+;; arguments such as numbers, strings, or symbols. Arguments may also be
+;; objects and this involves nested blocks in the diagram.
 
-;; Example block ideas, where [....] is a picture of a block:
-
-;; [move forward 1 space]
-;; [move west 10 pixels]
-;; [play "beep"]
-;; [music "piano" loop no]
-;; [drop new bomb]
-
-(defcell block ()
-  (row :documentation "Row number of this block in the enclosing program.")
-  (column :documentation "Column number of this block in the enclosing program.")
-  (tokens :documentation "List of expression data arguments.")
-  (token-types :documentation "List of CL type specifiers for corresponding expressions in <tokens>.")
+(define-prototype block ()
+  (x :documentation "Integer X coordinate of this block's position.")
+  (y :documentation "Integer Y coordinate of this block's position.")
+  (width :documentation "Cached pixel width of block.")
+  (height :documentation "Cached pixel height of block.")
+  (arguments :documentation "List of block argument values.")
+  (schema :documentation "List of CL type specifiers for corresponding expressions in <arguments>.")
   (operation :initform "block" :documentation "Symbol name of block's operation, i.e. message key.")
-  (topic :documentation "Topic name of block. See also `*block-topics*'."))
-
-;; blocks can be arguments to blocks
-(defparameter *token-types* '(iomacs:object integer float number string keyword))
-(defparameter *block-topics* '(:system :motion :event :message :looks :sound :control :sensing :operators :variables))
-(defparameter *block-colors* '(:motion ".cornflower blue"
-			       :system ".gray50"
-			       :event ".white"
-			       :looks ".purple"
-			       :sound ".orchid"
-			       :message ".sienna3"
-			       :control ".orange1"
-			       :variables ".DarkOrange2"
-			       :operators ".green1"
-			       :sensing ".DeepSkyBlue3")
-  "X11 color names of the different block topics.")
-(defparameter *block-text-colors* '(:motion ".white"
-				    :system ".white"
-				    :event ".gray50"
-				    :message ".white"
-				    :looks ".white"
-				    :sound ".white"
-				    :control ".white"
-				    :variables ".white"
-				    :operators ".white"
-				    :sensing ".white")
-  "X11 color names of the text used for different block topics.")
-
-(define-method move block (row column)
-  (setf <row> row)
-  (setf <column> column))
-
-(define-method get-token block (index)
-  (nth index <tokens>))
-
-(define-method set-token block (index value)
-    (setf (nth index <tokens>) value))
-
-(define-method execute block (recipient)
-  "Send the appropriate message to the RECIPIENT object."
-  (apply #'iomacs:send nil <operation> recipient <tokens>))
-
-(define-method describe block ()
-  "Show name and comprehensive help for this block.")
-
-(define-method draw block (x y image)) ;; themed blocks with AA sans fonts
+  (type :documentation "Type name of block. See also `*block-types*'."))
 
 (defmacro defblock (name &body args)
   `(define-prototype ,name (:parent =block=)
      (operation :initform ,(make-keyword name))
      ,@args))
 
-;;; Predefined blocks for sending various common messages to cells
+(defparameter *argument-types*
+  '(:block :sprite :integer :float :number 
+    :string :symbol :unit :direction :body))
 
-;; See also cells.lisp
+(defparameter *block-types*
+  '(:system :motion :event :message :looks :sound 
+    :control :comment :sensing :operators :variables))
+
+(defparameter *background-color* ".white")
+
+(defparameter *block-font* "sans-condensed-bold-12")
+
+(defvar *dash-size* 3)
+
+(defvar *space-size* nil
+  "Size of the basic spacer layout distance, in pixels.
+  Should be just a bit more than the height of `*block-font*'")
+
+(defparameter *block-colors* 
+  '(:motion ".cornflower blue"
+    :system ".gray50"
+    :event ".white"
+    :comment ".grey70"
+    :looks ".purple"
+    :sound ".orchid"
+    :message ".sienna3"
+    :control ".orange1"
+    :variables ".DarkOrange2"
+    :operators ".green1"
+    :sensing ".DeepSkyBlue3")
+  "X11 color names of the different block types.")
+
+(defparameter *block-highlight-colors*
+  '(:motion ".sky blue"
+    :system ".gray80"
+    :event ".white"
+    :comment ".grey90"
+    :looks ".medium orchid"
+    :sound ".plum"
+    :message ".sienna2"
+    :control ".gold"
+    :variables ".DarkOrange1"
+    :operators ".chartreuse3"
+    :sensing ".DeepSkyBlue2")
+  "X11 color names of highlights on the different block types.")
+
+(defparameter *block-shadow-colors* 
+  '(:motion ".dark slate blue"
+    :system ".gray50"
+    :event ".white"
+    :comment ".grey40"
+    :looks ".dark orchid"
+    :sound ".violet red"
+    :message ".chocolate3"
+    :control ".dark orange"
+    :variables ".OrangeRed2"
+    :operators ".green3"
+    :sensing ".turquoise3")
+  "X11 color names of shadows on the different block types.")
+
+(defparameter *block-foreground-colors* 
+  '(:motion ".white"
+    :system ".white"
+    :event ".gray50"
+    :comment ".gray30"
+    :message ".white"
+    :looks ".white"
+    :sound ".white"
+    :control ".white"
+    :variables ".white"
+    :operators ".white"
+    :sensing ".white")
+  "X11 color names of the text used for different block types.")
+
+(defun block-color (color &optional (part :background))
+  (let ((colors (ecase part
+		  (:background *block-colors*)
+		  (:highlight *block-highlight-colors*)
+		  (:shadow *block-shadow-colors*)
+		  (:foreground *block-text-colors*))))
+    (getf colors color)))
+
+(defparameter *small-block-corners* '(:top-left ".top-left-corner-small"
+				      :top-right ".top-right-corner-small"
+				      :bottom-right ".bottom-right-corner-small"
+				      :bottom-left ".bottom-left-corner-small"))
+
+(defparameter *medium-block-corners* '(:top-left ".top-left-corner-medium"
+				       :top-right ".top-right-corner-medium"
+				       :bottom-right ".bottom-right-corner-medium"
+				       :bottom-left ".bottom-left-corner-medium"))
+
+(defparameter *default-block-corner-size* :small)
+
+(defun block-corner (corner &optional (size *default-block-corner-size*))
+  (let ((images (ecase size
+		  (:medium *medium-block-corners*)
+		  (:small *small-block-corners*))))
+    (getf images corner)))
+
+(defun block-corner-size (&optional (size *default-block-corner-size*))
+  (ecase size
+    (:small 5)
+    (:medium 9)))
+
+(define-method count block () 1)
+
+(define-method move block (x y)
+  (setf <x> x)
+  (setf <y> y))
+
+(define-method hit block (click-x click-y)
+  (when (within-extents click-x click-y 
+			x y 
+			(+ x width)
+			(+ y height))
+    self))
+
+(define-method arrange block ()
+  (let ((font *block-font*)
+	(line (format nil "~{~a~^ ~}" <arguments>)))
+    (setf <width> (+ (* 2 *dash-size*) ;; spacing
+		     (font-text-extents line font)))
+    (setf <height> (font-height font))))
+
+(define-method get-argument block (index)
+  (nth index <arguments>))
+
+(define-method set-argument block (index value)
+    (setf (nth index <arguments>) value)
+    (/arrange self))
+
+(define-method execute block (recipient)
+  "Send the appropriate message to the RECIPIENT object."
+  (apply #'iosketch:send nil <operation> recipient <arguments>))
+
+(define-method describe block ()
+  "Show name and comprehensive help for this block.")
+
+(define-method draw block (image)
+  (with-field-values (x y type height width schema) self
+    (let* ((foreground (block-color self :foreground))
+	   (background (block-color self :background))
+	   (highlight (block-color self :highlight))
+	   (shadow (block-color self :shadow))
+	   (space *space-size*)
+	   (label (format nil "~{~a~^ ~}" <arguments>))
+	   (box-width (+ space width space))
+	   (box-height (+ space height space))
+	   (corner-size (block-corner-size))
+	   (bottom (+ y box-height))
+	   (right (+ x box-width)))
+      (draw-box x y box-width box-height
+		:color background
+		:stroke-color shadow
+		:destination image)
+      (draw-line 0 0 right 0 
+		 :color highlight
+		 :destination image)
+      (draw-line 0 0 0 bottom
+		 :color highlight
+		 :destination image)
+      (draw-string-blended label 
+			   (+ x space)
+			   (+ y space)
+			   :foreground foreground
+			   :background background
+			   :destination image
+			   :font *block-font*)
+      (draw-image (block-corner :top-left)
+		  x y :destination image)
+      (draw-image (block-corner :top-right)
+		  (- right corner-size) y 
+		  :destination image)
+      (draw-image (block-corner :bottom-right)
+		  (- right corner-size)
+		  (- bottom corner-size)
+		  :destination image)
+      (draw-image (block-corner :bottom-left)
+		  x (- bottom corner-size)
+		  :destination image))))
+
+;;; Predefined blocks for sending various common messages 
 
 (defblock move
-  (topic :initform :motion)
-  (token-types :initform '(:direction :distance :unit))
-  (tokens :initform '(:north 10 :pixels)))
+  (type :initform :motion)
+  (schema :initform '(:direction :integer :unit))
+  (arguments :initform '(:north 10 :pixels)))
 
 (defblock move-to
-  (topic :initform :motion)
-  (token-types :initform '(:unit :integer :integer))
-  (tokens :initform '(:space 0 0)))
+  (type :initform :motion)
+  (schema :initform '(:unit :integer :integer))
+  (arguments :initform '(:space 0 0)))
 
-(defblock play-music 
-  (topic :initform :sound)
-  (token-types :initform '(:string :keyword :keyword))
-  (tokens :initform '("fanfare" :loop :no)))
+(defblock music 
+  (type :initform :sound)
+  (schema :initform '(:string :keyword :keyword))
+  (arguments :initform '("fanfare" :loop :no)))
 
-;;; Executing programs composed of blocks
+(defblock when 
+  (type :initform :control)
+  (schema :initform '(:predicate :block))
+  (arguments :initform '(nil nil)))
 
-;; TODO rethink use of cells? nested sprites instead?
+(defblock if 
+  (type :initform :control)
+  (schema :initform '(:predicate :block :block))
+  (arguments :initform '(nil nil nil)))
 
-;; Execution of a program begins with an event. If an event block's
-;; name (for example "do mouse" or "do timer") matches a real event
-;; (such as mouse movement, message, or button press), we begin
-;; executing the program at that event block's (row, column)
-;; location. Move downwards one space to the block immediately beneath
-;; the triggered event and execute that, and so on.
-
-;; Horizontal indentation by one space to the right indicates
-;; expression nesting depth as is usual. Instead of textual whitespace
-;; characters, here we indent with blank program spaces that have no
-;; blocks in them. If we find a blank cell, look for something
-;; indented one space; if so, that's interpreted as a BEGIN, etc.
-
-;; A program may contain any number of event blocks with corresponding
-;; subprograms, i.e. blocks arranged in a column (possibly with
-;; indentation at parts) below named event blocks. The ability to
-;; trigger events manually from a block means that local subroutines
-;; within a program are easy to construct and is done in the same way
-;; as responding to system events. Example:
-
-;; [do congratulate]
-;; [say "Congratulations, you clicked the object."]
-;;
-;; [do click]
-;; [music "fanfare"]
-;; [congratulate]
-
-;; The explanation is that [do foo] expands into (define-method foo...
-
-;; The final displayed dimensions of a block do not impact the program
-;; itself in any way; the indentation is solely defined by a block's
-;; grid location in the abstract, spreadsheet-like 2D space of the
-;; program. (See forms.lisp) To prevent collisions, onscreen column
-;; widths are dynamically adjusted according to block display result
-;; widths.
-
-;; First-class functions are supported (as in Scratch/BYOB) but
-;; instead of little graphical sockets in the block that you plug
-;; other blocks into, any block arguments are instead placed to the
-;; right of the original block. Leftward << are shown at the right
-;; edge of such blocks to indicate the presence and number of block
-;; arguments.
-
-;; TODO Balloon values.
-
-;; An event "do" block with no name token is an anonymous subprogram.
-;; It enables this syntax for conditionals:
-;;
-;;   [when <condition>] [move west 10 pixels]
-;;
-;;   [when <condition>] [explode]
-;;
-;;   [unless <condition>] [do]
-;;                          [play-sound "beep"]
-;;                          [music "scary"]
-;;
-;;   [if <condition>] [do]                        >>> [do]
-;;                      [move north 1 space]            [move south 1 space]
-;;                      [say "hello!" for 2 seconds]    [........
-;;
-;;   [when <condition>] [run] [
-;;
-;;
-;; NOTE: The ">>>" above indicates that more than one column may
-;; intervene between the "then" and "else" clauses in that row.
-;; TODO: scan for all required block args first?
-
-;; TODO not based on pages/rows: instead do it CLFRAME style
-
-(define-prototype program (:parent iomacs:=page=)
-  ;; grid location of block being executed, if any
-  (owner :documentation "Game object associated with script.")
-  (row :initform 0) 
-  (column :initform 0)
-  positions
-  )
+(defblock do
+  (type :initform :event)
+  (schema :initform '(:symbol :body))
+  (body :initform nil)
+  (arguments :initform nil))
 
 (defun is-event-block (thing)
   (and (not (null thing))
-       (iomacs:object-p thing)
+       (iosketch:object-p thing)
        (has-field :operation thing)
        (eq :do (field-value :operation thing))))
 
-(define-method begin program (start-row start-column)
-  (with-fields (row column owner positions height width grid) self
-    (push )))
+;;; Composing blocks into larger programs
 
-(define-method end program)
+(define-prototype script ()
+  (blocks :initform ()
+	  :documentation "List of blocks in the script.")
+  (variables :initform (make-hash-table :test 'eq)))
 
-(define-method do-event program (event-name)
-  (with-fields (row column owner positions height width grid) self
-    (let ((event-block 
-	   (block searching
-	     (dotimes (i height) 
-	       (dotimes (j width)
-		 (let ((it (/top-cell self i j)))
-		   (when (and (is-event-block it)
-			      ;; is it a DO block?
-			      (eq :do (field-value :operation it)
-				  (return-from searching it))))))))))
-      (setf row (field-value :row event-block))
-      (setf column (field-value :column event-block))
-      ;; move down to first block  
-      (incf row)
-      ())))
-      
-;; when you reach a blank square moving down:
-;;        reduce nesting by 1 level
-;;        move left until non-blank is found
-;;        begin executing 
-      
-      
+(defvar *script*)
 
+(define-method add script (block x y)
+  (with-fields (blocks) self
+    (setf blocks (adjoin block blocks))
+    (/move block x y)))
+
+(define-method delete script (block)
+  (with-fields (blocks) self
+    (setf blocks (delete block blocks))))
+
+(define-method set script (var value)
+  (setf (gethash var <variables>) value))
+
+(define-method get script (var)
+  (gethash var <variables>))
+
+(defun script-variable (var-name)
+  (/get *script* var-name))
+
+(defun set-script-variable (var-name value)
+  (/set *script* var-name value))
+
+(defsetf script-variable set-script-variable)
+
+(defmacro with-script-variables (vars &rest body)
+  (labels ((make-clause (sym)
+	     `(,sym (script-variable ,(make-keyword sym)))))
+    (let* ((symbols (mapcar #'make-non-keyword vars))
+	   (clauses (mapcar #'make-clause symbols)))
+      `(symbol-macrolet ,clauses ,@body))))
+
+;;; Script editor widget
+
+(defwidget editor
+  (script :initform nil 
+	  :documentation "The IOSKETCH:=SCRIPT= object being edited.")
+  (selection :initform ()
+  	     :documentation "Subset of selected blocks.")
+  (focus :initform nil
+  	 :documentation "Block with current focus.")
+  (drag :initform nil 
+  	:documentation "Block being dragged, if any.")
+  (modified :initform nil 
+  	    :documentation "Non-nil when modified since last save."))
+
+(define-method render editor (image)
+  (with-fields (script selection focus drag modified) self   
+    (when script
+      (with-fields (blocks) script
+	(/clear self :color *background-color*)
+	(map nil #'/arrange blocks)
+	(map nil #'/draw blocks)))))
+      
 ;;; blocks.lisp ends here

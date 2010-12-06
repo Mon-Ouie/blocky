@@ -1,4 +1,4 @@
-;;; path.lisp --- A* pathfinding for IOMACS
+;;; path.lisp --- A* pathfinding for IOSKETCH
 
 ;; Copyright (C) 2009  David O'Toole
 
@@ -27,7 +27,7 @@
 
 ;;; Code:
 
-(in-package :iomacs)
+(in-package :iosketch)
 
 (defstruct path
   world ;; Pointer to associated world. 

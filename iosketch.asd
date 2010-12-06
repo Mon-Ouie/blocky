@@ -2,12 +2,12 @@
 
 ;; ASDF Manual: http://constantly.at/lisp/asdf/
 
-(defpackage :iomacs-asd)
+(defpackage :iosketch-asd)
 
-(in-package :iomacs-asd)
+(in-package :iosketch-asd)
 
-(asdf:defsystem iomacs
-  :name "iomacs"
+(asdf:defsystem iosketch
+  :name "iosketch"
   :version "1.99"
   :maintainer "David O'Toole"
   :author "David O'Toole"
@@ -20,7 +20,7 @@
 	       :lispbuilder-sdl-gfx
 	       :lispbuilder-sdl-ttf
 	       :lispbuilder-sdl-mixer)
-  :components ((:file "iomacs")
+  :components ((:file "iosketch")
 	       (:file "prototypes")
 	       (:file "math")
 	       (:file "rgb")
