@@ -52,7 +52,7 @@
 (defwidget frame
   (active-color :initform ".red")
   (inactive-color :initform ".gray20")
-  (pane-widths :initform '(20 30 50))
+  (pane-widths :initform '(50 30 20))
   (panes :initform nil)
   (focus :initform 1))
 

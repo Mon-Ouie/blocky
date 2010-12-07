@@ -1744,7 +1744,7 @@ The default destination is the main window."
 (defun draw-aa-circle (x y radius &key 
 		   (color ".white")
 		    destination)
-  (sdl:draw-aa-circle-* x y radius :surface destination :color (find-resource-object color)))
+  (sdl-gfx:draw-aa-circle-* x y radius :surface destination :color (find-resource-object color)))
 
 ;;; Millisecond clock
 

@@ -104,7 +104,7 @@
   "X11 color names of highlights on the different block types.")
 
 (defparameter *block-shadow-colors* 
-  '(:motion ".slate blue"
+  '(:motion ".steel blue"
     :system ".gray50"
     :event ".gray70"
     :socket ".gray45"
@@ -140,29 +140,6 @@
 		  (:shadow *block-shadow-colors*)
 		  (:foreground *block-foreground-colors*))))
     (getf colors type)))
-
-(defparameter *small-block-corners* '(:top-left ".top-left-corner-small"
-				      :top-right ".top-right-corner-small"
-				      :bottom-right ".bottom-right-corner-small"
-				      :bottom-left ".bottom-left-corner-small"))
-
-(defparameter *medium-block-corners* '(:top-left ".top-left-corner-medium"
-				       :top-right ".top-right-corner-medium"
-				       :bottom-right ".bottom-right-corner-medium"
-				       :bottom-left ".bottom-left-corner-medium"))
-
-(defparameter *default-block-corner-size* :small)
-
-(defun block-corner (corner &optional (size *default-block-corner-size*))
-  (let ((images (ecase size
-		  (:medium *medium-block-corners*)
-		  (:small *small-block-corners*))))
-    (getf images corner)))
-
-(defun block-corner-size (&optional (size *default-block-corner-size*))
-  (ecase size
-    (:small 5)
-    (:medium 9)))
 
 (define-method count block () 1)
 
@@ -206,77 +183,72 @@
 	   (background (block-color type :background))
 	   (highlight (block-color type :highlight))
 	   (shadow (block-color type :shadow))
-	   (space *dash-size*)
+	   (dash *dash-size*)
 	   (label (string-downcase (format nil "~{~a~^ ~}" (cons <operation> <arguments>))))
-	   (corner (block-corner-size))
+	   (radius *dash-size*)
+	   (diameter (* 2 radius))
 	   (bottom (+ y height))
 	   (right (+ x width)))
-      (draw-box x y width height
-		:color background
-		:stroke-color background
-		:destination image)
-      (draw-string-blended label 
-			   (+ x (* 3 space))
-			   (+ y space)
-			   :foreground foreground
-			   :destination image
-			   :font *block-font*)
-      ;; top left
-      (draw-resource-image (block-corner :top-left)
-			   x y :destination image)
-      (draw-line (+ x corner) y
-		 x (+ y corner)
-		 :color highlight
-		 :destination image)
-      ;; top
-      (draw-line (+ x corner) y
-		 (- right corner) y
-		 :color highlight
-		 :destination image)
-      ;; top right
-      (draw-resource-image (block-corner :top-right)
-			   (- right corner) y 
-			   :destination image)
-      (draw-line (- right corner) y
-		 right (+ y corner)
-		 :color background
-		 :destination image)
-      ;; right
-      (draw-line right (+ y corner)
-		 right (- bottom corner)
-		 :color shadow
-		 :destination image)
-      ;; bottom right
-      (draw-resource-image (block-corner :bottom-right)
-			   (- right corner)
-			   (- bottom corner)
-			   :destination image)
-      (draw-line (- right corner) bottom
-		 right (- bottom corner)
-		 :color shadow
-		 :destination image)
-      (draw-line (- right corner 1) bottom
-		 (- right 1) (- bottom corner)
-		 :color background
-		 :destination image)
-      ;; bottom 
-      (draw-line (+ x corner) bottom
-		 (- right corner 1) bottom
-		 :color shadow
-		 :destination image)
-      ;; bottom left
-      (draw-resource-image (block-corner :bottom-left)
-			   x (- bottom corner)
-			   :destination image)
-      (draw-line x (- bottom corner)
-		 (+ x corner) bottom
-		 :color background 
-		 :destination image)
-      ;; left 
-      (draw-line x (+ y corner) 
-		 x (- bottom corner)
-		 :color highlight
-		 :destination image))))
+      (labels ((circle (x y &optional color)
+		 (draw-aa-circle x y radius 
+				 :color (or color background)
+				 :destination image))
+	       (disc (x y &optional color)
+		 (draw-filled-circle x y radius
+				     :color (or color background)
+				     :destination image))
+	       (line (x0 y0 x1 y1 &optional color)
+		 (draw-line x0 y0 x1 y1 
+			    :color (or color background)
+			    :destination image))
+	       (box (x y r b &optional color)
+		 (draw-box x y (- r x) (- b y)
+			   :color (or color background)
+			   :stroke-color (or color background)
+			   :destination image))
+	       (text (x y string)
+		 (draw-string-blended string x y
+				      :foreground foreground
+				      :destination image
+				      :font *block-font*)))
+	;; top left
+	(disc (+ x radius) (+ y radius))
+	(circle (+ x radius) (+ y radius) highlight)
+	;; top right
+	(disc (- right radius 1) (+ y radius))
+	;; bottom right
+	(disc (- right radius 1) (- bottom radius 1))
+	(circle (- right radius 1) (- bottom radius 1) shadow)
+	;; bottom left
+	(disc (+ x radius) (- bottom radius 1))
+	(circle (+ x radius) (- bottom radius 1))
+	;; bottom 
+	(box (+ x radius) (- bottom diameter)
+	     (- right radius 1) bottom)
+	(line (+ x radius 1) bottom
+	      (- right radius 1) bottom shadow)
+	;; top
+	(box (+ x radius) y
+	     (- right radius) (+ y diameter))
+	(line (+ x radius 1) y
+	      (- right radius 1) y highlight)
+	;; left 
+	(box x (+ y radius) 
+	     (+ x diameter) (- bottom radius))
+	(line x (+ y radius 1)
+	      x (- bottom radius 1) highlight)
+	;; right
+	(box (- right diameter) (+ y radius)
+	     right (- bottom radius))
+	(line right (+ y radius 1)
+	      right (- bottom radius 1) shadow)
+	;; content area
+	(box (+ x radius) (+ y radius)
+	     (- right radius) (- bottom radius))
+	;; content
+	(text (+ x (* 3 dash))
+	      (+ y dash)
+	      label)))))
 
 ;;; Predefined blocks for sending various common messages 
 
@@ -387,7 +359,8 @@
 	  (dolist (block blocks)
 	    (/arrange block)))
 	(dolist (block blocks)
-	  (/draw block image))))))
+	  (/draw block image))
+	(when drag (/draw drag image))))))
 
 (define-method mouse-down editor (x y &optional button)
   (with-fields (script selection focus drag modified) self
