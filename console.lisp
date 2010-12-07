@@ -1736,6 +1736,16 @@ The default destination is the main window."
 		    destination)
   (sdl:draw-circle-* x y radius :surface destination :color (find-resource-object color)))
 
+(defun draw-filled-circle (x y radius &key 
+			   (color ".white")
+			   destination)
+  (sdl-gfx:draw-filled-circle-* x y radius :surface destination :color (find-resource-object color)))
+
+(defun draw-aa-circle (x y radius &key 
+		   (color ".white")
+		    destination)
+  (sdl:draw-aa-circle-* x y radius :surface destination :color (find-resource-object color)))
+
 ;;; Millisecond clock
 
 (defun get-ticks ()

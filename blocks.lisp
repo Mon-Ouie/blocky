@@ -40,14 +40,14 @@
 ;; objects and this involves nested blocks in the diagram.
 
 (define-prototype block ()
-  (x :documentation "Integer X coordinate of this block's position.")
-  (y :documentation "Integer Y coordinate of this block's position.")
-  (width :documentation "Cached pixel width of block.")
-  (height :documentation "Cached pixel height of block.")
   (arguments :documentation "List of block argument values.")
   (schema :documentation "List of CL type specifiers for corresponding expressions in <arguments>.")
   (operation :initform "block" :documentation "Symbol name of block's operation, i.e. message key.")
-  (type :documentation "Type name of block. See also `*block-types*'."))
+  (type :documentation "Type name of block. See also `*block-types*'.")
+  (x :documentation "Integer X coordinate of this block's position.")
+  (y :documentation "Integer Y coordinate of this block's position.")
+  (width :documentation "Cached width of block.")
+  (height :documentation "Cached height of block."))
 
 (defmacro defblock (name &body args)
   `(define-prototype ,name (:parent =block=)
@@ -55,8 +55,13 @@
      ,@args))
 
 (defparameter *argument-types*
-  '(:block :sprite :integer :float :number 
+  '(:block :body :sprite :integer :float :number 
     :string :symbol :unit :direction :body))
+
+(defparameter *display-widgets* nil)
+  ;; '(:integer =integer=
+  ;;   :float =float=
+  ;;   :number =number=))
 
 (defparameter *block-types*
   '(:system :motion :event :message :looks :sound 
@@ -72,6 +77,7 @@
   '(:motion ".cornflower blue"
     :system ".gray50"
     :event ".gray80"
+    :socket ".gray60"
     :comment ".grey70"
     :looks ".purple"
     :sound ".orchid"
@@ -88,6 +94,7 @@
     :event ".gray90"
     :comment ".grey90"
     :looks ".medium orchid"
+    :socket ".gray80"
     :sound ".plum"
     :message ".sienna2"
     :control ".gold"
@@ -100,6 +107,7 @@
   '(:motion ".slate blue"
     :system ".gray50"
     :event ".gray70"
+    :socket ".gray45"
     :comment ".grey40"
     :looks ".dark orchid"
     :sound ".violet red"
@@ -115,6 +123,7 @@
     :system ".white"
     :event ".gray40"
     :comment ".gray30"
+    :socket ".gray20"
     :message ".white"
     :looks ".white"
     :sound ".white"
@@ -365,7 +374,7 @@
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget where last started.")
   (drag-offset :initform nil
-	       :documentation "A cons (X . Y) of mouse click location on block.")
+	       :documentation "A cons (X . Y) of mouse click location on dragged block.")
   (modified :initform nil 
   	    :documentation "Non-nil when modified since last save."))
 

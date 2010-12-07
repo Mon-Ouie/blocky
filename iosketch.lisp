@@ -60,6 +60,7 @@
 	   keyboard-released-p keyboard-time-in-current-state
 	   keyboard-time-in-previous-state *timesteps* keyboard-down-p
 	   keyboard-keys-down keyboard-modifier-down-p keyboard-modifiers
+	   draw-filled-circle draw-aa-circle
 	   get-keys *module-package-name* module-package-name
 	   *form-command-handler-function* =data-cell= =var-cell= =option-cell=
 	   =toggle-cell= =event-cell= =buffer-cell= =comment-cell= install-widget
