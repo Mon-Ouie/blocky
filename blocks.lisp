@@ -47,25 +47,34 @@
   (x :documentation "Integer X coordinate of this block's position.")
   (y :documentation "Integer Y coordinate of this block's position.")
   (width :documentation "Cached width of block.")
-  (height :documentation "Cached height of block."))
+  (height :documentation "Cached height of block.")
+  (widgets :initform nil)
+  (excluded-fields :initform '(:widgets)))
+
+(define-method initialize block ()
+  (setf <widgets> (make-list (length <schema>))))
+
+(define-method deserialize block ()
+  (/initialize self))
 
 (defmacro defblock (name &body args)
   `(define-prototype ,name (:parent =block=)
      (operation :initform ,(make-keyword name))
      ,@args))
 
-(defparameter *argument-types*
-  '(:block :body :sprite :integer :float :number 
-    :string :symbol :unit :direction :body))
-
-(defparameter *display-widgets* nil)
-  ;; '(:integer =integer=
-  ;;   :float =float=
-  ;;   :number =number=))
-
 (defparameter *block-types*
   '(:system :motion :event :message :looks :sound 
     :control :comment :sensing :operators :variables))
+
+(defparameter *argument-types*
+  '(:block :body :integer :float :number :string :symbol))
+
+(defparameter *display-widgets*
+   '(:integer =integer=
+     :float =float=
+     :number =number=
+     :string =textbox=
+     :symbol =option=))
 
 (defparameter *background-color* ".white")
 
@@ -186,8 +195,8 @@
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
 
-(define-method draw block (image)
-  (with-field-values (x y type height width schema) self
+(defmacro with-block-drawing (&body body)
+  `(with-field-values (x y type image height width schema) self
     (let* ((foreground (block-color type :foreground))
 	   (background (block-color type :background))
 	   (highlight (block-color type :highlight))
@@ -202,7 +211,7 @@
 		 (draw-aa-circle x y radius 
 				 :color (or color background)
 				 :destination image))
-       (disc (x y &optional color)
+	       (disc (x y &optional color)
 		 (draw-filled-circle x y radius
 				     :color (or color background)
 				     :destination image))
@@ -220,14 +229,20 @@
 				      :foreground foreground
 				      :destination image
 				      :font *block-font*)))
+	,@body))))
+
+(define-method draw-patch (x0 y0 x1 y1 &optional depressed)
+    (with-block-drawing
+      (let ((bevel (if depressed shadow highlight))
+	    (chisel (if depressed highlight shadow)))
 	;; top left
 	(disc (+ x radius) (+ y radius))
-	(circle (+ x radius) (+ y radius) highlight)
+	(circle (+ x radius) (+ y radius) bevel)
 	;; top right
 	(disc (- right radius 1) (+ y radius))
 	;; bottom right
 	(disc (- right radius 1) (- bottom radius 1))
-	(circle (- right radius 1) (- bottom radius 1) shadow)
+	(circle (- right radius 1) (- bottom radius 1) chisel)
 	;; bottom left
 	(disc (+ x radius) (- bottom radius 1))
 	(circle (+ x radius) (- bottom radius 1))
@@ -235,35 +250,64 @@
 	(box (+ x radius) (- bottom diameter)
 	     (- right radius 1) bottom)
 	(line (+ x radius 1) bottom
-	      (- right radius 1) bottom shadow)
+	      (- right radius 1) bottom chisel)
 	;; top
 	(box (+ x radius) y
 	     (- right radius) (+ y diameter))
 	(line (+ x radius 1) y
-	      (- right radius 1) y highlight)
+	      (- right radius 1) y bevel)
 	;; left 
 	(box x (+ y radius) 
 	     (+ x diameter) (- bottom radius))
 	(line x (+ y radius 1)
-	      x (- bottom radius 1) highlight)
+	      x (- bottom radius 1) bevel)
 	;; right
 	(box (- right diameter) (+ y radius)
 	     right (- bottom radius))
 	(line right (+ y radius 1)
-	      right (- bottom radius 1) shadow)
+	      right (- bottom radius 1) chisel)
 	;; content area
 	(box (+ x radius) (+ y radius)
-	     (- right radius) (- bottom radius))
-	;; content
-	(text (+ x (* 3 dash))
-	      (+ y dash)
-	      label)))))
+	     (- right radius) (- bottom radius)))))
 
-;;; Predefined blocks for sending various common messages 
+(define-method draw-socket block (x0 y0 x1 y1)
+  (/draw-patch x0 y0 x1 y1 :depressed))
+    
+(define-method draw-background block ()
+  (with-fields (x y width height) self
+    (/draw-patch x y (+ x width) (+ y height))))
+
+;; (define-method draw-arguments block () 
+;;   (with-block-drawing 
+;;     (text (+ <x> (* 3 *dash-size*))
+;; 	  (+ <y> *dash-size*)
+;; 	  (/line-string self))))
+  
+
+
+(define-method draw block (image)
+  (/draw-background self)
+  (/draw-arguments self))
+    
+;;; Predefined blocks 
+
+(defblock do
+  (type :initform :event)
+  (schema :initform '(:body))
+  (arguments :initform (nil)))
+
+;; (define-method hit do (mouse-x mouse-y)
+  
+;;   )
+
+;; (define-method drop do (x y block)
+  
+;;   ) 
+ 
 
 (defblock move
   (type :initform :motion)
-  (schema :initform '(:direction :integer :unit))
+  (schema :initform '(:symbol :integer :integer))
   (arguments :initform '(:north 10 :pixels)))
 
 (defblock move-to
@@ -283,17 +327,17 @@
 
 (defblock when 
   (type :initform :control)
-  (schema :initform '(:predicate :block))
+  (schema :initform '(:block :block))
   (arguments :initform '(nil nil)))
 
 (defblock unless
   (type :initform :control)
-  (schema :initform '(:predicate :block))
+  (schema :initform '(:block :block))
   (arguments :initform '(nil nil)))
 
 (defblock if 
   (type :initform :control)
-  (schema :initform '(:predicate :block :block))
+  (schema :initform '(:block :block :block))
   (arguments :initform '(nil nil nil)))
 
 (defblock start
@@ -311,12 +355,6 @@
   (schema :initform '(:number :number))
   (arguments :initform '(nil nil)))
 
-(defblock do
-  (type :initform :event)
-  (schema :initform '(:symbol :body))
-  (body :initform nil)
-  (arguments :initform nil))
-
 (defun is-event-block (thing)
   (and (not (null thing))
        (iosketch:object-p thing)
@@ -326,7 +364,7 @@
 ;;; Composing blocks into larger programs
 
 (define-prototype script ()
-  (blocks :initform ()
+  (blocks :initform '()
 	  :documentation "List of blocks in the script.")
   (variables :initform (make-hash-table :test 'eq)))
 
@@ -422,7 +460,6 @@
     (setf drag-start nil)
     (setf drag-offset nil)
     (setf drag nil)))
-
 
 ;; (define-method drag editor (x y))
 
