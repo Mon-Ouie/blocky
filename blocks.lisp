@@ -243,9 +243,13 @@
 			   (- right corner)
 			   (- bottom corner)
 			   :destination image)
+      (draw-line (- right corner) bottom
+		 right (- bottom corner)
+		 :color shadow
+		 :destination image)
       (draw-line (- right corner 1) bottom
 		 (- right 1) (- bottom corner)
-		 :color shadow
+		 :color background
 		 :destination image)
       ;; bottom 
       (draw-line (+ x corner) bottom
