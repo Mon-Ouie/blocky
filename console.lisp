@@ -287,7 +287,7 @@ for backward-compatibility."
 
 ;;; Physics timestep callback
 
-(defvar *dt* 10)
+(defvar *dt* 20)
 
 (defvar *physics-function* nil)
 
@@ -686,27 +686,17 @@ display."
 					 :flags sdl:SDL-RESIZABLE
 					 :position *window-position*))
 	(:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
-			     nil)
+			     (let ((widget (hit-widgets x y *active-widgets*)))
+			       (when (and widget (has-method :mouse-move widget))
+				 (/mouse-move widget x y))))
 	(:mouse-button-down-event (:button button :state state :x x :y y)
-				  (let ((object (hit-widgets x y *active-widgets*)))
-				    (cond ((null object)
-					   (message ""))
-					  ((eq t object)
-					   nil)
-					  (t 
-					   ;; deliver messages in a queued environment
-					   (sdl:clear-display sdl:*black*)
-					   (when *world*
-					     (when (field-value :message-queue *world*)
-					       (with-message-queue (field-value :message-queue *world*)
-						 (case button
-						   (1 (when (has-method :select object) 
-							(send nil :activate object)))
-						   (3 (when (has-method :activate object) 
-							(send nil :activate object)))))
-					       (send nil :process-messages *world*)))))))
+				  (let ((widget (hit-widgets x y *active-widgets*)))
+				    (when (and widget (has-method :mouse-down widget))
+				      (/mouse-down widget x y button))))
 	(:mouse-button-up-event (:button button :state state :x x :y y)
-				nil)
+				  (let ((widget (hit-widgets x y *active-widgets*)))
+				    (when (and widget (has-method :mouse-up widget))
+				      (/mouse-up widget x y button))))
 	(:joy-button-down-event (:which which :button button :state state)
 				(when (assoc button *joystick-mapping*)
 				  (update-joystick button state)
@@ -1902,5 +1892,16 @@ and its .startup resource is loaded."
 	   (find-resource *startup*)
 	   (run-main-loop)))
     (sdl:quit-sdl)))
+				    ;; ;; deliver messages in a queued environment
+				    ;; 	   (sdl:clear-display sdl:*black*)
+				    ;; 	   (when *world*
+				    ;; 	     (when (field-value :message-queue *world*)
+				    ;; 	       (with-message-queue (field-value :message-queue *world*)
+				    ;; 		 (case button
+				    ;; 		   (1 (when (has-method :select object) 
+				    ;; 			(send nil :activate object)))
+				    ;; 		   (3 (when (has-method :activate object) 
+				    ;; 			(send nil :activate object)))))
+				    ;; 	       (send nil :process-messages *world*)))))))
 
 ;;; console.lisp ends here

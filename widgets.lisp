@@ -149,7 +149,6 @@ possibly return one of them."
 			  x0 y0 
 			  (+ x0 <width>)
 			  (+ y0 <height>))
-      (message "~S" (object-name (object-parent self)))
       self)))
 
 ;;; Stack layout

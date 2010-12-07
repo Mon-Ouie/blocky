@@ -150,7 +150,7 @@
     (ecase newpos
       (0 (/palette-pane self))
       (1 (/script-pane self))
-      (2 (/world-page self)))))
+      (2 (/world-pane self)))))
 
 (define-method render frame ()
   (with-field-values (x y width image height panes visible pane-widths) self

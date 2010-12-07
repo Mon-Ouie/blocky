@@ -620,10 +620,10 @@ was invoked."
 						  "/"
 						  (symbol-name method-name))))
 	 (queue-defun-symbol (intern (concatenate 'string
-						  "/queue/"
+						  "/QUEUE/"
 						  (symbol-name method-name))))
 	 (parent-defun-symbol (intern (concatenate 'string
-						  "/parent/"
+						  "/PARENT/"
 						  (symbol-name method-name)))))
     (let ((name (gensym)))
       `(progn 

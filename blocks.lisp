@@ -172,9 +172,10 @@
 (define-method arrange block ()
   (let ((font *block-font*)
 	(line (string-downcase (format nil "~{~a~^ ~}" (cons <operation> <arguments>)))))
-    (setf <width> (+ (* 4 *dash-size*) ;; spacing
+    (setf <width> (+ (* 6 *dash-size*) ;; spacing
 		     (font-text-extents line font)))
-    (setf <height> (font-height font))))
+    (setf <height> (+ (* 2 *dash-size*)
+		      (font-height font)))))
 
 (define-method get-argument block (index)
   (nth index <arguments>))
@@ -198,12 +199,10 @@
 	   (shadow (block-color type :shadow))
 	   (space *dash-size*)
 	   (label (string-downcase (format nil "~{~a~^ ~}" (cons <operation> <arguments>))))
-	   (box-width (+ space width space))
-	   (box-height (+ space height space))
 	   (corner (block-corner-size))
-	   (bottom (+ y box-height))
-	   (right (+ x box-width)))
-      (draw-box x y box-width box-height
+	   (bottom (+ y height))
+	   (right (+ x width)))
+      (draw-box x y width height
 		:color background
 		:stroke-color background
 		:destination image)
@@ -236,7 +235,7 @@
       ;; right
       (draw-line right (+ y corner)
 		 right (- bottom corner)
-		 :color background
+		 :color shadow
 		 :destination image)
       ;; bottom right
       (draw-resource-image (block-corner :bottom-right)
@@ -363,6 +362,10 @@
   	 :documentation "Block with current focus.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
+  (drag-start :initform nil
+	      :documentation "A cons (X . Y) of widget where last started.")
+  (drag-offset :initform nil
+	       :documentation "A cons (X . Y) of mouse click location on block.")
   (modified :initform nil 
   	    :documentation "Non-nil when modified since last save."))
 
@@ -371,15 +374,42 @@
     (when script
       (with-fields (blocks) script
 	(/clear self *background-color*)
-	(dolist (block blocks)
-	  (/arrange block))
+	(unless drag 
+	  (dolist (block blocks)
+	    (/arrange block)))
 	(dolist (block blocks)
 	  (/draw block image))))))
 
-(define-method click editor (x y))
+(define-method mouse-down editor (x y &optional button)
+  (with-fields (script selection focus drag modified) self
+    (when script 
+      (with-fields (blocks) script
+	(labels ((hit (b)
+		   (/hit b x y)))
+	  (let ((block (some #'hit blocks)))
+	    (setf drag block)
+	    (setf focus block)))))))
 
-(define-method drag editor (x y))
+(define-method mouse-move editor (mouse-x mouse-y)
+  (with-fields (script selection focus drag-start drag modified) self
+    (when drag
+      (with-fields (x y) drag
+	(when (null drag-start)
+	  (setf drag-start (cons x y))
+	  (setf drag-offset (cons (- mouse-x x)
+				  (- mouse-y y))))
+	(destructuring-bind (x0 . y0) drag-offset
+	  (/move drag (- mouse-x x0) (- mouse-y y0)))))))
 
-(define-method drop editor (x y))
+(define-method mouse-up editor (x y &optional button)
+  (with-fields (script drag-start selection focus drag modified) self
+    (setf drag-start nil)
+    (setf drag-offset nil)
+    (setf drag nil)))
+
+
+;; (define-method drag editor (x y))
+
+;; (define-method drop editor (x y))
       
 ;;; blocks.lisp ends here
