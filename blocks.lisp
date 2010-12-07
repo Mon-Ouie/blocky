@@ -71,7 +71,7 @@
 (defparameter *block-colors* 
   '(:motion ".cornflower blue"
     :system ".gray50"
-    :event ".white"
+    :event ".gray80"
     :comment ".grey70"
     :looks ".purple"
     :sound ".orchid"
@@ -85,7 +85,7 @@
 (defparameter *block-highlight-colors*
   '(:motion ".sky blue"
     :system ".gray80"
-    :event ".white"
+    :event ".gray90"
     :comment ".grey90"
     :looks ".medium orchid"
     :sound ".plum"
@@ -97,9 +97,9 @@
   "X11 color names of highlights on the different block types.")
 
 (defparameter *block-shadow-colors* 
-  '(:motion ".dark slate blue"
+  '(:motion ".slate blue"
     :system ".gray50"
-    :event ".white"
+    :event ".gray70"
     :comment ".grey40"
     :looks ".dark orchid"
     :sound ".violet red"
@@ -113,7 +113,7 @@
 (defparameter *block-foreground-colors* 
   '(:motion ".white"
     :system ".white"
-    :event ".gray50"
+    :event ".gray40"
     :comment ".gray30"
     :message ".white"
     :looks ".white"
@@ -171,8 +171,8 @@
 
 (define-method arrange block ()
   (let ((font *block-font*)
-	(line (format nil "~{~a~^ ~}" <arguments>)))
-    (setf <width> (+ (* 2 *dash-size*) ;; spacing
+	(line (string-downcase (format nil "~{~a~^ ~}" (cons <operation> <arguments>)))))
+    (setf <width> (+ (* 4 *dash-size*) ;; spacing
 		     (font-text-extents line font)))
     (setf <height> (font-height font))))
 
@@ -197,40 +197,74 @@
 	   (highlight (block-color type :highlight))
 	   (shadow (block-color type :shadow))
 	   (space *dash-size*)
-	   (label (format nil "~{~a~^ ~}" <arguments>))
+	   (label (string-downcase (format nil "~{~a~^ ~}" (cons <operation> <arguments>))))
 	   (box-width (+ space width space))
 	   (box-height (+ space height space))
-	   (corner-size (block-corner-size))
+	   (corner (block-corner-size))
 	   (bottom (+ y box-height))
 	   (right (+ x box-width)))
       (draw-box x y box-width box-height
 		:color background
-		:stroke-color shadow
+		:stroke-color background
 		:destination image)
-      (draw-line 0 0 right 0 
-		 :color highlight
-		 :destination image)
-      (draw-line 0 0 0 bottom
-		 :color highlight
-		 :destination image)
       (draw-string-blended label 
-			   (+ x space)
+			   (+ x (* 3 space))
 			   (+ y space)
 			   :foreground foreground
 			   :destination image
 			   :font *block-font*)
-      (draw-image (block-corner :top-left)
-		  x y :destination image)
-      (draw-image (block-corner :top-right)
-		  (- right corner-size) y 
-		  :destination image)
-      (draw-image (block-corner :bottom-right)
-		  (- right corner-size)
-		  (- bottom corner-size)
-		  :destination image)
-      (draw-image (block-corner :bottom-left)
-		  x (- bottom corner-size)
-		  :destination image))))
+      ;; top left
+      (draw-resource-image (block-corner :top-left)
+			   x y :destination image)
+      (draw-line (+ x corner) y
+		 x (+ y corner)
+		 :color highlight
+		 :destination image)
+      ;; top
+      (draw-line (+ x corner) y
+		 (- right corner) y
+		 :color highlight
+		 :destination image)
+      ;; top right
+      (draw-resource-image (block-corner :top-right)
+			   (- right corner) y 
+			   :destination image)
+      (draw-line (- right corner) y
+		 right (+ y corner)
+		 :color background
+		 :destination image)
+      ;; right
+      (draw-line right (+ y corner)
+		 right (- bottom corner)
+		 :color background
+		 :destination image)
+      ;; bottom right
+      (draw-resource-image (block-corner :bottom-right)
+			   (- right corner)
+			   (- bottom corner)
+			   :destination image)
+      (draw-line (- right corner 1) bottom
+		 (- right 1) (- bottom corner)
+		 :color shadow
+		 :destination image)
+      ;; bottom 
+      (draw-line (+ x corner) bottom
+		 (- right corner 1) bottom
+		 :color shadow
+		 :destination image)
+      ;; bottom left
+      (draw-resource-image (block-corner :bottom-left)
+			   x (- bottom corner)
+			   :destination image)
+      (draw-line x (- bottom corner)
+		 (+ x corner) bottom
+		 :color background 
+		 :destination image)
+      ;; left 
+      (draw-line x (+ y corner) 
+		 x (- bottom corner)
+		 :color highlight
+		 :destination image))))
 
 ;;; Predefined blocks for sending various common messages 
 

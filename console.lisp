@@ -1879,8 +1879,8 @@ and its .startup resource is loaded."
 	 #+linux (do-cffi-loading)
 	 ;;
 	 (sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
-	   (unless (sdl:initialise-default-font sdl:*ttf-font-vera*)
-	     (error "FATAL: Cannot initialize the default font."))
+	   ;; (unless (sdl:initialise-default-font sdl:*ttf-font-vera*)
+	   ;;   (error "FATAL: Cannot initialize the default font."))
 	   (load-user-init-file)	
 	   (initialize-resource-table)
 	   (initialize-colors)

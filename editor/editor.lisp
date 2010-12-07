@@ -153,7 +153,7 @@
       (2 (/world-page self)))))
 
 (define-method render frame ()
-  (with-field-values (x y width height panes visible pane-widths) self
+  (with-field-values (x y width image height panes visible pane-widths) self
     (when visible
       (labels ((scale (percentage)
 		 (truncate (* width (/ (float percentage)
