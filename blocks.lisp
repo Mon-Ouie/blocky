@@ -84,7 +84,7 @@
     :message ".sienna3"
     :control ".orange1"
     :variables ".DarkOrange2"
-    :operators ".green1"
+    :operators ".OliveDrab3"
     :sensing ".DeepSkyBlue3")
   "X11 color names of the different block types.")
 
@@ -99,7 +99,7 @@
     :message ".sienna2"
     :control ".gold"
     :variables ".DarkOrange1"
-    :operators ".chartreuse3"
+    :operators ".OliveDrab1"
     :sensing ".DeepSkyBlue2")
   "X11 color names of highlights on the different block types.")
 
@@ -114,7 +114,7 @@
     :message ".chocolate3"
     :control ".dark orange"
     :variables ".OrangeRed2"
-    :operators ".green3"
+    :operators ".OliveDrab3"
     :sensing ".turquoise3")
   "X11 color names of shadows on the different block types.")
 
@@ -155,9 +155,18 @@
 			  (+ y height))
       self)))
 
+(define-method line-string block ()
+  (with-fields (operation arguments) self
+    (labels ((clean (thing) 
+	       (typecase thing
+		 (keyword (make-non-keyword thing))
+		 (otherwise thing))))
+      (let ((output (mapcar #'clean (cons operation arguments))))
+	(string-downcase (format nil "~{~s~^ ~}" output))))))
+
 (define-method arrange block ()
   (let ((font *block-font*)
-	(line (string-downcase (format nil "~{~a~^ ~}" (cons <operation> <arguments>)))))
+	(line (/line-string self)))
     (setf <width> (+ (* 6 *dash-size*) ;; spacing
 		     (font-text-extents line font)))
     (setf <height> (+ (* 2 *dash-size*)
@@ -184,7 +193,7 @@
 	   (highlight (block-color type :highlight))
 	   (shadow (block-color type :shadow))
 	   (dash *dash-size*)
-	   (label (string-downcase (format nil "~{~a~^ ~}" (cons <operation> <arguments>))))
+	   (label (/line-string self))
 	   (radius *dash-size*)
 	   (diameter (* 2 radius))
 	   (bottom (+ y height))
@@ -193,7 +202,7 @@
 		 (draw-aa-circle x y radius 
 				 :color (or color background)
 				 :destination image))
-	       (disc (x y &optional color)
+       (disc (x y &optional color)
 		 (draw-filled-circle x y radius
 				     :color (or color background)
 				     :destination image))
@@ -262,12 +271,22 @@
   (schema :initform '(:unit :integer :integer))
   (arguments :initform '(:space 0 0)))
 
-(defblock music 
+(defblock play-music 
   (type :initform :sound)
   (schema :initform '(:string :keyword :keyword))
   (arguments :initform '("fanfare" :loop :no)))
 
+(defblock play-sound 
+  (type :initform :sound)
+  (schema :initform '(:string))
+  (arguments :initform '("boing")))
+
 (defblock when 
+  (type :initform :control)
+  (schema :initform '(:predicate :block))
+  (arguments :initform '(nil nil)))
+
+(defblock unless
   (type :initform :control)
   (schema :initform '(:predicate :block))
   (arguments :initform '(nil nil)))
@@ -276,6 +295,21 @@
   (type :initform :control)
   (schema :initform '(:predicate :block :block))
   (arguments :initform '(nil nil nil)))
+
+(defblock start
+  (type :initform :system) 
+  (schema :initform nil)
+  (arguments :initform nil))
+
+(defblock stop
+  (type :initform :system) 
+  (schema :initform nil)
+  (arguments :initform nil))
+  
+(defblock +
+  (type :initform :operators)
+  (schema :initform '(:number :number))
+  (arguments :initform '(nil nil)))
 
 (defblock do
   (type :initform :event)

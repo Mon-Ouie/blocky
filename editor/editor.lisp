@@ -35,7 +35,8 @@
 (define-method initialize palette ()
   (/parent/initialize self)
   (labels ((random-block ()
-	     (clone (first (one-of (list =move= =music= =move-to= =if= =do=))))))
+	     (clone (first (one-of (list =move= =play-music= =play-sound= =move-to= =if= =do=
+					 =when= =start= =stop= =+= ))))))
     (with-fields (script) self
       (setf script (clone =script=))
       (/add script (random-block) 20 20)
@@ -43,6 +44,15 @@
       (/add script (random-block) 20 120)
       (/add script (random-block) 20 160)
       (/add script (random-block) 20 200)
+      (/add script (random-block) 20 320)
+      (/add script (random-block) 20 360)
+      (/add script (random-block) 20 400)
+      (/add script (random-block) 20 420)
+      (/add script (random-block) 20 500)
+      (/add script (random-block) 20 520)
+      (/add script (random-block) 20 460)
+      (/add script (random-block) 20 300)
+
       (/add script (random-block) 20 240))))
 
 ;;; A "frame" is a top-level application window.
@@ -52,7 +62,7 @@
 (defwidget frame
   (active-color :initform ".red")
   (inactive-color :initform ".gray20")
-  (pane-widths :initform '(50 30 20))
+  (pane-widths :initform '(70 15 15))
   (panes :initform nil)
   (focus :initform 1))
 

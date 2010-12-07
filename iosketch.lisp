@@ -135,7 +135,8 @@
 	   =command-cell= convert-cffi-sample get-sample-buffer
 	   register-sample-generator =voice= register-voice unregister-voice
 	   register-voice-mixer mix-voices convert-cffi-sample-to-internal *page*
-	   *script* =script= =editor= =block= =move= =move-to= =music= =when=
+	   *script* =script= =editor= =block= =move= =move-to= =play-music= =when=
+	   =play-sound= =unless= =if= =start= =stop= =+=
 	   =if= =do= convert-internal-sample-to-cffi get-ticks page-variable
 	   with-page-variables set-page-variable with-pages with-mission-locals
 	   *module* quit reset seek-music make-keyword make-special-variable-name
