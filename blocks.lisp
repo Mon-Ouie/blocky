@@ -375,5 +375,11 @@
 	  (/arrange block))
 	(dolist (block blocks)
 	  (/draw block image))))))
+
+(define-method click editor (x y))
+
+(define-method drag editor (x y))
+
+(define-method drop editor (x y))
       
 ;;; blocks.lisp ends here
