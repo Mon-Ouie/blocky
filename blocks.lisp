@@ -68,10 +68,6 @@
 
 (defvar *dash-size* 3)
 
-(defvar *space-size* nil
-  "Size of the basic spacer layout distance, in pixels.
-  Should be just a bit more than the height of `*block-font*'")
-
 (defparameter *block-colors* 
   '(:motion ".cornflower blue"
     :system ".gray50"
@@ -128,13 +124,13 @@
     :sensing ".white")
   "X11 color names of the text used for different block types.")
 
-(defun block-color (color &optional (part :background))
+(defun block-color (type &optional (part :background))
   (let ((colors (ecase part
 		  (:background *block-colors*)
 		  (:highlight *block-highlight-colors*)
 		  (:shadow *block-shadow-colors*)
-		  (:foreground *block-text-colors*))))
-    (getf colors color)))
+		  (:foreground *block-foreground-colors*))))
+    (getf colors type)))
 
 (defparameter *small-block-corners* '(:top-left ".top-left-corner-small"
 				      :top-right ".top-right-corner-small"
@@ -166,11 +162,12 @@
   (setf <y> y))
 
 (define-method hit block (click-x click-y)
-  (when (within-extents click-x click-y 
-			x y 
-			(+ x width)
-			(+ y height))
-    self))
+  (with-fields (x y width height) self
+    (when (within-extents click-x click-y 
+			  x y 
+			  (+ x width)
+			  (+ y height))
+      self)))
 
 (define-method arrange block ()
   (let ((font *block-font*)
@@ -195,11 +192,11 @@
 
 (define-method draw block (image)
   (with-field-values (x y type height width schema) self
-    (let* ((foreground (block-color self :foreground))
-	   (background (block-color self :background))
-	   (highlight (block-color self :highlight))
-	   (shadow (block-color self :shadow))
-	   (space *space-size*)
+    (let* ((foreground (block-color type :foreground))
+	   (background (block-color type :background))
+	   (highlight (block-color type :highlight))
+	   (shadow (block-color type :shadow))
+	   (space *dash-size*)
 	   (label (format nil "~{~a~^ ~}" <arguments>))
 	   (box-width (+ space width space))
 	   (box-height (+ space height space))
@@ -220,7 +217,6 @@
 			   (+ x space)
 			   (+ y space)
 			   :foreground foreground
-			   :background background
 			   :destination image
 			   :font *block-font*)
       (draw-image (block-corner :top-left)
@@ -282,6 +278,10 @@
 	  :documentation "List of blocks in the script.")
   (variables :initform (make-hash-table :test 'eq)))
 
+(define-method initialize script (&key blocks variables)
+  (when blocks (setf <blocks> blocks))
+  (when variables (setf <variables> variables)))
+
 (defvar *script*)
 
 (define-method add script (block x y)
@@ -328,12 +328,14 @@
   (modified :initform nil 
   	    :documentation "Non-nil when modified since last save."))
 
-(define-method render editor (image)
-  (with-fields (script selection focus drag modified) self   
+(define-method render editor ()
+  (with-fields (script image selection focus drag modified) self   
     (when script
       (with-fields (blocks) script
-	(/clear self :color *background-color*)
-	(map nil #'/arrange blocks)
-	(map nil #'/draw blocks)))))
+	(/clear self *background-color*)
+	(dolist (block blocks)
+	  (/arrange block))
+	(dolist (block blocks)
+	  (/draw block image))))))
       
 ;;; blocks.lisp ends here

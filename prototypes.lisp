@@ -35,9 +35,7 @@
 ;; http://www.cliki.net/Garnet
 ;; http://iolanguage.com/about/
 
-;; TODO fix slash function interning
-;; TODO add docs/lambdas to slash funcs
-;; TODO create queue/foo and parent/foo slash funcs
+;; TODO add docs/lambdas/argslists to slash funcs
 ;; TODO fix parent lookup
   
 ;;; Code: 
@@ -924,5 +922,11 @@ objects after reconstruction, wherever present."
      (mapcar #'deserialize data))
     ;; passthru
     (t data)))
+
+(defun /parent/initialize (object &rest args)
+  (apply #'send-parent nil :initialize object args))
+
+(defun /queue/initialize (object &rest args)
+  (apply #'send-queue nil :initialize object args))
       
 ;;; prototypes.lisp ends here

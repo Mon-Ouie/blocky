@@ -18,61 +18,51 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(defpackage :editor
-  (:use :iosketch :common-lisp)
-  (:export editor))
-
-(in-package :editor)
-
-(setf iosketch:*dt* 20)
-(setf iosketch:*resizable* t)
+(in-package :iosketch)
 
 ;;; Main program. 
 
-(defparameter *window-width* 1200)
-(defparameter *window-height* 720)
-(defparameter *prompt-height* 20)
-(defparameter *quickhelp-height* 100)
-(defparameter *quickhelp-width* 390)
-(defparameter *quickhelp-spacer* 0)
-(defparameter *terminal-height* 100)
-(defparameter *pager-height* 20)
-(defparameter *sidebar-width* 400)
+(defparameter *window-width* 1024)
+(defparameter *window-height* 768)
 
-(defvar *form*)
-(defvar *terminal*)
-(defvar *prompt*)
-(defvar *pager*)
-(defvar *forms*)
+;;; Palettes to choose objects from
 
-(defun handle-editor-command (command)
-  (assert (stringp command))
-  (/insert *prompt* command)
-  (/execute *prompt*))
+;; A palette is an editor widget whose blocks change according to context.
 
-(defvar *command-handler-function* #'handle-editor-command)
+(define-prototype palette (:parent =editor=)
+  type)
 
-(define-prototype editor-prompt (:parent iosketch:=prompt=))
+(define-method initialize palette ()
+  (/parent/initialize self)
+  (labels ((random-block ()
+	     (clone (first (one-of (list =move= =music= =move-to= =if= =do=))))))
+    (with-fields (script) self
+      (setf script (clone =script=))
+      (/add script (random-block) 20 20)
+      (/add script (random-block) 20 60)
+      (/add script (random-block) 20 120)
+      (/add script (random-block) 20 160)
+      (/add script (random-block) 20 200)
+      (/add script (random-block) 20 240))))
 
-(define-method say editor-prompt (&rest args)
-  (apply #'send nil :say *terminal* args))
+;;; A "frame" is a top-level application window.
 
-(define-method goto editor-prompt ()
-  (/unfocus (/left-form *forms*))
-  (/unfocus (/right-form *forms*))
-  (setf <mode> :direct))
+;; Multiple simultaneous frames are possible.
 
-(define-method do-after-execute editor-prompt ()
-  (/clear-line self)  
-  (setf <mode> :forward))
+(defwidget frame
+  (active-color :initform ".red")
+  (inactive-color :initform ".gray20")
+  (pane-widths :initform '(20 30 50))
+  (panes :initform nil)
+  (focus :initform 1))
 
-(define-method exit editor-prompt ()
-  (/parent>>exit self)
-  (/refocus *forms*))
-
-;;; The frame where everything is displayed
-
-(define-prototype frame (:parent iosketch:=stack=))
+(define-method initialize frame (&rest panes)
+  (/parent/initialize self)
+  (if panes
+      (setf <panes> panes)
+      (setf <panes>
+	    (mapcar #'clone
+		    (list =palette= =editor= =editor=)))))
 
 (defparameter *qwerty-keybindings*
   '(;; arrow key cursor movement
@@ -131,19 +121,19 @@
     ("T" (:control) :next-tool)))
 
 (define-method install-keybindings frame ()
-  (dolist (binding (case *user-keyboard-layout*
-		     (:qwerty *qwerty-keybindings*)
-		     (otherwise *qwerty-keybindings*)))
-    (/generic-keybind self binding)))
+  (/generic-keybind self *qwerty-keybindings*))
+
+(define-method install frame ()
+  (apply #'iosketch:install-widgets self <panes>))
 
 (define-method palette-pane frame ()
-  (nth 0 <children>))
+  (nth 0 <panes>))
 
 (define-method script-pane frame ()
-  (nth 1 <children>))
+  (nth 1 <panes>))
 
 (define-method world-pane frame ()
-  (nth 2 <children>))
+  (nth 2 <panes>))
 
 (define-method other-pane frame ()
   (ecase <focus>
@@ -152,161 +142,66 @@
     (2 (/palette-pane self))))
 
 (define-method selected-pane frame ()
-  (nth <focus> <children>))
+  (nth <focus> <panes>))
 
 (define-method switch-panes frame ()
-  (let ((newpos (mod (1+ <focus>) (length <children>))))
+  (let ((newpos (mod (1+ <focus>) (length <panes>))))
     (setf <focus> newpos)
     (ecase newpos
       (0 (/palette-pane self))
       (1 (/script-pane self))
       (2 (/world-page self)))))
 
-(define-method paste frame (&optional page)
-  (let ((source (if page 
-		    (find-page page)
-		    (field-value :world (/other-form self))))
-	(destination (field-value :world (/selected-form self))))
-    (multiple-value-bind (top left bottom right) (/mark-region (/selected-form self))
-      (multiple-value-bind (top0 left0 bottom0 right0) (/mark-region (/other-form self))
-	(let ((source-height (field-value :height source))
-	      (source-width (field-value :width source)))
-	  (with-fields (cursor-row cursor-column) (/selected-form self)
-	    (let* ((height (or (when top (- bottom top))
-			       (when top0 (- bottom0 top0))
-			       source-height))
-		   (width (or (when left (- right left))
-			      (when left0 (- right0 left0))
-			      source-width))
-		   (r0 (or top cursor-row))
-		   (c0 (or left cursor-column))
-		   (r1 (or bottom (- height 1)))
-		   (c1 (or right (- width 1)))
-		   (sr (or top0 0))
-		   (sc (or left0 0)))
-	      (/paste-region destination source r0 c0 sr sc height width))))))))
-  
-(define-method commands frame ()
-  "Syntax: command-name arg1 arg2 ...
-Available commands: HELP EVAL SWITCH-PANES LEFT-PANE RIGHT-PANE
-NEXT-TOOL SET-TOOL APPLY-LEFT APPLY-RIGHT VISIT SELECT SAVE-ALL
-SAVE-MODULE LOAD-MODULE TILE-VIEW LABEL-VIEW QUIT VISIT APPLY-TOOL
-CLONE ERASE CREATE-WORLD PASTE QUIT ENTER EXIT"
- nil)
+(define-method render frame ()
+  (with-field-values (x y width height panes visible pane-widths) self
+    (when visible
+      (labels ((scale (percentage)
+		 (truncate (* width (/ (float percentage)
+				       100)))))
+	(let ((pane-stops (mapcar #'scale pane-widths)))
+	  (dolist (widget panes)
+	    (/move widget :x x :y y)
+	    (/resize widget :height height :width (first pane-stops))
+	    (/render widget)
+	    (draw-image (field-value :image widget) x y :destination image)
+	    (when (eq widget (/selected-pane self))
+	      (draw-rectangle x y (field-value :width widget)
+			      (field-value :height widget)
+			      :color <active-color>
+			      :destination image))
+	    (incf x (1+ (first pane-stops)))
+	    (pop pane-stops)))))))
+
+(define-method hit frame (x y)
+  (hit-widgets x y <panes>))
+
+(define-method handle-key frame (event)
+  (or (let ((func (gethash event <keymap>)))
+	(when func
+	  (prog1 t
+	    (funcall func))))
+      (/handle-key (/selected-pane self) event)))
+
+(define-method forward frame (method &rest args)
+  (apply #'send self method (/selected-pane self) args))
 
 (defun editor ()
-  (setf iosketch:*screen-width* *window-width*)
-  (setf iosketch:*screen-height* *window-height*)
-  (iosketch:message "Initializing EDITOR...")
-  (setf iosketch:*window-title* "EDITOR")
-  (clon:initialize)
+  (setf iosketch:*window-title* "IOSKETCH")
+  (setf iosketch:*resizable* t)
+  (iosketch:enable-classic-key-repeat 100 100)
+  (iosketch:message "Starting IOSKETCH...")
+  (iosketch:initialize)
   (iosketch:set-screen-height *window-height*)
   (iosketch:set-screen-width *window-width*)
-  (let* ((prompt (clone =editor-prompt=))
-	 (help (clone =help-textbox=))
-	 (help-prompt (clone =help-prompt=))
-	 (quickhelp (clone =formatter=))
-	 (form (clone =form=))
-	 (form2 (clone =form= "*scratch*"))
-	 (terminal (clone =narrator=))
-	 (split (clone =frame=))
-	 (stack (clone =stack=)))
+  (let* ((frame (clone =frame=)))
+    (add-hook 'iosketch:*resize-hook* 
+	      #'(lambda ()
+		  (/resize frame :width *screen-width* :height *screen-height*)))
     ;;
-    (setf *form* form)
-    (setf *prompt* prompt)
-    (setf *terminal* terminal)
-    (setf *forms* split)
-    (labels ((resize-widgets ()
-	       (/say terminal "Resizing to ~S" (list :width *screen-width* :height *screen-height*))
-	       (/resize prompt :height *prompt-height* :width *screen-width*)
-	       (/resize form :height (- *screen-height* *terminal-height* 
-				       *prompt-height* *pager-height*) 
-		       :width (- *screen-width* *sidebar-width* 2))
-	       (/resize form2 :height (- *screen-height* *terminal-height* *prompt-height* *pager-height*) :width (- *sidebar-width* 2))
-	       (/resize-to-scroll help :height (- *screen-height* *pager-height*) :width *screen-width*)
-	       (/resize stack :width *screen-width* :height (- *screen-height* *pager-height* *prompt-height*))
-	       (/resize split :width (- *screen-width* 1) :height (- *screen-height* *pager-height* *prompt-height* *terminal-height*))
-	       (/resize terminal :height *terminal-height* :width *screen-width*)
-	       (/resize quickhelp :height *quickhelp-height* :width *quickhelp-width*)
-	       (/move quickhelp :y (- *screen-height* *quickhelp-height* *pager-height*) :x (- *screen-width* *quickhelp-width* *quickhelp-spacer*))
-	       (/auto-position *pager*)))
-      (add-hook 'iosketch:*resize-hook* #'resize-widgets))
-    ;;
-    (/resize prompt :height *prompt-height* :width *screen-width*)
-    (/move prompt :x 0 :y 0)
-    (/show prompt)
-    (/install-keybindings prompt)
-    (/install-keybindings split)
-    (/say prompt "Welcome to EDITOR. Press ALT-X to enter command mode, or F1 for help.")
-    (/set-mode prompt :forward) ;; don't start with prompt on
-    (/set-receiver prompt split)
-    ;; 
-    (/resize form :height (- *screen-height* *terminal-height* 
-			    *prompt-height* *pager-height*) 
-	    :width (- *screen-width* *sidebar-width*))
-    (/move form :x 0 :y 0)
-    (/set-prompt form prompt)
-    (/set-narrator form terminal)
-    ;;
-    (/resize-to-scroll help :height (- *screen-height* *pager-height*) :width *screen-width*)
-    (/move help :x 0 :y 0)
-    (setf (field-value :read-only help) t)
-    (let ((text	(find-resource-object "editor-help-message")))
-      (/set-buffer help text))
-    ;;
-    (/resize help-prompt :width 10 :height 10)
-    (/move help-prompt :x 0 :y 0)
-    (/hide help-prompt)
-    (/set-receiver help-prompt help)
-
-    ;;
-    (/resize form2 :height (- *screen-height* *terminal-height* *prompt-height* *pager-height*) :width *sidebar-width*)
-    (/move form2 :x 0 :y 0)
-    (setf (field-value :header-style form2) nil)
-    (/set-prompt form2 prompt)
-    (/set-narrator form2 terminal)
-    ;;
-    (iosketch:halt-music 1000)
-    ;;
-    ;; (/resize help :height 540 :width 800) 
-    ;; (/move help :x 0 :y 0)
-    (/resize-to-scroll help :height 540 :width 800) 
-    (/move help :x 0 :y 0)
-    (let ((text	(find-resource-object "editor-help-message")))
-      (/set-buffer help text))
-    ;;
-    (/resize quickhelp :height *quickhelp-height* :width *quickhelp-width*)
-    (/move quickhelp :y (- *screen-height* *quickhelp-height* *pager-height*) :x (- *screen-width* *quickhelp-width* *quickhelp-spacer*))
-    (let ((text	(find-resource-object "editor-quickhelp-message")))
-      (dolist (line text)
-    	(dolist (string line)
-    	  (funcall #'send nil :print-formatted-string quickhelp string))
-    	(/newline quickhelp)))
-    ;;
-    (/resize stack :width *screen-width* :height (- *screen-height* *pager-height* *prompt-height*))
-    (/move stack :x 0 :y 0)
-    (/set-children stack (list split terminal prompt))
-    ;;
-    (/resize split :width *screen-width* :height (- *screen-height* *pager-height* *terminal-height* *prompt-height*))
-    (/move split :x 0 :y 0)
-    (/set-children split (list form form2))
-    ;;
-    (/resize terminal :height *terminal-height* :width *screen-width*)
-    (/move terminal :x 0 :y (- *screen-height* *terminal-height*))
-    (/set-verbosity terminal 0)
-    ;;
-    ;;
-    (setf *pager* (clone =pager=))
-    (/auto-position *pager*)
-    ;;
-    (/add-page *pager* :edit (list prompt stack split terminal quickhelp))
-    (/add-page *pager* :help (list help-prompt help))
-    (/select *pager* :edit)
-    (iosketch:enable-classic-key-repeat 100 100)
-    (in-package :iosketch)
-    (/focus-left *forms*)
-;;    (run-hook 'iosketch:*resize-hook*)
-))
+    (/move frame :x 0 :y 0)
+    (/show frame)
+    (/resize frame :width *screen-width* :height *screen-height*)
+    (/install frame)))
 
 (editor)
 

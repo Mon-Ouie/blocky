@@ -1,12 +1,18 @@
-This is the INSTALL file for the IOSKETCH engine.
-Installation and basic playing instructions are provided. 
+This is the INSTALL file for IOSKETCH, with instructions on getting
+the system installed and running from source.
 
-1. You need a Common Lisp implementation. Only tested on SBCL right
-   now. You must also have the SDL libraries installed. How to do this
-   is beyond the scope of this document. See libsdl.org for more
-   information. In addition, the LISPBUILDER-SDL libraries are also
-   required and these should be compiled from their latest
-   SVN. (see below for instructions.)
+NOTE: Users of Windows and Mac OSX do not need to follow the
+instructions in this file unless they are building IOSKETCH from
+source code. 
+
+1. System Requirements 
+
+   Linux users will need a Common Lisp implementation---currently
+   IOSKETCH has only been tested with SBCL (Steel Bank Common
+   Lisp). You must also have the SDL (Simple Direct Media Layer)
+   libraries installed on your system. How to do this is beyond the
+   scope of this document. See http://www.libsdl.org for more
+   information.
 
    Your Linux distribution will have SDL packages for sdl, sdl-image,
    sdl-mixer, and sdl-gfx, all of which are required libraries.
@@ -23,47 +29,35 @@ Installation and basic playing instructions are provided.
    mkdir ~/.sbcl/systems
    ln -s ~/src/iosketch/iosketch.asd ~/.sbcl/systems
 
-4. Download and install a required library called PROTON. Example
-   commands:
-
-   mkdir ~/src
-   cd ~/src
-   git clone git://github.com/dto/proton.git
-
-   Then link the proton.asd file:
-
-   ln -s ~/src/proton/proton.asd ~/.sbcl/systems
-
-5a. Install some prerequisites for LISPBUILDER-SDL. This should be quick.
+4. Install LISPBUILDER-SDL. 
     
-    (It'll be even quicker if you use Quicklisp: see http://www.quicklisp.org/)
+    The recommended method is Quicklisp: see http://www.quicklisp.org/
+    It takes only a few moments to install Quicklisp. Once that's done
+    you can install and load everything with just this command at the
+    SBCL prompt:
 
-    First enter the SBCL prompt by running "sbcl" in a terminal or shell.
+        (map nil #'ql:quickload 
+   	      '("lispbuilder-sdl-gfx" 
+                "lispbuilder-sdl-mixer" 
+                "lispbuilder-sdl-image"
+ 	        "lispbuilder-sdl-ttf"))
 
-   (require :asdf)
-   (require :asdf-install)
-   (asdf-install:install :cffi)
+   If you don't have Quicklisp, you can follow these instructions.
 
-   If it asks about any GPG-KEY-CHECKS, press the appropriate listed
-   key to skip them.
+4a. (OPTIONAL) The latest development version of LISPBUILDER-SDL is
+    also available. Use Subversion to check out the source code:
 
-   Now install your GNU/Linux distribution's packages for libsdl,
-   libsdl-image, libsdl-mixer, and libsdl-gfx.
+    mkdir ~/src
+    cd ~/src
+    svn checkout http://lispbuilder.googlecode.com/svn/trunk/ lispbuilder
 
-5b. The latest development version of LISPBUILDER-SDL is required. Use
-    Subversion to check out the source code:
+    Then symlink all the .asd files in that tree into ~/.sbcl/systems
+    (or wherever your .ASD files go) like this:
 
-   mkdir ~/src
-   cd ~/src
-   svn checkout http://lispbuilder.googlecode.com/svn/trunk/ lispbuilder
+    cd ~/.sbcl/systems
+    for i in `find ~/src/lispbuilder -name "*.asd"`; do ln -s $i .; done
 
-   Then symlink all the .asd files in that tree into ~/.sbcl/systems
-   (or wherever your .ASD files go) like this:
-
-   cd ~/.sbcl/systems
-   for i in `find ~/src/lispbuilder -name "*.asd"`; do ln -s $i .; done
-
-6. OPTIONAL: configure module directories
+6. (OPTIONAL) Configure project folders
 
    Add something like this to a new file called ~/.iosketchrc:
 

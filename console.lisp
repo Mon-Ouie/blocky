@@ -1208,9 +1208,11 @@ control the size of the individual frames or subimages."
     (sdl:initialise-font (symbol-value (intern font-name :lispbuilder-sdl)))))
 
 (defun load-ttf-resource (resource)
-  (let ((size (getf (resource-properties resource) :size)))  
-    (assert (integerp size))
-    (sdl:initialise-font (namestring (resource-file resource)) size)))
+  (let* ((size (getf (resource-properties resource) :size))
+	 (definition (make-instance 'sdl:ttf-font-definition
+	 			    :filename (namestring (resource-file resource))
+	 			    :size size)))
+    (sdl:initialise-font definition)))
 
 (defun load-music-resource (resource)
   (when *use-sound*
@@ -1225,19 +1227,20 @@ control the size of the individual frames or subimages."
 	    (when (numberp volume)
 	      (setf (sdl-mixer:sample-volume chunk) volume))))))))
 
-(defvar *resource-handlers* (list :image #'load-image-resource
-				  :lisp #'load-lisp-resource
-				  :object #'load-object-resource
-				  :sprite-sheet #'load-sprite-sheet-resource
-				  :color #'load-color-resource
-				  :music #'load-music-resource
-				  :bitmap-font #'load-bitmap-font-resource
-				  :text #'load-text-resource
-				  :formatted-text #'load-formatted-text-resource
-				  :sample #'load-sample-resource
-				  :canvas #'load-canvas-resource
-				  :ttf #'load-ttf-resource
-				  :font #'load-font-resource)
+(defparameter *resource-handlers* 
+  (list :image #'load-image-resource
+	:lisp #'load-lisp-resource
+	:object #'load-object-resource
+	:sprite-sheet #'load-sprite-sheet-resource
+	:color #'load-color-resource
+	:music #'load-music-resource
+	:bitmap-font #'load-bitmap-font-resource
+	:text #'load-text-resource
+	:formatted-text #'load-formatted-text-resource
+	:sample #'load-sample-resource
+	:canvas #'load-canvas-resource
+	:ttf #'load-ttf-resource
+	:font #'load-font-resource)
   "A property list mapping resource type keywords to handler functions.
 Each function should accept one resource record, and return an
 object (possibly driver-dependent). When a resource is loaded (with
@@ -1602,7 +1605,7 @@ of the music."
   (let ((resource (find-resource font)))
     (ecase (resource-type resource)
       (:font (find-resource-property font :height))
-      (:ttf (sdl:get-font-height :font (resource-object font))))))
+      (:ttf (sdl:get-font-height :font (resource-object resource))))))
 
 (defun font-width (font)
   (let ((resource (find-resource font)))
@@ -1615,8 +1618,8 @@ of the music."
     (ecase (resource-type resource)
       (:font (* (length string)
 		(font-width font)))
-      (:ttf (values (sdl:get-font-size string :font (resource-object font))
-		    (sdl:get-font-height :font (resource-object font)))))))
+      (:ttf (values (sdl:get-font-size string :size :w :font (resource-object resource))
+		    (sdl:get-font-height :font (resource-object resource)))))))
 
 (defun draw-string-solid (string x y 
 			  &key destination (font *default-font*) (color ".white"))
@@ -1629,11 +1632,11 @@ of the music."
 			    (find-resource-object background)
 			    :surface destination :font (find-resource-object font)))
 
-(defun draw-string-blended (string x y &optional (foreground ".white") (background ".black")
-			  &key destination (font *default-font*))
-  (sdl:draw-string-blended-* string x y (find-resource-object foreground)
-			    (find-resource-object background)
-			    :surface destination :font (find-resource-object font)))
+(defun draw-string-blended (string x y &key (foreground ".black")
+			    destination (font *default-font*))
+  (sdl:draw-string-blended-* string x y 
+			     :color (find-resource-object foreground)
+			     :surface destination :font (find-resource-object font)))
 
 ;;; Standard colors
 
@@ -1842,6 +1845,17 @@ also the file LIBSDL-LICENSE for details.
 		  "libSDL_image")))
     (cffi:use-foreign-library sdl-image))
 
+;; (defun init-ttf ()  
+;;   (if (is-init)  
+;;       t  
+;;       (sdl-ttf-cffi::ttf-init)))  
+;; (pushnew 'init-ttf sdl:*external-init-on-startup*)
+
+;; (defun quit-ttf ()  
+;;    (if (is-init)  
+;;      (sdl-ttf-cffi::ttf-quit)))  
+;; (pushnew 'quit-ttf sdl:*external-quit-on-exit*) 
+
 (defun play (&optional (module-name "standard") &rest args)
   "This is the main entry point to IOSKETCH. MODULE-NAME is loaded 
 and its .startup resource is loaded."
@@ -1860,51 +1874,33 @@ and its .startup resource is loaded."
   (setf *next-module* module-name)
   ;; add library search paths for Mac if needed
   (setup-library-search-paths)
- ;; now play modules until done
-  (loop while (and (not *quitting*)
-		   *next-module*)
-     do (unwind-protect
-	       (progn 
-		 #+linux (do-cffi-loading)
-		 ;;
-		 (sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
-		   (load-user-init-file)	
-		   (initialize-resource-table)
-		   (initialize-colors)
-		   (when *use-sound*
-		     ;; try opening sound
-		     (when (null (sdl-mixer:open-audio :frequency *frequency*
-						       :chunksize *output-chunksize*
-						       :enable-callbacks t
-						       :format *sample-format*
-						       :channels *output-channels*))
-		       ;; if that didn't work, disable effects/music
-		       (message "Could not open audio Driver. Disabling sound effects and music.")
-		       (setf *use-sound* nil))
-		     ;; set to mix lots of sounds
-		     (sdl-mixer:allocate-channels *channels*))
-		     ;; (message "Setting sample callback...")
-		     ;; (sdl-mixer:register-music-finished #'(lambda (channel)
-		     ;; 					     (message "MUSIC FINISHED CALLBACK")
-		     ;; 					     (when *music-callback*
-		     ;; 					       (funcall *music-callback* channel)))))
-		   (index-module "standard") 
-		   (load-module *next-module*)
-		   
-		   (find-resource *startup*)
-		      (run-main-loop)))
-	  ;; close audio if crash
-	  (when *use-sound* 
-	    (sdl-mixer:close-audio t)))
-	  (setf *quitting* t))
-	(setf *quitting* nil)
-	(when *use-sound* 
-    (sdl-mixer:close-audio t)))
-  ;; ;; free audio
-  ;; (maphash #'(lambda (name resource)
-  ;; 	       (declare (ignore name))
-  ;; 	       (when (eq :music (resource-type resource))
-  ;; 		 (sdl-mixer:free (resource-object resource))))
-  ;; 	   *resource-table*))
+  (unwind-protect
+       (progn 
+	 #+linux (do-cffi-loading)
+	 ;;
+	 (sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
+	   (unless (sdl:initialise-default-font sdl:*ttf-font-vera*)
+	     (error "FATAL: Cannot initialize the default font."))
+	   (load-user-init-file)	
+	   (initialize-resource-table)
+	   (initialize-colors)
+	   (when *use-sound*
+	     ;; try opening sound
+	     (when (null (sdl-mixer:open-audio :frequency *frequency*
+					       :chunksize *output-chunksize*
+					       :enable-callbacks t
+					       :format *sample-format*
+					       :channels *output-channels*))
+	       ;; if that didn't work, disable effects/music
+	       (message "Could not open audio driver. Disabling sound effects and music.")
+	       (setf *use-sound* nil))
+	     ;; set to mix lots of sounds
+	     (sdl-mixer:allocate-channels *channels*))
+	   (index-module "standard") 
+	   (load-module *next-module*)
+	   
+	   (find-resource *startup*)
+	   (run-main-loop)))
+    (sdl:quit-sdl)))
 
 ;;; console.lisp ends here

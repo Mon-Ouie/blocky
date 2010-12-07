@@ -504,7 +504,7 @@ The modes can be toggled with CONTROL-X.
 ")
   (mode :documentation "Either :direct or :forward." :initform :direct)
   (clock :initform *prompt-blink-time*)
-  (default-keybindings :documentation "Default keybindings bound during initialization.
+  (keybindings :documentation "Default keybindings bound during initialization.
 These are the arguments to `bind-key-to-prompt-insertion', which see.")
   (visible :documentation "When non-nil, the prompt is drawn." :initform t)
   (receiver :documentation "The object to send command messages to when in :forward mode.")
@@ -538,8 +538,8 @@ normally."
 (define-method set-mode prompt (mode)
   (setf <mode> mode))
 
-(define-method install-default-keybindings prompt ()
-  (dolist (k <default-keybindings>)
+(define-method install-keybindings prompt ()
+  (dolist (k <keybindings>)
     (apply #'bind-key-to-prompt-insertion self k)))
 
 (defparameter *prompt-qwerty-keybindings*
@@ -625,8 +625,8 @@ normally."
   (apply #'message args))
 
 (define-method initialize prompt ()
-  (send-parent self :initialize self)
-  (/install-default-keybindings self))
+  (/parent/initialize self)
+  (/install-keybindings self))
 
 (define-method forward-char prompt ()
   (setf <point> (min (1+ <point>)
