@@ -194,7 +194,7 @@
 	     (keyword (make-non-keyword segment))
 	     (otherwise segment)))))
 
-(defparameter *socket-width* (* 6 *dash-size*))
+(defparameter *socket-width* (* 12 *dash-size*))
 
 (defun segment-width (segment &optional (font *block-font*))
   (if (iosketch:object-p segment)
@@ -202,12 +202,12 @@
       (font-text-extents (print-segment segment) font)))
 
 (define-method handle-width block ()
-  (+ (* 3 *dash-size*)
+  (+ (* 2 *dash-size*)
      (segment-width <operation>)))
 
 (defmacro with-block-drawing (image &body body)
   (let ((image-sym (gensym)))
-    `(with-field-values (x y type height width schema) self
+    `(with-field-values (x y type height width) self
        (let* ((foreground (block-color type :foreground))
 	      (background (block-color type :background))
 	      (highlight (block-color type :highlight))
@@ -291,7 +291,7 @@
 
 (define-method layout block ()
   (with-field-values 
-      (x y operation arguments height width widgets) 
+      (x y operation schema arguments height width widgets) 
       self
     (let* ((font *block-font*)
 	   (dash *dash-size*)
@@ -299,35 +299,42 @@
 	   (max-height (+ dash (font-height font))))
       (loop while arguments do
  	(let ((widget (pop widgets))
-	      (argument (pop arguments)))
+	      (argument (pop arguments))
+	      (type (pop schema)))
 	  (if (null widget)
-	      (progn (incf left (+ dash (segment-width argument))))
+	      (incf left 
+		    (+ dash
+		       (if (eq :block type)
+			   (if (null argument)
+			       *socket-width*
+			       (field-value :width argument))
+			   (segment-width argument))))
 	      (progn (/move widget :x left :y (+ y dash))
 		     (incf left (field-value :width widget))
 		     (setf max-height 
 			   (max max-height 
 				(field-value :height widget)))))))
-      (setf <width> (+ (- left x) (* 6 dash)))
+      (setf <width> (+ (- left x) (* 4 dash)))
       (setf <height> (+ max-height (* 2 dash))))))
 
-(define-method draw-segment block (x y segment type image)
+(define-method draw-segment block (x0 y0 segment type image)
   (with-block-drawing image
     (with-fields (height) self
       (let ((dash *dash-size*))
 	(if (eq type :block)
-	    (/draw-socket x (+ y dash)
-			  (+ x *socket-width*)
-			  (+ y (- height dash)))
-	    (text x (+ y dash 1)
+	    (/draw-socket x0 (+ y0 dash)
+			  (+ x0 *socket-width*)
+			  (+ y0 (- height dash)))
+	    (text x0 (+ y0 dash 1)
 		  (print-segment segment)))))))
 
 (define-method draw-contents block (image)
   (with-block-drawing image
     (with-field-values 
-	(x y operation arguments schema height width widgets) 
+	(x y operation arguments schema height width widgets)
 	self
       (let* ((dash *dash-size*)
-	     (left (+ x (* 3 dash))))
+	     (left (+ x (* 2 dash))))
 	(text left (+ y dash 1) (print-segment operation))
 	(incf left (+ dash (segment-width operation)))
 	(loop while arguments do
@@ -500,7 +507,7 @@
       (setf buffer (create-image width height)))))
 
 (define-method redraw editor ()
-  (with-fields (script buffer width height) self
+  (with-fields (script buffer needs-redraw width height) self
     (with-fields (blocks) script
       (draw-box 0 0 width height 
 		:color *background-color*
@@ -509,15 +516,16 @@
       (dolist (block blocks)
 	(/layout block))
       (dolist (block blocks)
-	(/draw block buffer)))))
+	(/draw block buffer)))
+    (setf needs-redraw nil)))
 
 (define-method render editor ()
   (with-fields 
       (script needs-redraw image buffer selection focus drag modified) self   
     (when script
-      (when needs-redraw (/redraw self)
+      (when needs-redraw (/redraw self))
       (draw-image buffer 0 0 :destination image)
-      (when drag (/draw drag image))))))
+      (when drag (/draw drag image)))))
 
 (define-method mouse-down editor (x y &optional button)
   (with-fields (script selection focus drag modified) self
