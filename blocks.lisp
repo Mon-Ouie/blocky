@@ -22,7 +22,11 @@
 
 ;; This file implements a drag-and-drop visual programming language in
 ;; the style of Smalltalk environments such as Squeak Morphic and MIT
-;; Scratch.
+;; Scratch. For more information see:
+
+;; http://scratch.mit.edu/
+;; http://byob.berkeley.edu/
+;; http://wiki.scratch.mit.edu/wiki/Category:Scratch_Modifications
 
 ;;; Code:
 
@@ -457,11 +461,11 @@
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
   (drag-start :initform nil
-	      :documentation "A cons (X . Y) of widget where last started.")
+	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
-	       :documentation "A cons (X . Y) of mouse click location on dragged block.")
-  (modified :initform nil 
-  	    :documentation "Non-nil when modified since last save."))
+	       :documentation "A cons (X . Y) of mouse click location on dragged block."))
+(modified :initform nil 
+	  :documentation "Non-nil when modified since last save.")
 
 (define-method render editor ()
   (with-fields (script image selection focus drag modified) self   
