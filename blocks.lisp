@@ -181,44 +181,66 @@
 			  (+ y height))
       self)))
 
-(defmacro with-block-drawing (&body body)
-  `(with-field-values (x y type image height width schema) self
-    (let* ((foreground (block-color type :foreground))
-	   (background (block-color type :background))
-	   (highlight (block-color type :highlight))
-	   (shadow (block-color type :shadow))
-	   (dash *dash-size*)
-	   (label (/line-string self))
-	   (radius *dash-size*)
-	   (diameter (* 2 radius))
-	   (bottom (+ y height))
-	   (right (+ x width)))
-      (labels ((circle (x y &optional color)
-		 (draw-aa-circle x y radius 
-				 :color (or color background)
-				 :destination image))
-	       (disc (x y &optional color)
-		 (draw-filled-circle x y radius
-				     :color (or color background)
-				     :destination image))
-	       (line (x0 y0 x1 y1 &optional color)
-		 (draw-line x0 y0 x1 y1 
-			    :color (or color background)
-			    :destination image))
-	       (box (x y r b &optional color)
-		 (draw-box x y (- r x) (- b y)
-			   :color (or color background)
-			   :stroke-color (or color background)
-			   :destination image))
-	       (text (x y string)
-		 (draw-string-blended string x y
-				      :foreground foreground
-				      :destination image
-				      :font *block-font*)))
-	,@body))))
+(define-method line-string block ()
+  (with-fields (operation arguments) self
+    (labels ((clean (thing) 
+      (let ((output (mapcar #'clean (cons operation arguments))))
+	(string-downcase (format nil "~{~s~^ ~}" output))))))))
 
-(define-method draw-patch block (x0 y0 x1 y1 &optional depressed)
-    (with-block-drawing
+(defun print-segment (segment)
+  (string-downcase 
+   (format nil "~S"
+	   (typecase segment
+	     (keyword (make-non-keyword segment))
+	     (otherwise segment)))))
+
+(defun printed-width (segment &optional (font *block-font*))
+  (font-text-extents (print-segment segment) font))
+
+(define-method handle-width block ()
+  (+ (* 3 *dash-size*)
+     (printed-width <operation>)))
+
+(defmacro with-block-drawing (image &body body)
+  (let ((image-sym (gensym)))
+    `(with-field-values (x y type height width schema) self
+       (let* ((foreground (block-color type :foreground))
+	      (background (block-color type :background))
+	      (highlight (block-color type :highlight))
+	      (shadow (block-color type :shadow))
+	      (dash *dash-size*)
+	      (label (/line-string self))
+	      (radius *dash-size*)
+	      (diameter (* 2 radius))
+	      (bottom (+ y height))
+	      (right (+ x width))
+	      (,image-sym ,image))
+	 (labels ((circle (x y &optional color)
+		    (draw-aa-circle x y radius 
+				    :color (or color background)
+				    :destination ,image-sym))
+		  (disc (x y &optional color)
+		    (draw-filled-circle x y radius
+					:color (or color background)
+					:destination ,image-sym))
+		  (line (x0 y0 x1 y1 &optional color)
+		    (draw-line x0 y0 x1 y1 
+			       :color (or color background)
+			       :destination ,image-sym))
+		  (box (x y r b &optional color)
+		    (draw-box x y (- r x) (- b y)
+			      :color (or color background)
+			      :stroke-color (or color background)
+			      :destination ,image-sym))
+		  (text (x y string)
+		    (draw-string-blended string x y
+					 :foreground foreground
+					 :destination ,image-sym
+					 :font *block-font*)))
+	   ,@body)))))
+
+(define-method draw-patch block (x0 y0 x1 y1 image &optional depressed)
+    (with-block-drawing image
       (let ((bevel (if depressed shadow highlight))
 	    (chisel (if depressed highlight shadow)))
 	;; top left
@@ -256,32 +278,12 @@
 	(box (+ x radius) (+ y radius)
 	     (- right radius) (- bottom radius)))))
 
-(define-method draw-socket block (x0 y0 x1 y1)
-  (/draw-patch x0 y0 x1 y1 :depressed))
+(define-method draw-socket block (x0 y0 x1 y1 image)
+  (/draw-patch self x0 y0 x1 y1 image :depressed))
     
-(define-method draw-background block ()
+(define-method draw-background block (image)
   (with-fields (x y width height) self
-    (/draw-patch x y (+ x width) (+ y height))))
-
-(define-method line-string block ()
-  (with-fields (operation arguments) self
-    (labels ((clean (thing) 
-      (let ((output (mapcar #'clean (cons operation arguments))))
-	(string-downcase (format nil "~{~s~^ ~}" output))))))))
-
-(defun print-segment (segment)
-  (string-downcase 
-   (format nil "~S"
-	   (typecase segment
-	     (keyword (make-non-keyword segment))
-	     (otherwise segment)))))
-
-(defun printed-width (segment &optional (font *block-font*))
-  (font-text-extents (print-segment segment) font))
-
-(define-method handle-width block ()
-*  (+ (* 3 *dash-size*)
-     (printed-width <operation>)))
+    (/draw-patch self x y (+ x width) (+ y height) image)))
 
 (define-method layout block ()
   (with-field-values 
@@ -289,41 +291,44 @@
       self
     (let* ((font *block-font*)
 	   (dash *dash-size*)
-	   (left (/handle-width self))
-	   (max-height (font-height font)))
+	   (left (+ x (/handle-width self)))
+	   (max-height (+ dash (font-height font))))
       (loop while arguments do
  	(let ((widget (pop widgets))
 	      (argument (pop arguments)))
 	  (if (null widget)
 	      (progn (incf left (printed-width argument)))
-	      (progn (/move widget :x left :y dash)
+	      (progn (/move widget :x left :y (+ y dash))
 		     (incf left (field-value :width widget))
 		     (setf max-height 
 			   (max max-height 
 				(field-value :height widget)))))))
-      (setf <width> (+ left (* 6 dash)))
+      (setf <width> (+ (- left x) (* 6 dash)))
       (setf <height> (+ max-height (* 2 dash))))))
 
-(define-method draw-segments block ()
-  (with-block-drawing 
+(define-method draw-segments block (image)
+  (with-block-drawing image
     (with-field-values 
 	(x y operation arguments height width widgets) 
 	self
-      (let ((left (/handle-width self)))
+      (let* ((dash *dash-size*)
+	     (left (+ x (* 3 dash))))
+	(text left (+ y dash 1) (print-segment operation))
+	(incf left (+ dash (printed-width operation)))
 	(loop while arguments do
 	  (let ((widget (pop widgets))
 		(argument (pop arguments)))
 	    (if (null widget)
 		(progn 
 		  ;; TODO draw sockets etc
-		  (text (+ x left) (+ y *dash-size*) 
+		  (text left (+ y dash 1) 
 			(print-segment argument))
-		  (incf left (printed-width argument)))
-		(incf left (field-value :width widget)))))))))
+		  (incf left (+ dash (printed-width argument))))
+		(incf left (+ dash (field-value :width widget))))))))))
       		        
 (define-method draw block (image)
-  (/draw-background self)
-  (/draw-segments self))
+  (/draw-background self image)
+  (/draw-segments self image))
     
 ;;; Predefined blocks 
 
@@ -415,6 +420,11 @@
     (setf blocks (adjoin block blocks))
     (/move block x y)))
 
+(define-method bring-to-front script (block)
+  (with-fields (blocks) self
+    (setf blocks (delete block blocks))
+    (setf blocks (append blocks (list block)))))
+
 (define-method delete script (block)
   (with-fields (blocks) self
     (setf blocks (delete block blocks))))
@@ -451,24 +461,45 @@
   	 :documentation "Block with current focus.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
+  (buffer :initform nil)
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
 	       :documentation "A cons (X . Y) of mouse click location on dragged block.")
+  (needs-redraw :initform t)
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
+(define-method resize editor (&key width height)
+  (with-fields (buffer image) self
+    (when (null buffer)
+      (setf buffer (create-image width height)))
+    (unless (and (= <width> width)
+		 (= <height> height))
+      (/parent/resize self :width width :height height)
+      (when buffer
+	(sdl:free buffer))
+      (setf buffer (create-image width height)))))
+
+(define-method redraw editor ()
+  (with-fields (script buffer width height) self
+    (with-fields (blocks) script
+      (draw-box 0 0 width height 
+		:color *background-color*
+		:stroke-color *background-color*
+		:destination buffer)
+      (dolist (block blocks)
+	(/layout block))
+      (dolist (block blocks)
+	(/draw block buffer)))))
+
 (define-method render editor ()
-  (with-fields (script image selection focus drag modified) self   
+  (with-fields 
+      (script needs-redraw image buffer selection focus drag modified) self   
     (when script
-      (with-fields (blocks) script
-	(/clear self *background-color*)
-	(unless drag 
-	  (dolist (block blocks)
-	    (/layout block)))
-	(dolist (block blocks)
-	  (/draw block image))
-	(when drag (/draw drag image))))))
+      (when needs-redraw (/redraw self)
+      (draw-image buffer 0 0 :destination image)
+      (when drag (/draw drag image))))))
 
 (define-method mouse-down editor (x y &optional button)
   (with-fields (script selection focus drag modified) self
@@ -494,10 +525,14 @@
 	  (/move drag (- mouse-x x0) (- mouse-y y0)))))))
 
 (define-method mouse-up editor (x y &optional button)
-  (with-fields (script drag-start selection focus drag modified) self
+  (with-fields 
+      (script needs-redraw drag-start selection focus drag modified) 
+      self
+    (/bring-to-front script drag)
     (setf drag-start nil)
     (setf drag-offset nil)
-    (setf drag nil)))
+    (setf drag nil)
+    (setf needs-redraw t)))
 
 ;; (define-method drag editor (x y))
 

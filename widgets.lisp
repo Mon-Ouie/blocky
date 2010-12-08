@@ -41,11 +41,11 @@ including an output formatter and a configurable command prompt.
 ")
   (keymap :documentation "A hash table mapping keylists to lambdas.")
   (image :documentation "The offscreen image buffer containing the widget's rendered output.")
-  (width :documentation "The current allocated image width of the widget, in pixels.")
-  (height :documentation "The current allocated image height of the widget, in pixels.")
+  (width :documentation "The current allocated image width of the widget, in pixels." :initform 0)
+  (height :documentation "The current allocated image height of the widget, in pixels." :initform 0)
   (visible :initform t :documentation "The boolean visibility of the widget.")
-  (x :documentation "The screen x-coordinate of the left side of the widget's display area.")
-  (y :documentation "The screen y-coordinate of the top of the widget's display area."))
+  (x :documentation "The screen x-coordinate of the left side of the widget's display area." :initform 0)
+  (y :documentation "The screen y-coordinate of the top of the widget's display area." :initform 0))
 
 (defmacro defwidget (name &body args)
   "Define a widget named NAME, with the fields ARGS as in a normal
@@ -59,11 +59,13 @@ widgets."
 
 (define-method resize widget (&key height width)
   "Allocate an image buffer of HEIGHT by WIDTH pixels."
-  (setf <width> width 
-	<height> height)
-  (let ((oldimage <image>))
-    (setf <image> (create-image width height))
-    (when oldimage (sdl:free oldimage))))
+  (unless (and (= <width> width)
+	       (= <height> height))
+    (setf <width> width 
+	  <height> height)  
+    (let ((oldimage <image>))
+      (setf <image> (create-image width height))
+      (when oldimage (sdl:free oldimage)))))
 
 (define-method move widget (&key x y)
   "Move the widget to the location X, Y."
