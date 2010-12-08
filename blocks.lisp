@@ -211,7 +211,7 @@
 	(substitute #\Space #\- (symbol-name segment)))
      (otherwise (format nil "~s" segment)))))
 
-(defparameter *socket-width* (* 16 *dash-size*))
+(defparameter *socket-width* (* 18 *dash-size*))
 
 (defun segment-width (segment &optional (font *block-font*))
   (if (iosketch:object-p segment)
@@ -224,7 +224,7 @@
 
 (defmacro with-block-drawing (image &body body)
   (let ((image-sym (gensym)))
-    `(with-field-values (x y height width) self
+    `(with-field-values (height width) self
        (let* ((foreground (/find-color self :foreground))
 	      (background (/find-color self :background))
 	      (highlight (/find-color self :highlight))
@@ -233,8 +233,6 @@
 	      (label (/line-string self))
 	      (radius *dash-size*)
 	      (diameter (* 2 radius))
-	      (bottom (+ y height))
-	      (right (+ x width))
 	      (,image-sym ,image))
 	 (labels ((circle (x y &optional color)
 		    (draw-aa-circle x y radius 
@@ -358,7 +356,7 @@
 
 (define-method draw-segment block (x0 y0 segment type image)
   (with-block-drawing image
-    (let (width)
+    (let ((width *socket-width*))
       (with-fields (height) self
 	(let ((dash *dash-size*))
 	  (if (eq type :block)
@@ -366,7 +364,7 @@
 		(progn (setf width *socket-width*)
 		       (/draw-socket self (+ x0 dash) (+ y0 dash)
 				     (+ x0 *socket-width*)
-				     (+ y0 (- height dash dash))
+				     (+ y0 (- height dash))
 				     image)))
 	      (progn 
 		(text x0 (+ y0 dash 1)
