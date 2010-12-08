@@ -250,15 +250,15 @@
 	    (chisel (if depressed highlight shadow))
 	    (fill (if dark shadow background)))
 	;; top left
-	(disc (+ x0 radius) (+ y0 radius))
+	(disc (+ x0 radius) (+ y0 radius) fill)
 	(circle (+ x0 radius) (+ y0 radius) bevel)
 	;; top x1
-	(disc (- x1 radius 1) (+ y0 radius))
+	(disc (- x1 radius 1) (+ y0 radius) fill)
 	;; y1 x1
-	(disc (- x1 radius 1) (- y1 radius 1))
+	(disc (- x1 radius 1) (- y1 radius 1) fill)
 	(circle (- x1 radius 1) (- y1 radius 1) chisel)
 	;; y1 left
-	(disc (+ x0 radius) (- y1 radius 1))
+	(disc (+ x0 radius) (- y1 radius 1) fill)
 	(circle (+ x0 radius) (- y1 radius 1))
 	;; y1 
 	(box (+ x0 radius) (- y1 diameter)
