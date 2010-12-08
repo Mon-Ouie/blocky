@@ -243,10 +243,12 @@
 					 :font *block-font*)))
 	   ,@body)))))
 
-(define-method draw-patch block (x0 y0 x1 y1 image &optional depressed)
+(define-method draw-patch block (x0 y0 x1 y1 image 
+				    &key depressed dark)
     (with-block-drawing image
       (let ((bevel (if depressed shadow highlight))
-	    (chisel (if depressed highlight shadow)))
+	    (chisel (if depressed highlight shadow))
+	    (fill (if dark shadow background)))
 	;; top left
 	(disc (+ x0 radius) (+ y0 radius))
 	(circle (+ x0 radius) (+ y0 radius) bevel)
@@ -260,30 +262,35 @@
 	(circle (+ x0 radius) (- y1 radius 1))
 	;; y1 
 	(box (+ x0 radius) (- y1 diameter)
-	     (- x1 radius 1) y1)
+	     (- x1 radius 1) y1
+	     fill)
 	(line (+ x0 radius 1) y1
 	      (- x1 radius 1) y1 chisel)
 	;; top
 	(box (+ x0 radius) y0
-	     (- x1 radius) (+ y0 diameter))
+	     (- x1 radius) (+ y0 diameter)
+	     fill)
 	(line (+ x0 radius 1) y0
 	      (- x1 radius 1) y0 bevel)
 	;; left 
 	(box x0 (+ y0 radius) 
-	     (+ x0 diameter) (- y1 radius))
+	     (+ x0 diameter) (- y1 radius)
+	     fill)
 	(line x0 (+ y0 radius 1)
 	      x0 (- y1 radius 1) bevel)
 	;; x1
 	(box (- x1 diameter) (+ y0 radius)
-	     x1 (- y1 radius))
+	     x1 (- y1 radius)
+	     fill)
 	(line x1 (+ y0 radius 1)
 	      x1 (- y1 radius 1) chisel)
 	;; content area
 	(box (+ x0 radius) (+ y0 radius)
-	     (- x1 radius) (- y1 radius)))))
+	     (- x1 radius) (- y1 radius)
+	     fill))))
 
 (define-method draw-socket block (x0 y0 x1 y1 image)
-  (/draw-patch self x0 y0 x1 y1 image :depressed))
+  (/draw-patch self x0 y0 x1 y1 image :depressed t :dark t))
     
 (define-method draw-background block (image)
   (with-fields (x y width height) self
