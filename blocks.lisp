@@ -263,20 +263,11 @@
   (with-fields (x y width height) self
     (/draw-patch x y (+ x width) (+ y height))))
 
-;; (define-method draw-arguments block () 
-;;   (with-block-drawing 
-;;     (text (+ <x> (* 3 *dash-size*))
-;; 	  (+ <y> *dash-size*)
-;; 	  (/line-string self))))
-
-(define-method draw-arguments block () 
-  (with-block-drawing 
-
 (define-method line-string block ()
   (with-fields (operation arguments) self
     (labels ((clean (thing) 
       (let ((output (mapcar #'clean (cons operation arguments))))
-	(string-downcase (format nil "~{~s~^ ~}" output))))))
+	(string-downcase (format nil "~{~s~^ ~}" output))))))))
 
 (defun print-segment (segment)
   (string-downcase 
@@ -288,8 +279,8 @@
 (defun printed-width (segment &optional (font *block-font*))
   (font-text-extents (print-segment segment) font))
 
-(define-method handle-width self ()
-  (+ (* 3 *dash-size*)
+(define-method handle-width block ()
+*  (+ (* 3 *dash-size*)
      (printed-width <operation>)))
 
 (define-method layout block ()
@@ -298,7 +289,7 @@
       self
     (let* ((font *block-font*)
 	   (dash *dash-size*)
-	   (left (/handle-width self)
+	   (left (/handle-width self))
 	   (max-height (font-height font)))
       (loop while arguments do
  	(let ((widget (pop widgets))
@@ -311,7 +302,7 @@
 			   (max max-height 
 				(field-value :height widget)))))))
       (setf <width> (+ left (* 6 dash)))
-      (setf <height> (+ max-height (* 2 dash)))))))
+      (setf <height> (+ max-height (* 2 dash))))))
 
 (define-method draw-segments block ()
   (with-block-drawing 
@@ -339,7 +330,7 @@
 (defblock do
   (type :initform :event)
   (schema :initform '(:body))
-  (arguments :initform (nil)))
+  (arguments :initform '(nil)))
 
 ;; (define-method hit do (mouse-x mouse-y)
   
@@ -463,9 +454,9 @@
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
-	       :documentation "A cons (X . Y) of mouse click location on dragged block."))
-(modified :initform nil 
-	  :documentation "Non-nil when modified since last save.")
+	       :documentation "A cons (X . Y) of mouse click location on dragged block.")
+  (modified :initform nil 
+	  :documentation "Non-nil when modified since last save."))
 
 (define-method render editor ()
   (with-fields (script image selection focus drag modified) self   
@@ -490,7 +481,9 @@
 	    (setf focus block)))))))
 
 (define-method mouse-move editor (mouse-x mouse-y)
-  (with-fields (script selection focus drag-start drag modified) self
+  (with-fields 
+      (script drag-offset selection focus drag-start drag modified) 
+      self
     (when drag
       (with-fields (x y) drag
 	(when (null drag-start)
