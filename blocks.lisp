@@ -165,13 +165,13 @@
     :sensing ".white")
   "X11 color names of the text used for different block types.")
 
-(defun block-color (type &optional (part :background))
+(define-method find-color block (&optional (part :background))
   (let ((colors (ecase part
 		  (:background *block-colors*)
 		  (:highlight *block-highlight-colors*)
 		  (:shadow *block-shadow-colors*)
 		  (:foreground *block-foreground-colors*))))
-    (getf colors type)))
+    (getf colors <type>)))
 
 (define-method hit block (click-x click-y)
   (with-fields (x y width height) self
@@ -194,7 +194,7 @@
 	     (keyword (make-non-keyword segment))
 	     (otherwise segment)))))
 
-(defparameter *socket-width* (* 12 *dash-size*))
+(defparameter *socket-width* (* 16 *dash-size*))
 
 (defun segment-width (segment &optional (font *block-font*))
   (if (iosketch:object-p segment)
@@ -207,11 +207,11 @@
 
 (defmacro with-block-drawing (image &body body)
   (let ((image-sym (gensym)))
-    `(with-field-values (x y type height width) self
-       (let* ((foreground (block-color type :foreground))
-	      (background (block-color type :background))
-	      (highlight (block-color type :highlight))
-	      (shadow (block-color type :shadow))
+    `(with-field-values (x y height width) self
+       (let* ((foreground (/find-color self :foreground))
+	      (background (/find-color self :background))
+	      (highlight (/find-color self :highlight))
+	      (shadow (/find-color self :shadow))
 	      (dash *dash-size*)
 	      (label (/line-string self))
 	      (radius *dash-size*)
@@ -248,39 +248,39 @@
       (let ((bevel (if depressed shadow highlight))
 	    (chisel (if depressed highlight shadow)))
 	;; top left
-	(disc (+ x radius) (+ y radius))
-	(circle (+ x radius) (+ y radius) bevel)
-	;; top right
-	(disc (- right radius 1) (+ y radius))
-	;; bottom right
-	(disc (- right radius 1) (- bottom radius 1))
-	(circle (- right radius 1) (- bottom radius 1) chisel)
-	;; bottom left
-	(disc (+ x radius) (- bottom radius 1))
-	(circle (+ x radius) (- bottom radius 1))
-	;; bottom 
-	(box (+ x radius) (- bottom diameter)
-	     (- right radius 1) bottom)
-	(line (+ x radius 1) bottom
-	      (- right radius 1) bottom chisel)
+	(disc (+ x0 radius) (+ y0 radius))
+	(circle (+ x0 radius) (+ y0 radius) bevel)
+	;; top x1
+	(disc (- x1 radius 1) (+ y0 radius))
+	;; y1 x1
+	(disc (- x1 radius 1) (- y1 radius 1))
+	(circle (- x1 radius 1) (- y1 radius 1) chisel)
+	;; y1 left
+	(disc (+ x0 radius) (- y1 radius 1))
+	(circle (+ x0 radius) (- y1 radius 1))
+	;; y1 
+	(box (+ x0 radius) (- y1 diameter)
+	     (- x1 radius 1) y1)
+	(line (+ x0 radius 1) y1
+	      (- x1 radius 1) y1 chisel)
 	;; top
-	(box (+ x radius) y
-	     (- right radius) (+ y diameter))
-	(line (+ x radius 1) y
-	      (- right radius 1) y bevel)
+	(box (+ x0 radius) y0
+	     (- x1 radius) (+ y0 diameter))
+	(line (+ x0 radius 1) y0
+	      (- x1 radius 1) y0 bevel)
 	;; left 
-	(box x (+ y radius) 
-	     (+ x diameter) (- bottom radius))
-	(line x (+ y radius 1)
-	      x (- bottom radius 1) bevel)
-	;; right
-	(box (- right diameter) (+ y radius)
-	     right (- bottom radius))
-	(line right (+ y radius 1)
-	      right (- bottom radius 1) chisel)
+	(box x0 (+ y0 radius) 
+	     (+ x0 diameter) (- y1 radius))
+	(line x0 (+ y0 radius 1)
+	      x0 (- y1 radius 1) bevel)
+	;; x1
+	(box (- x1 diameter) (+ y0 radius)
+	     x1 (- y1 radius))
+	(line x1 (+ y0 radius 1)
+	      x1 (- y1 radius 1) chisel)
 	;; content area
-	(box (+ x radius) (+ y radius)
-	     (- right radius) (- bottom radius)))))
+	(box (+ x0 radius) (+ y0 radius)
+	     (- x1 radius) (- y1 radius)))))
 
 (define-method draw-socket block (x0 y0 x1 y1 image)
   (/draw-patch self x0 y0 x1 y1 image :depressed))
@@ -319,19 +319,26 @@
 
 (define-method draw-segment block (x0 y0 segment type image)
   (with-block-drawing image
-    (with-fields (height) self
-      (let ((dash *dash-size*))
-	(if (eq type :block)
-	    (/draw-socket x0 (+ y0 dash)
-			  (+ x0 *socket-width*)
-			  (+ y0 (- height dash)))
-	    (text x0 (+ y0 dash 1)
-		  (print-segment segment)))))))
+    (let (width)
+      (with-fields (height) self
+	(let ((dash *dash-size*))
+	  (if (eq type :block)
+	      (progn 
+		(setf width *socket-width*)
+		(/draw-socket self (+ x0 dash) (+ y0 dash)
+			      (+ x0 *socket-width*)
+			      (+ y0 (- height dash dash))
+			      image))
+	      (progn 
+		(text x0 (+ y0 dash 1)
+		      (print-segment segment))
+		(setf width (segment-width segment))))))
+      width)))
 
 (define-method draw-contents block (image)
   (with-block-drawing image
     (with-field-values 
-	(x y operation arguments schema height width widgets)
+	(x y operation arguments schema widgets)
 	self
       (let* ((dash *dash-size*)
 	     (left (+ x (* 2 dash))))
@@ -342,12 +349,11 @@
 		(type (pop schema))
 		(argument (pop arguments)))
 	    (if (null widget)
-		(progn 
-		  (/draw-segment self 
-				 left y 
-				 argument type
-				 image)
-		  (incf left (+ dash (segment-width argument))))
+		(incf left 
+		      (+ dash (/draw-segment self 
+					     left y 
+					     argument type
+					     image)))
 		(incf left (+ dash (field-value :width widget))))))))))
       		        
 (define-method draw block (image)

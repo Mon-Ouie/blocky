@@ -821,7 +821,7 @@ initializer. The new object is created with fields for which INITFORMS
 were specified (if any; see `define-prototype'); the INITFORMS are
 evaluated, then any applicable initializer is triggered."
   (let ((new-object (make-object :parent prototype 
-				 :fields (compose-blank-fields nil :list))))
+				 :fields (compose-blank-fields nil :hash))))
     (initialize-method-cache new-object)
     (send nil :initialize-fields new-object)
     (if (has-field :initialize new-object)
