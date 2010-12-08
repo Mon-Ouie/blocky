@@ -39,17 +39,32 @@
 					 =when= =start= =stop= =+= ))))))
     (with-fields (script) self
       (setf script (clone =script=))
-      (/add script (clone =move=) 20 20)
-      (/add script (clone =move-to=) 20 60)
-      (/add script (clone =play-music=) 20 120)
-      (/add script (clone =play-sound=) 20 160)
+      (/add script (clone =move= :west 2 :spaces) 20 20)
+      (/add script (clone =play-music= "victory") 20 120)
+      (/add script (clone =play-sound= "beep") 20 160)
       (/add script (clone =start=) 20 200)
-      (/add script (clone =stop=) 20 320)
-      (/add script (clone =when= (clone =do=) (clone =do=)) 20 360)
-      (/add script (clone =unless= (clone =do=) (clone =do=)) 20 400)
-      (/add script (clone =if= (clone =do=) nil (clone =do=)) 20 420)
-      (/add script (clone =if=) 20 420)
-      (/add script (clone =+=) 20 500))))
+      (/add script (clone =stop=) 20 200)
+      (/add script (clone =when= 
+      			  (clone =visible?=)
+      			  (clone =set-variable= :n nil)) 20 360)
+      (/add script (clone =when= 
+      			  (clone =my= :stepping) 
+      			  (clone =play-sound= "footstep")) 20 400)
+      (/add script (clone =if= (clone =my= :color) 
+			  (clone =say= "I have a color.")
+			  (clone =play-sound= "warning")) 20 420)
+      (/add script (clone =if= (clone =my= :boosting) 
+			  (clone =move= :north 1 :pixel) 
+			  (clone =move= :south 2 :pixels)) 20 420)
+      (/add script (clone =when= 
+      			  (clone =joystick-button= 2 :down)
+			  (clone =if=
+				 (clone =my= :fuel)
+				 (clone =set-variable= :boosting :yes)
+				 (clone =play-sound= "empty")))
+	    20 320)
+      (/add script (clone =+= 7 5) 20 500))
+      ))
 
 ;;; A "frame" is a top-level application window.
 

@@ -66,7 +66,7 @@
     :control :comment :sensing :operators :variables))
 
 (defparameter *argument-types*
-  '(:block :body :integer :float :number :string :symbol))
+  '(:block :anything :body :integer :float :number :string :symbol))
 
 (define-method move block (x y)
   (setf <x> x)
@@ -341,10 +341,11 @@
 		       (if (eq :block type)
 			   (if (null argument)
 			       *socket-width*
-			       (progn 
-				 (/move argument (+ left dash dash) (+ y dash dash))
-				 (/layout argument)
-				 (field-value :width argument)))
+			       (if (object-p argument) 
+				   (progn (/move argument (+ left dash dash) (+ y dash dash))
+					  (/layout argument)
+					  (field-value :width argument))
+				   (segment-width argument)))
 			   (segment-width argument))))
 	      (progn (/move widget :x left :y (+ y dash))
 		     (incf left (field-value :width widget))
@@ -361,11 +362,10 @@
 	(let ((dash *dash-size*))
 	  (if (eq type :block)
 	      (when (null segment) 
-		(progn (setf width *socket-width*)
-		       (/draw-socket self (+ x0 dash) (+ y0 dash)
-				     (+ x0 *socket-width*)
-				     (+ y0 (- height dash))
-				     image)))
+		(/draw-socket self (+ x0 dash) (+ y0 dash)
+			      (+ x0 *socket-width*)
+			      (+ y0 (- height dash))
+			      image))
 	      (progn 
 		(text x0 (+ y0 dash 1)
 		      (print-segment segment))
@@ -436,6 +436,21 @@
   (schema :initform '(:body))
   (arguments :initform '(nil)))
 
+(defblock my 
+  (type :initform :variables)
+  (schema :initform '(:symbol))
+  (arguments :initform '(:name)))
+
+(defblock set
+  (type :initform :variables)
+  (schema :initform '(:symbol :anything))
+  (arguments :initform '(:counter 1)))
+
+(defblock say 
+  (type :initform :message)
+  (schema :initform '(:string))
+  (arguments :initform '("Hello!")))
+
 ;; (define-method hit do (mouse-x mouse-y)
   
 ;;   )
@@ -447,7 +462,7 @@
 
 (defblock move
   (type :initform :motion)
-  (schema :initform '(:symbol :integer :integer))
+  (schema :initform '(:symbol :integer :symbol))
   (arguments :initform '(:north 10 :pixels)))
 
 (defblock move-to
@@ -455,10 +470,30 @@
   (schema :initform '(:unit :integer :integer))
   (arguments :initform '(:space 0 0)))
 
+(defblock joystick-button
+  (type :initform :sensing)
+  (schema :initform '(:integer :symbol))
+  (arguments :initform '(1 :down)))
+
+(defblock visible?
+  (type :initform :variables)
+  (schema :initform nil)
+  (arguments :initform nil))
+
+(defblock set-variable 
+  (type :initform :variables)
+  (schema :initform '(:symbol :block))
+  (arguments :initform '(:n nil)))
+
+(defblock animate 
+  (type :initform :looks)
+  (schema :initform '(:string))
+  (arguments :initform '(nil)))
+
 (defblock play-music 
   (type :initform :sound)
-  (schema :initform '(:string :keyword :keyword))
-  (arguments :initform '("fanfare" :loop :no)))
+  (schema :initform '(:string))
+  (arguments :initform '("fanfare")))
 
 (defblock play-sound 
   (type :initform :sound)
