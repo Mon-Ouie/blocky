@@ -51,12 +51,6 @@
   (widgets :initform nil)
   (excluded-fields :initform '(:widgets)))
 
-(define-method initialize block ()
-  (setf <widgets> (make-list (length <schema>))))
-
-(define-method deserialize block ()
-  (/initialize self))
-
 (defmacro defblock (name &body args)
   `(define-prototype ,name (:parent =block=)
      (operation :initform ,(make-keyword name))
@@ -68,6 +62,31 @@
 
 (defparameter *argument-types*
   '(:block :body :integer :float :number :string :symbol))
+
+(define-method move block (x y)
+  (setf <x> x)
+  (setf <y> y))
+
+(define-method get-argument block (index)
+  (nth index <arguments>))
+
+(define-method set-argument block (index value)
+    (setf (nth index <arguments>) value))
+
+(define-method execute block (recipient)
+  "Send the appropriate message to the RECIPIENT object."
+  (apply #'iosketch:send nil <operation> recipient <arguments>))
+
+(define-method describe block ()
+  "Show name and comprehensive help for this block.")
+
+(define-method initialize block ()
+  (setf <widgets> (make-list (length <schema>))))
+
+(define-method deserialize block ()
+  (/initialize self))
+
+(define-method count block () 1)
 
 (defparameter *display-widgets*
    '(:integer =integer=
@@ -150,12 +169,6 @@
 		  (:foreground *block-foreground-colors*))))
     (getf colors type)))
 
-(define-method count block () 1)
-
-(define-method move block (x y)
-  (setf <x> x)
-  (setf <y> y))
-
 (define-method hit block (click-x click-y)
   (with-fields (x y width height) self
     (when (within-extents click-x click-y 
@@ -163,37 +176,6 @@
 			  (+ x width)
 			  (+ y height))
       self)))
-
-(define-method line-string block ()
-  (with-fields (operation arguments) self
-    (labels ((clean (thing) 
-	       (typecase thing
-		 (keyword (make-non-keyword thing))
-		 (otherwise thing))))
-      (let ((output (mapcar #'clean (cons operation arguments))))
-	(string-downcase (format nil "~{~s~^ ~}" output))))))
-
-(define-method arrange block ()
-  (let ((font *block-font*)
-	(line (/line-string self)))
-    (setf <width> (+ (* 6 *dash-size*) ;; spacing
-		     (font-text-extents line font)))
-    (setf <height> (+ (* 2 *dash-size*)
-		      (font-height font)))))
-
-(define-method get-argument block (index)
-  (nth index <arguments>))
-
-(define-method set-argument block (index value)
-    (setf (nth index <arguments>) value)
-    (/arrange self))
-
-(define-method execute block (recipient)
-  "Send the appropriate message to the RECIPIENT object."
-  (apply #'iosketch:send nil <operation> recipient <arguments>))
-
-(define-method describe block ()
-  "Show name and comprehensive help for this block.")
 
 (defmacro with-block-drawing (&body body)
   `(with-field-values (x y type image height width schema) self
@@ -231,7 +213,7 @@
 				      :font *block-font*)))
 	,@body))))
 
-(define-method draw-patch (x0 y0 x1 y1 &optional depressed)
+(define-method draw-patch block (x0 y0 x1 y1 &optional depressed)
     (with-block-drawing
       (let ((bevel (if depressed shadow highlight))
 	    (chisel (if depressed highlight shadow)))
@@ -282,12 +264,71 @@
 ;;     (text (+ <x> (* 3 *dash-size*))
 ;; 	  (+ <y> *dash-size*)
 ;; 	  (/line-string self))))
-  
 
+(define-method draw-arguments block () 
+  (with-block-drawing 
 
+(define-method line-string block ()
+  (with-fields (operation arguments) self
+    (labels ((clean (thing) 
+      (let ((output (mapcar #'clean (cons operation arguments))))
+	(string-downcase (format nil "~{~s~^ ~}" output))))))
+
+(defun print-segment (segment)
+  (string-downcase 
+   (format nil "~S"
+	   (typecase segment
+	     (keyword (make-non-keyword segment))
+	     (otherwise segment)))))
+
+(defun printed-width (segment &optional (font *block-font*))
+  (font-text-extents (print-segment segment) font))
+
+(define-method handle-width self ()
+  (+ (* 3 *dash-size*)
+     (printed-width <operation>)))
+
+(define-method layout block ()
+  (with-field-values 
+      (x y operation arguments height width widgets) 
+      self
+    (let* ((font *block-font*)
+	   (dash *dash-size*)
+	   (left (/handle-width self)
+	   (max-height (font-height font)))
+      (loop while arguments do
+ 	(let ((widget (pop widgets))
+	      (argument (pop arguments)))
+	  (if (null widget)
+	      (progn (incf left (printed-width argument)))
+	      (progn (/move widget :x left :y dash)
+		     (incf left (field-value :width widget))
+		     (setf max-height 
+			   (max max-height 
+				(field-value :height widget)))))))
+      (setf <width> (+ left (* 6 dash)))
+      (setf <height> (+ max-height (* 2 dash)))))))
+
+(define-method draw-segments block ()
+  (with-block-drawing 
+    (with-field-values 
+	(x y operation arguments height width widgets) 
+	self
+      (let ((left (/handle-width self)))
+	(loop while arguments do
+	  (let ((widget (pop widgets))
+		(argument (pop arguments)))
+	    (if (null widget)
+		(progn 
+		  ;; TODO draw sockets etc
+		  (text (+ x left) (+ y *dash-size*) 
+			(print-segment argument))
+		  (incf left (printed-width argument)))
+		(incf left (field-value :width widget)))))))))
+      		        
 (define-method draw block (image)
   (/draw-background self)
-  (/draw-arguments self))
+  (/draw-segments self))
     
 ;;; Predefined blocks 
 
@@ -429,7 +470,7 @@
 	(/clear self *background-color*)
 	(unless drag 
 	  (dolist (block blocks)
-	    (/arrange block)))
+	    (/layout block)))
 	(dolist (block blocks)
 	  (/draw block image))
 	(when drag (/draw drag image))))))

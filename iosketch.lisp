@@ -23,18 +23,6 @@
 
 ;; This program is dedicated to our beloved Yogi, who died 2006-10-06.
 
-;;; Commentary:
-
-;;  - Single-player, turn-based action in an object-oriented world
-;;  - Graphical tile map display with transparency
-;;  - Command processor with customizable keybindings
-;;  - Formatting engine for messages and data displays
-;;  - Saving/restoring game sessions
-;;  - Music and sound effects support
-;;  - Line-of-sight and light/shadow engine
-;;  - Terrain generation and pattern-based map synthesis
-;;  - Pathfinding and A.I. support
-
 ;;; Requirements:
 
 ;; This program requires a Common Lisp implementation and the
