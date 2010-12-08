@@ -39,21 +39,17 @@
 					 =when= =start= =stop= =+= ))))))
     (with-fields (script) self
       (setf script (clone =script=))
-      (/add script (random-block) 20 20)
-      (/add script (random-block) 20 60)
-      (/add script (random-block) 20 120)
-      (/add script (random-block) 20 160)
-      (/add script (random-block) 20 200)
-      (/add script (random-block) 20 320)
-      (/add script (random-block) 20 360)
-      (/add script (random-block) 20 400)
-      (/add script (random-block) 20 420)
-      (/add script (random-block) 20 500)
-      (/add script (random-block) 20 520)
-      (/add script (random-block) 20 460)
-      (/add script (random-block) 20 300)
-
-      (/add script (random-block) 20 240))))
+      (/add script (clone =move=) 20 20)
+      (/add script (clone =move-to=) 20 60)
+      (/add script (clone =play-music=) 20 120)
+      (/add script (clone =play-sound=) 20 160)
+      (/add script (clone =start=) 20 200)
+      (/add script (clone =stop=) 20 320)
+      (/add script (clone =when= (clone =do=) (clone =do=)) 20 360)
+      (/add script (clone =unless= (clone =do=) (clone =do=)) 20 400)
+      (/add script (clone =if= (clone =do=) nil (clone =do=)) 20 420)
+      (/add script (clone =if=) 20 420)
+      (/add script (clone =+=) 20 500))))
 
 ;;; A "frame" is a top-level application window.
 

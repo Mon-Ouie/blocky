@@ -48,12 +48,13 @@
   (schema :documentation "List of CL type specifiers for corresponding expressions in <arguments>.")
   (operation :initform "block" :documentation "Symbol name of block's operation, i.e. message key.")
   (type :documentation "Type name of block. See also `*block-types*'.")
-  (x :documentation "Integer X coordinate of this block's position.")
-  (y :documentation "Integer Y coordinate of this block's position.")
-  (width :documentation "Cached width of block.")
-  (height :documentation "Cached height of block.")
+  (x :initform 0 :documentation "Integer X coordinate of this block's position.")
+  (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
+  (width :initform 32 :documentation "Cached width of block.")
+  (height :initform 32 :documentation "Cached height of block.")
+  (parent :initform nil)
   (widgets :initform nil)
-  (excluded-fields :initform '(:widgets)))
+  (excluded-fields :initform '(:widgets :parent)))
 
 (defmacro defblock (name &body args)
   `(define-prototype ,name (:parent =block=)
@@ -71,11 +72,23 @@
   (setf <x> x)
   (setf <y> y))
 
+(define-method set-parent block (parent)
+  (setf <parent> parent))
+
 (define-method get-argument block (index)
   (nth index <arguments>))
 
 (define-method set-argument block (index value)
     (setf (nth index <arguments>) value))
+
+(define-method plug block (child index)
+  (/set-argument self index child)
+  (/set-parent child self))
+
+(define-method unplug block (child)
+  (let ((pos (position child <arguments>)))
+    (/set-argument self pos nil)
+    (/set-parent child nil)))
 
 (define-method execute block (recipient)
   "Send the appropriate message to the RECIPIENT object."
@@ -84,8 +97,12 @@
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
 
-(define-method initialize block ()
-  (setf <widgets> (make-list (length <schema>))))
+(define-method initialize block (&rest arguments)
+  (setf <widgets> (make-list (length <schema>)))
+  (when arguments 
+    (assert (= (length arguments)
+	       (length <arguments>)))
+    (setf <arguments> arguments)))
 
 (define-method deserialize block ()
   (/initialize self))
@@ -189,10 +206,10 @@
 
 (defun print-segment (segment)
   (string-downcase 
-   (format nil "~S"
-	   (typecase segment
-	     (keyword (make-non-keyword segment))
-	     (otherwise segment)))))
+   (typecase segment
+     (keyword 
+	(substitute #\Space #\- (symbol-name segment)))
+     (otherwise (format nil "~s" segment)))))
 
 (defparameter *socket-width* (* 16 *dash-size*))
 
@@ -296,6 +313,18 @@
   (with-fields (x y width height) self
     (/draw-patch self x y (+ x width) (+ y height) image)))
 
+(define-method draw-stub block (image)
+  (with-fields (x y operation) self
+    (let ((width (segment-width operation))
+	  (height (+ (font-height *block-font*) (* 2 *dash-size*))))
+      (/draw-patch self x y 
+		   (+ x width (* 4 *dash-size*))
+		   (+ y height (* 2 *dash-size*)) image)
+      (/draw-segment self 
+		     (+ x (* 2 *dash-size*))
+		     (+ y 1)
+		     operation :symbol image))))
+
 (define-method layout block ()
   (with-field-values 
       (x y operation schema arguments height width widgets) 
@@ -314,7 +343,10 @@
 		       (if (eq :block type)
 			   (if (null argument)
 			       *socket-width*
-			       (field-value :width argument))
+			       (progn 
+				 (/move argument (+ left dash dash) (+ y dash dash))
+				 (/layout argument)
+				 (field-value :width argument)))
 			   (segment-width argument))))
 	      (progn (/move widget :x left :y (+ y dash))
 		     (incf left (field-value :width widget))
@@ -330,12 +362,12 @@
       (with-fields (height) self
 	(let ((dash *dash-size*))
 	  (if (eq type :block)
-	      (progn 
-		(setf width *socket-width*)
-		(/draw-socket self (+ x0 dash) (+ y0 dash)
-			      (+ x0 *socket-width*)
-			      (+ y0 (- height dash dash))
-			      image))
+	      (when (null segment) 
+		(progn (setf width *socket-width*)
+		       (/draw-socket self (+ x0 dash) (+ y0 dash)
+				     (+ x0 *socket-width*)
+				     (+ y0 (- height dash dash))
+				     image)))
 	      (progn 
 		(text x0 (+ y0 dash 1)
 		      (print-segment segment))
@@ -362,10 +394,42 @@
 					     argument type
 					     image)))
 		(incf left (+ dash (field-value :width widget))))))))))
+
+(define-method hit-segment block (click-x click-y)
+  (with-field-values 
+      (x y width height operation arguments schema widgets)
+    self
+    (let* ((dash *dash-size*)
+	   (left (+ x (* 2 dash)))
+	   new-left n)
+	(incf left (+ dash (segment-width operation)))
+      (block testing
+	(loop while arguments do
+	  (let ((widget (pop widgets))
+		(type (pop schema))
+		(argument (pop arguments)))
+	    (setf new-left 
+		  (if (null widget)
+		      (+ left
+			 (if (eq :block type)
+			     (if (null argument)
+				 *socket-width*
+				 (field-value :width argument))
+			     (segment-width argument)))
+		      (incf left (+ dash (field-value :width widget)))))
+	    (when (and (< y click-y (+ y height))
+		       (< left click-x new-left))
+	      (return-from testing n))
+	    (incf n)
+	    (setf left new-left)))
+	(return-from testing nil)))))
       		        
 (define-method draw block (image)
   (/draw-background self image)
-  (/draw-contents self image))
+  (/draw-contents self image)
+  (dolist (child <arguments>)
+    (when (object-p child)
+      (/draw child image))))
     
 ;;; Predefined blocks 
 
@@ -538,7 +602,7 @@
     (when script
       (when needs-redraw (/redraw self))
       (draw-image buffer 0 0 :destination image)
-      (when drag (/draw drag image)))))
+      (when drag (/draw-stub drag image)))))
 
 (define-method mouse-down editor (x y &optional button)
   (with-fields (script selection focus drag modified) self
@@ -559,7 +623,8 @@
       (with-fields (x y) drag
 	(when (null drag-start)
 	  (setf drag-start (cons x y))
-	  (setf drag-offset (cons (- mouse-x x)
+	  (setf drag-offset (cons (min (/handle-width drag)
+				       (- mouse-x x))
 				  (- mouse-y y))))
 	(destructuring-bind (x0 . y0) drag-offset
 	  (/move drag (- mouse-x x0) (- mouse-y y0)))))))
