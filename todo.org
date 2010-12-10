@@ -1,16 +1,12 @@
-* TODO draw sockets
-* TODO use ? suffix for predicates and ? in predicate sockets
-* TODO use a square "mini-block" to denote other sockets
-* TODO joystick blocks
 * TODO modular formatting / widget-in-block-embedding for each argument
 * TODO implement do block
+* TODO body
 * TODO show DROP hot spots as you drag 
-* TODO remove dashes in command names?
+* TODO joystick blocks
 * TODO viewport block
 * TODO usb camera block
-* TODO body
 * TODO where do you draw arguments that are in between bodies?
-* TODO [#A] click and drag from palette (it's a dynamic customized editor widget)
+** TODO [#A] click and drag from palette (it's a dynamic customized editor widget)
 * TODO [#B] auto-updated palette pages by category
 * TODO select block
 * TODO cut/copy/paste
