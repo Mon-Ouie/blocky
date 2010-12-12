@@ -36,24 +36,31 @@
 ;; programming language Pure Data: "The diagram is the program."
 ;; Since the diagram is 2D, the program must therefore be
 ;; two-dimensional as well. That means every block in the program
-;; (i.e. every expression) must have an X,Y position.
+;; (i.e. every expression) must have an X,Y position. 
+
+;; The position units are abstract "pseudo-pixels" which can be scaled
+;; appropriately for display.
 
 ;; Besides a 2D position, each block has a (possibly empty) list of
-;; arguments. Arguments are symbols like :move or :play-sound, or data
-;; arguments such as numbers, strings, or symbols. Arguments may also be
-;; objects and this involves nested blocks in the diagram.
+;; argument values. Arguments are symbols like :move or :play-sound,
+;; or other data such as numbers and strings. Arguments may also be
+;; other blocks, and this creates nested blocks in the diagram.
 
 (define-prototype block ()
   (arguments :documentation "List of block argument values.")
-  (schema :documentation "List of CL type specifiers for corresponding expressions in <arguments>.")
+  (schema :documentation 
+	  "List of type keywords for corresponding expressions in <arguments>.
+See also `*argument-types*'.")
   (operation :initform "block" :documentation "Symbol name of block's operation, i.e. message key.")
   (type :documentation "Type name of block. See also `*block-types*'.")
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
-  (parent :initform nil)
-  (widgets :initform nil)
+  (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
+  (widgets :initform nil :documentation 
+	   "List whose nth element is either nil, or the nth argument's GUI widget.")
+  (widths :initform nil "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
   (excluded-fields :initform '(:widgets :parent)))
 
 (defmacro defblock (name &body args)
@@ -63,41 +70,59 @@
 
 (defparameter *block-types*
   '(:system :motion :event :message :looks :sound 
-    :control :comment :sensing :operators :variables))
+    :control :comment :sensing :operators :variables)
+  "List of keywords used to group blocks into different functionality
+areas.")
 
 (defparameter *argument-types*
-  '(:block :anything :body :integer :float :number :string :symbol))
+  '(:block :anything :body :integer :float :number :string :symbol)
+  "List of keywords identifying the type of a particular argument.")
 
 (define-method move block (x y)
+  "Move the block to a new (X Y) location."
   (setf <x> x)
   (setf <y> y))
 
 (define-method set-parent block (parent)
+  "Store a link to an enclosing PARENT block, if any."
   (setf <parent> parent))
 
-(define-method get-argument block (index)
-  (nth index <arguments>))
+(define-method get-argument block (n)
+  "Return the value of the Nth block argument."
+  (nth n <arguments>))
 
-(define-method set-argument block (index value)
-    (setf (nth index <arguments>) value))
+(define-method set-argument block (n value)
+  "Set the Nth argument value to VALUE."
+    (setf (nth n <arguments>) value))
 
-(define-method plug block (child index)
-  (/set-argument self index child)
+(define-method plug block (child n)
+  "Connect the block CHILD as the value of the Nth argument."
+  (/set-argument self n child)
   (/set-parent child self))
 
 (define-method unplug block (child)
+  "Disconnect the block CHILD from this block."
   (let ((pos (position child <arguments>)))
     (/set-argument self pos nil)
     (/set-parent child nil)))
 
 (define-method execute block (recipient)
-  "Send the appropriate message to the RECIPIENT object."
+  "Carry out the block's action by sending messages to the object RECIPIENT.
+The RECIPIENT argument is provided by the script executing the block,
+and its value will be the IOSKETCH object associated with the script.
+The default behavior is to send the <OPERATION> field's value as a
+message, with the arguments being the current data argument values of
+this block. This default method is sufficient for many blocks whose
+main purpose is to send a single message; other blocks can redefine
+this /EXECUTE method to do something else. See also `defblock'."
   (apply #'iosketch:send nil <operation> recipient <arguments>))
 
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
 
 (define-method initialize block (&rest arguments)
+  "Prepare an empty block, or if ARGUMENTS is non-empty, a block
+initialized with its values as arguments."
   (setf <widgets> (make-list (length <schema>)))
   (when arguments 
     (assert (= (length arguments)
@@ -105,22 +130,33 @@
     (setf <arguments> arguments)))
 
 (define-method deserialize block ()
+  "Make sure the block is ready after loading."
   (/initialize self))
 
-(define-method count block () 1)
+(define-method count block ()
+  "Return the number of blocks enclosed in this block, including the
+current block. Blocks that can contain other blocks should replace
+this default implementation." 1)
 
 (defparameter *display-widgets*
    '(:integer =integer=
      :float =float=
      :number =number=
      :string =textbox=
-     :symbol =option=))
+     :symbol =option=)
+  "A property list mapping some argument type keywords to
+corresponding IOSKETCH:=WIDGET= prototypes used for editing that kind
+of value.")
 
-(defparameter *background-color* ".white")
+(defparameter *background-color* ".white" 
+  "The default background color of the IOSKETCH user interface.")
 
-(defparameter *block-font* "sans-condensed-bold-12")
+(defparameter *block-font* "sans-condensed-bold-12"
+  "The font used in drawing block labels and argument data.")
 
-(defvar *dash-size* 3)
+(defvar *dash-size* 3 
+  "Size in pseudo-pixels of (roughly) the size of the space between
+two words. This is used as a unit for various layout operations.")
 
 (defparameter *block-colors* 
   '(:motion ".cornflower blue"
@@ -183,6 +219,10 @@
   "X11 color names of the text used for different block types.")
 
 (define-method find-color block (&optional (part :background))
+  "Return the X11 color name of this block's type as a string.
+If PART is provided, return the color for the corresponding 
+:BACKGROUND, :SHADOW, :FOREGROUND, or :HIGHLIGHT parts of this type of
+block."
   (let ((colors (ecase part
 		  (:background *block-colors*)
 		  (:highlight *block-highlight-colors*)
@@ -191,6 +231,9 @@
     (getf colors <type>)))
 
 (define-method hit block (click-x click-y)
+  "If the coordinates CLICK-X and CLICK-Y identify a point inside this
+block, return the block. Blocks containing other blocks may override
+this method to return children if those are clicked."
   (with-fields (x y width height) self
     (when (within-extents click-x click-y 
 			  x y 
@@ -198,68 +241,58 @@
 			  (+ y height))
       self)))
 
-(define-method line-string block ()
-  (with-fields (operation arguments) self
-    (labels ((clean (thing) 
-      (let ((output (mapcar #'clean (cons operation arguments))))
-	(string-downcase (format nil "~{~s~^ ~}" output))))))))
-
-(defun print-segment (segment)
-  (string-downcase 
-   (typecase segment
-     (keyword 
-	(substitute #\Space #\- (symbol-name segment)))
-     (otherwise (format nil "~s" segment)))))
-
-(defparameter *socket-width* (* 18 *dash-size*))
-
-(defun segment-width (segment &optional (font *block-font*))
-  (if (iosketch:object-p segment)
-      *socket-width*
-      (font-text-extents (print-segment segment) font)))
-
-(define-method handle-width block ()
-  (+ (* 2 *dash-size*)
-     (segment-width <operation>)))
-
 (defmacro with-block-drawing (image &body body)
-  (let ((image-sym (gensym)))
+  "Run BODY forms with drawing primitives set to draw on IMAGE.
+The primitives are CIRCLE, DISC, LINE, BOX, and TEXT. These are used
+in subsequent functions as the basis of drawing nested diagrams of
+blocks."
+  (let ((image-sym (gensym))
+	(foreground (gensym))
+	(background (gensym))
+	(highlight (gensym))
+	(shadow (gensym))
+	(dash (gensym))
+	(radius (gensym))
+	(diameter (gensym)))
     `(with-field-values (height width) self
-       (let* ((foreground (/find-color self :foreground))
-	      (background (/find-color self :background))
-	      (highlight (/find-color self :highlight))
-	      (shadow (/find-color self :shadow))
-	      (dash *dash-size*)
-	      (label (/line-string self))
-	      (radius *dash-size*)
-	      (diameter (* 2 radius))
+       (let* ((,foreground (/find-color self :foreground))
+	      (,background (/find-color self :background))
+	      (,highlight (/find-color self :highlight))
+	      (,shadow (/find-color self :shadow))
+	      (,dash *dash-size*)
+	      (,radius *dash-size*)
+	      (,diameter (* 2 ,radius))
 	      (,image-sym ,image))
 	 (labels ((circle (x y &optional color)
-		    (draw-aa-circle x y radius 
-				    :color (or color background)
+		    (draw-aa-circle x y ,radius 
+				    :color (or color ,background)
 				    :destination ,image-sym))
 		  (disc (x y &optional color)
-		    (draw-filled-circle x y radius
-					:color (or color background)
+		    (draw-filled-circle x y ,radius
+					:color (or color ,background)
 					:destination ,image-sym))
 		  (line (x0 y0 x1 y1 &optional color)
 		    (draw-line x0 y0 x1 y1 
-			       :color (or color background)
+			       :color (or color ,background)
 			       :destination ,image-sym))
 		  (box (x y r b &optional color)
 		    (draw-box x y (- r x) (- b y)
-			      :color (or color background)
-			      :stroke-color (or color background)
+			      :color (or color ,background)
+			      :stroke-color (or color ,background)
 			      :destination ,image-sym))
 		  (text (x y string)
 		    (draw-string-blended string x y
-					 :foreground foreground
+					 :foreground ,foreground
 					 :destination ,image-sym
 					 :font *block-font*)))
 	   ,@body)))))
 
 (define-method draw-patch block (x0 y0 x1 y1 image 
 				    &key depressed dark)
+  "Draw a standard IOSKETCH block notation patch on IMAGE.
+Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
+non-nil, draw an indentation; otherwise a raised area is
+drawn. If DARK is non-nil, paint a darker region."
     (with-block-drawing image
       (let ((bevel (if depressed shadow highlight))
 	    (chisel (if depressed highlight shadow))
@@ -322,6 +355,24 @@
 		     (+ x (* 2 *dash-size*))
 		     (+ y 1)
 		     operation :symbol image))))
+
+(defun print-segment (segment)
+  (string-downcase 
+   (typecase segment
+     (keyword 
+	(substitute #\Space #\- (symbol-name segment)))
+     (otherwise (format nil "~s" segment)))))
+
+(defparameter *socket-width* (* 18 *dash-size*))
+
+(defun segment-width (segment &optional (font *block-font*))
+  (if (iosketch:object-p segment)
+      *socket-width*
+      (font-text-extents (print-segment segment) font)))
+
+(define-method handle-width block ()
+  (+ (* 2 *dash-size*)
+     (segment-width <operation>)))
 
 (define-method layout block ()
   (with-field-values 
