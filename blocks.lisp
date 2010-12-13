@@ -60,7 +60,7 @@ See also `*argument-types*'.")
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (widgets :initform nil :documentation 
 	   "List whose nth element is either nil, or the nth argument's GUI widget.")
-  (segment-widths :initform nil "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
+  (segment-widths :initform nil :documentation "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
   (excluded-fields :initform '(:widgets :parent)))
 
 (defmacro defblock (name &body args)
@@ -114,7 +114,8 @@ The default behavior is to send the <OPERATION> field's value as a
 message, with the arguments being the current data argument values of
 this block. This default method is sufficient for many blocks whose
 main purpose is to send a single message; other blocks can redefine
-this /EXECUTE method to do something else. See also `defblock'."
+this /EXECUTE method to do something else. See also `defblock' and
+`send'."
   (apply #'iosketch:send nil <operation> recipient <arguments>))
 
 (define-method describe block ()
@@ -230,59 +231,41 @@ block."
 		  (:foreground *block-foreground-colors*))))
     (getf colors <type>)))
 
-(define-method hit block (click-x click-y)
-  "If the coordinates CLICK-X and CLICK-Y identify a point inside this
-block, return the block. Blocks containing other blocks may override
-this method to return children if those are clicked."
-  (with-fields (x y width height) self
-    (when (within-extents click-x click-y 
-			  x y 
-			  (+ x width)
-			  (+ y height))
-      self)))
-
 (defmacro with-block-drawing (image &body body)
   "Run BODY forms with drawing primitives set to draw on IMAGE.
 The primitives are CIRCLE, DISC, LINE, BOX, and TEXT. These are used
 in subsequent functions as the basis of drawing nested diagrams of
 blocks."
-  (let ((image-sym (gensym))
-	(foreground (gensym))
-	(background (gensym))
-	(highlight (gensym))
-	(shadow (gensym))
-	(dash (gensym))
-	(radius (gensym))
-	(diameter (gensym)))
+  (let ((image-sym (gensym)))
     `(with-field-values (height width) self
-       (let* ((,foreground (/find-color self :foreground))
-	      (,background (/find-color self :background))
-	      (,highlight (/find-color self :highlight))
-	      (,shadow (/find-color self :shadow))
-	      (,dash *dash-size*)
-	      (,radius *dash-size*)
-	      (,diameter (* 2 ,radius))
+       (let* ((foreground (/find-color self :foreground))
+	      (background (/find-color self :background))
+	      (highlight (/find-color self :highlight))
+	      (shadow (/find-color self :shadow))
+	      (dash *dash-size*)
+	      (radius *dash-size*)
+	      (diameter (* 2 radius))
 	      (,image-sym ,image))
 	 (labels ((circle (x y &optional color)
-		    (draw-aa-circle x y ,radius 
-				    :color (or color ,background)
+		    (draw-aa-circle x y radius 
+				    :color (or color background)
 				    :destination ,image-sym))
 		  (disc (x y &optional color)
-		    (draw-filled-circle x y ,radius
-					:color (or color ,background)
+		    (draw-filled-circle x y radius
+					:color (or color background)
 					:destination ,image-sym))
 		  (line (x0 y0 x1 y1 &optional color)
 		    (draw-line x0 y0 x1 y1 
-			       :color (or color ,background)
+			       :color (or color background)
 			       :destination ,image-sym))
 		  (box (x y r b &optional color)
 		    (draw-box x y (- r x) (- b y)
-			      :color (or color ,background)
-			      :stroke-color (or color ,background)
+			      :color (or color background)
+			      :stroke-color (or color background)
 			      :destination ,image-sym))
 		  (text (x y string)
 		    (draw-string-blended string x y
-					 :foreground ,foreground
+					 :foreground foreground
 					 :destination ,image-sym
 					 :font *block-font*)))
 	   ,@body)))))
@@ -356,72 +339,72 @@ drawn. If DARK is non-nil, paint a darker region."
 ;; 		     (+ y 1)
 ;; 		     operation :symbol image))))
 
-(defun segment-width (segment &optional (font *block-font*))
-  (if (iosketch:object-p segment)
+(defun expression-width (expression &optional (font *block-font*))
+  (if (iosketch:object-p expression)
       *socket-width*
-      (font-text-extents (print-segment segment) font)))
+      (font-text-extents (print-expression expression) font)))
 
 (define-method handle-width block ()
   (+ (* 2 *dash-size*)
-     (segment-width <operation>)))
+     (expression-width <operation>)))
 
-(defun print-segment (segment)
+(defun print-expression (expression)
   (string-downcase 
-   (typecase segment
+   (typecase expression
      (keyword 
-	(substitute #\Space #\- (symbol-name segment)))
-     (otherwise (format nil "~s" segment)))))
+	(substitute #\Space #\- (symbol-name expression)))
+     (otherwise (format nil "~s" expression)))))
 
+;; TODO adjust for font size
 (defparameter *socket-width* (* 18 *dash-size*))
 
 (define-method layout block ()
-  (with-fields (segment-widths) self
-    (with-field-values 
-	(x y operation schema arguments height width widgets) 
-      self
+  (with-fields (segment-widths height width) self
+    (with-field-values (x y operation schema arguments widgets) self
       (let* ((font *block-font*)
 	     (dash *dash-size*)
 	     (left (+ x (/handle-width self)))
-	     (max-height (+ (* 4 dash) (font-height font))))
-	(loop while arguments do
-	  (let ((n 0)
-		(widget (pop widgets))
-		(argument (pop arguments))
-		(type (pop schema)))
-	    (if (null widget)
-		;; there's no widget presently embedded in this onscreen segment.
-		(incf left 
-		      (+ dash
-			 (if (eq :block type)
-			     ;; it's a nested block.
-			     (if (null argument)
-				 ;; empty block slots are drawn as a "socket".
-				 *socket-width*
-				 (if (object-p argument) 
-				     ;; recursively call /LAYOUT on child blocks
-				     (progn (/move argument (+ left dash dash) (+ y dash dash))
-					    (/layout argument)
-					    (field-value :width argument))
-				     (segment-width argument)))
-			     ;; it's not a block. so display it as a datum
-			     (segment-width argument))))
-		(progn (/move widget :x left :y (+ y dash))
-		     (incf left (field-value :width widget))
-		     (setf max-height 
-			   (max max-height 
-				(field-value :height widget)))))
-	    ;; store the computed width of the segment.
-	    (setf (nth n segment-widths) left)
-	    (incf n)))
-	(setf <width> (+ (- left x) (* 4 dash)))
-	(setf <height> (+ max-height (* 2 dash)))))))
+	     (max-height (+ (* 6 dash) (font-height font))))
+	(labels ((layout-segment (widget thing type)
+		   (let ((measurement
+			  (+ dash
+			     (if (null widget)
+				 ;; there's no widget presently embedded in this onscreen segment.
+				 (if (eq :block type)
+				     ;; it's a nested block.
+				     (if (null thing)
+					 ;; empty block slots are drawn as a "socket".
+					 *socket-width*
+					 (if (object-p thing) 
+					     ;; recursively call /LAYOUT on child blocks to discover their sizes/positions
+					     (progn (/move thing (+ left dash dash) (+ y dash dash))
+						    (/layout thing)
+						    (setf max-height (max max-height (field-value :height thing)))
+						    (field-value :width thing))
+					     (expression-width thing)))
+				     ;; it's not a block. so display it as an expression.
+				     (expression-width thing))
+				 ;; it's a widget. move and measure the widget.
+				 (progn (/move widget :x left :y (+ y dash))
+					(incf left (field-value :width widget))
+					(setf max-height
+					      (max max-height 
+						   (field-value :height widget))))))))
+		     (prog1 measurement 
+		       (incf left measurement)))))
+	  (setf segment-widths 
+		(mapcar #'layout-segment widgets arguments schema))
+	  (setf width (+ (- left x) (* 4 dash)))
+	  (setf height (+ max-height (* 2 dash))))))))
 
-(define-method draw-segment block (x0 y0 segment type image)
+(define-method draw-expression block (x0 y0 segment type image)
   (with-block-drawing image
       (with-fields (height segment-widths) self
 	(let ((dash *dash-size*)
 	      (width *socket-width*))
 	  (if (eq type :block)
+	      ;; draw a socket if there's no block; otherwise wait
+	      ;; until later to draw.
 	      (when (null segment) 
 		(/draw-socket self (+ x0 dash) (+ y0 dash)
 			      (+ x0 *socket-width*)
@@ -429,8 +412,8 @@ drawn. If DARK is non-nil, paint a darker region."
 			      image))
 	      (progn 
 		(text x0 (+ y0 dash 1)
-		      (print-segment segment))
-		(setf width (segment-width segment))))
+		      (print-expression segment))
+		(setf width (expression-width segment))))
 	  width))))
 
 (define-method draw-contents block (image)
@@ -440,48 +423,36 @@ drawn. If DARK is non-nil, paint a darker region."
 	self
       (let* ((dash *dash-size*)
 	     (left (+ x (* 2 dash))))
-	(text left (+ y dash 1) (print-segment operation))
-	(incf left (+ dash (segment-width operation)))
-	(loop while arguments do
-	  (let ((widget (pop widgets))
-		(type (pop schema))
-		(argument (pop arguments)))
-	    (if (null widget)
-		(incf left 
-		      (+ dash (/draw-segment self 
-					     left y 
-					     argument type
-					     image)))
-		(incf left (+ dash (field-value :width widget))))))))))
+	(text left (+ y dash 1) (print-expression operation))
+	(incf left (+ dash (expression-width operation)))
+	(labels ((draw (widget thing type)
+		   (if (null widget)
+		       (incf left 
+			     (+ dash (/draw-expression self 
+						       left y 
+						       thing type
+						       image)))
+		       (incf left (+ dash (field-value :width widget))))))
+	  ;; nested blocks are not drawn at this step.
+	  (map nil #'draw widgets arguments schema))))))
 
-(define-method hit-segment block (click-x click-y)
-  (with-field-values 
-      (x y width height operation arguments schema widgets)
+(define-method hit block (click-x click-y)
+  "Return this block (or child block) if the coordinates CLICK-X and
+CLICK-Y identify a point inside the block (or child block.)"
+  (with-fields 
+      (x y width height operation segment-widths arguments schema widgets)
     self
-    (let* ((dash *dash-size*)
-	   (left (+ x (* 2 dash)))
-	   new-left n)
-	(incf left (+ dash (segment-width operation)))
-      (block testing
-	(loop while arguments do
-	  (let ((widget (pop widgets))
-		(type (pop schema))
-		(argument (pop arguments)))
-	    (setf new-left 
-		  (if (null widget)
-		      (+ left
-			 (if (eq :block type)
-			     (if (null argument)
-				 *socket-width*
-				 (field-value :width argument))
-			     (segment-width argument)))
-		      (incf left (+ dash (field-value :width widget)))))
-	    (when (and (< y click-y (+ y height))
-		       (< left click-x new-left))
-	      (return-from testing n))
-	    (incf n)
-	    (setf left new-left)))
-	(return-from testing nil)))))
+    (when (within-extents click-x click-y 
+			  x y 
+			  (+ x width)
+			  (+ y height))
+      (let ((left (/handle-width self)))
+	(labels ((hit (thing wid)
+		   (when (< left click-x (+ left wid))
+		     (prog1 thing 
+		       (incf left wid)))))
+	  (let ((segment (some #'hit arguments segment-widths)))
+	    (values (or segment self) self)))))))
       		        
 (define-method draw block (image)
   (/draw-background self image)
@@ -511,15 +482,6 @@ drawn. If DARK is non-nil, paint a darker region."
   (type :initform :message)
   (schema :initform '(:string))
   (arguments :initform '("Hello!")))
-
-;; (define-method hit do (mouse-x mouse-y)
-  
-;;   )
-
-;; (define-method drop do (x y block)
-  
-;;   ) 
- 
 
 (defblock move
   (type :initform :motion)
@@ -696,7 +658,7 @@ drawn. If DARK is non-nil, paint a darker region."
     (when script
       (when needs-redraw (/redraw self))
       (draw-image buffer 0 0 :destination image)
-      (when drag (/draw-stub drag image)))))
+      (when drag (/draw drag image)))))
 
 (define-method mouse-down editor (x y &optional button)
   (with-fields (script selection focus drag modified) self
@@ -725,7 +687,7 @@ drawn. If DARK is non-nil, paint a darker region."
 
 (define-method mouse-up editor (x y &optional button)
   (with-fields 
-      (script needs-redraw drag-start selection focus drag modified) 
+      (script needs-redraw drag-offset drag-start selection focus drag modified) 
       self
     (/bring-to-front script drag)
     (setf drag-start nil)
