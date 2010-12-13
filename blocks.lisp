@@ -116,7 +116,12 @@ this block. This default method is sufficient for many blocks whose
 main purpose is to send a single message; other blocks can redefine
 this /EXECUTE method to do something else. See also `defblock' and
 `send'."
-  (apply #'iosketch:send nil <operation> recipient <arguments>))
+  (with-fields (operation arguments) self
+    (labels ((exec (if (object-p thing)
+		       (/execute thing recipient)
+		       thing)))
+      (apply #'iosketch:send nil operation recipient
+	   (mapcar #'exec arguments)))))
 
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
