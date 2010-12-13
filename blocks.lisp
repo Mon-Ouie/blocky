@@ -60,7 +60,7 @@ See also `*argument-types*'.")
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (widgets :initform nil :documentation 
 	   "List whose nth element is either nil, or the nth argument's GUI widget.")
-  (widths :initform nil "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
+  (segment-widths :initform nil "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
   (excluded-fields :initform '(:widgets :parent)))
 
 (defmacro defblock (name &body args)
@@ -344,26 +344,17 @@ drawn. If DARK is non-nil, paint a darker region."
   (with-fields (x y width height) self
     (/draw-patch self x y (+ x width) (+ y height) image)))
 
-(define-method draw-stub block (image)
-  (with-fields (x y operation) self
-    (let ((width (segment-width operation))
-	  (height (+ (font-height *block-font*) (* 2 *dash-size*))))
-      (/draw-patch self x y 
-		   (+ x width (* 4 *dash-size*))
-		   (+ y height (* 2 *dash-size*)) image)
-      (/draw-segment self 
-		     (+ x (* 2 *dash-size*))
-		     (+ y 1)
-		     operation :symbol image))))
-
-(defun print-segment (segment)
-  (string-downcase 
-   (typecase segment
-     (keyword 
-	(substitute #\Space #\- (symbol-name segment)))
-     (otherwise (format nil "~s" segment)))))
-
-(defparameter *socket-width* (* 18 *dash-size*))
+;; (define-method draw-stub block (image)
+;;   (with-fields (x y operation) self
+;;     (let ((width (segment-width operation))
+;; 	  (height (+ (font-height *block-font*) (* 2 *dash-size*))))
+;;       (/draw-patch self x y 
+;; 		   (+ x width (* 4 *dash-size*))
+;; 		   (+ y height (* 2 *dash-size*)) image)
+;;       (/draw-segment self 
+;; 		     (+ x (* 2 *dash-size*))
+;; 		     (+ y 1)
+;; 		     operation :symbol image))))
 
 (defun segment-width (segment &optional (font *block-font*))
   (if (iosketch:object-p segment)
@@ -374,43 +365,62 @@ drawn. If DARK is non-nil, paint a darker region."
   (+ (* 2 *dash-size*)
      (segment-width <operation>)))
 
+(defun print-segment (segment)
+  (string-downcase 
+   (typecase segment
+     (keyword 
+	(substitute #\Space #\- (symbol-name segment)))
+     (otherwise (format nil "~s" segment)))))
+
+(defparameter *socket-width* (* 18 *dash-size*))
+
 (define-method layout block ()
-  (with-field-values 
-      (x y operation schema arguments height width widgets) 
+  (with-fields (segment-widths) self
+    (with-field-values 
+	(x y operation schema arguments height width widgets) 
       self
-    (let* ((font *block-font*)
-	   (dash *dash-size*)
-	   (left (+ x (/handle-width self)))
-	   (max-height (+ dash (font-height font))))
-      (loop while arguments do
- 	(let ((widget (pop widgets))
-	      (argument (pop arguments))
-	      (type (pop schema)))
-	  (if (null widget)
-	      (incf left 
-		    (+ dash
-		       (if (eq :block type)
-			   (if (null argument)
-			       *socket-width*
-			       (if (object-p argument) 
-				   (progn (/move argument (+ left dash dash) (+ y dash dash))
-					  (/layout argument)
-					  (field-value :width argument))
-				   (segment-width argument)))
-			   (segment-width argument))))
-	      (progn (/move widget :x left :y (+ y dash))
+      (let* ((font *block-font*)
+	     (dash *dash-size*)
+	     (left (+ x (/handle-width self)))
+	     (max-height (+ (* 4 dash) (font-height font))))
+	(loop while arguments do
+	  (let ((n 0)
+		(widget (pop widgets))
+		(argument (pop arguments))
+		(type (pop schema)))
+	    (if (null widget)
+		;; there's no widget presently embedded in this onscreen segment.
+		(incf left 
+		      (+ dash
+			 (if (eq :block type)
+			     ;; it's a nested block.
+			     (if (null argument)
+				 ;; empty block slots are drawn as a "socket".
+				 *socket-width*
+				 (if (object-p argument) 
+				     ;; recursively call /LAYOUT on child blocks
+				     (progn (/move argument (+ left dash dash) (+ y dash dash))
+					    (/layout argument)
+					    (field-value :width argument))
+				     (segment-width argument)))
+			     ;; it's not a block. so display it as a datum
+			     (segment-width argument))))
+		(progn (/move widget :x left :y (+ y dash))
 		     (incf left (field-value :width widget))
 		     (setf max-height 
 			   (max max-height 
-				(field-value :height widget)))))))
-      (setf <width> (+ (- left x) (* 4 dash)))
-      (setf <height> (+ max-height (* 2 dash))))))
+				(field-value :height widget)))))
+	    ;; store the computed width of the segment.
+	    (setf (nth n segment-widths) left)
+	    (incf n)))
+	(setf <width> (+ (- left x) (* 4 dash)))
+	(setf <height> (+ max-height (* 2 dash)))))))
 
 (define-method draw-segment block (x0 y0 segment type image)
   (with-block-drawing image
-    (let ((width *socket-width*))
-      (with-fields (height) self
-	(let ((dash *dash-size*))
+      (with-fields (height segment-widths) self
+	(let ((dash *dash-size*)
+	      (width *socket-width*))
 	  (if (eq type :block)
 	      (when (null segment) 
 		(/draw-socket self (+ x0 dash) (+ y0 dash)
@@ -420,8 +430,8 @@ drawn. If DARK is non-nil, paint a darker region."
 	      (progn 
 		(text x0 (+ y0 dash 1)
 		      (print-segment segment))
-		(setf width (segment-width segment))))))
-      width)))
+		(setf width (segment-width segment))))
+	  width))))
 
 (define-method draw-contents block (image)
   (with-block-drawing image
