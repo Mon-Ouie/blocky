@@ -1,20 +1,19 @@
-* TODO modular formatting / widget-in-block-embedding for each argument
-* TODO implement do block
-* TODO body
-* TODO show DROP hot spots as you drag 
-* TODO joystick blocks
-* TODO viewport block
-* TODO usb camera block
-* TODO where do you draw arguments that are in between bodies?
-** TODO [#A] click and drag from palette (it's a dynamic customized editor widget)
+* TODO [#A] refactor layout / rendering methods
+* TODO [#A] implement :body with =do= block
+* TODO [#A] show DROP hot spots as you drag 
+* TODO video demo with moving circle.
+
+* TODO [#C] joystick blocks
+* TODO [#C] viewport block
+* TODO [#C] usb camera block
 * TODO [#B] auto-updated palette pages by category
-* TODO select block
-* TODO cut/copy/paste
-* TODO rectangle selection
-* TODO Balloon values.
-* TODO IOSKETCH.INI
+* TODO [#B] select block
+* TODO [#C] cut/copy/paste
+* TODO [#C] rectangle selection
+* TODO [#B] Balloon values.
+* TODO [#B] IOSKETCH.INI
 * TODO [#B] Compile the diagrams for speed
-* TODO http://thread.gmane.org/gmane.lisp.slime.devel/7339/focus=7341
+* TODO [#C] http://thread.gmane.org/gmane.lisp.slime.devel/7339/focus=7341
 * TODO [#C] automatic window switching
 (05:08:52 PM) David O'Toole: (suspend-frame)
 (05:08:56 PM) David O'Toole: let me look for the pop up one

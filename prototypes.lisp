@@ -635,10 +635,9 @@ was invoked."
 	   (defun ,defun-symbol (self ,@arglist)
 	     ,@(if documentation (list documentation))
 	     ,declaration
-	     (let ((*sender* self))
-	       ,@(if declaration 
-		     (rest body2)
-		     body2)))
+	     ,@(if declaration 
+		   (rest body2)
+		     body2))
 	   ;; store the method's function in the prototype's field
 	   (setf (field-value ,field-name prototype) ',defun-symbol)
 	   ;; add new method-descriptor for this method to the prototype
