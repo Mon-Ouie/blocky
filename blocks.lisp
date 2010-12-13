@@ -75,7 +75,7 @@ See also `*argument-types*'.")
 areas.")
 
 (defparameter *argument-types*
-  '(:block :anything :body :integer :float :number :string :symbol)
+  '(:block :anything :list :integer :float :number :string :symbol)
   "List of keywords identifying the type of a particular argument.")
 
 (define-method move block (x y)
@@ -364,7 +364,7 @@ drawn. If DARK is non-nil, paint a darker region."
       (let* ((font *block-font*)
 	     (dash *dash-size*)
 	     (left (+ x (/handle-width self)))
-	     (max-height (+ (* 6 dash) (font-height font))))
+	     (max-height (font-height font)))
 	(labels ((layout-segment (widget thing type)
 		   (let ((measurement
 			  (+ dash
@@ -395,7 +395,7 @@ drawn. If DARK is non-nil, paint a darker region."
 	  (setf segment-widths 
 		(mapcar #'layout-segment widgets arguments schema))
 	  (setf width (+ (- left x) (* 4 dash)))
-	  (setf height (+ max-height (* 2 dash))))))))
+	  (setf height (+ max-height (* 4 dash))))))))
 
 (define-method draw-expression block (x0 y0 segment type image)
   (with-block-drawing image
@@ -463,9 +463,9 @@ CLICK-Y identify a point inside the block (or child block.)"
     
 ;;; Predefined blocks 
 
-(defblock do
+(defblock list
   (type :initform :event)
-  (schema :initform '(:body))
+  (schema :initform '(:list))
   (arguments :initform '(nil)))
 
 (defblock my 
