@@ -457,21 +457,17 @@ in the block where the background shows through."
 (define-method hit block (click-x click-y)
   "Return this block (or child block) if the coordinates CLICK-X and
 CLICK-Y identify a point inside the block (or child block.)"
-  (with-fields 
-      (x y width height operation child-widths arguments schema widgets)
-    self
-    (when (within-extents click-x click-y 
-			  x y 
-			  (+ x width)
-			  (+ y height))
-      (let ((left (/handle-width self)))
-	(labels ((hit (thing wid)
-		   (when (< left click-x (+ left wid))
-		     (prog1 thing 
-		       (incf left wid)))))
-	  (let ((segment (some #'hit arguments child-widths)))
-	    (values (or segment self) self)))))))
-      		        
+(define-method hit list (click-x click-y)
+  (with-fields (x y width height arguments) self
+    (let ((child 
+	   (block nil
+	     (when (within-extents click-x click-y x y 
+				   (+ x width) (+ y height))
+	       (dolist (block arguments)
+		 (when (/hit block click-x click-y)
+		   (return block)))))))
+      (values child self))))
+     		        
 ;;; Vertically stacked list of blocks
 
 (defblock list
@@ -498,17 +494,6 @@ CLICK-Y identify a point inside the block (or child block.)"
     (dolist (thing arguments)
       (when (object-p thing)
 	(/draw thing image)))))
-
-(define-method hit list (click-x click-y)
-  (with-fields (x y width height arguments) self
-    (let ((child 
-	   (block nil
-	     (when (within-extents click-x click-y x y 
-				   (+ x width) (+ y height))
-	       (dolist (block arguments)
-		 (when (/hit block click-x click-y)
-		   (return block)))))))
-      (values child self))))
 
 ;;; IF block
 
