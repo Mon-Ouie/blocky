@@ -50,7 +50,7 @@ keyboard-time-in-previous-state *timesteps* keyboard-down-p
 keyboard-keys-down keyboard-modifier-down-p keyboard-modifiers
 draw-filled-circle draw-aa-circle =my= =say= =animate= =hide= =show=
 =set-variable= =variable= =visible?= =joystick-button= get-keys
-*module-package-name* module-package-name =set=
+*module-package-name* module-package-name =set= make-block 
 *form-command-handler-function* =data-cell= =var-cell= =option-cell=
 =toggle-cell= =event-cell= =buffer-cell= =comment-cell= install-widget
 uninstall-widget =button-cell= =image-cell= *initialization-hook*

@@ -69,8 +69,29 @@ See also `*argument-types*'.")
      (operation :initform ,(make-keyword name))
      ,@args))
 
+(defun make-block-ext (value)
+  (assert value)
+  (if (listp value) 
+      (destructuring-bind (operation &rest arguments) value
+	(apply #'clone 
+	       (symbol-value (make-special-variable-name operation))
+	       (mapcar #'make-block-ext arguments)))
+      (let ((prototype 
+	     (symbol-value
+	      (make-special-variable-name 
+	       (etypecase value
+		 (integer :integer)
+		 (string :string)
+		 (float :float)
+		 (symbol :symbol))))))
+	(clone prototype value))))
+
+(defmacro make-block (expression)
+  (assert expression)
+  `(make-block-ext ',expression))
+
 (defparameter *block-types*
-  '(:system :motion :event :message :looks :sound :structure 
+  '(:system :motion :event :message :looks :sound :structure :data
     :control :comment :sensing :operators :variables)
   "List of keywords used to group blocks into different functionality
 areas.")
@@ -147,13 +168,11 @@ the arguments all the time."
   "Prepare an empty block, or if ARGS is non-empty, a block
 initialized with its values as arguments."
   (with-fields (arguments schema results) self
-    (let ((arity (length <schema>)))
-      (setf schema (make-list arity))
-      (setf results (make-list arity))
+    (let ((arity (length schema)))
       (when args 
-	(assert (= (length args)
-		   (length arguments)))
-	(setf arguments args)))))
+	(assert (= (length args) arity))
+	(setf arguments args))
+      (setf results (make-list arity)))))
 
 (define-method deserialize block ()
   "Make sure the block is ready after loading."
@@ -161,15 +180,13 @@ initialized with its values as arguments."
 
 (define-method count block ()
   "Return the number of blocks enclosed in this block, including the
-current block. Blocks that can contain other blocks should replace
-this default implementation." 
+current block." 
   (with-fields (arguments) self
-    (+ 1 (count-if #'object-p arguments))))
+    (+ 1 (length arguments))))
 
 (defparameter *display-widgets*
    '(:integer =integer=
      :float =float=
-     :number =number=
      :string =textbox=
      :symbol =option=)
   "A property list mapping some argument type keywords to
@@ -186,11 +203,15 @@ of value.")
   "Size in pseudo-pixels of (roughly) the size of the space between
 two words. This is used as a unit for various layout operations.")
 
+(defvar *pseudo-pixel-size* 1.0
+  "Size in pixels of a pseudo-pixel.")
+
 (defparameter *block-colors* 
   '(:motion ".cornflower blue"
     :system ".gray50"
     :event ".gray80"
     :socket ".gray60"
+    :data ".gray60"
     :structure ".gray60"
     :comment ".grey70"
     :looks ".purple"
@@ -209,6 +230,7 @@ two words. This is used as a unit for various layout operations.")
     :comment ".grey90"
     :looks ".medium orchid"
     :socket ".gray80"
+    :data ".gray80"
     :structure ".gray80"
     :sound ".plum"
     :message ".sienna2"
@@ -223,6 +245,7 @@ two words. This is used as a unit for various layout operations.")
     :system ".gray50"
     :event ".gray70"
     :socket ".gray45"
+    :data ".gray45"
     :structure ".gray45"
     :comment ".grey40"
     :looks ".dark orchid"
@@ -240,6 +263,7 @@ two words. This is used as a unit for various layout operations.")
     :event ".gray40"
     :comment ".gray30"
     :socket ".gray20"
+    :data ".gray20"
     :structure ".gray20"
     :message ".white"
     :looks ".white"
@@ -434,17 +458,18 @@ in the block where the background shows through."
     (with-field-values 
 	(x y operation arguments schema widget)
 	self
-      (if widget
-	  (progn 
-	    (/render widget)
-	    (draw-image (field-value :image widget)
-			left y0 :destination image))
-	  (let* ((dash *dash-size*)
-		 (left (+ x (* 2 dash)))
-		 (y0 (+ y dash 1)))
-	    (text left y0 (print-expression operation))
-	    (dolist (block arguments)
-	      (/draw block image)))))))
+      (let* ((dash *dash-size*)
+	     (left (+ x (* 2 dash)))
+	     (y0 (+ y dash 1)))
+	(if widget
+	    (progn 
+	      (/render widget)
+	      (draw-image (field-value :image widget)
+			  left y0 :destination image))
+	    (progn 
+	      (text left y0 (print-expression operation))
+	      (dolist (block arguments)
+		(/draw block image))))))))
 
 (define-method draw block (image)
   (with-fields (arguments) self
@@ -486,6 +511,7 @@ CLICK-Y identify a point inside the block (or child block.)"
 	(/move block (+ x dash) y0)
 	(/layout block)
 	(incf height (field-value :height block))
+	(incf y0 (field-value :height block))
 	(setf width (max width (field-value :width block)))))))
 
 (define-method draw-contents list (image)
@@ -493,6 +519,24 @@ CLICK-Y identify a point inside the block (or child block.)"
     (dolist (thing arguments)
       (when (object-p thing)
 	(/draw thing image)))))
+
+;;; Data entry blocks
+
+(defblock integer 
+  (type :initform :data)
+  (schema :initform '(:integer)))
+
+(defblock string 
+  (type :initform :data)
+  (schema :initform '(:string)))
+
+(defblock float 
+  (type :initform :data)
+  (schema :initform '(:float)))
+
+(defblock symbol 
+  (type :initform :data)
+  (schema :initform '(:symbol)))
 
 ;;; IF block
 
@@ -511,9 +555,6 @@ CLICK-Y identify a point inside the block (or child block.)"
       (if (/run predicate recipient)
 	  (/run then recipient)
 	  (/run else recipient)))))
-
-
-;(define-method insert )
 
 (defblock my 
   (type :initform :variables)
@@ -596,9 +637,9 @@ CLICK-Y identify a point inside the block (or child block.)"
   (arguments :initform '(nil nil)))
 
 (define-method execute + (recipient)
-  (with-fields (arguments) self
-    (when (every #'integerp arguments)
-      (apply #'+ arguments))))
+  (with-fields (results) self
+    (when (every #'integerp results)
+      (apply #'+ results))))
 	  
 (defun is-event-block (thing)
   (and (not (null thing))

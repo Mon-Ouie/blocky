@@ -1,5 +1,4 @@
-* TODO [#A] refactor layout / rendering methods
-* TODO [#A] implement :body with =do= block
+* TODO make all segments (even integers) into blocks // no widgets
 * TODO [#A] show DROP hot spots as you drag 
 * TODO video demo with moving circle.
 
@@ -25,3 +24,20 @@
 * TODO [#B] "session" i.e. the particular play session's persistent data objects, which get saved in a separate per-user per-game per-session.pak
 * TODO [#B] better looking, clickable pager tabs (at top?)
 * TODO [#A] better mouse support overall
+
+* Archived Entries
+** DONE [#A] refactor layout / rendering methods
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2010-12-13 Mon 21:34
+   :ARCHIVE_FILE: ~/iosketch/todo.org
+   :ARCHIVE_CATEGORY: todo
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE [#A] implement list block
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2010-12-13 Mon 23:28
+   :ARCHIVE_FILE: ~/iosketch/todo.org
+   :ARCHIVE_CATEGORY: todo
+   :ARCHIVE_TODO: DONE
+   :END:
+
