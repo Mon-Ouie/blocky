@@ -48,11 +48,11 @@
 
 (define-prototype block ()
   (arguments :documentation "List of block argument values.")
-  (outputs :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
+  (results :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
   (schema :documentation 
 	  "List of type keywords for corresponding expressions in <arguments>.
 See also `*argument-types*'.")
-  (operation :initform "block" :documentation "Symbol name of block's operation, i.e. message key.")
+  (operation :initform :block :documentation "Keyword name of method to be invoked on recipient.")
   (type :documentation "Type name of block. See also `*block-types*'.")
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
@@ -70,13 +70,13 @@ See also `*argument-types*'.")
      ,@args))
 
 (defparameter *block-types*
-  '(:system :motion :event :message :looks :sound 
+  '(:system :motion :event :message :looks :sound :structure 
     :control :comment :sensing :operators :variables)
   "List of keywords used to group blocks into different functionality
 areas.")
 
 (defparameter *argument-types*
-  '(:block :anything :list :integer :float :number :string :symbol)
+  '(:block :anything :integer :float :number :string :symbol)
   "List of keywords identifying the type of a particular argument.")
 
 (define-method move block (x y)
@@ -111,36 +111,34 @@ areas.")
   "Carry out the block's action by sending messages to the object RECIPIENT.
 The RECIPIENT argument is provided by the script executing the block,
 and its value will be the IOSKETCH object associated with the script.
-The default behavior is to send the <OPERATION> field's value as a
-message, with the arguments being the current data argument values of
-this block. This default method is sufficient for many blocks whose
+The <RESULTS> field will be a list of results obtained by
+executing/evaluating the <ARGUMENTS> (see also
+`BLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
+send the <OPERATION> field's value as a message to the recipient, with
+the arguments to the recipient's method being the current computed
+<RESULTS>. This default action is sufficient for many blocks whose
 main purpose is to send a single message; other blocks can redefine
 this /EXECUTE method to do something else. See also `defblock' and
 `send'."
-  (with-fields (operation outputs) self
-    (apply #'iosketch:send nil operation recipient outputs)))
+  (with-fields (operation results) self
+    (apply #'iosketch:send nil operation recipient results)))
 
 (define-method execute-arguments block (recipient)
-  (with-fields (arguments outputs) self
+  "Execute or evaluate all <ARGUMENTS>, running block arguments (if
+any) from left-to-right. Results are placed in <RESULTS>. Override
+this method when defining new blocks if you don't want to evaluate all
+the arguments all the time."
+  (with-fields (arguments results) self
     (labels ((exec (thing)
 	       (if (object-p thing)
 		   (/run thing recipient)
 		   thing)))
       ;; depth-first computing of argument values when they're blocks
-      (setf outputs (mapcar #'exec arguments)))))
-
-(define-method all-required-blocks-p block ()
-  (with-fields (schema arguments) self
-    (labels ((present (arg type)
-	       (if (eq type :block)
-		   (object-p arg)
-		   t)))
-      (every #'present arguments schema))))
+      (setf results (mapcar #'exec arguments)))))
 
 (define-method run block (recipient)
-  (when (/all-required-blocks-p self)
-    (/execute-arguments thing recipient)
-    (/execute thing recipient)))
+  (/execute-arguments self recipient)
+  (/execute self recipient))
 
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
@@ -148,11 +146,11 @@ this /EXECUTE method to do something else. See also `defblock' and
 (define-method initialize block (&rest args)
   "Prepare an empty block, or if ARGS is non-empty, a block
 initialized with its values as arguments."
-  (with-fields (arguments schema widgets outputs) self
+  (with-fields (arguments schema widgets results) self
     (let ((arity (length <schema>)))
       (setf widgets (make-list arity))
       (setf schema (make-list arity))
-      (setf outputs (make-list arity))
+      (setf results (make-list arity))
       (when args 
 	(assert (= (length args)
 		   (length arguments)))
@@ -194,6 +192,7 @@ two words. This is used as a unit for various layout operations.")
     :system ".gray50"
     :event ".gray80"
     :socket ".gray60"
+    :structure ".gray60"
     :comment ".grey70"
     :looks ".purple"
     :sound ".orchid"
@@ -211,6 +210,7 @@ two words. This is used as a unit for various layout operations.")
     :comment ".grey90"
     :looks ".medium orchid"
     :socket ".gray80"
+    :structure ".gray80"
     :sound ".plum"
     :message ".sienna2"
     :control ".gold"
@@ -224,6 +224,7 @@ two words. This is used as a unit for various layout operations.")
     :system ".gray50"
     :event ".gray70"
     :socket ".gray45"
+    :structure ".gray45"
     :comment ".grey40"
     :looks ".dark orchid"
     :sound ".violet red"
@@ -240,6 +241,7 @@ two words. This is used as a unit for various layout operations.")
     :event ".gray40"
     :comment ".gray30"
     :socket ".gray20"
+    :structure ".gray20"
     :message ".white"
     :looks ".white"
     :sound ".white"
@@ -304,8 +306,9 @@ blocks."
 				    &key depressed dark hole)
   "Draw a standard IOSKETCH block notation patch on IMAGE.
 Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
-non-nil, draw an indentation; otherwise a raised area is
-drawn. If DARK is non-nil, paint a darker region."
+non-nil, draw an indentation; otherwise a raised area is drawn. If
+DARK is non-nil, paint a darker region. If HOLE is non-nil, cut a hole
+in the block where the background shows through."
     (with-block-drawing image
       (let ((bevel (if depressed shadow highlight))
 	    (chisel (if depressed highlight shadow))
@@ -358,14 +361,14 @@ drawn. If DARK is non-nil, paint a darker region."
   (with-fields (x y width height) self
     (/draw-patch self x y (+ x width) (+ y height) image)))
 
+(define-method handle-width block ()
+  (+ (* 2 *dash-size*)
+     (expression-width <operation>)))
+
 (defun expression-width (expression &optional (font *block-font*))
   (if (iosketch:object-p expression)
       *socket-width*
       (font-text-extents (print-expression expression) font)))
-
-(define-method handle-width block ()
-  (+ (* 2 *dash-size*)
-     (expression-width <operation>)))
 
 (defun print-expression (expression)
   (string-downcase 
@@ -478,13 +481,70 @@ CLICK-Y identify a point inside the block (or child block.)"
   (dolist (child <arguments>)
     (when (object-p child)
       (/draw child image))))
-    
-;;; Predefined blocks 
+
+;;; Vertically stacked list of blocks
 
 (defblock list
-  (type :initform :event)
-  (schema :initform '(:list))
-  (arguments :initform '(nil)))
+  (type :initform :structure))
+
+(define-method initialize list (&rest args)
+  (when args (setf <arguments> args)))
+
+(define-method layout list ()
+  (with-fields (x y arguments height width) self
+    (let* ((dash *dash-size*)
+	   (y0 (+ y dash))
+	   (line-height (font-height *block-font*)))
+      (setf height (+ (* 2 dash) line-height))
+      (setf width (* 8 dash))
+      (dolist (thing arguments)
+	(if (object-p thing)
+	    (progn 
+	      (/move thing (+ x dash) y0)
+	      (/layout thing)
+	      (incf height (field-value :height thing))
+	      (setf width (max width (field-value :width thing))))
+	    (progn
+	      (incf height (+ dash line-height))
+	      (setf width (max width (expression-width thing)))))))))
+
+(define-method draw-contents list (image)
+  (with-field-values (arguments) self
+    (dolist (thing arguments)
+      (when (object-p thing)
+	(/draw thing image)))))
+
+(define-method hit list (click-x click-y)
+  (with-fields (x y width height arguments) self
+    (let ((child 
+	   (block nil
+	     (when (within-extents click-x click-y x y 
+				   (+ x width) (+ y height))
+	       (dolist (block arguments)
+		 (when (/hit block click-x click-y)
+		   (return block)))))))
+      (values child self))))
+
+;;; IF block
+
+(defblock if 
+  (type :initform :control)
+  (result :initform nil)
+  (schema :initform '(:block :block :block))
+  (arguments :initform '(nil nil nil)))
+
+(define-method execute if (recipient)
+  <result>)
+
+(define-method execute-arguments if (recipient)
+  (with-fields (arguments result) self
+    (destructuring-bind (predicate then else) arguments
+      (if (/run predicate recipient)
+	  (/run then recipient)
+	  (/run else recipient)))))
+
+
+;(define-method insert )
 
 (defblock my 
   (type :initform :variables)
@@ -550,22 +610,6 @@ CLICK-Y identify a point inside the block (or child block.)"
   (type :initform :control)
   (schema :initform '(:block :block))
   (arguments :initform '(nil nil)))
-
-(defblock if 
-  (type :initform :control)
-  (result :initform nil)
-  (schema :initform '(:block :block :block))
-  (arguments :initform '(nil nil nil)))
-
-(define-method execute if (recipient)
-  <result>)
-
-(define-method execute-arguments if (recipient)
-  (with-fields (arguments result) self
-    (destructuring-bind (predicate then else) arguments
-      (if (/run predicate recipient)
-	  (/run then recipient)
-	  (/run else recipient)))))
 
 (defblock start
   (type :initform :system) 
