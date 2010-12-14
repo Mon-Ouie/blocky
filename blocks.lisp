@@ -47,7 +47,7 @@
 ;; other blocks, and this creates nested blocks in the diagram.
 
 (define-prototype block ()
-  (arguments :documentation "List of block argument values.")
+  (arguments :initform nil :documentation "List of block argument values.")
   (results :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
   (schema :documentation 
 	  "List of type keywords for corresponding expressions in <arguments>.
@@ -81,10 +81,12 @@ See also `*argument-types*'.")
 	      (make-special-variable-name 
 	       (etypecase value
 		 (integer :integer)
-		 (string :string)
 		 (float :float)
+		 (string :string)
 		 (symbol :symbol))))))
-	(clone prototype value))))
+	(let ((entry (clone prototype)))
+	  (prog1 entry
+	    (/set-data entry value))))))
 
 (defmacro make-block (expression)
   (assert expression)
@@ -516,27 +518,32 @@ CLICK-Y identify a point inside the block (or child block.)"
 
 (define-method draw-contents list (image)
   (with-field-values (arguments) self
-    (dolist (thing arguments)
-      (when (object-p thing)
-	(/draw thing image)))))
+    (dolist (block arguments)
+      (/draw block image))))
 
 ;;; Data entry blocks
 
-(defblock integer 
+(defblock entry 
   (type :initform :data)
-  (schema :initform '(:integer)))
+  (schema :iniform nil)
+  (data :initform nil))
 
-(defblock string 
-  (type :initform :data)
-  (schema :initform '(:string)))
+(define-method execute entry (recipient)
+  (declare (ignore recipient))
+  <data>)
 
-(defblock float 
-  (type :initform :data)
-  (schema :initform '(:float)))
+(define-method set-data entry (data)
+  (setf <data> data))
 
-(defblock symbol 
-  (type :initform :data)
-  (schema :initform '(:symbol)))
+(defmacro defentry (name data)
+  `(define-prototype ,name (:parent =entry=)
+     (operation :initform ,(make-keyword name))
+     (data :initform ,data)))
+
+(defentry integer 0)
+(defentry string "")
+(defentry float 0.0)
+(defentry symbol nil)
 
 ;;; IF block
 
@@ -558,8 +565,7 @@ CLICK-Y identify a point inside the block (or child block.)"
 
 (defblock my 
   (type :initform :variables)
-  (schema :initform '(:symbol))
-  (arguments :initform '(:name)))
+  (schema :initform '(:block)))
 
 (defblock set
   (type :initform :variables)
