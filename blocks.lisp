@@ -432,22 +432,19 @@ in the block where the background shows through."
 (define-method draw-contents block (image)
   (with-block-drawing image
     (with-field-values 
-	(x y operation arguments schema widgets)
+	(x y operation arguments schema widget)
 	self
-      (let* ((dash *dash-size*)
-	     (left (+ x (* 2 dash))))
-	(text left (+ y dash 1) (print-expression operation))
-	(incf left (+ dash (expression-width operation)))
-	(labels ((draw (widget thing type)
-		   (if (null widget)
-		       (incf left 
-			     (+ dash (/draw-expression self 
-						       left y 
-						       thing type
-						       image)))
-		       (incf left (+ dash (field-value :width widget))))))
-	  ;; nested blocks are not drawn at this step.
-	  (map nil #'draw widgets arguments schema))))))
+      (if widget
+	  (progn 
+	    (/render widget)
+	    (draw-image (field-value :image widget)
+			left y0 :destination image))
+	  (let* ((dash *dash-size*)
+		 (left (+ x (* 2 dash)))
+		 (y0 (+ y dash 1)))
+	    (text left y0 (print-expression operation))
+	    (dolist (block arguments)
+	      (/draw block image)))))))
 
 (define-method hit block (click-x click-y)
   "Return this block (or child block) if the coordinates CLICK-X and
