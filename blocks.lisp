@@ -446,6 +446,14 @@ in the block where the background shows through."
 	    (dolist (block arguments)
 	      (/draw block image)))))))
 
+(define-method draw block (image)
+  (with-fields (arguments) self
+    (/draw-background self image)
+    (/draw-contents self image)
+    (dolist (block arguments)
+      (when (object-p block)
+	(/draw block image)))))
+
 (define-method hit block (click-x click-y)
   "Return this block (or child block) if the coordinates CLICK-X and
 CLICK-Y identify a point inside the block (or child block.)"
@@ -464,13 +472,6 @@ CLICK-Y identify a point inside the block (or child block.)"
 	  (let ((segment (some #'hit arguments child-widths)))
 	    (values (or segment self) self)))))))
       		        
-(define-method draw block (image)
-  (/draw-background self image)
-  (/draw-contents self image)
-  (dolist (child <arguments>)
-    (when (object-p child)
-      (/draw child image))))
-
 ;;; Vertically stacked list of blocks
 
 (defblock list
@@ -486,16 +487,11 @@ CLICK-Y identify a point inside the block (or child block.)"
 	   (line-height (font-height *block-font*)))
       (setf height (+ (* 2 dash) line-height))
       (setf width (* 8 dash))
-      (dolist (thing arguments)
-	(if (object-p thing)
-	    (progn 
-	      (/move thing (+ x dash) y0)
-	      (/layout thing)
-	      (incf height (field-value :height thing))
-	      (setf width (max width (field-value :width thing))))
-	    (progn
-	      (incf height (+ dash line-height))
-	      (setf width (max width (expression-width thing)))))))))
+      (dolist (block arguments)
+	(/move block (+ x dash) y0)
+	(/layout block)
+	(incf height (field-value :height block))
+	(setf width (max width (field-value :width block)))))))
 
 (define-method draw-contents list (image)
   (with-field-values (arguments) self
