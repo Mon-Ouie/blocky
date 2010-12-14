@@ -32,44 +32,52 @@
 (define-prototype palette (:parent =editor=)
   type)
 
+(defgsprite circle 
+  (image :initform "circle"))
+
+(define-prototype circle-prompt (:parent =prompt=))
+
+(define-method install-keybindings circle-prompt ()
+  (dolist (binding '(("UP" nil "move :north 2 :pixels")
+		     ("DOWN" nil "move :south 2 :pixels")
+		     ("LEFT" nil "move :west 2 :pixels")
+		     ("RIGHT" nil "move :east 2 :pixels")))
+    (apply #'bind-key-to-prompt-insertion self binding)))
+
+(defworld myworld 
+  (background :initform "bluedot"))
+
+(defvar *circle*)
+(defvar *viewport*)
+(defvar *myverse*)
+(defvar *prompt*)
+
 (define-method initialize palette ()
   (/parent/initialize self)
-  (with-fields (script) self
-    (setf script (clone =script=))
-    (/add script (make-block (move west 2 spaces)) 20 20)
-    (/add script (make-block (play-music "victory")) 20 120)
-    (/add script (make-block (+ (+ 2 5) (+ 3 1))) 20 140)
-    (/add script (make-block (if (my stepping) 
+  (setf *circle* (clone =circle=))    
+  (setf *myverse* (clone =universe=))
+  (setf *viewport* (clone =viewport=))
+  (setf *prompt* (clone =circle-prompt=))
+  (/install-keybindings *prompt*)
+  (/set-receiver *prompt* *circle*)
+  (/configure *myverse* :prompt *prompt*
+	      :viewport *viewport*
+	      :player *circle*)
+  (/play *myverse* :address '(=myworld=))
+  (/set-world *viewport* *world*)
+  (/set-scrolling *viewport* nil)
+  (/resize-to-background *world*)
+  (/drop-sprite *world* *circle* 50 100)
+    (with-fields (script) self
+    (setf script (clone =script= :recipient *circle*))
+    (/add script (make-block (move west 2 pixels)) 20 20)
+    (/add script (make-block (move west (+ 1 3) pixels)) 20 20)
+    (/add script (make-block (play-sound "beep")) 20 120)
+    (/add script (make-block (if visible?
 				 (list (play-sound "footstep")
 				       (move (my direction) 2 pixels))
 				 (list (say "I'm flying."))))
-	  20 200)
-    ;; (/add script (clone =move= :west 2 :spaces) 20 20)
-    ;; (/add script (clone =play-music= "victory") 20 120)
-    ;; (/add script (clone =play-sound= "beep") 20 160)
-    ;; (/add script (clone =start=) 20 200)
-    ;; (/add script (clone =stop=) 20 200)
-    ;; (/add script (clone =when= 
-    ;; 			(clone =visible?=)
-    ;; 			(clone =set-variable= :n nil)) 20 360)
-    ;;   (/add script (clone =when= 
-    ;;   			  (clone =my= :stepping) 
-    ;;   			  (clone =play-sound= "footstep")) 20 400)
-    ;;   (/add script (clone =if= (clone =my= :color) 
-    ;; 			  (clone =say= "I have a color.")
-    ;; 			  (clone =play-sound= "warning")) 20 420)
-    ;;   (/add script (clone =if= (clone =my= :boosting) 
-    ;; 			  (clone =move= :north 1 :pixel) 
-    ;; 			  (clone =move= :south 2 :pixels)) 20 420)
-    ;;   (/add script (clone =when= 
-    ;;   			  (clone =joystick-button= 2 :down)
-    ;; 			  (clone =if=
-    ;; 				 (clone =my= :fuel)
-    ;; 				 (clone =set-variable= :boosting :yes)
-    ;; 				 (clone =play-sound= "empty")))
-    ;; 	    20 320)
-    ;;   (/add script (clone =+= 7 5) 20 500))
-      ))
+	  20 200)))
 
 ;;; A "frame" is a top-level application window.
 
@@ -78,7 +86,7 @@
 (defwidget frame
   (active-color :initform ".red")
   (inactive-color :initform ".gray20")
-  (pane-widths :initform '(70 15 15))
+  (pane-widths :initform '(50 40 10))
   (panes :initform nil)
   (focus :initform 1))
 
@@ -87,8 +95,9 @@
   (if panes
       (setf <panes> panes)
       (setf <panes>
-	    (mapcar #'clone
-		    (list =palette= =editor= =editor=)))))
+	    (list (clone =palette=)
+		  *viewport*
+		  (clone =editor=)))))
 
 (defparameter *qwerty-keybindings*
   '(;; arrow key cursor movement
@@ -186,7 +195,7 @@
 				       100)))))
 	(let ((pane-stops (mapcar #'scale pane-widths)))
 	  (dolist (widget panes)
-	    (/move widget :x x :y y)
+	    (/move widget :x x :y 0)
 	    (/resize widget :height height :width (first pane-stops))
 	    (/render widget)
 	    (draw-image (field-value :image widget) x y :destination image)

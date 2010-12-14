@@ -1,3 +1,5 @@
 (
+ (:name "circle" :type :image :file "circle.png")	
+ (:name "bluedot" :type :image :file "bluedot.png")	
  (:name ".startup" :type :lisp :file "editor.lisp" :properties (:autoload t))
 ) 

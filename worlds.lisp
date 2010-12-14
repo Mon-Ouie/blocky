@@ -75,7 +75,7 @@ At the moment, only 0=off and 1=on are supported.")
   (phase-number :initform 1 :documentation "Integer number of current phase.")
   (turn-number :initform 1 :documentation "Integer number of elapsed user turns (actions).")
   ;; narration 
-  (narrator :documentation "The narration widget object.")
+  (narrator :initform nil :documentation "The narration widget object.")
   ;; browsing 
   (browser :documentation "The browser object.")
   ;; viewing
@@ -325,7 +325,7 @@ non-nil, the :loadout method is invoked on the sprite after
 placement."
   (assert (eq :sprite (field-value :type sprite)))
   (/add-sprite self sprite)
-  (/move-to sprite x y)
+  (/move-to sprite :pixels x y)
   (when (or loadout (field-value :auto-loadout sprite))
     (/loadout sprite))
   (unless no-collisions
@@ -997,9 +997,9 @@ narrator, and VIEWPORT as the viewport."
   (when address (setf <current-address> address))
   (when player (setf <player> player))
   (when prompt (setf <prompt> prompt))
-  (when narrator (setf <narrator> narrator))
+;; (when narrator (setf <narrator> narrator))
   (when viewport (setf <viewport> viewport))
-  (assert (and <prompt> <narrator>))
+;;  (assert (and <prompt> <narrator>))
   (let ((world (/find-world self <current-address>))
 	(player <player>)
 	(previous-world (car <stack>)))
@@ -1015,7 +1015,7 @@ narrator, and VIEWPORT as the viewport."
     (/set-world <viewport> world)
     (/drop-player-at-entry world player)
     (/set-receiver <prompt> world)
-    (/set-narrator world <narrator>)
+;;  (/set-narrator world <narrator>)
     (/start world)))
 
 (define-method exit universe (&key player)

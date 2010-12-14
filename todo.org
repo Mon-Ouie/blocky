@@ -1,6 +1,12 @@
-* TODO make all segments (even integers) into blocks // no widgets
+* TODO draw colored circle
+* TODO make simple sprite world in viewport
+* TODO right click to run block
+
+
 * TODO [#A] show DROP hot spots as you drag 
+* TODO running script moves a circle
 * TODO video demo with moving circle.
+
 
 * TODO [#C] joystick blocks
 * TODO [#C] viewport block

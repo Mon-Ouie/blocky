@@ -37,6 +37,7 @@
   (world :documentation "The world object to be displayed.")
   (overlays :documentation "List of closures.")
   (use-overlays :initform t)
+  (scrolling :initform t)
   (pending-draws :initform (make-array 100 :initial-element nil 
 				       :adjustable t :fill-pointer 0))
   (margin :initform 15 :documentation "Scroll margin.")
@@ -97,6 +98,9 @@
 (define-method set-world viewport (world)
   (setf <world> world))
 
+(define-method set-scrolling viewport (flag)
+  (setf <scrolling> flag))
+
 (define-method set-tile-size viewport (&optional size)
   (with-fields (tile-size origin-width origin-height) self
     (setf tile-size (or size (field-value :tile-size <world>)))))
@@ -110,9 +114,9 @@
 	(when resize (/resize self :height new-height :width new-width))))))
 
 (define-method render viewport ()
-;;  (declare (optimize (speed 3)))
+;;(declare (optimize (speed 3)))
   (when <visible>
-    (/adjust self) 
+    (when <scrolling> (/adjust self))
     (let* ((world (or <world> *world*))
            (origin-width <origin-width>)
            (origin-height <origin-height>)
@@ -130,7 +134,7 @@
                                height width sprites background
                                turn-number ambient-light) world
         ;; blank the display
-        (/clear self)
+        (/clear self ".white")
 	;; draw any background
 	(when (stringp background)
 	  (let ((surface (find-resource-object background))

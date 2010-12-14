@@ -398,7 +398,7 @@ in the block where the background shows through."
 (defun print-expression (expression)
   (string-downcase 
    (typecase expression
-     (keyword 
+     (symbol 
 	(substitute #\Space #\- (symbol-name expression)))
      (otherwise (format nil "~s" expression)))))
 
@@ -485,14 +485,14 @@ in the block where the background shows through."
   "Return this block (or child block) if the coordinates CLICK-X and
 CLICK-Y identify a point inside the block (or child block.)"
   (with-fields (x y width height arguments) self
-    (let ((child 
-	   (block nil
-	     (when (within-extents click-x click-y x y 
-				   (+ x width) (+ y height))
+    (when (within-extents click-x click-y x y 
+			  (+ x width) (+ y height))
+      (let ((child 
+	     (block nil
 	       (dolist (block arguments)
 		 (when (/hit block click-x click-y)
-		   (return block)))))))
-      (values child self))))
+		   (return block))))))
+	(values (or child self) self)))))
      		        
 ;;; Vertically stacked list of blocks
 
@@ -534,6 +534,19 @@ CLICK-Y identify a point inside the block (or child block.)"
 
 (define-method set-data entry (data)
   (setf <data> data))
+
+(define-method draw entry (image)
+  (with-block-drawing image
+    (with-fields (x y data) self
+      (/draw-background self image)
+      (text (+ x (* 2 dash))
+	    (+ y dash 1)
+	    (print-expression data)))))
+
+(define-method layout entry ()
+  (with-fields (height width data) self
+    (setf height (+ (* 4 *dash-size*) (font-height *block-font*)))
+    (setf width (+ (* 4 *dash-size*) (expression-width data)))))
 
 (defmacro defentry (name data)
   `(define-prototype ,name (:parent =entry=)
@@ -658,19 +671,29 @@ CLICK-Y identify a point inside the block (or child block.)"
 (define-prototype script ()
   (blocks :initform '()
 	  :documentation "List of blocks in the script.")
+  (recipient :initform nil)
   (variables :initform (make-hash-table :test 'eq)))
 
-(define-method initialize script (&key blocks variables)
+(define-method initialize script (&key blocks variables recipient)
   (when blocks (setf <blocks> blocks))
-  (when variables (setf <variables> variables)))
+  (when variables (setf <variables> variables))
+  (when recipient (setf <recipient> recipient)))
 
 (defvar *script*)
+
+(define-method set-recipient script (recipient)
+  (setf <recipient> recipient))
 
 (define-method add script (block x y)
   (with-fields (blocks) self
     (setf blocks (adjoin block blocks))
     (/move block x y)))
 
+(define-method run script (block)
+  (with-fields (blocks recipient) self
+    (assert (member block blocks))
+    (/run block recipient)))
+	    
 (define-method bring-to-front script (block)
   (with-fields (blocks) self
     (when (member block blocks)
@@ -762,8 +785,10 @@ CLICK-Y identify a point inside the block (or child block.)"
 		   (/hit b x y)))
 	  (let ((block (find-if #'hit blocks :from-end t)))
 	    (when block
-	      (setf drag block)
-	      (setf focus block))))))))
+	      (case button
+		(1 (setf drag block)
+		   (setf focus block))
+		(3 (/run script block))))))))))
 
 (define-method mouse-move editor (mouse-x mouse-y)
   (with-fields 
