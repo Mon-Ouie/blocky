@@ -59,10 +59,10 @@ See also `*argument-types*'.")
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
-  (widgets :initform nil :documentation 
-	   "List whose nth element is either nil, or the nth argument's GUI widget.")
-  (segment-widths :initform nil :documentation "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
-  (excluded-fields :initform '(:widgets :parent)))
+  (data :initform nil :documentation "Data value for data entry blocks.")
+  (widget :initform nil :documentation "Widget object for interacting with this block, if any.")
+  (child-widths :initform nil :documentation "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
+  (excluded-fields :initform '(:widget :results :parent)))
 
 (defmacro defblock (name &body args)
   `(define-prototype ,name (:parent =block=)
@@ -146,9 +146,8 @@ the arguments all the time."
 (define-method initialize block (&rest args)
   "Prepare an empty block, or if ARGS is non-empty, a block
 initialized with its values as arguments."
-  (with-fields (arguments schema widgets results) self
+  (with-fields (arguments schema results) self
     (let ((arity (length <schema>)))
-      (setf widgets (make-list arity))
       (setf schema (make-list arity))
       (setf results (make-list arity))
       (when args 
@@ -380,47 +379,40 @@ in the block where the background shows through."
 (defparameter *socket-width* (* 18 *dash-size*))
 
 (define-method layout block ()
-  (with-fields (segment-widths height width) self
-    (with-field-values (x y operation schema arguments widgets) self
+  (with-fields (child-widths height width) self
+    (with-field-values (x y operation schema arguments widget) self
       (let* ((font *block-font*)
 	     (dash *dash-size*)
 	     (left (+ x (/handle-width self)))
 	     (max-height (font-height font)))
-	(labels ((layout-segment (widget thing type)
+	(labels ((move-widget (widget)
+		   (/move widget :x left :y (+ y dash))
+		   (incf left (field-value :width widget))
+		   (setf max-height
+			 (max max-height 
+			      (field-value :height widget))))
+		 (move-child (child)
+		   (/move child (+ left dash dash) (+ y dash dash))
+		   (/layout child)
+		   (setf max-height (max max-height (field-value :height child)))
+		   (field-value :width child))
+		 (layout-child (block type)
 		   (let ((measurement
 			  (+ dash
-			     (if (null widget)
-				 ;; there's no widget presently embedded in this onscreen segment.
-				 (if (eq :block type)
-				     ;; it's a nested block.
-				     (if (null thing)
-					 ;; empty block slots are drawn as a "socket".
-					 *socket-width*
-					 (if (object-p thing) 
-					     ;; recursively call /LAYOUT on child blocks to discover their sizes/positions
-					     (progn (/move thing (+ left dash dash) (+ y dash dash))
-						    (/layout thing)
-						    (setf max-height (max max-height (field-value :height thing)))
-						    (field-value :width thing))
-					     (expression-width thing)))
-				     ;; it's not a block. so display it as an expression.
-				     (expression-width thing))
-				 ;; it's a widget. move and measure the widget.
-				 (progn (/move widget :x left :y (+ y dash))
-					(incf left (field-value :width widget))
-					(setf max-height
-					      (max max-height 
-						   (field-value :height widget))))))))
+			     (if (null block)
+				 *socket-width*
+				 (move-child block)))))
 		     (prog1 measurement 
 		       (incf left measurement)))))
-	  (setf segment-widths 
-		(mapcar #'layout-segment widgets arguments schema))
+	  (if widget
+	      (move-widget widget)
+	      (setf child-widths (mapcar #'layout-child arguments schema)))
 	  (setf width (+ (- left x) (* 4 dash)))
 	  (setf height (+ max-height (* 4 dash))))))))
 
 (define-method draw-expression block (x0 y0 segment type image)
   (with-block-drawing image
-      (with-fields (height segment-widths) self
+      (with-fields (height child-widths) self
 	(let ((dash *dash-size*)
 	      (width *socket-width*))
 	  (if (eq type :block)
@@ -461,7 +453,7 @@ in the block where the background shows through."
   "Return this block (or child block) if the coordinates CLICK-X and
 CLICK-Y identify a point inside the block (or child block.)"
   (with-fields 
-      (x y width height operation segment-widths arguments schema widgets)
+      (x y width height operation child-widths arguments schema widgets)
     self
     (when (within-extents click-x click-y 
 			  x y 
@@ -472,7 +464,7 @@ CLICK-Y identify a point inside the block (or child block.)"
 		   (when (< left click-x (+ left wid))
 		     (prog1 thing 
 		       (incf left wid)))))
-	  (let ((segment (some #'hit arguments segment-widths)))
+	  (let ((segment (some #'hit arguments child-widths)))
 	    (values (or segment self) self)))))))
       		        
 (define-method draw block (image)
