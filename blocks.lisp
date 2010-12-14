@@ -144,7 +144,12 @@ main purpose is to send a single message; other blocks can redefine
 this /EXECUTE method to do something else. See also `defblock' and
 `send'."
   (with-fields (operation results) self
-    (apply #'iosketch:send nil operation recipient results)))
+    (labels ((clean (item)
+	       (if (symbolp item)
+		   (make-keyword item)
+		   item)))
+    (apply #'iosketch:send nil operation recipient 
+	   (mapcar #'clean results)))))
 
 (define-method execute-arguments block (recipient)
   "Execute or evaluate all <ARGUMENTS>, running block arguments (if
@@ -213,7 +218,7 @@ two words. This is used as a unit for various layout operations.")
     :system ".gray50"
     :event ".gray80"
     :socket ".gray60"
-    :data ".gray60"
+    :data ".gray70"
     :structure ".gray60"
     :comment ".grey70"
     :looks ".purple"
@@ -514,7 +519,8 @@ CLICK-Y identify a point inside the block (or child block.)"
 	(/layout block)
 	(incf height (field-value :height block))
 	(incf y0 (field-value :height block))
-	(setf width (max width (field-value :width block)))))))
+	(setf width (max width (field-value :width block))))
+      (incf width (* 2 dash)))))
 
 (define-method draw-contents list (image)
   (with-field-values (arguments) self
@@ -580,6 +586,21 @@ CLICK-Y identify a point inside the block (or child block.)"
   (type :initform :variables)
   (schema :initform '(:block)))
 
+(define-method execute my (recipient)
+  (with-fields (results) self
+    (field-value (make-keyword (car results))
+		 recipient)))
+
+(defblock emote 
+  (type :initform :looks)
+  (schema :initform '(:string)))
+
+(define-method execute emote (recipient)
+  (/emote recipient 
+	  (list (list (list (first <results>) :font *block-font*
+			    :foreground ".black")))
+	  :timeout 10.0 :style :clear))
+
 (defblock set
   (type :initform :variables)
   (schema :initform '(:symbol :anything))
@@ -624,6 +645,9 @@ CLICK-Y identify a point inside the block (or child block.)"
   (type :initform :sound)
   (schema :initform '(:string))
   (arguments :initform '("fanfare")))
+
+(define-method execute play-music (recipient)
+  (/play-music recipient (first <results>) :loop t))
 
 (defblock play-sound 
   (type :initform :sound)

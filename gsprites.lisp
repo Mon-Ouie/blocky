@@ -102,7 +102,7 @@ world, and collision detection is performed between sprites and cells.")
 	(when (and y x)
 	  (multiple-value-bind (y0 x0) (iosketch:step-in-direction y x direction dist)
 	    (assert (and y0 x0))
-	    (/move-to self x0 y0)))))))
+	    (/move-to self :pixel x0 y0)))))))
   
 (define-method collide gsprite (gsprite)
   ;; (message "COLLIDING A=~S B=~S"

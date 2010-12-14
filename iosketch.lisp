@@ -107,7 +107,7 @@ find-all-modules *next-module* transform-tree stat-value draw-line
 *default-message-verbosities* *message-verbosities* add-overlay
 set-message-verbosities operation-symbol message-symbol play-sample
 set-music-volume add-message-verbosities with-message-queue =minimap=
-draw-pixel *user-keyboard-layout* *fullscreen* draw-circle
+draw-pixel *user-keyboard-layout* *fullscreen* draw-circle =emote=
 set-field-option-value =pager= =pager-prompt= load-module
 =sprite-special= field-options world set-frame-rate *frame-rate*
 =stack= *workbook* set-resource-modified-p *pak-file-extension*

@@ -288,7 +288,7 @@ inline images that are larger than the text height---see also
 		    (draw-string-solid string x (+ text-offset y) :font font
 				       :color foreground :destination destination)))))))
 
-(defun render-formatted-line (line x y &key destination (font *default-font*))
+(defun render-formatted-line (line x y &key destination (font *default-font*) blended)
   "Render the formatted LINE at position X,Y on the image DESTINATION.
 Return the height of the rendered line."
   (let* ((line-height (formatted-line-height line))
@@ -302,7 +302,7 @@ Return the height of the rendered line."
     (dolist (string line)
       (when string
 	(render-formatted-string string current-x y :text-offset text-offset 
-				 :destination destination)
+				 :destination destination :blended blended)
 	(incf current-x (formatted-string-width string)))
       line-height)))
   

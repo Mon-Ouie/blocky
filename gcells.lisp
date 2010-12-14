@@ -111,8 +111,8 @@ Sprites are also based on cells. See `defsprite'.")
 
 (define-method compute gcell () nil)
     
-(define-method set gcell (data)
-  nil)
+(define-method set gcell (field value)
+  (setf (field-value field self) value))
 
 (define-method get gcell ()
   (object-name (object-parent self)))
@@ -616,9 +616,8 @@ May be affected by the player's :hearing-range stat, if any."
       (when (> range dist)
 	(play-sample sample-name)))))
 
-(define-method play-music gcell (music-name &optional loop-keyword loop)
-  (assert (eq :loop loop-keyword))
-  (play-music music-name :loop (ecase loop (:yes t) (:no nil))))
+(define-method play-music gcell (music-name &key loop)
+  (play-music music-name :loop loop))
 
 (define-method distance-to-player gcell ()
   (multiple-value-bind (r c) (/grid-coordinates self)
@@ -672,7 +671,6 @@ are as with `format'."
   (tile :initform ".gray-asterisk")
   (name :initform "System"))
 
-
 ;;; Popup text balloons
 
 (defgcell balloon 
@@ -722,7 +720,7 @@ are as with `format'."
 	(let ((x2 (+ margin x1))
 	      (y2 (+ margin y1)))
 	  (dolist (line text)
-	    (render-formatted-line line x2 y2 :destination image)
+	    (render-formatted-line line x2 y2 :destination image :blended t)
 	    (incf y2 (formatted-line-height line))))))))
 
 (define-method run balloon ()
@@ -730,7 +728,7 @@ are as with `format'."
   (when <following>
     (multiple-value-bind (r c) (/grid-coordinates <following>)
       ;; follow emoter
-      (/move-to self r c)))
+      (/move-to self :space r c)))
   (when (integerp <timeout>)
     (when (minusp (decf <timeout>))
       (/die self))))
@@ -741,7 +739,6 @@ are as with `format'."
 	 (balloon (clone =balloon= :text ftext :timeout timeout 
 			:following self :style style
 			:scale 2)))
-    (/play-sample self "talk")
     ;; get rid of any previous balloons first
     (multiple-value-bind (row column)
 	(/grid-coordinates self)

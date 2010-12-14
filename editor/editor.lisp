@@ -32,8 +32,13 @@
 (define-prototype palette (:parent =editor=)
   type)
 
-(defgsprite circle 
+(defgsprite circle
+  (direction :initform :north)
   (image :initform "circle"))
+
+(define-method emote circle (&rest args)
+  (/play-sound self "bloop")
+  (apply #'/parent/emote self args))
 
 (define-prototype circle-prompt (:parent =prompt=))
 
@@ -58,6 +63,9 @@
   (setf *myverse* (clone =universe=))
   (setf *viewport* (clone =viewport=))
   (setf *prompt* (clone =circle-prompt=))
+  (setf *physics-function* 
+	#'(lambda (&rest ignore)
+	    (when *world* (/run-cpu-phase *world* t))))
   (/install-keybindings *prompt*)
   (/set-receiver *prompt* *circle*)
   (/configure *myverse* :prompt *prompt*
@@ -70,13 +78,22 @@
   (/drop-sprite *world* *circle* 50 100)
     (with-fields (script) self
     (setf script (clone =script= :recipient *circle*))
-    (/add script (make-block (move west 2 pixels)) 20 20)
-    (/add script (make-block (move west (+ 1 3) pixels)) 20 20)
-    (/add script (make-block (play-sound "beep")) 20 120)
-    (/add script (make-block (if visible?
-				 (list (play-sound "footstep")
-				       (move (my direction) 2 pixels))
-				 (list (say "I'm flying."))))
+    (/add script (make-block (move west 5 pixels)) 20 20)
+    (/add script (make-block (move north 5 pixels)) 30 30)
+    (/add script (make-block (move south 5 pixels)) 20 20)
+    (/add script (make-block (move east (+ 1 (+ 2 4)) pixels)) 30 30)
+    (/add script (make-block (move (my direction) 10 pixels))
+	  50 50)
+    (/add script (make-block (list 
+			      (emote "Well this is very strange.")))
+	  55 55)
+    (/add script (make-block (list 
+			      (emote "Maybe I'll go west.")
+			      (set direction west)))
+	  60 60)
+    (/add script (make-block (play-sound "woom")) 20 120)
+    (/add script (make-block (list (play-music "calm")
+				   (emote "I feel calm.")))
 	  20 200)))
 
 ;;; A "frame" is a top-level application window.
@@ -204,7 +221,7 @@
 			      (field-value :height widget)
 			      :color <active-color>
 			      :destination image))
-	    (incf x (1+ (first pane-stops)))
+	    (incf x (first pane-stops))
 	    (pop pane-stops)))))))
 
 (define-method hit frame (x y)
