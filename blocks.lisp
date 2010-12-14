@@ -48,6 +48,7 @@
 
 (define-prototype block ()
   (arguments :documentation "List of block argument values.")
+  (outputs :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
   (schema :documentation 
 	  "List of type keywords for corresponding expressions in <arguments>.
 See also `*argument-types*'.")
@@ -116,24 +117,46 @@ this block. This default method is sufficient for many blocks whose
 main purpose is to send a single message; other blocks can redefine
 this /EXECUTE method to do something else. See also `defblock' and
 `send'."
-  (with-fields (operation arguments) self
-    (labels ((exec (if (object-p thing)
-		       (/execute thing recipient)
-		       thing)))
-      (apply #'iosketch:send nil operation recipient
-	   (mapcar #'exec arguments)))))
+  (with-fields (operation outputs) self
+    (apply #'iosketch:send nil operation recipient outputs)))
+
+(define-method execute-arguments block (recipient)
+  (with-fields (arguments outputs) self
+    (labels ((exec (thing)
+	       (if (object-p thing)
+		   (/run thing recipient)
+		   thing)))
+      ;; depth-first computing of argument values when they're blocks
+      (setf outputs (mapcar #'exec arguments)))))
+
+(define-method all-required-blocks-p block ()
+  (with-fields (schema arguments) self
+    (labels ((present (arg type)
+	       (if (eq type :block)
+		   (object-p arg)
+		   t)))
+      (every #'present arguments schema))))
+
+(define-method run block (recipient)
+  (when (/all-required-blocks-p self)
+    (/execute-arguments thing recipient)
+    (/execute thing recipient)))
 
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
 
-(define-method initialize block (&rest arguments)
-  "Prepare an empty block, or if ARGUMENTS is non-empty, a block
+(define-method initialize block (&rest args)
+  "Prepare an empty block, or if ARGS is non-empty, a block
 initialized with its values as arguments."
-  (setf <widgets> (make-list (length <schema>)))
-  (when arguments 
-    (assert (= (length arguments)
-	       (length <arguments>)))
-    (setf <arguments> arguments)))
+  (with-fields (arguments schema widgets outputs) self
+    (let ((arity (length <schema>)))
+      (setf widgets (make-list arity))
+      (setf schema (make-list arity))
+      (setf outputs (make-list arity))
+      (when args 
+	(assert (= (length args)
+		   (length arguments)))
+	(setf arguments args)))))
 
 (define-method deserialize block ()
   "Make sure the block is ready after loading."
@@ -142,7 +165,9 @@ initialized with its values as arguments."
 (define-method count block ()
   "Return the number of blocks enclosed in this block, including the
 current block. Blocks that can contain other blocks should replace
-this default implementation." 1)
+this default implementation." 
+  (with-fields (arguments) self
+    (+ 1 (count-if #'object-p arguments))))
 
 (defparameter *display-widgets*
    '(:integer =integer=
@@ -276,7 +301,7 @@ blocks."
 	   ,@body)))))
 
 (define-method draw-patch block (x0 y0 x1 y1 image 
-				    &key depressed dark)
+				    &key depressed dark hole)
   "Draw a standard IOSKETCH block notation patch on IMAGE.
 Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
 non-nil, draw an indentation; otherwise a raised area is
@@ -284,7 +309,8 @@ drawn. If DARK is non-nil, paint a darker region."
     (with-block-drawing image
       (let ((bevel (if depressed shadow highlight))
 	    (chisel (if depressed highlight shadow))
-	    (fill (if dark shadow background)))
+	    (fill (if hole *background-color* 
+		      (if dark shadow background))))
 	;; top left
 	(disc (+ x0 radius) (+ y0 radius) fill)
 	(circle (+ x0 radius) (+ y0 radius) bevel)
@@ -326,23 +352,11 @@ drawn. If DARK is non-nil, paint a darker region."
 	     fill))))
 
 (define-method draw-socket block (x0 y0 x1 y1 image)
-  (/draw-patch self x0 y0 x1 y1 image :depressed t :dark t))
+  (/draw-patch self x0 y0 x1 y1 image :depressed t :hole t))
     
 (define-method draw-background block (image)
   (with-fields (x y width height) self
     (/draw-patch self x y (+ x width) (+ y height) image)))
-
-;; (define-method draw-stub block (image)
-;;   (with-fields (x y operation) self
-;;     (let ((width (segment-width operation))
-;; 	  (height (+ (font-height *block-font*) (* 2 *dash-size*))))
-;;       (/draw-patch self x y 
-;; 		   (+ x width (* 4 *dash-size*))
-;; 		   (+ y height (* 2 *dash-size*)) image)
-;;       (/draw-segment self 
-;; 		     (+ x (* 2 *dash-size*))
-;; 		     (+ y 1)
-;; 		     operation :symbol image))))
 
 (defun expression-width (expression &optional (font *block-font*))
   (if (iosketch:object-p expression)
@@ -360,7 +374,6 @@ drawn. If DARK is non-nil, paint a darker region."
 	(substitute #\Space #\- (symbol-name expression)))
      (otherwise (format nil "~s" expression)))))
 
-;; TODO adjust for font size
 (defparameter *socket-width* (* 18 *dash-size*))
 
 (define-method layout block ()
@@ -540,8 +553,19 @@ CLICK-Y identify a point inside the block (or child block.)"
 
 (defblock if 
   (type :initform :control)
+  (result :initform nil)
   (schema :initform '(:block :block :block))
   (arguments :initform '(nil nil nil)))
+
+(define-method execute if (recipient)
+  <result>)
+
+(define-method execute-arguments if (recipient)
+  (with-fields (arguments result) self
+    (destructuring-bind (predicate then else) arguments
+      (if (/run predicate recipient)
+	  (/run then recipient)
+	  (/run else recipient)))))
 
 (defblock start
   (type :initform :system) 
@@ -558,6 +582,11 @@ CLICK-Y identify a point inside the block (or child block.)"
   (schema :initform '(:number :number))
   (arguments :initform '(nil nil)))
 
+(define-method execute + (recipient)
+  (with-fields (arguments) self
+    (when (every #'integerp arguments)
+      (apply #'+ arguments))))
+	  
 (defun is-event-block (thing)
   (and (not (null thing))
        (iosketch:object-p thing)
