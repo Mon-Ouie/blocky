@@ -327,7 +327,7 @@ blocks."
 			      :destination ,image-sym))
 		  (text (x y string)
 		    (draw-string-blended string x y
-					 :foreground foreground
+				 :foreground foreground
 					 :destination ,image-sym
 					 :font *block-font*)))
 	   ,@body)))))
@@ -599,7 +599,8 @@ CLICK-Y identify a point inside the block (or child block.)"
   (/emote recipient 
 	  (list (list (list (first <results>) :font *block-font*
 			    :foreground ".black")))
-	  :timeout 10.0 :style :clear))
+	  :timeout 200 :style :clear))
+
 
 (defblock set
   (type :initform :variables)

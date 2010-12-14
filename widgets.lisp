@@ -278,7 +278,7 @@ inline images that are larger than the text height---see also
 	    (message "Warning: no string to render.")
 	    (if blended
 		(draw-string-blended string x (+ text-offset y)
-				     :font font :color foreground
+				     :font font :foreground foreground
 				     :destination destination)
 		(if background
 		    (draw-string-shaded string x (+ text-offset y)

@@ -701,7 +701,7 @@ are as with `format'."
   (with-field-values (text style scale) self
     (with-field-values (tile-size) *world*
       (let* ((offset (ecase style
-		       (:balloon tile-size)
+		       (:balloon (* 2 tile-size))
 		       (:clear 0)
 		       (:flat 0)))
 	     (x0 (+ x tile-size))
@@ -715,8 +715,8 @@ are as with `format'."
 	  (draw-box x1 y1 width height 
 		    :stroke-color <stroke-color>
 		    :color <background-color>
-		    :destination image)
-	  (draw-line x0 y0 x1 y1 :destination image))
+		    :destination image))
+	(draw-line x0 y0 x1 y1 :destination image)
 	(let ((x2 (+ margin x1))
 	      (y2 (+ margin y1)))
 	  (dolist (line text)
