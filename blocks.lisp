@@ -457,7 +457,6 @@ in the block where the background shows through."
 (define-method hit block (click-x click-y)
   "Return this block (or child block) if the coordinates CLICK-X and
 CLICK-Y identify a point inside the block (or child block.)"
-(define-method hit list (click-x click-y)
   (with-fields (x y width height arguments) self
     (let ((child 
 	   (block nil
