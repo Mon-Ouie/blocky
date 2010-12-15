@@ -67,7 +67,7 @@
 	  "List of type keywords for corresponding expressions in <arguments>.
 See also `*argument-types*'.")
   (operation :initform :block :documentation "Keyword name of method to be invoked on recipient.")
-  (type :documentation "Type name of block. See also `*block-types*'.")
+  (type :initform :data :documentation "Type name of block. See also `*block-types*'.")
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
   (width :initform 32 :documentation "Cached width of block.")
@@ -330,38 +330,37 @@ The primitives are CIRCLE, DISC, LINE, BOX, and TEXT. These are used
 in subsequent functions as the basis of drawing nested diagrams of
 blocks."
   (let ((image-sym (gensym)))
-    `(with-field-values (height width) self
-       (let* ((foreground (/find-color self :foreground))
-	      (background (/find-color self :background))
-	      (highlight (/find-color self :highlight))
-	      (shadow (/find-color self :shadow))
-	      (dash *dash-size*)
-	      (radius *dash-size*)
-	      (diameter (* 2 radius))
-	      (,image-sym ,image))
-	 (labels ((circle (x y &optional color)
-		    (draw-aa-circle x y radius 
-				    :color (or color background)
-				    :destination ,image-sym))
-		  (disc (x y &optional color)
-		    (draw-filled-circle x y radius
-					:color (or color background)
-					:destination ,image-sym))
-		  (line (x0 y0 x1 y1 &optional color)
-		    (draw-line x0 y0 x1 y1 
-			       :color (or color background)
-			       :destination ,image-sym))
-		  (box (x y r b &optional color)
-		    (draw-box x y (- r x) (- b y)
-			      :color (or color background)
-			      :stroke-color (or color background)
-			      :destination ,image-sym))
-		  (text (x y string)
-		    (draw-string-blended string x y
-				 :foreground foreground
-					 :destination ,image-sym
-					 :font *block-font*)))
-	   ,@body)))))
+    `(let* ((foreground (/find-color self :foreground))
+	    (background (/find-color self :background))
+	    (highlight (/find-color self :highlight))
+	    (shadow (/find-color self :shadow))
+	    (dash *dash-size*)
+	    (radius *dash-size*)
+	    (diameter (* 2 radius))
+	    (,image-sym ,image))
+       (labels ((circle (x y &optional color)
+		  (draw-aa-circle x y radius 
+				  :color (or color background)
+				  :destination ,image-sym))
+		(disc (x y &optional color)
+		  (draw-filled-circle x y radius
+				      :color (or color background)
+				      :destination ,image-sym))
+		(line (x0 y0 x1 y1 &optional color)
+		  (draw-line x0 y0 x1 y1 
+			     :color (or color background)
+			     :destination ,image-sym))
+		(box (x y r b &optional color)
+		  (draw-box x y (- r x) (- b y)
+			    :color (or color background)
+			    :stroke-color (or color background)
+			    :destination ,image-sym))
+		(text (x y string)
+		  (draw-string-blended string x y
+				       :foreground foreground
+				       :destination ,image-sym
+				       :font *block-font*)))
+	   ,@body))))
 
 (define-method draw-patch block (x0 y0 x1 y1 image 
 				    &key depressed dark hole)
@@ -370,50 +369,50 @@ Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
 non-nil, draw an indentation; otherwise a raised area is drawn. If
 DARK is non-nil, paint a darker region. If HOLE is non-nil, cut a hole
 in the block where the background shows through."
-    (with-block-drawing image
-      (let ((bevel (if depressed shadow highlight))
-	    (chisel (if depressed highlight shadow))
-	    (fill (if hole *background-color* 
-		      (if dark shadow background))))
-	;; top left
-	(disc (+ x0 radius) (+ y0 radius) fill)
-	(circle (+ x0 radius) (+ y0 radius) bevel)
-	;; top x1
-	(disc (- x1 radius 1) (+ y0 radius) fill)
-	;; y1 x1
-	(disc (- x1 radius 1) (- y1 radius 1) fill)
-	(circle (- x1 radius 1) (- y1 radius 1) chisel)
-	;; y1 left
-	(disc (+ x0 radius) (- y1 radius 1) fill)
-	(circle (+ x0 radius) (- y1 radius 1))
-	;; y1 
-	(box (+ x0 radius) (- y1 diameter)
-	     (- x1 radius 1) y1
-	     fill)
-	(line (+ x0 radius 1) y1
-	      (- x1 radius 1) y1 chisel)
-	;; top
-	(box (+ x0 radius) y0
-	     (- x1 radius) (+ y0 diameter)
-	     fill)
-	(line (+ x0 radius 1) y0
-	      (- x1 radius 1) y0 bevel)
-	;; left 
-	(box x0 (+ y0 radius) 
-	     (+ x0 diameter) (- y1 radius)
-	     fill)
-	(line x0 (+ y0 radius 1)
-	      x0 (- y1 radius 1) bevel)
-	;; x1
-	(box (- x1 diameter) (+ y0 radius)
-	     x1 (- y1 radius)
-	     fill)
-	(line x1 (+ y0 radius 1)
-	      x1 (- y1 radius 1) chisel)
-	;; content area
-	(box (+ x0 radius) (+ y0 radius)
-	     (- x1 radius) (- y1 radius)
-	     fill))))
+  (with-block-drawing image
+    (let ((bevel (if depressed shadow highlight))
+	  (chisel (if depressed highlight shadow))
+	  (fill (if hole *background-color* 
+		    (if dark shadow background))))
+      ;; top left
+      (disc (+ x0 radius) (+ y0 radius) fill)
+      (circle (+ x0 radius) (+ y0 radius) bevel)
+      ;; top x1
+      (disc (- x1 radius 1) (+ y0 radius) fill)
+      ;; y1 x1
+      (disc (- x1 radius 1) (- y1 radius 1) fill)
+      (circle (- x1 radius 1) (- y1 radius 1) chisel)
+      ;; y1 left
+      (disc (+ x0 radius) (- y1 radius 1) fill)
+      (circle (+ x0 radius) (- y1 radius 1))
+      ;; y1 
+      (box (+ x0 radius) (- y1 diameter)
+	   (- x1 radius 1) y1
+	   fill)
+      (line (+ x0 radius 1) y1
+	    (- x1 radius 1) y1 chisel)
+      ;; top
+      (box (+ x0 radius) y0
+	   (- x1 radius) (+ y0 diameter)
+	   fill)
+      (line (+ x0 radius 1) y0
+	    (- x1 radius 1) y0 bevel)
+      ;; left 
+      (box x0 (+ y0 radius) 
+	   (+ x0 diameter) (- y1 radius)
+	   fill)
+      (line x0 (+ y0 radius 1)
+	    x0 (- y1 radius 1) bevel)
+      ;; x1
+      (box (- x1 diameter) (+ y0 radius)
+	   x1 (- y1 radius)
+	   fill)
+      (line x1 (+ y0 radius 1)
+	    x1 (- y1 radius 1) chisel)
+      ;; content area
+      (box (+ x0 radius) (+ y0 radius)
+	   (- x1 radius) (- y1 radius)
+	   fill))))
 
 (define-method draw-socket block (x0 y0 x1 y1 image)
   (/draw-patch self x0 y0 x1 y1 image :depressed t :hole t))
@@ -421,6 +420,11 @@ in the block where the background shows through."
 (define-method draw-background block (image)
   (with-fields (x y width height) self
     (/draw-patch self x y (+ x width) (+ y height) image)))
+
+(define-method draw-ghost block (image)
+  (with-fields (x y width height) self
+    (/draw-patch self x y (+ x width) (+ y height) image
+		 :depressed t :hole t)))
 
 (define-method handle-width block ()
   (+ (* 2 *dash-size*)
@@ -796,6 +800,7 @@ CLICK-Y identify a point inside the block (or child block.)"
   	 :documentation "Block with current focus.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
+  (ghost :initform (clone =block=))
   (buffer :initform nil)
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
@@ -831,7 +836,8 @@ CLICK-Y identify a point inside the block (or child block.)"
 
 (define-method render editor ()
   (with-fields 
-      (script needs-redraw image buffer selection focus drag modified) self   
+      (script needs-redraw image buffer drag-start selection focus
+      drag modified ghost) self
     (labels ((copy ()
 	       (draw-image buffer 0 0 :destination image)))
       (when script
@@ -841,10 +847,11 @@ CLICK-Y identify a point inside the block (or child block.)"
 	(when drag 
 	  (copy)
 	  (/layout drag)
+	  (/draw-ghost ghost image)
 	  (/draw drag image))))))
 
 (define-method mouse-down editor (x y &optional button)
-  (with-fields (script selection focus drag modified) self
+  (with-fields (script ghost selection focus drag modified) self
     (when script 
       (with-fields (blocks) script
 	(labels ((hit (b)
@@ -858,18 +865,23 @@ CLICK-Y identify a point inside the block (or child block.)"
 
 (define-method mouse-move editor (mouse-x mouse-y)
   (with-fields 
-      (script drag-offset selection focus drag-start drag modified) 
+      (script drag-offset selection focus ghost drag-start drag modified) 
       self
     (when drag
-      (with-fields (x y) drag
+      (let ((dx (field-value :x drag))
+	    (dy (field-value :y drag)))
 	(when (null drag-start)
-	  (setf drag-start (cons x y))
-	  (setf drag-offset (cons (min (/handle-width drag)
-				       (- mouse-x x))
-				  (- mouse-y y))))
-	(destructuring-bind (x0 . y0) drag-offset
-	  (/move drag (- mouse-x x0) (- mouse-y y0)))))))
-
+	  (setf drag-start (cons dx dy))
+	  (let ((gw (field-value :width drag))
+		(gh (field-value :height drag)))
+	    (with-fields (x y width height) ghost
+		(setf x dx y dy gw gh))))
+	(destructuring-bind (sx . sy) drag-offset
+	  (setf drag-offset (cons (max (/handle-width drag)
+				       (- mouse-x sx))
+				  (- mouse-y sy)))
+	(/move drag (- mouse-x sx) (- mouse-y sy)))))))
+  
 (define-method mouse-up editor (x y &optional button)
   (with-fields 
       (script needs-redraw drag-offset drag-start selection focus drag modified) 
