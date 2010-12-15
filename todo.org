@@ -1,11 +1,13 @@
-* TODO draw colored circle
-* TODO make simple sprite world in viewport
-* TODO right click to run block
+* TODO User experience description
+* TODO BLOCK/HOVER method
+* TODO think about drag and drop UI
+* TODO drag and drop into lists
+* TODO interactively create scripts
 
 
-* TODO [#A] show DROP hot spots as you drag 
-* TODO running script moves a circle
-* TODO video demo with moving circle.
+
+* TODO navigating different worlds/pages
+* TODO defining blocks with blocks
 
 
 * TODO [#C] joystick blocks

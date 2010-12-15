@@ -613,9 +613,9 @@ was invoked."
 	 (prototype-special-name (make-special-variable-name prototype-name))
 	 (field-name (make-keyword method-name))
 	 (defun-symbol (intern (concatenate 'string
-					    (symbol-name method-name) 
-					    ">>"
-					    (symbol-name prototype-name))))
+					    (symbol-name prototype-name) 
+					    "/"
+					    (symbol-name method-name))))
 	 (slash-defun-symbol (intern (concatenate 'string
 						  "/"
 						  (symbol-name method-name))))

@@ -207,9 +207,10 @@
 (define-method render frame ()
   (with-field-values (x y width image height panes visible pane-widths) self
     (when visible
+      (/clear self ".gray80")
       (labels ((scale (percentage)
-		 (truncate (* width (/ (float percentage)
-				       100)))))
+		 (1- (truncate (* width (/ (float percentage)
+					  100))))))
 	(let ((pane-stops (mapcar #'scale pane-widths)))
 	  (dolist (widget panes)
 	    (/move widget :x x :y 0)
@@ -221,7 +222,7 @@
 			      (field-value :height widget)
 			      :color <active-color>
 			      :destination image))
-	    (incf x (first pane-stops))
+	    (incf x (1+ (first pane-stops)))
 	    (pop pane-stops)))))))
 
 (define-method hit frame (x y)
