@@ -32,19 +32,33 @@
 
 (in-package :iosketch)
 
-;; For the design I've followed a motto associated with the visual
-;; programming language Pure Data: "The diagram is the program."
-;; Since the diagram is 2D, the program must therefore be
+;; For the design of IOSKETCH, I've followed a motto associated with
+;; the visual programming language Pure Data: "The diagram is the
+;; program."  Since the diagram is 2D, the program must therefore be
 ;; two-dimensional as well. That means every block in the program
-;; (i.e. every expression) must have an X,Y position. 
-
-;; The position units are abstract "pseudo-pixels" which can be scaled
+;; (i.e. every expression) must have an X,Y position. The position
+;; units are abstract "pseudo-pixels" which can be scaled
 ;; appropriately for display.
 
-;; Besides a 2D position, each block has a (possibly empty) list of
-;; argument values. Arguments are symbols like :move or :play-sound,
-;; or other data such as numbers and strings. Arguments may also be
-;; other blocks, and this creates nested blocks in the diagram.
+;; Unlike Pure Data and other visual languages that model themselves
+;; after electronic components connected by wires, IOSKETCH does away
+;; with the explicitly drawn connections in favor of a tree structure
+;; mapping to Lisp expressions. 
+
+;; The purpose of a block is to perform some action in response to a
+;; number of input arguments and then return a value. Each argument is
+;; itself a block and there are prebuilt block types for integers,
+;; strings, symbols, and lists. To run a block diagram we proceed
+;; depth-first to the leaves and execute those to obtain values, then
+;; propagate results up the tree until the outermost block is executed
+;; using the propagated results as its input values. See also
+;; `BLOCK/RUN'.
+
+;; New block types and behaviors can be defined with the macro
+;; `defblock' and subsequently replacing default methods of the base
+;; block prototype via `define-method'. With the macro `make-block'
+;; you can convert lisp expressions into working block
+;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
 
 (define-prototype block ()
   (arguments :initform nil :documentation "List of block argument values.")
@@ -65,6 +79,8 @@ See also `*argument-types*'.")
   (excluded-fields :initform '(:widget :results :parent)))
 
 (defmacro defblock (name &body args)
+  "Define a new block prototype named =NAME=.
+ARGS are field specifiers, as with `define-prototype'."
   `(define-prototype ,name (:parent =block=)
      (operation :initform ,(make-keyword name))
      ,@args))
@@ -80,6 +96,7 @@ See also `*argument-types*'.")
 	     (symbol-value
 	      (make-special-variable-name 
 	       (etypecase value
+		 ;; see also `defentry' below.
 		 (integer :integer)
 		 (float :float)
 		 (string :string)
@@ -89,6 +106,16 @@ See also `*argument-types*'.")
 	    (/set-data entry value))))))
 
 (defmacro make-block (expression)
+  "Expand EXPRESSION specifying a block diagram into real blocks.
+EXPRESSION is of the form:
+
+  (BLOCK-NAME ARG1 ARG2 ... ARGN)
+
+Where BLOCK-NAME is the name of a prototype defined with `defblock'
+and ARG1-ARGN are numbers, symbols, strings, or nested
+EXPRESSIONS.
+
+ (The equals signs are not needed around BLOCK-NAME.)"
   (assert expression)
   `(make-block-ext ',expression))
 
@@ -130,12 +157,27 @@ areas.")
     (/set-argument self pos nil)
     (/set-parent child nil)))
 
+(define-method execute-arguments block (recipient)
+  "Execute all blocks in <ARGUMENTS> from left-to-right. Results are
+placed in corresponding positions of <RESULTS>. Override this method
+when defining new blocks if you don't want to evaluate all the
+arguments all the time."
+  (with-fields (arguments results) self
+    (setf results (mapcar #'(lambda (block)
+			      (/run block recipient))
+			  arguments))))
+    ;; (when (and arguments results)
+    ;;   (dotimes (n (length arguments))
+    ;; 	(setf (nth n results)
+    ;; 	      (/run (nth n arguments)
+    ;; 		    recipient))))))
+
 (define-method execute block (recipient)
   "Carry out the block's action by sending messages to the object RECIPIENT.
 The RECIPIENT argument is provided by the script executing the block,
 and its value will be the IOSKETCH object associated with the script.
 The <RESULTS> field will be a list of results obtained by
-executing/evaluating the <ARGUMENTS> (see also
+executing/evaluating the blocks in <ARGUMENTS> (see also
 `BLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
 send the <OPERATION> field's value as a message to the recipient, with
 the arguments to the recipient's method being the current computed
@@ -151,20 +193,9 @@ this /EXECUTE method to do something else. See also `defblock' and
     (apply #'iosketch:send nil operation recipient 
 	   (mapcar #'clean results)))))
 
-(define-method execute-arguments block (recipient)
-  "Execute or evaluate all <ARGUMENTS>, running block arguments (if
-any) from left-to-right. Results are placed in <RESULTS>. Override
-this method when defining new blocks if you don't want to evaluate all
-the arguments all the time."
-  (with-fields (arguments results) self
-    (labels ((exec (thing)
-	       (if (object-p thing)
-		   (/run thing recipient)
-		   thing)))
-      ;; depth-first computing of argument values when they're blocks
-      (setf results (mapcar #'exec arguments)))))
-
 (define-method run block (recipient)
+  "Run nested blocks on RECIPIENT to produce results, then run this
+block with those results as input."
   (/execute-arguments self recipient)
   (/execute self recipient))
 
@@ -492,17 +523,18 @@ CLICK-Y identify a point inside the block (or child block.)"
   (with-fields (x y width height arguments) self
     (when (within-extents click-x click-y x y 
 			  (+ x width) (+ y height))
-      (let ((child 
-	     (block nil
-	       (dolist (block arguments)
-		 (when (/hit block click-x click-y)
-		   (return block))))))
-	(values (or child self) self)))))
+      (labels ((hit (block)
+		 (/hit block click-x click-y)))
+	(values (or (some #'hit arguments) self) self)))))
      		        
 ;;; Vertically stacked list of blocks
 
 (defblock list
   (type :initform :structure))
+
+(define-method execute list (recipient)
+  (declare (ignore recipient))
+  <results>)
 
 (define-method initialize list (&rest args)
   (when args (setf <arguments> args)))
@@ -573,14 +605,16 @@ CLICK-Y identify a point inside the block (or child block.)"
   (arguments :initform '(nil nil nil)))
 
 (define-method execute if (recipient)
-  <result>)
+  <results>)
 
 (define-method execute-arguments if (recipient)
-  (with-fields (arguments result) self
+  (with-fields (arguments results) self
     (destructuring-bind (predicate then else) arguments
       (if (/run predicate recipient)
 	  (/run then recipient)
 	  (/run else recipient)))))
+
+;;; Get field value
 
 (defblock my 
   (type :initform :variables)
@@ -590,6 +624,15 @@ CLICK-Y identify a point inside the block (or child block.)"
   (with-fields (results) self
     (field-value (make-keyword (car results))
 		 recipient)))
+
+;;; Set field value
+
+(defblock set
+  (type :initform :variables)
+  (schema :initform '(:symbol :anything))
+  (arguments :initform '(:counter 1)))
+
+;;; Talking 
 
 (defblock emote 
   (type :initform :looks)
@@ -601,11 +644,7 @@ CLICK-Y identify a point inside the block (or child block.)"
 			    :foreground ".black")))
 	  :timeout 200 :style :clear))
 
-
-(defblock set
-  (type :initform :variables)
-  (schema :initform '(:symbol :anything))
-  (arguments :initform '(:counter 1)))
+;;; Other blocks
 
 (defblock say 
   (type :initform :message)
