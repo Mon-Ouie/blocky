@@ -510,12 +510,8 @@ in the block where the background shows through."
 		(/draw block image))))))))
 
 (define-method draw block (image)
-  (with-fields (arguments) self
-    (/draw-background self image)
-    (/draw-contents self image)
-    (dolist (block arguments)
-      (when (object-p block)
-	(/draw block image)))))
+  (/draw-background self image)
+  (/draw-contents self image))
 
 (define-method hit block (click-x click-y)
   "Return this block (or child block) if the coordinates CLICK-X and
@@ -836,10 +832,16 @@ CLICK-Y identify a point inside the block (or child block.)"
 (define-method render editor ()
   (with-fields 
       (script needs-redraw image buffer selection focus drag modified) self   
-    (when script
-      (when needs-redraw (/redraw self))
-      (draw-image buffer 0 0 :destination image)
-      (when drag (/draw drag image)))))
+    (labels ((copy ()
+	       (draw-image buffer 0 0 :destination image)))
+      (when script
+	(when needs-redraw 
+	  (/redraw self)
+	  (copy))
+	(when drag 
+	  (copy)
+	  (/layout drag)
+	  (/draw drag image))))))
 
 (define-method mouse-down editor (x y &optional button)
   (with-fields (script selection focus drag modified) self
