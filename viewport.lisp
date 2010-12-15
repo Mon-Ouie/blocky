@@ -216,7 +216,8 @@
 		       sprite)))))
 	(assert *world*)
 	(or (some #'hit (field-value :sprites *world*))
-	    (when cells (aref cells (1- (fill-pointer cells))))))))))
+	    (when (and cells (> (fill-pointer cells) 0))
+		(aref cells (1- (fill-pointer cells))))))))))
 
 (define-method set-origin viewport (&key x y height width)
   (setf <origin-x> x
