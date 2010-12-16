@@ -1,10 +1,9 @@
 * TODO User experience description
+* TODO Empty list appearance?
 * TODO BLOCK/HOVER method
 * TODO think about drag and drop UI
 * TODO drag and drop into lists
 * TODO interactively create scripts
-
-
 
 * TODO navigating different worlds/pages
 * TODO defining blocks with blocks
