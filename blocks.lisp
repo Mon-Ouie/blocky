@@ -234,6 +234,9 @@ of value.")
 (defparameter *background-color* ".white" 
   "The default background color of the IOSKETCH user interface.")
 
+(defparameter *socket-color* ".gray80" 
+  "The default background color of block sockets.")
+
 (defparameter *block-font* "sans-condensed-bold-12"
   "The font used in drawing block labels and argument data.")
 
@@ -362,17 +365,19 @@ blocks."
 				       :font *block-font*)))
 	   ,@body))))
 
+
+
 (define-method draw-patch block (x0 y0 x1 y1 image 
-				    &key depressed dark hole)
+				    &key depressed dark socket)
   "Draw a standard IOSKETCH block notation patch on IMAGE.
 Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
 non-nil, draw an indentation; otherwise a raised area is drawn. If
-DARK is non-nil, paint a darker region. If HOLE is non-nil, cut a hole
+DARK is non-nil, paint a darker region. If SOCKET is non-nil, cut a hole
 in the block where the background shows through."
   (with-block-drawing image
     (let ((bevel (if depressed shadow highlight))
 	  (chisel (if depressed highlight shadow))
-	  (fill (if hole *background-color* 
+	  (fill (if socket *socket-color* 
 		    (if dark shadow background))))
       ;; top left
       (disc (+ x0 radius) (+ y0 radius) fill)
@@ -415,7 +420,7 @@ in the block where the background shows through."
 	   fill))))
 
 (define-method draw-socket block (x0 y0 x1 y1 image)
-  (/draw-patch self x0 y0 x1 y1 image :depressed t :hole t))
+  (/draw-patch self x0 y0 x1 y1 image :depressed t :socket t))
     
 (define-method draw-background block (image)
   (with-fields (x y width height) self
@@ -424,7 +429,7 @@ in the block where the background shows through."
 (define-method draw-ghost block (image)
   (with-fields (x y width height) self
     (/draw-patch self x y (+ x width) (+ y height) image
-		 :depressed t :hole t)))
+		 :depressed t :socket t)))
 
 (define-method handle-width block ()
   (+ (* 2 *dash-size*)
@@ -866,20 +871,21 @@ CLICK-Y identify a point inside the block (or child block.)"
       (script drag-offset selection focus ghost drag-start drag modified) 
       self
     (when drag
-      (when (null drag-start)
-	(let ((dx (field-value :x drag))
-	      (dy (field-value :y drag)))
-	  (setf drag-start (cons dx dy))
-	  (let ((gw (field-value :width drag))
-		(gh (field-value :height drag)))
-	    (with-fields (x y width height) ghost
-	      (setf x dx y dy gw gh)))))
-      ;;; TODO FIXME BUG HERE
-      (setf drag-offset (cons (max (/handle-width drag)
-				   (- mouse-x sx))
-			      (- mouse-y sy)))
-	(/move drag (- mouse-x sx) (- mouse-y sy)))))))
-  
+      (let ((dx (field-value :x drag))
+	    (dy (field-value :y drag))
+	    (dw (field-value :width drag))
+	    (dh (field-value :height drag)))
+	(with-fields (x y width height) ghost
+	  (let ((x-offset (max (/handle-width drag)
+			       (- mouse-x dx)))
+		(y-offset (- mouse-y dy)))
+	    (when (null drag-start)
+	      (setf x dx y dy width dw height dh)
+	      (setf drag-start (cons dx dy))
+	      (setf drag-offset (cons x-offset y-offset)))
+	    (destructuring-bind (ox . oy) drag-offset
+	      (/move drag (- mouse-x ox) (- mouse-y oy)))))))))
+
 (define-method mouse-up editor (x y &optional button)
   (with-fields 
       (script needs-redraw drag-offset drag-start selection focus drag modified) 
