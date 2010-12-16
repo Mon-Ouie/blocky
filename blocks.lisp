@@ -739,7 +739,7 @@ CLICK-Y identify a point inside the block (or child block.)"
   (variables :initform (make-hash-table :test 'eq)))
 
 (define-method initialize script (&key blocks variables recipient)
-  (when blocks (setf <blocks> blocks))
+  (setf <blocks> blocks)
   (when variables (setf <variables> variables))
   (when recipient (setf <recipient> recipient)))
 
@@ -760,9 +760,9 @@ CLICK-Y identify a point inside the block (or child block.)"
 	    
 (define-method bring-to-front script (block)
   (with-fields (blocks) self
-    (when (member block blocks)
+    (when (find block blocks)
       (setf blocks (delete block blocks))
-      (setf blocks (append blocks (list block))))))
+      (setf blocks (nconc blocks (list block))))))
 
 (define-method delete script (block)
   (with-fields (blocks) self
@@ -777,10 +777,8 @@ CLICK-Y identify a point inside the block (or child block.)"
 (defun script-variable (var-name)
   (/get *script* var-name))
 
-(defun set-script-variable (var-name value)
+(defun (setf script-variable) (var-name value)
   (/set *script* var-name value))
-
-(defsetf script-variable set-script-variable)
 
 (defmacro with-script-variables (vars &rest body)
   (labels ((make-clause (sym)
@@ -868,18 +866,18 @@ CLICK-Y identify a point inside the block (or child block.)"
       (script drag-offset selection focus ghost drag-start drag modified) 
       self
     (when drag
-      (let ((dx (field-value :x drag))
-	    (dy (field-value :y drag)))
-	(when (null drag-start)
+      (when (null drag-start)
+	(let ((dx (field-value :x drag))
+	      (dy (field-value :y drag)))
 	  (setf drag-start (cons dx dy))
 	  (let ((gw (field-value :width drag))
 		(gh (field-value :height drag)))
 	    (with-fields (x y width height) ghost
-		(setf x dx y dy gw gh))))
-	(destructuring-bind (sx . sy) drag-offset
-	  (setf drag-offset (cons (max (/handle-width drag)
-				       (- mouse-x sx))
-				  (- mouse-y sy)))
+	      (setf x dx y dy gw gh)))))
+      ;;; TODO FIXME BUG HERE
+      (setf drag-offset (cons (max (/handle-width drag)
+				   (- mouse-x sx))
+			      (- mouse-y sy)))
 	(/move drag (- mouse-x sx) (- mouse-y sy)))))))
   
 (define-method mouse-up editor (x y &optional button)
