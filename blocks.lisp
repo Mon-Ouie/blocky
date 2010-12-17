@@ -853,6 +853,22 @@ CLICK-Y identify a point inside the block (or child block.)"
 	  (/draw-ghost ghost image)
 	  (/draw drag image))))))
 
+(define-method begin-drag editor (mouse-x mouse-y block)
+  (with-fields (drag drag-start ghost drag-offset) self
+    (setf drag block)
+    (let ((dx (field-value :x block))
+	  (dy (field-value :y block))
+	  (dw (field-value :width block))
+	  (dh (field-value :height block)))
+      (with-fields (x y width height) ghost
+	(let ((x-offset (max (/handle-width block)
+			     (- mouse-x dx)))
+	      (y-offset (- mouse-y dy)))
+	  (when (null drag-start)
+	    (setf x dx y dy width dw height dh)
+	    (setf drag-start (cons dx dy))
+	    (setf drag-offset (cons x-offset y-offset))))))))
+
 (define-method mouse-down editor (x y &optional button)
   (with-fields (script ghost selection focus drag modified) self
     (when script 
@@ -862,29 +878,14 @@ CLICK-Y identify a point inside the block (or child block.)"
 	  (let ((block (find-if #'hit blocks :from-end t)))
 	    (when block
 	      (case button
-		(1 (setf drag block)
-		   (setf focus block))
+		(1 (/begin-drag self x y block))
 		(3 (/run script block))))))))))
 
 (define-method mouse-move editor (mouse-x mouse-y)
-  (with-fields 
-      (script drag-offset selection focus ghost drag-start drag modified) 
-      self
+  (with-fields (script drag-offset drag-start drag) self
     (when drag
-      (let ((dx (field-value :x drag))
-	    (dy (field-value :y drag))
-	    (dw (field-value :width drag))
-	    (dh (field-value :height drag)))
-	(with-fields (x y width height) ghost
-	  (let ((x-offset (max (/handle-width drag)
-			       (- mouse-x dx)))
-		(y-offset (- mouse-y dy)))
-	    (when (null drag-start)
-	      (setf x dx y dy width dw height dh)
-	      (setf drag-start (cons dx dy))
-	      (setf drag-offset (cons x-offset y-offset)))
-	    (destructuring-bind (ox . oy) drag-offset
-	      (/move drag (- mouse-x ox) (- mouse-y oy)))))))))
+      (destructuring-bind (ox . oy) drag-offset
+	(/move drag (- mouse-x ox) (- mouse-y oy))))))
 
 (define-method mouse-up editor (x y &optional button)
   (with-fields 
