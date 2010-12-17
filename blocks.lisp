@@ -530,6 +530,37 @@ CLICK-Y identify a point inside the block (or child block.)"
 		 (/hit block click-x click-y)))
 	(values (or (some #'hit arguments) self) self)))))
      		        
+;;; The null block
+
+(define-method null block ()) 
+
+(defblock null)
+
+(define-method null null () t)
+
+(define-method run null (recipient)
+  (declare (ignore recipient)))
+
+(defparameter *null-display-string* "()")
+;; (string #\LATIN_SMALL_LETTER_O_WITH_STROKE))
+
+(define-method layout null ()
+  (with-fields (height width) self
+    (setf width (+ (* 4 *dash-size*)
+		   (font-text-extents *null-display-string*
+				      *block-font*))
+	  height (+ (* 4 *dash-size*)
+		    (font-height *block-font*)))))
+
+(define-method draw-contents null (image)
+  (with-block-drawing image
+    (with-fields (x y) self
+      (text (+ x (* 2 *dash-size*))
+	    (+ y *dash-size* 1)
+	    *null-display-string*))))
+
+(defun null-block () (clone =null=))
+
 ;;; Vertically stacked list of blocks
 
 (defblock list
@@ -859,8 +890,7 @@ CLICK-Y identify a point inside the block (or child block.)"
 	  (dw (field-value :width block))
 	  (dh (field-value :height block)))
       (with-fields (x y width height) ghost
-	(let ((x-offset (max (/handle-width block)
-			     (- mouse-x dx)))
+	(let ((x-offset (- mouse-x dx))
 	      (y-offset (- mouse-y dy)))
 	  (when (null drag-start)
 	    (setf x dx y dy width dw height dh)
