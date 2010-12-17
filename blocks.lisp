@@ -436,6 +436,8 @@ in the block where the background shows through."
   (+ (* 2 *dash-size*)
      (expression-width <operation>)))
 
+(defparameter *socket-width* (* 18 *dash-size*))
+
 (defun expression-width (expression &optional (font *block-font*))
   (if (iosketch:object-p expression)
       *socket-width*
@@ -448,8 +450,6 @@ in the block where the background shows through."
 	(substitute #\Space #\- (symbol-name expression)))
      (otherwise (format nil "~s" expression)))))
 
-(defparameter *socket-width* (* 18 *dash-size*))
-
 (define-method layout block ()
   (with-fields (child-widths height width) self
     (with-field-values (x y operation schema arguments widget) self
@@ -458,13 +458,13 @@ in the block where the background shows through."
 	     (left (+ x (/handle-width self)))
 	     (max-height (font-height font)))
 	(labels ((move-widget (widget)
-		   (/move widget :x left :y (+ y dash))
+		   (/move widget :x left :y y)
 		   (incf left (field-value :width widget))
 		   (setf max-height
 			 (max max-height 
 			      (field-value :height widget))))
 		 (move-child (child)
-		   (/move child (+ left dash dash) (+ y dash dash))
+		   (/move child (+ left dash) y)
 		   (/layout child)
 		   (setf max-height (max max-height (field-value :height child)))
 		   (field-value :width child))
@@ -477,7 +477,7 @@ in the block where the background shows through."
 	      (move-widget widget)
 	      (setf child-widths (mapcar #'layout-child arguments schema)))
 	  (setf width (+ (- left x) (* 4 dash)))
-	  (setf height (+ max-height (* 4 dash))))))))
+	  (setf height (+ dash max-height)))))))
 
 (define-method draw-expression block (x0 y0 segment type image)
   (with-block-drawing image
@@ -538,6 +538,8 @@ CLICK-Y identify a point inside the block (or child block.)"
 
 (define-method null null () t)
 
+(defun null-block () (clone =null=))
+
 (define-method run null (recipient)
   (declare (ignore recipient)))
 
@@ -558,8 +560,6 @@ CLICK-Y identify a point inside the block (or child block.)"
       (text (+ x (* 2 *dash-size*))
 	    (+ y *dash-size* 1)
 	    *null-display-string*))))
-
-(defun null-block () (clone =null=))
 
 ;;; Vertically stacked list of blocks
 
