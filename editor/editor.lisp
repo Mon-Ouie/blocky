@@ -79,6 +79,10 @@
     (with-fields (script) self
     (setf script (clone =script= :recipient *circle*))
     (/add script (make-block (null)) 10 10)
+    (/add script (make-block (if (null) (null)
+				  (null)
+				 )) 60 60)
+    (/add script (make-block (null)) 10 10)
     (/add script (make-block (move west 5 pixels)) 20 20)
     (/add script (make-block (move north 5 pixels)) 30 30)
     (/add script (make-block (move south 5 pixels)) 20 20)

@@ -89,10 +89,14 @@ ARGS are field specifiers, as with `define-prototype'."
 (defun make-block-ext (value)
   (assert value)
   (if (listp value) 
-      (destructuring-bind (operation &rest arguments) value
-	(apply #'clone 
-	       (symbol-value (make-special-variable-name operation))
-	       (mapcar #'make-block-ext arguments)))
+      (destructuring-bind (operation &rest args) value
+	(let ((block (apply #'clone 
+			    (symbol-value 
+			     (make-special-variable-name operation))
+			    (mapcar #'make-block-ext args))))
+	  (with-fields (arguments) block
+	    (dolist (child arguments)
+	      (/set-parent child block)))))
       (let ((prototype 
 	     (symbol-value
 	      (make-special-variable-name 
@@ -520,16 +524,24 @@ in the block where the background shows through."
   (/draw-background self image)
   (/draw-contents self image))
 
-(define-method hit block (click-x click-y)
-  "Return this block (or child block) if the coordinates CLICK-X and
-CLICK-Y identify a point inside the block (or child block.)"
+(define-method hit block (mouse-x mouse-y)
+  "Return this block (or child block) if the coordinates MOUSE-X and
+MOUSE-Y identify a point inside the block (or child block.)"
   (with-fields (x y width height arguments) self
-    (when (within-extents click-x click-y x y 
+    (when (within-extents mouse-x mouse-y x y 
 			  (+ x width) (+ y height))
       (labels ((hit (block)
-		 (/hit block click-x click-y)))
-	(values (or (some #'hit arguments) self) self)))))
-     		        
+		 (/hit block mouse-x mouse-y)))
+	(let* ((child (some #'hit arguments))
+	       (pos (position child arguments)))
+	  (values (or child self) pos))))))
+     		      
+(define-method drop block (mouse-x mouse-y other-block)
+  (multiple-value-bind (child position)
+      (/hit self mouse-x mouse-y)
+    (when (and position (/null child))
+      (/plug other-block self position))))
+
 ;;; The null block
 
 (define-method null block ()) 
@@ -885,6 +897,9 @@ CLICK-Y identify a point inside the block (or child block.)"
 (define-method begin-drag editor (mouse-x mouse-y block)
   (with-fields (drag drag-start ghost drag-offset) self
     (setf drag block)
+    (let ((parent (field-value :parent block)))
+      (when parent
+	(/unplug parent block)))
     (let ((dx (field-value :x block))
 	  (dy (field-value :y block))
 	  (dw (field-value :width block))
@@ -903,7 +918,9 @@ CLICK-Y identify a point inside the block (or child block.)"
       (with-fields (blocks) script
 	(labels ((hit (b)
 		   (/hit b x y)))
-	  (find-if #'hit blocks :from-end t))))))
+	  (let ((parent (find-if #'hit blocks :from-end t)))
+	    (when parent
+	      (/hit parent x y))))))))
 
 (define-method mouse-down editor (x y &optional button)
   (with-fields (script) self 
