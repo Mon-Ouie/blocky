@@ -470,10 +470,7 @@ in the block where the background shows through."
 		   (field-value :width child))
 		 (layout-child (block type)
 		   (let ((measurement
-			  (+ dash
-			     (if (null block)
-				 *socket-width*
-				 (move-child block)))))
+			  (+ dash (move-child block))))
 		     (prog1 measurement 
 		       (incf left measurement)))))
 	  (if widget
