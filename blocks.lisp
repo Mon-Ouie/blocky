@@ -155,7 +155,7 @@ areas.")
 (define-method unplug block (child)
   "Disconnect the block CHILD from this block."
   (let ((pos (position child <arguments>)))
-    (/set-argument self pos nil)
+    (/set-argument self pos (null-block))
     (/set-parent child nil)))
 
 (define-method execute-arguments block (recipient)
