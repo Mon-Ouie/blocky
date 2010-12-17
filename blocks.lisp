@@ -285,7 +285,7 @@ two words. This is used as a unit for various layout operations.")
   '(:motion ".steel blue"
     :system ".gray50"
     :event ".gray70"
-    :socket ".gray45"
+    :socket ".gray90"
     :data ".gray45"
     :structure ".gray45"
     :comment ".grey40"
@@ -294,7 +294,7 @@ two words. This is used as a unit for various layout operations.")
     :message ".chocolate3"
     :control ".dark orange"
     :variables ".OrangeRed2"
-    :operators ".OliveDrab3"
+    :operators ".OliveDrab4"
     :sensing ".turquoise3")
   "X11 color names of shadows on the different block types.")
 
@@ -304,7 +304,7 @@ two words. This is used as a unit for various layout operations.")
     :event ".gray40"
     :comment ".gray30"
     :socket ".gray20"
-    :data ".gray20"
+    :data ".white"
     :structure ".gray20"
     :message ".white"
     :looks ".white"
@@ -581,7 +581,7 @@ CLICK-Y identify a point inside the block (or child block.)"
 (define-method draw entry (image)
   (with-block-drawing image
     (with-fields (x y data) self
-      (/draw-background self image)
+      ;; (/draw-background self image)
       (text (+ x (* 2 dash))
 	    (+ y dash 1)
 	    (print-expression data)))))
