@@ -22,11 +22,12 @@
 
 ;; This file implements a drag-and-drop visual programming language in
 ;; the style of Smalltalk environments such as Squeak Morphic and MIT
-;; Scratch. For more information see:
+;; Scratch, but with a Lisp flavor. For more information see:
 
 ;; http://scratch.mit.edu/
 ;; http://byob.berkeley.edu/
 ;; http://wiki.scratch.mit.edu/wiki/Category:Scratch_Modifications
+;; http://en.wikipedia.org/wiki/Visual_programming_language
 
 ;;; Code:
 
@@ -900,9 +901,5 @@ CLICK-Y identify a point inside the block (or child block.)"
     (setf drag-offset nil)
     (setf drag nil)
     (setf needs-redraw t)))
-
-;; (define-method drag editor (x y))
-
-;; (define-method drop editor (x y))
       
 ;;; blocks.lisp ends here
