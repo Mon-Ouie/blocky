@@ -869,17 +869,21 @@ CLICK-Y identify a point inside the block (or child block.)"
 	    (setf drag-start (cons dx dy))
 	    (setf drag-offset (cons x-offset y-offset))))))))
 
-(define-method mouse-down editor (x y &optional button)
-  (with-fields (script ghost selection focus drag modified) self
+(define-method hit-blocks editor (x y)
+  (with-fields (script) self
     (when script 
       (with-fields (blocks) script
 	(labels ((hit (b)
 		   (/hit b x y)))
-	  (let ((block (find-if #'hit blocks :from-end t)))
-	    (when block
-	      (case button
-		(1 (/begin-drag self x y block))
-		(3 (/run script block))))))))))
+	  (find-if #'hit blocks :from-end t))))))
+
+(define-method mouse-down editor (x y &optional button)
+  (with-fields (script) self 
+    (let ((block (/hit-blocks self x y)))
+      (when block
+	(case button
+	  (1 (/begin-drag self x y block))
+	  (3 (/run script block)))))))
 
 (define-method mouse-move editor (mouse-x mouse-y)
   (with-fields (script drag-offset drag-start drag) self
