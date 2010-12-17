@@ -182,10 +182,10 @@ executing/evaluating the blocks in <ARGUMENTS> (see also
 `BLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
 send the <OPERATION> field's value as a message to the recipient, with
 the arguments to the recipient's method being the current computed
-<RESULTS>. This default action is sufficient for many blocks whose
-main purpose is to send a single message; other blocks can redefine
-this /EXECUTE method to do something else. See also `defblock' and
-`send'."
+<RESULTS>, and return the result of the method call. This default
+action is sufficient for many blocks whose main purpose is to send a
+single message; other blocks can redefine this /EXECUTE method to do
+something else. See also `defblock' and `send'."
   (with-fields (operation results) self
     (labels ((clean (item)
 	       (if (symbolp item)
