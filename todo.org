@@ -1,18 +1,27 @@
-* TODO User experience description
-* TODO Empty list appearance?
-* TODO BLOCK/HOVER method
-* TODO think about drag and drop UI
-* TODO drag and drop into lists
+* TODO LIST/DRAW-EMPTY
+* TODO BLOCK/HOVER method during dragging
+* TODO LIST/HOVER drag and drop into lists
+* TODO EDITOR/DROP
+
+* TODO editor-shell -- type or drag blocks into command area, block results. scroll script
+* TODO scripts are named, like emacs buffers---some temporary with *earmuffs*
+** TODO minibuffer (message area lights up with blinking cursor when prompt is ready)
+** TODO mouse and keyboard interaction do not interfere with one another
+* TODO define-editors "modes" for buffers are implemented as "defeditor"
+* TODO workbook-browser
+* TODO palette-browser
+* TODO simple pulldown menu bar
+
 * TODO interactively create scripts
 
-* TODO navigating different worlds/pages
-* TODO defining blocks with blocks
-
+* TODO paint-with-objects import PNG image colors as world terrain map, keyed to X11 colors
+* TODO large-map-support with 100x100 window into megaworld
 
 * TODO [#C] joystick blocks
 * TODO [#C] viewport block
 * TODO [#C] usb camera block
-* TODO [#B] auto-updated palette pages by category
+* TODO navigating different worlds/pages
+* TODO defining blocks with blocks* TODO [#B] auto-updated palette pages by category
 * TODO [#B] select block
 * TODO [#C] cut/copy/paste
 * TODO [#C] rectangle selection
