@@ -172,7 +172,7 @@ areas.")
 (define-method unplug block (child)
   "Disconnect the block CHILD from this block."
   (let ((pos (position child <arguments>)))
-    (/set-argument self pos (null-block))
+    (/plug self (null-block) pos)
     (/set-parent child nil)))
 
 (define-method unplug-from-parent block ()
@@ -550,7 +550,7 @@ in the block where the background shows through."
 
 (define-method draw-hover block (image)
   (with-fields (x y width height) self
-    (draw-box x y width height 
+    (draw-box x y (+ *dash-size* width) (+ *dash-size* height)
 	      :stroke-color *hover-color* 
 	      :color *hover-color*
 	      :destination image))
@@ -564,7 +564,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 			  (+ x width) (+ y height))
       (labels ((hit (block)
 		 (/hit block mouse-x mouse-y)))
-	(let* ((child (some #'hit arguments)))
+	(let ((child (some #'hit arguments)))
 	  (values (or child self) (when child (/position child))))))))
      	
 (define-method accept block (other-block)
@@ -573,7 +573,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
       (prog1 t
 	(let ((position (/child-position parent self)))
 	  (assert (integerp position))
-	  (/unplug parent self)
+;;	  (/unplug parent self)
 	  (/plug parent other-block position))))))
 
 ;;; The null block
@@ -619,6 +619,18 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-method initialize list (&rest args)
   (when args (setf <arguments> args)))
 
+(define-method accept list (child)
+  (with-fields (arguments) self
+    (nconc arguments (list child))
+    (when (/get-parent child)
+      (/unplug-from-parent child))
+    (/set-parent child self)))
+
+(define-method unplug list (child)
+  (with-fields (arguments) self
+    (setf arguments (delete child arguments))
+    (/set-parent child nil)))
+
 (define-method layout list ()
   (with-fields (x y arguments height width) self
     (let* ((dash *dash-size*)
@@ -657,13 +669,18 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (with-block-drawing image
     (with-fields (x y data parent) self
       (when (null parent) (/draw-background self image))
-      (text (+ x (* 2 dash))
-	    (+ y dash 1)
+      (/draw-contents self image))))
+
+(define-method draw-contents entry (image)
+  (with-block-drawing image
+    (with-fields (data x y) self
+      (text (+ x (* 2 *dash-size*))
+	    (+ y *dash-size* 1)
 	    (print-expression data)))))
 
 (define-method layout entry ()
   (with-fields (height width data) self
-    (setf height (+ (* 4 *dash-size*) (font-height *block-font*)))
+    (setf height (+ (* 2 *dash-size*) (font-height *block-font*)))
     (setf width (+ (* 4 *dash-size*) (expression-width data)))))
 
 (defmacro defentry (name data)
@@ -977,6 +994,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 (define-method mouse-move editor (mouse-x mouse-y)
   (with-fields (script hover drag-offset drag-start drag) self
+    (setf hover nil)
     (when drag
       (destructuring-bind (ox . oy) drag-offset
 	(let ((target-x (- mouse-x ox))
@@ -986,24 +1004,24 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 (define-method mouse-up editor (x y &optional button)
   (with-fields 
-      (script needs-redraw drag-offset drag-start 
+      (script needs-redraw drag-offset drag-start hover
 	      selection focus drag modified) 
       self
     (with-fields (blocks) script
       (when drag
-	(let ((target (/hit-blocks self x y)))
-	  (if target
-	      ;; dropping on another block
-	      (unless (/accept target drag)
-		(/add script drag))
+	(let ((drag-parent (/get-parent drag)))
+	  (when drag-parent
+	    (/unplug-from-parent drag))
+	  (let ((target hover))
+	    (if target
+		;; dropping on another block
+		(unless (/accept target drag)
+		  (/add script drag))
 		;; dropping on background
-	      (let ((drag-parent (/get-parent drag)))
-		(when drag-parent
-		  (/unplug-from-parent drag))
-		(/add script drag))))
-	(setf drag-start nil
-	      drag-offset nil
-	      drag nil
-	      needs-redraw t)))))
+		(/add script drag)))))
+      (setf drag-start nil
+	    drag-offset nil
+	    drag nil
+	    needs-redraw t))))
       
 ;;; blocks.lisp ends here
