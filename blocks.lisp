@@ -127,7 +127,7 @@ EXPRESSIONS.
 
 (defparameter *block-types*
   '(:system :motion :event :message :looks :sound :structure :data
-    :control :comment :sensing :operators :variables)
+    :hover :control :comment :sensing :operators :variables)
   "List of keywords used to group blocks into different functionality
 areas.")
 
@@ -274,6 +274,7 @@ two words. This is used as a unit for various layout operations.")
   '(:motion ".cornflower blue"
     :system ".gray50"
     :event ".gray80"
+    :hover ".red"
     :socket ".gray60"
     :data ".gray70"
     :structure ".gray60"
@@ -290,6 +291,7 @@ two words. This is used as a unit for various layout operations.")
 (defparameter *block-highlight-colors*
   '(:motion ".sky blue"
     :system ".gray80"
+    :hover ".dark orange"
     :event ".gray90"
     :comment ".grey90"
     :looks ".medium orchid"
@@ -312,6 +314,7 @@ two words. This is used as a unit for various layout operations.")
     :data ".gray55"
     :structure ".gray45"
     :comment ".grey40"
+    :hover ".orange red"
     :looks ".dark orchid"
     :sound ".violet red"
     :message ".chocolate3"
@@ -327,6 +330,7 @@ two words. This is used as a unit for various layout operations.")
     :event ".gray40"
     :comment ".gray30"
     :socket ".gray20"
+    :hover ".yellow"
     :data ".white"
     :structure ".gray20"
     :message ".white"
@@ -542,6 +546,16 @@ in the block where the background shows through."
   (/draw-background self image)
   (/draw-contents self image))
 
+(defparameter *hover-color* ".red")
+
+(define-method draw-hover block (image)
+  (with-fields (x y width height) self
+    (draw-box x y width height 
+	      :stroke-color *hover-color* 
+	      :color *hover-color*
+	      :destination image))
+  (/draw-contents self image))
+		    
 (define-method hit block (mouse-x mouse-y)
   "Return this block (or child block) if the coordinates MOUSE-X and
 MOUSE-Y identify a point inside the block (or child block.)"
@@ -552,7 +566,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 		 (/hit block mouse-x mouse-y)))
 	(let* ((child (some #'hit arguments)))
 	  (values (or child self) (when child (/position child))))))))
-     		      
+     	
 (define-method accept block (other-block)
   (with-field-values (parent) self
     (when parent
@@ -872,6 +886,8 @@ MOUSE-Y identify a point inside the block (or child block.)"
   	 :documentation "Block with current focus.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
+  (hover :initform nil
+	 :documentation "Block being hovered over, if any.")
   (ghost :initform (clone =block=))
   (buffer :initform nil)
   (drag-start :initform nil
@@ -906,22 +922,6 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	(/draw block buffer)))
     (setf needs-redraw nil)))
 
-(define-method render editor ()
-  (with-fields 
-      (script needs-redraw image buffer drag-start selection focus
-      drag modified ghost) self
-    (labels ((copy ()
-	       (draw-image buffer 0 0 :destination image)))
-      (when script
-	(when needs-redraw 
-	  (/redraw self)
-	  (copy))
-	(when drag 
-	  (copy)
-	  (/layout drag)
-	  (/draw-ghost ghost image)
-	  (/draw drag image))))))
-
 (define-method begin-drag editor (mouse-x mouse-y block)
   (with-fields (drag script drag-start ghost drag-offset) self
     (setf drag block)
@@ -949,6 +949,24 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	    (when parent
 	      (/hit parent x y))))))))
 
+(define-method render editor ()
+  (with-fields 
+      (script needs-redraw image buffer drag-start selection focus
+      drag modified hover ghost) self
+    (labels ((copy ()
+	       (draw-image buffer 0 0 :destination image)))
+      (when script
+	(when needs-redraw 
+	  (/redraw self)
+	  (copy))
+	(when drag 
+	  (copy)
+	  (/layout drag)
+	  (/draw-ghost ghost image)
+	  (/draw drag image)
+	  (when hover 
+	    (/draw-hover hover image)))))))
+
 (define-method mouse-down editor (x y &optional button)
   (with-fields (script) self 
     (let ((block (/hit-blocks self x y)))
@@ -958,10 +976,13 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	  (3 (/run script block)))))))
 
 (define-method mouse-move editor (mouse-x mouse-y)
-  (with-fields (script drag-offset drag-start drag) self
+  (with-fields (script hover drag-offset drag-start drag) self
     (when drag
       (destructuring-bind (ox . oy) drag-offset
-	(/move drag (- mouse-x ox) (- mouse-y oy))))))
+	(let ((target-x (- mouse-x ox))
+	      (target-y (- mouse-y oy)))
+	  (setf hover (/hit-blocks self target-x target-y))
+	  (/move drag target-x target-y))))))
 
 (define-method mouse-up editor (x y &optional button)
   (with-fields 
