@@ -40,7 +40,7 @@
 (defpackage :iosketch
     (:documentation "A 2D game engine in Common Lisp.")
   (:use :common-lisp) 
-  (:export *default-frame-width* *default-frame-height* =viewport=
+  (:export *default-frame-width* *default-frame-height* =null= null-block =viewport=
 *frequency* *output-chunksize* *output-channels* halt-sample *dt*
 defgame *physics-function* =equipment= *default-world-axis-size*
 defgsprite generic-keybind *default-world-z-size* =browser=
