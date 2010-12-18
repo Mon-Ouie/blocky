@@ -25,13 +25,6 @@
 (defparameter *window-width* 1024)
 (defparameter *window-height* 720)
 
-;;; Palettes to choose objects from
-
-;; A palette is an editor widget whose blocks change according to context.
-
-(define-prototype palette (:parent =editor=)
-  type)
-
 (defgsprite circle
   (direction :initform :north)
   (image :initform "circle"))
@@ -57,6 +50,13 @@
 (defvar *myverse*)
 (defvar *prompt*)
 
+;;; Palettes to choose objects from
+
+;; A palette is an editor widget whose blocks change according to context.
+
+(define-prototype palette (:parent =editor=)
+  type)
+
 (define-method initialize palette ()
   (/parent/initialize self)
   (setf *circle* (clone =circle=))    
@@ -77,33 +77,34 @@
   (/resize-to-background *world*)
   (/drop-sprite *world* *circle* 50 100)
     (with-fields (script) self
-    (setf script (clone =script= :recipient *circle*))
-    (/add script (make-block (null)) 10 10)
-    (/add script (make-block (if (null) (null)
-				  (null)
-				 )) 60 60)
-    (/add script (make-block (when (see-player) (set direction (player-direction)))) 90 90)
-    (/add script (make-block (animate "blue-costume")) 50 50)
-    (/add script (make-block (when (closer-than 10 spaces to player) (fire (my direction))))
-	   54 44)
-    (/add script (make-block (null)) 10 10)
-    (/add script (make-block (move west 5 pixels)) 20 20)
-    (/add script (make-block (move north 5 pixels)) 30 30)
-    (/add script (make-block (move south 5 pixels)) 20 20)
-    (/add script (make-block (move east (+ 1 (+ 2 4)) pixels)) 30 30)
-    (/add script (make-block (move (my direction) 10 pixels))
-	  50 50)
-    (/add script (make-block (list 
-			      (emote "Well this is very strange.")))
-	  55 55)
-    (/add script (make-block (list 
-			      (emote "Maybe I'll go west.")
-			      (set direction west)))
-	  60 60)
-    (/add script (make-block (play-sound "woom")) 20 120)
-    (/add script (make-block (list (play-music "calm")
-				   (emote "I feel calm.")))
-	  20 200)))
+      (/set-recipient script *circle*)
+      (/add script (make-block (list (listener))))))
+    ;; (/add script (make-block (null)) 10 10)
+    ;; (/add script (make-block (if (null) (null)
+    ;; 				  (null)
+    ;; 				 )) 60 60)
+    ;; (/add script (make-block (when (see-player) (set direction (player-direction)))) 90 90)
+    ;; (/add script (make-block (animate "blue-costume")) 50 50)
+    ;; (/add script (make-block (when (closer-than 10 spaces to player) (fire (my direction))))
+    ;; 	   54 44)
+    ;; (/add script (make-block (null)) 10 10)
+    ;; (/add script (make-block (move west 5 pixels)) 20 20)
+    ;; (/add script (make-block (move north 5 pixels)) 30 30)
+    ;; (/add script (make-block (move south 5 pixels)) 20 20)
+    ;; (/add script (make-block (move east (+ 1 (+ 2 4)) pixels)) 30 30)
+    ;; (/add script (make-block (move (my direction) 10 pixels))
+    ;; 	  50 50)
+    ;; (/add script (make-block (list 
+    ;; 			      (emote "Well this is very strange.")))
+    ;; 	  55 55)
+    ;; (/add script (make-block (list 
+    ;; 			      (emote "Maybe I'll go west.")
+    ;; 			      (set direction west)))
+    ;; 	  60 60)
+    ;; (/add script (make-block (play-sound "woom")) 20 120)
+    ;; (/add script (make-block (list (play-music "calm")
+    ;; 				   (emote "I feel calm.")))
+    ;; 	  20 200)))
 
 ;;; A "frame" is a top-level application window.
 
