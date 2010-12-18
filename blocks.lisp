@@ -94,9 +94,10 @@ ARGS are field specifiers, as with `define-prototype'."
 			    (symbol-value 
 			     (make-special-variable-name operation))
 			    (mapcar #'make-block-ext args))))
-	  (with-fields (arguments) block
-	    (dolist (child arguments)
-	      (/set-parent child block)))))
+	  (prog1 block
+	    (with-fields (arguments) block
+	      (dolist (child arguments)
+		(/set-parent child block))))))
       (let ((prototype 
 	     (symbol-value
 	      (make-special-variable-name 
@@ -143,6 +144,9 @@ areas.")
   "Store a link to an enclosing PARENT block, if any."
   (setf <parent> parent))
 
+(define-method get-parent block ()
+  <parent>)
+
 (define-method get-argument block (n)
   "Return the value of the Nth block argument."
   (nth n <arguments>))
@@ -150,6 +154,10 @@ areas.")
 (define-method set-argument block (n value)
   "Set the Nth argument value to VALUE."
     (setf (nth n <arguments>) value))
+
+(define-method child-position block (child)
+  (with-fields (arguments) self
+    (position child arguments)))
 
 (define-method plug block (child n)
   "Connect the block CHILD as the value of the Nth argument."
@@ -794,14 +802,17 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-method set-recipient script (recipient)
   (setf <recipient> recipient))
 
-(define-method add script (block x y)
+(define-method add script (block &optional x y)
   (with-fields (blocks) self
-    (setf blocks (adjoin block blocks))
-    (/move block x y)))
+    (unless (find block blocks)
+      (setf blocks (nconc blocks (list block)))
+      (setf (field-value :parent block) nil)
+      (when (and (integerp x)
+		 (integerp y))
+	(/move block x y)))))
 
 (define-method run script (block)
   (with-fields (blocks recipient) self
-    (assert (member block blocks))
     (/run block recipient)))
 	    
 (define-method bring-to-front script (block)
@@ -895,11 +906,9 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	  (/draw drag image))))))
 
 (define-method begin-drag editor (mouse-x mouse-y block)
-  (with-fields (drag drag-start ghost drag-offset) self
+  (with-fields (drag script drag-start ghost drag-offset) self
     (setf drag block)
-    (let ((parent (field-value :parent block)))
-      (when parent
-	(/unplug parent block)))
+    (/delete script block) 
     (let ((dx (field-value :x block))
 	  (dy (field-value :y block))
 	  (dw (field-value :width block))
@@ -940,10 +949,27 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (with-fields 
       (script needs-redraw drag-offset drag-start selection focus drag modified) 
       self
-    (/bring-to-front script drag)
-    (setf drag-start nil)
-    (setf drag-offset nil)
-    (setf drag nil)
-    (setf needs-redraw t)))
+    (with-fields (blocks) script
+      (when drag
+	(with-fields (parent) drag
+	  (labels ((hit (block)
+		     (/hit block x y)))
+	    (let ((top-block (find-if #'hit blocks :from-end t)))
+	      (if top-block
+		  ;; dropping on another block
+		  (multiple-value-bind (target position)
+		      (/hit top-block x y)
+		    (when (and target position)
+		      (when parent 
+			(/unplug parent drag))
+		      (/plug (/get-parent target)
+			     drag position)))
+		  ;; dropping on background
+		  (progn 
+		    (/add script drag)
+		    (setf drag-start nil
+			  drag-offset nil
+			  drag nil
+			  needs-redraw t))))))))))
       
 ;;; blocks.lisp ends here
