@@ -82,6 +82,10 @@
     (/add script (make-block (if (null) (null)
 				  (null)
 				 )) 60 60)
+    (/add script (make-block (when (see-player) (set direction (player-direction)))) 90 90)
+    (/add script (make-block (animate "blue-costume")) 50 50)
+    (/add script (make-block (when (closer-than 10 spaces to player) (fire (my direction))))
+	   54 44)
     (/add script (make-block (null)) 10 10)
     (/add script (make-block (move west 5 pixels)) 20 20)
     (/add script (make-block (move north 5 pixels)) 30 30)
@@ -108,7 +112,7 @@
 (defwidget frame
   (active-color :initform ".red")
   (inactive-color :initform ".gray20")
-  (pane-widths :initform '(50 40 10))
+  (pane-widths :initform '(70 25 5))
   (panes :initform nil)
   (focus :initform 1))
 

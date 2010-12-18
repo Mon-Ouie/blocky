@@ -503,7 +503,7 @@ in the block where the background shows through."
 	      (move-widget widget)
 	      (setf child-widths (mapcar #'layout-child arguments schema)))
 	  (setf width (+ (- left x) (* 4 dash)))
-	  (setf height (+ dash max-height)))))))
+	  (setf height (+ dash dash max-height)))))))
 
 (define-method draw-expression block (x0 y0 segment type image)
   (with-block-drawing image
@@ -806,6 +806,26 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (schema :initform nil)
   (arguments :initform nil))
 
+(defblock fire
+  (type :initform :control)
+  (schema :initform '(:block))
+  (arguments :initform '(:south)))
+
+(defblock see-player
+  (type :initform :sensing)
+  (schema :initform nil)
+  (arguments :initform nil))
+
+(defblock player-direction
+  (type :initform :sensing)
+  (schema :initform nil)
+  (arguments :initform nil))
+
+(defblock closer-than
+  (type :initform :sensing)
+  (schema :initform '(:block :block :block :block))
+  (arguments :initform '(10 spaces to player)))
+  
 (defblock stop
   (type :initform :system) 
   (schema :initform nil)

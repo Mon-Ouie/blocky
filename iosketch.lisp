@@ -54,7 +54,8 @@ draw-filled-circle draw-aa-circle =my= =say= =animate= =hide= =show=
 =string= =float= =symbol= *form-command-handler-function* =data-cell=
 =var-cell= =option-cell= =toggle-cell= =event-cell= =buffer-cell=
 =comment-cell= install-widget uninstall-widget =button-cell=
-=image-cell= *initialization-hook* initialize-engine
+=image-cell= *initialization-hook* initialize-engine =fire= =see-player=
+=player-direction= =closer-than=
 split-string-on-lines message *prompt-sweden-keybindings*
 *prompt-qwerty-keybindings* *screen-width* transform-method-body
 roll-under make-stat =formatter= initialize-colors
