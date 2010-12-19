@@ -664,10 +664,11 @@ normally."
 
 (define-method do-sexp prompt (sexp)
   (with-fields (receiver) self
-    (apply #'send nil 
-	   (make-keyword operation) 
-	   receiver 
-	   (mapcar #'eval arguments))))
+    (destructuring-bind (operation &rest arguments) sexp
+      (apply #'send nil 
+	     (make-keyword operation) 
+	     receiver 
+	     (mapcar #'eval arguments)))))
 
 (define-method execute prompt ()
   (labels ((print-it (c) 

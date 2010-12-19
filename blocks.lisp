@@ -91,18 +91,29 @@ ARGS are field specifiers, as with `define-prototype'."
     (when widget
       (/handle-key widget keys))))
 
+(defvar *make-block-package* nil)
+
 (defun make-block-ext (value)
-  (assert value)
   (if (listp value) 
-      (destructuring-bind (operation &rest args) value
-	(let ((block (apply #'clone 
-			    (symbol-value 
-			     (make-special-variable-name operation))
-			    (mapcar #'make-block-ext args))))
-	  (prog1 block
-	    (with-fields (arguments) block
-	      (dolist (child arguments)
-		(/set-parent child block))))))
+      (if (and (symbolp (first value))
+	       (not (boundp (make-special-variable-name (first value)))))
+	  (let ((entry (clone =symbol=)))
+	    (prog1 entry (/set-data entry (first value))))
+	  (destructuring-bind (operation &rest args) value
+	    (let ((block (apply #'clone 
+				(symbol-value 
+				 (make-special-variable-name 
+				  operation
+				  *make-block-package*))
+				(mapcar #'make-block-ext args))))
+	      (prog1 block
+		(with-fields (arguments) block
+		  (setf arguments 
+			(mapcar #'(lambda (value)
+				    (or value (clone (symbol-value '=null=))))
+				arguments))
+		  (dolist (child arguments)
+		    (/set-parent child block)))))))
       (let ((prototype 
 	     (symbol-value
 	      (make-special-variable-name 
@@ -239,8 +250,10 @@ initialized with its values as arguments."
   (with-fields (arguments schema results) self
     (let ((arity (length schema)))
       (when args 
-	(assert (= (length args) arity))
-	(setf arguments args))
+	(setf arguments (make-list arity))
+	(dotimes (n (length args))
+	  (setf (nth n arguments)
+		(nth n args))))
       (setf results (make-list arity)))))
 
 (define-method deserialize block ()
@@ -636,10 +649,12 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-method initialize list (&rest args)
   (when args (setf <arguments> args)))
 
-(define-method accept list (child)
+(define-method accept list (child &optional prepend)
   (with-fields (arguments) self
     (if arguments 
-	(nconc arguments (list child))
+	(if prepend
+	    (setf arguments (nconc (list child) arguments))
+	    (setf arguments (nconc arguments (list child))))
 	(setf arguments (list child)))
     (when (/get-parent child)
       (/unplug-from-parent child))
@@ -682,8 +697,10 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 (define-method get-widget list ()
   (with-fields (arguments) self
-    (let ((block (find-if #'/get-widget arguments :from-end t)))
-      (/get-widget block))))
+    (labels ((get-maybe (b)
+	       (when b (/get-widget b))))
+      (let ((block (find-if #'get-maybe arguments :from-end t)))
+	(get-maybe block)))))
 
 (define-method handle-key list (keys)
   (let ((widget (/get-widget self)))
@@ -964,18 +981,20 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-method do-sexp block-prompt (sexp)
   (with-fields (output rows) self
     (assert output)
-    (if (listp (first sexp))
-	(let ((container (/get-parent output)))
-	  (when container
-	    (/accept container (make-block-ext (first sexp)))
-	    (when (> (/length container) rows)
-	      (/pop container))))
-	(/parent/do-sexp self sexp))))
+    (let ((container (/get-parent output)))
+      (when container
+	(/accept container 
+		 (let ((*make-block-package* (find-package :iosketch)))
+		   (if (symbolp (first sexp))
+		       (make-block-ext sexp)
+		       (make-block-ext (first sexp)))))
+	(when (> (/length container) rows)
+	  (/pop container))))))
 
 (defblock listener
   (type :initform :system))
 
-(defparameter *minimum-listener-width* 100)
+(defparameter *minimum-listener-width* 200)
 
 (define-method initialize listener ()
   (with-fields (widget) self

@@ -67,10 +67,13 @@
 		 (setf (gethash k a) v))
 	     b)))
 	       
-(defun make-special-variable-name (S)
+(defun make-special-variable-name (S &optional package)
   "Make the symbol S into a special variable name. This is used to
 make the names of the objects made with `define-prototype'."
- (intern (concatenate 'string "=" (symbol-name S) "=")))
+  (let ((name (concatenate 'string "=" (symbol-name S) "=")))
+    (if package
+	(intern name package)
+	(intern name))))
 
 ;;; Object data structure
 
