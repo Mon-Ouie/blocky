@@ -22,11 +22,12 @@
 
 ;; This file implements a drag-and-drop visual programming language in
 ;; the style of Smalltalk environments such as Squeak Morphic and MIT
-;; Scratch. For more information see:
+;; Scratch, but with a Lisp flavor. For more information see:
 
 ;; http://scratch.mit.edu/
 ;; http://byob.berkeley.edu/
 ;; http://wiki.scratch.mit.edu/wiki/Category:Scratch_Modifications
+;; http://en.wikipedia.org/wiki/Visual_programming_language
 
 ;;; Code:
 
@@ -85,13 +86,34 @@ ARGS are field specifiers, as with `define-prototype'."
      (operation :initform ,(make-keyword name))
      ,@args))
 
+(define-method handle-key block (keys)
+  (with-fields (widget) self
+    (when widget
+      (/handle-key widget keys))))
+
+(defvar *make-block-package* nil)
+
 (defun make-block-ext (value)
-  (assert value)
   (if (listp value) 
-      (destructuring-bind (operation &rest arguments) value
-	(apply #'clone 
-	       (symbol-value (make-special-variable-name operation))
-	       (mapcar #'make-block-ext arguments)))
+      (if (and (symbolp (first value))
+	       (not (boundp (make-special-variable-name (first value)))))
+	  (let ((entry (clone =symbol=)))
+	    (prog1 entry (/set-data entry (first value))))
+	  (destructuring-bind (operation &rest args) value
+	    (let ((block (apply #'clone 
+				(symbol-value 
+				 (make-special-variable-name 
+				  operation
+				  *make-block-package*))
+				(mapcar #'make-block-ext args))))
+	      (prog1 block
+		(with-fields (arguments) block
+		  (setf arguments 
+			(mapcar #'(lambda (value)
+				    (or value (clone (symbol-value '=null=))))
+				arguments))
+		  (dolist (child arguments)
+		    (/set-parent child block)))))))
       (let ((prototype 
 	     (symbol-value
 	      (make-special-variable-name 
@@ -121,7 +143,7 @@ EXPRESSIONS.
 
 (defparameter *block-types*
   '(:system :motion :event :message :looks :sound :structure :data
-    :control :comment :sensing :operators :variables)
+    :hover :control :comment :sensing :operators :variables)
   "List of keywords used to group blocks into different functionality
 areas.")
 
@@ -138,6 +160,12 @@ areas.")
   "Store a link to an enclosing PARENT block, if any."
   (setf <parent> parent))
 
+(define-method get-parent block ()
+  <parent>)
+
+(define-method get-widget block ()
+  <widget>)
+
 (define-method get-argument block (n)
   "Return the value of the Nth block argument."
   (nth n <arguments>))
@@ -145,6 +173,15 @@ areas.")
 (define-method set-argument block (n value)
   "Set the Nth argument value to VALUE."
     (setf (nth n <arguments>) value))
+
+(define-method child-position block (child)
+  (with-fields (arguments) self
+    (position child arguments)))
+
+(define-method position block ()
+  (with-fields (parent) self
+    (when parent 
+      (/child-position parent self))))
 
 (define-method plug block (child n)
   "Connect the block CHILD as the value of the Nth argument."
@@ -154,8 +191,13 @@ areas.")
 (define-method unplug block (child)
   "Disconnect the block CHILD from this block."
   (let ((pos (position child <arguments>)))
-    (/set-argument self pos nil)
+    (/plug self (null-block) pos)
     (/set-parent child nil)))
+
+(define-method unplug-from-parent block ()
+  (with-fields (parent) self
+    (when parent
+      (/unplug parent self))))
 
 (define-method execute-arguments block (recipient)
   "Execute all blocks in <ARGUMENTS> from left-to-right. Results are
@@ -181,10 +223,10 @@ executing/evaluating the blocks in <ARGUMENTS> (see also
 `BLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
 send the <OPERATION> field's value as a message to the recipient, with
 the arguments to the recipient's method being the current computed
-<RESULTS>. This default action is sufficient for many blocks whose
-main purpose is to send a single message; other blocks can redefine
-this /EXECUTE method to do something else. See also `defblock' and
-`send'."
+<RESULTS>, and return the result of the method call. This default
+action is sufficient for many blocks whose main purpose is to send a
+single message; other blocks can redefine this /EXECUTE method to do
+something else. See also `defblock' and `send'."
   (with-fields (operation results) self
     (labels ((clean (item)
 	       (if (symbolp item)
@@ -208,8 +250,10 @@ initialized with its values as arguments."
   (with-fields (arguments schema results) self
     (let ((arity (length schema)))
       (when args 
-	(assert (= (length args) arity))
-	(setf arguments args))
+	(setf arguments (make-list arity))
+	(dotimes (n (length args))
+	  (setf (nth n arguments)
+		(nth n args))))
       (setf results (make-list arity)))))
 
 (define-method deserialize block ()
@@ -251,6 +295,7 @@ two words. This is used as a unit for various layout operations.")
   '(:motion ".cornflower blue"
     :system ".gray50"
     :event ".gray80"
+    :hover ".red"
     :socket ".gray60"
     :data ".gray70"
     :structure ".gray60"
@@ -267,6 +312,7 @@ two words. This is used as a unit for various layout operations.")
 (defparameter *block-highlight-colors*
   '(:motion ".sky blue"
     :system ".gray80"
+    :hover ".dark orange"
     :event ".gray90"
     :comment ".grey90"
     :looks ".medium orchid"
@@ -285,16 +331,17 @@ two words. This is used as a unit for various layout operations.")
   '(:motion ".steel blue"
     :system ".gray50"
     :event ".gray70"
-    :socket ".gray45"
-    :data ".gray45"
+    :socket ".gray90"
+    :data ".gray55"
     :structure ".gray45"
     :comment ".grey40"
+    :hover ".orange red"
     :looks ".dark orchid"
     :sound ".violet red"
     :message ".chocolate3"
     :control ".dark orange"
     :variables ".OrangeRed2"
-    :operators ".OliveDrab3"
+    :operators ".OliveDrab4"
     :sensing ".turquoise3")
   "X11 color names of shadows on the different block types.")
 
@@ -304,7 +351,8 @@ two words. This is used as a unit for various layout operations.")
     :event ".gray40"
     :comment ".gray30"
     :socket ".gray20"
-    :data ".gray20"
+    :hover ".yellow"
+    :data ".white"
     :structure ".gray20"
     :message ".white"
     :looks ".white"
@@ -327,6 +375,8 @@ block."
 		  (:foreground *block-foreground-colors*))))
     (getf colors <type>)))
 
+(defparameter *selection-color* ".red")
+
 (defmacro with-block-drawing (image &body body)
   "Run BODY forms with drawing primitives set to draw on IMAGE.
 The primitives are CIRCLE, DISC, LINE, BOX, and TEXT. These are used
@@ -336,6 +386,7 @@ blocks."
     `(let* ((foreground (/find-color self :foreground))
 	    (background (/find-color self :background))
 	    (highlight (/find-color self :highlight))
+	    (selection *selection-color*)
 	    (shadow (/find-color self :shadow))
 	    (dash *dash-size*)
 	    (radius *dash-size*)
@@ -365,20 +416,19 @@ blocks."
 				       :font *block-font*)))
 	   ,@body))))
 
-
-
 (define-method draw-patch block (x0 y0 x1 y1 image 
-				    &key depressed dark socket)
+				    &key depressed dark socket color)
   "Draw a standard IOSKETCH block notation patch on IMAGE.
 Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
 non-nil, draw an indentation; otherwise a raised area is drawn. If
 DARK is non-nil, paint a darker region. If SOCKET is non-nil, cut a hole
-in the block where the background shows through."
+in the block where the background shows through. If COLOR is non-nil,
+override all colors."
   (with-block-drawing image
-    (let ((bevel (if depressed shadow highlight))
-	  (chisel (if depressed highlight shadow))
-	  (fill (if socket *socket-color* 
-		    (if dark shadow background))))
+    (let ((bevel (or color (if depressed shadow highlight)))
+	  (chisel (or color (if depressed highlight shadow)))
+	  (fill (or color (if socket *socket-color* 
+			      (if dark shadow background)))))
       ;; top left
       (disc (+ x0 radius) (+ y0 radius) fill)
       (circle (+ x0 radius) (+ y0 radius) bevel)
@@ -422,6 +472,14 @@ in the block where the background shows through."
 (define-method draw-socket block (x0 y0 x1 y1 image)
   (/draw-patch self x0 y0 x1 y1 image :depressed t :socket t))
     
+(define-method draw-border block (image &optional (color *selection-color*))
+  (let ((dash *dash-size*))
+    (with-fields (x y height width) self
+      (/draw-patch self (- x dash) (- y dash)
+		   (+ x width dash)
+		   (+ y height dash)
+		   image :color color))))
+
 (define-method draw-background block (image)
   (with-fields (x y width height) self
     (/draw-patch self x y (+ x width) (+ y height) image)))
@@ -435,6 +493,8 @@ in the block where the background shows through."
   (+ (* 2 *dash-size*)
      (expression-width <operation>)))
 
+(defparameter *socket-width* (* 18 *dash-size*))
+
 (defun expression-width (expression &optional (font *block-font*))
   (if (iosketch:object-p expression)
       *socket-width*
@@ -447,8 +507,6 @@ in the block where the background shows through."
 	(substitute #\Space #\- (symbol-name expression)))
      (otherwise (format nil "~s" expression)))))
 
-(defparameter *socket-width* (* 18 *dash-size*))
-
 (define-method layout block ()
   (with-fields (child-widths height width) self
     (with-field-values (x y operation schema arguments widget) self
@@ -457,29 +515,26 @@ in the block where the background shows through."
 	     (left (+ x (/handle-width self)))
 	     (max-height (font-height font)))
 	(labels ((move-widget (widget)
-		   (/move widget :x left :y (+ y dash))
+		   (/move widget :x left :y y)
 		   (incf left (field-value :width widget))
 		   (setf max-height
 			 (max max-height 
 			      (field-value :height widget))))
 		 (move-child (child)
-		   (/move child (+ left dash dash) (+ y dash dash))
+		   (/move child (+ left dash) y)
 		   (/layout child)
 		   (setf max-height (max max-height (field-value :height child)))
 		   (field-value :width child))
 		 (layout-child (block type)
 		   (let ((measurement
-			  (+ dash
-			     (if (null block)
-				 *socket-width*
-				 (move-child block)))))
+			  (+ dash (move-child block))))
 		     (prog1 measurement 
 		       (incf left measurement)))))
 	  (if widget
 	      (move-widget widget)
 	      (setf child-widths (mapcar #'layout-child arguments schema)))
 	  (setf width (+ (- left x) (* 4 dash)))
-	  (setf height (+ max-height (* 4 dash))))))))
+	  (setf height (+ dash dash max-height)))))))
 
 (define-method draw-expression block (x0 y0 segment type image)
   (with-block-drawing image
@@ -522,16 +577,66 @@ in the block where the background shows through."
   (/draw-background self image)
   (/draw-contents self image))
 
-(define-method hit block (click-x click-y)
-  "Return this block (or child block) if the coordinates CLICK-X and
-CLICK-Y identify a point inside the block (or child block.)"
+(defparameter *hover-color* ".red")
+
+(define-method draw-hover block (image)
+  (with-fields (x y width height) self
+    (draw-box x y (+ *dash-size* width) (+ *dash-size* height)
+	      :stroke-color *hover-color* 
+	      :color *hover-color*
+	      :destination image))
+  (/draw-contents self image))
+		    
+(define-method hit block (mouse-x mouse-y)
+  "Return this block (or child block) if the coordinates MOUSE-X and
+MOUSE-Y identify a point inside the block (or child block.)"
   (with-fields (x y width height arguments) self
-    (when (within-extents click-x click-y x y 
+    (when (within-extents mouse-x mouse-y x y 
 			  (+ x width) (+ y height))
       (labels ((hit (block)
-		 (/hit block click-x click-y)))
-	(values (or (some #'hit arguments) self) self)))))
-     		        
+		 (/hit block mouse-x mouse-y)))
+	(let ((child (some #'hit arguments)))
+	  (values (or child self) (when child (/position child))))))))
+     	
+(define-method accept block (other-block)
+  (with-field-values (parent) self
+    (when parent
+      (prog1 t
+	(let ((position (/child-position parent self)))
+	  (assert (integerp position))
+	  (/plug parent other-block position))))))
+
+;;; The null block
+
+(define-method null block ()) 
+
+(defblock null)
+
+(define-method null null () t)
+
+(defun null-block () (clone =null=))
+
+(define-method run null (recipient)
+  (declare (ignore recipient)))
+
+(defparameter *null-display-string* "()")
+;; (string #\LATIN_SMALL_LETTER_O_WITH_STROKE))
+
+(define-method layout null ()
+  (with-fields (height width) self
+    (setf width (+ (* 4 *dash-size*)
+		   (font-text-extents *null-display-string*
+				      *block-font*))
+	  height (+ (* 4 *dash-size*)
+		    (font-height *block-font*)))))
+
+(define-method draw-contents null (image)
+  (with-block-drawing image
+    (with-fields (x y) self
+      (text (+ x (* 2 *dash-size*))
+	    (+ y *dash-size* 1)
+	    *null-display-string*))))
+
 ;;; Vertically stacked list of blocks
 
 (defblock list
@@ -543,6 +648,32 @@ CLICK-Y identify a point inside the block (or child block.)"
 
 (define-method initialize list (&rest args)
   (when args (setf <arguments> args)))
+
+(define-method accept list (child &optional prepend)
+  (with-fields (arguments) self
+    (if arguments 
+	(if prepend
+	    (setf arguments (nconc (list child) arguments))
+	    (setf arguments (nconc arguments (list child))))
+	(setf arguments (list child)))
+    (when (/get-parent child)
+      (/unplug-from-parent child))
+    (/set-parent child self)))
+
+(define-method pop list ()
+  (with-fields (arguments) self
+    (let ((block (first arguments)))
+      (prog1 block
+	(/unplug self block)))))
+
+(define-method length list ()
+  (with-fields (arguments) self
+    (length arguments)))
+
+(define-method unplug list (child)
+  (with-fields (arguments) self
+    (setf arguments (delete child arguments))
+    (/set-parent child nil)))
 
 (define-method layout list ()
   (with-fields (x y arguments height width) self
@@ -564,6 +695,18 @@ CLICK-Y identify a point inside the block (or child block.)"
     (dolist (block arguments)
       (/draw block image))))
 
+(define-method get-widget list ()
+  (with-fields (arguments) self
+    (labels ((get-maybe (b)
+	       (when b (/get-widget b))))
+      (let ((block (find-if #'get-maybe arguments :from-end t)))
+	(get-maybe block)))))
+
+(define-method handle-key list (keys)
+  (let ((widget (/get-widget self)))
+    (when widget 
+      (/handle-key widget keys))))
+    
 ;;; Data entry blocks
 
 (defblock entry 
@@ -580,15 +723,20 @@ CLICK-Y identify a point inside the block (or child block.)"
 
 (define-method draw entry (image)
   (with-block-drawing image
-    (with-fields (x y data) self
-      (/draw-background self image)
-      (text (+ x (* 2 dash))
-	    (+ y dash 1)
+    (with-fields (x y data parent) self
+      (when (null parent) (/draw-background self image))
+      (/draw-contents self image))))
+
+(define-method draw-contents entry (image)
+  (with-block-drawing image
+    (with-fields (data x y) self
+      (text (+ x (* 2 *dash-size*))
+	    (+ y *dash-size* 1)
 	    (print-expression data)))))
 
 (define-method layout entry ()
   (with-fields (height width data) self
-    (setf height (+ (* 4 *dash-size*) (font-height *block-font*)))
+    (setf height (+ (* 2 *dash-size*) (font-height *block-font*)))
     (setf width (+ (* 4 *dash-size*) (expression-width data)))))
 
 (defmacro defentry (name data)
@@ -714,6 +862,26 @@ CLICK-Y identify a point inside the block (or child block.)"
   (schema :initform nil)
   (arguments :initform nil))
 
+(defblock fire
+  (type :initform :control)
+  (schema :initform '(:block))
+  (arguments :initform '(:south)))
+
+(defblock see-player
+  (type :initform :sensing)
+  (schema :initform nil)
+  (arguments :initform nil))
+
+(defblock player-direction
+  (type :initform :sensing)
+  (schema :initform nil)
+  (arguments :initform nil))
+
+(defblock closer-than
+  (type :initform :sensing)
+  (schema :initform '(:block :block :block :block))
+  (arguments :initform '(10 spaces to player)))
+  
 (defblock stop
   (type :initform :system) 
   (schema :initform nil)
@@ -753,14 +921,21 @@ CLICK-Y identify a point inside the block (or child block.)"
 (define-method set-recipient script (recipient)
   (setf <recipient> recipient))
 
-(define-method add script (block x y)
+(define-method is-member script (block)
   (with-fields (blocks) self
-    (setf blocks (adjoin block blocks))
-    (/move block x y)))
+    (find block blocks)))
+
+(define-method add script (block &optional x y)
+  (with-fields (blocks) self
+    (assert (not (find block blocks)))
+    (setf blocks (nconc blocks (list block)))
+    (setf (field-value :parent block) nil)
+    (when (and (integerp x)
+	       (integerp y))
+      (/move block x y))))
 
 (define-method run script (block)
   (with-fields (blocks recipient) self
-    (assert (member block blocks))
     (/run block recipient)))
 	    
 (define-method bring-to-front script (block)
@@ -771,6 +946,7 @@ CLICK-Y identify a point inside the block (or child block.)"
 
 (define-method delete script (block)
   (with-fields (blocks) self
+    (assert (find block blocks))
     (setf blocks (delete block blocks))))
 
 (define-method set script (var value)
@@ -792,17 +968,57 @@ CLICK-Y identify a point inside the block (or child block.)"
 	   (clauses (mapcar #'make-clause symbols)))
       `(symbol-macrolet ,clauses ,@body))))
 
-;;; Script editor widget
+;;; Script editor widget and shell
+
+(define-prototype block-prompt (:parent =prompt=)
+  output 
+  (rows :initform 10))
+
+(define-method initialize block-prompt (output)
+  (/parent/initialize self)
+  (setf <output> output))
+  
+(define-method do-sexp block-prompt (sexp)
+  (with-fields (output rows) self
+    (assert output)
+    (let ((container (/get-parent output)))
+      (when container
+	(/accept container 
+		 (let ((*make-block-package* (find-package :iosketch)))
+		   (if (symbolp (first sexp))
+		       (make-block-ext sexp)
+		       (make-block-ext (first sexp)))))
+	(when (> (/length container) rows)
+	  (/pop container))))))
+
+(defblock listener
+  (type :initform :system))
+
+(defparameter *minimum-listener-width* 200)
+
+(define-method initialize listener ()
+  (with-fields (widget) self
+    (/parent/initialize self)
+    (let ((prompt (clone =block-prompt= self)))
+      (/resize prompt 
+	       :width *minimum-listener-width*
+	       :height (+ (* 2 *dash-size*) 
+			  (font-height *default-font*)))
+      (setf widget prompt))))
+
+;; (define-method layout listener ()
+;;   (/parent/layout self)
+;;   (with-fields (height width widget) self
 
 (defwidget editor
   (script :initform nil 
 	  :documentation "The IOSKETCH:=SCRIPT= object being edited.")
   (selection :initform ()
   	     :documentation "Subset of selected blocks.")
-  (focus :initform nil
-  	 :documentation "Block with current focus.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
+  (hover :initform nil
+	 :documentation "Block being hovered over, if any.")
   (ghost :initform (clone =block=))
   (buffer :initform nil)
   (drag-start :initform nil
@@ -813,8 +1029,32 @@ CLICK-Y identify a point inside the block (or child block.)"
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
+(define-method initialize editor ()
+  (/parent/initialize self)
+  (with-fields (script) self
+    (setf script (clone =script=))))
+
+(define-method select editor (block)
+  (with-fields (selection blocks) self
+    (pushnew block selection)))
+
+(define-method select-if editor (predicate)
+  (with-fields (selection blocks) self
+    (setf selection (remove-if predicate blocks))))
+
+(define-method unselect editor (block)
+  (with-fields (selection) self
+    (setf selection (delete block selection))))
+
+(define-method handle-key editor (keys)
+  (with-fields (selection needs-redraw) self
+    (when (= 1 (length selection))
+      (when (first selection)
+	(/handle-key (first selection) keys)
+	(setf needs-redraw t)))))
+
 (define-method resize editor (&key width height)
-  (with-fields (buffer image) self
+  (with-fields (buffer prompt image) self
     (when (null buffer)
       (setf buffer (create-image width height)))
     (unless (and (= <width> width)
@@ -825,7 +1065,7 @@ CLICK-Y identify a point inside the block (or child block.)"
       (setf buffer (create-image width height)))))
 
 (define-method redraw editor ()
-  (with-fields (script buffer needs-redraw width height) self
+  (with-fields (script buffer selection needs-redraw width height) self
     (with-fields (blocks) script
       (draw-box 0 0 width height 
 		:color *background-color*
@@ -834,13 +1074,47 @@ CLICK-Y identify a point inside the block (or child block.)"
       (dolist (block blocks)
 	(/layout block))
       (dolist (block blocks)
-	(/draw block buffer)))
-    (setf needs-redraw nil)))
+	(when (find block selection)
+	  (/draw-border block buffer))
+	(/draw block buffer))
+      (setf needs-redraw nil))))
+
+(define-method begin-drag editor (mouse-x mouse-y block)
+  (with-fields (drag script drag-start ghost drag-offset) self
+    (setf drag block)
+    (when (/is-member script block)
+      (/delete script block))
+    (let ((dx (field-value :x block))
+	  (dy (field-value :y block))
+	  (dw (field-value :width block))
+	  (dh (field-value :height block)))
+      (with-fields (x y width height) ghost
+	(let ((x-offset (- mouse-x dx))
+	      (y-offset (- mouse-y dy)))
+	  (when (null drag-start)
+	    (setf x dx y dy width dw height dh)
+	    (setf drag-start (cons dx dy))
+	    (setf drag-offset (cons x-offset y-offset))))))))
+
+(define-method hit-blocks editor (x y)
+  (with-fields (script) self
+    (when script 
+      (with-fields (blocks) script
+	(labels ((hit (b)
+		   (/hit b x y)))
+	  (let ((parent (find-if #'hit blocks :from-end t)))
+	    (when parent
+	      (/hit parent x y))))))))
 
 (define-method render editor ()
   (with-fields 
-      (script needs-redraw image buffer drag-start selection focus
-      drag modified ghost) self
+      (script needs-redraw image buffer drag-start selection
+      drag modified hover ghost prompt) self
+    (dolist (block selection)
+      (let ((widget (/get-widget block)))
+	(when widget 
+	  (/render widget)
+	  (/draw block image))))
     (labels ((copy ()
 	       (draw-image buffer 0 0 :destination image)))
       (when script
@@ -851,53 +1125,50 @@ CLICK-Y identify a point inside the block (or child block.)"
 	  (copy)
 	  (/layout drag)
 	  (/draw-ghost ghost image)
-	  (/draw drag image))))))
+	  (/draw drag image)
+	  (when hover 
+	    (/draw-hover hover image)))))))
 
 (define-method mouse-down editor (x y &optional button)
-  (with-fields (script ghost selection focus drag modified) self
-    (when script 
-      (with-fields (blocks) script
-	(labels ((hit (b)
-		   (/hit b x y)))
-	  (let ((block (find-if #'hit blocks :from-end t)))
-	    (when block
-	      (case button
-		(1 (setf drag block)
-		   (setf focus block))
-		(3 (/run script block))))))))))
+  (with-fields (script) self 
+    (let ((block (/hit-blocks self x y)))
+      (when block
+	(case button
+	  (1 (/begin-drag self x y block))
+	  (3 (/run script block)))))))
 
 (define-method mouse-move editor (mouse-x mouse-y)
-  (with-fields 
-      (script drag-offset selection focus ghost drag-start drag modified) 
-      self
+  (with-fields (script hover drag-offset drag-start drag) self
+    (setf hover nil)
     (when drag
-      (let ((dx (field-value :x drag))
-	    (dy (field-value :y drag))
-	    (dw (field-value :width drag))
-	    (dh (field-value :height drag)))
-	(with-fields (x y width height) ghost
-	  (let ((x-offset (max (/handle-width drag)
-			       (- mouse-x dx)))
-		(y-offset (- mouse-y dy)))
-	    (when (null drag-start)
-	      (setf x dx y dy width dw height dh)
-	      (setf drag-start (cons dx dy))
-	      (setf drag-offset (cons x-offset y-offset)))
-	    (destructuring-bind (ox . oy) drag-offset
-	      (/move drag (- mouse-x ox) (- mouse-y oy)))))))))
+      (destructuring-bind (ox . oy) drag-offset
+	(let ((target-x (- mouse-x ox))
+	      (target-y (- mouse-y oy)))
+	  (setf hover (/hit-blocks self target-x target-y))
+	  (/move drag target-x target-y))))))
 
 (define-method mouse-up editor (x y &optional button)
   (with-fields 
-      (script needs-redraw drag-offset drag-start selection focus drag modified) 
+      (script needs-redraw drag-offset drag-start hover
+	      selection drag modified) 
       self
-    (/bring-to-front script drag)
-    (setf drag-start nil)
-    (setf drag-offset nil)
-    (setf drag nil)
-    (setf needs-redraw t)))
-
-;; (define-method drag editor (x y))
-
-;; (define-method drop editor (x y))
+    (with-fields (blocks) script
+      (when drag
+	(let ((drag-parent (/get-parent drag)))
+	  (when drag-parent
+	    (/unplug-from-parent drag))
+	  (let ((target hover))
+	    (if target
+		;; dropping on another block
+		(unless (/accept target drag)
+		  (/add script drag))
+		;; dropping on background
+		(/add script drag)))))
+      (setf selection nil)
+      (when drag (/select self drag))
+      (setf drag-start nil
+	    drag-offset nil
+	    drag nil
+	    needs-redraw t))))
       
 ;;; blocks.lisp ends here

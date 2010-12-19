@@ -40,7 +40,7 @@
 (defpackage :iosketch
     (:documentation "A 2D game engine in Common Lisp.")
   (:use :common-lisp) 
-  (:export *default-frame-width* *default-frame-height* =viewport=
+  (:export *default-frame-width* *default-frame-height* =null= null-block =viewport=
 *frequency* *output-chunksize* *output-channels* halt-sample *dt*
 defgame *physics-function* =equipment= *default-world-axis-size*
 defgsprite generic-keybind *default-world-z-size* =browser=
@@ -54,7 +54,9 @@ draw-filled-circle draw-aa-circle =my= =say= =animate= =hide= =show=
 =string= =float= =symbol= *form-command-handler-function* =data-cell=
 =var-cell= =option-cell= =toggle-cell= =event-cell= =buffer-cell=
 =comment-cell= install-widget uninstall-widget =button-cell=
-=image-cell= *initialization-hook* initialize-engine
+=image-cell= *initialization-hook* initialize-engine =fire= =see-player= 
+hit-widgets
+=player-direction= =closer-than= =block-prompt= =listener= =list=
 split-string-on-lines message *prompt-sweden-keybindings*
 *prompt-qwerty-keybindings* *screen-width* transform-method-body
 roll-under make-stat =formatter= initialize-colors

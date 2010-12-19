@@ -435,17 +435,17 @@ auto-updated displays."
 	   
 ;;; Command prompt widget
 
-(defparameter *prompt-blink-time* 7)
-(defparameter *prompt-cursor-color* ".yellow")
-(defparameter *prompt-cursor-blink-color* ".red")
+(defparameter *prompt-blink-time* 24)
+(defparameter *prompt-cursor-color* ".magenta")
+(defparameter *prompt-cursor-blink-color* ".yellow")
 
-(defparameter *direct-prompt-string* ">> ")
+(defparameter *direct-prompt-string* "> ")
 (defparameter *forward-prompt-string* "Press CONTROL-X to enter the prompt.")
 
 (defparameter *default-prompt-margin* 4)
 
 (defparameter *default-prompt-history-size* 100)
-(defparameter *default-cursor-width* 5)
+(defparameter *default-cursor-width* 8)
 
 (defvar *lowercase-alpha-characters* "abcdefghijklmnopqrstuvwxyz")
 (defvar *uppercase-alpha-characters* "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -529,7 +529,7 @@ normally."
 		(prog1 t (/goto self))))))
 
 (define-method exit prompt ()
-  (/clear-line self)  
+  (/clear-line self)
   (setf <mode> :forward))
 
 (define-method goto prompt ()
@@ -567,7 +567,7 @@ normally."
     ("EQUALS" (:shift) "+")
     ("SEMICOLON" nil ";")
     ("SEMICOLON" (:shift) ":")
-    ("0" (:shift) ")")
+    ("0" (:shift) ")") 
     ("9" (:shift) "(")
     ("8" (:shift) "*")
     ("SPACE" nil " ")
@@ -662,6 +662,14 @@ normally."
 
 (defparameter *prompt-debug-on-error* t)
 
+(define-method do-sexp prompt (sexp)
+  (with-fields (receiver) self
+    (destructuring-bind (operation &rest arguments) sexp
+      (apply #'send nil 
+	     (make-keyword operation) 
+	     receiver 
+	     (mapcar #'eval arguments)))))
+
 (define-method execute prompt ()
   (labels ((print-it (c) 
 	     (/print-data self c :comment)))
@@ -675,7 +683,7 @@ normally."
       (when sexp 
 	(/say self "~A" line)
 	(if *prompt-debug-on-error*
-	    (apply #'send nil (make-keyword (car sexp)) <receiver> (mapcar #'eval (cdr sexp)))
+	    (/do-sexp self sexp)
 	    (handler-case
 		(handler-bind (((not serious-condition)
 				(lambda (c) 
@@ -685,7 +693,7 @@ normally."
 				  ;; avoid double-printing.
 				  (let ((r (find-restart 'muffle-warning c)))
 				    (when r (invoke-restart r))))))
-		  (apply #'send nil (make-keyword (car sexp)) <receiver> (mapcar #'eval (cdr sexp))))
+		  (/do-sexp self sexp))
 	      (serious-condition (c)
 		(print-it c))))
 	(queue line <history>))))
@@ -727,46 +735,59 @@ normally."
   (setf <point> 0))
 
 (define-method render prompt ()
-  (when <visible>
-    (decf <clock>)
-    (when (> (- 0 *prompt-blink-time*) <clock>)
-      (setf <clock> *prompt-blink-time*))
-    (let* ((image <image>)
-	   (font-height (font-height *default-font*))
-	   (font-width (font-width *default-font*))
-	   (prompt-height (+ (* 2 *default-prompt-margin*)
-			     font-height))
-	   (strings-y *default-prompt-margin*)
-	   (prompt-string (ecase <mode>
-			    (:direct *direct-prompt-string*)
-			    (:forward *forward-prompt-string*))))
-      (draw-box 0 0 <width> prompt-height :color ".black" :stroke-color ".black"
-		:destination image)
-      ;; draw cursor
-      (when (eq :direct <mode>)
-	(let ((color (if (minusp <clock>)
-			 *prompt-cursor-color*
-			 *prompt-cursor-blink-color*)))
-	  (draw-box (* (+ (length prompt-string) 1 <point>)
-		       font-width)
-		    strings-y
-		    *default-cursor-width*
-		    font-height
-		    :color color
-		    :stroke-color color
-		    :destination image))
-	;; draw prompt 
-	(draw-string-solid prompt-string
+  (decf <clock>)
+  (when (> (- 0 *prompt-blink-time*) <clock>)
+    (setf <clock> *prompt-blink-time*))
+  (let* ((image <image>)
+	 (font-height (font-height *default-font*))
+	 (prompt-height (+ (* 2 *default-prompt-margin*)
+			   font-height))
+	 (strings-y *default-prompt-margin*)
+	 (prompt-string (ecase <mode>
+			  (:direct *direct-prompt-string*)
+			  (:forward *forward-prompt-string*))))
+    (draw-box 0 0 <width> prompt-height :color ".gray40" :stroke-color ".gray80"
+    	      :destination image)
+    ;; draw cursor
+    (when (eq :direct <mode>)
+      (let ((color (if (minusp <clock>)
+		       *prompt-cursor-color*
+		       *prompt-cursor-blink-color*)))
+	(when (> <point> (length <line>))
+	  (setf <point> (1- (length <line>))))
+	(draw-box (+ (font-text-extents (if (<= <point> (length <line>))
+					    (subseq <line> 0 <point>)
+					    " ")
+					*default-font*)
+		     (font-text-extents prompt-string *default-font*))
+		  strings-y
+		  (font-text-extents 
+		   (string (if (< <point> (length <line>))
+			       (aref <line> 
+				     (max (max 0 
+					       (1- (length <line>)))
+					  <point>))
+			       #\Space))
+		   *default-font*)
+		  font-height
+		  :color color
+		  :stroke-color color
+		  :destination image))
+      ;; draw prompt 
+      (draw-string-blended prompt-string
 			   *default-prompt-margin*
 			   strings-y
+			   :foreground ".white"
 			   :destination image))
-      ;; draw current command line text
-      (when (null <line>) (setf <line> ""))
-      (draw-string-solid <line>
-			 (+ *default-prompt-margin* 
-			    (* font-width (length prompt-string)))
-			 strings-y
-			 :destination image))))
+    ;; draw current command line text
+    (when (null <line>) (setf <line> ""))
+    (unless (zerop (length <line>))
+      (draw-string-blended <line>
+			   (+ 0
+			      (font-text-extents prompt-string *default-font*))
+			   strings-y
+			   :foreground ".white"
+			   :destination image))))
 
 ;;; Text display and edit control
 
