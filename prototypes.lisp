@@ -40,7 +40,7 @@
   
 ;;; Code: 
 
-(in-package :iosketch)
+(in-package :ioforms)
 
 ;;; Emacs Lisp compatibilty macro 
 
@@ -102,7 +102,7 @@ make the names of the objects made with `define-prototype'."
 
 ;; An object's field collection is either a hash table or plist. The
 ;; function `field-value' implements the chaining field lookups that
-;; make inheritance work in IOSKETCH.
+;; make inheritance work in IOFORMS.
 
 ;; If a field value is not present in a given object's field
 ;; collection, the object's parent is also checked for a value, and
@@ -368,7 +368,7 @@ argument is ignored for now."
 ;;; Message forwarding
 
 ;; When a message cannot be delivered because no corresponding
-;; function was found, IOSKETCH attempts to re-send the message via the
+;; function was found, IOFORMS attempts to re-send the message via the
 ;; object's `forward' method (if any).
 
 ;; An object's `forward' method should accept the method-key as the
@@ -833,9 +833,9 @@ evaluated, then any applicable initializer is triggered."
 ;;; Serialization support
 
 ;; The functions SERIALIZE and DESERIALIZE convert
-;; (almost abitrary) trees of Lisp objects (including IOSKETCH objects)
+;; (almost abitrary) trees of Lisp objects (including IOFORMS objects)
 ;; into printable S-expressions for storing as plain text, and from
-;; this printed representation back into living IOSKETCH objects.
+;; this printed representation back into living IOFORMS objects.
 
 ;; The method names :SERIALIZE and :DESERIALIZE are reserved for
 ;; serialization use. :SERIALIZE, if such a method is present, is
@@ -847,12 +847,12 @@ evaluated, then any applicable initializer is triggered."
 ;; are not serialized; typically these will be properly re-initialized
 ;; by the :DESERIALIZE method. 
 
-(defconstant +object-type-key+ :%IOSKETCH%OBJECT%)
-(defconstant +hash-type-key+ :%IOSKETCH%HASH-TABLE%)
+(defconstant +object-type-key+ :%IOFORMS%OBJECT%)
+(defconstant +hash-type-key+ :%IOFORMS%HASH-TABLE%)
 
 (defun serialize (object)
   "Convert a Lisp object a print-ready S-expression.
-Invokes :SERIALIZE on IOSKETCH objects whenever present. Any fields
+Invokes :SERIALIZE on IOFORMS objects whenever present. Any fields
 named in the list <EXCLUDED-FIELDS> of said object will be ignored."
   ;; use labels here so we can call #'serialize
   (labels ((hash-to-list (hash)
@@ -895,11 +895,11 @@ named in the list <EXCLUDED-FIELDS> of said object will be ignored."
       (otherwise object))))
 
 (defun deserialize (data)
-  "Reconstruct Lisp objects (including IOSKETCH-derived objects) from an
-S-expression made by SERIALIZE. Invokes :DESERIALIZE on IOSKETCH
+  "Reconstruct Lisp objects (including IOFORMS-derived objects) from an
+S-expression made by SERIALIZE. Invokes :DESERIALIZE on IOFORMS
 objects after reconstruction, wherever present."
   (cond 
-    ;; handle IOSKETCH objects
+    ;; handle IOFORMS objects
     ((and (listp data) (eq +object-type-key+ (first data)))
      (destructuring-bind (&key parent fields &allow-other-keys)
 	 (rest data)

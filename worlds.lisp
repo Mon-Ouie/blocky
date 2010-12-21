@@ -18,12 +18,12 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-(in-package :iosketch)
+(in-package :ioforms)
 
 (define-prototype world
     (:parent =page=
-	     :documentation "An IOSKETCH game world filled with cells and sprites.
-Worlds are the focus of the action in IOSKETCH. A world is a 3-D grid of
+	     :documentation "An IOFORMS game world filled with cells and sprites.
+Worlds are the focus of the action in IOFORMS. A world is a 3-D grid of
 interacting cells. The world object performs the following tasks:
 
   - Keeps track of a single player in a world of cells
@@ -183,7 +183,7 @@ At the moment, only 0=off and 1=on are supported.")
 PARAMETERS and interpreting the world's grammar field <GRAMMAR>."
   (declare (ignore parameters))
   (with-fields (grammar stack) self
-    (setf iosketch:*grammar* grammar)
+    (setf ioforms:*grammar* grammar)
     (let ((program (generate 'world)))
       (or program (message "WARNING: Nothing was generated from this grammar."))
       (message (prin1-to-string program))

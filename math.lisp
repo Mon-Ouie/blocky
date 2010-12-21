@@ -22,7 +22,7 @@
 
 ;;; Code:
 
-(in-package :iosketch)
+(in-package :ioforms)
 
 ;;; Probability
 

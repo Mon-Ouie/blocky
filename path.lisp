@@ -1,4 +1,4 @@
-;;; path.lisp --- A* pathfinding for IOSKETCH
+;;; path.lisp --- A* pathfinding for IOFORMS
 
 ;; Copyright (C) 2009  David O'Toole
 
@@ -27,7 +27,7 @@
 
 ;;; Code:
 
-(in-package :iosketch)
+(in-package :ioforms)
 
 (defstruct path
   world ;; Pointer to associated world. 

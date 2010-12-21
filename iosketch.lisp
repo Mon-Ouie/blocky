@@ -1,4 +1,4 @@
-;;; iosketch.lisp --- retro-esque 2d game engine for Common Lisp
+;;; ioforms.lisp --- retro-esque 2d game engine for Common Lisp
                
 ;; Copyright (C) 2006, 2007, 2008, 2009  David O'Toole
 
@@ -37,7 +37,7 @@
 
 ;;; Code:
 
-(defpackage :iosketch
+(defpackage :ioforms
     (:documentation "A 2D game engine in Common Lisp.")
   (:use :common-lisp) 
   (:export *default-frame-width* *default-frame-height* =null= null-block =viewport=
@@ -152,4 +152,4 @@ draw-string-blended =block= *token-types* *block-categories*
 *block-colors* *block-text-colors* defblock =beep= =program=
 make-program ))
 
-;;; iosketch.lisp ends here
+;;; ioforms.lisp ends here

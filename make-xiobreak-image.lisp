@@ -3,14 +3,14 @@
 (push (merge-pathnames "lib/" (values *default-pathname-defaults*))
       asdf:*central-registry*)
 
-(asdf:oos 'asdf:load-op 'iosketch)
+(asdf:oos 'asdf:load-op 'ioforms)
 
 (sb-ext:save-lisp-and-die "run-xiotank"
 			  :toplevel (lambda ()
 				      (sb-posix:putenv
 				       (format nil "SBCL_HOME=~A" 
 					       #.(sb-ext:posix-getenv "SBCL_HOME")))
-				      (iosketch:play "xiobreak")
+				      (ioforms:play "xiobreak")
 				      0)
 			  :executable t)
 

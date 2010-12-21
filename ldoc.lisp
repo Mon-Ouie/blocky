@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :iosketch)
+(in-package :ioforms)
 
 ;; todo show parent name if any
 
@@ -184,7 +184,7 @@
     (document-package package-name stream preamble-file)))
 			    
 ;; (document-package :clon t)
-;; (document-package-to-file :iosketch #P"/home/dto/notebook/iosketch-reference.org" #P"/home/dto/iosketch/doc-preamble.org")
-;; (document-package :iosketch t #P"/home/dto/iosketch/doc-preamble.org")
+;; (document-package-to-file :ioforms #P"/home/dto/notebook/ioforms-reference.org" #P"/home/dto/ioforms/doc-preamble.org")
+;; (document-package :ioforms t #P"/home/dto/ioforms/doc-preamble.org")
 
 ;;; ldoc.lisp ends here

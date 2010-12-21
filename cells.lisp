@@ -20,7 +20,7 @@
 
 ;;; Code:
 
-(in-package :iosketch)
+(in-package :ioforms)
 
 ;;; Base cell prototype
 
@@ -35,7 +35,7 @@
   (categories :initform nil :documentation "List of category keyword symbols.") 
   (label :initform nil :documentation "Optional string or formatted line to display.")
   (widget :initform nil)
-  (image :initform nil :documentation "Image to display. either a resource name string, or an IOSKETCH image object.")
+  (image :initform nil :documentation "Image to display. either a resource name string, or an IOFORMS image object.")
   (tile :initform ".asterisk" :documentation "Resource name of image. 
 When nil, the method DRAW is invoked instead of using a tile.")
   (render-cell :initform nil :documentation "Subcell to render. See load-sprite-sheet-resource.")
@@ -148,7 +148,7 @@ Cells may be placed into categories that influence their processing by
 the engine. The field `<categories>' is a set of keyword symbols; if a
 symbol `:foo' is in the list, then the cell is in the category `:foo'.
 
-Although a game built on IOSKETCH can define whatever categories are
+Although a game built on IOFORMS can define whatever categories are
 needed, certain base categories are built-in and have a fixed
 interpretation:
 
@@ -309,7 +309,7 @@ When LOADOUT is non-nil, call the :loadout method."
 ;;; Custom rendering
 
 (define-method draw cell (x y image)
-  "Use IOSKETCH drawing commands to render a presentation of this cell at
+  "Use IOFORMS drawing commands to render a presentation of this cell at
 X, Y to the offscreen image IMAGE.  This method is invoked to draw a
 cell when its TILE field is nil, or when it is in the
 category :drawn. See also viewport.lisp." 

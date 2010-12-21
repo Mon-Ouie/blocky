@@ -31,9 +31,9 @@
 
 ;;; Code:
 
-(in-package :iosketch)
+(in-package :ioforms)
 
-;; For the design of IOSKETCH, I've followed a motto associated with
+;; For the design of IOFORMS, I've followed a motto associated with
 ;; the visual programming language Pure Data: "The diagram is the
 ;; program."  Since the diagram is 2D, the program must therefore be
 ;; two-dimensional as well. That means every block in the program
@@ -42,7 +42,7 @@
 ;; appropriately for display.
 
 ;; Unlike Pure Data and other visual languages that model themselves
-;; after electronic components connected by wires, IOSKETCH does away
+;; after electronic components connected by wires, IOFORMS does away
 ;; with the explicitly drawn connections in favor of a tree structure
 ;; mapping to Lisp expressions. 
 
@@ -217,7 +217,7 @@ arguments all the time."
 (define-method execute block (recipient)
   "Carry out the block's action by sending messages to the object RECIPIENT.
 The RECIPIENT argument is provided by the script executing the block,
-and its value will be the IOSKETCH object associated with the script.
+and its value will be the IOFORMS object associated with the script.
 The <RESULTS> field will be a list of results obtained by
 executing/evaluating the blocks in <ARGUMENTS> (see also
 `BLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
@@ -232,7 +232,7 @@ something else. See also `defblock' and `send'."
 	       (if (symbolp item)
 		   (make-keyword item)
 		   item)))
-    (apply #'iosketch:send nil operation recipient 
+    (apply #'ioforms:send nil operation recipient 
 	   (mapcar #'clean results)))))
 
 (define-method run block (recipient)
@@ -272,11 +272,11 @@ current block."
      :string =textbox=
      :symbol =option=)
   "A property list mapping some argument type keywords to
-corresponding IOSKETCH:=WIDGET= prototypes used for editing that kind
+corresponding IOFORMS:=WIDGET= prototypes used for editing that kind
 of value.")
 
 (defparameter *background-color* ".white" 
-  "The default background color of the IOSKETCH user interface.")
+  "The default background color of the IOFORMS user interface.")
 
 (defparameter *socket-color* ".gray80" 
   "The default background color of block sockets.")
@@ -418,7 +418,7 @@ blocks."
 
 (define-method draw-patch block (x0 y0 x1 y1 image 
 				    &key depressed dark socket color)
-  "Draw a standard IOSKETCH block notation patch on IMAGE.
+  "Draw a standard IOFORMS block notation patch on IMAGE.
 Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
 non-nil, draw an indentation; otherwise a raised area is drawn. If
 DARK is non-nil, paint a darker region. If SOCKET is non-nil, cut a hole
@@ -496,7 +496,7 @@ override all colors."
 (defparameter *socket-width* (* 18 *dash-size*))
 
 (defun expression-width (expression &optional (font *block-font*))
-  (if (iosketch:object-p expression)
+  (if (ioforms:object-p expression)
       *socket-width*
       (font-text-extents (print-expression expression) font)))
 
@@ -899,7 +899,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	  
 (defun is-event-block (thing)
   (and (not (null thing))
-       (iosketch:object-p thing)
+       (ioforms:object-p thing)
        (has-field :operation thing)
        (eq :do (field-value :operation thing))))
 
@@ -984,7 +984,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
     (let ((container (/get-parent output)))
       (when container
 	(/accept container 
-		 (let ((*make-block-package* (find-package :iosketch)))
+		 (let ((*make-block-package* (find-package :ioforms)))
 		   (if (symbolp (first sexp))
 		       (make-block-ext sexp)
 		       (make-block-ext (first sexp)))))
@@ -1012,7 +1012,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 (defwidget editor
   (script :initform nil 
-	  :documentation "The IOSKETCH:=SCRIPT= object being edited.")
+	  :documentation "The IOFORMS:=SCRIPT= object being edited.")
   (selection :initform ()
   	     :documentation "Subset of selected blocks.")
   (drag :initform nil 

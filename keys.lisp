@@ -1,4 +1,4 @@
-;;; keys.lisp --- key symbols for sdl/iosketch
+;;; keys.lisp --- key symbols for sdl/ioforms
 
 ;; Copyright (C) 2010  David O'Toole
 
@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :iosketch)
+(in-package :ioforms)
 
 (defparameter *key-identifiers*
   '((:FIRST 0)

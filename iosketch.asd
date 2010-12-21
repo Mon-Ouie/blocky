@@ -2,25 +2,24 @@
 
 ;; ASDF Manual: http://constantly.at/lisp/asdf/
 
-(defpackage :iosketch-asd)
+(defpackage :ioforms-asd)
 
-(in-package :iosketch-asd)
+(in-package :ioforms-asd)
 
-(asdf:defsystem iosketch
-  :name "iosketch"
-  :version "1.99"
-  :maintainer "David O'Toole"
-  :author "David O'Toole"
+(asdf:defsystem ioforms
+  :name "ioforms"
+  :version "0.2"
+  :maintainer "David T O'Toole <dto1138@gmail.com>"
+  :author "David T O'Toole <dto1138@gmail.com>"
   :license "General Public License (GPL) Version 3"
   :description "An object-oriented graphical 2D game engine."
   :serial t
-  :depends-on (;; :trivial-features :trivial-features-tests 
-	       :lispbuilder-sdl 
+  :depends-on (:lispbuilder-sdl 
 	       :lispbuilder-sdl-image 
 	       :lispbuilder-sdl-gfx
 	       :lispbuilder-sdl-ttf
 	       :lispbuilder-sdl-mixer)
-  :components ((:file "iosketch")
+  :components ((:file "ioforms")
 	       (:file "prototypes")
 	       (:file "math")
 	       (:file "rgb")

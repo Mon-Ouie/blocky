@@ -1,4 +1,4 @@
-;;; console.lisp --- core operations for IOSKETCH
+;;; console.lisp --- core operations for IOFORMS
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010  David O'Toole
 
@@ -22,18 +22,18 @@
 
 ;;; Commentary:
 
-;; The "console" is the library which provides all IOSKETCH system
+;; The "console" is the library which provides all IOFORMS system
 ;; services. Primitive operations such as setting the resolution,
 ;; displaying bitmaps, drawing lines, playing sounds, file access, and
 ;; keyboard/mouse input are handled here. 
 
 ;; Currently it uses the cross-platform SDL library (via
 ;; LISPBUILDER-SDL) as its device driver, and wraps the library for
-;; use by the rest of IOSKETCH.
+;; use by the rest of IOFORMS.
 
 ;; http://lispbuilder.sourceforge.net/
 
-(in-package :iosketch) 
+(in-package :ioforms) 
 
 ;;; Platform detection
 
@@ -48,13 +48,13 @@
 ;;; Keyboard state
 
 (defun keyboard-id (key)
-  "Look up the SDL symbol corresponding to the IOSKETCH symbol KEY. See keys.lisp."
+  "Look up the SDL symbol corresponding to the IOFORMS symbol KEY. See keys.lisp."
   (let* ((entry (find key *key-identifiers* :key #'first))
 	 (entry2 (find (second entry) *sdl-key-identifiers* :key #'second)))
     (first entry2)))
 
 (defun keyboard-mod (mod)
-  "Look up the SDL symbol corresponding to the IOSKETCH symbol MOD. See keys.lisp."
+  "Look up the SDL symbol corresponding to the IOFORMS symbol MOD. See keys.lisp."
   (let* ((entry (find mod *key-modifiers* :key #'first))
 	 (entry2 (find (second entry) *sdl-key-modifiers* :key #'second)))
     (first entry2)))
@@ -208,7 +208,7 @@ Do not set this variable directly from a module; instead, call
 
 (defun install-widgets (&rest widgets)
   "User-level function for setting the active widget set. Note that
-IOSKETCH may override the current widget set at any time for system menus
+IOFORMS may override the current widget set at any time for system menus
 and the like."
   (setf *module-widgets* widgets)
   (setf *active-widgets* widgets))
@@ -247,7 +247,7 @@ and the like."
   "Enable key repeat on every frame when held. Arguments are ignored
 for backward-compatibility."
   (when args 
-    (message "Warning. DELAY and INTERVAL arguments to IOSKETCH:ENABLE-HELD-KEYS are deprecated and ignored."))
+    (message "Warning. DELAY and INTERVAL arguments to IOFORMS:ENABLE-HELD-KEYS are deprecated and ignored."))
   (setf *key-table* (make-hash-table :test 'equal))
   (setf *held-keys* t))
 
@@ -333,7 +333,7 @@ The modifier list is sorted; thus, events can be compared for
 equality with `equal' and used as hashtable keys.
 
 The default event handler is `send-event-to-widgets', which see. An
-IOSKETCH game can use the widget framework to do its drawing and event
+IOFORMS game can use the widget framework to do its drawing and event
 handling, or override `*event-handler-function*' and do something
 else.")
 
@@ -357,7 +357,7 @@ else.")
 	    (send nil :hit widget x y))
 	(reverse widgets)))
 
-;;; Translating SDL key events into IOSKETCH event lists
+;;; Translating SDL key events into IOFORMS event lists
 
 (defparameter *other-modifier-symbols* '(:button-down :button-up :axis))
 
@@ -636,7 +636,7 @@ window. Set this in the game startup file.")
 (defun set-screen-height (height)
   (setf *screen-height* height))
 
-;;; The main loop of IOSKETCH
+;;; The main loop of IOFORMS
 
 (defvar *next-module* "standard")
 
@@ -644,7 +644,7 @@ window. Set this in the game startup file.")
 
 (defvar *fullscreen* nil "When non-nil, attempt to use fullscreen mode.")
 
-(defvar *window-title* "IOSKETCH")
+(defvar *window-title* "IOFORMS")
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
 
@@ -760,12 +760,12 @@ display."
 		     (sdl:update-display))))))))
   
   
-;;; The .iosketchrc user init file
+;;; The .ioformsrc user init file
 
-(defparameter *user-init-file-name* ".iosketchrc")
+(defparameter *user-init-file-name* ".ioformsrc")
 
 (defvar *initialization-hook* nil 
-"This hook is run after the IOSKETCH console is initialized.
+"This hook is run after the IOFORMS console is initialized.
 Set timer parameters and other settings here.")
 
 (defun load-user-init-file ()
@@ -938,7 +938,7 @@ resource is stored; see also `find-resource'."
 							    *load-truename*))
 			     :directory (pathname-directory #.(or *compile-file-truename*
 								  *load-truename*)))))))
-  "List of directories where IOSKETCH will search for modules.
+  "List of directories where IOFORMS will search for modules.
 Directories are searched in list order.")
 ;; (load-time-value 
 ;; (or #.*compile-file-truename* *load-truename*))))
@@ -957,7 +957,7 @@ name MODULE-NAME. Returns the pathname if found, otherwise nil."
 			    :defaults dir))
        when path return path)
      (error "Cannot find module ~s in paths ~S. 
-You must set the variable IOSKETCH:*MODULE-DIRECTORIES* in the configuration file ~~/.iosketchrc
+You must set the variable IOFORMS:*MODULE-DIRECTORIES* in the configuration file ~~/.ioformsrc
 Please see the included file BINARY-README for instructions."
 	    module-name dirs))))
 
@@ -1039,7 +1039,7 @@ table."
 ;; again. Each page is stored in one PAK file, containing a single
 ;; resource with the serialized data stored in the :DATA field of the
 ;; resource record. Page-names are resource-names, and therefore must
-;; be unique within a given IOSKETCH module. A page's PAK file is stored in
+;; be unique within a given IOFORMS module. A page's PAK file is stored in
 ;; {MODULENAME}/{PAGENAME}.pak, and for a given module these PAKs will
 ;; all be included by {MODULENAME}/OBJECTS.PAK, which is an
 ;; automatically generated PAK index linking to all the serialized
@@ -1664,15 +1664,15 @@ found."
 
 ;;; Creating and displaying images
 
-;; The "driver dependent objects" for IOSKETCH images are just SDL:SURFACE
-;; objects. (The situation is the same for IOSKETCH colors, fonts, and so
+;; The "driver dependent objects" for IOFORMS images are just SDL:SURFACE
+;; objects. (The situation is the same for IOFORMS colors, fonts, and so
 ;; on). So long as the clients treat the driver-dependent resource
 ;; objects as opaque, this thin wrapper is sufficient.
 
 ;; Below are some image handling functions.
 
 (defun create-image (width height)
-  "Create a new IOSKETCH image of size (* WIDTH HEIGHT)."
+  "Create a new IOFORMS image of size (* WIDTH HEIGHT)."
   (assert (and (integerp width) (integerp height)))
   (sdl:create-surface width height))
 
@@ -1765,7 +1765,7 @@ The default destination is the main window."
   (sdl:push-quit-event))
 
 (defvar *copyright-text*
-"IOSKETCH Game Engine
+"IOFORMS Game Engine
 Copyright (C) 2006, 2007, 2008, 2009, 2010 David O'Toole
 <dto@gnu.org>
 
@@ -1857,7 +1857,7 @@ also the file LIBSDL-LICENSE for details.
 ;; (pushnew 'quit-ttf sdl:*external-quit-on-exit*) 
 
 (defun play (&optional (module-name "standard") &rest args)
-  "This is the main entry point to IOSKETCH. MODULE-NAME is loaded 
+  "This is the main entry point to IOFORMS. MODULE-NAME is loaded 
 and its .startup resource is loaded."
   (format t "~A" *copyright-text*)
   (initialize-resource-table)
