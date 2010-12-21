@@ -1,14 +1,14 @@
-This is the INSTALL file for IOSKETCH, with instructions on getting
+This is the INSTALL file for IOFORMS, with instructions on getting
 the system installed and running from source.
 
 NOTE: Users of Windows and Mac OSX do not need to follow the
-instructions in this file unless they are building IOSKETCH from
+instructions in this file unless they are building IOFORMS from
 source code. 
 
 1. System Requirements 
 
    Linux users will need a Common Lisp implementation---currently
-   IOSKETCH has only been tested with SBCL (Steel Bank Common
+   IOFORMS has only been tested with SBCL (Steel Bank Common
    Lisp). You must also have the SDL (Simple Direct Media Layer)
    libraries installed on your system. How to do this is beyond the
    scope of this document. See http://www.libsdl.org for more
@@ -17,17 +17,17 @@ source code.
    Your Linux distribution will have SDL packages for sdl, sdl-image,
    sdl-mixer, and sdl-gfx, all of which are required libraries.
 
-2. If you have not already done so, download IOSKETCH:
+2. If you have not already done so, download IOFORMS:
   
    mkdir ~/src
    cd ~/src
-   git clone git://github.com/dto/iosketch.git 
+   git clone git://github.com/dto/ioforms.git 
 
-3. Then link the iosketch.asd file into your ~/.sbcl/systems directory:
+3. Then link the ioforms.asd file into your ~/.sbcl/systems directory:
 
    mkdir ~/.sbcl
    mkdir ~/.sbcl/systems
-   ln -s ~/src/iosketch/iosketch.asd ~/.sbcl/systems
+   ln -s ~/src/ioforms/ioforms.asd ~/.sbcl/systems
 
 4. Install LISPBUILDER-SDL. 
     
@@ -59,12 +59,12 @@ source code.
 
 6. (OPTIONAL) Configure project folders
 
-   Add something like this to a new file called ~/.iosketchrc:
+   Add something like this to a new file called ~/.ioformsrc:
 
-  (setf iosketch:*module-directories* '(#P"/home/USERNAME/src/iosketch/" #P"/home/USERNAME/modules/"))
+  (setf ioforms:*module-directories* '(#P"/home/USERNAME/src/ioforms/" #P"/home/USERNAME/modules/"))
 
 The first item should be the pathname of wherever you installed the
-IOSKETCH source tree. This is auto-detected as the current directory if
+IOFORMS source tree. This is auto-detected as the current directory if
 you don't set it. NOTE: These must be pathnames (prefixed with #P) and
 must contain a trailing slash.
 
@@ -74,25 +74,25 @@ The other directory should contain game modules. For example:
     git clone git://github.com/dto/terahertz.git
     mv terahertz thz
 
-7. At the shell, cd to the install directory for IOSKETCH, run SBCL, and
+7. At the shell, cd to the install directory for IOFORMS, run SBCL, and
    then at the REPL:
 
-    (require :iosketch)
-    (iosketch:play "thz")  ;; or the name of a module in ~/modules
+    (require :ioforms)
+    (ioforms:play "thz")  ;; or the name of a module in ~/modules
 
   If you get an error about TRIVIAL-FEATURES-TESTS, try this:
   (require :trivial-features-tests)
 
-8. Here is my example .iosketchrc:
+8. Here is my example .ioformsrc:
 
     ;; -*- Mode: lisp -*-
 
-    (setf iosketch:*module-directories* '(#P"/home/dto/iosketch/" 
+    (setf ioforms:*module-directories* '(#P"/home/dto/ioforms/" 
     	  			     #P"/home/dto/modules/"))
-    (setf iosketch:*user-keyboard-layout* :qwerty)
-    (setf iosketch:*use-sound* t)
-    (setf iosketch:*message-logging* t)
-     ;; fullscreen is a pain if IOSKETCH hangs
-    (setf iosketch:*fullscreen* nil)
+    (setf ioforms:*user-keyboard-layout* :qwerty)
+    (setf ioforms:*use-sound* t)
+    (setf ioforms:*message-logging* t)
+     ;; fullscreen is a pain if IOFORMS hangs
+    (setf ioforms:*fullscreen* nil)
 
   

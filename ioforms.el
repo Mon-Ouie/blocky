@@ -1,4 +1,4 @@
-;;; iosketch.el --- Emacs tools for iosketch
+;;; ioforms.el --- Emacs tools for ioforms
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010 David O'Toole
 
@@ -29,9 +29,9 @@
 ;;; Font-locking
 
 ;; Put this in your emacs initialization file to get the highlighting:
-;; (add-hook 'emacs-lisp-mode-hook #'iosketch-do-font-lock)
+;; (add-hook 'emacs-lisp-mode-hook #'ioforms-do-font-lock)
 
-(defvar iosketch-font-lock-keywords
+(defvar ioforms-font-lock-keywords
   `((,(rx (sequence "(" (group "define-method")
 		   (one-or-more space)
 		   (group (one-or-more (not (any space))))
@@ -74,10 +74,10 @@
 ;    ("\\<\\(\<[^<>]*\>\\)\\>" (1 font-lock-preprocessor-face))
     ("(.*\\(\>\>\\>\\)" (1 font-lock-type-face))))
 
-(defun iosketch-do-font-lock ()
+(defun ioforms-do-font-lock ()
   (interactive)
   "Highlight the keywords used in prototype-oriented programming."
-  (font-lock-add-keywords nil iosketch-font-lock-keywords))
+  (font-lock-add-keywords nil ioforms-font-lock-keywords))
 
-(provide 'iosketch)
-;;; iosketch.el ends here
+(provide 'ioforms)
+;;; ioforms.el ends here
