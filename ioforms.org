@@ -1,27 +1,27 @@
 # Lines beginning with a "#" sign are comments.
 # Special comments begin with "#+" and are used to control Org settings.
-#+title: IOSKETCH
+#+title: IOFORMS
 #+author: David T. O'Toole 
 #+email: dto@gnu.org
 
 * Overview
 
-IOSKETCH is a visual game programming language suitable for making
+IOFORMS is a visual game programming language suitable for making
 games and other interactive media. With the mouse and keyboard (or
 touchscreen) the user connects color coded blocks to create
 event-driven programs in the style of [[http://scratch.mit.edu][MIT Scratch]]. Full extensibility
 is provided with Common Lisp for defining new blocks and
-extending the engine's base capabilities. IOSKETCH projects can be
+extending the engine's base capabilities. IOFORMS projects can be
 saved, compressed, and published on the internet as standalone files;
-the IOSKETCH player is available on Windows, Mac OSX, and
+the IOFORMS player is available on Windows, Mac OSX, and
 GNU/Linux. (Applications may also embed the GPL-licensed player.)
 
-IOSKETCH can take advantage of [[http://www.gnu.org/software/emacs][GNU Emacs]] if you have it installed. It
+IOFORMS can take advantage of [[http://www.gnu.org/software/emacs][GNU Emacs]] if you have it installed. It
 delegates content processing to external [[http://lispgames.ath.cx/index.php/UsefulApplications][applications]] like the GIMP,
-Pure Data, ImageMagick, FFMPEG, SBCL, and so on. IOSKETCH uses [[http://en.wikipedia.org/wiki/Digital_asset_management][Digital
+Pure Data, ImageMagick, FFMPEG, SBCL, and so on. IOFORMS uses [[http://en.wikipedia.org/wiki/Digital_asset_management][Digital
 Asset Management]] (DAM) techniques to tag, annotate, store, and search
 a project's various text and binary files (code, images, sounds) as
-well as metadata describing the files. Because IOSKETCH knows what
+well as metadata describing the files. Because IOFORMS knows what
 applications are available to edit and process data of various
 formats, the user can forget about organizing hundreds of files and
 instead launch their favorite editors from a hierarchical [[http://orgmode.org][org-mode]]
@@ -80,13 +80,13 @@ developing games in Common Lisp, in a so-called [[http://en.wikipedia.org/wiki/L
 [[http://www.gnu.org/software/emacs][GNU Emacs]] and [[http://orgmode.org/worg/org-contrib/babel/][Org Babel.]] My configurations and custom code are
 collected here in an org-mode essay containing executable Emacs Lisp
 code for a simple [[http://en.wikipedia.org/wiki/Digital_asset_management][Digital Asset Management]] (DAM) system called
-"Iosketch". The name is short for "[[http://en.wikipedia.org/wiki/Hypermedia][hypermedia]] programming".
+"Ioforms". The name is short for "[[http://en.wikipedia.org/wiki/Hypermedia][hypermedia]] programming".
 
 Although this workbook is readable as a web page, it is best
 used interactively by opening it within GNU Emacs. Please download
-the raw version of this workbook, [[http://dto.github.com/notebook/iosketch.org][iosketch.org]]
+the raw version of this workbook, [[http://dto.github.com/notebook/ioforms.org][ioforms.org]]
 
-The github page for this workbook is http://github.com/dto/iosketch.
+The github page for this workbook is http://github.com/dto/ioforms.
 
 * Motivation
 
@@ -115,18 +115,18 @@ the Lisp code---there's a third file mapping resource names to
 files. The indirection makes the engine more flexible, but it's
 another file to maintain.
 
-My experiments with Iosketch are an attempt to apply [[http://orgmode.org/][Orgmode]]
+My experiments with Ioforms are an attempt to apply [[http://orgmode.org/][Orgmode]]
 organizational, publishing, and workflow tools to the problems of solo
 and small-group games development, with custom code and the unifying
 theme of literate programming.
 
 * Prerequisites
 
-Iosketch is based on [[http://orgmode.org][Orgmode]] and [[http://orgmode.org/worg/org-contrib/babel/][Org Babel]], which are both [[http://www.gnu.org/software/emacs][GNU Emacs]]
+Ioforms is based on [[http://orgmode.org][Orgmode]] and [[http://orgmode.org/worg/org-contrib/babel/][Org Babel]], which are both [[http://www.gnu.org/software/emacs][GNU Emacs]]
 packages. Being familiar with these programs will help understanding
 the rest of this document.
 
-* Hypermedia programming with Iosketch
+* Hypermedia programming with Ioforms
 
 There are a few new terms to worry about: workbook, entry, asset,
 attachment, and chunk.
@@ -260,18 +260,18 @@ and indexing resources of almost any kind:
 
 #+source: auto-inserting-properties-templates
 #+begin_src emacs-lisp
-  (defvar iosketch-properties-template "
+  (defvar ioforms-properties-template "
   <<dublin-core-template>>
   "
   "Text of org properties drawer entries to insert upon creating a new entry.")
   
-  (defun iosketch-insert-properties-template ()
+  (defun ioforms-insert-properties-template ()
     (interactive)
       (save-excursion
         (destructuring-bind (beg . end) 
             (org-get-property-block nil nil :force)
           (goto-char beg)
-          (insert iosketch-properties-template))))
+          (insert ioforms-properties-template))))
 #+end_src
 
 For more information about Dublin Core, see these pages:
@@ -329,29 +329,29 @@ chunks headers, and also the ellipses used to indicate hidden text.
 
 #+source: visible-chunks
 #+begin_src emacs-lisp
-(defface iosketch-chunk-header-face '((t (:foreground "red" :bold t :weight bold))) "Face for chunk header lines.")
-(defvar iosketch-chunk-header-face 'iosketch-chunk-header-face)
+(defface ioforms-chunk-header-face '((t (:foreground "red" :bold t :weight bold))) "Face for chunk header lines.")
+(defvar ioforms-chunk-header-face 'ioforms-chunk-header-face)
   
-  (defvar iosketch-chunk-regexp "^#\\+\\(source:\\|srcname:\\|function:\\)")
+  (defvar ioforms-chunk-regexp "^#\\+\\(source:\\|srcname:\\|function:\\)")
   
-  (defun* iosketch-fontify-chunk (limit)
-    (while (re-search-forward iosketch-chunk-regexp limit :noerror)
+  (defun* ioforms-fontify-chunk (limit)
+    (while (re-search-forward ioforms-chunk-regexp limit :noerror)
       (let ((beg (match-beginning 1))
             (end (match-end 1)))
-        (add-text-properties beg end (list 'display (propertize (match-string 1) 'face iosketch-chunk-header-face)
+        (add-text-properties beg end (list 'display (propertize (match-string 1) 'face ioforms-chunk-header-face)
                                            'font-lock-fontified t)))))
 #+end_src
 
 #+source: visible-ellipsis
 #+begin_src emacs-lisp
-  (defface iosketch-hidden-face '((t (:foreground "yellow" :underline "red"))) "Face for hidden iosketch text.")
-  (defvar iosketch-hidden-face 'iosketch-hidden-face)
+  (defface ioforms-hidden-face '((t (:foreground "yellow" :underline "red"))) "Face for hidden ioforms text.")
+  (defvar ioforms-hidden-face 'ioforms-hidden-face)
 #+end_src
 
 
 #+source: fontified-chunks
 #+begin_src emacs-lisp
-  (defun iosketch-fontify-blocks ()
+  (defun ioforms-fontify-blocks ()
     (interactive)
     (save-excursion 
       (goto-char (point-min))
@@ -378,7 +378,7 @@ chunks headers, and also the ellipses used to indicate hidden text.
 #+end_src
 
 #+results: fontified-chunks
-: iosketch-fontify-blocks
+: ioforms-fontify-blocks
 
 * Mouse menus
 
@@ -407,45 +407,45 @@ code to your emacs initialization file.
 
 #+source: turn-on-visible-chunks
 #+begin_src emacs-lisp
- (add-hook 'org-font-lock-hook #'iosketch-fontify-chunk)
+ (add-hook 'org-font-lock-hook #'ioforms-fontify-chunk)
 #+end_src
 
 #+source: turn-off-visible-chunks
 #+begin_src emacs-lisp
- (remove-hook 'org-font-lock-hook #'iosketch-fontify-chunk)
+ (remove-hook 'org-font-lock-hook #'ioforms-fontify-chunk)
 #+end_src
 
 #+source: turn-on-visible-ellipsis
 #+begin_src emacs-lisp
- (setf org-ellipsis iosketch-hidden-face)
+ (setf org-ellipsis ioforms-hidden-face)
 #+end_src
 
 * Processes for creating and transforming chunks
 
-* How the Iosketch source is made
+* How the Ioforms source is made
 :PROPERTIES:
 :ID: 13a1e5df-8185-4633-9d62-ae9cab244f07
 :END:
 
-Using Babel, the Emacs Lisp source code for Iosketch itself is extracted
+Using Babel, the Emacs Lisp source code for Ioforms itself is extracted
 from this workbook (or "tangled", in literate programming
-terminology), to produce an output file called =iosketch.el=. 
+terminology), to produce an output file called =ioforms.el=. 
 
 There are also configuration chunks, snippets of elisp code you can
 execute in place (with C-c C-c) or copy to your emacs init file. 
 
-To make =iosketch.el= from this workbook, execute the following elisp code
+To make =ioforms.el= from this workbook, execute the following elisp code
 chunk by placing point on it and pressing C-c C-c:
 
 #+begin_src emacs-lisp
   (org-babel-tangle)
 #+end_src
 
-Assuming =iosketch.el= is somewhere in your Emacs load-path, you can load
+Assuming =ioforms.el= is somewhere in your Emacs load-path, you can load
 it by executing this chunk:
 
 #+begin_src emacs-lisp
-  (require 'iosketch)
+  (require 'ioforms)
 #+end_src
 
 However, you can do a shortcut and use the following command to tangle
@@ -473,7 +473,7 @@ The =<<chunk-name>>= tags above will be replaced by their
 corresponding definition chunks, defined elsewhere in this workbook,
 during the tangle process. Notice the ":tangle yes" argument; this is
 the only such block in this workbook. It means that in order to appear
-in the output file "iosketch.el", a chunk must be referenced somewhere in
+in the output file "ioforms.el", a chunk must be referenced somewhere in
 the expansion of this tangled chunk.
 
 If you want the opposite behavior, use "#+property: tangle yes" as a
@@ -492,7 +492,7 @@ the final elisp file:
 
 #+source: postamble
 #+begin_src emacs-lisp
-  (provide 'iosketch)
+  (provide 'ioforms)
 #+end_src
 
 * Recommended reading
@@ -540,7 +540,7 @@ Emacs variables; see [[info:emacs:Specifying%20File%20Variables][info:emacs:Spec
 
 #+source: htmlfontify-this-workbook
 #+begin_src emacs-lisp
-  (htmlfontify-buffer nil "iosketch-pretty.html")
+  (htmlfontify-buffer nil "ioforms-pretty.html")
 #+end_src 
 
 # By default, all chunks in a workbook are exported during tangling. 
