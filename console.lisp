@@ -35,17 +35,13 @@
 
 (in-package :ioforms) 
 
-;;; Platform detection
-
-(defvar *windows* nil)
-(defvar *linux* nil)
-(defvar *osx* nil)
-
 ;;; Counting timesteps
 
 (defparameter *timesteps* 0)
 
 ;;; Keyboard state
+
+;; see also keys.lisp
 
 (defun keyboard-id (key)
   "Look up the SDL symbol corresponding to the IOFORMS symbol KEY. See keys.lisp."
@@ -87,8 +83,6 @@
   "Returns t if the modifier key is depressed."
   (sdl:mod-down-p (keyboard-mod mod)))
 
-;; see also keys.lisp 
-
 (defun keyboard-keys-down ()
   "Returns a list of the keys that are depressed."
   (labels ((translate (key)
@@ -105,7 +99,7 @@
 		 (first entry2)))))
     (mapcar #'translate (sdl:mods-down-p))))
 
-;; Processing once per timestep
+;;; Processing once per timestep
 
 (defvar *keys* nil "List of keywords of currently pressed keys.")
 
@@ -184,48 +178,42 @@ elements of the vector produced by evaluating EXPR."
 		   (progn (decf ,counter)
 			  (when ,var ,@body)))))))))
 
-;;; The active widgets list 
+;;; The active blocks list 
 
-(defvar *active-widgets* nil "List of active widget objects. 
-These widgets receive input events and are rendered to the screen by
-the console. See also `send-event-to-widgets'.
+(defvar *blocks* nil "List of active block objects. 
+These blocks receive input events and are rendered to the screen by
+the console. See also `send-event-to-blocks'.
 
 Do not set this variable directly from a module; instead, call
-`install-widgets'.")
+`install-blocks'.")
 
-(defun show-widgets ()
-  "Draw the active widgets to the screen."
-  (dolist (widget *active-widgets*)
-    (with-field-values (image x y) widget
+(defun show-blocks ()
+  "Draw the active blocks to the screen."
+  (dolist (block *blocks*)
+    (with-field-values (image x y) block
       (when image
-	(send nil :render widget))))
-  (dolist (widget *active-widgets*)
-    (with-field-values (image x y visible) widget
+	(send nil :render block))))
+  (dolist (block *blocks*)
+    (with-field-values (image x y visible) block
       (when visible
 	(sdl:draw-surface-at-* image x y)))))
 
-(defvar *module-widgets* nil "List of widget objects in the current module.")
-
-(defun install-widgets (&rest widgets)
-  "User-level function for setting the active widget set. Note that
-IOFORMS may override the current widget set at any time for system menus
+(defun install-blocks (&rest blocks)
+  "User-level function for setting the active block set. Note that
+IOFORMS may override the current block set at any time for system menus
 and the like."
-  (setf *module-widgets* widgets)
-  (setf *active-widgets* widgets))
+  (setf *blocks* blocks))
 ;; TODO why does this crash: 
-;;  (show-widgets))
+;;  (show-blocks))
 
-(defun install-widget (widget)
-  (unless (find widget *module-widgets*)
-    (setf *module-widgets* (append *module-widgets* (list widget))))
-  (unless (find widget *active-widgets*)
-    (setf *active-widgets* (append *active-widgets* (list widget))))
-  (show-widgets))
+(defun install-block (block)
+  (unless (find block *blocks*)
+    (setf *blocks* (append *blocks* (list block))))
+  (show-blocks))
 
-(defun uninstall-widget (widget)
-  (setf *module-widgets* (delete widget *module-widgets* :test #'eq))
-  (setf *active-widgets* (delete widget *active-widgets* :test #'eq))
-  (show-widgets))
+(defun uninstall-block (block)
+  (setf *blocks* (delete block *blocks* :test #'eq))
+  (show-blocks))
 
 ;;; "Classic" key repeat
 
@@ -296,9 +284,9 @@ for backward-compatibility."
   (when (functionp *physics-function*)
     (apply *physics-function* args)))
 
-;;; Event handling and widgets
+;;; Event handling and blocks
 
-(defun send-event-to-widgets (event)
+(defun send-event-to-blocks (event)
   "Keyboard, mouse, joystick, and timer events are represented as
 event lists of the form:
 
@@ -308,19 +296,19 @@ Where MODIFIERS is a list of symbols like :shift, :control, :alt,
  :timer, :system, :mouse, and so on.
 
 The default event handler attempts to deliver a keypress to one of
-the widgets in `*active-widgets*'. See widgets.lisp and the docstrings
+the blocks in `*blocks*'. See blocks.lisp and the docstrings
 below for more information.
 
-This function attempts to deliver EVENT to each of the *active-widgets*
+This function attempts to deliver EVENT to each of the *blocks*
 one at a time (in list order) until one of them is found to have a
 matching keybinding, in which case the keybinding's corresponding
-function is triggered. If none of the widgets have a matching
+function is triggered. If none of the blocks have a matching
 keybinding, nothing happens, and this function returns nil."
-  (some #'(lambda (widget)
-	    (send nil :handle-key widget event))
-	*active-widgets*))
+  (some #'(lambda (block)
+	    (send nil :handle-key block event))
+	*blocks*))
 
-(defvar *event-handler-function* #'send-event-to-widgets
+(defvar *event-handler-function* #'send-event-to-blocks
   "Function to be called with keypress events. This function should
 accept an event list of the form
 
@@ -332,8 +320,8 @@ of key modifier symbols like :shift, :control, :alt, and so on.
 The modifier list is sorted; thus, events can be compared for
 equality with `equal' and used as hashtable keys.
 
-The default event handler is `send-event-to-widgets', which see. An
-IOFORMS game can use the widget framework to do its drawing and event
+The default event handler is `send-event-to-blocks', which see. An
+IOFORMS game can use the block framework to do its drawing and event
 handling, or override `*event-handler-function*' and do something
 else.")
 
@@ -351,11 +339,11 @@ else.")
 	     (funcall *event-handler-function* event))
       (error "No event handler registered.")))
 
-(defun hit-widgets (x y &optional (widgets *active-widgets*))
-  "Hit test the WIDGETS to find the clicked widget."
-  (some #'(lambda (widget)
-	    (send nil :hit widget x y))
-	(reverse widgets)))
+(defun hit-blocks (x y &optional (blocks *blocks*))
+  "Hit test the BLOCKS to find the clicked block."
+  (some #'(lambda (block)
+	    (send nil :hit block x y))
+	(reverse blocks)))
 
 ;;; Translating SDL key events into IOFORMS event lists
 
@@ -672,7 +660,7 @@ display."
     (set-frame-rate *frame-rate*)
     (reset-joystick)
     (sdl:clear-display sdl:*black*)
-    (show-widgets)
+    (show-blocks)
     (sdl:update-display)
     (run-hook '*initialization-hook*)
     (let ((events-this-frame 0))
@@ -686,17 +674,17 @@ display."
 					 :flags sdl:SDL-RESIZABLE
 					 :position *window-position*))
 	(:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
-			     (let ((widget (hit-widgets x y *active-widgets*)))
-			       (when (and widget (has-method :mouse-move widget))
-				 (/mouse-move widget x y))))
+			     (let ((block (hit-blocks x y *blocks*)))
+			       (when (and block (has-method :mouse-move block))
+				 (/mouse-move block x y))))
 	(:mouse-button-down-event (:button button :state state :x x :y y)
-				  (let ((widget (hit-widgets x y *active-widgets*)))
-				    (when (and widget (has-method :mouse-down widget))
-				      (/mouse-down widget x y button))))
+				  (let ((block (hit-blocks x y *blocks*)))
+				    (when (and block (has-method :mouse-down block))
+				      (/mouse-down block x y button))))
 	(:mouse-button-up-event (:button button :state state :x x :y y)
-				  (let ((widget (hit-widgets x y *active-widgets*)))
-				    (when (and widget (has-method :mouse-up widget))
-				      (/mouse-up widget x y button))))
+				  (let ((block (hit-blocks x y *blocks*)))
+				    (when (and block (has-method :mouse-up block))
+				      (/mouse-up block x y button))))
 	(:joy-button-down-event (:which which :button button :state state)
 				(when (assoc button *joystick-mapping*)
 				  (update-joystick button state)
@@ -746,7 +734,7 @@ display."
 			 ;; (poll-all-buttons)
 			 ;;  (generate-button-events)
 			 ;; update display
-			 (show-widgets)
+			 (show-blocks)
 			 (sdl:update-display)
 			 (setf *clock* *timer-interval*))
 		       (decf *clock*))
@@ -756,7 +744,7 @@ display."
 		       (do-physics))
 		     (sdl:clear-display sdl:*black*)
 		     (when *held-keys* (send-held-events)) ;; TODO move this to do-physics?
-		     (show-widgets) 
+		     (show-blocks) 
 		     (sdl:update-display))))))))
   
   
