@@ -90,10 +90,16 @@ ARGS are field specifiers, as with `define-prototype'."
 
 ;;; Defining input events for blocks
 
+(define-method initialize-keymap-maybe block ()
+  (with-fields (keymap) self
+    (when (null keymap)
+      (setf keymap (make-hash-table :test 'equal)))))
+
 (define-method define-key block (key-name modifiers func)
   "Bind the described keypress to invoke FUNC.
 KEY-NAME is a string giving the key name; MODIFIERS is a list of
 keywords like :control, :alt, and so on."
+  (/initialize-keymap-maybe self)
   (setf (gethash (normalize-event (cons key-name modifiers))
 		 <keymap>)
 	func))
@@ -109,6 +115,7 @@ keywords like :control, :alt, and so on."
 (define-method handle-key block (keylist)
   "Look up and invoke the function (if any) bound to KEYLIST. Return t
 if a binding was found, nil otherwise."
+  (/initialize-keymap-maybe self)
   (with-fields (keymap) self
       (when keymap 
 	(let ((func (gethash keylist keymap)))

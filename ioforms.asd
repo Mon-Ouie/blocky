@@ -32,8 +32,6 @@
 	       (:file "cells")
 	       (:file "gcells")
 	       (:file "gsprites")
-	       (:file "narration")
-	       (:file "browser")
 	       (:file "mission")
 	       (:file "forms")
 	       (:file "worlds")

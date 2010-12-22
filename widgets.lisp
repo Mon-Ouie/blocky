@@ -220,7 +220,7 @@ line."
 
 (define-method initialize formatter ()
   (/parent/initialize self)
-  (/reset-linesself)
+  (/reset-lines self)
   (/newline self))
 
 (define-method update formatter ()

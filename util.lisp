@@ -23,7 +23,7 @@
 (defmacro defgame (module-name 
 		   (&key title description
 			 (prompt-prototype =prompt=)
-			 timestep physics-function
+			 timestep timestep-function
 			 held-keys 
 			 splash-image splash-function splash-music
 			 screen-width screen-height
@@ -33,7 +33,7 @@
   `(progn
      (ioforms:set-screen-height ,screen-height)
      (ioforms:set-screen-width ,screen-width)
-     (setf ioforms:*physics-function* ,physics-function)
+     (setf ioforms:*timestep-function* ,timestep-function)
      (setf ioforms:*dt* ,timestep)
      ,@startup-forms))
 

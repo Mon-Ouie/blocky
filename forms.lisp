@@ -504,9 +504,8 @@ initialize the arrays for a page of the size specified there."
 
 (defparameter *form-cursor-blink-time* 10)
 
-(define-prototype form 
-    (:parent =widget= :documentation  "An interactive graphical spreadsheet.")
-  prompt narrator computing
+(defblock form
+   prompt narrator computing
   (page-name :initform nil)
   (page :documentation "The ioforms:=page= of objects to be displayed.")
   rows columns
@@ -719,12 +718,12 @@ Type HELP :COMMANDS for a list of available commands."
 
 (define-method save-all form ()
   (/say self "Saving objects...")
-  (ioforms:save-modified-objects t)
+  (ioforms:save-objects :force)
   (/say self "Saving objects... Done."))
 
-(define-method save-modified form ()
+(define-method save form ()
   (/say self "Saving objects...")
-  (ioforms:save-modified-objects)
+  (ioforms:save-objects)
   (/say self "Saving objects... Done."))
   
 (define-method create-page form (&key height width name object)
@@ -785,10 +784,10 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	(setf <entered> nil)
 	(/say self "Finished entering data.")))))
     
-(define-method load-module form (name)
-  "Load the IOFORMS module NAME for development."
+(define-method open-project form (name)
+  "Load the IOFORMS project named NAME for development."
   (/say self (format nil "Loading module ~S" name))
-  (ioforms:load-module name))
+  (ioforms:open-project name))
 
 (define-method quit form ()
   "Quit XIOFORMS."
