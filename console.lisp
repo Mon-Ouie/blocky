@@ -739,16 +739,16 @@ Set timer parameters and other settings here.")
 
 (defparameter *use-sound* t "Non-nil (the default) is to use sound. Nil disables sound.")
 
-;;; PAK resource interchange files
+;;; IOF resource interchange files
 
-(defparameter *pak-file-extension* ".pak"
-"PAK is a simple Lisp data interchange file format readable and
-writable by both Emacs Lisp and Common Lisp. A PAK file can contain
+(defparameter *iof-file-extension* ".iof"
+"IOF is a simple Lisp data interchange file format readable and
+writable by both Emacs Lisp and Common Lisp. An IOF file can contain
 one or more data resources. A 'resource' is an image, sound, text,
 font, lisp program, or other data whose interpretation is up to the
 client.
 
-A PAK resource can be either self-contained, or point to an
+An IOF resource can be either self-contained, or point to an
 external file for its data.
 
 A 'resource record' defines a resource. A resource record is a
@@ -761,7 +761,7 @@ structure with the following elements:
           Corresponding handlers are the responsibility of the client.
           See also `*resource-handlers*' and `load-resource'.
 
-          The special type :pak is used to load the pak file
+          The special type :iof is used to load the iof file
           specified in :FILE, from (optionally) another project
           whose name is given in :DATA.
 
@@ -777,26 +777,26 @@ structure with the following elements:
               (the default is to load resources on demand.)
 
  :FILE    Name of file to load data from, if any. 
-          Relative to directory of PAK file.
+          Relative to directory of IOF file.
  :DATA    Lisp data encoding the resource itself, if any.
 
 In memory, these will be represented by resource structs (see below).
 On disk, it's Lisp data printed as text. This text should compress very
 well.
 
-The string '()' is a valid .PAK file; it contains no resources.")
+The string '()' is a valid .IOF file; it contains no resources.")
 
 (defstruct resource 
   name type properties file data object modified-p)
 
-;; The extra `object' field is not saved in .PAK files; it is used to
+;; The extra `object' field is not saved in .IOF files; it is used to
 ;; store driver-dependent loaded resources (i.e. SDL image surface
 ;; objects and so on). This is used in the resource table.
 ;; The modified-p field is likewise not stored. 
 
 (defun resource-to-plist (res)
   "Convert the resource record RES into a property list.
-This prepares it for printing as part of a PAK file."
+This prepares it for printing as part of a IOF file."
   (list :name (resource-name res)
 	:type (resource-type res)
 	:properties (resource-properties res)
@@ -825,14 +825,14 @@ This prepares it for printing as part of a PAK file."
       (message "Reading data from ~A... Done." filename))))
 
 ;; Now tie it all together with routines that read and write
-;; collections of records into PAK files.
+;; collections of records into IOF files.
 
-(defun write-pak (filename resources)
-  "Write the RESOURCES to the PAK file FILENAME."
+(defun write-iof (filename resources)
+  "Write the RESOURCES to the IOF file FILENAME."
   (write-sexp-to-file filename (mapcar #'resource-to-plist resources)))
 
-(defun read-pak (filename)
-  "Return a list of resources from the PAK file FILENAME."
+(defun read-iof (filename)
+  "Return a list of resources from the IOF file FILENAME."
   (mapcar #'(lambda (plist)
 	      (apply #'make-resource plist))
 	  (read-sexp-from-file filename)))
@@ -861,7 +861,7 @@ A lookup failure results in an error. See `find-resource'.
 
 A `project' is a directory full of resource files. The name of the
 project is the name of the directory. Each project must contain a
-file called {project-name}.pak, which should contain an index of
+file called {project-name}.iof, which should contain an index of
 all the project's resources. Multiple projects may be loaded at one
 time. In addition the special resource .startup will be loaded;
 if this is type :lisp, the startup code for your game can go in
@@ -911,10 +911,10 @@ object save directory (by setting the current `*project*'. See also
     (mapc #'load-resource (nreverse *pending-autoload-resources*)))
   (setf *pending-autoload-resources* nil)
   ;; now load any objects
-  (let ((object-index-file (find-project-file project *object-index-filename*)))
+  (let ((object-index-file (find-project-file project (object-index-filename project))))
     (when (probe-file object-index-file)
       (message "Loading saved objects from ~S" object-index-file)
-      (index-pak project object-index-file)))
+      (index-iof project object-index-file)))
   (run-hook '*after-load-project-hook*)
   (let ((package (find-package (project-package-name))))
     (when package
@@ -964,10 +964,10 @@ Please see the included file BINARY-README for instructions."
 			    (find-project-path project-name))))
 
 (defun directory-is-project-p (dir)
-  "Test whether a {PROJECTNAME}.PAK index file exists in a directory."
+  "Test whether a {PROJECTNAME}.IOF index file exists in a directory."
   (let ((index-filename (concatenate 'string
 				     (file-namestring dir)
-				     *pak-file-extension*)))
+				     *iof-file-extension*)))
     (probe-file (make-pathname :name index-filename
 			       :directory (if (stringp dir)
 					      dir
@@ -987,18 +987,18 @@ Please see the included file BINARY-README for instructions."
 
 (defvar *pending-autoload-resources* '())
 
-(defun index-pak (project-name pak-file)
-  "Add all the resources from the pak PAK-FILE to the resource
+(defun index-iof (project-name iof-file)
+  "Add all the resources from the iof IOF-FILE to the resource
 table. File names are relative to the project PROJECT-NAME."
-  (let ((resources (read-pak pak-file)))
+  (let ((resources (read-iof iof-file)))
     (dolist (res resources)
-      (if (eq :pak (resource-type res))
-	  ;; we're including another pak file. if :data is specified,
+      (if (eq :iof (resource-type res))
+	  ;; we're including another iof file. if :data is specified,
 	  ;; take this as the name of the project where to look for
-	  ;; that pak file and its resources.
+	  ;; that iof file and its resources.
 	  (let ((include-project (or (resource-data res) 
 				    project-name)))
-	    (index-pak include-project (find-project-file include-project
+	    (index-iof include-project (find-project-file include-project
 							(resource-file res))))
 	  ;; we're indexing a single resource.
 	  (progn
@@ -1013,14 +1013,15 @@ table. File names are relative to the project PROJECT-NAME."
 	    (when (getf (resource-properties res) :autoload)
 	      (push res *pending-autoload-resources*)))))))
 
-(defparameter *object-index-filename* "objects.pak")
+(defun object-index-filename (project-name)
+  (concatenate 'string project-name "-object-index" *iof-file-extension*))
 
 (defun index-project (project-name)
   "Add all the resources from the project PROJECT-NAME to the resource
 table."
   (let ((index-file (find-project-file project-name
-				      (concatenate 'string project-name *pak-file-extension*))))
-    (index-pak project-name index-file)))
+				      (concatenate 'string project-name *iof-file-extension*))))
+    (index-iof project-name index-file)))
 
 ;;; Standard resource names
 
@@ -1028,20 +1029,20 @@ table."
 
 (defvar *default-font* ".default-font")
 
-;;; Creating, saving, and loading object resources in PAK files
+;;; Creating, saving, and loading object resources in IOF files
 
-;; See also the documentation string for `*pak-file-extension*'.
+;; See also the documentation string for `*iof-file-extension*'.
 
-;; Object resources are PAK resources with type :object. These are
+;; Object resources are IOF resources with type :object. These are
 ;; used to save serialized objects to disk and read them back
-;; again. Each page is stored in one PAK file, containing a single
+;; again. Each page is stored in one IOF file, containing a single
 ;; resource with the serialized data stored in the :DATA field of the
 ;; resource record. Page-names are resource-names, and therefore must
-;; be unique within a given IOFORMS project. A page's PAK file is stored in
-;; {PROJECTNAME}/{PAGENAME}.pak, and for a given project these PAKs will
-;; all be included by {PROJECTNAME}/OBJECTS.PAK, which is an
-;; automatically generated PAK index linking to all the serialized
-;; page PAK files.
+;; be unique within a given IOFORMS project. A page's IOF file is stored in
+;; {PROJECTNAME}/{PAGENAME}.iof, and for a given project these IOFs will
+;; all be included by {PROJECTNAME}/OBJECTS.IOF, which is an
+;; automatically generated IOF index linking to all the serialized
+;; page IOF files.
 
 (defun make-object-resource (name object)
   "Make an object resource named NAME (a string) with the CLON object
@@ -1054,13 +1055,13 @@ OBJECT as the data."
       (index-resource resource))))
 
 (defun save-object-resource (resource &optional (project *project*))
-  "Save an object resource to disk as {RESOURCE-NAME}.PAK."
+  "Save an object resource to disk as {RESOURCE-NAME}.IOF."
   (let ((name (resource-name resource)))
     (setf (resource-data resource) (serialize (resource-object resource)))
     (message "Saving resource ~S..." name)
-    (write-pak (find-project-file project 
+    (write-iof (find-project-file project 
 				 (concatenate 'string (resource-name resource)
-					      *pak-file-extension*))
+					      *iof-file-extension*))
 	       (list resource))
     (setf (resource-modified-p resource) nil)
     (setf (resource-data resource) nil)))
@@ -1075,17 +1076,17 @@ OBJECT as the data."
 		 (when (eq :object (resource-type resource))
 		   (unless (is-special-resource resource)
 		     ;; we want to index them all, whether or not we save them all.
-		     ;; make a link resource (i.e. of type :pak) to pull this in later
-		     (let ((link-resource (make-resource :type :pak 
+		     ;; make a link resource (i.e. of type :iof) to pull this in later
+		     (let ((link-resource (make-resource :type :iof 
 							 :file (concatenate 'string
 									    (resource-name resource)
-									    *pak-file-extension*))))
+									    *iof-file-extension*))))
 		       (push link-resource index))
 		     (when (or force (resource-modified-p resource))
 		       (save-object-resource resource)))))))
       (maphash #'save *resource-table*))
     ;; write auto-generated index
-    (write-pak (find-project-file *project* *object-index-filename*) index)))
+    (write-iof (find-project-file *project* (object-index-filename *project*))) index))
 
 (defun load-object-resource (resource)
   "Loads a serialized :OBJECT resource from the Lisp data in the 
@@ -1099,12 +1100,12 @@ also the documentation for DESERIALIZE."
 ;;; Driver-dependent resource object loading handlers
 
 (defun load-image-resource (resource)
-  "Loads an :IMAGE-type pak resource from a :FILE on disk."
+  "Loads an :IMAGE-type iof resource from a :FILE on disk."
   (sdl-image:load-image (namestring (resource-file resource))
 			:alpha 255))
   
 (defun load-sprite-sheet-resource (resource)
-  "Loads a :SPRITE-SHEET-type pak resource from a :FILE on disk. Looks
+  "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
 for :SPRITE-WIDTH and :SPRITE-HEIGHT properties on the resource to
 control the size of the individual frames or subimages."
   (let* ((image (load-image-resource resource))
@@ -1540,7 +1541,7 @@ of the music."
 
 ;;; Font operations
 
-;; A PAK entry for a font looks like this: 
+;; An IOF entry for a font looks like this: 
 
 ;; (:name ".default-font" 
 ;;        :type :font 
