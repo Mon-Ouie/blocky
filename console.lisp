@@ -1038,9 +1038,10 @@ table."
 ;; again. Each page is stored in one IOF file, containing a single
 ;; resource with the serialized data stored in the :DATA field of the
 ;; resource record. Page-names are resource-names, and therefore must
-;; be unique within a given IOFORMS project. A page's IOF file is stored in
-;; {PROJECTNAME}/{PAGENAME}.iof, and for a given project these IOFs will
-;; all be included by {PROJECTNAME}/OBJECTS.IOF, which is an
+;; be unique within a given IOFORMS project. A page's IOF file is
+;; stored in {PROJECTNAME}/{PAGENAME}.iof, and for a given project
+;; these IOFs will all be included by
+;; {PROJECTNAME}/{PROJECTNAME}-OBJECT-INDEX.IOF, which is an
 ;; automatically generated IOF index linking to all the serialized
 ;; page IOF files.
 
@@ -1789,28 +1790,26 @@ also the file LIBSDL-LICENSE for details.
 ;;      (sdl-ttf-cffi::ttf-quit)))  
 ;; (pushnew 'quit-ttf sdl:*external-quit-on-exit*) 
 
-(defun play (&optional (project-name "standard") &rest args)
+(defun play (project-name &rest args)
   "This is the main entry point to IOFORMS. PROJECT-NAME is loaded 
 and its .startup resource is loaded."
-  (format t "~A" *copyright-text*)
-  (initialize-resource-table)
-  (setf *project-package-name* nil)
-  (setf *timestep-function* nil)
-  (setf *world* nil)
-  (initialize)
-  (setf *timesteps* 0)
-  (setf *keyboard-timestep-number* 0)
-  (setf *initialization-hook* nil)
-  (setf *play-args* args)
-  (setf *random-state* (make-random-state t))
-  ;; override project to play?
-  (setf *project* project-name)
-  ;; add library search paths for Mac if needed
-  (setup-library-search-paths)
   (unwind-protect
        (progn 
 	 #+linux (do-cffi-loading)
 	 ;;
+	 (format t "~A" *copyright-text*)
+	 (setf *project-package-name* nil)
+	 (setf *timestep-function* nil)
+	 (setf *world* nil)
+	 (initialize)
+	 (setf *timesteps* 0)
+	 (setf *keyboard-timestep-number* 0)
+	 (setf *initialization-hook* nil)
+	 (setf *play-args* args)
+	 (setf *random-state* (make-random-state t))
+	 (setf *project* project-name)
+	 ;; add library search paths for Mac if needed
+	 (setup-library-search-paths)
 	 (sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
 	   ;; (unless (sdl:initialise-default-font sdl:*ttf-font-vera*)
 	   ;;   (error "FATAL: Cannot initialize the default font."))
