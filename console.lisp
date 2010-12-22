@@ -180,6 +180,8 @@ elements of the vector produced by evaluating EXPR."
 
 ;;; The active blocks list 
 
+;; see also blocks.lisp
+
 (defvar *blocks* nil "List of active block objects. 
 These blocks receive input events and are rendered to the screen by
 the console. See also `send-event-to-blocks'.
@@ -200,7 +202,7 @@ and the like."
 
 (defun install-block (block)
   (unless (find block *blocks*)
-    (setf *blocks* (append *blocks* (list block))))
+    (setf *blocks* (nconc *blocks* (list block))))
   (show-blocks))
 
 (defun uninstall-block (block)
