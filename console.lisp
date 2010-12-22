@@ -883,6 +883,43 @@ resource is stored; see also `find-resource'."
 		   *resource-table*) 
 	  val)))
 
+;;; Opening and saving projects
+
+(defvar *project* nil "The name of the current project.")
+
+(defvar *project-path* nil "The pathname of the currently opened project. 
+This is where all saved objects are stored.")
+
+(defvar *after-load-project-hook* nil)
+
+(defvar *project-package-name* nil)
+
+(defun project-package-name (&optional (project-name *project*))
+  (or *project-package-name* (make-keyword project-name)))
+    
+(defun open-project (project &key (autoload t))
+  "Load the project named PROJECT. Load any resources marked with a
+non-nil :autoload property. This operation also sets the default
+object save directory (by setting the current `*project*'. See also
+`save-object-resource')."
+  (setf *project* project)
+  (setf *pending-autoload-resources* nil)
+  (setf *project-path* (find-project-path project))
+  (assert (pathnamep *project-path*))
+  (index-project project)
+  (when autoload 
+    (mapc #'load-resource (nreverse *pending-autoload-resources*)))
+  (setf *pending-autoload-resources* nil)
+  ;; now load any objects
+  (let ((object-index-file (find-project-file project *object-index-filename*)))
+    (when (probe-file object-index-file)
+      (message "Loading saved objects from ~S" object-index-file)
+      (index-pak project object-index-file)))
+  (run-hook '*after-load-project-hook*)
+  (let ((package (find-package (project-package-name))))
+    (when package
+      (setf *package* package))))
+
 (defvar *executable* nil)
 
 (defvar *project-directories* 
@@ -902,8 +939,6 @@ resource is stored; see also `find-resource'."
 Directories are searched in list order.")
 ;; (load-time-value 
 ;; (or #.*compile-file-truename* *load-truename*))))
-
-(defvar *project-path* nil)
 
 (defun find-project-path (project-name)
   "Search the `*project-directories*' path for a directory with the
@@ -925,7 +960,8 @@ Please see the included file BINARY-README for instructions."
 
 (defun find-project-file (project-name file)
   "Make a pathname for FILE within the project PROJECT-NAME."
-  (merge-pathnames file (find-project-path project-name)))
+  (merge-pathnames file (or *project-path* 
+			    (find-project-path project-name))))
 
 (defun directory-is-project-p (dir)
   "Test whether a {PROJECTNAME}.PAK index file exists in a directory."
@@ -983,7 +1019,7 @@ table. File names are relative to the project PROJECT-NAME."
   "Add all the resources from the project PROJECT-NAME to the resource
 table."
   (let ((index-file (find-project-file project-name
-				      (concatenate 'string project-name ".pak"))))
+				      (concatenate 'string project-name *pak-file-extension*))))
     (index-pak project-name index-file)))
 
 ;;; Standard resource names
@@ -1312,38 +1348,6 @@ found."
 (defun set-resource-modified-p (resource &optional (value t))
   (let ((res (find-resource resource)))
     (setf (resource-modified-p res) value)))
-
-;;; Loading projects as a whole and autoloading resources
-
-(defvar *project* nil "The name of the current project.")
-
-(defparameter *after-load-project-hook* nil)
-
-(defvar *project-package-name* nil)
-
-(defun project-package-name (&optional (project-name *project*))
-  (or *project-package-name* (make-keyword project-name)))
-    
-(defun load-project (project &key (autoload t))
-  "Load the project named PROJECT. Load any resources marked with a
-non-nil :autoload property. This operation also sets the default
-object save directory (by setting the current `*project*'. See also
-`save-object-resource')."
-  (setf *project* project)
-  (setf *pending-autoload-resources* nil)
-  (index-project project)
-  (when autoload 
-    (mapc #'load-resource (nreverse *pending-autoload-resources*)))
-  (setf *pending-autoload-resources* nil)
-  ;; now load any objects
-  (let ((object-index-file (find-project-file project *object-index-filename*)))
-    (when (probe-file object-index-file)
-      (message "Loading saved objects from ~S" object-index-file)
-      (index-pak project object-index-file)))
-  (run-hook '*after-load-project-hook*)
-  (let ((package (find-package (project-package-name))))
-    (when package
-      (setf *package* package))))
 
 ;;; Custom audio generation
 
