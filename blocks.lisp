@@ -67,7 +67,7 @@
   (schema :documentation 
 	  "List of type keywords for corresponding expressions in <arguments>.
 See also `*argument-types*'.")
-  (operation :initform :block :documentation "Keyword name of method to be invoked on recipient.")
+  (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
   (type :initform :data :documentation "Type name of block. See also `*block-types*'.")
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
@@ -199,30 +199,30 @@ areas.")
     (when parent
       (/unplug parent self))))
 
-(define-method execute-arguments block (recipient)
+(define-method execute-arguments block (target)
   "Execute all blocks in <ARGUMENTS> from left-to-right. Results are
 placed in corresponding positions of <RESULTS>. Override this method
 when defining new blocks if you don't want to evaluate all the
 arguments all the time."
   (with-fields (arguments results) self
     (setf results (mapcar #'(lambda (block)
-			      (/run block recipient))
+			      (/run block target))
 			  arguments))))
     ;; (when (and arguments results)
     ;;   (dotimes (n (length arguments))
     ;; 	(setf (nth n results)
     ;; 	      (/run (nth n arguments)
-    ;; 		    recipient))))))
+    ;; 		    target))))))
 
-(define-method execute block (recipient)
-  "Carry out the block's action by sending messages to the object RECIPIENT.
-The RECIPIENT argument is provided by the script executing the block,
+(define-method execute block (target)
+  "Carry out the block's action by sending messages to the object TARGET.
+The TARGET argument is provided by the script executing the block,
 and its value will be the IOFORMS object associated with the script.
 The <RESULTS> field will be a list of results obtained by
 executing/evaluating the blocks in <ARGUMENTS> (see also
 `BLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
-send the <OPERATION> field's value as a message to the recipient, with
-the arguments to the recipient's method being the current computed
+send the <OPERATION> field's value as a message to the target, with
+the arguments to the target's method being the current computed
 <RESULTS>, and return the result of the method call. This default
 action is sufficient for many blocks whose main purpose is to send a
 single message; other blocks can redefine this /EXECUTE method to do
@@ -232,14 +232,14 @@ something else. See also `defblock' and `send'."
 	       (if (symbolp item)
 		   (make-keyword item)
 		   item)))
-    (apply #'ioforms:send nil operation recipient 
+    (apply #'ioforms:send nil operation target 
 	   (mapcar #'clean results)))))
 
-(define-method run block (recipient)
-  "Run nested blocks on RECIPIENT to produce results, then run this
+(define-method run block (target)
+  "Run nested blocks on TARGET to produce results, then run this
 block with those results as input."
-  (/execute-arguments self recipient)
-  (/execute self recipient))
+  (/execute-arguments self target)
+  (/execute self target))
 
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
@@ -616,8 +616,8 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 (defun null-block () (clone =null=))
 
-(define-method run null (recipient)
-  (declare (ignore recipient)))
+(define-method run null (target)
+  (declare (ignore target)))
 
 (defparameter *null-display-string* "()")
 ;; (string #\LATIN_SMALL_LETTER_O_WITH_STROKE))
@@ -642,8 +642,8 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (defblock list
   (type :initform :structure))
 
-(define-method execute list (recipient)
-  (declare (ignore recipient))
+(define-method execute list (target)
+  (declare (ignore target))
   <results>)
 
 (define-method initialize list (&rest args)
@@ -714,8 +714,8 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (schema :iniform nil)
   (data :initform nil))
 
-(define-method execute entry (recipient)
-  (declare (ignore recipient))
+(define-method execute entry (target)
+  (declare (ignore target))
   <data>)
 
 (define-method set-data entry (data)
@@ -757,15 +757,15 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (schema :initform '(:block :block :block))
   (arguments :initform '(nil nil nil)))
 
-(define-method execute if (recipient)
+(define-method execute if (target)
   <results>)
 
-(define-method execute-arguments if (recipient)
+(define-method execute-arguments if (target)
   (with-fields (arguments results) self
     (destructuring-bind (predicate then else) arguments
-      (if (/run predicate recipient)
-	  (/run then recipient)
-	  (/run else recipient)))))
+      (if (/run predicate target)
+	  (/run then target)
+	  (/run else target)))))
 
 ;;; Get field value
 
@@ -773,10 +773,10 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (type :initform :variables)
   (schema :initform '(:block)))
 
-(define-method execute my (recipient)
+(define-method execute my (target)
   (with-fields (results) self
     (field-value (make-keyword (car results))
-		 recipient)))
+		 target)))
 
 ;;; Set field value
 
@@ -791,8 +791,8 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (type :initform :looks)
   (schema :initform '(:string)))
 
-(define-method execute emote (recipient)
-  (/emote recipient 
+(define-method execute emote (target)
+  (/emote target 
 	  (list (list (list (first <results>) :font *block-font*
 			    :foreground ".black")))
 	  :timeout 200 :style :clear))
@@ -839,8 +839,8 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (schema :initform '(:string))
   (arguments :initform '("fanfare")))
 
-(define-method execute play-music (recipient)
-  (/play-music recipient (first <results>) :loop t))
+(define-method execute play-music (target)
+  (/play-music target (first <results>) :loop t))
 
 (defblock play-sound 
   (type :initform :sound)
@@ -892,7 +892,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (schema :initform '(:number :number))
   (arguments :initform '(nil nil)))
 
-(define-method execute + (recipient)
+(define-method execute + (target)
   (with-fields (results) self
     (when (every #'integerp results)
       (apply #'+ results))))
@@ -908,18 +908,18 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-prototype script ()
   (blocks :initform '()
 	  :documentation "List of blocks in the script.")
-  (recipient :initform nil)
+  (target :initform nil)
   (variables :initform (make-hash-table :test 'eq)))
 
-(define-method initialize script (&key blocks variables recipient)
+(define-method initialize script (&key blocks variables target)
   (setf <blocks> blocks)
   (when variables (setf <variables> variables))
-  (when recipient (setf <recipient> recipient)))
+  (when target (setf <target> target)))
 
 (defvar *script*)
 
-(define-method set-recipient script (recipient)
-  (setf <recipient> recipient))
+(define-method set-target script (target)
+  (setf <target> target))
 
 (define-method is-member script (block)
   (with-fields (blocks) self
@@ -935,8 +935,8 @@ MOUSE-Y identify a point inside the block (or child block.)"
       (/move block x y))))
 
 (define-method run script (block)
-  (with-fields (blocks recipient) self
-    (/run block recipient)))
+  (with-fields (blocks target) self
+    (/run block target)))
 	    
 (define-method bring-to-front script (block)
   (with-fields (blocks) self
