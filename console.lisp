@@ -115,7 +115,7 @@
       (setf *keys* nil *mods* nil))
   (values *keys* *mods*))
 
-;;; Message logging
+;;; Logging messages to the standard output
 
 (defparameter *message-logging* nil)
 
@@ -184,27 +184,19 @@ elements of the vector produced by evaluating EXPR."
 These blocks receive input events and are rendered to the screen by
 the console. See also `send-event-to-blocks'.
 
-Do not set this variable directly from a module; instead, call
+Do not set this variable directly from a project; instead, call
 `install-blocks'.")
 
 (defun show-blocks ()
   "Draw the active blocks to the screen."
   (dolist (block *blocks*)
-    (with-field-values (image x y) block
-      (when image
-	(send nil :render block))))
-  (dolist (block *blocks*)
-    (with-field-values (image x y visible) block
-      (when visible
-	(sdl:draw-surface-at-* image x y)))))
+    (send nil :draw block sdl:*default-surface*)))
 
 (defun install-blocks (&rest blocks)
   "User-level function for setting the active block set. Note that
 IOFORMS may override the current block set at any time for system menus
 and the like."
   (setf *blocks* blocks))
-;; TODO why does this crash: 
-;;  (show-blocks))
 
 (defun install-block (block)
   (unless (find block *blocks*)
@@ -626,13 +618,13 @@ window. Set this in the game startup file.")
 
 ;;; The main loop of IOFORMS
 
-(defvar *next-module* "standard")
+(defvar *next-project* "standard")
 
 (defvar *quitting* nil)
 
 (defvar *fullscreen* nil "When non-nil, attempt to use fullscreen mode.")
 
-(defvar *window-title* "IOFORMS")
+(defvar *window-title* "ioforms")
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
 
@@ -790,7 +782,7 @@ structure with the following elements:
           See also `*resource-handlers*' and `load-resource'.
 
           The special type :pak is used to load the pak file
-          specified in :FILE, from (optionally) another module
+          specified in :FILE, from (optionally) another project
           whose name is given in :DATA.
 
           The special type :alias is used to provide multiple names
@@ -866,7 +858,7 @@ This prepares it for printing as part of a PAK file."
 	      (apply #'make-resource plist))
 	  (read-sexp-from-file filename)))
 
-;;; Resources and modules
+;;; Resources and projects
 
 (defvar *resource-table* nil 
   "A hash table mapping resource names to resource records. All loaded
@@ -887,10 +879,10 @@ function (see `*resource-handlers*').
 table, and loading the resource if it hasn't been loaded already.
 A lookup failure results in an error. See `find-resource'.
 
-A `module' is a directory full of resource files. The name of the
-module is the name of the directory. Each module must contain a
-file called {module-name}.pak, which should contain an index of
-all the module's resources. Multiple modules may be loaded at one
+A `project' is a directory full of resource files. The name of the
+project is the name of the directory. Each project must contain a
+file called {project-name}.pak, which should contain an index of
+all the project's resources. Multiple projects may be loaded at one
 time. In addition the special resource .startup will be loaded;
 if this is type :lisp, the startup code for your game can go in
 that external lisp file.")
@@ -913,7 +905,7 @@ resource is stored; see also `find-resource'."
 
 (defvar *executable* nil)
 
-(defvar *module-directories* 
+(defvar *project-directories* 
   (list (if *executable*
             (make-pathname :directory (pathname-directory (car #+sbcl sb-ext:*posix-argv*
                                                                #+clozure ccl:*command-line-argument-list*)))
@@ -926,34 +918,34 @@ resource is stored; see also `find-resource'."
 							    *load-truename*))
 			     :directory (pathname-directory #.(or *compile-file-truename*
 								  *load-truename*)))))))
-  "List of directories where IOFORMS will search for modules.
+  "List of directories where IOFORMS will search for projects.
 Directories are searched in list order.")
 ;; (load-time-value 
 ;; (or #.*compile-file-truename* *load-truename*))))
 
-(defun find-module-path (module-name)
-  "Search the `*module-directories*' path for a directory with the
-name MODULE-NAME. Returns the pathname if found, otherwise nil."
-  (let ((dirs *module-directories*))
+(defun find-project-path (project-name)
+  "Search the `*project-directories*' path for a directory with the
+name PROJECT-NAME. Returns the pathname if found, otherwise nil."
+  (let ((dirs *project-directories*))
     (message "Probing directories ~S..." dirs)
     (or 
      (loop 
        for dir in dirs for path
 	 = (probe-file (make-pathname :directory 
 				      (append (pathname-directory
-					       dir) (list module-name))
+					       dir) (list project-name))
 			    :defaults dir))
        when path return path)
-     (error "Cannot find module ~s in paths ~S. 
-You must set the variable IOFORMS:*MODULE-DIRECTORIES* in the configuration file ~~/.ioformsrc
+     (error "Cannot find project ~s in paths ~S. 
+You must set the variable IOFORMS:*PROJECT-DIRECTORIES* in the configuration file ~~/.ioformsrc
 Please see the included file BINARY-README for instructions."
-	    module-name dirs))))
+	    project-name dirs))))
 
-(defun find-module-file (module-name file)
-  "Make a pathname for FILE within the module MODULE-NAME."
-  (merge-pathnames file (find-module-path module-name)))
+(defun find-project-file (project-name file)
+  "Make a pathname for FILE within the project PROJECT-NAME."
+  (merge-pathnames file (find-project-path project-name)))
 
-(defun directory-is-module-p (dir)
+(defun directory-is-project-p (dir)
   "Test whether a PAK index file exists in a directory."
   (let ((index-filename (concatenate 'string
 				     (file-namestring dir)
@@ -963,32 +955,32 @@ Please see the included file BINARY-README for instructions."
 					      dir
 					      (namestring dir))))))
 
-(defun find-modules-in-directory (dir)
-  "Search DIR for modules and return a list of their names."
+(defun find-projects-in-directory (dir)
+  "Search DIR for projects and return a list of their names."
   (let ((dirnames (mapcar #'(lambda (s)
 			      (subseq s 0 (1- (length s))))
 			  (mapcar #'namestring
 				  (directory (concatenate 'string (namestring dir) "/*/"))))))
-    (remove-if-not #'directory-is-module-p dirnames)))
+    (remove-if-not #'directory-is-project-p dirnames)))
 
-(defun find-all-modules ()
+(defun find-all-projects ()
   (mapcar #'file-namestring
-	  (mapcan #'find-modules-in-directory *module-directories*)))
+	  (mapcan #'find-projects-in-directory *project-directories*)))
 
 (defvar *pending-autoload-resources* '())
 
-(defun index-pak (module-name pak-file)
+(defun index-pak (project-name pak-file)
   "Add all the resources from the pak PAK-FILE to the resource
-table. File names are relative to the module MODULE-NAME."
+table. File names are relative to the project PROJECT-NAME."
   (let ((resources (read-pak pak-file)))
     (dolist (res resources)
       (if (eq :pak (resource-type res))
 	  ;; we're including another pak file. if :data is specified,
-	  ;; take this as the name of the module where to look for
+	  ;; take this as the name of the project where to look for
 	  ;; that pak file and its resources.
-	  (let ((include-module (or (resource-data res) 
-				    module-name)))
-	    (index-pak include-module (find-module-file include-module
+	  (let ((include-project (or (resource-data res) 
+				    project-name)))
+	    (index-pak include-project (find-project-file include-project
 							(resource-file res))))
 	  ;; we're indexing a single resource.
 	  (progn
@@ -998,19 +990,19 @@ table. File names are relative to the module MODULE-NAME."
 	    (when (resource-file res)
 	      (setf (resource-file res)
 		    (merge-pathnames (resource-file res)
-				     (find-module-path module-name))))
+				     (find-project-path project-name))))
 	    ;; save the resource name for later autoloading, if needed
 	    (when (getf (resource-properties res) :autoload)
 	      (push res *pending-autoload-resources*)))))))
 
 (defparameter *object-index-filename* "objects.pak")
 
-(defun index-module (module-name)
-  "Add all the resources from the module MODULE-NAME to the resource
+(defun index-project (project-name)
+  "Add all the resources from the project PROJECT-NAME to the resource
 table."
-  (let ((index-file (find-module-file module-name
-				      (concatenate 'string module-name ".pak"))))
-    (index-pak module-name index-file)))
+  (let ((index-file (find-project-file project-name
+				      (concatenate 'string project-name ".pak"))))
+    (index-pak project-name index-file)))
 
 ;;; Standard resource names
 
@@ -1027,9 +1019,9 @@ table."
 ;; again. Each page is stored in one PAK file, containing a single
 ;; resource with the serialized data stored in the :DATA field of the
 ;; resource record. Page-names are resource-names, and therefore must
-;; be unique within a given IOFORMS module. A page's PAK file is stored in
-;; {MODULENAME}/{PAGENAME}.pak, and for a given module these PAKs will
-;; all be included by {MODULENAME}/OBJECTS.PAK, which is an
+;; be unique within a given IOFORMS project. A page's PAK file is stored in
+;; {PROJECTNAME}/{PAGENAME}.pak, and for a given project these PAKs will
+;; all be included by {PROJECTNAME}/OBJECTS.PAK, which is an
 ;; automatically generated PAK index linking to all the serialized
 ;; page PAK files.
 
@@ -1043,14 +1035,14 @@ OBJECT as the data."
     (prog1 resource
       (index-resource resource))))
 
-(defun save-object-resource (resource &optional (module *module*))
+(defun save-object-resource (resource &optional (project *project*))
   "Save an object resource to disk as {RESOURCE-NAME}.PAK."
   (let ((name (resource-name resource)))
     (message "Serializing resource ~S..." name)
 ;    (assert (object-p (resource-object resource)))
     (setf (resource-data resource) (serialize (resource-object resource)))
     (message "Saving resource ~S..." name)
-    (write-pak (find-module-file module 
+    (write-pak (find-project-file project 
 				 (concatenate 'string (resource-name resource)
 					      *pak-file-extension*))
 	       (list resource))
@@ -1078,7 +1070,7 @@ OBJECT as the data."
 		       (save-object-resource resource)))))))
       (maphash #'save *resource-table*))
     ;; write auto-generated index
-    (write-pak (find-module-file *module* *object-index-filename*) index)))
+    (write-pak (find-project-file *project* *object-index-filename*) index)))
 
 ;; (save-modified-objects t)
 
@@ -1347,35 +1339,35 @@ found."
   (let ((res (find-resource resource)))
     (setf (resource-modified-p res) value)))
 
-;;; Loading modules as a whole and autoloading resources
+;;; Loading projects as a whole and autoloading resources
 
-(defvar *module* nil "The name of the current module.")
+(defvar *project* nil "The name of the current project.")
 
-(defparameter *after-load-module-hook* nil)
+(defparameter *after-load-project-hook* nil)
 
-(defvar *module-package-name* nil)
+(defvar *project-package-name* nil)
 
-(defun module-package-name (&optional (module-name *module*))
-  (or *module-package-name* (make-keyword module-name)))
+(defun project-package-name (&optional (project-name *project*))
+  (or *project-package-name* (make-keyword project-name)))
     
-(defun load-module (module &key (autoload t))
-  "Load the module named MODULE. Load any resources marked with a
+(defun load-project (project &key (autoload t))
+  "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
-object save directory (by setting the current `*module*'. See also
+object save directory (by setting the current `*project*'. See also
 `save-object-resource')."
-  (setf *module* module)
+  (setf *project* project)
   (setf *pending-autoload-resources* nil)
-  (index-module module)
+  (index-project project)
   (when autoload 
     (mapc #'load-resource (nreverse *pending-autoload-resources*)))
   (setf *pending-autoload-resources* nil)
   ;; now load any objects
-  (let ((object-index-file (find-module-file module *object-index-filename*)))
+  (let ((object-index-file (find-project-file project *object-index-filename*)))
     (when (probe-file object-index-file)
       (message "Loading saved objects from ~S" object-index-file)
-      (index-pak module object-index-file)))
-  (run-hook '*after-load-module-hook*)
-  (let ((package (find-package (module-package-name))))
+      (index-pak project object-index-file)))
+  (run-hook '*after-load-project-hook*)
+  (let ((package (find-package (project-package-name))))
     (when package
       (setf *package* package))))
 
@@ -1635,7 +1627,7 @@ of the music."
 ;; expression (icon-image :move) becomes the image ".move".
 ;; See cells.lisp for a list of keywords.
 
-;; Standard icons for these are in the "standard" module. 
+;; Standard icons for these are in the "standard" project. 
 
 (defun icon-resource (key)
   "Return an icon resource for the key KEY.
@@ -1744,12 +1736,12 @@ The default destination is the main window."
 (defun quit (&optional shutdown)
   (when shutdown 
     (setf *quitting* t))
-  (setf *next-module* nil)
+  (setf *next-project* nil)
   (sdl:push-quit-event))
 
-(defun reset (&optional (module-name "standard"))
+(defun reset (&optional (project-name "standard"))
   (setf *quitting* nil)
-  (setf *next-module* module-name)
+  (setf *next-project* project-name)
   (sdl:push-quit-event))
 
 (defvar *copyright-text*
@@ -1844,12 +1836,12 @@ also the file LIBSDL-LICENSE for details.
 ;;      (sdl-ttf-cffi::ttf-quit)))  
 ;; (pushnew 'quit-ttf sdl:*external-quit-on-exit*) 
 
-(defun play (&optional (module-name "standard") &rest args)
-  "This is the main entry point to IOFORMS. MODULE-NAME is loaded 
+(defun play (&optional (project-name "standard") &rest args)
+  "This is the main entry point to IOFORMS. PROJECT-NAME is loaded 
 and its .startup resource is loaded."
   (format t "~A" *copyright-text*)
   (initialize-resource-table)
-  (setf *module-package-name* nil)
+  (setf *project-package-name* nil)
   (setf *physics-function* nil)
   (setf *world* nil)
   (initialize)
@@ -1858,8 +1850,8 @@ and its .startup resource is loaded."
   (setf *initialization-hook* nil)
   (setf *play-args* args)
   (setf *random-state* (make-random-state t))
-  ;; override module to play?
-  (setf *next-module* module-name)
+  ;; override project to play?
+  (setf *next-project* project-name)
   ;; add library search paths for Mac if needed
   (setup-library-search-paths)
   (unwind-protect
@@ -1884,8 +1876,8 @@ and its .startup resource is loaded."
 	       (setf *use-sound* nil))
 	     ;; set to mix lots of sounds
 	     (sdl-mixer:allocate-channels *channels*))
-	   (index-module "standard") 
-	   (load-module *next-module*)
+	   (index-project "standard") 
+	   (load-project *next-project*)
 	   
 	   (find-resource *startup*)
 	   (run-main-loop)))
