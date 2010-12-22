@@ -90,12 +90,12 @@ run-hook queue-tail make-queue queue unqueue queue-message
 queued-messages-p unqueue-message send-queue field-value
 random-direction *resource-table* load-font-resource
 save-object-resource /parent/initialize /queue/initialize
-draw-string-solid read-pak initialize-resource-table percent-of-time
+draw-string-solid read-iof initialize-resource-table percent-of-time
 render-formatted-paragraph make-formatted-string draw-string-shaded
 render-formatted-string render-formatted-line resource
 font-text-extents write-sexp-to-file with-message-sender
 *message-sender* =textbox= read-sexp-from-file with-fields
-with-field-values write-pak *grammar* one-of left-hand-side
+with-field-values write-iof *grammar* one-of left-hand-side
 right-hand-side expansions generate send-event-to-blocks play-music
 halt-music seek-music *joystick-mapping* *generic-joystick-mapping*
 *ps3-joystick-mapping* *joystick-button-symbols* draw-resource-image
@@ -110,9 +110,9 @@ find-all-projects *project* transform-tree stat-value draw-line
 set-message-verbosities operation-symbol message-symbol play-sample
 set-music-volume add-message-verbosities with-message-queue =minimap=
 draw-pixel *user-keyboard-layout* *fullscreen* draw-circle =emote=
-set-field-option-value =pager= =pager-prompt= load-project
+set-field-option-value =pager= =pager-prompt= open-project
 =sprite-special= field-options world set-frame-rate *frame-rate*
-=stack= *workbook* set-resource-modified-p *pak-file-extension*
+=stack= *workbook* set-resource-modified-p *iof-file-extension*
 *window-title* *window-position* =split= set-timer-interval =gcell=
 defgcell =page= *message-logging* overlay poll-joystick-axis
 poll-joystick-button reset-joystick set-screen-width =universe=
@@ -120,7 +120,7 @@ poll-joystick-button reset-joystick set-screen-width =universe=
 zoom-image is-zoomed-resource *timer-interval* save-objects
 enable-timer disable-timer while defmission enable-held-keys
 disable-held-keys do-cells draw-box *resizable* achieve *resize-hook*
-draw-rectangle *quitting* *after-load-project-hook* *mission*
+draw-rectangle *quitting* *after-open-project-hook* *mission*
 mission-variable set-mission-variable with-mission-locals =mission=
 *background-color* set-sample-callback set-music-callback
 cffi-chunk-buffer =command-cell= convert-cffi-sample get-sample-buffer
