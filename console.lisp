@@ -544,19 +544,10 @@ worlds.lisp. Cells are free to send messages to `*world*' at
 any time, because it is always bound to the world containing the cell
 at the time the cell method is run.")
 
-;;; Auto-zooming images
+;;; Scaling images
 
-(defvar *zoom-factor* 1 
-"When set to some integer greater than 1, all image resources are
-scaled by that factor unless marked with the property :nozoom t.")
-
-(defun is-zoomed-resource (resource)
-  "Return non-nil if the RESOURCE should be zoomed by `*zoom-factor*'."
-  (not (getf (resource-properties resource)
-	     :nozoom)))
-
-(defun zoom-image (image &optional (factor *zoom-factor*))
-  "Return a zoomed version of IMAGE, zoomed by FACTOR.
+(defun scale-image (image &optional (factor 1))
+  "Return a scaled version of IMAGE, scaled by FACTOR.
 Allocates a new image."
   (assert (integerp factor))
   (lispbuilder-sdl-gfx:zoom-surface factor factor
@@ -565,11 +556,10 @@ Allocates a new image."
 
 ;;; Timing
 
-(defvar *frame-rate* 30
-"The intended frame rate of the game. Recommended value is 30.")
+(defvar *frame-rate* 30 "The intended frame rate of the game.")
 
 (defun set-frame-rate (&optional (rate *frame-rate*))
-  "Set the SDL frame rate for the game."
+  "Set the frame rate for the game."
   (message "Setting frame rate to ~S" rate)
   (setf (sdl:frame-rate) rate))
 
@@ -1087,17 +1077,9 @@ also the documentation for DESERIALIZE."
 
 (defun load-image-resource (resource)
   "Loads an :IMAGE-type pak resource from a :FILE on disk."
-  ;; handle zooming
-  (let ((image 
-         (sdl-image:load-image (namestring (resource-file resource))
-                               :alpha 255)))
-    (if (or (= 1 *zoom-factor*)
-	    (not (is-zoomed-resource resource)))
-	image 
-	;; TODO get rid of this. subclass viewport instead
-	;; if you want to zoom everything. 
-	(zoom-image image *zoom-factor*))))
-
+  (sdl-image:load-image (namestring (resource-file resource))
+			:alpha 255))
+  
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type pak resource from a :FILE on disk. Looks
 for :SPRITE-WIDTH and :SPRITE-HEIGHT properties on the resource to
