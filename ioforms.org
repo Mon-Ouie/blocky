@@ -2,7 +2,7 @@
 # Special comments begin with "#+" and are used to control Org settings.
 #+title: IOFORMS
 #+author: David T. O'Toole 
-#+email: dto@gnu.org
+#+email: dto1138@gmail.com
 
 * Overview
 
