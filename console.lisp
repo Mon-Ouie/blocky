@@ -341,6 +341,8 @@ else.")
 
 ;;; Translating SDL key events into IOFORMS event lists
 
+;; see also keys.lisp
+
 (defparameter *other-modifier-symbols* '(:button-down :button-up :axis))
 
 (defun make-key-modifier-symbol (sdl-mod)
@@ -541,10 +543,6 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 worlds.lisp. Cells are free to send messages to `*world*' at
 any time, because it is always bound to the world containing the cell
 at the time the cell method is run.")
-
-(defun world ()
-  "Return the current world."
-  *world*)
 
 ;;; Auto-zooming images
 
