@@ -35,10 +35,6 @@
 
 (in-package :ioforms) 
 
-;;; Counting timesteps
-
-(defparameter *timesteps* 0)
-
 ;;; Keyboard state
 
 ;; see also keys.lisp
@@ -266,17 +262,6 @@ for backward-compatibility."
 	       (message "Breaking ~S due to match with ~S." event2 event)
 	       (remhash event2 *key-table*))))
     (maphash #'break-it *key-table*)))
-
-;;; Physics timestep callback
-
-(defvar *dt* 20)
-
-(defvar *physics-function* nil)
-
-(defun do-physics (&rest args) 
-  (incf *timesteps*)
-  (when (functionp *physics-function*)
-    (apply *physics-function* args)))
 
 ;;; Event handling and blocks
 
@@ -544,17 +529,19 @@ worlds.lisp. Cells are free to send messages to `*world*' at
 any time, because it is always bound to the world containing the cell
 at the time the cell method is run.")
 
-;;; Scaling images
-
-(defun scale-image (image &optional (factor 1))
-  "Return a scaled version of IMAGE, scaled by FACTOR.
-Allocates a new image."
-  (assert (integerp factor))
-  (lispbuilder-sdl-gfx:zoom-surface factor factor
-				    :surface image
-				    :smooth nil))
-
 ;;; Timing
+
+(defun get-ticks ()
+  (sdl:sdl-get-ticks))
+
+(defvar *dt* 20)
+
+(defvar *timestep-function* nil)
+
+(defun do-timestep (&rest args) 
+  (incf *timesteps*)
+  (when (functionp *timestep-function*)
+    (apply *timestep-function* args)))
 
 (defvar *frame-rate* 30 "The intended frame rate of the game.")
 
@@ -562,6 +549,8 @@ Allocates a new image."
   "Set the frame rate for the game."
   (message "Setting frame rate to ~S" rate)
   (setf (sdl:frame-rate) rate))
+
+(defparameter *timesteps* 0)
 
 (defvar *clock* 0 "Number of frames until next timer event.")
 
@@ -608,13 +597,14 @@ window. Set this in the game startup file.")
 
 ;;; The main loop of IOFORMS
 
-(defvar *next-project* "standard")
+(defvar *project* "standard")
 
 (defvar *quitting* nil)
 
 (defvar *fullscreen* nil "When non-nil, attempt to use fullscreen mode.")
 
 (defvar *window-title* "ioforms")
+
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
 
@@ -622,6 +612,7 @@ window. Set this in the game startup file.")
   "Initialize the console, open a window, and play.
 We want to process all inputs, update the game state, then update the
 display."
+  (run-hook '*initialization-hook*)
   (let ((fps (make-instance 'sdl:fps-mixed :dt *dt*)))
     (cond (*fullscreen*
 	   (sdl:window *screen-width* *screen-height*
@@ -644,7 +635,6 @@ display."
     (sdl:clear-display sdl:*black*)
     (show-blocks)
     (sdl:update-display)
-    (run-hook '*initialization-hook*)
     (let ((events-this-frame 0))
       (sdl:with-events ()
 	(:quit-event () (prog1 t))
@@ -723,9 +713,9 @@ display."
 		   ;; clean this up. these two cases aren't that different.
 		   (progn 
 		     (sdl:with-timestep ()
-		       (do-physics))
+		       (do-timestep))
 		     (sdl:clear-display sdl:*black*)
-		     (when *held-keys* (send-held-events)) ;; TODO move this to do-physics?
+		     (when *held-keys* (send-held-events)) ;; TODO move this to do-timestep?
 		     (show-blocks) 
 		     (sdl:update-display))))))))
   
@@ -791,7 +781,7 @@ structure with the following elements:
  :DATA    Lisp data encoding the resource itself, if any.
 
 In memory, these will be represented by resource structs (see below).
-On disk, it's Lisp data printed as text. This text will compress very
+On disk, it's Lisp data printed as text. This text should compress very
 well.
 
 The string '()' is a valid .PAK file; it contains no resources.")
@@ -806,7 +796,6 @@ The string '()' is a valid .PAK file; it contains no resources.")
 
 (defun resource-to-plist (res)
   "Convert the resource record RES into a property list.
-
 This prepares it for printing as part of a PAK file."
   (list :name (resource-name res)
 	:type (resource-type res)
@@ -855,11 +844,12 @@ This prepares it for printing as part of a PAK file."
 resources go in this one hash table.
 
 The `resource table' maps resource names to their corresponding
-records. `Indexing' a resource means that its resource record is
-added to the resource table. `Loading' a resource means that any
-associated driver-dependent object (SDL image surface, audio buffer
-object, etc) is created. This value is stored into the OBJECT field
-of the resource record upon loading; see `load-resource'.
+records. `Indexing' a resource means that its resource record is added
+to the resource table. `Loading' a resource means that any associated
+driver-dependent object (SDL image surface, audio buffer object, etc)
+is created, which may involve reading an image or sound file from the
+disk. This value is stored into the OBJECT field of the resource
+record upon loading; see `load-resource'.
 
 The loading operation may be driver-dependent, so each resource
 type (i.e. :image, :text, :sound) is handled by its own plugin
@@ -913,6 +903,8 @@ Directories are searched in list order.")
 ;; (load-time-value 
 ;; (or #.*compile-file-truename* *load-truename*))))
 
+(defvar *project-path* nil)
+
 (defun find-project-path (project-name)
   "Search the `*project-directories*' path for a directory with the
 name PROJECT-NAME. Returns the pathname if found, otherwise nil."
@@ -936,7 +928,7 @@ Please see the included file BINARY-README for instructions."
   (merge-pathnames file (find-project-path project-name)))
 
 (defun directory-is-project-p (dir)
-  "Test whether a PAK index file exists in a directory."
+  "Test whether a {PROJECTNAME}.PAK index file exists in a directory."
   (let ((index-filename (concatenate 'string
 				     (file-namestring dir)
 				     *pak-file-extension*)))
@@ -1028,22 +1020,19 @@ OBJECT as the data."
 (defun save-object-resource (resource &optional (project *project*))
   "Save an object resource to disk as {RESOURCE-NAME}.PAK."
   (let ((name (resource-name resource)))
-    (message "Serializing resource ~S..." name)
-;    (assert (object-p (resource-object resource)))
     (setf (resource-data resource) (serialize (resource-object resource)))
     (message "Saving resource ~S..." name)
     (write-pak (find-project-file project 
 				 (concatenate 'string (resource-name resource)
 					      *pak-file-extension*))
 	       (list resource))
-    (message "Saving resource ~S... Done." name)
     (setf (resource-modified-p resource) nil)
     (setf (resource-data resource) nil)))
 
 (defun is-special-resource (resource)
   (string= "*" (string (aref (resource-name resource) 0))))
   
-(defun save-modified-objects (&optional force)
+(defun save-objects (&optional force)
   (let (index)
     (labels ((save (name resource)
 	       (when (not (stringp resource))
@@ -1061,8 +1050,6 @@ OBJECT as the data."
       (maphash #'save *resource-table*))
     ;; write auto-generated index
     (write-pak (find-project-file *project* *object-index-filename*) index)))
-
-;; (save-modified-objects t)
 
 (defun load-object-resource (resource)
   "Loads a serialized :OBJECT resource from the Lisp data in the 
@@ -1237,8 +1224,13 @@ of the record.")
   (sdl:set-surface-* image :x 0 :y 0)
   image))
 
-(defun scale-image (resource scale)
-  (zoom-image (resource-object resource) scale))
+(defun scale-image (image &optional (factor 1))
+  "Return a scaled version of IMAGE, scaled by FACTOR.
+Allocates a new image."
+  (assert (integerp factor))
+  (lispbuilder-sdl-gfx:zoom-surface factor factor
+				    :surface (resource-object image)
+				    :smooth nil))
 
 (defvar *resource-transformations* 
   (list :rotate #'rotate-image
@@ -1603,27 +1595,6 @@ of the music."
 				     :type :color
 				     :data (list red green blue))))))
 
-;;; Icons
-
-;; An icon is an image that corresponds to a cell method keyword. The
-;; expression (icon-image :move) becomes the image ".move".
-;; See cells.lisp for a list of keywords.
-
-;; Standard icons for these are in the "standard" project. 
-
-(defun icon-resource (key)
-  "Return an icon resource for the key KEY.
-The standard GEAR icon is used when no other applicable icon can be
-found."
-  (or (find-resource (concatenate 'string "."
-				  (string-downcase (symbol-name key)))
-		     :noerror)
-      (find-resource ".gear")))
-
-(defun icon-image (key)
-  "Return an icon image name for KEY."
-  (resource-name (icon-resource key)))
-
 ;;; Creating and displaying images
 
 ;; The "driver dependent objects" for IOFORMS images are just SDL:SURFACE
@@ -1708,22 +1679,17 @@ The default destination is the main window."
 		    destination)
   (sdl-gfx:draw-aa-circle-* x y radius :surface destination :color (find-resource-object color)))
 
-;;; Millisecond clock
-
-(defun get-ticks ()
-  (sdl:sdl-get-ticks))
-
 ;;; Engine status
 
 (defun quit (&optional shutdown)
   (when shutdown 
     (setf *quitting* t))
-  (setf *next-project* nil)
+  (setf *project* nil)
   (sdl:push-quit-event))
 
 (defun reset (&optional (project-name "standard"))
   (setf *quitting* nil)
-  (setf *next-project* project-name)
+  (setf *project* project-name)
   (sdl:push-quit-event))
 
 (defvar *copyright-text*
@@ -1824,7 +1790,7 @@ and its .startup resource is loaded."
   (format t "~A" *copyright-text*)
   (initialize-resource-table)
   (setf *project-package-name* nil)
-  (setf *physics-function* nil)
+  (setf *timestep-function* nil)
   (setf *world* nil)
   (initialize)
   (setf *timesteps* 0)
@@ -1833,7 +1799,7 @@ and its .startup resource is loaded."
   (setf *play-args* args)
   (setf *random-state* (make-random-state t))
   ;; override project to play?
-  (setf *next-project* project-name)
+  (setf *project* project-name)
   ;; add library search paths for Mac if needed
   (setup-library-search-paths)
   (unwind-protect
@@ -1859,8 +1825,7 @@ and its .startup resource is loaded."
 	     ;; set to mix lots of sounds
 	     (sdl-mixer:allocate-channels *channels*))
 	   (index-project "standard") 
-	   (load-project *next-project*)
-	   
+	   (load-project *project*)
 	   (find-resource *startup*)
 	   (run-main-loop)))
     (sdl:quit-sdl)))

@@ -42,7 +42,7 @@
   (:use :common-lisp) 
   (:export *default-frame-width* *default-frame-height* =null= null-block =viewport=
 *frequency* *output-chunksize* *output-channels* halt-sample *dt*
-defgame *physics-function* =equipment= *default-world-axis-size*
+defgame *timestep-function* =equipment= *default-world-axis-size*
 defgsprite generic-keybind *default-world-z-size* =browser=
 install-blocks =balloon= =form= keyboard-held-p keyboard-pressed-p
 keyboard-released-p keyboard-time-in-current-state
@@ -78,7 +78,7 @@ load-lisp-resource *executable* *resource-handlers* load-resource
 find-resource find-resource-object *colors* *world*
 load-user-init-file *project-directories* resource-to-plist *osx*
 *linux* make-resource make-object-resource make-event =block=
-*active-blocks* bind-key-to-prompt-insertion make-field-initializer
+*blocks* bind-key-to-prompt-insertion make-field-initializer
 clone make-field-initializer-body make-key-modifier-symbol
 make-key-string normalize-event make-keyword make-object queue-head
 queue-max queue-count *sender* make-special-variable-name
@@ -105,7 +105,7 @@ trace-column trace-octagon trace-line midpoint =asterisk=
 get-some-object-name transform-declaration-field-descriptor
 show-blocks no-such-field =narrator= find-projects-in-directory goal
 =mission= =gateway= =launchpad= =environment= directory-is-project-p
-find-all-projects *next-project* transform-tree stat-value draw-line
+find-all-projects *project* transform-tree stat-value draw-line
 *default-message-verbosities* *message-verbosities* add-overlay
 set-message-verbosities operation-symbol message-symbol play-sample
 set-music-volume add-message-verbosities with-message-queue =minimap=
@@ -117,7 +117,7 @@ set-field-option-value =pager= =pager-prompt= load-project
 defgcell =page= *message-logging* overlay poll-joystick-axis
 poll-joystick-button reset-joystick set-screen-width =universe=
 *universe* *play-args* set-screen-height genseq *zoom-factor*
-zoom-image is-zoomed-resource *timer-interval* save-modified-objects
+zoom-image is-zoomed-resource *timer-interval* save-objects
 enable-timer disable-timer while defmission enable-held-keys
 disable-held-keys do-cells draw-box *resizable* achieve *resize-hook*
 draw-rectangle *quitting* *after-load-project-hook* *mission*
