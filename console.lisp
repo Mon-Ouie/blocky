@@ -1087,7 +1087,7 @@ OBJECT as the data."
 		       (save-object-resource resource)))))))
       (maphash #'save *resource-table*))
     ;; write auto-generated index
-    (write-iof (find-project-file *project* (object-index-filename *project*))) index))
+    (write-iof (find-project-file *project* (object-index-filename *project*)) index)))
 
 (defun load-object-resource (resource)
   "Loads a serialized :OBJECT resource from the Lisp data in the 
