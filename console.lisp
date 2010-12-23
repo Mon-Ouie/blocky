@@ -897,48 +897,39 @@ This is where all saved objects are stored.")
 (defun project-package-name (&optional (project-name *project*))
   (or *project-package-name* (make-keyword project-name)))
     
-(defun open-project (project &key (autoload t))
-  "Load the project named PROJECT. Load any resources marked with a
-non-nil :autoload property. This operation also sets the default
-object save directory (by setting the current `*project*'. See also
-`save-object-resource')."
-  (setf *project* project)
-  (setf *pending-autoload-resources* nil)
-  (setf *project-path* (find-project-path project))
-  (assert (pathnamep *project-path*))
-  (index-project project)
-  (when autoload 
-    (mapc #'load-resource (nreverse *pending-autoload-resources*)))
-  (setf *pending-autoload-resources* nil)
-  ;; now load any objects
-  (let ((object-index-file (find-project-file project (object-index-filename project))))
-    (when (probe-file object-index-file)
-      (message "Loading saved objects from ~S" object-index-file)
-      (index-iof project object-index-file)))
-  (run-hook '*after-load-project-hook*)
-  (let ((package (find-package (project-package-name))))
-    (when package
-      (setf *package* package))))
-
 (defvar *executable* nil)
 
-(defvar *project-directories* 
-  (list (if *executable*
-            (make-pathname :directory (pathname-directory (car #+sbcl sb-ext:*posix-argv*
-                                                               #+clozure ccl:*command-line-argument-list*)))
-	    (make-pathname :directory 
-			   (pathname-directory 
-			    (make-pathname
-			     :host (pathname-host #.(or *compile-file-truename*
+(defun make-directory (directory)
+  (ensure-directories-exist (make-pathname :name "NAME" :type "TYPE"
+					   :defaults directory)))
+
+(defparameter *projects-directory-name* "projects")
+
+(defun make-default-paths () 
+  (let ((ioforms-directory
+	 (if *executable*
+	     (make-pathname :directory 
+			    (pathname-directory 
+			     (car #+sbcl sb-ext:*posix-argv*
+				  #+clozure ccl:*command-line-argument-list*)))
+	     (make-pathname :directory 
+			    (pathname-directory 
+			     (make-pathname
+			      :host (pathname-host #.(or *compile-file-truename*
+						    *load-truename*))
+			 :device (pathname-device #.(or *compile-file-truename*
 							*load-truename*))
-			     :device (pathname-device #.(or *compile-file-truename*
-							    *load-truename*))
-			     :directory (pathname-directory #.(or *compile-file-truename*
-								  *load-truename*)))))))
+			 :directory (pathname-directory #.(or *compile-file-truename*
+							      *load-truename*))))))))
+    ;; ensure projects subfolder exists
+    (let ((projects-directory (make-pathname :name *projects-directory-name* 
+					     :defaults ioforms-directory)))
+      (make-directory projects-directory)
+      (list ioforms-directory projects-directory))))
+
+(defvar *project-directories* nil)
   "List of directories where IOFORMS will search for projects.
 Directories are searched in list order.")
-;; (load-time-value 
-;; (or #.*compile-file-truename* *load-truename*))))
 
 (defun find-project-path (project-name)
   "Search the `*project-directories*' path for a directory with the
@@ -962,6 +953,29 @@ Please see the included file BINARY-README for instructions."
   "Make a pathname for FILE within the project PROJECT-NAME."
   (merge-pathnames file (or *project-path* 
 			    (find-project-path project-name))))
+
+(defun open-project (project &key (autoload t))
+  "Load the project named PROJECT. Load any resources marked with a
+non-nil :autoload property. This operation also sets the default
+object save directory (by setting the current `*project*'. See also
+`save-object-resource')."
+  (setf *project* project)
+  (setf *pending-autoload-resources* nil)
+  (setf *project-path* (find-project-path project))
+  (assert (pathnamep *project-path*))
+  (index-project project)
+  (when autoload 
+    (mapc #'load-resource (nreverse *pending-autoload-resources*)))
+  (setf *pending-autoload-resources* nil)
+  ;; now load any objects
+  (let ((object-index-file (find-project-file project (object-index-filename project))))
+    (when (probe-file object-index-file)
+      (message "Loading saved objects from ~S" object-index-file)
+      (index-iof project object-index-file)))
+  (run-hook '*after-load-project-hook*)
+  (let ((package (find-package (project-package-name))))
+    (when package
+      (setf *package* package))))
 
 (defun directory-is-project-p (dir)
   "Test whether a {PROJECTNAME}.IOF index file exists in a directory."
@@ -1014,13 +1028,13 @@ table. File names are relative to the project PROJECT-NAME."
 	      (push res *pending-autoload-resources*)))))))
 
 (defun object-index-filename (project-name)
-  (concatenate 'string project-name "-object-index" *iof-file-extension*))
+  (concatenate 'string project-name *iof-file-extension*))
 
 (defun index-project (project-name)
   "Add all the resources from the project PROJECT-NAME to the resource
 table."
   (let ((index-file (find-project-file project-name
-				      (concatenate 'string project-name *iof-file-extension*))))
+				       (object-index-filename project-name))))
     (index-iof project-name index-file)))
 
 ;;; Standard resource names
@@ -1070,21 +1084,33 @@ OBJECT as the data."
 (defun is-special-resource (resource)
   (string= "*" (string (aref (resource-name resource) 0))))
   
+(defun save-resource (name resource)
+  (let (index)
+    (let ((pathname (resource-file resource))
+	  (link (copy-structure resource)))
+      (if (eq :object (resource-type resource))
+	  (unless (is-special-resource resource)
+	    ;; we want to index them all, whether or not we save them all.
+	    ;; make a link resource (i.e. of type :iof) to pull this in later
+	    (setf link (make-resource :type :iof 
+				      :file (concatenate 'string
+							 (resource-name resource)
+							 *iof-file-extension*)))
+	    (push link index)
+	    (when (or force (resource-modified-p resource))
+	      (save-object-resource resource)))
+	  ;; just a normal resource
+	  (progn 
+	    (setf (resource-file link) (namestring pathname)
+		  (resource-data link) nil
+		  ;; mark the original as saved
+		  (resource-modified-p resource) nil)
+	    (push link index))))
+    index))
+
 (defun save-objects (&optional force)
   (let (index)
-    (labels ((save (name resource)
-	       (when (not (stringp resource))
-		 (when (eq :object (resource-type resource))
-		   (unless (is-special-resource resource)
-		     ;; we want to index them all, whether or not we save them all.
-		     ;; make a link resource (i.e. of type :iof) to pull this in later
-		     (let ((link-resource (make-resource :type :iof 
-							 :file (concatenate 'string
-									    (resource-name resource)
-									    *iof-file-extension*))))
-		       (push link-resource index))
-		     (when (or force (resource-modified-p resource))
-		       (save-object-resource resource)))))))
+    (labels 
       (maphash #'save *resources*))
     ;; write auto-generated index
     (write-iof (find-project-file *project* (object-index-filename *project*)) index)))
@@ -1790,7 +1816,7 @@ also the file LIBSDL-LICENSE for details.
 ;;      (sdl-ttf-cffi::ttf-quit)))  
 ;; (pushnew 'quit-ttf sdl:*external-quit-on-exit*) 
 
-(defun play (project-name &rest args)
+(defun ioforms (project-name &rest args)
   "This is the main entry point to IOFORMS. PROJECT-NAME is loaded 
 and its .startup resource is loaded."
   (unwind-protect
@@ -1799,6 +1825,7 @@ and its .startup resource is loaded."
 	 ;;
 	 (format t "~A" *copyright-text*)
 	 (setf *project-package-name* nil)
+	 (setf *project-directories* (make-default-paths))
 	 (setf *timestep-function* nil)
 	 (setf *world* nil)
 	 (initialize)
@@ -1829,20 +1856,9 @@ and its .startup resource is loaded."
 	     ;; set to mix lots of sounds
 	     (sdl-mixer:allocate-channels *channels*))
 	   (index-project "standard") 
-	   (load-project *project*)
+	   (open-project *project*)
 	   (find-resource *startup*)
 	   (run-main-loop)))
     (sdl:quit-sdl)))
-				    ;; ;; deliver messages in a queued environment
-				    ;; 	   (sdl:clear-display sdl:*black*)
-				    ;; 	   (when *world*
-				    ;; 	     (when (field-value :message-queue *world*)
-				    ;; 	       (with-message-queue (field-value :message-queue *world*)
-				    ;; 		 (case button
-				    ;; 		   (1 (when (has-method :select object) 
-				    ;; 			(send nil :activate object)))
-				    ;; 		   (3 (when (has-method :activate object) 
-				    ;; 			(send nil :activate object)))))
-				    ;; 	       (send nil :process-messages *world*)))))))
 
 ;;; console.lisp ends here
