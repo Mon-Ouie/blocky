@@ -115,16 +115,20 @@
 
 (defparameter *message-logging* nil)
 
-(defun message (format-string &rest args)
-  "Print a log message to the standard output. The FORMAT-STRING and
-remaining arguments are passed to `format'.
+(defun message-to-standard-output (format-string &rest args)
+  (apply #'format t format-string args)
+  (fresh-line)
+  (force-output))
 
-When the variable `*message-logging*' is nil, this output is
-disabled."
-  (when *message-logging*
-    (apply #'format t format-string args)
-    (fresh-line)
-    (force-output)))
+(defvar *message-function* #'message-to-standard-output)
+
+(defun message (format-string &rest args)
+  "Print a log message by passing the arguments to
+`*message-function'. When the variable `*message-logging*' is nil,
+this output is disabled."
+  (when (and *message-logging* 
+	     (functionp *message-function*))
+    (apply *message-function* format-string args)))
 
 ;;; Sequence numbers
 
@@ -903,9 +907,10 @@ This is where all saved objects are stored.")
   (ensure-directories-exist (make-pathname :name "NAME" :type "TYPE"
 					   :defaults directory)))
 
-(defparameter *projects-directory-name* "projects")
-
-(defun make-default-paths () 
+(defun projects-directory ()
+  (let ((projects-directory (make-pathname :name *projects-directory-name* 
+					     :defaults ioforms-directory)))
+(defun ioforms-directory ()
   (let ((ioforms-directory
 	 (if *executable*
 	     (make-pathname :directory 
@@ -921,11 +926,14 @@ This is where all saved objects are stored.")
 							*load-truename*))
 			 :directory (pathname-directory #.(or *compile-file-truename*
 							      *load-truename*))))))))
+
+
+(defparameter *projects-directory-name* "projects")
+
+(defun configure-directories () 
     ;; ensure projects subfolder exists
-    (let ((projects-directory (make-pathname :name *projects-directory-name* 
-					     :defaults ioforms-directory)))
-      (make-directory projects-directory)
-      (list ioforms-directory projects-directory))))
+    (make-directory (projects-directory))
+    (list ioforms-directory projects-directory))))
 
 (defvar *project-directories* nil
   "List of directories where IOFORMS will search for projects.
@@ -1077,35 +1085,32 @@ OBJECT as the data."
 				 (concatenate 'string (resource-name resource)
 					      *iof-file-extension*))
 	       (list resource))
-    (setf (resource-modified-p resource) nil)
     (setf (resource-data resource) nil)))
 
 (defun is-special-resource (resource)
   (string= "*" (string (aref (resource-name resource) 0))))
+
+(defun make-resource-link (resource)
+  (make-resource :type :iof 
+		 :file (concatenate 'string
+				    (resource-name resource)
+				    *iof-file-extension*)))
   
 (defun save-resource (name resource)
-  (block saving
-    (let ((pathname (resource-file resource))
-	  (link (copy-structure resource)))
+  (let ((pathname (resource-file resource))
+	(link (make-resource-link resource)))
+    (prog1 link 
       (if (eq :object (resource-type resource))
-	  (unless (is-special-resource resource)
-	    ;; we want to index them all, whether or not we save them all.
-	    ;; make a link resource (i.e. of type :iof) to pull this in later
-	    (setf link (make-resource :type :iof 
-				      :file (concatenate 'string
-							 (resource-name resource)
-							 *iof-file-extension*)))
-	      (save-object-resource resource)
-	      (return-from saving link))
+	  ;; we want to index them all, whether or not we save them all.
+	  ;; make a link resource (i.e. of type :iof) to pull this in later
+	  (save-object-resource resource)
 	  ;; just a normal resource
-	  (progn 
-	    (setf (resource-file link) (namestring pathname)
-		  (resource-data link) nil
-		  ;; mark the original as saved
-		  (resource-modified-p resource) nil)
-	    (return-from saving link))))))
+	  (setf (resource-file link) (namestring pathname)
+		(resource-data link) nil))
+      ;; finally, mark the original as saved.
+      (resource-modified-p resource) nil)))
 
-(defun save-objects (&optional force)
+(defun save-project (&optional force)
   (let (index)
     (labels ((save (name resource) 
 	       (when (or force (resource-modified-p resource))
@@ -1114,8 +1119,17 @@ OBJECT as the data."
       (write-iof (find-project-file *project* (object-index-filename *project*)) 
 		 (nreverse index)))))
 
-(defun save-all-objects ()
-  (save-objects :force))
+(defun save-everything ()
+  (save-project :force))
+
+(defvar *export-formats* :archive :application)
+
+(defun export-archive (pathname)
+  (
+
+(defun export-application
+
+(defun export-project (format)
 
 ;;;  Resource object loading handlers
 
