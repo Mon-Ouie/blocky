@@ -76,13 +76,13 @@ defcell defworld *choose-direction-menu* set-field-options
 field-option-value index-resource find-project-path index-project
 load-image-resource load-lisp-resource *executable* *function-buttons*
 *corner-buttons* *dance-arrows* *punctuation* *dance-phrase-symbols*
-*dance-keybindings* *energy-dance-pad-mapping*
+*dance-keybindings* *energy-dance-pad-mapping* *message-function*
 *dark-target-arrow-images* get-button-index arrow-image
-arrow-formatted-string ticks-per-beat event-time event-arrow
-*step-tolerance* *resource-handlers* load-resource find-resource
-find-resource-object *colors* *world* load-user-init-file
-*project-directories* resource-to-plist *osx* *linux* make-resource
-make-object-resource make-event =block= *blocks*
+message-to-standard-output arrow-formatted-string ticks-per-beat
+event-time event-arrow *step-tolerance* *resource-handlers*
+load-resource find-resource find-resource-object *colors* *world*
+load-user-init-file *project-directories* resource-to-plist *osx*
+*linux* make-resource make-object-resource make-event =block= *blocks*
 bind-key-to-prompt-insertion make-field-initializer clone
 make-field-initializer-body make-key-modifier-symbol make-key-string
 normalize-event make-keyword make-object queue-head queue-max
@@ -91,6 +91,8 @@ null-parent *message-send-symbol-suffix* *x11-color-data* object-name
 object-parent send send-super send-queue self opposite-direction
 object-address-string object step-in-direction direction-to =cell=
 plasma-rect subdivide-rect render-plasma add-hook run-hook queue-tail
+make-resource-link save-resource save-project save-everything
+*export-formats* export-archive export-application export-project
 make-queue queue unqueue queue-message queued-messages-p
 unqueue-message send-queue field-value random-direction *resources*
 load-font-resource save-object-resource /parent/initialize
