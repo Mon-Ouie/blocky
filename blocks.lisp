@@ -62,6 +62,7 @@
 ;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
 
 (define-prototype block ()
+  (name :initform nil)
   (arguments :initform nil :documentation "List of block argument values.")
   (results :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
   (schema :documentation 

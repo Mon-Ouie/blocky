@@ -19,495 +19,12 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (in-package :ioforms)
-
-;;; Pages are grids of cells.
-;;; Pages also ARE cells! ?
-
-(defparameter *default-page-z-size* 8)
-
-(defvar *page* nil)
-
-(defcell page 
-  (name :initform nil :documentation "Name of the page.")
-  (width :initform 16) 
-  (height :initform 16)
-  (modified :initform nil)
-  ;; cells 
-  (grid :documentation "A two-dimensional array of adjustable vectors of cells.")
-  (serialized-grid :documentation "A serialized sexp version.")
-  ;; forms processing
-  (variables :initform nil :documentation "Hash table mapping values to values, local to the form.")
-  ;; queueing 
-  (message-queue :initform (make-queue))
-  (excluded-fields :initform '(:grid)))
-
-(define-method initialize page (&key height width name)
-    (when height (setf <height> height))
-    (when width (setf <width> width))
-    (when name (setf <name> name))
-    (setf <variables> (make-hash-table :test 'equal))
-    (/create-default-grid self))
-  
-(define-method make page (&rest parameters)
-  (apply #'/initialize self parameters))
-
-(define-method make-with-parameters page (parameters)
-  (apply #'send self :make self parameters))
-
-(define-method set page (var value)
-  (setf (gethash var <variables>) value))
-
-(define-method get page (var)
-  (gethash var <variables>))
-
-(defun page-variable (var-name)
-  (/get *page* var-name))
-
-(defun set-page-variable (var-name value)
-  (/set *page* var-name value))
-
-(defsetf page-variable set-page-variable)
-
-(defmacro with-page-variables (vars &rest body)
-  (labels ((make-clause (sym)
-	     `(,sym (page-variable ,(make-keyword sym)))))
-    (let* ((symbols (mapcar #'make-non-keyword vars))
-	   (clauses (mapcar #'make-clause symbols)))
-      `(symbol-macrolet ,clauses ,@body))))
-
-(define-method grid-location page (row column)
-  "Return the vector of cells at ROW, COLUMN in the page SELF."
-  (when (array-in-bounds-p <grid> row column)
-    (aref <grid> row column)))
-
-(define-method grid-location-list page (row column)
-  (coerce (/grid-location self row column)
-	  'list))
-
-(define-method category-at-p page (row column category)
-  "Returns non-nil if there is any cell in CATEGORY at ROW, COLUMN.
-CATEGORY may be a list of keyword symbols or one keyword symbol."
-  (declare (optimize (speed 3)))
-  (let ((catlist (etypecase category
-		   (keyword (list category))
-		   (list category)))
-	(grid <grid>))
-    (declare (type (simple-array vector (* *)) grid))
-    (and (array-in-bounds-p grid row column)
-	 (some #'(lambda (cell)
-		   (when (intersection catlist
-				       (field-value :categories cell))
-		     cell))
-	       (aref grid row column)))))
-
-(define-method in-bounds-p page (row column)
-  "Return non-nil if ROW and COLUMN are valid coordinates."
-  (array-in-bounds-p <grid> row column))
-
-(define-method nth-cell page (n row column)
-  (aref (aref <grid> row column) n))
-
-(define-method top-cell page (row column)
-  (let ((cells (/grid-location self row column)))
-    (when (and cells (not (zerop (fill-pointer cells))))
-      (aref cells (- (fill-pointer cells) 1)))))
-
-(define-method drop-cell page (cell row column)
-  (vector-push-extend cell (aref <grid> row column))
-  (/set-location cell row column))
-
-(define-method replace-cell page (cell new-cell row column
-					&optional &key loadout no-collisions)
-  "Replace the CELL with NEW-CELL at ROW, COLUMN in this page."
-  (let* ((cells (/grid-location self row column))
-	 (pos (position cell cells)))
-    (if (numberp pos)
-	(setf (aref cells pos) new-cell)
-	(error "Could not find cell to replace."))))
-
-(define-method replace-cells-at page (row column data)
-  "Destroy the cells at ROW, COLUMN, invoking CANCEL on each,
-replacing them with the single cell (or vector of cells) DATA."
-  (when (array-in-bounds-p <grid> row column)
-    (do-cells (cell (aref <grid> row column))
-      (/cancel cell))
-    (setf (aref <grid> row column)
-	  (etypecase data
-	    (vector data)
-	    (object (let ((cells (make-array *default-page-z-size* 
-						  :adjustable t
-						  :fill-pointer 0)))
-			   (prog1 cells
-			     (vector-push-extend data cells))))))
-    (do-cells (cell (aref <grid> row column))
-      (/set-location cell row column))))
-
-(define-method delete-cell page (cell row column)
-  "Delete CELL from the grid at ROW, COLUMN."
-  (ecase (field-value :type cell)
-    (:cell
-       (let* ((grid <grid>)
-	      (square (aref grid row column))
-	      (start (position cell square :test #'eq)))
-	 (declare (type (simple-array vector (* *)) grid) 
-		  (optimize (speed 3)))
-	 (when start
-	   (replace square square :start1 start :start2 (1+ start))
-	   (decf (fill-pointer square)))))
-    (:sprite
-       (/remove-sprite self cell))))
-    
-(define-method move-cell page (cell row column)
-  "Move CELL to ROW, COLUMN."
-  (let* ((old-row (field-value :row cell))
-	 (old-column (field-value :column cell)))
-    (/delete-cell self cell old-row old-column)
-    (/drop-cell self cell row column)))
-
-(define-method delete-category-at page (row column category)
-  "Delete all cells in CATEGORY at ROW, COLUMN in the grid.
-The cells' :cancel method is invoked."
-  (let* ((grid <grid>))
-    (declare (type (simple-array vector (* *)) grid)
-	     (optimize (speed 3)))
-    (when (array-in-bounds-p grid row column)
-      (setf (aref grid row column)
-	    (delete-if #'(lambda (c) (when (/in-category c category)
-				       (prog1 t (/cancel c))))
-		       (aref grid row column))))))
- 
-(define-method serialize page ()
-  (with-field-values (width height) self
-    (let ((grid <grid>)
-	  (sgrid (make-array (list height width) :initial-element nil :adjustable nil)))
-      (dotimes (i height)
-	(dotimes (j width)
-	  (map nil #'(lambda (cell)
-		       (when cell 
-			 (push (serialize cell) 
-			       (aref sgrid i j))))
-	       (aref grid i j))))
-      (setf <serialized-grid> sgrid))))
-    
-(define-method deserialize page ()
-    (/create-default-grid self)
-    (with-field-values (width height grid serialized-grid) self
-      (dotimes (i height)
-	(dotimes (j width)
-	  (map nil #'(lambda (cell)
-		       (when cell
-			 (vector-push-extend (deserialize cell)
-					     (aref grid i j))))
-	       (reverse (aref serialized-grid i j)))))
-      (setf <serialized-grid> nil)))
-  
-(define-method create-grid page (&key width height)
-  "Initialize all the arrays for a page of WIDTH by HEIGHT cells."
-  (let ((dims (list height width)))
-    (let ((grid (make-array dims 
-		 :element-type 'vector :adjustable nil)))
-      ;; now put a vector in each square to represent the z-axis
-      (dotimes (i height)
-	(dotimes (j width)
-	  (setf (aref grid i j)
-		(make-array *default-page-z-size* 
-			    :adjustable t
-			    :fill-pointer 0))))
-      (setf <grid> grid
-	    <height> height
-	    <width> width))))
-
-(define-method create-default-grid page ()
-  "If height and width have been set in a page's definition,
-initialize the arrays for a page of the size specified there."
-  (if (and (numberp <width>)
-	   (numberp <height>))
-      (/create-grid self :width <width> :height <height>)
-      (error "Cannot create default grid without height and width set.")))
-
-(define-method paste-region page (other-page dest-row dest-column source-row source-column source-height source-width 
-					       &optional deepcopy)
-    (loop for row from 0 to source-height
-	  do (loop for column from 0 to source-width
-		   do (let* ((cells (/grid-location other-page (+ row source-row) (+ column source-column)))
-			     (n 0))
-			(when (vectorp cells)
-			  (loop while (< n (fill-pointer cells)) do
-			    (let* ((cell (aref cells n))
-				   (proto (object-parent cell))
-				   (new-cell (if (or deepcopy (field-value :auto-deepcopy cell))
-						 ;; create a distinct object with the same local field values.
-						 (deserialize (serialize cell))
-						 ;; create a similar object
-						 (clone proto))))
-			      (/drop-cell self new-cell (+ row dest-row) (+ column dest-column) :exclusive nil))
-			    (incf n)))))))
-
-(define-method clone-onto page (other-page &optional deepcopy)
-  (let ((other (etypecase other-page
-		 (string (find-resource-object other-page))
-		 (object other-page))))
-    (with-fields (height width) other
-      (/create-grid self :height height :width width)
-      (let ((*page* other))
-	(/paste-region self other 0 0 0 0 height width deepcopy)))))
-
-(defun generate-page-name (page)
-  (concatenate 'string (get-some-object-name page) "-" (format nil "~S" (genseq))))
-
-(defun create-blank-page (&key height width name)
-  (let ((page (clone =page= :height height :width width)))
-    (prog1 page
-      (setf (field-value :name page)
-	    (or name (generate-page-name page))))))
-
-(defun find-object (object)
-  (etypecase object
-    (object 
-       ;; check for name collision
-       (let* ((old-name (or (field-value :name object)
-			    (generate-object-name object)))
-	      (new-name (if (find-resource old-name :noerror)
-			    (generate-object-name object)
-			    old-name)))
-	 (message "Indexing new object ~S as ~S" old-name new-name)
-	 (prog1 object 
-	   (make-object-resource new-name object)
-	   (setf (field-value :name object) new-name))))
-    (list 
-       ;; it's an address
-       (destructuring-bind (prototype-name &rest parameters) object
-	 (let ((object (clone (symbol-value prototype-name))))
-	   (/make-with-parameters object parameters)
-	   (find-object object))))
-    (string (or (find-resource-object object :noerror)
-		(progn (make-object-resource object (create-blank-object :name object))
-		       (let ((object (find-resource-object object)))
-			 (prog1 object
-			   (setf (field-value :name object) object))))))))
-
-;; (maphash #'(lambda (k v) (when (resource-p v)
-;; 			   (when (eq :object (resource-type v))
-;; 			     (message "XXobject ~S" (resource-object v)))))
-;; 	 *resource-table*)
-
-;;; A generic data cell just prints out the stored value.
-
-(defparameter *data-cell-style* '(:foreground ".gray40" :background ".white"))
-
-(defcell data-cell data)
-
-(define-method set data-cell (data)
-  (setf <data> data))
-
-(define-method get data-cell ()
-  <data>)
-
-(define-method print data-cell ()
-  (write-to-string <data> :circle t :pretty t :escape nil :lines 1))
-
-(define-method read data-cell (text)
-  (read-from-string text))
-
-(define-method compute data-cell ()
-  ;; update the label
-  (setf <label> (list (cons (format nil " ~S  " <data>) *data-cell-style*))))
-
-;;; A var cell stores a value into a variable, and reads it.
-
-(defparameter *var-cell-style* '(:foreground ".white" :background ".blue"))
-
-(defcell var-cell variable)
-
-(define-method initialize var-cell (variable)
-  (setf <variable> variable))
-
-(define-method set var-cell (value)
-  (/set-variable *page* <variable> value))
-
-(define-method get var-cell ()
-  (/get-variable *page* <variable>))
-
-(define-method compute var-cell ()
-  (setf <label> (list (cons (format nil ">> ~A  " <variable>) *var-cell-style*))))
-
-;;; Event cell picks up next event when clicked
-
-(defparameter *event-cell-style* '(:foreground ".yellow" :background ".forest green"))
-
-(defcell event-cell event capturing)
-
-(define-method set event-cell (event)
-  (setf <event> event))
-
-(define-method get event-cell ()
-  <event>)
-
-(define-method handle-key event-cell (event)
-  (when <capturing> 
-    ;; signal that we handled this event
-    (prog1 t
-      (setf <event> event)
-      (setf <capturing> nil))))
-  
-(define-method compute event-cell () 
-  (setf <label> 
-	(list (cons (if <capturing>
-			" CAPTURING... "
-			(destructuring-bind (key &rest modifiers) <event>
-			  (if modifiers
-			      (let ((mod-string (format nil " ~A" 
-							(apply #'concatenate 'string 
-							       (mapcar #'(lambda (mod)
-									   (format nil "~A " mod))
-								       modifiers)))))
-				(if (string= "JOYSTICK" key)
-				    (concatenate 'string key mod-string)
-				    (concatenate 'string mod-string key " ")))
-			      (concatenate 'string " " key " "))))
-		    *event-cell-style*))))
-
-(define-method activate event-cell ()
-  ;; capture next event
-  (setf <capturing> t))
-
-;;; Comment cell just displays text.
-
-(defparameter *comment-cell-style* '(:foreground ".white" :background ".gray20"))
-
-(defcell comment-cell comment)
-
-(define-method set comment-cell (comment)
-  (setf <comment> comment))
-
-(define-method get comment-cell ()
-  <comment>)
-
-(define-method compute comment-cell () 
-  (setf <label> (list (cons (format nil " ~A " <comment>) *comment-cell-style*))))
-
-;;; Image cell just displays an image.
-
-(defcell image-cell image)
-
-(define-method set image-cell (image) 
-  (setf <image> image))
-
-(define-method get image-cell ()
-  <image>)
-
-(define-method compute image-cell () 
-  (when <image> (setf <label> (list (list nil :image <image>)))))
-
-;;; Button cell executes some lambda
-
-(defparameter *button-cell-style* '(:foreground ".yellow" :background ".red"))
-
-(defparameter *button-cell-highlight-style* '(:foreground ".red" :background ".white"))
-
-(defparameter *button-cell-highlight-time* 15)
-
-(defcell button-cell button clock)
-
-(define-method initialize button-cell (&key closure text)
-  (setf <closure> closure)
-  (setf <clock> 0)
-  (setf <label> (list (cons text *button-cell-style*))))
-  
-(define-method set button-cell (button) nil)
-
-(define-method get button-cell () <closure>)
-
-(define-method compute button-cell () 
-  (with-fields (label clock) self
-    (unless (zerop clock)
-      (decf clock))
-    (setf (cdr (first label))
-	  (if (plusp clock)
-	      *button-cell-highlight-style*
-	      *button-cell-style*))))
-
-(define-method activate button-cell ()
-  (funcall <closure>)
-  (setf <clock> *button-cell-highlight-time*))
-
-;;; Command cell executes some prompt command
-
-(defparameter *command-cell-style* '(:foreground ".white" :background ".gray20"))
-
-(defparameter *command-cell-highlight-style* '(:foreground ".yellow" :background ".red"))
-
-(defparameter *command-cell-highlight-time* 15)
-
-(defvar *form-command-handler-function* nil)
-
-(defcell command-cell command (clock :initform 0))
-  
-(define-method initialize command-cell ()
-  (setf <label> (list (list "                    "))))
-
-(define-method set command-cell (command)
-  (setf <command> command)
-  (setf <label> (mapcar #'list command)))
-
-(define-method get command-cell () 
-  <command>)
-
-(define-method command-string command-cell ()
-  (when <command> 
-    (apply #'concatenate 'string <command>)))
-
-(define-method compute command-cell () 
-  (with-fields (label clock) self
-    (unless (zerop clock)
-      (decf clock))
-    (when label (setf (cdr (first label))
-		      (if (plusp clock)
-			  *command-cell-highlight-style*
-			  *command-cell-style*)))))
-
-(define-method activate command-cell ()
-  (when (and <command> *form-command-handler-function*)
-    (let ((command (apply #'concatenate 'string <command>)))
-      (funcall *form-command-handler-function* command)
-      (setf <clock> *command-cell-highlight-time*))))
-
-(define-method print command-cell ()
-  <command>)
-
-(define-method read command-cell (newdata)
-  (let ((lines (etypecase newdata
-		 (list newdata)
-		 (string (list newdata)))))
-    (setf <command> lines)))
-
-;;; Plain text buffer widget 
-
-(defcell buffer-cell buffer)
-
-(define-method set buffer-cell (buffer) 
-  (setf <buffer> buffer))
-
-(define-method get buffer-cell ()
-  <buffer>)
-
-(define-method print buffer-cell ()
-  <buffer>)
-
-(define-method read buffer-cell (newdata)
-  (let ((lines (etypecase newdata
-		 (list newdata)
-		 (string (list newdata)))))
-    (setf <buffer> lines)))
-     
-;;; The form GUI widget browses workbook pages composed of cells
-
+   
 (defparameter *form-cursor-blink-time* 10)
 
 (defblock form
    prompt narrator computing
-  (page-name :initform nil)
-  (page :documentation "The ioforms:=page= of objects to be displayed.")
+  (world :documentation "The ioforms:=world= of objects to be displayed.")
   rows columns
   (entered :initform nil :documentation "When non-nil, forward key events to the entry and/or any attached widget.")
   (cursor-row :initform 0) 
@@ -538,17 +55,17 @@ initialize the arrays for a page of the size specified there."
   (tool :initform :clone :documentation "Keyword symbol identifying the method to be applied.")
   (tool-methods :initform '(:clone :erase :inspect)))
 
-(defparameter *default-page-name* "*scratch*")
+(defparameter *default-world-name* "*scratch*")
 
-(define-method initialize form (&optional (page *default-page-name*))
+(define-method initialize form (&optional (world *default-world-name*))
   (with-fields (entry) self
-    (let ((page (find-page page)))
+    (let ((world (find-world world)))
       (send-parent self :initialize self)
-      (/visit self page))))
+      (/visit self world))))
 
 (define-method blank form (&rest parameters)
-  "Invoke the current page's default :make method, passing PARAMETER."
-  (/make-with-parameters <page> parameters))
+  "Invoke the current world's default :make method, passing PARAMETER."
+  (/make-with-parameters <world> parameters))
 
 (define-method set-tool form (tool)
   "Set the current sheet's selected tool to TOOL."
@@ -576,8 +93,8 @@ initialize the arrays for a page of the size specified there."
       (/say self (format nil "Changing tool operation to ~S" tool)))))
 
 (define-method set-modified form (&optional (value t))
-  (with-fields (page) self
-    (with-fields (name) page
+  (with-fields (world) self
+    (with-fields (name) world
       (set-resource-modified-p name value))))
   
 (define-method apply-tool form (data)
@@ -592,7 +109,7 @@ at the current cursor location. See also APPLY-LEFT and APPLY-RIGHT."
   (if (and (symbolp data)
 	   (boundp data)
 	   (object-p (symbol-value data)))
-      (/drop-cell <page> (clone (symbol-value data)) <cursor-row> <cursor-column>)
+      (/drop-cell <world> (clone (symbol-value data)) <cursor-row> <cursor-column>)
       (/say self "Cannot clone.")))
 
 (define-method inspect form ()
@@ -601,7 +118,7 @@ at the current cursor location. See also APPLY-LEFT and APPLY-RIGHT."
 (define-method erase form (&optional data)
   "Erase the top cell at the current location."
   (/say self "Erasing top cell.")
-  (let ((grid (field-value :grid <page>)))
+  (let ((grid (field-value :grid <world>)))
     (ignore-errors (vector-pop (aref grid <cursor-row> <cursor-column>)))))
 
 (define-method set-mark form ()
@@ -622,23 +139,23 @@ at the current cursor location. See also APPLY-LEFT and APPLY-RIGHT."
 		(max mark-column cursor-column))
 	(values nil nil nil nil))))
 
-(define-method visit form (&optional (page *default-page-name*))
-  "Visit the page PAGE with the current form. If PAGE is a =page=
-object, visit it and add the page to the page collection. If PAGE is a
-string, visit the named page. If the named page does not exist, a
-default page is created. If PAGE is a list, it is interpreted as a
-page address, and a new page is generated according to that address.
-See also CREATE-PAGE."
-  (let ((page (find-page page)))
-    (assert (object-p page))
-    (setf <page-name> (field-value :name page))
-    (/say self (format nil "Visiting page ~S" <page-name>))
-    (set-resource-modified-p <page-name> t)
-    (setf <page> page)
-    (setf *page* page) ;; TODO suspicious
+(define-method visit form (&optional (world *default-world-name*))
+  "Visit the world WORLD with the current form. If WORLD is a =world=
+object, visit it and add the world to the world collection. If WORLD is a
+string, visit the named world. If the named world does not exist, a
+default world is created. If WORLD is a list, it is interpreted as a
+world address, and a new world is generated according to that address.
+See also CREATE-WORLD."
+  (let ((world (find-world world)))
+    (assert (object-p world))
+    (setf <world-name> (field-value :name world))
+    (/say self (format nil "Visiting world ~S" <world-name>))
+    (set-resource-modified-p <world-name> t)
+    (setf <world> world)
+    (setf *world* world) ;; TODO suspicious
     (/install-keybindings self)
-    (setf <rows> (field-value :height page))
-    (setf <columns> (field-value :width page))
+    (setf <rows> (field-value :height world))
+    (setf <columns> (field-value :width world))
     (assert (integerp <rows>))
     (assert (integerp <columns>))
     (setf <cursor-row> 0)
@@ -651,11 +168,11 @@ See also CREATE-PAGE."
 	  <row-heights> (make-array (+ 1 <rows>) :initial-element 0)
 	  <column-styles> (make-array (+ 1 <columns>))
 	  <row-styles> (make-array (+ 1 <rows>)))
-    (/compute-geometry self)))
+    (/layout self)))
 
 (define-method cell-at form (row column)
   (assert (and (integerp row) (integerp column)))
-  (/top-cell <page> row column))
+  (/top-cell <world> row column))
 
 (define-method set-prompt form (prompt)
   (setf <prompt> prompt))
@@ -670,7 +187,7 @@ See also CREATE-PAGE."
   "Set the rendering style of the current form to STYLE.
 Must be one of (:image :label)."
   (setf <display-style> style)
-  (/compute-geometry self))
+  (/layout self))
 
 (define-method image-view form ()
   "Switch to image view in the current form."
@@ -726,13 +243,13 @@ Type HELP :COMMANDS for a list of available commands."
   (ioforms:save-objects)
   (/say self "Saving objects... Done."))
   
-(define-method create-page form (&key height width name object)
-  "Create and visit a blank page of height HEIGHT, width WIDTH, and name NAME.
+(define-method create-world form (&key height width name object)
+  "Create and visit a blank world of height HEIGHT, width WIDTH, and name NAME.
 If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
-  (let ((page (or object (create-blank-page :height height :width width :name name))))
-    (when name (setf (field-value :name page) name))
-    (/make page)
-    (/visit self page)))
+  (let ((world (or object (create-blank-world :height height :width width :name name))))
+    (when name (setf (field-value :name world) name))
+    (/make world)
+    (/visit self world)))
 
 (define-method enter-or-exit form ()
   (if <entered>
@@ -749,7 +266,7 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
       (/move entry :x 0 :y 0)
       (when (null cell)
 	(setf cell (clone =data-cell=))
-	(/drop-cell <page> cell <cursor-row> <cursor-column>))
+	(/drop-cell <world> cell <cursor-row> <cursor-column>))
       (let ((data (/get cell)))
 	(when data 
 	  (let* ((output (/print cell))
@@ -819,11 +336,11 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 ;;       (:label (max width (formatted-string-width *blank-cell-string*)))
 ;;       (:image width))))
 
-(define-method compute-geometry form ()
-  (with-field-values (rows columns display-style page
+(define-method layout form ()
+  (with-field-values (rows columns display-style world
 			   column-widths row-heights) self
-    (when page
-      (with-field-values (grid) page
+    (when world
+      (with-field-values (grid) world
 	(let ((height 0)
 	      (width 0)
 	      cell location)
@@ -865,7 +382,7 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 		  ((and widget <entered>)
 		   (prog1 nil (/handle-key widget event)))
 		  (t (send-parent self :handle-key self event)))))
-    (/compute-geometry self)))
+    (/layout self)))
 
 (define-method hit form (x0 y0) 
   (with-field-values (row-heights column-widths origin-row origin-column rows columns x y width height)
@@ -882,7 +399,7 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 		    do (incf y (aref row-heights row))
 		    when (> y y0) return row)))
 	(when (and (integerp selected-column) (integerp selected-row))
-	  (when (array-in-bounds-p (field-value :grid <page>)
+	  (when (array-in-bounds-p (field-value :grid <world>)
 				 selected-row selected-column)
 	    (prog1 t
 	      (setf <cursor-row> selected-row
@@ -894,14 +411,14 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 
 (define-method render form ()
   (/clear self)
-  (when <page>
-    (with-field-values (cursor-row cursor-column row-heights page page-name 
+  (when <world>
+    (with-field-values (cursor-row cursor-column row-heights world world-name 
 				   origin-row origin-column header-line status-line
 				   mark-row mark-column width height
 				   display-style header-style tool tool-methods entered focused
 				   row-spacing rows columns draw-blanks column-widths) self
       (when <computing> (/compute self))
-;;      (/compute-geometry self)
+;;      (/layout self)
       (let* ((image <image>)
 	     (widget-width <width>)
 	     (widget-height <height>)
@@ -1020,7 +537,7 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	    ;; TODO break this formatting out into variables
 	    (setf status-line
 		  (list 
-		   (list (format nil " (/ ~A )     " page-name) :foreground (if focused ".yellow" ".white")
+		   (list (format nil " (/ ~A )     " world-name) :foreground (if focused ".yellow" ".white")
 			 :background (if focused ".red" ".blue"))
 		   (list (format nil "  ~A (~S, ~S) ~Sx~S "
 				 tool cursor-row cursor-column rows columns)
@@ -1050,7 +567,7 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
   
 (define-method scroll form ()
   (with-fields (cursor-row cursor-column origin-row origin-column scroll-margin
-			   origin-height origin-width page rows columns) self
+			   origin-height origin-width world rows columns) self
     (when (or 
 	   ;; too far left
 	   (> (+ origin-column scroll-margin) 
@@ -1151,19 +668,5 @@ DIRECTION is one of :up :down :right :left."
   (unless <entered>
     (setf <cursor-row> 0)
     (/scroll self)))
-
-;;; Creating commonly used cells
-
-(define-method drop-at-cursor form (type)
-  (/drop-cell <page> (clone type) <cursor-row> <cursor-column>)) 
-
-(define-method drop-data-cell form ()
-  (/drop-at-cursor self =data-cell=))
-
-(define-method drop-command-cell form ()
-  (/drop-at-cursor self =command-cell=))
-
-(define-method drop-button-cell form ()
-  (/drop-at-cursor self =button-cell=))
 
 ;;; forms.lisp ends here

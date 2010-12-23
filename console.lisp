@@ -839,7 +839,7 @@ This prepares it for printing as part of a IOF file."
 
 ;;; Resources and projects
 
-(defvar *resource-table* nil 
+(defvar *resources* nil 
   "A hash table mapping resource names to resource records. All loaded
 resources go in this one hash table.
 
@@ -869,7 +869,7 @@ that external lisp file.")
 
 (defun initialize-resource-table ()
   "Create a new empty resource table."
-   (setf *resource-table* (make-hash-table :test 'equal)))
+   (setf *resources* (make-hash-table :test 'equal)))
 
 (defun index-resource (resource)
   "Add the RESOURCE's record to the resource table.
@@ -880,7 +880,7 @@ resource is stored; see also `find-resource'."
 		 (resource-data resource)
 		 resource)))
     (setf (gethash (resource-name resource)
-		   *resource-table*) 
+		   *resources*) 
 	  val)))
 
 ;;; Opening and saving projects
@@ -1085,7 +1085,7 @@ OBJECT as the data."
 		       (push link-resource index))
 		     (when (or force (resource-modified-p resource))
 		       (save-object-resource resource)))))))
-      (maphash #'save *resource-table*))
+      (maphash #'save *resources*))
     ;; write auto-generated index
     (write-iof (find-project-file *project* (object-index-filename *project*)) index)))
 
@@ -1298,7 +1298,7 @@ so that it can be fed to the console."
 and/or transformations. Unless NOERROR is non-nil, signal an error
 when NAME cannot be found."
   ;; can we find the resource straight off? 
-  (let ((res (gethash name *resource-table*)))
+  (let ((res (gethash name *resources*)))
     (cond ((resource-p res)
 	   ;; yes, load-on-demand
 	   (prog1 res
@@ -1307,7 +1307,7 @@ when NAME cannot be found."
 	  ;; no, is it an alias?
 	  ((stringp res)
 	   ;; look up the real one and make the alias map to the real resource
-	   (setf (gethash name *resource-table*) 
+	   (setf (gethash name *resources*) 
 		 (find-resource res)))
 	  ;; not found and not an alias. try to xform
 	  ((null res)
@@ -1315,7 +1315,7 @@ when NAME cannot be found."
 	       ;; ok. let's xform and cache the result
 	       (let ((xform (next-transformation name))
 		     (source-name (next-source name)))
-		 (setf (gethash name *resource-table*) 
+		 (setf (gethash name *resources*) 
 		       (if (null xform)
 			   (find-resource source-name)
 			   (destructuring-bind (operation . arguments) xform

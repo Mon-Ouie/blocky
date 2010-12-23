@@ -89,7 +89,7 @@ object-address-string object step-in-direction direction-to =cell=
 plasma-rect subdivide-rect render-plasma add-hook run-hook queue-tail
 make-queue queue unqueue queue-message queued-messages-p
 unqueue-message send-queue field-value random-direction
-*resource-table* load-font-resource save-object-resource
+*resources* load-font-resource save-object-resource
 /parent/initialize /queue/initialize draw-string-solid read-iof
 initialize-resource-table percent-of-time render-formatted-paragraph
 make-formatted-string draw-string-shaded render-formatted-string
