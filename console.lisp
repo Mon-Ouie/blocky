@@ -120,7 +120,10 @@
   (fresh-line)
   (force-output))
 
-(defvar *message-function* #'message-to-standard-output)
+(defvar *message-function* nil)
+
+(defun reset-message-function ()
+  (setf *message-function* #'message-to-standard-output))
 
 (defun message (format-string &rest args)
   "Print a log message by passing the arguments to
@@ -894,7 +897,7 @@ resource is stored; see also `find-resource'."
 (defvar *project-path* nil "The pathname of the currently opened project. 
 This is where all saved objects are stored.")
 
-(defvar *after-load-project-hook* nil)
+(defvar *after-open-project-hook* nil)
 
 (defvar *project-package-name* nil)
 
@@ -927,13 +930,12 @@ This is where all saved objects are stored.")
 			 :directory (pathname-directory #.(or *compile-file-truename*
 							      *load-truename*))))))))
 
-
 (defparameter *projects-directory-name* "projects")
 
-(defun configure-directories () 
-    ;; ensure projects subfolder exists
-    (make-directory (projects-directory))
-    (list ioforms-directory projects-directory))))
+(defun base-directories () 
+  (let ((projects (projects-directory)))
+    (make-directory projects)
+    (list ioforms-directory projects)))
 
 (defvar *project-directories* nil
   "List of directories where IOFORMS will search for projects.
@@ -980,7 +982,7 @@ object save directory (by setting the current `*project*'. See also
     (when (probe-file object-index-file)
       (message "Loading saved objects from ~S" object-index-file)
       (index-iof project object-index-file)))
-  (run-hook '*after-load-project-hook*)
+  (run-hook '*after-open-project-hook*)
   (let ((package (find-package (project-package-name))))
     (when package
       (setf *package* package))))
@@ -1832,49 +1834,14 @@ also the file LIBSDL-LICENSE for details.
 ;;      (sdl-ttf-cffi::ttf-quit)))  
 ;; (pushnew 'quit-ttf sdl:*external-quit-on-exit*) 
 
+(defvar *system* nil)
+
 (defun ioforms (project-name &rest args)
   "This is the main entry point to IOFORMS. PROJECT-NAME is loaded 
 and its .startup resource is loaded."
-  (unwind-protect
-       (progn 
-	 #+linux (do-cffi-loading)
-	 ;;
-	 (format t "~A" *copyright-text*)
-	 (setf *project-package-name* nil)
-	 (setf *project-directories* (make-default-paths))
-	 (setf *timestep-function* nil)
-	 (setf *world* nil)
-	 (initialize)
-	 (setf *timesteps* 0)
-	 (setf *keyboard-timestep-number* 0)
-	 (setf *initialization-hook* nil)
-	 (setf *play-args* args)
-	 (setf *random-state* (make-random-state t))
-	 (setf *project* project-name)
-	 ;; add library search paths for Mac if needed
-	 (setup-library-search-paths)
-	 (sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
-	   ;; (unless (sdl:initialise-default-font sdl:*ttf-font-vera*)
-	   ;;   (error "FATAL: Cannot initialize the default font."))
-	   (load-user-init-file)	
-	   (initialize-resource-table)
-	   (initialize-colors)
-	   (when *use-sound*
-	     ;; try opening sound
-	     (when (null (sdl-mixer:open-audio :frequency *frequency*
-					       :chunksize *output-chunksize*
-					       :enable-callbacks t
-					       :format *sample-format*
-					       :channels *output-channels*))
-	       ;; if that didn't work, disable effects/music
-	       (message "Could not open audio driver. Disabling sound effects and music.")
-	       (setf *use-sound* nil))
-	     ;; set to mix lots of sounds
-	     (sdl-mixer:allocate-channels *channels*))
-	   (index-project "standard") 
-	   (open-project *project*)
-	   (find-resource *startup*)
-	   (run-main-loop)))
+  (unwind-protect 
+       ;; see system.lisp
+       (setf *system* (clone (symbol-value '=system=)))
     (sdl:quit-sdl)))
 
 (defmacro defgame (module-name 

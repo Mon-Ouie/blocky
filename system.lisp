@@ -25,18 +25,8 @@
 (in-package :ioforms)
 
 (defblock system
-  (type :initform :system))
-
-(defvar *system* =system=)
-
-(define-method step system (&rest args)
-  (dolist (block *blocks*)
-    (/step block)))
-
-(define-method initialize system (&rest args)
-  (apply #'/parent/initialize self args)
-  (setf *timestep-function* #'(lambda (&rest args)
-				(apply #'/step self args))))
+  (type :initform :system)
+  (running :initform nil))
 
 (define-method get-blocks system ()
   *blocks*)
@@ -44,14 +34,68 @@
 (define-method count-blocks system ()
   (apply #'+ (mapcar #'/count *blocks*)))
 
+(define-method start system ()
+  (setf <running> t))
 
-(define-method start system ())
-(define-method stop system ())
-(define-method save system ())
-(define-method save-all system ())
-(define-method new system ())
-(define-method open system ())
-(define-method get-ticks system ())
+(define-method stop system ()
+  (setf <running> nil))
+
+(define-method step system (&rest args)
+  (dolist (block *blocks*)
+    (/step block)))
+
+(define-method initialize system ()
+  #+linux (do-cffi-loading)
+  (ioforms:initialize)
+  (apply #'/parent/initialize self args)
+  (setf *timestep-function* #'(lambda (&rest args)
+				(apply #'/step self args)))
+  (reset-message-function)
+  (setf *project-package-name* nil
+        *project-directories* (ioforms:base-directories)
+	*world* nil
+	*timesteps* 0
+	*keyboard-timestep-number* 0
+	*initialization-hook* nil
+	*play-args* args
+	*random-state* (make-random-state t)
+	*project* "*notes*")
+	;; add library search paths for Mac if needed
+	(setup-library-search-paths)
+	(sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
+	   ;; (unless (sdl:initialise-default-font sdl:*ttf-font-vera*)
+	   ;;   (error "FATAL: Cannot initialize the default font."))
+	   (load-user-init-file)	
+	   (initialize-resource-table)
+	   (initialize-colors)
+	   (when *use-sound*
+	     ;; try opening sound
+	     (when (null (sdl-mixer:open-audio :frequency *frequency*
+					       :chunksize *output-chunksize*
+					       :enable-callbacks t
+					       :format *sample-format*
+					       :channels *output-channels*))
+	       ;; if that didn't work, disable effects/music
+	       (message "Could not open audio driver. Disabling sound effects and music.")
+	       (setf *use-sound* nil))
+	     ;; set to mix lots of sounds
+	     (sdl-mixer:allocate-channels *channels*))
+	   (index-project "standard")
+	   (ioforms:run-main-loop)))
+
+(define-method new-project system ())
+
+(define-method open-project system (project)
+  (open-project project))
+
+(define-method save-project system ()
+  (save-project))
+
+(define-method save-everything system ()
+  (save-everything))
+
+(define-method get-ticks system ()
+  (get-ticks))
 
 ;;; Block shell widget and command prompt
 
