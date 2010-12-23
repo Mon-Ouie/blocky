@@ -22,54 +22,6 @@
 
 (in-package :ioforms)
 
-;;; Splitscreen view on 2 blocks with focus border
-
-(define-prototype split (:parent =block=)
-  (active-color :initform ".red")
-  (inactive-color :initform ".blue")
-  (focus :initform 0)
-  children)
-
-(define-method initialize split (&rest children)
-  (setf <children> children))
-  
-(define-method set-children split (children)
-  (setf <children> children))
-
-(define-method render split ()
-  (when <visible>
-    (let ((y <y>)
-          (x <x>)
-	  (image <image>)
-	  (focused-block (nth <focus> <children>)))
-      (dolist (block <children>)
-        (/move block :x x :y y)
-	(/render block)
-	(draw-image (field-value :image block) x y :destination image)
-	(when (eq block focused-block)
-	  (draw-rectangle x y (field-value :width block)
-			  (field-value :height block)
-			  :color <active-color>
-			  :destination <image>))
-        (incf x (1+ (field-value :width block)))))))
-
-(define-method hit split (x y)
-  (hit-blocks x y <children>))
-
-(define-method switch-panes split ()
-  (let ((newpos (mod (1+ <focus>) (length <children>))))
-    (setf <focus> newpos)))
-
-(define-method handle-key split (event)
-  (or (let ((func (gethash event <keymap>)))
-	(when func
-	  (prog1 t
-	    (funcall func))))
-      (/handle-key (nth <focus> <children>) event)))
-
-(define-method forward split (method &rest args)
-  (apply #'send self method (nth <focus> <children>) args))
-
 ;;; Formatted display block
 
 (defvar *default-formatter-scrollback-size* 1000)
@@ -1039,4 +991,53 @@ text INSERTION to be inserted at point."
         (push <pager-message> line))
       ;; draw the string
       (render-formatted-line (nreverse line) 0 0 :destination <image>))))
+
+;;; Splitscreen view on 2 blocks with focus border
+
+(define-prototype split (:parent =block=)
+  (active-color :initform ".red")
+  (inactive-color :initform ".blue")
+  (focus :initform 0)
+  children)
+
+(define-method initialize split (&rest children)
+  (setf <children> children))
+  
+(define-method set-children split (children)
+  (setf <children> children))
+
+(define-method render split ()
+  (when <visible>
+    (let ((y <y>)
+          (x <x>)
+	  (image <image>)
+	  (focused-block (nth <focus> <children>)))
+      (dolist (block <children>)
+        (/move block :x x :y y)
+	(/render block)
+	(draw-image (field-value :image block) x y :destination image)
+	(when (eq block focused-block)
+	  (draw-rectangle x y (field-value :width block)
+			  (field-value :height block)
+			  :color <active-color>
+			  :destination <image>))
+        (incf x (1+ (field-value :width block)))))))
+
+(define-method hit split (x y)
+  (hit-blocks x y <children>))
+
+(define-method switch-panes split ()
+  (let ((newpos (mod (1+ <focus>) (length <children>))))
+    (setf <focus> newpos)))
+
+(define-method handle-key split (event)
+  (or (let ((func (gethash event <keymap>)))
+	(when func
+	  (prog1 t
+	    (funcall func))))
+      (/handle-key (nth <focus> <children>) event)))
+
+(define-method forward split (method &rest args)
+  (apply #'send self method (nth <focus> <children>) args))
    
+;;; widgets.lisp ends here
