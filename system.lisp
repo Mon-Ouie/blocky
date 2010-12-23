@@ -83,7 +83,13 @@
 	   (index-project "standard")
 	   (ioforms:run-main-loop)))
 
-(define-method new-project system ())
+(define-method new-project system (project)
+  (assert (stringp project))
+  (let ((dir (find-project-path project)))
+    (when (directory-is-project-p dir)
+      (error "Project ~S aready exists." project))
+    (make-directory dir)
+    (open-project project)))
 
 (define-method open-project system (project)
   (open-project project))

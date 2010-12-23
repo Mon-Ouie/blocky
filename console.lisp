@@ -980,7 +980,7 @@ object save directory (by setting the current `*project*'. See also
   ;; now load any objects
   (let ((object-index-file (find-project-file project (object-index-filename project))))
     (when (probe-file object-index-file)
-      (message "Loading saved objects from ~S" object-index-file)
+      (message "Indexing saved objects from ~S" object-index-file)
       (index-iof project object-index-file)))
   (run-hook '*after-open-project-hook*)
   (let ((package (find-package (project-package-name))))
