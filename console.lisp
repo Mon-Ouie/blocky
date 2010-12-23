@@ -927,7 +927,7 @@ This is where all saved objects are stored.")
       (make-directory projects-directory)
       (list ioforms-directory projects-directory))))
 
-(defvar *project-directories* nil)
+(defvar *project-directories* nil
   "List of directories where IOFORMS will search for projects.
 Directories are searched in list order.")
 
@@ -1070,10 +1070,9 @@ OBJECT as the data."
       (index-resource resource))))
 
 (defun save-object-resource (resource &optional (project *project*))
-  "Save an object resource to disk as {RESOURCE-NAME}.IOF."
+  "Save an object resource to disk as {PROJECT-NAME}/{RESOURCE-NAME}.IOF."
   (let ((name (resource-name resource)))
     (setf (resource-data resource) (serialize (resource-object resource)))
-    (message "Saving resource ~S..." name)
     (write-iof (find-project-file project 
 				 (concatenate 'string (resource-name resource)
 					      *iof-file-extension*))
@@ -1085,7 +1084,7 @@ OBJECT as the data."
   (string= "*" (string (aref (resource-name resource) 0))))
   
 (defun save-resource (name resource)
-  (let (index)
+  (block saving
     (let ((pathname (resource-file resource))
 	  (link (copy-structure resource)))
       (if (eq :object (resource-type resource))
@@ -1096,24 +1095,29 @@ OBJECT as the data."
 				      :file (concatenate 'string
 							 (resource-name resource)
 							 *iof-file-extension*)))
-	    (push link index)
-	    (when (or force (resource-modified-p resource))
-	      (save-object-resource resource)))
+	      (save-object-resource resource)
+	      (return-from saving link))
 	  ;; just a normal resource
 	  (progn 
 	    (setf (resource-file link) (namestring pathname)
 		  (resource-data link) nil
 		  ;; mark the original as saved
 		  (resource-modified-p resource) nil)
-	    (push link index))))
-    index))
+	    (return-from saving link))))))
 
 (defun save-objects (&optional force)
   (let (index)
-    (labels 
-      (maphash #'save *resources*))
-    ;; write auto-generated index
-    (write-iof (find-project-file *project* (object-index-filename *project*)) index)))
+    (labels ((save (name resource) 
+	       (when (or force (resource-modified-p resource))
+		 (push (save-resource name resource) index))))
+      (maphash #'save *resources*)
+      (write-iof (find-project-file *project* (object-index-filename *project*)) 
+		 (nreverse index)))))
+
+(defun save-all-objects ()
+  (save-objects :force))
+
+;;;  Resource object loading handlers
 
 (defun load-object-resource (resource)
   "Loads a serialized :OBJECT resource from the Lisp data in the 
@@ -1123,8 +1127,6 @@ also the documentation for DESERIALIZE."
     (assert (object-p object))
     (setf (resource-data resource) nil) ;; no longer needed
     object))
-
-;;; Driver-dependent resource object loading handlers
 
 (defun load-image-resource (resource)
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
