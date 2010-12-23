@@ -27,7 +27,7 @@ source code.
 
    mkdir ~/.sbcl
    mkdir ~/.sbcl/systems
-   ln -s ~/src/ioforms/ioforms.asd ~/.sbcl/systems
+   ln -s ~/src/ioforms/ioforms.asd ~/.sbcl/systems/ioforms.asd
 
 4. Install LISPBUILDER-SDL. 
     

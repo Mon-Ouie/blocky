@@ -32,8 +32,7 @@
 
 (defstruct overlay func parameters clock)
 
-(define-prototype viewport 
-    (:parent =widget= :documentation "A map display for IOFORMS worlds.")
+(defblock viewport 
   (world :documentation "The world object to be displayed.")
   (overlays :documentation "List of closures.")
   (use-overlays :initform t)

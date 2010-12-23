@@ -1,4 +1,4 @@
-;;; util.lisp --- handy utilities for ioforms users
+;;; block.lisp --- interactive script creation
 
 ;; Copyright (C) 2010  David O'Toole
 
@@ -18,23 +18,10 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Commentary:
+
+;;; Code:
+
 (in-package :ioforms)
 
-(defmacro defgame (module-name 
-		   (&key title description
-			 (prompt-prototype =prompt=)
-			 timestep timestep-function
-			 held-keys 
-			 splash-image splash-function splash-music
-			 screen-width screen-height
-			 keybindings pages
-			 &allow-other-keys)
- 		   &body startup-forms)
-  `(progn
-     (ioforms:set-screen-height ,screen-height)
-     (ioforms:set-screen-width ,screen-width)
-     (setf ioforms:*timestep-function* ,timestep-function)
-     (setf ioforms:*dt* ,timestep)
-     ,@startup-forms))
 
-;;; util.lisp ends here

@@ -35,10 +35,6 @@
 
 (in-package :ioforms) 
 
-;;; Counting timesteps
-
-(defparameter *timesteps* 0)
-
 ;;; Keyboard state
 
 ;; see also keys.lisp
@@ -180,6 +176,8 @@ elements of the vector produced by evaluating EXPR."
 
 ;;; The active blocks list 
 
+;; see also blocks.lisp
+
 (defvar *blocks* nil "List of active block objects. 
 These blocks receive input events and are rendered to the screen by
 the console. See also `send-event-to-blocks'.
@@ -200,7 +198,7 @@ and the like."
 
 (defun install-block (block)
   (unless (find block *blocks*)
-    (setf *blocks* (append *blocks* (list block))))
+    (setf *blocks* (nconc *blocks* (list block))))
   (show-blocks))
 
 (defun uninstall-block (block)
@@ -265,17 +263,6 @@ for backward-compatibility."
 	       (remhash event2 *key-table*))))
     (maphash #'break-it *key-table*)))
 
-;;; Physics timestep callback
-
-(defvar *dt* 20)
-
-(defvar *physics-function* nil)
-
-(defun do-physics (&rest args) 
-  (incf *timesteps*)
-  (when (functionp *physics-function*)
-    (apply *physics-function* args)))
-
 ;;; Event handling and blocks
 
 (defun send-event-to-blocks (event)
@@ -338,6 +325,8 @@ else.")
 	(reverse blocks)))
 
 ;;; Translating SDL key events into IOFORMS event lists
+
+;; see also keys.lisp
 
 (defparameter *other-modifier-symbols* '(:button-down :button-up :axis))
 
@@ -540,38 +529,28 @@ worlds.lisp. Cells are free to send messages to `*world*' at
 any time, because it is always bound to the world containing the cell
 at the time the cell method is run.")
 
-(defun world ()
-  "Return the current world."
-  *world*)
-
-;;; Auto-zooming images
-
-(defvar *zoom-factor* 1 
-"When set to some integer greater than 1, all image resources are
-scaled by that factor unless marked with the property :nozoom t.")
-
-(defun is-zoomed-resource (resource)
-  "Return non-nil if the RESOURCE should be zoomed by `*zoom-factor*'."
-  (not (getf (resource-properties resource)
-	     :nozoom)))
-
-(defun zoom-image (image &optional (factor *zoom-factor*))
-  "Return a zoomed version of IMAGE, zoomed by FACTOR.
-Allocates a new image."
-  (assert (integerp factor))
-  (lispbuilder-sdl-gfx:zoom-surface factor factor
-				    :surface image
-				    :smooth nil))
-
 ;;; Timing
 
-(defvar *frame-rate* 30
-"The intended frame rate of the game. Recommended value is 30.")
+(defun get-ticks ()
+  (sdl:sdl-get-ticks))
+
+(defvar *dt* 20)
+
+(defvar *timestep-function* nil)
+
+(defun do-timestep (&rest args) 
+  (incf *timesteps*)
+  (when (functionp *timestep-function*)
+    (apply *timestep-function* args)))
+
+(defvar *frame-rate* 30 "The intended frame rate of the game.")
 
 (defun set-frame-rate (&optional (rate *frame-rate*))
-  "Set the SDL frame rate for the game."
+  "Set the frame rate for the game."
   (message "Setting frame rate to ~S" rate)
   (setf (sdl:frame-rate) rate))
+
+(defparameter *timesteps* 0)
 
 (defvar *clock* 0 "Number of frames until next timer event.")
 
@@ -618,13 +597,14 @@ window. Set this in the game startup file.")
 
 ;;; The main loop of IOFORMS
 
-(defvar *next-project* "standard")
+(defvar *project* "standard")
 
 (defvar *quitting* nil)
 
 (defvar *fullscreen* nil "When non-nil, attempt to use fullscreen mode.")
 
 (defvar *window-title* "ioforms")
+
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
 
@@ -632,6 +612,7 @@ window. Set this in the game startup file.")
   "Initialize the console, open a window, and play.
 We want to process all inputs, update the game state, then update the
 display."
+  (run-hook '*initialization-hook*)
   (let ((fps (make-instance 'sdl:fps-mixed :dt *dt*)))
     (cond (*fullscreen*
 	   (sdl:window *screen-width* *screen-height*
@@ -654,7 +635,6 @@ display."
     (sdl:clear-display sdl:*black*)
     (show-blocks)
     (sdl:update-display)
-    (run-hook '*initialization-hook*)
     (let ((events-this-frame 0))
       (sdl:with-events ()
 	(:quit-event () (prog1 t))
@@ -733,9 +713,9 @@ display."
 		   ;; clean this up. these two cases aren't that different.
 		   (progn 
 		     (sdl:with-timestep ()
-		       (do-physics))
+		       (do-timestep))
 		     (sdl:clear-display sdl:*black*)
-		     (when *held-keys* (send-held-events)) ;; TODO move this to do-physics?
+		     (when *held-keys* (send-held-events)) ;; TODO move this to do-timestep?
 		     (show-blocks) 
 		     (sdl:update-display))))))))
   
@@ -759,16 +739,16 @@ Set timer parameters and other settings here.")
 
 (defparameter *use-sound* t "Non-nil (the default) is to use sound. Nil disables sound.")
 
-;;; PAK resource interchange files
+;;; IOF resource interchange files
 
-(defparameter *pak-file-extension* ".pak"
-"PAK is a simple Lisp data interchange file format readable and
-writable by both Emacs Lisp and Common Lisp. A PAK file can contain
+(defparameter *iof-file-extension* ".iof"
+"IOF is a simple Lisp data interchange file format readable and
+writable by both Emacs Lisp and Common Lisp. An IOF file can contain
 one or more data resources. A 'resource' is an image, sound, text,
 font, lisp program, or other data whose interpretation is up to the
 client.
 
-A PAK resource can be either self-contained, or point to an
+An IOF resource can be either self-contained, or point to an
 external file for its data.
 
 A 'resource record' defines a resource. A resource record is a
@@ -781,7 +761,7 @@ structure with the following elements:
           Corresponding handlers are the responsibility of the client.
           See also `*resource-handlers*' and `load-resource'.
 
-          The special type :pak is used to load the pak file
+          The special type :iof is used to load the iof file
           specified in :FILE, from (optionally) another project
           whose name is given in :DATA.
 
@@ -797,27 +777,26 @@ structure with the following elements:
               (the default is to load resources on demand.)
 
  :FILE    Name of file to load data from, if any. 
-          Relative to directory of PAK file.
+          Relative to directory of IOF file.
  :DATA    Lisp data encoding the resource itself, if any.
 
 In memory, these will be represented by resource structs (see below).
-On disk, it's Lisp data printed as text. This text will compress very
+On disk, it's Lisp data printed as text. This text should compress very
 well.
 
-The string '()' is a valid .PAK file; it contains no resources.")
+The string '()' is a valid .IOF file; it contains no resources.")
 
 (defstruct resource 
   name type properties file data object modified-p)
 
-;; The extra `object' field is not saved in .PAK files; it is used to
+;; The extra `object' field is not saved in .IOF files; it is used to
 ;; store driver-dependent loaded resources (i.e. SDL image surface
 ;; objects and so on). This is used in the resource table.
 ;; The modified-p field is likewise not stored. 
 
 (defun resource-to-plist (res)
   "Convert the resource record RES into a property list.
-
-This prepares it for printing as part of a PAK file."
+This prepares it for printing as part of a IOF file."
   (list :name (resource-name res)
 	:type (resource-type res)
 	:properties (resource-properties res)
@@ -846,30 +825,31 @@ This prepares it for printing as part of a PAK file."
       (message "Reading data from ~A... Done." filename))))
 
 ;; Now tie it all together with routines that read and write
-;; collections of records into PAK files.
+;; collections of records into IOF files.
 
-(defun write-pak (filename resources)
-  "Write the RESOURCES to the PAK file FILENAME."
+(defun write-iof (filename resources)
+  "Write the RESOURCES to the IOF file FILENAME."
   (write-sexp-to-file filename (mapcar #'resource-to-plist resources)))
 
-(defun read-pak (filename)
-  "Return a list of resources from the PAK file FILENAME."
+(defun read-iof (filename)
+  "Return a list of resources from the IOF file FILENAME."
   (mapcar #'(lambda (plist)
 	      (apply #'make-resource plist))
 	  (read-sexp-from-file filename)))
 
 ;;; Resources and projects
 
-(defvar *resource-table* nil 
+(defvar *resources* nil 
   "A hash table mapping resource names to resource records. All loaded
 resources go in this one hash table.
 
 The `resource table' maps resource names to their corresponding
-records. `Indexing' a resource means that its resource record is
-added to the resource table. `Loading' a resource means that any
-associated driver-dependent object (SDL image surface, audio buffer
-object, etc) is created. This value is stored into the OBJECT field
-of the resource record upon loading; see `load-resource'.
+records. `Indexing' a resource means that its resource record is added
+to the resource table. `Loading' a resource means that any associated
+driver-dependent object (SDL image surface, audio buffer object, etc)
+is created, which may involve reading an image or sound file from the
+disk. This value is stored into the OBJECT field of the resource
+record upon loading; see `load-resource'.
 
 The loading operation may be driver-dependent, so each resource
 type (i.e. :image, :text, :sound) is handled by its own plugin
@@ -881,7 +861,7 @@ A lookup failure results in an error. See `find-resource'.
 
 A `project' is a directory full of resource files. The name of the
 project is the name of the directory. Each project must contain a
-file called {project-name}.pak, which should contain an index of
+file called {project-name}.iof, which should contain an index of
 all the project's resources. Multiple projects may be loaded at one
 time. In addition the special resource .startup will be loaded;
 if this is type :lisp, the startup code for your game can go in
@@ -889,7 +869,7 @@ that external lisp file.")
 
 (defun initialize-resource-table ()
   "Create a new empty resource table."
-   (setf *resource-table* (make-hash-table :test 'equal)))
+   (setf *resources* (make-hash-table :test 'equal)))
 
 (defun index-resource (resource)
   "Add the RESOURCE's record to the resource table.
@@ -900,8 +880,45 @@ resource is stored; see also `find-resource'."
 		 (resource-data resource)
 		 resource)))
     (setf (gethash (resource-name resource)
-		   *resource-table*) 
+		   *resources*) 
 	  val)))
+
+;;; Opening and saving projects
+
+(defvar *project* nil "The name of the current project.")
+
+(defvar *project-path* nil "The pathname of the currently opened project. 
+This is where all saved objects are stored.")
+
+(defvar *after-load-project-hook* nil)
+
+(defvar *project-package-name* nil)
+
+(defun project-package-name (&optional (project-name *project*))
+  (or *project-package-name* (make-keyword project-name)))
+    
+(defun open-project (project &key (autoload t))
+  "Load the project named PROJECT. Load any resources marked with a
+non-nil :autoload property. This operation also sets the default
+object save directory (by setting the current `*project*'. See also
+`save-object-resource')."
+  (setf *project* project)
+  (setf *pending-autoload-resources* nil)
+  (setf *project-path* (find-project-path project))
+  (assert (pathnamep *project-path*))
+  (index-project project)
+  (when autoload 
+    (mapc #'load-resource (nreverse *pending-autoload-resources*)))
+  (setf *pending-autoload-resources* nil)
+  ;; now load any objects
+  (let ((object-index-file (find-project-file project (object-index-filename project))))
+    (when (probe-file object-index-file)
+      (message "Loading saved objects from ~S" object-index-file)
+      (index-iof project object-index-file)))
+  (run-hook '*after-load-project-hook*)
+  (let ((package (find-package (project-package-name))))
+    (when package
+      (setf *package* package))))
 
 (defvar *executable* nil)
 
@@ -943,13 +960,14 @@ Please see the included file BINARY-README for instructions."
 
 (defun find-project-file (project-name file)
   "Make a pathname for FILE within the project PROJECT-NAME."
-  (merge-pathnames file (find-project-path project-name)))
+  (merge-pathnames file (or *project-path* 
+			    (find-project-path project-name))))
 
 (defun directory-is-project-p (dir)
-  "Test whether a PAK index file exists in a directory."
+  "Test whether a {PROJECTNAME}.IOF index file exists in a directory."
   (let ((index-filename (concatenate 'string
 				     (file-namestring dir)
-				     *pak-file-extension*)))
+				     *iof-file-extension*)))
     (probe-file (make-pathname :name index-filename
 			       :directory (if (stringp dir)
 					      dir
@@ -969,18 +987,18 @@ Please see the included file BINARY-README for instructions."
 
 (defvar *pending-autoload-resources* '())
 
-(defun index-pak (project-name pak-file)
-  "Add all the resources from the pak PAK-FILE to the resource
+(defun index-iof (project-name iof-file)
+  "Add all the resources from the iof IOF-FILE to the resource
 table. File names are relative to the project PROJECT-NAME."
-  (let ((resources (read-pak pak-file)))
+  (let ((resources (read-iof iof-file)))
     (dolist (res resources)
-      (if (eq :pak (resource-type res))
-	  ;; we're including another pak file. if :data is specified,
+      (if (eq :iof (resource-type res))
+	  ;; we're including another iof file. if :data is specified,
 	  ;; take this as the name of the project where to look for
-	  ;; that pak file and its resources.
+	  ;; that iof file and its resources.
 	  (let ((include-project (or (resource-data res) 
 				    project-name)))
-	    (index-pak include-project (find-project-file include-project
+	    (index-iof include-project (find-project-file include-project
 							(resource-file res))))
 	  ;; we're indexing a single resource.
 	  (progn
@@ -995,14 +1013,15 @@ table. File names are relative to the project PROJECT-NAME."
 	    (when (getf (resource-properties res) :autoload)
 	      (push res *pending-autoload-resources*)))))))
 
-(defparameter *object-index-filename* "objects.pak")
+(defun object-index-filename (project-name)
+  (concatenate 'string project-name "-object-index" *iof-file-extension*))
 
 (defun index-project (project-name)
   "Add all the resources from the project PROJECT-NAME to the resource
 table."
   (let ((index-file (find-project-file project-name
-				      (concatenate 'string project-name ".pak"))))
-    (index-pak project-name index-file)))
+				      (concatenate 'string project-name *iof-file-extension*))))
+    (index-iof project-name index-file)))
 
 ;;; Standard resource names
 
@@ -1010,20 +1029,21 @@ table."
 
 (defvar *default-font* ".default-font")
 
-;;; Creating, saving, and loading object resources in PAK files
+;;; Creating, saving, and loading object resources in IOF files
 
-;; See also the documentation string for `*pak-file-extension*'.
+;; See also the documentation string for `*iof-file-extension*'.
 
-;; Object resources are PAK resources with type :object. These are
+;; Object resources are IOF resources with type :object. These are
 ;; used to save serialized objects to disk and read them back
-;; again. Each page is stored in one PAK file, containing a single
+;; again. Each page is stored in one IOF file, containing a single
 ;; resource with the serialized data stored in the :DATA field of the
 ;; resource record. Page-names are resource-names, and therefore must
-;; be unique within a given IOFORMS project. A page's PAK file is stored in
-;; {PROJECTNAME}/{PAGENAME}.pak, and for a given project these PAKs will
-;; all be included by {PROJECTNAME}/OBJECTS.PAK, which is an
-;; automatically generated PAK index linking to all the serialized
-;; page PAK files.
+;; be unique within a given IOFORMS project. A page's IOF file is
+;; stored in {PROJECTNAME}/{PAGENAME}.iof, and for a given project
+;; these IOFs will all be included by
+;; {PROJECTNAME}/{PROJECTNAME}-OBJECT-INDEX.IOF, which is an
+;; automatically generated IOF index linking to all the serialized
+;; page IOF files.
 
 (defun make-object-resource (name object)
   "Make an object resource named NAME (a string) with the CLON object
@@ -1036,43 +1056,38 @@ OBJECT as the data."
       (index-resource resource))))
 
 (defun save-object-resource (resource &optional (project *project*))
-  "Save an object resource to disk as {RESOURCE-NAME}.PAK."
+  "Save an object resource to disk as {RESOURCE-NAME}.IOF."
   (let ((name (resource-name resource)))
-    (message "Serializing resource ~S..." name)
-;    (assert (object-p (resource-object resource)))
     (setf (resource-data resource) (serialize (resource-object resource)))
     (message "Saving resource ~S..." name)
-    (write-pak (find-project-file project 
+    (write-iof (find-project-file project 
 				 (concatenate 'string (resource-name resource)
-					      *pak-file-extension*))
+					      *iof-file-extension*))
 	       (list resource))
-    (message "Saving resource ~S... Done." name)
     (setf (resource-modified-p resource) nil)
     (setf (resource-data resource) nil)))
 
 (defun is-special-resource (resource)
   (string= "*" (string (aref (resource-name resource) 0))))
   
-(defun save-modified-objects (&optional force)
+(defun save-objects (&optional force)
   (let (index)
     (labels ((save (name resource)
 	       (when (not (stringp resource))
 		 (when (eq :object (resource-type resource))
 		   (unless (is-special-resource resource)
 		     ;; we want to index them all, whether or not we save them all.
-		     ;; make a link resource (i.e. of type :pak) to pull this in later
-		     (let ((link-resource (make-resource :type :pak 
+		     ;; make a link resource (i.e. of type :iof) to pull this in later
+		     (let ((link-resource (make-resource :type :iof 
 							 :file (concatenate 'string
 									    (resource-name resource)
-									    *pak-file-extension*))))
+									    *iof-file-extension*))))
 		       (push link-resource index))
 		     (when (or force (resource-modified-p resource))
 		       (save-object-resource resource)))))))
-      (maphash #'save *resource-table*))
+      (maphash #'save *resources*))
     ;; write auto-generated index
-    (write-pak (find-project-file *project* *object-index-filename*) index)))
-
-;; (save-modified-objects t)
+    (write-iof (find-project-file *project* (object-index-filename *project*)) index)))
 
 (defun load-object-resource (resource)
   "Loads a serialized :OBJECT resource from the Lisp data in the 
@@ -1086,20 +1101,12 @@ also the documentation for DESERIALIZE."
 ;;; Driver-dependent resource object loading handlers
 
 (defun load-image-resource (resource)
-  "Loads an :IMAGE-type pak resource from a :FILE on disk."
-  ;; handle zooming
-  (let ((image 
-         (sdl-image:load-image (namestring (resource-file resource))
-                               :alpha 255)))
-    (if (or (= 1 *zoom-factor*)
-	    (not (is-zoomed-resource resource)))
-	image 
-	;; TODO get rid of this. subclass viewport instead
-	;; if you want to zoom everything. 
-	(zoom-image image *zoom-factor*))))
-
+  "Loads an :IMAGE-type iof resource from a :FILE on disk."
+  (sdl-image:load-image (namestring (resource-file resource))
+			:alpha 255))
+  
 (defun load-sprite-sheet-resource (resource)
-  "Loads a :SPRITE-SHEET-type pak resource from a :FILE on disk. Looks
+  "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
 for :SPRITE-WIDTH and :SPRITE-HEIGHT properties on the resource to
 control the size of the individual frames or subimages."
   (let* ((image (load-image-resource resource))
@@ -1255,8 +1262,13 @@ of the record.")
   (sdl:set-surface-* image :x 0 :y 0)
   image))
 
-(defun scale-image (resource scale)
-  (zoom-image (resource-object resource) scale))
+(defun scale-image (image &optional (factor 1))
+  "Return a scaled version of IMAGE, scaled by FACTOR.
+Allocates a new image."
+  (assert (integerp factor))
+  (lispbuilder-sdl-gfx:zoom-surface factor factor
+				    :surface (resource-object image)
+				    :smooth nil))
 
 (defvar *resource-transformations* 
   (list :rotate #'rotate-image
@@ -1286,7 +1298,7 @@ so that it can be fed to the console."
 and/or transformations. Unless NOERROR is non-nil, signal an error
 when NAME cannot be found."
   ;; can we find the resource straight off? 
-  (let ((res (gethash name *resource-table*)))
+  (let ((res (gethash name *resources*)))
     (cond ((resource-p res)
 	   ;; yes, load-on-demand
 	   (prog1 res
@@ -1295,7 +1307,7 @@ when NAME cannot be found."
 	  ;; no, is it an alias?
 	  ((stringp res)
 	   ;; look up the real one and make the alias map to the real resource
-	   (setf (gethash name *resource-table*) 
+	   (setf (gethash name *resources*) 
 		 (find-resource res)))
 	  ;; not found and not an alias. try to xform
 	  ((null res)
@@ -1303,7 +1315,7 @@ when NAME cannot be found."
 	       ;; ok. let's xform and cache the result
 	       (let ((xform (next-transformation name))
 		     (source-name (next-source name)))
-		 (setf (gethash name *resource-table*) 
+		 (setf (gethash name *resources*) 
 		       (if (null xform)
 			   (find-resource source-name)
 			   (destructuring-bind (operation . arguments) xform
@@ -1338,38 +1350,6 @@ found."
 (defun set-resource-modified-p (resource &optional (value t))
   (let ((res (find-resource resource)))
     (setf (resource-modified-p res) value)))
-
-;;; Loading projects as a whole and autoloading resources
-
-(defvar *project* nil "The name of the current project.")
-
-(defparameter *after-load-project-hook* nil)
-
-(defvar *project-package-name* nil)
-
-(defun project-package-name (&optional (project-name *project*))
-  (or *project-package-name* (make-keyword project-name)))
-    
-(defun load-project (project &key (autoload t))
-  "Load the project named PROJECT. Load any resources marked with a
-non-nil :autoload property. This operation also sets the default
-object save directory (by setting the current `*project*'. See also
-`save-object-resource')."
-  (setf *project* project)
-  (setf *pending-autoload-resources* nil)
-  (index-project project)
-  (when autoload 
-    (mapc #'load-resource (nreverse *pending-autoload-resources*)))
-  (setf *pending-autoload-resources* nil)
-  ;; now load any objects
-  (let ((object-index-file (find-project-file project *object-index-filename*)))
-    (when (probe-file object-index-file)
-      (message "Loading saved objects from ~S" object-index-file)
-      (index-pak project object-index-file)))
-  (run-hook '*after-load-project-hook*)
-  (let ((package (find-package (project-package-name))))
-    (when package
-      (setf *package* package))))
 
 ;;; Custom audio generation
 
@@ -1562,7 +1542,7 @@ of the music."
 
 ;;; Font operations
 
-;; A PAK entry for a font looks like this: 
+;; An IOF entry for a font looks like this: 
 
 ;; (:name ".default-font" 
 ;;        :type :font 
@@ -1620,27 +1600,6 @@ of the music."
       (index-resource (make-resource :name (concatenate 'string "." name)
 				     :type :color
 				     :data (list red green blue))))))
-
-;;; Icons
-
-;; An icon is an image that corresponds to a cell method keyword. The
-;; expression (icon-image :move) becomes the image ".move".
-;; See cells.lisp for a list of keywords.
-
-;; Standard icons for these are in the "standard" project. 
-
-(defun icon-resource (key)
-  "Return an icon resource for the key KEY.
-The standard GEAR icon is used when no other applicable icon can be
-found."
-  (or (find-resource (concatenate 'string "."
-				  (string-downcase (symbol-name key)))
-		     :noerror)
-      (find-resource ".gear")))
-
-(defun icon-image (key)
-  "Return an icon image name for KEY."
-  (resource-name (icon-resource key)))
 
 ;;; Creating and displaying images
 
@@ -1726,22 +1685,17 @@ The default destination is the main window."
 		    destination)
   (sdl-gfx:draw-aa-circle-* x y radius :surface destination :color (find-resource-object color)))
 
-;;; Millisecond clock
-
-(defun get-ticks ()
-  (sdl:sdl-get-ticks))
-
 ;;; Engine status
 
 (defun quit (&optional shutdown)
   (when shutdown 
     (setf *quitting* t))
-  (setf *next-project* nil)
+  (setf *project* nil)
   (sdl:push-quit-event))
 
 (defun reset (&optional (project-name "standard"))
   (setf *quitting* nil)
-  (setf *next-project* project-name)
+  (setf *project* project-name)
   (sdl:push-quit-event))
 
 (defvar *copyright-text*
@@ -1836,28 +1790,26 @@ also the file LIBSDL-LICENSE for details.
 ;;      (sdl-ttf-cffi::ttf-quit)))  
 ;; (pushnew 'quit-ttf sdl:*external-quit-on-exit*) 
 
-(defun play (&optional (project-name "standard") &rest args)
+(defun play (project-name &rest args)
   "This is the main entry point to IOFORMS. PROJECT-NAME is loaded 
 and its .startup resource is loaded."
-  (format t "~A" *copyright-text*)
-  (initialize-resource-table)
-  (setf *project-package-name* nil)
-  (setf *physics-function* nil)
-  (setf *world* nil)
-  (initialize)
-  (setf *timesteps* 0)
-  (setf *keyboard-timestep-number* 0)
-  (setf *initialization-hook* nil)
-  (setf *play-args* args)
-  (setf *random-state* (make-random-state t))
-  ;; override project to play?
-  (setf *next-project* project-name)
-  ;; add library search paths for Mac if needed
-  (setup-library-search-paths)
   (unwind-protect
        (progn 
 	 #+linux (do-cffi-loading)
 	 ;;
+	 (format t "~A" *copyright-text*)
+	 (setf *project-package-name* nil)
+	 (setf *timestep-function* nil)
+	 (setf *world* nil)
+	 (initialize)
+	 (setf *timesteps* 0)
+	 (setf *keyboard-timestep-number* 0)
+	 (setf *initialization-hook* nil)
+	 (setf *play-args* args)
+	 (setf *random-state* (make-random-state t))
+	 (setf *project* project-name)
+	 ;; add library search paths for Mac if needed
+	 (setup-library-search-paths)
 	 (sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
 	   ;; (unless (sdl:initialise-default-font sdl:*ttf-font-vera*)
 	   ;;   (error "FATAL: Cannot initialize the default font."))
@@ -1877,8 +1829,7 @@ and its .startup resource is loaded."
 	     ;; set to mix lots of sounds
 	     (sdl-mixer:allocate-channels *channels*))
 	   (index-project "standard") 
-	   (load-project *next-project*)
-	   
+	   (load-project *project*)
 	   (find-resource *startup*)
 	   (run-main-loop)))
     (sdl:quit-sdl)))
