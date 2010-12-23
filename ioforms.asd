@@ -8,11 +8,11 @@
 
 (asdf:defsystem ioforms
   :name "ioforms"
-  :version "0.2"
+  :version "0.3"
   :maintainer "David T O'Toole <dto1138@gmail.com>"
   :author "David T O'Toole <dto1138@gmail.com>"
   :license "General Public License (GPL) Version 3"
-  :description "An object-oriented graphical 2D game engine."
+  :description "IOFORMS is a visual game creation tool."
   :serial t
   :depends-on (:lispbuilder-sdl 
 	       :lispbuilder-sdl-image 
@@ -36,7 +36,8 @@
 	       (:file "mission")
 	       (:file "forms")
 	       (:file "worlds")
-;;	       (:file "path")
+	       (:file "dance")
 	       (:file "util")))
+;;	       (:file "path")
 	       
 	       

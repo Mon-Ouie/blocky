@@ -74,16 +74,20 @@ formatted-line-height formatted-string-height formatted-string-width
 get-color create-image draw-image ioforms define-prototype has-field
 defcell defworld *choose-direction-menu* set-field-options
 field-option-value index-resource find-project-path index-project
-load-image-resource load-lisp-resource *executable*
-*resource-handlers* load-resource find-resource find-resource-object
-*colors* *world* load-user-init-file *project-directories*
-resource-to-plist *osx* *linux* make-resource make-object-resource
-make-event =block= *blocks* bind-key-to-prompt-insertion
-make-field-initializer clone make-field-initializer-body
-make-key-modifier-symbol make-key-string normalize-event make-keyword
-make-object queue-head queue-max queue-count *sender*
-make-special-variable-name field-reference-p null-parent
-*message-send-symbol-suffix* *x11-color-data* object-name
+load-image-resource load-lisp-resource *executable* *function-buttons*
+*corner-buttons* *dance-arrows* *punctuation* *dance-phrase-symbols*
+*dance-keybindings* *energy-dance-pad-mapping*
+*dark-target-arrow-images* get-button-index arrow-image
+arrow-formatted-string ticks-per-beat event-time event-arrow
+*step-tolerance* *resource-handlers* load-resource find-resource
+find-resource-object *colors* *world* load-user-init-file
+*project-directories* resource-to-plist *osx* *linux* make-resource
+make-object-resource make-event =block= *blocks*
+bind-key-to-prompt-insertion make-field-initializer clone
+make-field-initializer-body make-key-modifier-symbol make-key-string
+normalize-event make-keyword make-object queue-head queue-max
+queue-count *sender* make-special-variable-name field-reference-p
+null-parent *message-send-symbol-suffix* *x11-color-data* object-name
 object-parent send send-super send-queue self opposite-direction
 object-address-string object step-in-direction direction-to =cell=
 plasma-rect subdivide-rect render-plasma add-hook run-hook queue-tail
@@ -126,12 +130,12 @@ set-mission-variable with-mission-locals =mission= *background-color*
 set-sample-callback set-music-callback cffi-chunk-buffer
 =command-cell= convert-cffi-sample get-sample-buffer
 register-sample-generator =voice= register-voice unregister-voice
-register-voice-mixer mix-voices convert-cffi-sample-to-internal *block*
-*script* =script= =editor= =block= =move= =move-to= =play-music=
-=when= =play-sound= =unless= =if= =start= =stop= =+= =if= =do=
-convert-internal-sample-to-cffi get-ticks block-variable
-with-block-variables set-block-variable with-blocks with-mission-locals
-*project* quit reset seek-music make-keyword
+register-voice-mixer mix-voices convert-cffi-sample-to-internal
+*block* *script* =script= =editor= =block= =move= =move-to=
+=play-music= =when= =play-sound= =unless= =if= =start= =stop= =+= =if=
+=do= convert-internal-sample-to-cffi get-ticks block-variable
+with-block-variables set-block-variable with-blocks
+with-mission-locals *project* quit reset seek-music make-keyword
 make-special-variable-name object field-value make-queue
 set-field-value set-field-options field-options field-documentation
 set-field-option-value field-option-value *lookup-failure*

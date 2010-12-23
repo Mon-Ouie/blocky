@@ -1861,4 +1861,21 @@ and its .startup resource is loaded."
 	   (run-main-loop)))
     (sdl:quit-sdl)))
 
+(defmacro defgame (module-name 
+		   (&key title description
+			 (prompt-prototype =prompt=)
+			 timestep timestep-function
+			 held-keys 
+			 splash-image splash-function splash-music
+			 screen-width screen-height
+			 keybindings pages
+			 &allow-other-keys)
+ 		   &body startup-forms)
+  `(progn
+     (ioforms:set-screen-height ,screen-height)
+     (ioforms:set-screen-width ,screen-width)
+     (setf ioforms:*timestep-function* ,timestep-function)
+     (setf ioforms:*dt* ,timestep)
+     ,@startup-forms))
+
 ;;; console.lisp ends here

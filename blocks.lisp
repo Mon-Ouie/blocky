@@ -295,7 +295,7 @@ The TARGET argument is provided by the script executing the block,
 and its value will be the IOFORMS object associated with the script.
 The <RESULTS> field will be a list of results obtained by
 executing/evaluating the blocks in <ARGUMENTS> (see also
-`BLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
+`IOBLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
 send the <OPERATION> field's value as a message to the target, with
 the arguments to the target's method being the current computed
 <RESULTS>, and return the result of the method call. This default
