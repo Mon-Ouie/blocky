@@ -44,7 +44,7 @@
 ;; Unlike Pure Data and other visual languages that model themselves
 ;; after electronic components connected by wires, IOFORMS does away
 ;; with the explicitly drawn connections in favor of a tree structure
-;; mapping to Lisp expressions. 
+;; mapping more naturally to Lisp expressions. 
 
 ;; The purpose of a block is to perform some action in response to a
 ;; number of input arguments and then return a value. Each argument is
@@ -53,7 +53,7 @@
 ;; depth-first to the leaves and execute those to obtain values, then
 ;; propagate results up the tree until the outermost block is executed
 ;; using the propagated results as its input values. See also
-;; `BLOCK/RUN'.
+;; `IOBLOCK/RUN'.
 
 ;; New block types and behaviors can be defined with the macro
 ;; `defblock' and subsequently replacing default methods of the base
@@ -61,7 +61,7 @@
 ;; you can convert lisp expressions into working block
 ;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
 
-(define-prototype block ()
+(define-prototype ioblock ()
   (name :initform nil)
   (arguments :initform nil :documentation "List of block argument values.")
   (results :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
@@ -85,18 +85,18 @@ See also `*argument-types*'.")
 (defmacro defblock (name &body args)
   "Define a new block prototype named =NAME=.
 ARGS are field specifiers, as with `define-prototype'."
-  `(define-prototype ,name (:parent =block=)
+  `(define-prototype ,name (:parent =ioblock=)
      (operation :initform ,(make-keyword name))
      ,@args))
 
 ;;; Defining input events for blocks
 
-(define-method initialize-keymap-maybe block ()
+(define-method initialize-keymap-maybe ioblock ()
   (with-fields (keymap) self
     (when (null keymap)
       (setf keymap (make-hash-table :test 'equal)))))
 
-(define-method define-key block (key-name modifiers func)
+(define-method define-key ioblock (key-name modifiers func)
   "Bind the described keypress to invoke FUNC.
 KEY-NAME is a string giving the key name; MODIFIERS is a list of
 keywords like :control, :alt, and so on."
@@ -105,15 +105,15 @@ keywords like :control, :alt, and so on."
 		 <keymap>)
 	func))
 
-(define-method undefine-key block (key-name modifiers)
+(define-method undefine-key ioblock (key-name modifiers)
   "Remove the described keybinding."
   (remhash (normalize-event (cons key-name modifiers))
 	   <keymap>))
 
-(define-method clear-keymap block ()
+(define-method clear-keymap ioblock ()
   (setf <keymap> (make-hash-table :test 'equal)))
 
-(define-method handle-key block (keylist)
+(define-method handle-key ioblock (keylist)
   "Look up and invoke the function (if any) bound to KEYLIST. Return t
 if a binding was found, nil otherwise."
   (/initialize-keymap-maybe self)
@@ -136,7 +136,7 @@ text INSERTION to be inserted at point."
 	      #'(lambda ()
 		  (send nil method-keyword p))))
 
-(define-method generic-keybind block (binding) 
+(define-method generic-keybind ioblock (binding) 
   (destructuring-bind (key modifiers data) binding
     (apply (etypecase data
 	     (keyword #'bind-key-to-method)
@@ -205,66 +205,66 @@ areas.")
   '(:block :anything :integer :float :number :string :symbol)
   "List of keywords identifying the type of a particular argument.")
 
-(define-method move block (x y)
+(define-method move ioblock (x y)
   "Move the block to a new (X Y) location."
   (setf <x> x)
   (setf <y> y))
 
-(define-method show block ()
+(define-method show ioblock ()
   (setf <visible> t))
 
-(define-method hide block ()
+(define-method hide ioblock ()
   (setf <visible> nil))
 
-(define-method toggle-visible block ()
+(define-method toggle-visible ioblock ()
   (if <visible>
       (/hide self)
       (/show self)))
 
-(define-method set-parent block (parent)
+(define-method set-parent ioblock (parent)
   "Store a link to an enclosing PARENT block, if any."
   (setf <parent> parent))
 
-(define-method get-parent block ()
+(define-method get-parent ioblock ()
   <parent>)
 
-(define-method get-widget block ()
+(define-method get-widget ioblock ()
   <widget>)
 
-(define-method get-argument block (n)
+(define-method get-argument ioblock (n)
   "Return the value of the Nth block argument."
   (nth n <arguments>))
 
-(define-method set-argument block (n value)
+(define-method set-argument ioblock (n value)
   "Set the Nth argument value to VALUE."
     (setf (nth n <arguments>) value))
 
-(define-method child-position block (child)
+(define-method child-position ioblock (child)
   (with-fields (arguments) self
     (position child arguments)))
 
-(define-method position block ()
+(define-method position ioblock ()
   (with-fields (parent) self
     (when parent 
       (/child-position parent self))))
 
-(define-method plug block (child n)
+(define-method plug ioblock (child n)
   "Connect the block CHILD as the value of the Nth argument."
   (/set-argument self n child)
   (/set-parent child self))
 
-(define-method unplug block (child)
+(define-method unplug ioblock (child)
   "Disconnect the block CHILD from this block."
   (let ((pos (position child <arguments>)))
     (/plug self (null-block) pos)
     (/set-parent child nil)))
 
-(define-method unplug-from-parent block ()
+(define-method unplug-from-parent ioblock ()
   (with-fields (parent) self
     (when parent
       (/unplug parent self))))
 
-(define-method execute-arguments block (target)
+(define-method execute-arguments ioblock (target)
   "Execute all blocks in <ARGUMENTS> from left-to-right. Results are
 placed in corresponding positions of <RESULTS>. Override this method
 when defining new blocks if you don't want to evaluate all the
@@ -279,7 +279,7 @@ arguments all the time."
     ;; 	      (/run (nth n arguments)
     ;; 		    target))))))
 
-(define-method execute block (target)
+(define-method execute ioblock (target)
   "Carry out the block's action by sending messages to the object TARGET.
 The TARGET argument is provided by the script executing the block,
 and its value will be the IOFORMS object associated with the script.
@@ -300,16 +300,16 @@ something else. See also `defblock' and `send'."
     (apply #'ioforms:send nil operation target 
 	   (mapcar #'clean results)))))
 
-(define-method run block (target)
+(define-method run ioblock (target)
   "Run nested blocks on TARGET to produce results, then run this
 block with those results as input."
   (/execute-arguments self target)
   (/execute self target))
 
-(define-method describe block ()
+(define-method describe ioblock ()
   "Show name and comprehensive help for this block.")
 
-(define-method initialize block (&rest args)
+(define-method initialize ioblock (&rest args)
   "Prepare an empty block, or if ARGS is non-empty, a block
 initialized with its values as arguments."
   (with-fields (arguments schema results) self
@@ -321,11 +321,11 @@ initialized with its values as arguments."
 		(nth n args))))
       (setf results (make-list arity)))))
 
-(define-method deserialize block ()
+(define-method deserialize ioblock ()
   "Make sure the block is ready after loading."
   (/initialize self))
 
-(define-method count block ()
+(define-method count ioblock ()
   "Return the number of blocks enclosed in this block, including the
 current block." 
   (with-fields (arguments) self
@@ -427,8 +427,8 @@ two words. This is used as a unit for various layout operations.")
     :operators ".white"
     :sensing ".white")
   "X11 color names of the text used for different block types.")
-
-(define-method find-color block (&optional (part :background))
+ 
+(define-method find-color ioblock (&optional (part :background))
   "Return the X11 color name of this block's type as a string.
 If PART is provided, return the color for the corresponding 
 :BACKGROUND, :SHADOW, :FOREGROUND, or :HIGHLIGHT parts of this type of
@@ -442,7 +442,7 @@ block."
 
 (defparameter *selection-color* ".red")
 
-(define-method resize block (&key (height (* 8 *dash-size*))
+(define-method resize ioblock (&key (height (* 8 *dash-size*))
 				  (width (* 60 *dash-size*)))
   "Allocate an image buffer of HEIGHT by WIDTH pixels."
   (unless (and (= <width> width)
@@ -492,7 +492,7 @@ blocks."
 				       :font *block-font*)))
 	   ,@body))))
 
-(define-method draw-patch block (x0 y0 x1 y1 image 
+(define-method draw-patch ioblock (x0 y0 x1 y1 image 
 				    &key depressed dark socket color)
   "Draw a standard IOFORMS block notation patch on IMAGE.
 Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
@@ -545,10 +545,10 @@ override all colors."
 	   (- x1 radius) (- y1 radius)
 	   fill))))
 
-(define-method draw-socket block (x0 y0 x1 y1 image)
+(define-method draw-socket ioblock (x0 y0 x1 y1 image)
   (/draw-patch self x0 y0 x1 y1 image :depressed t :socket t))
     
-(define-method draw-border block (image &optional (color *selection-color*))
+(define-method draw-border ioblock (image &optional (color *selection-color*))
   (let ((dash *dash-size*))
     (with-fields (x y height width) self
       (/draw-patch self (- x dash) (- y dash)
@@ -556,16 +556,16 @@ override all colors."
 		   (+ y height dash)
 		   image :color color))))
 
-(define-method draw-background block (image)
+(define-method draw-background ioblock (image)
   (with-fields (x y width height) self
     (/draw-patch self x y (+ x width) (+ y height) image)))
 
-(define-method draw-ghost block (image)
+(define-method draw-ghost ioblock (image)
   (with-fields (x y width height) self
     (/draw-patch self x y (+ x width) (+ y height) image
 		 :depressed t :socket t)))
 
-(define-method handle-width block ()
+(define-method handle-width ioblock ()
   (+ (* 2 *dash-size*)
      (expression-width <operation>)))
 
@@ -583,7 +583,7 @@ override all colors."
 	(substitute #\Space #\- (symbol-name expression)))
      (otherwise (format nil "~s" expression)))))
 
-(define-method layout block ()
+(define-method layout ioblock ()
   (with-fields (child-widths height width) self
     (with-field-values (x y operation schema arguments widget) self
       (let* ((font *block-font*)
@@ -612,7 +612,7 @@ override all colors."
 	  (setf width (+ (- left x) (* 4 dash)))
 	  (setf height (+ dash dash max-height)))))))
 
-(define-method draw-expression block (x0 y0 segment type image)
+(define-method draw-expression ioblock (x0 y0 segment type image)
   (with-block-drawing image
       (with-fields (height child-widths) self
 	(let ((dash *dash-size*)
@@ -631,7 +631,7 @@ override all colors."
 		(setf width (expression-width segment))))
 	  width))))
 
-(define-method draw-contents block (image)
+(define-method draw-contents ioblock (image)
   (with-block-drawing image
     (with-field-values 
 	(x y operation arguments schema widget)
@@ -649,7 +649,7 @@ override all colors."
 	      (dolist (block arguments)
 		(/draw block image))))))))
 
-(define-method draw block (output-image)
+(define-method draw ioblock (output-image)
   (with-fields (image x y) self
     (if (null image)
 	(progn
@@ -662,7 +662,7 @@ override all colors."
 
 (defparameter *hover-color* ".red")
 
-(define-method draw-hover block (image)
+(define-method draw-hover ioblock (image)
   (with-fields (x y width height) self
     (draw-box x y (+ *dash-size* width) (+ *dash-size* height)
 	      :stroke-color *hover-color* 
@@ -670,7 +670,7 @@ override all colors."
 	      :destination image))
   (/draw-contents self image))
 		    
-(define-method hit block (mouse-x mouse-y)
+(define-method hit ioblock (mouse-x mouse-y)
   "Return this block (or child block) if the coordinates MOUSE-X and
 MOUSE-Y identify a point inside the block (or child block.)"
   (with-fields (x y width height arguments) self
@@ -681,7 +681,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	(let ((child (some #'hit arguments)))
 	  (values (or child self) (when child (/position child))))))))
      	
-(define-method accept block (other-block)
+(define-method accept ioblock (other-block)
   (with-field-values (parent) self
     (when parent
       (prog1 t
@@ -691,7 +691,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 ;;; The null block
 
-(define-method null block ()) 
+(define-method null ioblock ()) 
 
 (defblock null)
 
@@ -940,11 +940,6 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (schema :initform '(:block :block))
   (arguments :initform '(nil nil)))
 
-(defblock start
-  (type :initform :system) 
-  (schema :initform nil)
-  (arguments :initform nil))
-
 (defblock fire
   (type :initform :control)
   (schema :initform '(:block))
@@ -965,11 +960,6 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (schema :initform '(:block :block :block :block))
   (arguments :initform '(10 spaces to player)))
   
-(defblock stop
-  (type :initform :system) 
-  (schema :initform nil)
-  (arguments :initform nil))
-  
 (defblock +
   (type :initform :operators)
   (schema :initform '(:number :number))
@@ -979,11 +969,274 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (with-fields (results) self
     (when (every #'integerp results)
       (apply #'+ results))))
-	  
-(defun is-event-block (thing)
-  (and (not (null thing))
-       (ioforms:object-p thing)
-       (has-field :operation thing)
-       (eq :do (field-value :operation thing))))
+
+;;; Composing blocks into larger programs
+
+(defblock 
+
+(defblock block ()
+  (arguments :iniform '(nil))
+  (schema :initform '(:block))
+  (blocks :initform '()
+	  :documentation "List of blocks in the block.")
+  (target :initform nil)
+  (variables :initform (make-hash-table :test 'eq)))
+
+(define-method initialize block (&key blocks variables target)
+  (setf <blocks> blocks)
+  (when variables (setf <variables> variables))
+  (when target (setf <target> target)))
+
+(defvar *block* nil)
+(defvar *target* nil)
+
+(define-method set-target block (target)
+  (setf <target> target))
+
+(define-method is-member block (block)
+  (with-fields (blocks) self
+    (find block blocks)))
+
+(define-method add block (block &optional x y)
+  (with-fields (blocks) self
+    (assert (not (find block blocks)))
+    (setf blocks (nconc blocks (list block)))
+    (setf (field-value :parent block) nil)
+    (when (and (integerp x)
+	       (integerp y))
+      (/move block x y))))
+
+(define-method run block (block)
+  (with-fields (blocks target) self
+    (/run block target)))
+	    
+(define-method bring-to-front block (block)
+  (with-fields (blocks) self
+    (when (find block blocks)
+      (setf blocks (delete block blocks))
+      (setf blocks (nconc blocks (list block))))))
+
+(define-method delete block (block)
+  (with-fields (blocks) self
+    (assert (find block blocks))
+    (setf blocks (delete block blocks))))
+
+(define-method set block (var value)
+  (setf (gethash var <variables>) value))
+
+(define-method get block (var)
+  (gethash var <variables>))
+
+(defun block-variable (var-name)
+  (/get *block* var-name))
+
+(defun (setf block-variable) (var-name value)
+  (/set *block* var-name value))
+
+(defmacro with-block-variables (vars &rest body)
+  (labels ((make-clause (sym)
+	     `(,sym (block-variable ,(make-keyword sym)))))
+    (let* ((symbols (mapcar #'make-non-keyword vars))
+	   (clauses (mapcar #'make-clause symbols)))
+      `(symbol-macrolet ,clauses ,@body))))
+
+;;; Block editor widget and command prompt
+
+(define-prototype block-prompt (:parent =prompt=)
+  output 
+  (rows :initform 10))
+
+(define-method initialize block-prompt (output)
+  (/parent/initialize self)
+  (setf <output> output))
+  
+(define-method do-sexp block-prompt (sexp)
+  (with-fields (output rows) self
+    (assert output)
+    (let ((container (/get-parent output)))
+      (when container
+	(/accept container 
+		 (let ((*make-block-package* (find-package :ioforms)))
+		   (if (symbolp (first sexp))
+		       (make-block-ext sexp)
+		       (make-block-ext (first sexp)))))
+	(when (> (/length container) rows)
+	  (/pop container))))))
+
+(defblock listener
+  (type :initform :system))
+
+(defparameter *minimum-listener-width* 200)
+
+(define-method initialize listener ()
+  (with-fields (widget) self
+    (/parent/initialize self)
+    (let ((prompt (clone =block-prompt= self)))
+      (/resize prompt 
+	       :width *minimum-listener-width*
+	       :height (+ (* 2 *dash-size*) 
+			  (font-height *default-font*)))
+      (setf widget prompt))))
+
+(defblock editor
+  (block :initform nil 
+	  :documentation "The IOFORMS:=BLOCK= object being edited.")
+  (selection :initform ()
+  	     :documentation "Subset of selected blocks.")
+  (drag :initform nil 
+  	:documentation "Block being dragged, if any.")
+  (hover :initform nil
+	 :documentation "Block being hovered over, if any.")
+  (ghost :initform (clone =block=))
+  (buffer :initform nil)
+  (drag-start :initform nil
+	      :documentation "A cons (X . Y) of widget location at start of dragging.")
+  (drag-offset :initform nil
+	       :documentation "A cons (X . Y) of mouse click location on dragged block.")
+  (needs-redraw :initform t)
+  (modified :initform nil 
+	  :documentation "Non-nil when modified since last save."))
+
+(define-method initialize editor ()
+  (/parent/initialize self)
+  (with-fields (block) self
+    (setf block (clone =block=))))
+
+(define-method select editor (block)
+  (with-fields (selection blocks) self
+    (pushnew block selection)))
+
+(define-method select-if editor (predicate)
+  (with-fields (selection blocks) self
+    (setf selection (remove-if predicate blocks))))
+
+(define-method unselect editor (block)
+  (with-fields (selection) self
+    (setf selection (delete block selection))))
+
+(define-method handle-key editor (keys)
+  (with-fields (selection needs-redraw) self
+    (when (= 1 (length selection))
+      (when (first selection)
+	(/handle-key (first selection) keys)
+	(setf needs-redraw t)))))
+
+(define-method resize editor (&key width height)
+  (with-fields (buffer prompt image) self
+    (when (null buffer)
+      (setf buffer (create-image width height)))
+    (unless (and (= <width> width)
+		 (= <height> height))
+      (/parent/resize self :width width :height height)
+      (when buffer
+	(sdl:free buffer))
+      (setf buffer (create-image width height)))))
+
+(define-method redraw editor ()
+  (with-fields (block buffer selection needs-redraw width height) self
+    (with-fields (blocks) block
+      (draw-box 0 0 width height 
+		:color *background-color*
+		:stroke-color *background-color*
+		:destination buffer)
+      (dolist (block blocks)
+	(/layout block))
+      (dolist (block blocks)
+	(when (find block selection)
+	  (/draw-border block buffer))
+	(/draw block buffer))
+      (setf needs-redraw nil))))
+
+(define-method begin-drag editor (mouse-x mouse-y block)
+  (with-fields (drag block drag-start ghost drag-offset) self
+    (setf drag block)
+    (when (/is-member block block)
+      (/delete block block))
+    (let ((dx (field-value :x block))
+	  (dy (field-value :y block))
+	  (dw (field-value :width block))
+	  (dh (field-value :height block)))
+      (with-fields (x y width height) ghost
+	(let ((x-offset (- mouse-x dx))
+	      (y-offset (- mouse-y dy)))
+	  (when (null drag-start)
+	    (setf x dx y dy width dw height dh)
+	    (setf drag-start (cons dx dy))
+	    (setf drag-offset (cons x-offset y-offset))))))))
+
+(define-method hit-blocks editor (x y)
+  (with-fields (block) self
+    (when block 
+      (with-fields (blocks) block
+	(labels ((hit (b)
+		   (/hit b x y)))
+	  (let ((parent (find-if #'hit blocks :from-end t)))
+	    (when parent
+	      (/hit parent x y))))))))
+
+(define-method render editor ()
+  (with-fields 
+      (block needs-redraw image buffer drag-start selection
+      drag modified hover ghost prompt) self
+    (dolist (block selection)
+      (let ((widget (/get-widget block)))
+	(when widget 
+	  (/render widget)
+	  (/draw block image))))
+    (labels ((copy ()
+	       (draw-image buffer 0 0 :destination image)))
+      (when block
+	(when needs-redraw 
+	  (/redraw self)
+	  (copy))
+	(when drag 
+	  (copy)
+	  (/layout drag)
+	  (/draw-ghost ghost image)
+	  (/draw drag image)
+	  (when hover 
+	    (/draw-hover hover image)))))))
+
+(define-method mouse-down editor (x y &optional button)
+  (with-fields (block) self 
+    (let ((block (/hit-blocks self x y)))
+      (when block
+	(case button
+	  (1 (/begin-drag self x y block))
+	  (3 (/run block block)))))))
+
+(define-method mouse-move editor (mouse-x mouse-y)
+  (with-fields (block hover drag-offset drag-start drag) self
+    (setf hover nil)
+    (when drag
+      (destructuring-bind (ox . oy) drag-offset
+	(let ((target-x (- mouse-x ox))
+	      (target-y (- mouse-y oy)))
+	  (setf hover (/hit-blocks self target-x target-y))
+	  (/move drag target-x target-y))))))
+
+(define-method mouse-up editor (x y &optional button)
+  (with-fields 
+      (block needs-redraw drag-offset drag-start hover
+	      selection drag modified) 
+      self
+    (with-fields (blocks) block
+      (when drag
+	(let ((drag-parent (/get-parent drag)))
+	  (when drag-parent
+	    (/unplug-from-parent drag))
+	  (let ((target hover))
+	    (if target
+		;; dropping on another block
+		(unless (/accept target drag)
+		  (/add block drag))
+		;; dropping on background
+		(/add block drag)))))
+      (setf selection nil)
+      (when drag (/select self drag))
+      (setf drag-start nil
+	    drag-offset nil
+	    drag nil
+	    needs-redraw t))))
       
 ;;; blocks.lisp ends here

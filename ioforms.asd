@@ -27,6 +27,7 @@
 	       (:file "console")
 	       (:file "blocks")
 	       (:file "widgets")
+	       (:file "system")
 	       (:file "scripts")
 	       (:file "viewport")
 	       (:file "cells")

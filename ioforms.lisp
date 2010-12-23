@@ -43,9 +43,9 @@
   (:export *default-frame-width* *default-frame-height* =null=
 null-block =viewport= *frequency* *output-chunksize* *output-channels*
 halt-sample *dt* defgame *timestep-function* =equipment=
-*default-world-axis-size* defgsprite generic-keybind
-*default-world-z-size* =browser= install-blocks =balloon= =form=
-keyboard-held-p keyboard-pressed-p keyboard-released-p
+*default-world-axis-size* defgsprite generic-keybind *target* *blocks*
+*script* *default-world-z-size* =browser= install-blocks =balloon=
+=form= keyboard-held-p keyboard-pressed-p keyboard-released-p
 keyboard-time-in-current-state keyboard-time-in-previous-state
 *timesteps* keyboard-down-p keyboard-keys-down
 keyboard-modifier-down-p keyboard-modifiers draw-filled-circle
@@ -88,34 +88,33 @@ object-parent send send-super send-queue self opposite-direction
 object-address-string object step-in-direction direction-to =cell=
 plasma-rect subdivide-rect render-plasma add-hook run-hook queue-tail
 make-queue queue unqueue queue-message queued-messages-p
-unqueue-message send-queue field-value random-direction
-*resources* load-font-resource save-object-resource
-/parent/initialize /queue/initialize draw-string-solid read-iof
-initialize-resource-table percent-of-time render-formatted-paragraph
-make-formatted-string draw-string-shaded render-formatted-string
-render-formatted-line resource font-text-extents write-sexp-to-file
-with-message-sender *message-sender* =textbox= read-sexp-from-file
-with-fields with-field-values write-iof *grammar* one-of
-left-hand-side right-hand-side expansions generate
-send-event-to-blocks play-music halt-music seek-music
-*joystick-mapping* *generic-joystick-mapping* *ps3-joystick-mapping*
-*joystick-button-symbols* draw-resource-image *event-handler-function*
-*use-sound* trace-rectangle trace-row trace-column trace-octagon
-trace-line midpoint =asterisk= =gray-asterisk= self *project-blocks*
-defsprite =sprite= get-some-object-name
-transform-declaration-field-descriptor show-blocks no-such-field
-=narrator= find-projects-in-directory goal =mission= =gateway=
-=launchpad= =environment= directory-is-project-p find-all-projects
-*project* transform-tree stat-value draw-line
+unqueue-message send-queue field-value random-direction *resources*
+load-font-resource save-object-resource /parent/initialize
+/queue/initialize draw-string-solid read-iof initialize-resource-table
+percent-of-time render-formatted-paragraph make-formatted-string
+draw-string-shaded render-formatted-string render-formatted-line
+resource font-text-extents write-sexp-to-file with-message-sender
+*message-sender* =textbox= read-sexp-from-file with-fields
+with-field-values write-iof *grammar* one-of left-hand-side
+right-hand-side expansions generate send-event-to-blocks play-music
+halt-music seek-music *joystick-mapping* *generic-joystick-mapping*
+*ps3-joystick-mapping* *joystick-button-symbols* draw-resource-image
+*event-handler-function* *use-sound* trace-rectangle trace-row
+trace-column trace-octagon trace-line midpoint =asterisk=
+=gray-asterisk= self *project-blocks* defsprite =sprite=
+get-some-object-name transform-declaration-field-descriptor
+show-blocks no-such-field =narrator= find-projects-in-directory goal
+=mission= =gateway= =launchpad= =environment= directory-is-project-p
+find-all-projects *project* transform-tree stat-value draw-line
 *default-message-verbosities* *message-verbosities* add-overlay
 set-message-verbosities operation-symbol message-symbol play-sample
 set-music-volume add-message-verbosities with-message-queue =minimap=
 draw-pixel *user-keyboard-layout* *fullscreen* draw-circle =emote=
-set-field-option-value =pager= =pager-prompt= open-project
+set-field-option-value =blockr= =blockr-prompt= open-project
 =sprite-special= field-options world set-frame-rate *frame-rate*
 =stack= *workbook* set-resource-modified-p *iof-file-extension*
 load-project *project* *project-path* *window-title* *window-position*
-=split= set-timer-interval =gcell= defgcell =page= *message-logging*
+=split= set-timer-interval =gcell= defgcell =block= *message-logging*
 overlay poll-joystick-axis poll-joystick-button reset-joystick
 set-screen-width =universe= *universe* *play-args* set-screen-height
 genseq *zoom-factor* zoom-image is-zoomed-resource *timer-interval*
@@ -127,11 +126,11 @@ set-mission-variable with-mission-locals =mission= *background-color*
 set-sample-callback set-music-callback cffi-chunk-buffer
 =command-cell= convert-cffi-sample get-sample-buffer
 register-sample-generator =voice= register-voice unregister-voice
-register-voice-mixer mix-voices convert-cffi-sample-to-internal *page*
+register-voice-mixer mix-voices convert-cffi-sample-to-internal *block*
 *script* =script= =editor= =block= =move= =move-to= =play-music=
 =when= =play-sound= =unless= =if= =start= =stop= =+= =if= =do=
-convert-internal-sample-to-cffi get-ticks page-variable
-with-page-variables set-page-variable with-pages with-mission-locals
+convert-internal-sample-to-cffi get-ticks block-variable
+with-block-variables set-block-variable with-blocks with-mission-locals
 *project* quit reset seek-music make-keyword
 make-special-variable-name object field-value make-queue
 set-field-value set-field-options field-options field-documentation
@@ -151,7 +150,7 @@ define-prototype clone object-p self
 transform-declaration-field-descriptor is-a compose-blank-fields
 make-field-initializer initialize object-address-string
 draw-string-blended =block= *token-types* *block-categories*
-*block-colors* *block-text-colors* defblock =beep= =program=
-make-program ))
+*block-colors* *block-text-colors* defblock =beep= =program=)
+make-program )
 
 ;;; ioforms.lisp ends here
