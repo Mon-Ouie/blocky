@@ -1837,7 +1837,8 @@ This program includes the DejaVu fonts family. See the file
        (progn 
 	 (setf *system* (clone (symbol-value '=system=)))
 	 (when project 
-	   (apply #'send nil :open-project *system* project args)))
+	   (apply #'send nil :open-project *system* project args))
+	 (send nil :run *system*))
     (sdl:quit-sdl)))
 
 (defmacro defgame (module-name 
