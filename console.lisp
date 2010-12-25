@@ -115,16 +115,23 @@
 
 (defparameter *message-logging* nil)
 
-(defun message (format-string &rest args)
-  "Print a log message to the standard output. The FORMAT-STRING and
-remaining arguments are passed to `format'.
+(defun message-to-standard-output (format-string &rest args)
+  (apply #'format t format-string args)
+  (fresh-line)
+  (force-output))
 
-When the variable `*message-logging*' is nil, this output is
-disabled."
-  (when *message-logging*
-    (apply #'format t format-string args)
-    (fresh-line)
-    (force-output)))
+(defvar *message-function* nil)
+
+(defun reset-message-function ()
+  (setf *message-function* #'message-to-standard-output))
+
+(defun message (format-string &rest args)
+  "Print a log message by passing the arguments to
+`*message-function'. When the variable `*message-logging*' is nil,
+this output is disabled."
+  (when (and *message-logging* 
+	     (functionp *message-function*))
+    (apply *message-function* format-string args)))
 
 ;;; Sequence numbers
 
@@ -597,6 +604,8 @@ window. Set this in the game startup file.")
 
 ;;; The main loop of IOFORMS
 
+(defvar *after-initialization-hook* nil)
+
 (defvar *project* "standard")
 
 (defvar *quitting* nil)
@@ -635,6 +644,7 @@ display."
     (sdl:clear-display sdl:*black*)
     (show-blocks)
     (sdl:update-display)
+    (run-hook '*after-initialization-hook*)
     (let ((events-this-frame 0))
       (sdl:with-events ()
 	(:quit-event () (prog1 t))
@@ -722,18 +732,17 @@ display."
   
 ;;; The .ioformsrc user init file
 
-(defparameter *user-init-file-name* ".ioformsrc")
-
 (defvar *initialization-hook* nil 
 "This hook is run after the IOFORMS console is initialized.
-Set timer parameters and other settings here.")
+Set system parameters and other settings here.")
+
+(defparameter *user-init-file-name* "ioforms.ini")
 
 (defun load-user-init-file ()
   (let ((file (merge-pathnames (make-pathname :name *user-init-file-name*)
-			       (user-homedir-pathname))))
+			       (ioforms-directory))))
     (when (probe-file file)
-      (load (merge-pathnames (make-pathname :name *user-init-file-name*)
-			     (user-homedir-pathname))))))
+      (load file))))
 
 (defparameter *user-keyboard-layout* :qwerty)
 
@@ -863,8 +872,8 @@ A `project' is a directory full of resource files. The name of the
 project is the name of the directory. Each project must contain a
 file called {project-name}.iof, which should contain an index of
 all the project's resources. Multiple projects may be loaded at one
-time. In addition the special resource .startup will be loaded;
-if this is type :lisp, the startup code for your game can go in
+time. In addition the special resource `.startup' will be loaded;
+if this is of type :lisp, the startup code for your game can go in
 that external lisp file.")
 
 (defun initialize-resource-table ()
@@ -890,48 +899,51 @@ resource is stored; see also `find-resource'."
 (defvar *project-path* nil "The pathname of the currently opened project. 
 This is where all saved objects are stored.")
 
-(defvar *after-load-project-hook* nil)
+(defvar *after-open-project-hook* nil)
 
 (defvar *project-package-name* nil)
 
-(defun project-package-name (&optional (project-name *project*))
-  (or *project-package-name* (make-keyword project-name)))
-    
+(defparameter *projects-directory-name* "projects")
+
 (defvar *executable* nil)
 
-(defun make-directory (directory)
+(defun project-package-name (&optional (project-name *project*))
+  (or *project-package-name* (make-keyword project-name)))
+
+(defun make-directory-maybe (directory)
   (ensure-directories-exist (make-pathname :name "NAME" :type "TYPE"
 					   :defaults directory)))
 
-(defparameter *projects-directory-name* "projects")
+(defun ioforms-directory ()
+  (if *executable*
+      (make-pathname :directory 
+		     (pathname-directory 
+		      (car #+sbcl sb-ext:*posix-argv*
+			   #+clozure ccl:*command-line-argument-list*)))
+      (make-pathname :directory 
+		     (pathname-directory 
+		      (make-pathname
+		       :host (pathname-host #.(or *compile-file-truename*
+						  *load-truename*))
+		       :device (pathname-device #.(or *compile-file-truename*
+						      *load-truename*))
+		       :directory (pathname-directory #.(or *compile-file-truename*
+							    *load-truename*)))))))
 
-(defun make-default-paths () 
-  (let ((ioforms-directory
-	 (if *executable*
-	     (make-pathname :directory 
-			    (pathname-directory 
-			     (car #+sbcl sb-ext:*posix-argv*
-				  #+clozure ccl:*command-line-argument-list*)))
-	     (make-pathname :directory 
-			    (pathname-directory 
-			     (make-pathname
-			      :host (pathname-host #.(or *compile-file-truename*
-						    *load-truename*))
-			 :device (pathname-device #.(or *compile-file-truename*
-							*load-truename*))
-			 :directory (pathname-directory #.(or *compile-file-truename*
-							      *load-truename*))))))))
-    ;; ensure projects subfolder exists
-    (let ((projects-directory (make-pathname :name *projects-directory-name* 
-					     :defaults ioforms-directory)))
-      (make-directory projects-directory)
-      (list ioforms-directory projects-directory))))
+(defun projects-directory ()
+  (make-pathname :name *projects-directory-name* 
+		 :defaults (ioforms-directory)))
 
-(defvar *project-directories* nil)
+(defun default-project-directories () 
+  (let ((projects (projects-directory)))
+    (make-directory-maybe projects)
+    (list (ioforms-directory) projects)))
+
+(defvar *project-directories* nil
   "List of directories where IOFORMS will search for projects.
 Directories are searched in list order.")
 
-(defun find-project-path (project-name)
+(defun search-project-path (project-name)
   "Search the `*project-directories*' path for a directory with the
 name PROJECT-NAME. Returns the pathname if found, otherwise nil."
   (let ((dirs *project-directories*))
@@ -949,20 +961,24 @@ You must set the variable IOFORMS:*PROJECT-DIRECTORIES* in the configuration fil
 Please see the included file BINARY-README for instructions."
 	    project-name dirs))))
 
+(defun find-project-path (project-name)
+  "Return the current project path."
+  (assert *project*)
+  (or *project-path*
+      (search-project-path project-name)))
+
 (defun find-project-file (project-name file)
   "Make a pathname for FILE within the project PROJECT-NAME."
-  (merge-pathnames file (or *project-path* 
-			    (find-project-path project-name))))
+  (merge-pathnames file (find-project-path project-name)))
 
 (defun open-project (project &key (autoload t))
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
-object save directory (by setting the current `*project*'. See also
-`save-object-resource')."
-  (setf *project* project)
-  (setf *pending-autoload-resources* nil)
-  (setf *project-path* (find-project-path project))
-  (assert (pathnamep *project-path*))
+object save directory. See also `save-object-resource')."
+  (setf *project* project
+	*project-path* (search-project-path project)
+	*pending-autoload-resources* nil)
+  (assert *project-path*)
   (index-project project)
   (when autoload 
     (mapc #'load-resource (nreverse *pending-autoload-resources*)))
@@ -970,12 +986,12 @@ object save directory (by setting the current `*project*'. See also
   ;; now load any objects
   (let ((object-index-file (find-project-file project (object-index-filename project))))
     (when (probe-file object-index-file)
-      (message "Loading saved objects from ~S" object-index-file)
+      (message "Indexing saved objects from ~S" object-index-file)
       (index-iof project object-index-file)))
-  (run-hook '*after-load-project-hook*)
   (let ((package (find-package (project-package-name))))
     (when package
-      (setf *package* package))))
+      (setf *package* package)))
+  (run-hook '*after-open-project-hook*))
 
 (defun directory-is-project-p (dir)
   "Test whether a {PROJECTNAME}.IOF index file exists in a directory."
@@ -1070,50 +1086,59 @@ OBJECT as the data."
       (index-resource resource))))
 
 (defun save-object-resource (resource &optional (project *project*))
-  "Save an object resource to disk as {RESOURCE-NAME}.IOF."
+  "Save an object resource to disk as {PROJECT-NAME}/{RESOURCE-NAME}.IOF."
   (let ((name (resource-name resource)))
     (setf (resource-data resource) (serialize (resource-object resource)))
-    (message "Saving resource ~S..." name)
     (write-iof (find-project-file project 
 				 (concatenate 'string (resource-name resource)
 					      *iof-file-extension*))
 	       (list resource))
-    (setf (resource-modified-p resource) nil)
     (setf (resource-data resource) nil)))
 
 (defun is-special-resource (resource)
   (string= "*" (string (aref (resource-name resource) 0))))
+
+(defun make-resource-link (resource)
+  (make-resource :type :iof 
+		 :file (concatenate 'string
+				    (resource-name resource)
+				    *iof-file-extension*)))
   
 (defun save-resource (name resource)
-  (let (index)
-    (let ((pathname (resource-file resource))
-	  (link (copy-structure resource)))
+  (let ((pathname (resource-file resource))
+	(link (make-resource-link resource)))
+    (prog1 link 
       (if (eq :object (resource-type resource))
-	  (unless (is-special-resource resource)
-	    ;; we want to index them all, whether or not we save them all.
-	    ;; make a link resource (i.e. of type :iof) to pull this in later
-	    (setf link (make-resource :type :iof 
-				      :file (concatenate 'string
-							 (resource-name resource)
-							 *iof-file-extension*)))
-	    (push link index)
-	    (when (or force (resource-modified-p resource))
-	      (save-object-resource resource)))
+	  ;; we want to index them all, whether or not we save them all.
+	  ;; make a link resource (i.e. of type :iof) to pull this in later
+	  (save-object-resource resource)
 	  ;; just a normal resource
-	  (progn 
-	    (setf (resource-file link) (namestring pathname)
-		  (resource-data link) nil
-		  ;; mark the original as saved
-		  (resource-modified-p resource) nil)
-	    (push link index))))
-    index))
+	  (setf (resource-file link) (namestring pathname)
+		(resource-data link) nil))
+      ;; finally, mark the original as saved.
+      (resource-modified-p resource) nil)))
 
-(defun save-objects (&optional force)
+(defun save-project (&optional force)
   (let (index)
-    (labels 
-      (maphash #'save *resources*))
-    ;; write auto-generated index
-    (write-iof (find-project-file *project* (object-index-filename *project*)) index)))
+    (labels ((save (name resource) 
+	       (when (or force (resource-modified-p resource))
+		 (push (save-resource name resource) index))))
+      (maphash #'save *resources*)
+      (write-iof (find-project-file *project* (object-index-filename *project*)) 
+		 (nreverse index)))))
+
+(defun save-everything ()
+  (save-project :force))
+
+(defparameter *export-formats* '(:archive :application))
+
+;; (defun export-archive (pathname)
+
+;; (defun export-application
+
+;; (defun export-project (format)
+
+;;;  Resource object loading handlers
 
 (defun load-object-resource (resource)
   "Loads a serialized :OBJECT resource from the Lisp data in the 
@@ -1123,8 +1148,6 @@ also the documentation for DESERIALIZE."
     (assert (object-p object))
     (setf (resource-data resource) nil) ;; no longer needed
     object))
-
-;;; Driver-dependent resource object loading handlers
 
 (defun load-image-resource (resource)
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
@@ -1725,9 +1748,10 @@ The default destination is the main window."
   (sdl:push-quit-event))
 
 (defvar *copyright-text*
-"IOFORMS Game Engine
-Copyright (C) 2006, 2007, 2008, 2009, 2010 David O'Toole
-<dto@gnu.org>
+"IOFORMS Visual Common Lisp Multimedia Authoring Tool
+Copyright (C) 2006, 2007, 2008, 2009, 2010 by David T O'Toole
+<dto@gnu.org> <dto1138@gmail.com>
+http://ioforms.org/
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1742,9 +1766,13 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-This program uses libSDL 1.2 (Simple Direct Media Layer), which is
+This program includes libSDL 1.2 (Simple Direct Media Layer), which is
 provided under the terms of the GNU Lesser General Public License. See
 also the file LIBSDL-LICENSE for details.
+
+This program includes the DejaVu fonts family. See the file
+./standard/DEJAVU-FONTS-LICENSE for more information.
+
 ")
 
 (defvar *library-search-paths-setup-hook* nil)
@@ -1805,63 +1833,25 @@ also the file LIBSDL-LICENSE for details.
 		  "libSDL_image")))
     (cffi:use-foreign-library sdl-image))
 
-;; (defun init-ttf ()  
-;;   (if (is-init)  
-;;       t  
-;;       (sdl-ttf-cffi::ttf-init)))  
-;; (pushnew 'init-ttf sdl:*external-init-on-startup*)
+(defvar *system* nil)
 
-;; (defun quit-ttf ()  
-;;    (if (is-init)  
-;;      (sdl-ttf-cffi::ttf-quit)))  
-;; (pushnew 'quit-ttf sdl:*external-quit-on-exit*) 
+(defun run (&rest args)
+  (destructuring-bind (project &rest arguments) args
+    (unwind-protect 
+	 ;; see shell.lisp
+	 (progn 
+	   (setf *system* (clone (symbol-value '=system=)))
+	   (when project 
+	     (apply #'send nil :open-project *system* project arguments))
+	   (send nil :run *system*))
+      (sdl:quit-sdl))))
 
-(defun ioforms (project-name &rest args)
-  "This is the main entry point to IOFORMS. PROJECT-NAME is loaded 
-and its .startup resource is loaded."
-  (unwind-protect
-       (progn 
-	 #+linux (do-cffi-loading)
-	 ;;
-	 (format t "~A" *copyright-text*)
-	 (setf *project-package-name* nil)
-	 (setf *project-directories* (make-default-paths))
-	 (setf *timestep-function* nil)
-	 (setf *world* nil)
-	 (initialize)
-	 (setf *timesteps* 0)
-	 (setf *keyboard-timestep-number* 0)
-	 (setf *initialization-hook* nil)
-	 (setf *play-args* args)
-	 (setf *random-state* (make-random-state t))
-	 (setf *project* project-name)
-	 ;; add library search paths for Mac if needed
-	 (setup-library-search-paths)
-	 (sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
-	   ;; (unless (sdl:initialise-default-font sdl:*ttf-font-vera*)
-	   ;;   (error "FATAL: Cannot initialize the default font."))
-	   (load-user-init-file)	
-	   (initialize-resource-table)
-	   (initialize-colors)
-	   (when *use-sound*
-	     ;; try opening sound
-	     (when (null (sdl-mixer:open-audio :frequency *frequency*
-					       :chunksize *output-chunksize*
-					       :enable-callbacks t
-					       :format *sample-format*
-					       :channels *output-channels*))
-	       ;; if that didn't work, disable effects/music
-	       (message "Could not open audio driver. Disabling sound effects and music.")
-	       (setf *use-sound* nil))
-	     ;; set to mix lots of sounds
-	     (sdl-mixer:allocate-channels *channels*))
-	   (index-project "standard") 
-	   (open-project *project*)
-	   (find-resource *startup*)
-	   (run-main-loop)))
-    (sdl:quit-sdl)))
-
-(defmacro defgame (module-name 
+(defun ioforms (&rest args)
+  (if (null args)
+      (run nil)
+      (apply #'run args)))
+      
+(defmacro defproject (module-name 
 		   (&key title description
 			 (prompt-prototype =prompt=)
 			 timestep timestep-function

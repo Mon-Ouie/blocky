@@ -26,8 +26,6 @@
 
 ;;; Main program. 
 
-(defparameter *window-width* 1024)
-(defparameter *window-height* 720)
 
 (defgsprite circle
   (direction :initform :north)

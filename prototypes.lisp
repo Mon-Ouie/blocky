@@ -425,6 +425,7 @@ argument is ignored for now."
 (defvar *send-parent-depth* 2)
 
 (defun initialize ()
+  (format t "~A" *copyright-text*)
   ;;(initialize-documentation-tables)
   (setf *send-parent-depth* 2))
 

@@ -44,7 +44,11 @@
 ;; Unlike Pure Data and other visual languages that model themselves
 ;; after electronic components connected by wires, IOFORMS does away
 ;; with the explicitly drawn connections in favor of a tree structure
-;; mapping more naturally to Lisp expressions. 
+;; and evaluation semantics mapping more naturally to Lisp
+;; expressions, although the mapping is not exact. In fact, I have
+;; chosen to define the IOFORMS visual language as a separate
+;; "companion" language for Common Lisp, so that neither is a simple
+;; duplication of the other (just with different appearances.)
 
 ;; The purpose of a block is to perform some action in response to a
 ;; number of input arguments and then return a value. Each argument is
@@ -61,6 +65,8 @@
 ;; you can convert lisp expressions into working block
 ;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
 
+(defvar *target*)
+
 (define-prototype ioblock ()
   (name :initform nil)
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
@@ -73,6 +79,7 @@ See also `*argument-types*'.")
   (type :initform :data :documentation "Type name of block. See also `*block-types*'.")
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
+  (blocks :initform nil)
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
@@ -81,7 +88,7 @@ See also `*argument-types*'.")
   (visible :initform t :documentation "When non-nil, block will be visible.")
   (keymap :initform nil :documentation "Keybindings, if any.")  
   (child-widths :initform nil :documentation "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
-  (excluded-fields :initform '(:widget :results :parent)))
+  (excluded-fields :initform '(:image :results :parent)))
 
 (defmacro defblock (name &body args)
   "Define a new block prototype named =NAME=.
@@ -231,6 +238,9 @@ areas.")
       (/hide self)
       (/show self)))
 
+(define-method is-visible ioblock ()
+  <visible>)
+
 (define-method set-parent ioblock (parent)
   "Store a link to an enclosing PARENT block, if any."
   (setf <parent> parent))
@@ -238,8 +248,8 @@ areas.")
 (define-method get-parent ioblock ()
   <parent>)
 
-(define-method get-widget ioblock ()
-  <widget>)
+(define-method get-image ioblock ()
+  <image>)
 
 (define-method get-argument ioblock (n)
   "Return the value of the Nth block argument."
@@ -274,25 +284,18 @@ areas.")
     (when parent
       (/unplug parent self))))
 
-(define-method execute-arguments ioblock (target)
+(define-method execute-arguments ioblock ()
   "Execute all blocks in <ARGUMENTS> from left-to-right. Results are
 placed in corresponding positions of <RESULTS>. Override this method
 when defining new blocks if you don't want to evaluate all the
 arguments all the time."
   (with-fields (arguments results) self
-    (setf results (mapcar #'(lambda (block)
-			      (/run block target))
-			  arguments))))
-    ;; (when (and arguments results)
-    ;;   (dotimes (n (length arguments))
-    ;; 	(setf (nth n results)
-    ;; 	      (/run (nth n arguments)
-    ;; 		    target))))))
+    (setf results (mapcar #'/run arguments))))
 
-(define-method execute ioblock (target)
-  "Carry out the block's action by sending messages to the object TARGET.
-The TARGET argument is provided by the script executing the block,
-and its value will be the IOFORMS object associated with the script.
+(define-method execute ioblock ()
+  "Carry out the block's action by sending messages to the object '*target*'.
+The *target* is a special variable bound in the execution
+environment. Its value will be the IOFORMS object to send messages to.
 The <RESULTS> field will be a list of results obtained by
 executing/evaluating the blocks in <ARGUMENTS> (see also
 `IOBLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
@@ -307,14 +310,18 @@ something else. See also `defblock' and `send'."
 	       (if (symbolp item)
 		   (make-keyword item)
 		   item)))
-    (apply #'ioforms:send nil operation target 
+    (apply #'ioforms:send nil operation *target* 
 	   (mapcar #'clean results)))))
 
-(define-method run ioblock (target)
-  "Run nested blocks on TARGET to produce results, then run this
-block with those results as input."
-  (/execute-arguments self target)
-  (/execute self target))
+(defmacro with-target (target &body body)
+  `(let ((*target* ,target))
+     ,@body))
+
+(define-method run ioblock ()
+  "Run child blocks to produce results, then run this block with
+those results as input."
+  (/execute-arguments self)
+  (/execute self))
 
 (define-method step ioblock (&rest args)
   "Update the simulation one step forward in time."
@@ -601,7 +608,7 @@ override all colors."
 
 (define-method layout ioblock ()
   (with-fields (child-widths height width) self
-    (with-field-values (x y operation schema arguments widget) self
+    (with-field-values (x y operation schema arguments) self
       (let* ((font *block-font*)
 	     (dash *dash*)
 	     (left (+ x (/handle-width self)))
@@ -622,11 +629,9 @@ override all colors."
 			  (+ dash (move-child block))))
 		     (prog1 measurement 
 		       (incf left measurement)))))
-	  (if widget
-	      (move-widget widget)
-	      (setf child-widths (mapcar #'layout-child arguments schema)))
+	  (setf child-widths (mapcar #'layout-child arguments schema)))
 	  (setf width (+ (- left x) (* 4 dash)))
-	  (setf height (+ dash dash max-height)))))))
+	  (setf height (+ dash dash max-height))))))
 
 (define-method draw-expression ioblock (x0 y0 segment type image)
   (with-block-drawing image
@@ -647,18 +652,20 @@ override all colors."
 		(setf width (expression-width segment))))
 	  width))))
 
+(define-method render ioblock ())
+
 (define-method draw-contents ioblock (image)
   (with-block-drawing image
     (with-field-values 
-	(x y operation arguments schema widget)
+	(x y operation arguments)
 	self
       (let* ((dash *dash*)
 	     (left (+ x (* 2 dash)))
 	     (y0 (+ y dash 1)))
-	(if widget
+	(if <image>
 	    (progn 
-	      (/render widget)
-	      (draw-image (field-value :image widget)
+	      (/render self)
+	      (draw-image <image>
 			  left y0 :destination image))
 	    (progn 
 	      (text left y0 (print-expression operation))
@@ -674,7 +681,7 @@ override all colors."
 	(progn
 	  (/render self)
 	  (draw-image image x y 
-		      :destination output-buffer)))))
+		      :destination output-image)))))
 
 (defparameter *hover-color* ".red")
 
@@ -712,8 +719,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (schema :iniform nil)
   (data :initform nil))
 
-(define-method execute entry (target)
-  (declare (ignore target))
+(define-method execute entry ()
   <data>)
 
 (define-method set-data entry (data)
@@ -756,8 +762,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 (defun null-block () (clone =list=))
 
-(define-method execute list (target)
-  (declare (ignore target))
+(define-method execute list ()
   <results>)
 
 (define-method initialize list (&rest args)
@@ -799,7 +804,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	  height (+ (* 4 *dash*)))))
 
 (define-method layout-body-as-list list ()
-  (with-fields (x y height width) self
+  (with-fields (x y height width arguments) self
     (let* ((dash *dash*)
 	   (header-height (+ dash (/layout-header self)))
 	   (y0 (+ y dash header-height))
@@ -827,30 +832,27 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-prototype block (:parent =list=)
   (arguments :iniform '(nil))
   (schema :initform '(:block))
-  (blocks :initform '()
-	  :documentation "List of blocks in the block.")
   (target :initform nil)
   (variables :initform (make-hash-table :test 'eq)))
 
 (define-method initialize block (&key blocks variables target)
-  (setf <blocks> blocks)
+  (setf <arguments> blocks)
   (when variables (setf <variables> variables))
   (when target (setf <target> target)))
 
-(defvar *block* nil)
 (defvar *target* nil)
 
 (define-method set-target block (target)
   (setf <target> target))
 
 (define-method is-member block (block)
-  (with-fields (blocks) self
-    (find block blocks)))
+  (with-fields (arguments) self
+    (find block arguments)))
 
 (define-method add block (block &optional x y)
-  (with-fields (blocks) self
-    (assert (not (find block blocks)))
-    (setf blocks (nconc blocks (list block)))
+  (with-fields (arguments) self
+    (assert (not (find block arguments)))
+    (setf arguments (nconc arguments (list block)))
     (setf (field-value :parent block) nil)
     (when (and (integerp x)
 	       (integerp y))
@@ -874,19 +876,20 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	      "block")))))
 			   
 (define-method run block (block)
-  (with-fields (blocks target) self
-    (/run block target)))
+  (with-fields (block target) self
+    (with-target target
+          (/run block))))
 	    
 (define-method bring-to-front block (block)
-  (with-fields (blocks) self
-    (when (find block blocks)
-      (setf blocks (delete block blocks))
-      (setf blocks (nconc blocks (list block))))))
+  (with-fields (arguments) self
+    (when (find block arguments)
+      (setf arguments (delete block arguments))
+      (setf arguments (nconc arguments (list block))))))
 
 (define-method delete block (block)
-  (with-fields (blocks) self
-    (assert (find block blocks))
-    (setf blocks (delete block blocks))))
+  (with-fields (arguments) self
+    (assert (find block arguments))
+    (setf arguments (delete block arguments))))
 
 (define-method set block (var value)
   (setf (gethash var <variables>) value))
@@ -894,17 +897,17 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-method get block (var)
   (gethash var <variables>))
 
-(defun block-variable (var-name)
-  (/get *block* var-name))
+;; (defun block-variable (var-name)
+;;   (/get *block* var-name))
 
-(defun (setf block-variable) (var-name value)
-  (/set *block* var-name value))
+;; (defun (setf block-variable) (var-name value)
+;;   (/set *block* var-name value))
 
-(defmacro with-block-variables (vars &rest body)
-  (labels ((make-clause (sym)
-	     `(,sym (block-variable ,(make-keyword sym)))))
-    (let* ((symbols (mapcar #'make-non-keyword vars))
-	   (clauses (mapcar #'make-clause symbols)))
-      `(symbol-macrolet ,clauses ,@body))))
+;; (defmacro with-block-variables (vars &rest body)
+;;   (labels ((make-clause (sym)
+;; 	     `(,sym (block-variable ,(make-keyword sym)))))
+;;     (let* ((symbols (mapcar #'make-non-keyword vars))
+;; 	   (clauses (mapcar #'make-clause symbols)))
+;;       `(symbol-macrolet ,clauses ,@body))))
       
 ;;; blocks.lisp ends here

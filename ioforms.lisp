@@ -42,7 +42,7 @@
   (:use :common-lisp) 
   (:export *default-frame-width* *default-frame-height* =null=
 null-block =viewport= *frequency* *output-chunksize* *output-channels*
-halt-sample *dt* defgame *timestep-function* =equipment=
+halt-sample *dt* defproject run *timestep-function* =equipment=
 *default-world-axis-size* defgsprite generic-keybind *target* *blocks*
 *script* *default-world-z-size* =browser= install-blocks =balloon=
 =form= keyboard-held-p keyboard-pressed-p keyboard-released-p
@@ -71,26 +71,31 @@ compose-blank-fields font-width font-height *browser* browser
 set-browser find-object *windows* transform-field-reference defblock
 *screen-height* =inventory= formatted-line-width *last-event*
 formatted-line-height formatted-string-height formatted-string-width
-get-color create-image draw-image ioforms define-prototype has-field
-defcell defworld *choose-direction-menu* set-field-options
-field-option-value index-resource find-project-path index-project
-load-image-resource load-lisp-resource *executable* *function-buttons*
-*corner-buttons* *dance-arrows* *punctuation* *dance-phrase-symbols*
-*dance-keybindings* *energy-dance-pad-mapping*
+get-color create-image draw-image ioforms edit =frame=
+define-prototype has-field *target* with-target defcell defworld
+*choose-direction-menu* set-field-options field-option-value
+index-resource find-project-path index-project load-image-resource
+load-lisp-resource *executable* *function-buttons* *corner-buttons*
+*dance-arrows* *punctuation* *dance-phrase-symbols*
+*dance-keybindings* *energy-dance-pad-mapping* *message-function*
 *dark-target-arrow-images* get-button-index arrow-image
+message-to-standard-output reset-message-function
 arrow-formatted-string ticks-per-beat event-time event-arrow
-*step-tolerance* *resource-handlers* load-resource find-resource
-find-resource-object *colors* *world* load-user-init-file
-*project-directories* resource-to-plist *osx* *linux* make-resource
-make-object-resource make-event =block= *blocks*
-bind-key-to-prompt-insertion make-field-initializer clone
-make-field-initializer-body make-key-modifier-symbol make-key-string
-normalize-event make-keyword make-object queue-head queue-max
-queue-count *sender* make-special-variable-name field-reference-p
-null-parent *message-send-symbol-suffix* *x11-color-data* object-name
+default-project-directories *step-tolerance* *resource-handlers*
+load-resource find-resource find-resource-object *colors* *world*
+make-directory-maybe load-user-init-file *project-directories*
+resource-to-plist *osx* *linux* make-resource make-object-resource
+make-event =block= *blocks* bind-key-to-prompt-insertion
+make-field-initializer clone make-field-initializer-body
+make-key-modifier-symbol make-key-string normalize-event make-keyword
+make-object queue-head queue-max queue-count *sender*
+make-special-variable-name field-reference-p null-parent
+*message-send-symbol-suffix* *x11-color-data* object-name
 object-parent send send-super send-queue self opposite-direction
 object-address-string object step-in-direction direction-to =cell=
 plasma-rect subdivide-rect render-plasma add-hook run-hook queue-tail
+make-resource-link save-resource save-project save-everything
+*export-formats* export-archive export-application export-project
 make-queue queue unqueue queue-message queued-messages-p
 unqueue-message send-queue field-value random-direction *resources*
 load-font-resource save-object-resource /parent/initialize
@@ -109,17 +114,19 @@ trace-column trace-octagon trace-line midpoint =asterisk=
 get-some-object-name transform-declaration-field-descriptor
 show-blocks no-such-field =narrator= find-projects-in-directory goal
 =mission= =gateway= =launchpad= =environment= directory-is-project-p
-find-all-projects *project* transform-tree stat-value draw-line
-*default-message-verbosities* *message-verbosities* add-overlay
-set-message-verbosities operation-symbol message-symbol play-sample
-set-music-volume add-message-verbosities with-message-queue =minimap=
-draw-pixel *user-keyboard-layout* *fullscreen* draw-circle =emote=
+find-all-projects *project* transform-tree *after-initialization-hook*
+stat-value draw-line *default-message-verbosities*
+*message-verbosities* add-overlay set-message-verbosities
+operation-symbol message-symbol play-sample set-music-volume
+add-message-verbosities with-message-queue =minimap= draw-pixel
+*user-keyboard-layout* *fullscreen* draw-circle =emote=
 set-field-option-value =blockr= =blockr-prompt= open-project
 =sprite-special= field-options world set-frame-rate *frame-rate*
 =stack= *workbook* set-resource-modified-p *iof-file-extension*
 load-project *project* *project-path* *window-title* *window-position*
-=split= set-timer-interval =gcell= defgcell =block= *message-logging*
-overlay poll-joystick-axis poll-joystick-button reset-joystick
+*default-shell-width* *default-shell-height* =split=
+set-timer-interval =gcell= defgcell =block= *message-logging* overlay
+poll-joystick-axis poll-joystick-button reset-joystick
 set-screen-width =universe= *universe* *play-args* set-screen-height
 genseq *zoom-factor* zoom-image is-zoomed-resource *timer-interval*
 save-objects enable-timer disable-timer while defmission

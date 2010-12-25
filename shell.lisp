@@ -1,4 +1,4 @@
-;;; system.lisp --- blocks library for basic ioforms operations
+;;; shell.lisp --- blocks library for basic ioforms operations
 
 ;; Copyright (C) 2010  David O'Toole
 
@@ -25,35 +25,117 @@
 (in-package :ioforms)
 
 (defblock system
-  (type :initform :system))
+  (type :initform :system)
+  (shell :initform nil)
+  (running :initform nil))
 
-(defvar *system* =system=)
-
-(define-method step system (&rest args)
-  (dolist (block *blocks*)
-    (/step block)))
-
-(define-method initialize system (&rest args)
-  (apply #'/parent/initialize self args)
-  (setf *timestep-function* #'(lambda (&rest args)
-				(apply #'/step self args))))
+;; (define-method handle-key system (keylist)
+;;   (or (/parent/handle-key self keylist)
+;;       (some #'(lambda (block)
+;; 		(unless (eq self block)
+;; 		  (/handle-key block keylist)))
+;; 	    *blocks*)))
 
 (define-method get-blocks system ()
-  *blocks*)
+  <children>)
 
 (define-method count-blocks system ()
-  (apply #'+ (mapcar #'/count *blocks*)))
+  (with-fields (children) self
+    (apply #'+ (mapcar #'/count children))))
 
+(define-method start system ()
+  (setf <running> t))
 
-(define-method start system ())
-(define-method stop system ())
-(define-method save system ())
-(define-method save-all system ())
-(define-method new system ())
-(define-method open system ())
-(define-method get-ticks system ())
+(define-method stop system ()
+  (setf <running> nil))
 
-;;; Block shell widget and command prompt
+(define-method step system (&rest args)
+  (with-fields (running children) self
+    (when running
+      (dolist (block children)
+	(/step block)))))
+
+(define-method initialize system (&rest args)
+  #+linux (do-cffi-loading)
+  (ioforms:initialize)
+  (apply #'/parent/initialize self args)
+  ;; (setf *timestep-function* #'(lambda (&rest args)
+  ;; 				(apply #'/step self args)))
+  (reset-message-function)
+  (setf *project-package-name* nil
+        *project-directories* (ioforms:default-project-directories)
+	*world* nil
+	*timesteps* 0
+	*keyboard-timestep-number* 0
+	*initialization-hook* nil
+	*play-args* args
+	*random-state* (make-random-state t))
+	;; add library search paths for Mac if needed
+	(setup-library-search-paths)
+	(sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
+	   (load-user-init-file) ;; this step may override *project-directories*
+	   (initialize-resource-table)
+	   (initialize-colors)
+	   (when *use-sound*
+	     ;; try opening sound
+	     (when (null (sdl-mixer:open-audio :frequency *frequency*
+					       :chunksize *output-chunksize*
+					       :enable-callbacks t
+					       :format *sample-format*
+					       :channels *output-channels*))
+	       ;; if that didn't work, disable effects/music
+	       (message "Could not open audio driver. Disabling sound effects and music.")
+	       (setf *use-sound* nil))
+	     ;; set to mix lots of sounds
+	     (sdl-mixer:allocate-channels *channels*))
+	   (index-project "standard")))
+
+(defparameter *default-shell-width* 1024)
+(defparameter *default-shell-height* 720)
+
+(define-method run system ()
+  (with-fields (shell) self
+    (message "Starting IOFORMS Shell...")
+    (setf *window-title* "ioforms")
+    (setf *resizable* t)
+    (enable-classic-key-repeat 100 100)
+    (set-screen-height *default-shell-height*)
+    (set-screen-width *default-shell-width*)
+    (labels ((resize-shell ()
+	       (/resize self 
+			:width *screen-width* 
+			:height *screen-height*)
+	       (/resize shell 
+			:height *screen-height*
+			:width *screen-width*)))
+      (add-hook '*resize-hook* #'resize-shell)
+      (add-hook '*after-initialization-hook* #'(lambda () (/add shell (clone =listener=))))
+      (add-hook '*after-initialization-hook* #'resize-shell)
+      (setf shell (clone (symbol-value '=shell=)))
+      (install-blocks self shell)
+      (run-main-loop))))
+
+(define-method open-project system (project)
+  (open-project project))
+
+(define-method save-project system ()
+  (save-project))
+
+(define-method new-project system (project)
+  (assert (stringp project))
+  (let ((dir (find-project-path project)))
+    (when (directory-is-project-p dir)
+      (error "Project ~S aready exists." project))
+    (make-directory-maybe dir)
+    (/open-project self project)))
+
+(define-method save-everything system ()
+  (save-everything))
+
+(define-method get-ticks system ()
+  (get-ticks))
+
+;;; Interactive editor shell
 
 (define-prototype block-prompt (:parent =prompt=)
   output 
@@ -82,7 +164,7 @@
 (defparameter *minimum-listener-width* 200)
 
 (define-method initialize listener ()
-  (with-fields (widget) self
+  (with-fields (image) self
     (/parent/initialize self)
     (let ((prompt (clone =block-prompt= self)))
       (/resize prompt 
@@ -91,9 +173,7 @@
 			  (font-height *default-font*)))
       (setf widget prompt))))
 
-(defblock shell
-  (block :initform nil 
-	  :documentation "The IOFORMS:=BLOCK= object being edited.")
+(define-prototype shell (:parent =block=)
   (selection :initform ()
   	     :documentation "Subset of selected blocks.")
   (drag :initform nil 
@@ -110,18 +190,13 @@
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
-(define-method initialize shell ()
-  (/parent/initialize self)
-  (with-fields (block) self
-    (setf block (clone =block=))))
-
 (define-method select shell (block)
-  (with-fields (selection blocks) self
+  (with-fields (selection arguments) self
     (pushnew block selection)))
 
 (define-method select-if shell (predicate)
-  (with-fields (selection blocks) self
-    (setf selection (remove-if predicate blocks))))
+  (with-fields (selection arguments) self
+    (setf selection (remove-if predicate arguments))))
 
 (define-method unselect shell (block)
   (with-fields (selection) self
@@ -135,36 +210,31 @@
 	(setf needs-redraw t)))))
 
 (define-method resize shell (&key width height)
-  (with-fields (buffer prompt image) self
-    (when (null buffer)
-      (setf buffer (create-image width height)))
-    (unless (and (= <width> width)
-		 (= <height> height))
-      (/parent/resize self :width width :height height)
-      (when buffer
-	(sdl:free buffer))
-      (setf buffer (create-image width height)))))
+  (with-fields (prompt buffer image) self
+    (/parent/resize self :width width :height height)
+    (setf buffer (create-image width height))))
 
 (define-method redraw shell ()
-  (with-fields (block buffer selection needs-redraw width height) self
-    (with-fields (blocks) block
-      (draw-box 0 0 width height 
-		:color *background-color*
-		:stroke-color *background-color*
-		:destination buffer)
-      (dolist (block blocks)
-	(/layout block))
-      (dolist (block blocks)
-	(when (find block selection)
-	  (/draw-border block buffer))
-	(/draw block buffer))
-      (setf needs-redraw nil))))
+  (with-fields (arguments buffer selection needs-redraw width height) self
+    (draw-box 0 0 width height 
+	      :color *background-color*
+	      :stroke-color *background-color*
+	      :destination buffer)
+    (dolist (block arguments)
+      (/layout block))
+    (dolist (block arguments)
+      (when (find block selection)
+	(/draw-border block buffer))
+      (/draw block buffer))
+    (setf needs-redraw nil)))
+
+(define-method render shell ())
 
 (define-method begin-drag shell (mouse-x mouse-y block)
-  (with-fields (drag block drag-start ghost drag-offset) self
+  (with-fields (drag arguments drag-start ghost drag-offset) self
     (setf drag block)
-    (when (/is-member block block)
-      (/delete block block))
+    (when (/is-member self block)
+      (/delete block arguments))
     (let ((dx (field-value :x block))
 	  (dy (field-value :y block))
 	  (dw (field-value :width block))
@@ -178,48 +248,44 @@
 	    (setf drag-offset (cons x-offset y-offset))))))))
 
 (define-method hit-blocks shell (x y)
-  (with-fields (block) self
-    (when block 
-      (with-fields (blocks) block
-	(labels ((hit (b)
-		   (/hit b x y)))
-	  (let ((parent (find-if #'hit blocks :from-end t)))
-	    (when parent
-	      (/hit parent x y))))))))
+  (with-fields (arguments) self
+    (when arguments 
+      (labels ((hit (b)
+		 (/hit b x y)))
+	(let ((parent (find-if #'hit arguments :from-end t)))
+	  (when parent
+	    (/hit parent x y)))))))
 
 (define-method render shell ()
   (with-fields 
-      (block needs-redraw image buffer drag-start selection
+      (arguments needs-redraw buffer image drag-start selection
       drag modified hover ghost prompt) self
     (dolist (block selection)
-      (let ((widget (/get-widget block)))
-	(when widget 
-	  (/render widget)
-	  (/draw block image))))
+      (let ((block-image (field-value :image block)))
+    	(when block-image 
+    	  (/render block))))
     (labels ((copy ()
 	       (draw-image buffer 0 0 :destination image)))
-      (when block
-	(when needs-redraw 
-	  (/redraw self)
-	  (copy))
-	(when drag 
-	  (copy)
-	  (/layout drag)
-	  (/draw-ghost ghost image)
-	  (/draw drag image)
-	  (when hover 
-	    (/draw-hover hover image)))))))
+      (when needs-redraw 
+	(/redraw self)
+	(copy))
+      (when drag 
+	(copy)
+	(/layout drag)
+	(/draw-ghost ghost image)
+	(/draw drag image)
+	(when hover 
+	  (/draw-hover hover image))))))
 
 (define-method mouse-down shell (x y &optional button)
-  (with-fields (block) self 
-    (let ((block (/hit-blocks self x y)))
-      (when block
-	(case button
-	  (1 (/begin-drag self x y block))
-	  (3 (/run block block)))))))
+  (let ((block (/hit-blocks self x y)))
+    (when block
+      (case button
+	(1 (/begin-drag self x y block))
+	(3 (/run block))))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
-  (with-fields (block hover drag-offset drag-start drag) self
+  (with-fields (arguments hover drag-offset drag-start drag) self
     (setf hover nil)
     (when drag
       (destructuring-bind (ox . oy) drag-offset
@@ -230,21 +296,21 @@
 
 (define-method mouse-up shell (x y &optional button)
   (with-fields 
-      (block needs-redraw drag-offset drag-start hover
+      (arguments needs-redraw drag-offset drag-start hover
 	      selection drag modified) 
       self
-    (with-fields (blocks) block
+    (with-fields (arguments) self
       (when drag
 	(let ((drag-parent (/get-parent drag)))
 	  (when drag-parent
 	    (/unplug-from-parent drag))
-	  (let ((target hover))
-	    (if target
+	  (let ((sink hover))
+	    (if sink
 		;; dropping on another block
-		(unless (/accept target drag)
-		  (/add block drag))
+		(unless (/accept sink drag)
+		  (/add self drag))
 		;; dropping on background
-		(/add block drag)))))
+		(/add self drag)))))
       (setf selection nil)
       (when drag (/select self drag))
       (setf drag-start nil
@@ -252,7 +318,9 @@
 	    drag nil
 	    needs-redraw t))))
 
-;;; IF block
+
+
+;;; Various blocks
 
 (defblock if 
   (type :initform :control)
@@ -260,15 +328,15 @@
   (schema :initform '(:block :block :block))
   (arguments :initform '(nil nil nil)))
 
-(define-method execute if (target)
+(define-method execute if ()
   <results>)
 
-(define-method execute-arguments if (target)
+(define-method execute-arguments if ()
   (with-fields (arguments results) self
     (destructuring-bind (predicate then else) arguments
-      (if (/run predicate target)
-	  (/run then target)
-	  (/run else target)))))
+      (if (/run predicate)
+	  (/run then)
+	  (/run else)))))
 
 ;;; Get field value
 
@@ -276,10 +344,10 @@
   (type :initform :variables)
   (schema :initform '(:block)))
 
-(define-method execute my (target)
+(define-method execute my ()
   (with-fields (results) self
     (field-value (make-keyword (car results))
-		 target)))
+		 *target*)))
 
 ;;; Set field value
 
@@ -294,8 +362,8 @@
   (type :initform :looks)
   (schema :initform '(:string)))
 
-(define-method execute emote (target)
-  (/emote target 
+(define-method execute emote ()
+  (/emote *target* 
 	  (list (list (list (first <results>) :font *block-font*
 			    :foreground ".black")))
 	  :timeout 200 :style :clear))
@@ -342,8 +410,8 @@
   (schema :initform '(:string))
   (arguments :initform '("fanfare")))
 
-(define-method execute play-music (target)
-  (/play-music target (first <results>) :loop t))
+(define-method execute play-music ()
+  (/play-music *target* (first <results>) :loop t))
 
 (defblock play-sound 
   (type :initform :sound)
@@ -385,9 +453,9 @@
   (schema :initform '(:number :number))
   (arguments :initform '(nil nil)))
 
-(define-method execute + (target)
+(define-method execute + ()
   (with-fields (results) self
     (when (every #'integerp results)
       (apply #'+ results))))
 
-;;; system.lisp ends here
+;;; shell.lisp ends here
