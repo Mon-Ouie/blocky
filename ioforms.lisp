@@ -42,7 +42,7 @@
   (:use :common-lisp) 
   (:export *default-frame-width* *default-frame-height* =null=
 null-block =viewport= *frequency* *output-chunksize* *output-channels*
-halt-sample *dt* defgame *timestep-function* =equipment=
+halt-sample *dt* defproject run *timestep-function* =equipment=
 *default-world-axis-size* defgsprite generic-keybind *target* *blocks*
 *script* *default-world-z-size* =browser= install-blocks =balloon=
 =form= keyboard-held-p keyboard-pressed-p keyboard-released-p
@@ -110,7 +110,7 @@ halt-music seek-music *joystick-mapping* *generic-joystick-mapping*
 *ps3-joystick-mapping* *joystick-button-symbols* draw-resource-image
 *event-handler-function* *use-sound* trace-rectangle trace-row
 trace-column trace-octagon trace-line midpoint =asterisk=
-=gray-asterisk= self *project-blocks* defsprite =sprite=
+=gray-asterisk= self *project-blocks* defsprite =sprite= 
 get-some-object-name transform-declaration-field-descriptor
 show-blocks no-such-field =narrator= find-projects-in-directory goal
 =mission= =gateway= =launchpad= =environment= directory-is-project-p

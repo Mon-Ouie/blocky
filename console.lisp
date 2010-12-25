@@ -1830,18 +1830,23 @@ This program includes the DejaVu fonts family. See the file
 
 (defvar *system* nil)
 
-(defun ioforms (project &rest args)
-  "This is the main entry point to IOFORMS."
-  (unwind-protect 
-       ;; see shell.lisp
-       (progn 
-	 (setf *system* (clone (symbol-value '=system=)))
-	 (when project 
-	   (apply #'send nil :open-project *system* project args))
-	 (send nil :run *system*))
-    (sdl:quit-sdl)))
+(defun run (&rest args) 
+  (destructuring-bind (project &rest arguments) args
+    (unwind-protect 
+	 ;; see shell.lisp
+	 (progn 
+	   (setf *system* (clone (symbol-value '=system=)))
+	   (when project 
+	     (apply #'send nil :open-project *system* project arguments))
+	   (send nil :run *system*))
+      (sdl:quit-sdl))))
 
-(defmacro defgame (module-name 
+(defun ioforms (&rest args)
+  (if (null args)
+      (run nil)
+      (apply #'run args)))
+      
+(defmacro defproject (module-name 
 		   (&key title description
 			 (prompt-prototype =prompt=)
 			 timestep timestep-function
