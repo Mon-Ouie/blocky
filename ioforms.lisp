@@ -71,11 +71,12 @@ compose-blank-fields font-width font-height *browser* browser
 set-browser find-object *windows* transform-field-reference defblock
 *screen-height* =inventory= formatted-line-width *last-event*
 formatted-line-height formatted-string-height formatted-string-width
-get-color create-image draw-image ioforms edit =frame= define-prototype has-field
-defcell defworld *choose-direction-menu* set-field-options
-field-option-value index-resource find-project-path index-project
-load-image-resource load-lisp-resource *executable* *function-buttons*
-*corner-buttons* *dance-arrows* *punctuation* *dance-phrase-symbols*
+get-color create-image draw-image ioforms edit =frame=
+define-prototype has-field *target* with-target defcell defworld
+*choose-direction-menu* set-field-options field-option-value
+index-resource find-project-path index-project load-image-resource
+load-lisp-resource *executable* *function-buttons* *corner-buttons*
+*dance-arrows* *punctuation* *dance-phrase-symbols*
 *dance-keybindings* *energy-dance-pad-mapping* *message-function*
 *dark-target-arrow-images* get-button-index arrow-image
 message-to-standard-output reset-message-function
