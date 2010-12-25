@@ -81,15 +81,16 @@ load-lisp-resource *executable* *function-buttons* *corner-buttons*
 *dark-target-arrow-images* get-button-index arrow-image
 message-to-standard-output reset-message-function
 arrow-formatted-string ticks-per-beat event-time event-arrow
-default-project-directories *step-tolerance* *resource-handlers* load-resource
-find-resource find-resource-object *colors* *world* make-directory-maybe
-load-user-init-file *project-directories* resource-to-plist *osx*
-*linux* make-resource make-object-resource make-event =block= *blocks*
-bind-key-to-prompt-insertion make-field-initializer clone
-make-field-initializer-body make-key-modifier-symbol make-key-string
-normalize-event make-keyword make-object queue-head queue-max
-queue-count *sender* make-special-variable-name field-reference-p
-null-parent *message-send-symbol-suffix* *x11-color-data* object-name
+default-project-directories *step-tolerance* *resource-handlers*
+load-resource find-resource find-resource-object *colors* *world*
+make-directory-maybe load-user-init-file *project-directories*
+resource-to-plist *osx* *linux* make-resource make-object-resource
+make-event =block= *blocks* bind-key-to-prompt-insertion
+make-field-initializer clone make-field-initializer-body
+make-key-modifier-symbol make-key-string normalize-event make-keyword
+make-object queue-head queue-max queue-count *sender*
+make-special-variable-name field-reference-p null-parent
+*message-send-symbol-suffix* *x11-color-data* object-name
 object-parent send send-super send-queue self opposite-direction
 object-address-string object step-in-direction direction-to =cell=
 plasma-rect subdivide-rect render-plasma add-hook run-hook queue-tail
@@ -122,8 +123,9 @@ set-field-option-value =blockr= =blockr-prompt= open-project
 =sprite-special= field-options world set-frame-rate *frame-rate*
 =stack= *workbook* set-resource-modified-p *iof-file-extension*
 load-project *project* *project-path* *window-title* *window-position*
-=split= set-timer-interval =gcell= defgcell =block= *message-logging*
-overlay poll-joystick-axis poll-joystick-button reset-joystick
+*default-shell-width* *default-shell-height* =split=
+set-timer-interval =gcell= defgcell =block= *message-logging* overlay
+poll-joystick-axis poll-joystick-button reset-joystick
 set-screen-width =universe= *universe* *play-args* set-screen-height
 genseq *zoom-factor* zoom-image is-zoomed-resource *timer-interval*
 save-objects enable-timer disable-timer while defmission

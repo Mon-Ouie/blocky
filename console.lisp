@@ -1127,7 +1127,7 @@ OBJECT as the data."
 (defun save-everything ()
   (save-project :force))
 
-(defvar *export-formats* :archive :application)
+(defparameter *export-formats* '(:archive :application))
 
 ;; (defun export-archive (pathname)
 

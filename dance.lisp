@@ -87,7 +87,7 @@
 
 ;;; Define the main widgets of the UI. 
 
-(define-prototype dance-frame (:parent xe2:=split=))
+(define-prototype dance-frame (:parent ioforms:=split=))
 
 ;; (defparameter *qwerty-keybindings*
 ;;   '(;; arrow key cursor movement
@@ -300,7 +300,7 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 
 ;; see also widgets.lisp
 
-(define-prototype dance-prompt (:parent xe2:=prompt=))
+(define-prototype dance-prompt (:parent ioforms:=prompt=))
 
 (define-method say dance-prompt (&rest args)
   (apply #'send nil :say *terminal* args))
@@ -315,7 +315,7 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
   (setf <mode> :forward))
 
 (define-method exit dance-prompt ()
-  [parent>>exit self]
+  (/parent>>exit self)
   (/refocus *frame*))
       
 ;;; Dance pad support
@@ -355,10 +355,10 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 (defparameter *dance-phrase-symbols*
   (append *punctuation* *dance-arrows* *corner-buttons* *function-buttons*))
 
-;; Configure the XE2 engine so that it translates dance pad button presses
-;; into standard XE2 joystick events.
+;; Configure the IOFORMS engine so that it translates dance pad button presses
+;; into standard IOFORMS joystick events.
 
-(setf xe2:*joystick-button-symbols* *dance-phrase-symbols*)
+(setf ioforms:*joystick-button-symbols* *dance-phrase-symbols*)
 
 ;;; Input device configuration
 
@@ -407,7 +407,7 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 
 ;; TODO (defun auto-detect-pad
 
-(setf xe2:*joystick-mapping* *energy-dance-pad-mapping*)
+(setf ioforms:*joystick-mapping* *energy-dance-pad-mapping*)
 
 (defun get-button-index (arrow)
   (first (find arrow *joystick-mapping* :key #'cdr)))
@@ -455,8 +455,8 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 
 (defparameter *margin-size* 16)
 
-(define-prototype status (:parent xe2:=widget=)
-  (height :initform *window-height*)
+(defblock status 
+  (height :initform *default-shell-height*)
   (width :initform (+  (* 3 *medium-arrow-width*)
 			(* 2 *margin-size*))))
 
@@ -511,9 +511,9 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 
 (define-method toggle step ()
   (with-fields (state) self
-    (if [is-on self]
-	[off self]
-	[on self])))
+    (if (/is-on self)
+	(/off self)
+	(/on self))))
 
 (define-method activate step ()
   (/toggle self))
@@ -623,7 +623,7 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
   (float (/ +ticks-per-minute+ bpm)))
 
 (define-prototype tracker 
-  (:parent xe2:=prompt= 
+  (:parent ioforms:=prompt= 
    :documentation "A tracker object is the engine for Track mode.")
   (beats-per-minute :initform 110) 
   (row-remainder :initform 0.0)
@@ -643,7 +643,7 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
       (apply #'bind-key-to-prompt-insertion self k)))
 
 (define-method quit tracker ()
-  (xe2:quit))
+  (ioforms:quit))
 
 (define-method select tracker ()
   (setf <start-time> nil)
@@ -738,28 +738,28 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
     (/activate form)))
 
 (define-method up tracker ()
-  [do-arrow-event self :up]
+  (/do-arrow-event self :up)
   (let ((form (if (/either-shift-p self)
 		  (/right-form *frame*)
 		  (/left-form *frame*))))
     (/move-cursor-up form)))
     
 (define-method down tracker ()
-  [do-arrow-event self :down]
+  (/do-arrow-event self :down)
   (let ((form (if (/either-shift-p self)
 		  (/right-form *frame*)
 		  (/left-form *frame*))))
     (/move-cursor-down form)))
 
 (define-method left tracker ()
-  [do-arrow-event self :left]
+  (/do-arrow-event self :left)
   (let ((form (if (/either-shift-p self)
 		  (/right-form *frame*)
 		  (/left-form *frame*))))
     (/move-cursor-left form)))
 
 (define-method right tracker ()
-  [do-arrow-event self :right]
+  (/do-arrow-event self :right)
   (let ((form (if (/either-shift-p self)
 		  (/right-form *frame*)
 		  (/left-form *frame*))))
@@ -803,7 +803,7 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 (define-prototype help-textbox (:parent =textbox=))
 
 (define-method render help-textbox ()
-  [parent>>render self]
+  (/parent>>render self)
   (/message *pager* 
 	   (list (format nil " --- Showing lines ~A-~A of ~A. Use PAGE UP and PAGE DOWN to scroll the text." 
 			 <point-row> (+ <point-row> <max-displayed-rows>) (length <buffer>)))))
@@ -813,16 +813,16 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 				      (when (string= *module* "dance")
 					(/visit *form* "FrontPage"))))
 
-(setf xe2:*output-chunksize* 512)
+(setf ioforms:*output-chunksize* 512)
 
 ;; (defun dance ()
-;;   (xe2:message "Initializing DANCE...")
-;;   (setf xe2:*window-title* "DANCE")
+;;   (ioforms:message "Initializing DANCE...")
+;;   (setf ioforms:*window-title* "DANCE")
 ;;   (clon:initialize)
-;;   (setf xe2:*dt* 20) ;; 20 millisecond timestep
-;;   (setf xe2:*resizable* t) ;; We want the game window to be resizable.
-;;   (xe2:set-screen-height *window-height*)
-;;   (xe2:set-screen-width *window-width*)
+;;   (setf ioforms:*dt* 20) ;; 20 millisecond timestep
+;;   (setf ioforms:*resizable* t) ;; We want the game window to be resizable.
+;;   (ioforms:set-screen-height *window-height*)
+;;   (ioforms:set-screen-width *window-width*)
 ;;   (let* ((prompt (clone =dance-prompt=))
 ;; 	 (help (clone =help-textbox=))
 ;; 	 (help-prompt (clone =help-prompt=))
@@ -869,12 +869,12 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 ;; 	       (/move engine :x 0 :y 0)
 ;; 	       (/show engine)
 ;; 	       (/set-receiver engine engine)
-;; 	       ;;	           [set-receiver prompt engine]
+;; 	       ;;	           (/set-receiver prompt engine)
 ;; 	       (/resize stack :width *screen-width* :height (- *screen-height* *pager-height* *prompt-height*))
-;; 	       [install-keybindings engine]
+;; 	       (/install-keybindings engine)
 ;; 	       (/move quickhelp :y (- *screen-height* *quickhelp-height* *pager-height*) :x (- *screen-width* *quickhelp-width* *quickhelp-spacer*))
 ;; 	       (/auto-position *pager*)))
-;;       (add-hook 'xe2:*resize-hook* #'resize-widgets))
+;;       (add-hook 'ioforms:*resize-hook* #'resize-widgets))
 ;;     ;;
 ;;     (/resize prompt :height *prompt-height* :width *screen-width*)
 ;;     (/move prompt :x 0 :y 0)
@@ -909,7 +909,7 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 ;;     (/set-prompt form2 prompt)
 ;;     (/set-narrator form2 terminal)
 ;;     ;;
-;;     (xe2:halt-music 1000)
+;;     (ioforms:halt-music 1000)
 ;;     ;;
 ;;     ;; (/resize help :height 540 :width 800) 
 ;;     ;; (/move help :x 0 :y 0)
@@ -950,11 +950,11 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 ;;     (/add-page *pager* :chart (list prompt stack frame terminal status quickhelp))
 ;;     (/add-page *pager* :help (list help-prompt help))
 ;;     (/select *pager* :chart)
-;;     (xe2:reset-joystick)
-;;     (xe2:enable-classic-key-repeat 100 100)
+;;     (ioforms:reset-joystick)
+;;     (ioforms:enable-classic-key-repeat 100 100)
 ;;     (/focus-left *frame*)
 ;;     (/label-view (/left-form *frame*))
-;;     (run-hook 'xe2:*resize-hook*)
+;;     (run-hook 'ioforms:*resize-hook*)
 ;; ;;    (play-music "electron")
 ;; ;;    (register-voice-mixer)
 ;; ))
@@ -979,7 +979,7 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 
 ;; (defvar *commander* nil)
 
-;; (define-prototype commander (:parent xe2:=formatter=)
+;; (define-prototype commander (:parent ioforms:=formatter=)
 ;;   (display-current-line :initform t))
 
 ;; (define-method insert commander (arrow)
