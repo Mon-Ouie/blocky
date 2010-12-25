@@ -113,7 +113,7 @@
       (/add shell (clone =listener=))
       (install-blocks self shell)
       (resize-shell)
-      (run-main-loop)))))
+      (run-main-loop))))
 
 (define-method open-project system (project)
   (open-project project))
