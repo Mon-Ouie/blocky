@@ -966,8 +966,7 @@ Please see the included file BINARY-README for instructions."
 
 (defun find-project-file (project-name file)
   "Make a pathname for FILE within the project PROJECT-NAME."
-  (merge-pathnames file (or *project-path* 
-			    (find-project-path project-name))))
+  (merge-pathnames file (find-project-path project-name)))
 
 (defun open-project (project &key (autoload t))
   "Load the project named PROJECT. Load any resources marked with a
@@ -975,7 +974,7 @@ non-nil :autoload property. This operation also sets the default
 object save directory. See also `save-object-resource')."
   (setf *project* project)
   (setf *pending-autoload-resources* nil)
-  (setf *project-path* (find-project-path project))
+  (setf *project-path* (search-project-path project))
   (assert (pathnamep *project-path*))
   (index-project project)
   (when autoload 
