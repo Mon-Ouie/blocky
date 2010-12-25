@@ -657,15 +657,15 @@ override all colors."
 (define-method draw-contents ioblock (image)
   (with-block-drawing image
     (with-field-values 
-	(x y operation arguments schema widget)
+	(x y operation arguments)
 	self
       (let* ((dash *dash*)
 	     (left (+ x (* 2 dash)))
 	     (y0 (+ y dash 1)))
-	(if widget
+	(if <image>
 	    (progn 
-	      (/render widget)
-	      (draw-image (field-value :image widget)
+	      (/render self)
+	      (draw-image <image>
 			  left y0 :destination image))
 	    (progn 
 	      (text left y0 (print-expression operation))
@@ -681,7 +681,7 @@ override all colors."
 	(progn
 	  (/render self)
 	  (draw-image image x y 
-		      :destination output-buffer)))))
+		      :destination output-image)))))
 
 (defparameter *hover-color* ".red")
 
@@ -804,7 +804,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	  height (+ (* 4 *dash*)))))
 
 (define-method layout-body-as-list list ()
-  (with-fields (x y height width) self
+  (with-fields (x y height width arguments) self
     (let* ((dash *dash*)
 	   (header-height (+ dash (/layout-header self)))
 	   (y0 (+ y dash header-height))
@@ -897,17 +897,17 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-method get block (var)
   (gethash var <variables>))
 
-(defun block-variable (var-name)
-  (/get *block* var-name))
+;; (defun block-variable (var-name)
+;;   (/get *block* var-name))
 
-(defun (setf block-variable) (var-name value)
-  (/set *block* var-name value))
+;; (defun (setf block-variable) (var-name value)
+;;   (/set *block* var-name value))
 
-(defmacro with-block-variables (vars &rest body)
-  (labels ((make-clause (sym)
-	     `(,sym (block-variable ,(make-keyword sym)))))
-    (let* ((symbols (mapcar #'make-non-keyword vars))
-	   (clauses (mapcar #'make-clause symbols)))
-      `(symbol-macrolet ,clauses ,@body))))
+;; (defmacro with-block-variables (vars &rest body)
+;;   (labels ((make-clause (sym)
+;; 	     `(,sym (block-variable ,(make-keyword sym)))))
+;;     (let* ((symbols (mapcar #'make-non-keyword vars))
+;; 	   (clauses (mapcar #'make-clause symbols)))
+;;       `(symbol-macrolet ,clauses ,@body))))
       
 ;;; blocks.lisp ends here
