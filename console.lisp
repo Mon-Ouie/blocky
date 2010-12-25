@@ -940,7 +940,7 @@ This is where all saved objects are stored.")
   "List of directories where IOFORMS will search for projects.
 Directories are searched in list order.")
 
-(defun find-project-path (project-name)
+(defun search-project-path (project-name)
   "Search the `*project-directories*' path for a directory with the
 name PROJECT-NAME. Returns the pathname if found, otherwise nil."
   (let ((dirs *project-directories*))
@@ -958,6 +958,12 @@ You must set the variable IOFORMS:*PROJECT-DIRECTORIES* in the configuration fil
 Please see the included file BINARY-README for instructions."
 	    project-name dirs))))
 
+(defun find-project-path (project-name)
+  "Return the current project path."
+  (assert *project*)
+  (or *project-path*
+      (search-project-path project-name)))
+
 (defun find-project-file (project-name file)
   "Make a pathname for FILE within the project PROJECT-NAME."
   (merge-pathnames file (or *project-path* 
@@ -966,8 +972,7 @@ Please see the included file BINARY-README for instructions."
 (defun open-project (project &key (autoload t))
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
-object save directory (by setting the current `*project*'. See also
-`save-object-resource')."
+object save directory. See also `save-object-resource')."
   (setf *project* project)
   (setf *pending-autoload-resources* nil)
   (setf *project-path* (find-project-path project))
