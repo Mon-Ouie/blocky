@@ -82,7 +82,7 @@ load-lisp-resource *executable* *function-buttons* *corner-buttons*
 message-to-standard-output reset-message-function
 arrow-formatted-string ticks-per-beat event-time event-arrow
 default-project-directories *step-tolerance* *resource-handlers* load-resource
-find-resource find-resource-object *colors* *world*
+find-resource find-resource-object *colors* *world* make-directory-maybe
 load-user-init-file *project-directories* resource-to-plist *osx*
 *linux* make-resource make-object-resource make-event =block= *blocks*
 bind-key-to-prompt-insertion make-field-initializer clone

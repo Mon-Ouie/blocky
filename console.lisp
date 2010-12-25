@@ -1828,17 +1828,6 @@ This program includes the DejaVu fonts family. See the file
 		  "libSDL_image")))
     (cffi:use-foreign-library sdl-image))
 
-;; (defun init-ttf ()  
-;;   (if (is-init)  
-;;       t  
-;;       (sdl-ttf-cffi::ttf-init)))  
-;; (pushnew 'init-ttf sdl:*external-init-on-startup*)
-
-;; (defun quit-ttf ()  
-;;    (if (is-init)  
-;;      (sdl-ttf-cffi::ttf-quit)))  
-;; (pushnew 'quit-ttf sdl:*external-quit-on-exit*) 
-
 (defvar *system* nil)
 
 (defun ioforms (project-name &rest args)
