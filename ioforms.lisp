@@ -81,7 +81,7 @@ load-lisp-resource *executable* *function-buttons* *corner-buttons*
 *dark-target-arrow-images* get-button-index arrow-image
 message-to-standard-output reset-message-function
 arrow-formatted-string ticks-per-beat event-time event-arrow
-base-directories *step-tolerance* *resource-handlers* load-resource
+default-project-directories *step-tolerance* *resource-handlers* load-resource
 find-resource find-resource-object *colors* *world*
 load-user-init-file *project-directories* resource-to-plist *osx*
 *linux* make-resource make-object-resource make-event =block= *blocks*

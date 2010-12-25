@@ -53,7 +53,7 @@
 				(apply #'/step self args)))
   (reset-message-function)
   (setf *project-package-name* nil
-        *project-directories* (ioforms:base-directories)
+        *project-directories* (ioforms:default-project-directories)
 	*world* nil
 	*timesteps* 0
 	*keyboard-timestep-number* 0
@@ -64,9 +64,7 @@
 	;; add library search paths for Mac if needed
 	(setup-library-search-paths)
 	(sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
-	   ;; (unless (sdl:initialise-default-font sdl:*ttf-font-vera*)
-	   ;;   (error "FATAL: Cannot initialize the default font."))
-	   (load-user-init-file)	
+	   (load-user-init-file) ;; this step may override *project-directories*
 	   (initialize-resource-table)
 	   (initialize-colors)
 	   (when *use-sound*
