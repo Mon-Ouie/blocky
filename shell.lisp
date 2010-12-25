@@ -79,8 +79,10 @@
 	       (setf *use-sound* nil))
 	     ;; set to mix lots of sounds
 	     (sdl-mixer:allocate-channels *channels*))
-	   (index-project "standard")
-	   (ioforms:run-main-loop)))
+	   (index-project "standard")))
+
+(define-method run system ()
+  (run-main-loop))
 
 (define-method open-project system (project)
   (open-project project))
