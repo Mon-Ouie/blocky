@@ -1765,6 +1765,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 This program uses libSDL 1.2 (Simple Direct Media Layer), which is
 provided under the terms of the GNU Lesser General Public License. See
 also the file LIBSDL-LICENSE for details.
+
+This program includes the DejaVu fonts family. See the file
+./standard/DEJAVU-FONTS-LICENSE for more information.
 ")
 
 (defvar *library-search-paths-setup-hook* nil)
