@@ -729,18 +729,17 @@ display."
   
 ;;; The .ioformsrc user init file
 
-(defparameter *user-init-file-name* ".ioformsrc")
-
 (defvar *initialization-hook* nil 
 "This hook is run after the IOFORMS console is initialized.
-Set timer parameters and other settings here.")
+Set system parameters and other settings here.")
+
+(defparameter *user-init-file-name* "ioforms.ini")
 
 (defun load-user-init-file ()
   (let ((file (merge-pathnames (make-pathname :name *user-init-file-name*)
-			       (user-homedir-pathname))))
+			       (ioforms-directory))))
     (when (probe-file file)
-      (load (merge-pathnames (make-pathname :name *user-init-file-name*)
-			     (user-homedir-pathname))))))
+      (load file))))
 
 (defparameter *user-keyboard-layout* :qwerty)
 
@@ -901,41 +900,41 @@ This is where all saved objects are stored.")
 
 (defvar *project-package-name* nil)
 
-(defun project-package-name (&optional (project-name *project*))
-  (or *project-package-name* (make-keyword project-name)))
-    
+(defparameter *projects-directory-name* "projects")
+
 (defvar *executable* nil)
 
-(defun make-directory (directory)
+(defun project-package-name (&optional (project-name *project*))
+  (or *project-package-name* (make-keyword project-name)))
+
+(defun make-directory-maybe (directory)
   (ensure-directories-exist (make-pathname :name "NAME" :type "TYPE"
 					   :defaults directory)))
 
-(defun projects-directory ()
-  (let ((projects-directory (make-pathname :name *projects-directory-name* 
-					     :defaults ioforms-directory)))
 (defun ioforms-directory ()
-  (let ((ioforms-directory
-	 (if *executable*
-	     (make-pathname :directory 
-			    (pathname-directory 
-			     (car #+sbcl sb-ext:*posix-argv*
-				  #+clozure ccl:*command-line-argument-list*)))
-	     (make-pathname :directory 
-			    (pathname-directory 
-			     (make-pathname
-			      :host (pathname-host #.(or *compile-file-truename*
-						    *load-truename*))
-			 :device (pathname-device #.(or *compile-file-truename*
-							*load-truename*))
-			 :directory (pathname-directory #.(or *compile-file-truename*
-							      *load-truename*))))))))
+  (if *executable*
+      (make-pathname :directory 
+		     (pathname-directory 
+		      (car #+sbcl sb-ext:*posix-argv*
+			   #+clozure ccl:*command-line-argument-list*)))
+      (make-pathname :directory 
+		     (pathname-directory 
+		      (make-pathname
+		       :host (pathname-host #.(or *compile-file-truename*
+						  *load-truename*))
+		       :device (pathname-device #.(or *compile-file-truename*
+						      *load-truename*))
+		       :directory (pathname-directory #.(or *compile-file-truename*
+							    *load-truename*)))))))
 
-(defparameter *projects-directory-name* "projects")
+(defun projects-directory ()
+  (make-pathname :name *projects-directory-name* 
+		 :defaults (ioforms-directory)))
 
-(defun base-directories () 
+(defun default-project-directories () 
   (let ((projects (projects-directory)))
-    (make-directory projects)
-    (list ioforms-directory projects)))
+    (make-directory-maybe projects)
+    (list (ioforms-directory) projects)))
 
 (defvar *project-directories* nil
   "List of directories where IOFORMS will search for projects.
