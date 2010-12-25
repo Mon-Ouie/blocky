@@ -1830,12 +1830,14 @@ This program includes the DejaVu fonts family. See the file
 
 (defvar *system* nil)
 
-(defun ioforms (project-name &rest args)
-  "This is the main entry point to IOFORMS. PROJECT-NAME is loaded 
-and its .startup resource is loaded."
+(defun ioforms (project &rest args)
+  "This is the main entry point to IOFORMS."
   (unwind-protect 
-       ;; see system.lisp
-       (setf *system* (clone (symbol-value '=system=)))
+       ;; see shell.lisp
+       (progn 
+	 (setf *system* (clone (symbol-value '=system=)))
+	 (when project 
+	   (apply #'send nil :open-project *system* project args)))
     (sdl:quit-sdl)))
 
 (defmacro defgame (module-name 
