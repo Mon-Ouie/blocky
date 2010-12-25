@@ -654,6 +654,8 @@ override all colors."
 		(setf width (expression-width segment))))
 	  width))))
 
+(define-method render ioblock ())
+
 (define-method draw-contents ioblock (image)
   (with-block-drawing image
     (with-field-values 

@@ -1745,9 +1745,10 @@ The default destination is the main window."
   (sdl:push-quit-event))
 
 (defvar *copyright-text*
-"IOFORMS Game Engine
-Copyright (C) 2006, 2007, 2008, 2009, 2010 David O'Toole
-<dto@gnu.org>
+"IOFORMS Visual Common Lisp Multimedia Authoring Tool
+Copyright (C) 2006, 2007, 2008, 2009, 2010 by David T O'Toole
+<dto@gnu.org> <dto1138@gmail.com>
+http://ioforms.org/
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1762,12 +1763,13 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-This program uses libSDL 1.2 (Simple Direct Media Layer), which is
+This program includes libSDL 1.2 (Simple Direct Media Layer), which is
 provided under the terms of the GNU Lesser General Public License. See
 also the file LIBSDL-LICENSE for details.
 
 This program includes the DejaVu fonts family. See the file
 ./standard/DEJAVU-FONTS-LICENSE for more information.
+
 ")
 
 (defvar *library-search-paths-setup-hook* nil)
@@ -1830,7 +1832,7 @@ This program includes the DejaVu fonts family. See the file
 
 (defvar *system* nil)
 
-(defun run (&rest args) 
+(defun run (&rest args)
   (destructuring-bind (project &rest arguments) args
     (unwind-protect 
 	 ;; see shell.lisp

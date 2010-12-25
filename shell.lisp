@@ -24,18 +24,24 @@
 
 (in-package :ioforms)
 
-(defparameter *default-shell-width* 1024)
-(defparameter *default-shell-height* 720)
-
 (defblock system
   (type :initform :system)
+  (shell :initform nil)
   (running :initform nil))
 
+;; (define-method handle-key system (keylist)
+;;   (or (/parent/handle-key self keylist)
+;;       (some #'(lambda (block)
+;; 		(unless (eq self block)
+;; 		  (/handle-key block keylist)))
+;; 	    *blocks*)))
+
 (define-method get-blocks system ()
-  *blocks*)
+  <children>)
 
 (define-method count-blocks system ()
-  (apply #'+ (mapcar #'/count *blocks*)))
+  (with-fields (children) self
+    (apply #'+ (mapcar #'/count children))))
 
 (define-method start system ()
   (setf <running> t))
@@ -44,16 +50,17 @@
   (setf <running> nil))
 
 (define-method step system (&rest args)
-  (when <running> 
-    (dolist (block *blocks*)
-      (/step block))))
+  (with-fields (running children) self
+    (when running
+      (dolist (block children)
+	(/step block)))))
 
 (define-method initialize system (&rest args)
   #+linux (do-cffi-loading)
   (ioforms:initialize)
   (apply #'/parent/initialize self args)
-  (setf *timestep-function* #'(lambda (&rest args)
-				(apply #'/step self args)))
+  ;; (setf *timestep-function* #'(lambda (&rest args)
+  ;; 				(apply #'/step self args)))
   (reset-message-function)
   (setf *project-package-name* nil
         *project-directories* (ioforms:default-project-directories)
@@ -83,18 +90,30 @@
 	     (sdl-mixer:allocate-channels *channels*))
 	   (index-project "standard")))
 
+(defparameter *default-shell-width* 1024)
+(defparameter *default-shell-height* 720)
+
 (define-method run system ()
-  (message "Starting IOFORMS Shell...")
-  (setf *window-title* "ioforms")
-  (setf *resizable* t)
-  (enable-classic-key-repeat 100 100)
-  (set-screen-height *default-shell-height*)
-  (set-screen-width *default-shell-width*)
-  (add-hook '*resize-hook* 
-	    #'(lambda ()
-		(/resize self :width *screen-width* :height *screen-height*)))
-  (install-blocks self)
-  (run-main-loop))
+  (with-fields (shell) self
+    (message "Starting IOFORMS Shell...")
+    (setf *window-title* "ioforms")
+    (setf *resizable* t)
+    (enable-classic-key-repeat 100 100)
+    (set-screen-height *default-shell-height*)
+    (set-screen-width *default-shell-width*)
+    (labels ((resize-shell ()
+	       (/resize self 
+			:width *screen-width* 
+			:height *screen-height*)
+	       (/resize shell 
+			:height *screen-height*
+			:width *screen-width*)))
+      (add-hook '*resize-hook* #'resize-shell)
+      (setf shell (clone (symbol-value '=shell=)))
+      (/add shell (clone =listener=))
+      (install-blocks self shell)
+      (resize-shell)
+      (run-main-loop)))))
 
 (define-method open-project system (project)
   (open-project project))
@@ -117,10 +136,6 @@
   (get-ticks))
 
 ;;; Interactive editor shell
-
-;;; Block shell widget and command prompt
-
-;; see also widgets.lisp
 
 (define-prototype block-prompt (:parent =prompt=)
   output 
@@ -195,15 +210,9 @@
 	(setf needs-redraw t)))))
 
 (define-method resize shell (&key width height)
-  (with-fields (buffer prompt image) self
-    (when (null buffer)
-      (setf buffer (create-image width height)))
-    (unless (and (= <width> width)
-		 (= <height> height))
-      (/parent/resize self :width width :height height)
-      (when buffer
-	(sdl:free buffer))
-      (setf buffer (create-image width height)))))
+  (with-fields (prompt buffer image) self
+    (/parent/resize self :width width :height height)
+    (setf buffer (create-image width height))))
 
 (define-method redraw shell ()
   (with-fields (arguments buffer selection needs-redraw width height) self
@@ -219,11 +228,13 @@
       (/draw block buffer))
     (setf needs-redraw nil)))
 
+(define-method render shell ())
+
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag arguments drag-start ghost drag-offset) self
     (setf drag block)
-    (when (/is-member block )
-      (/delete block block))
+    (when (/is-member self block)
+      (/delete block arguments))
     (let ((dx (field-value :x block))
 	  (dy (field-value :y block))
 	  (dw (field-value :width block))
@@ -247,13 +258,12 @@
 
 (define-method render shell ()
   (with-fields 
-      (blocks needs-redraw image buffer drag-start selection
+      (arguments needs-redraw buffer image drag-start selection
       drag modified hover ghost prompt) self
     (dolist (block selection)
-      (let ((widget (/get-widget block)))
-	(when widget 
-	  (/render widget)
-	  (/draw block image))))
+      (let ((block-image (field-value :image block)))
+    	(when block-image 
+    	  (/render block))))
     (labels ((copy ()
 	       (draw-image buffer 0 0 :destination image)))
       (when needs-redraw 
@@ -272,7 +282,7 @@
     (when block
       (case button
 	(1 (/begin-drag self x y block))
-	(3 (/run block block))))))
+	(3 (/run block))))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
   (with-fields (arguments hover drag-offset drag-start drag) self
