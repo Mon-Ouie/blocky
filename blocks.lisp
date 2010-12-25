@@ -88,7 +88,7 @@ See also `*argument-types*'.")
   (visible :initform t :documentation "When non-nil, block will be visible.")
   (keymap :initform nil :documentation "Keybindings, if any.")  
   (child-widths :initform nil :documentation "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
-  (excluded-fields :initform '(:widget :results :parent)))
+  (excluded-fields :initform '(:image :results :parent)))
 
 (defmacro defblock (name &body args)
   "Define a new block prototype named =NAME=.
@@ -237,6 +237,9 @@ areas.")
   (if <visible>
       (/hide self)
       (/show self)))
+
+(define-method is-visible ioblock ()
+  <visible>)
 
 (define-method set-parent ioblock (parent)
   "Store a link to an enclosing PARENT block, if any."
@@ -837,7 +840,6 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (when variables (setf <variables> variables))
   (when target (setf <target> target)))
 
-(defvar *block* nil)
 (defvar *target* nil)
 
 (define-method set-target block (target)
@@ -1027,18 +1029,17 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	    (setf drag-offset (cons x-offset y-offset))))))))
 
 (define-method hit-blocks shell (x y)
-  (with-fields (block) self
-    (when block 
-      (with-fields (arguments) block
-	(labels ((hit (b)
-		   (/hit b x y)))
-	  (let ((parent (find-if #'hit arguments :from-end t)))
-	    (when parent
-	      (/hit parent x y))))))))
+  (with-fields (arguments) self
+    (when arguments 
+      (labels ((hit (b)
+		 (/hit b x y)))
+	(let ((parent (find-if #'hit arguments :from-end t)))
+	  (when parent
+	    (/hit parent x y)))))))
 
 (define-method render shell ()
   (with-fields 
-      (block needs-redraw image buffer drag-start selection
+      (blocks needs-redraw image buffer drag-start selection
       drag modified hover ghost prompt) self
     (dolist (block selection)
       (let ((widget (/get-widget block)))
@@ -1047,28 +1048,26 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	  (/draw block image))))
     (labels ((copy ()
 	       (draw-image buffer 0 0 :destination image)))
-      (when block
-	(when needs-redraw 
-	  (/redraw self)
-	  (copy))
-	(when drag 
-	  (copy)
-	  (/layout drag)
-	  (/draw-ghost ghost image)
-	  (/draw drag image)
-	  (when hover 
-	    (/draw-hover hover image)))))))
+      (when needs-redraw 
+	(/redraw self)
+	(copy))
+      (when drag 
+	(copy)
+	(/layout drag)
+	(/draw-ghost ghost image)
+	(/draw drag image)
+	(when hover 
+	  (/draw-hover hover image))))))
 
 (define-method mouse-down shell (x y &optional button)
-  (with-fields (block) self 
-    (let ((block (/hit-blocks self x y)))
-      (when block
-	(case button
-	  (1 (/begin-drag self x y block))
-	  (3 (/run block block)))))))
+  (let ((block (/hit-blocks self x y)))
+    (when block
+      (case button
+	(1 (/begin-drag self x y block))
+	(3 (/run block block))))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
-  (with-fields (block hover drag-offset drag-start drag) self
+  (with-fields (arguments hover drag-offset drag-start drag) self
     (setf hover nil)
     (when drag
       (destructuring-bind (ox . oy) drag-offset
@@ -1079,21 +1078,21 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 (define-method mouse-up shell (x y &optional button)
   (with-fields 
-      (block needs-redraw drag-offset drag-start hover
+      (arguments needs-redraw drag-offset drag-start hover
 	      selection drag modified) 
       self
-    (with-fields (arguments) block
+    (with-fields (arguments) self
       (when drag
 	(let ((drag-parent (/get-parent drag)))
 	  (when drag-parent
 	    (/unplug-from-parent drag))
-	  (let ((target hover))
-	    (if target
+	  (let ((sink hover))
+	    (if sink
 		;; dropping on another block
-		(unless (/accept target drag)
-		  (/add block drag))
+		(unless (/accept sink drag)
+		  (/add self drag))
 		;; dropping on background
-		(/add block drag)))))
+		(/add self drag)))))
       (setf selection nil)
       (when drag (/select self drag))
       (setf drag-start nil
