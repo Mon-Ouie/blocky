@@ -110,15 +110,16 @@ halt-music seek-music *joystick-mapping* *generic-joystick-mapping*
 *ps3-joystick-mapping* *joystick-button-symbols* draw-resource-image
 *event-handler-function* *use-sound* trace-rectangle trace-row
 trace-column trace-octagon trace-line midpoint =asterisk=
-=gray-asterisk= self *project-blocks* defsprite =sprite= 
+=gray-asterisk= self *project-blocks* defsprite =sprite=
 get-some-object-name transform-declaration-field-descriptor
 show-blocks no-such-field =narrator= find-projects-in-directory goal
 =mission= =gateway= =launchpad= =environment= directory-is-project-p
-find-all-projects *project* transform-tree stat-value draw-line
-*default-message-verbosities* *message-verbosities* add-overlay
-set-message-verbosities operation-symbol message-symbol play-sample
-set-music-volume add-message-verbosities with-message-queue =minimap=
-draw-pixel *user-keyboard-layout* *fullscreen* draw-circle =emote=
+find-all-projects *project* transform-tree *after-initialization-hook*
+stat-value draw-line *default-message-verbosities*
+*message-verbosities* add-overlay set-message-verbosities
+operation-symbol message-symbol play-sample set-music-volume
+add-message-verbosities with-message-queue =minimap= draw-pixel
+*user-keyboard-layout* *fullscreen* draw-circle =emote=
 set-field-option-value =blockr= =blockr-prompt= open-project
 =sprite-special= field-options world set-frame-rate *frame-rate*
 =stack= *workbook* set-resource-modified-p *iof-file-extension*

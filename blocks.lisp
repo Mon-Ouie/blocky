@@ -248,8 +248,8 @@ areas.")
 (define-method get-parent ioblock ()
   <parent>)
 
-(define-method get-widget ioblock ()
-  <widget>)
+(define-method get-image ioblock ()
+  <image>)
 
 (define-method get-argument ioblock (n)
   "Return the value of the Nth block argument."
@@ -608,7 +608,7 @@ override all colors."
 
 (define-method layout ioblock ()
   (with-fields (child-widths height width) self
-    (with-field-values (x y operation schema arguments widget) self
+    (with-field-values (x y operation schema arguments) self
       (let* ((font *block-font*)
 	     (dash *dash*)
 	     (left (+ x (/handle-width self)))
@@ -629,11 +629,9 @@ override all colors."
 			  (+ dash (move-child block))))
 		     (prog1 measurement 
 		       (incf left measurement)))))
-	  (if widget
-	      (move-widget widget)
-	      (setf child-widths (mapcar #'layout-child arguments schema)))
+	  (setf child-widths (mapcar #'layout-child arguments schema)))
 	  (setf width (+ (- left x) (* 4 dash)))
-	  (setf height (+ dash dash max-height)))))))
+	  (setf height (+ dash dash max-height))))))
 
 (define-method draw-expression ioblock (x0 y0 segment type image)
   (with-block-drawing image

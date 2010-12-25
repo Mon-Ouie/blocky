@@ -604,6 +604,8 @@ window. Set this in the game startup file.")
 
 ;;; The main loop of IOFORMS
 
+(defvar *after-initialization-hook* nil)
+
 (defvar *project* "standard")
 
 (defvar *quitting* nil)
@@ -642,6 +644,7 @@ display."
     (sdl:clear-display sdl:*black*)
     (show-blocks)
     (sdl:update-display)
+    (run-hook '*after-initialization-hook*)
     (let ((events-this-frame 0))
       (sdl:with-events ()
 	(:quit-event () (prog1 t))

@@ -109,10 +109,10 @@
 			:height *screen-height*
 			:width *screen-width*)))
       (add-hook '*resize-hook* #'resize-shell)
+      (add-hook '*after-initialization-hook* #'(lambda () (/add shell (clone =listener=))))
+      (add-hook '*after-initialization-hook* #'resize-shell)
       (setf shell (clone (symbol-value '=shell=)))
-      (/add shell (clone =listener=))
       (install-blocks self shell)
-      (resize-shell)
       (run-main-loop))))
 
 (define-method open-project system (project)
@@ -164,7 +164,7 @@
 (defparameter *minimum-listener-width* 200)
 
 (define-method initialize listener ()
-  (with-fields (widget) self
+  (with-fields (image) self
     (/parent/initialize self)
     (let ((prompt (clone =block-prompt= self)))
       (/resize prompt 
@@ -173,7 +173,7 @@
 			  (font-height *default-font*)))
       (setf widget prompt))))
 
-(defblock shell
+(define-prototype shell (:parent =block=)
   (selection :initform ()
   	     :documentation "Subset of selected blocks.")
   (drag :initform nil 
