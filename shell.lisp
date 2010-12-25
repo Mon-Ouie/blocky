@@ -82,19 +82,19 @@
 	   (index-project "standard")
 	   (ioforms:run-main-loop)))
 
-(define-method new-project system (project)
-  (assert (stringp project))
-  (let ((dir (find-project-path project)))
-    (when (directory-is-project-p dir)
-      (error "Project ~S aready exists." project))
-    (make-directory dir)
-    (open-project project)))
-
 (define-method open-project system (project)
   (open-project project))
 
 (define-method save-project system ()
   (save-project))
+
+(define-method new-project system (project)
+  (assert (stringp project))
+  (let ((dir (find-project-path project)))
+    (when (directory-is-project-p dir)
+      (error "Project ~S aready exists." project))
+    (make-directory-maybe dir)
+    (/open-project self project)))
 
 (define-method save-everything system ()
   (save-everything))
@@ -110,15 +110,15 @@
   (schema :initform '(:block :block :block))
   (arguments :initform '(nil nil nil)))
 
-(define-method execute if (target)
+(define-method execute if ()
   <results>)
 
-(define-method execute-arguments if (target)
+(define-method execute-arguments if ()
   (with-fields (arguments results) self
     (destructuring-bind (predicate then else) arguments
-      (if (/run predicate target)
-	  (/run then target)
-	  (/run else target)))))
+      (if (/run predicate)
+	  (/run then)
+	  (/run else)))))
 
 ;;; Get field value
 
@@ -126,10 +126,10 @@
   (type :initform :variables)
   (schema :initform '(:block)))
 
-(define-method execute my (target)
+(define-method execute my ()
   (with-fields (results) self
     (field-value (make-keyword (car results))
-		 target)))
+		 *target*)))
 
 ;;; Set field value
 
@@ -144,8 +144,8 @@
   (type :initform :looks)
   (schema :initform '(:string)))
 
-(define-method execute emote (target)
-  (/emote target 
+(define-method execute emote ()
+  (/emote *target* 
 	  (list (list (list (first <results>) :font *block-font*
 			    :foreground ".black")))
 	  :timeout 200 :style :clear))
@@ -192,8 +192,8 @@
   (schema :initform '(:string))
   (arguments :initform '("fanfare")))
 
-(define-method execute play-music (target)
-  (/play-music target (first <results>) :loop t))
+(define-method execute play-music ()
+  (/play-music *target* (first <results>) :loop t))
 
 (defblock play-sound 
   (type :initform :sound)
@@ -235,7 +235,7 @@
   (schema :initform '(:number :number))
   (arguments :initform '(nil nil)))
 
-(define-method execute + (target)
+(define-method execute + ()
   (with-fields (results) self
     (when (every #'integerp results)
       (apply #'+ results))))
