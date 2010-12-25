@@ -48,7 +48,7 @@
     (dolist (block *blocks*)
       (/step block))))
 
-(define-method initialize system ()
+(define-method initialize system (&rest args)
   #+linux (do-cffi-loading)
   (ioforms:initialize)
   (apply #'/parent/initialize self args)
@@ -85,14 +85,15 @@
 
 (define-method run system ()
   (message "Starting IOFORMS Shell...")
-  (setf ioforms:*window-title* "ioforms")
-  (setf ioforms:*resizable* t)
-  (ioforms:enable-classic-key-repeat 100 100)
-  (set-screen-height *window-height*)
-  (set-screen-width *window-width*)
+  (setf *window-title* "ioforms")
+  (setf *resizable* t)
+  (enable-classic-key-repeat 100 100)
+  (set-screen-height *default-shell-height*)
+  (set-screen-width *default-shell-width*)
   (add-hook '*resize-hook* 
 	    #'(lambda ()
 		(/resize self :width *screen-width* :height *screen-height*)))
+  (install-blocks self)
   (run-main-loop))
 
 (define-method open-project system (project)
