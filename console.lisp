@@ -972,10 +972,10 @@ Please see the included file BINARY-README for instructions."
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
 object save directory. See also `save-object-resource')."
-  (setf *project* project)
-  (setf *pending-autoload-resources* nil)
-  (setf *project-path* (search-project-path project))
-  (assert (pathnamep *project-path*))
+  (setf *project* project
+	*project-path* (search-project-path project)
+	*pending-autoload-resources* nil)
+  (assert *project-path*)
   (index-project project)
   (when autoload 
     (mapc #'load-resource (nreverse *pending-autoload-resources*)))
@@ -985,10 +985,10 @@ object save directory. See also `save-object-resource')."
     (when (probe-file object-index-file)
       (message "Indexing saved objects from ~S" object-index-file)
       (index-iof project object-index-file)))
-  (run-hook '*after-open-project-hook*)
   (let ((package (find-package (project-package-name))))
     (when package
-      (setf *package* package))))
+      (setf *package* package)))
+  (run-hook '*after-open-project-hook*))
 
 (defun directory-is-project-p (dir)
   "Test whether a {PROJECTNAME}.IOF index file exists in a directory."
