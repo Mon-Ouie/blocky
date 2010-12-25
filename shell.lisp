@@ -24,6 +24,9 @@
 
 (in-package :ioforms)
 
+(defparameter *default-shell-width* 1024)
+(defparameter *default-shell-height* 720)
+
 (defblock system
   (type :initform :system)
   (running :initform nil))
@@ -59,8 +62,7 @@
 	*keyboard-timestep-number* 0
 	*initialization-hook* nil
 	*play-args* args
-	*random-state* (make-random-state t)
-	*project* "*notes*")
+	*random-state* (make-random-state t))
 	;; add library search paths for Mac if needed
 	(setup-library-search-paths)
 	(sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
@@ -82,6 +84,15 @@
 	   (index-project "standard")))
 
 (define-method run system ()
+  (message "Starting IOFORMS Shell...")
+  (setf ioforms:*window-title* "ioforms")
+  (setf ioforms:*resizable* t)
+  (ioforms:enable-classic-key-repeat 100 100)
+  (set-screen-height *window-height*)
+  (set-screen-width *window-width*)
+  (add-hook '*resize-hook* 
+	    #'(lambda ()
+		(/resize self :width *screen-width* :height *screen-height*)))
   (run-main-loop))
 
 (define-method open-project system (project)
