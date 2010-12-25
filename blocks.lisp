@@ -44,7 +44,11 @@
 ;; Unlike Pure Data and other visual languages that model themselves
 ;; after electronic components connected by wires, IOFORMS does away
 ;; with the explicitly drawn connections in favor of a tree structure
-;; mapping more naturally to Lisp expressions. 
+;; and evaluation semantics mapping more naturally to Lisp
+;; expressions, although the mapping is not exact. In fact, I have
+;; chosen to define the IOFORMS visual language as a separate
+;; "companion" language for Common Lisp, so that neither is a simple
+;; duplication of the other (just with different appearances.)
 
 ;; The purpose of a block is to perform some action in response to a
 ;; number of input arguments and then return a value. Each argument is

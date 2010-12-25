@@ -71,7 +71,7 @@ compose-blank-fields font-width font-height *browser* browser
 set-browser find-object *windows* transform-field-reference defblock
 *screen-height* =inventory= formatted-line-width *last-event*
 formatted-line-height formatted-string-height formatted-string-width
-get-color create-image draw-image ioforms define-prototype has-field
+get-color create-image draw-image ioforms edit =frame= define-prototype has-field
 defcell defworld *choose-direction-menu* set-field-options
 field-option-value index-resource find-project-path index-project
 load-image-resource load-lisp-resource *executable* *function-buttons*

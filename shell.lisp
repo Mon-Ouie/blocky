@@ -41,8 +41,9 @@
   (setf <running> nil))
 
 (define-method step system (&rest args)
-  (dolist (block *blocks*)
-    (/step block)))
+  (when <running> 
+    (dolist (block *blocks*)
+      (/step block))))
 
 (define-method initialize system ()
   #+linux (do-cffi-loading)
@@ -440,4 +441,4 @@
     (when (every #'integerp results)
       (apply #'+ results))))
 
-;;; system.lisp ends here
+;;; shell.lisp ends here

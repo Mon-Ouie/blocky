@@ -1126,12 +1126,11 @@ OBJECT as the data."
 
 (defvar *export-formats* :archive :application)
 
-(defun export-archive (pathname)
-  (
+;; (defun export-archive (pathname)
 
-(defun export-application
+;; (defun export-application
 
-(defun export-project (format)
+;; (defun export-project (format)
 
 ;;;  Resource object loading handlers
 
