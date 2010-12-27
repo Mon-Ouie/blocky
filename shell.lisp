@@ -1,4 +1,4 @@
-;;; shell.lisp --- blocks library for basic ioforms operations
+;;; system.lisp --- blocks library for basic ioforms operations
 
 ;; Copyright (C) 2010  David O'Toole
 
@@ -29,13 +29,6 @@
   (shell :initform nil)
   (running :initform nil))
 
-;; (define-method handle-key system (keylist)
-;;   (or (/parent/handle-key self keylist)
-;;       (some #'(lambda (block)
-;; 		(unless (eq self block)
-;; 		  (/handle-key block keylist)))
-;; 	    *blocks*)))
-
 (define-method get-blocks system ()
   <children>)
 
@@ -59,8 +52,8 @@
   #+linux (do-cffi-loading)
   (ioforms:initialize)
   (apply #'/parent/initialize self args)
-  ;; (setf *timestep-function* #'(lambda (&rest args)
-  ;; 				(apply #'/step self args)))
+  (setf *timestep-function* #'(lambda (&rest args)
+  				(apply #'/step self args)))
   (reset-message-function)
   (setf *project-package-name* nil
         *project-directories* (ioforms:default-project-directories)
@@ -458,4 +451,4 @@
     (when (every #'integerp results)
       (apply #'+ results))))
 
-;;; shell.lisp ends here
+;;; system.lisp ends here

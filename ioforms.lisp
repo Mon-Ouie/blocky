@@ -109,7 +109,7 @@ right-hand-side expansions generate send-event-to-blocks play-music
 halt-music seek-music *joystick-mapping* *generic-joystick-mapping*
 *ps3-joystick-mapping* *joystick-button-symbols* draw-resource-image
 *event-handler-function* *use-sound* trace-rectangle trace-row
-trace-column trace-octagon trace-line midpoint =asterisk=
+trace-column trace-octagon trace-line midpoint =asterisk= send-event
 =gray-asterisk= self *project-blocks* defsprite =sprite=
 get-some-object-name transform-declaration-field-descriptor
 show-blocks no-such-field =narrator= find-projects-in-directory goal
