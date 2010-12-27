@@ -57,7 +57,7 @@
 ;; depth-first to the leaves and execute those to obtain values, then
 ;; propagate results up the tree until the outermost block is executed
 ;; using the propagated results as its input values. See also
-;; `IOBLOCK/RUN'.
+;; `BLOCK/RUN'.
 
 ;; New block types and behaviors can be defined with the macro
 ;; `defblock' and subsequently replacing default methods of the base
@@ -67,11 +67,11 @@
 
 (defvar *target*)
 
-(define-prototype ioblock ()
+(define-prototype block ()
   (name :initform nil)
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
   (arguments :initform nil :documentation "List of block argument values.")
-  (results :initform nil :documentation "Computed output values. See `IOBLOCK/EXECUTE'.")
+  (results :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
   (schema :documentation 
 	  "List of type keywords for corresponding expressions in <arguments>.
 See also `*argument-types*'.")
@@ -93,27 +93,27 @@ See also `*argument-types*'.")
 (defmacro defblock (name &body args)
   "Define a new block prototype named =NAME=.
 ARGS are field specifiers, as with `define-prototype'."
-  `(define-prototype ,name (:parent =ioblock=)
+  `(define-prototype ,name (:parent =block=)
      (operation :initform ,(make-keyword name))
      ,@args))
 
-(define-method pin ioblock ()
+(define-method pin block ()
   (setf <pinned> t))
 
-(define-method unpin ioblock ()
+(define-method unpin block ()
   (setf <pinned> nil))
 
-(define-method is-pinned ioblock ()
+(define-method is-pinned block ()
   <pinned>)
 
 ;;; Defining input events for blocks
 
-(define-method initialize-keymap-maybe ioblock ()
+(define-method initialize-keymap-maybe block ()
   (with-fields (keymap) self
     (when (null keymap)
       (setf keymap (make-hash-table :test 'equal)))))
 
-(define-method define-key ioblock (key-name modifiers func)
+(define-method define-key block (key-name modifiers func)
   "Bind the described keypress to invoke FUNC.
 KEY-NAME is a string giving the key name; MODIFIERS is a list of
 keywords like :control, :alt, and so on."
@@ -122,15 +122,15 @@ keywords like :control, :alt, and so on."
 		 <keymap>)
 	func))
 
-(define-method undefine-key ioblock (key-name modifiers)
+(define-method undefine-key block (key-name modifiers)
   "Remove the described keybinding."
   (remhash (normalize-event (cons key-name modifiers))
 	   <keymap>))
 
-(define-method clear-keymap ioblock ()
+(define-method clear-keymap block ()
   (setf <keymap> (make-hash-table :test 'equal)))
 
-(define-method handle-key ioblock (keylist)
+(define-method handle-key block (keylist)
   "Look up and invoke the function (if any) bound to KEYLIST. Return t
 if a binding was found, nil otherwise."
   (/initialize-keymap-maybe self)
@@ -153,7 +153,7 @@ text INSERTION to be inserted at point."
 	      #'(lambda ()
 		  (send nil method-keyword p))))
 
-(define-method generic-keybind ioblock (binding) 
+(define-method generic-keybind block (binding) 
   (destructuring-bind (key modifiers data) binding
     (apply (etypecase data
 	     (keyword #'bind-key-to-method)
@@ -222,69 +222,69 @@ areas.")
   '(:block :anything :integer :float :number :string :symbol)
   "List of keywords identifying the type of a particular argument.")
 
-(define-method move ioblock (x y)
+(define-method move block (x y)
   "Move the block to a new (X Y) location."
   (setf <x> x)
   (setf <y> y))
 
-(define-method show ioblock ()
+(define-method show block ()
   (setf <visible> t))
 
-(define-method hide ioblock ()
+(define-method hide block ()
   (setf <visible> nil))
 
-(define-method toggle-visible ioblock ()
+(define-method toggle-visible block ()
   (if <visible>
       (/hide self)
       (/show self)))
 
-(define-method is-visible ioblock ()
+(define-method is-visible block ()
   <visible>)
 
-(define-method set-parent ioblock (parent)
+(define-method set-parent block (parent)
   "Store a link to an enclosing PARENT block, if any."
   (setf <parent> parent))
 
-(define-method get-parent ioblock ()
+(define-method get-parent block ()
   <parent>)
 
-(define-method get-image ioblock ()
+(define-method get-image block ()
   <image>)
 
-(define-method get-argument ioblock (n)
+(define-method get-argument block (n)
   "Return the value of the Nth block argument."
   (nth n <arguments>))
 
-(define-method set-argument ioblock (n value)
+(define-method set-argument block (n value)
   "Set the Nth argument value to VALUE."
     (setf (nth n <arguments>) value))
 
-(define-method child-position ioblock (child)
+(define-method child-position block (child)
   (with-fields (arguments) self
     (position child arguments)))
 
-(define-method position ioblock ()
+(define-method position block ()
   (with-fields (parent) self
     (when parent 
       (/child-position parent self))))
 
-(define-method plug ioblock (child n)
+(define-method plug block (child n)
   "Connect the block CHILD as the value of the Nth argument."
   (/set-argument self n child)
   (/set-parent child self))
 
-(define-method unplug ioblock (child)
+(define-method unplug block (child)
   "Disconnect the block CHILD from this block."
   (let ((pos (position child <arguments>)))
     (/plug self (null-block) pos)
     (/set-parent child nil)))
 
-(define-method unplug-from-parent ioblock ()
+(define-method unplug-from-parent block ()
   (with-fields (parent) self
     (when parent
       (/unplug parent self))))
 
-(define-method execute-arguments ioblock ()
+(define-method execute-arguments block ()
   "Execute all blocks in <ARGUMENTS> from left-to-right. Results are
 placed in corresponding positions of <RESULTS>. Override this method
 when defining new blocks if you don't want to evaluate all the
@@ -292,13 +292,13 @@ arguments all the time."
   (with-fields (arguments results) self
     (setf results (mapcar #'/run arguments))))
 
-(define-method execute ioblock ()
+(define-method execute block ()
   "Carry out the block's action by sending messages to the object '*target*'.
 The *target* is a special variable bound in the execution
 environment. Its value will be the IOFORMS object to send messages to.
 The <RESULTS> field will be a list of results obtained by
 executing/evaluating the blocks in <ARGUMENTS> (see also
-`IOBLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
+`BLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
 send the <OPERATION> field's value as a message to the target, with
 the arguments to the target's method being the current computed
 <RESULTS>, and return the result of the method call. This default
@@ -317,22 +317,22 @@ something else. See also `defblock' and `send'."
   `(let ((*target* ,target))
      ,@body))
 
-(define-method run ioblock ()
+(define-method run block ()
   "Run child blocks to produce results, then run this block with
 those results as input."
   (/execute-arguments self)
   (/execute self))
 
-(define-method step ioblock (&rest args)
+(define-method step block (&rest args)
   "Update the simulation one step forward in time."
   (with-fields (arguments) self
     (dolist (block arguments)
       (send nil :step block))))
 
-(define-method describe ioblock ()
+(define-method describe block ()
   "Show name and comprehensive help for this block.")
 
-(define-method initialize ioblock (&rest args)
+(define-method initialize block (&rest args)
   "Prepare an empty block, or if ARGS is non-empty, a block
 initialized with its values as arguments."
   (with-fields (arguments schema results) self
@@ -344,11 +344,11 @@ initialized with its values as arguments."
 		(nth n args))))
       (setf results (make-list arity)))))
 
-(define-method deserialize ioblock ()
+(define-method deserialize block ()
   "Make sure the block is ready after loading."
   (/initialize self))
 
-(define-method count ioblock ()
+(define-method count block ()
   "Return the number of blocks enclosed in this block, including the
 current block." 
   (with-fields (arguments) self
@@ -451,7 +451,7 @@ two words. This is used as a unit for various layout operations.")
     :sensing ".white")
   "X11 color names of the text used for different block types.")
  
-(define-method find-color ioblock (&optional (part :background))
+(define-method find-color block (&optional (part :background))
   "Return the X11 color name of this block's type as a string.
 If PART is provided, return the color for the corresponding 
 :BACKGROUND, :SHADOW, :FOREGROUND, or :HIGHLIGHT parts of this type of
@@ -465,7 +465,7 @@ block."
 
 (defparameter *selection-color* ".red")
 
-(define-method resize ioblock (&key (height (* 8 *dash*))
+(define-method resize block (&key (height (* 8 *dash*))
 				  (width (* 60 *dash*)))
   "Allocate an image buffer of HEIGHT by WIDTH pixels."
   (unless (and (= <width> width)
@@ -515,7 +515,7 @@ blocks."
 				       :font *block-font*)))
 	   ,@body))))
 
-(define-method draw-patch ioblock (x0 y0 x1 y1 image 
+(define-method draw-patch block (x0 y0 x1 y1 image 
 				    &key depressed dark socket color)
   "Draw a standard IOFORMS block notation patch on IMAGE.
 Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
@@ -526,7 +526,8 @@ override all colors."
   (with-block-drawing image
     (let ((bevel (or color (if depressed shadow highlight)))
 	  (chisel (or color (if depressed highlight shadow)))
-	  (fill (or color (if socket *socket-color* 
+	  (fill (or color (if socket
+			      *socket-color* 
 			      (if dark shadow background)))))
       ;; top left
       (disc (+ x0 radius) (+ y0 radius) fill)
@@ -568,10 +569,10 @@ override all colors."
 	   (- x1 radius) (- y1 radius)
 	   fill))))
 
-(define-method draw-socket ioblock (x0 y0 x1 y1 image)
+(define-method draw-socket block (x0 y0 x1 y1 image)
   (/draw-patch self x0 y0 x1 y1 image :depressed t :socket t))
     
-(define-method draw-border ioblock (image &optional (color *selection-color*))
+(define-method draw-border block (image &optional (color *selection-color*))
   (let ((dash *dash*))
     (with-fields (x y height width) self
       (/draw-patch self (- x dash) (- y dash)
@@ -579,16 +580,16 @@ override all colors."
 		   (+ y height dash)
 		   image :color color))))
 
-(define-method draw-background ioblock (image)
+(define-method draw-background block (image)
   (with-fields (x y width height) self
     (/draw-patch self x y (+ x width) (+ y height) image)))
 
-(define-method draw-ghost ioblock (image)
+(define-method draw-ghost block (image)
   (with-fields (x y width height) self
     (/draw-patch self x y (+ x width) (+ y height) image
 		 :depressed t :socket t)))
 
-(define-method handle-width ioblock ()
+(define-method handle-width block ()
   (+ (* 2 *dash*)
      (expression-width <operation>)))
 
@@ -606,7 +607,7 @@ override all colors."
 	(substitute #\Space #\- (symbol-name expression)))
      (otherwise (format nil "~s" expression)))))
 
-(define-method layout ioblock ()
+(define-method layout block ()
   (with-fields (child-widths height width) self
     (with-field-values (x y operation schema arguments) self
       (let* ((font *block-font*)
@@ -633,7 +634,7 @@ override all colors."
 	  (setf width (+ (- left x) (* 4 dash)))
 	  (setf height (+ dash dash max-height))))))
 
-(define-method draw-expression ioblock (x0 y0 segment type image)
+(define-method draw-expression block (x0 y0 segment type image)
   (with-block-drawing image
       (with-fields (height child-widths) self
 	(let ((dash *dash*)
@@ -652,9 +653,9 @@ override all colors."
 		(setf width (expression-width segment))))
 	  width))))
 
-(define-method render ioblock ())
+(define-method render block ())
 
-(define-method draw-contents ioblock (image)
+(define-method draw-contents block (image)
   (with-block-drawing image
     (with-field-values 
 	(x y operation arguments)
@@ -672,7 +673,7 @@ override all colors."
 	      (dolist (block arguments)
 		(/draw block image))))))))
 
-(define-method draw ioblock (output-image)
+(define-method draw block (output-image)
   (with-fields (image x y) self
     (if (null image)
 	(progn
@@ -685,7 +686,7 @@ override all colors."
 
 (defparameter *hover-color* ".red")
 
-(define-method draw-hover ioblock (image)
+(define-method draw-hover block (image)
   (with-fields (x y width height) self
     (draw-box x y (+ *dash* width) (+ *dash* height)
 	      :stroke-color *hover-color* 
@@ -693,7 +694,7 @@ override all colors."
 	      :destination image))
   (/draw-contents self image))
 		    
-(define-method hit ioblock (mouse-x mouse-y)
+(define-method hit block (mouse-x mouse-y)
   "Return this block (or child block) if the coordinates MOUSE-X and
 MOUSE-Y identify a point inside the block (or child block.)"
   (with-fields (x y width height arguments) self
@@ -704,7 +705,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	(let ((child (some #'hit arguments)))
 	  (values (or child self) (when child (/position child))))))))
      	
-(define-method accept ioblock (other-block)
+(define-method accept block (other-block)
   (with-field-values (parent) self
     (when parent
       (prog1 t
@@ -829,27 +830,27 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 ;;; Composing blocks into larger programs, recursively.
 
-(define-prototype block (:parent =list=)
+(define-prototype script (:parent =list=)
   (arguments :iniform '(nil))
   (schema :initform '(:block))
   (target :initform nil)
   (variables :initform (make-hash-table :test 'eq)))
 
-(define-method initialize block (&key blocks variables target)
+(define-method initialize script (&key blocks variables target)
   (setf <arguments> blocks)
   (when variables (setf <variables> variables))
   (when target (setf <target> target)))
 
 (defvar *target* nil)
 
-(define-method set-target block (target)
+(define-method set-target script (target)
   (setf <target> target))
 
-(define-method is-member block (block)
+(define-method is-member script (block)
   (with-fields (arguments) self
     (find block arguments)))
 
-(define-method add block (block &optional x y)
+(define-method add script (block &optional x y)
   (with-fields (arguments) self
     (assert (not (find block arguments)))
     (setf arguments (nconc arguments (list block)))
@@ -858,7 +859,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	       (integerp y))
       (/move block x y))))
 
-(define-method layout-header block ()
+(define-method layout-header script ()
   (with-fields (x y arguments) self
     (let ((name (first arguments))
 	  (height (font-height *block-font*)))
@@ -867,7 +868,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	       (+ x (/handle-width self))
 	       (+ y height))))))
 
-(define-method draw-header block (image)
+(define-method draw-header script (image)
   (prog1 (font-height *block-font*)
     (with-fields (x y) self
       (with-block-drawing image
@@ -875,27 +876,28 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	      (+ y *dash* 1)
 	      "block")))))
 			   
-(define-method run block (block)
-  (with-fields (block target) self
+(define-method run script ()
+  (with-fields (arguments target) self
     (with-target target
-          (/run block))))
+      (dolist (block arguments)
+	(/run block)))))
 	    
-(define-method bring-to-front block (block)
+(define-method bring-to-front script (block)
   (with-fields (arguments) self
     (when (find block arguments)
       (setf arguments (delete block arguments))
       (setf arguments (nconc arguments (list block))))))
 
-(define-method delete block (block)
+(define-method delete script (block)
   (with-fields (arguments) self
     (assert (find block arguments))
     (setf arguments (delete block arguments))))
 
-(define-method set block (var value)
-  (setf (gethash var <variables>) value))
+;; (define-method set script (var value)
+;;   (setf (gethash var <variables>) value))
 
-(define-method get block (var)
-  (gethash var <variables>))
+;; (define-method get script (var)
+;;   (gethash var <variables>))
 
 ;; (defun block-variable (var-name)
 ;;   (/get *block* var-name))
