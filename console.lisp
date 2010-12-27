@@ -192,7 +192,14 @@ the console. See also `send-event'.
 Do not set this variable directly from a project; instead, call
 `install-blocks'.")
 
-(defun show-blocks ()
+(defun hit-blocks (x y &optional (blocks *blocks*))
+  (labels ((hit (b)
+	     (/hit b x y)))
+    (let ((parent (find-if #'hit *blocks* :from-end t)))
+      (when parent
+	(/hit parent x y)))))
+
+(defun draw-blocks ()
   "Draw the active blocks to the screen."
   (dolist (block *blocks*)
     (send nil :draw block sdl:*default-surface*)))
@@ -206,11 +213,11 @@ and the like."
 (defun install-block (block)
   (unless (find block *blocks*)
     (setf *blocks* (nconc *blocks* (list block))))
-  (show-blocks))
+  (draw-blocks))
 
 (defun uninstall-block (block)
   (setf *blocks* (delete block *blocks* :test #'eq))
-  (show-blocks))
+  (draw-blocks))
 
 ;;; "Classic" key repeat
 
@@ -273,8 +280,8 @@ for backward-compatibility."
 ;;; Event handling and blocks
 
 (defun send-to-blocks (event &optional (blocks *blocks*))
-  (let ((try (block)
-	  (/handle-key block event)))
+  (labels ((try (block)
+	     (/handle-key block event)))
     (some #'try blocks)))
 
 (defvar *event-handler-function* #'send-to-blocks
@@ -614,7 +621,7 @@ display."
     (set-frame-rate *frame-rate*)
     (reset-joystick)
     (sdl:clear-display sdl:*black*)
-    (show-blocks)
+    (draw-blocks)
     (sdl:update-display)
     (run-hook '*after-initialization-hook*)
     (let ((events-this-frame 0))
@@ -688,7 +695,7 @@ display."
 			 ;; (poll-all-buttons)
 			 ;;  (generate-button-events)
 			 ;; update display
-			 (show-blocks)
+			 (draw-blocks)
 			 (sdl:update-display)
 			 (setf *clock* *timer-interval*))
 		       (decf *clock*))
@@ -697,8 +704,8 @@ display."
 		     (sdl:with-timestep ()
 		       (do-timestep))
 		     (sdl:clear-display sdl:*black*)
-		     (when *held-keys* (send-held-events)) ;; TODO move this to do-timestep?
-		     (show-blocks) 
+;;		     (when *held-keys* (send-held-events))
+		     (draw-blocks) 
 		     (sdl:update-display))))))))
   
   
@@ -1817,6 +1824,11 @@ This program includes the DejaVu fonts family. See the file
       (sdl:quit-sdl))))
 
 (defun ioforms (&rest args)
+  (setf *after-open-project-hook* nil
+	*after-initialization-hook* nil
+	*initialization-hook* nil
+	*resize-hook* nil
+	*event-handler-function* #'send-to-blocks)
   (if (null args)
       (run nil)
       (apply #'run args)))

@@ -79,7 +79,6 @@ See also `*argument-types*'.")
   (type :initform :data :documentation "Type name of block. See also `*block-types*'.")
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
-  (blocks :initform nil)
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
@@ -663,15 +662,14 @@ override all colors."
       (let* ((dash *dash*)
 	     (left (+ x (* 2 dash)))
 	     (y0 (+ y dash 1)))
-	(if <image>
-	    (progn 
-	      (/render self)
-	      (draw-image <image>
-			  left y0 :destination image))
-	    (progn 
-	      (text left y0 (print-expression operation))
-	      (dolist (block arguments)
-		(/draw block image))))))))
+	;; (if <image>
+	;;     (progn 
+	;;       (/render self)
+	;;       (draw-image <image>
+	;; 		  left y0 :destination image))
+	(text left y0 (print-expression operation))
+	(dolist (block arguments)
+	  (/draw block image))))))
 
 (define-method draw block (output-image)
   (with-fields (image x y) self
@@ -854,7 +852,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (with-fields (arguments) self
     (assert (not (find block arguments)))
     (setf arguments (nconc arguments (list block)))
-    (setf (field-value :parent block) nil)
+    (setf (field-value :parent block) nil) ;; TODO self?
     (when (and (integerp x)
 	       (integerp y))
       (/move block x y))))
@@ -876,11 +874,11 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	      (+ y *dash* 1)
 	      "block")))))
 			   
-(define-method run script ()
-  (with-fields (arguments target) self
-    (with-target target
-      (dolist (block arguments)
-	(/run block)))))
+(define-method run script ())
+  ;; (with-fields (arguments target) self
+  ;;   (with-target target
+  ;;     (dolist (block arguments)
+  ;; 	(/run block)))))
 	    
 (define-method bring-to-front script (block)
   (with-fields (arguments) self
