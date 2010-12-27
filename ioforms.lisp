@@ -124,12 +124,12 @@ set-field-option-value =blockr= =blockr-prompt= open-project
 =sprite-special= field-options world set-frame-rate *frame-rate*
 =stack= *workbook* set-resource-modified-p *iof-file-extension*
 load-project *project* *project-path* *window-title* *window-position*
-*default-shell-width* *default-shell-height* =split=
-set-timer-interval =gcell= defgcell =block= *message-logging* overlay
-poll-joystick-axis poll-joystick-button reset-joystick
+*default-shell-width* *default-shell-height* =split= =shell= =system=
+*system* set-timer-interval =gcell= defgcell =block= *message-logging*
+overlay poll-joystick-axis poll-joystick-button reset-joystick
 set-screen-width =universe= *universe* *play-args* set-screen-height
 genseq *zoom-factor* zoom-image is-zoomed-resource *timer-interval*
-save-objects enable-timer disable-timer while defmission
+save-objects enable-timer disable-timer while defmission send-to-blocks
 enable-held-keys disable-held-keys do-cells draw-box *resizable*
 achieve *resize-hook* draw-rectangle *quitting*
 *after-open-project-hook* *mission* mission-variable

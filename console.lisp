@@ -272,7 +272,12 @@ for backward-compatibility."
 
 ;;; Event handling and blocks
 
-(defvar *event-handler-function* nil
+(defun send-to-blocks (event &optional (blocks *blocks*))
+  (let ((try (block)
+	  (/handle-key block event)))
+    (some #'try blocks)))
+
+(defvar *event-handler-function* #'send-to-blocks
   "Function to be called with keypress events. Keyboard, mouse,
 joystick, and timer events are represented as event lists of the form:
 
