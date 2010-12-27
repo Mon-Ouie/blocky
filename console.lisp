@@ -185,7 +185,7 @@ elements of the vector produced by evaluating EXPR."
 
 ;; see also blocks.lisp
 
-(defvar ** nil "List of active block objects. 
+(defvar *blocks* nil "List of active block objects. 
 These blocks receive input events and are rendered to the screen by
 the console. See also `send-event'.
 
@@ -271,11 +271,6 @@ for backward-compatibility."
     (maphash #'break-it *key-table*)))
 
 ;;; Event handling and blocks
-
-  "
-The default event handler attempts to deliver a keypress to one of
-the blocks in `*blocks*'. See blocks.lisp and the docstrings
-below for more information.
 
 (defvar *event-handler-function* nil
   "Function to be called with keypress events. Keyboard, mouse,
