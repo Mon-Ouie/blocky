@@ -464,16 +464,22 @@ block."
 
 (defparameter *selection-color* ".red")
 
-(define-method resize block (&key (height (* 8 *dash*))
-				  (width (* 60 *dash*)))
+(define-method create-image block ()
+  (with-fields (image height width) self
+    (let ((oldimage image))
+      (when oldimage
+	(sdl:free oldimage))
+      (setf image (create-image width height)))))
+
+(define-method resize block (&key height width)
   "Allocate an image buffer of HEIGHT by WIDTH pixels."
-  (unless (and (= <width> width)
-	       (= <height> height))
-    (setf <width> width 
-	  <height> height)  
-    (let ((oldimage <image>))
-      (setf <image> (create-image width height))
-      (when oldimage (sdl:free oldimage)))))
+  (with-fields (image) self
+    (when (not (and (= <width> width) 
+		    (= <height> height)))
+      (assert (and (integerp width) (integerp height)))
+      (setf <width> width 
+	    <height> height) 
+      (when image (/create-image self)))))
 
 (defmacro with-block-drawing (image &body body)
   "Run BODY forms with drawing primitives set to draw on IMAGE.
@@ -613,13 +619,7 @@ override all colors."
 	     (dash *dash*)
 	     (left (+ x (/handle-width self)))
 	     (max-height (font-height font)))
-	(labels ((move-widget (widget)
-		   (/move widget :x left :y y)
-		   (incf left (field-value :width widget))
-		   (setf max-height
-			 (max max-height 
-			      (field-value :height widget))))
-		 (move-child (child)
+	(labels ((move-child (child)
 		   (/move child (+ left dash) y)
 		   (/layout child)
 		   (setf max-height (max max-height (field-value :height child)))
@@ -662,14 +662,15 @@ override all colors."
       (let* ((dash *dash*)
 	     (left (+ x (* 2 dash)))
 	     (y0 (+ y dash 1)))
-	;; (if <image>
-	;;     (progn 
-	;;       (/render self)
-	;;       (draw-image <image>
-	;; 		  left y0 :destination image))
-	(text left y0 (print-expression operation))
-	(dolist (block arguments)
-	  (/draw block image))))))
+	(if <image>
+	    (progn 
+	      (/render self)
+	      (draw-image <image>
+			  left y0 :destination image))
+	    (progn 
+	      (text left y0 (print-expression operation))
+	      (dolist (block arguments)
+		(/draw block image))))))))
 
 (define-method draw block (output-image)
   (with-fields (image x y) self

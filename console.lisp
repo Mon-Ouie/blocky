@@ -1,4 +1,4 @@
-;;; console.lisp --- core operations for IOFORMS
+;;; console.lisp --- core operations for IOFORM
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010  David O'Toole
 
@@ -522,7 +522,11 @@ at the time the cell method is run.")
 
 (defvar *dt* 20)
 
-(defvar *timestep-function* nil)
+(defun step-blocks (&rest args)
+  (dolist (block *blocks*)
+    (apply #'send nil :step block args)))
+
+(defvar *timestep-function* #'step-blocks)
 
 (defun do-timestep (&rest args) 
   (incf *timesteps*)
@@ -1820,7 +1824,7 @@ This program includes the DejaVu fonts family. See the file
 	   (setf *system* (clone (symbol-value '=system=)))
 	   (when project 
 	     (apply #'send nil :open-project *system* project arguments))
-	   (send nil :run *system*))
+	   (run-main-loop))
       (sdl:quit-sdl))))
 
 (defun ioforms (&rest args)
