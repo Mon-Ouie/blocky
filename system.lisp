@@ -63,7 +63,8 @@
 (define-method resize system (&key height width)
   ;; (/parent/resize self :height height :width width)
   (with-fields (shell) self
-    (/resize shell :height height :width width)))
+    (/resize shell :height height :width width)
+    (/layout shell)))
 
 (define-method initialize system (&rest args)
   #+linux (do-cffi-loading)
@@ -99,19 +100,17 @@
 	     ;; set to mix lots of sounds
 	     (sdl-mixer:allocate-channels *channels*))
 	   (index-project "standard"))
-	   ;; set up shell and script
-	(with-fields (shell) self
-	  (setf *window-title* "ioforms")
-	  (setf *resizable* t)
-	  (enable-classic-key-repeat 100 100)
-	  (set-screen-height *default-shell-height*)
-	  (set-screen-width *default-shell-width*)
-	  (labels ((resize ()
-		     (/resize *system* 
-			      :width *screen-width* 
-			      :height *screen-height*)))
-	    (add-hook '*resize-hook* #'resize))
-	  (ioforms:install-blocks self)))
+	(setf *window-title* "ioforms")
+	(setf *resizable* t)
+	(enable-classic-key-repeat 100 100)
+	(set-screen-height *default-shell-height*)
+	(set-screen-width *default-shell-width*)
+	(labels ((resize ()
+		   (/resize *system* 
+			    :width *screen-width* 
+			    :height *screen-height*)))
+	  (add-hook '*resize-hook* #'resize))
+	(ioforms:install-blocks self))
 
 
 (defparameter *default-shell-width* 1024)
@@ -203,7 +202,8 @@
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
-(define-method layout shell ())
+(define-method layout shell ()
+  (/layout <script>))
 
 (define-method initialize shell ()
   (/parent/initialize self))
@@ -213,7 +213,9 @@
   (setf <script> script))
   
 (define-method add shell (block &optional x y)
-  (/add <script> block x y))
+  (with-fields (needs-redraw script) self
+    (/add script block x y)
+    (setf needs-redraw t)))
 
 (define-method delete shell (block)
   (/delete <script> block))
@@ -244,18 +246,19 @@
     (setf needs-redraw t)))
 
 (define-method redraw shell ()
-  (with-fields (arguments buffer selection needs-redraw width height) self
-    (draw-box 0 0 width height 
-	      :color *background-color*
-	      :stroke-color *background-color*
-	      :destination buffer)
-    (dolist (block arguments)
-      (/layout block))
-    (dolist (block arguments)
-      (when (find block selection)
-	(/draw-border block buffer))
-      (/draw block buffer))
-    (setf needs-redraw nil)))
+  (with-fields (buffer script selection needs-redraw width height) self
+    (with-fields (arguments) script
+      (draw-box 0 0 width height 
+		:color *background-color*
+		:stroke-color *background-color*
+		:destination buffer)
+      (dolist (block arguments)
+	(/layout block))
+      (dolist (block arguments)
+	(when (find block selection)
+	  (/draw-border block buffer))
+	(/draw block buffer))
+      (setf needs-redraw nil))))
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag arguments drag-start ghost drag-offset) self
@@ -285,7 +288,7 @@
 
 (define-method render shell ()
   (with-fields 
-      (arguments needs-redraw buffer image drag-start selection
+      (script needs-redraw buffer image drag-start selection
       drag modified hover ghost prompt) self
     ;; render any selected blocks to their offscreen images
     (dolist (block selection)

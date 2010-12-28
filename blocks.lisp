@@ -835,6 +835,8 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (target :initform nil)
   (variables :initform (make-hash-table :test 'eq)))
 
+(define-method layout script ())
+
 (define-method initialize script (&key blocks variables target)
   (setf <arguments> blocks)
   (when variables (setf <variables> variables))
