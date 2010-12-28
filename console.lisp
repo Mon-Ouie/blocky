@@ -195,9 +195,9 @@ Do not set this variable directly from a project; instead, call
 (defun hit-blocks (x y &optional (blocks *blocks*))
   (labels ((hit (b)
 	     (/hit b x y)))
-    (let ((parent (find-if #'hit *blocks* :from-end t)))
+    (let ((parent (find-if #'hit blocks :from-end t)))
       (when parent
-	(/hit parent x y)))))
+	(hit parent)))))
 
 (defun draw-blocks ()
   "Draw the active blocks to the screen."
@@ -640,15 +640,15 @@ display."
 					 :position *window-position*))
 	(:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
 			     (let ((block (hit-blocks x y *blocks*)))
-			       (when (and block (has-method :mouse-move block))
+			       (when block
 				 (/mouse-move block x y))))
 	(:mouse-button-down-event (:button button :state state :x x :y y)
 				  (let ((block (hit-blocks x y *blocks*)))
-				    (when (and block (has-method :mouse-down block))
+				    (when block
 				      (/mouse-down block x y button))))
 	(:mouse-button-up-event (:button button :state state :x x :y y)
 				  (let ((block (hit-blocks x y *blocks*)))
-				    (when (and block (has-method :mouse-up block))
+				    (when block
 				      (/mouse-up block x y button))))
 	(:joy-button-down-event (:which which :button button :state state)
 				(when (assoc button *joystick-mapping*)

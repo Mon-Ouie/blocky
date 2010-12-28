@@ -60,11 +60,18 @@
       (dolist (block children)
 	(apply #'/step block args)))))
 
+(define-method forward system (method &rest args)
+  (apply #'send nil method <script> args))
+
 (define-method resize system (&key height width)
   ;; (/parent/resize self :height height :width width)
   (with-fields (shell) self
     (/resize shell :height height :width width)
     (/layout shell)))
+
+(define-method hit system (x y)
+  (with-fields (shell) self
+    (/hit shell x y)))
 
 (define-method initialize system (&rest args)
   #+linux (do-cffi-loading)
@@ -208,6 +215,9 @@
 (define-method initialize shell ()
   (/parent/initialize self))
 
+(define-method script-blocks shell ()
+  (field-value :arguments <script>))
+
 (define-method switch-to-script shell (script) 
   (assert (ioforms:object-p script))
   (setf <script> script))
@@ -246,25 +256,25 @@
     (setf needs-redraw t)))
 
 (define-method redraw shell ()
-  (with-fields (buffer script selection needs-redraw width height) self
-    (with-fields (arguments) script
+  (with-fields (buffer selection needs-redraw width height) self
+    (let ((blocks (/script-blocks self)))
       (draw-box 0 0 width height 
 		:color *background-color*
 		:stroke-color *background-color*
 		:destination buffer)
-      (dolist (block arguments)
+      (dolist (block blocks)
 	(/layout block))
-      (dolist (block arguments)
+      (dolist (block blocks)
 	(when (find block selection)
 	  (/draw-border block buffer))
 	(/draw block buffer))
       (setf needs-redraw nil))))
 
 (define-method begin-drag shell (mouse-x mouse-y block)
-  (with-fields (drag arguments drag-start ghost drag-offset) self
+  (with-fields (drag arguments script drag-start ghost drag-offset) self
     (setf drag block)
-    (when (/is-member self block)
-      (/delete block arguments))
+    (when (/is-member script block)
+      (/delete script block))
     (let ((dx (field-value :x block))
 	  (dy (field-value :y block))
 	  (dw (field-value :width block))
@@ -278,13 +288,15 @@
 	    (setf drag-offset (cons x-offset y-offset))))))))
 
 (define-method hit-blocks shell (x y)
-  (with-fields (arguments) self
-    (when arguments 
-      (labels ((hit (b)
-		 (/hit b x y)))
-	(let ((parent (find-if #'hit arguments :from-end t)))
-	  (when parent
-	    (/hit parent x y)))))))
+  (labels ((hit (b)
+	     (/hit b x y)))
+    (let ((parent 
+	   (find-if 
+	    #'hit  
+	    (/script-blocks self)
+	    :from-end t)))
+      (when parent
+	(hit parent)))))
 
 (define-method render shell ()
   (with-fields 
@@ -304,8 +316,7 @@
       (/draw-ghost ghost image)
       (/draw drag image)
       (when hover 
-	(/draw-hover hover image)))
-    (draw-string-blended "SHELL IS BEING DRAWN." 0 0 :font *block-font* :destination image)))
+	(/draw-hover hover image)))))
 
 (define-method mouse-down shell (x y &optional button)
   (let ((block (/hit-blocks self x y)))
@@ -329,24 +340,23 @@
       (arguments needs-redraw drag-offset drag-start hover
 	      selection drag modified) 
       self
-    (with-fields (arguments) self
-      (when drag
-	(let ((drag-parent (/get-parent drag)))
-	  (when drag-parent
-	    (/unplug-from-parent drag))
-	  (let ((sink hover))
-	    (if sink
-		;; dropping on another block
-		(unless (/accept sink drag)
-		  (/add self drag))
-		;; dropping on background
-		(/add self drag)))))
-      (setf selection nil)
-      (when drag (/select self drag))
-      (setf drag-start nil
-	    drag-offset nil
-	    drag nil
-	    needs-redraw t))))
+    (when drag
+      (let ((drag-parent (/get-parent drag)))
+	(when drag-parent
+	  (/unplug-from-parent drag))
+	(let ((sink hover))
+	  (if sink
+	      ;; dropping on another block
+	      (unless (/accept sink drag)
+		(/add self drag))
+	      ;; dropping on background
+	      (/add self drag)))))
+    (setf selection nil)
+    (when drag (/select self drag))
+    (setf drag-start nil
+	  drag-offset nil
+	  drag nil
+	  needs-redraw t)))
 
 ;;; Various blocks
 
