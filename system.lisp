@@ -177,19 +177,20 @@
 	  (/pop container))))))
 
 (defblock listener
-  (type :initform :system))
+  (type :initform :system)
+  (schema :initform '(:block)))
 
 (defparameter *minimum-listener-width* 200)
 
 (define-method initialize listener ()
-  (with-fields (image) self
-    (/parent/initialize self)
-    (let ((prompt (clone =block-prompt= self)))
+  (with-fields (image arguments) self
+    (let ((prompt (setf prompt (clone =block-prompt= self))))
+      (/parent/initialize self)
       (/resize prompt 
 	       :width *minimum-listener-width*
 	       :height (+ (* 2 *dash*) 
 			  (font-height *default-font*)))
-      (setf widget prompt))))
+      (setf (first arguments) prompt))))
 
 (define-prototype shell (:parent =block=)
   (selection :initform ()
