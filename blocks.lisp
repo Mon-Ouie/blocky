@@ -859,7 +859,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
       (with-block-drawing image
 	(text (+ x *dash* 1)
 	      (+ y *dash* 1)
-	      "block")))))
+	      "script")))))
 			   
 (define-method run script ())
   ;; (with-fields (arguments target) self
