@@ -1,6 +1,6 @@
 ;;; console.lisp --- core operations for IOFORM
 
-;; Copyright (C) 2006, 2007, 2008, 2009, 2010  David O'Toole
+;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org> <dto1138@gmail.com>
 ;; Keywords: multimedia, games
@@ -1732,7 +1732,7 @@ The default destination is the main window."
 
 (defvar *copyright-text*
 "IOFORMS Visual Common Lisp Multimedia Authoring Tool
-Copyright (C) 2006, 2007, 2008, 2009, 2010 by David T O'Toole
+Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 by David T O'Toole
 <dto@gnu.org> <dto1138@gmail.com>
 http://ioforms.org/
 
