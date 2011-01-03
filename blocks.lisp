@@ -72,7 +72,7 @@ See also `*argument-types*'.")
   (visible :initform t :documentation "When non-nil, block will be visible.")
   (keymap :initform nil :documentation "Keybindings, if any.")  
   (child-widths :initform nil :documentation "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
-  (excluded-fields :initform '(:image :results :parent)))
+  (excluded-fields :initform '(:image :keymap :child-widths :results :parent)))
 
 (defmacro defblock (name &body args)
   "Define a new block prototype named =NAME=.
