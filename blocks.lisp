@@ -69,9 +69,7 @@
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
   (arguments :initform nil :documentation "List of block argument values.")
   (results :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
-  (arity :documentation 
-	  "List of type keywords for corresponding expressions in <arguments>.
-See also `*argument-types*'.")
+  (arity :initform nil :documentation "When non-nil, number of arguments.")
   (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
   (type :initform :data :documentation "Type name of block. See also `*block-types*'.")
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
