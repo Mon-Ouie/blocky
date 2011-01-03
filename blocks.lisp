@@ -35,7 +35,7 @@
 
 ;; For the design of IOFORMS, I've followed a motto associated with
 ;; the visual programming language Pure Data: "The diagram is the
-;; program."  Since the diagram is 2D, the program must therefore be
+;; program." Since the diagram is 2D, the program must therefore be
 ;; two-dimensional as well. That means every block in the program
 ;; (i.e. every expression) must have an X,Y position. The position
 ;; units are abstract "pseudo-pixels" which can be scaled
@@ -45,10 +45,7 @@
 ;; after electronic components connected by wires, IOFORMS does away
 ;; with the explicitly drawn connections in favor of a tree structure
 ;; and evaluation semantics mapping more naturally to Lisp
-;; expressions, although the mapping is not exact. In fact, I have
-;; chosen to define the IOFORMS visual language as a separate
-;; "companion" language for Common Lisp, so that neither is a simple
-;; duplication of the other (just with different appearances.)
+;; expressions, although the correspondence is not exact. 
 
 ;; The purpose of a block is to perform some action in response to a
 ;; number of input arguments and then return a value. Each argument is
@@ -72,7 +69,7 @@
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
   (arguments :initform nil :documentation "List of block argument values.")
   (results :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
-  (schema :documentation 
+  (arity :documentation 
 	  "List of type keywords for corresponding expressions in <arguments>.
 See also `*argument-types*'.")
   (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
@@ -334,14 +331,12 @@ those results as input."
 (define-method initialize block (&rest args)
   "Prepare an empty block, or if ARGS is non-empty, a block
 initialized with its values as arguments."
-  (with-fields (arguments schema results) self
-    (let ((arity (length schema)))
-      (when args 
-	(setf arguments (make-list arity))
-	(dotimes (n (length args))
-	  (setf (nth n arguments)
-		(nth n args))))
-      (setf results (make-list arity)))))
+  (with-fields (arguments arity results) self
+    (setf arguments (when arity (make-list arity)))
+    (setf results (when arity (make-list arity)))
+    (dotimes (n (length args))
+      (setf (nth n arguments)
+	    (nth n args)))))
 
 (define-method deserialize block ()
   "Make sure the block is ready after loading."
@@ -614,7 +609,7 @@ override all colors."
 
 (define-method layout block ()
   (with-fields (child-widths height width) self
-    (with-field-values (x y operation schema arguments) self
+    (with-field-values (x y operation arity arguments) self
       (let* ((font *block-font*)
 	     (dash *dash*)
 	     (left (+ x (/handle-width self)))
@@ -624,12 +619,12 @@ override all colors."
 		   (/layout child)
 		   (setf max-height (max max-height (field-value :height child)))
 		   (field-value :width child))
-		 (layout-child (block type)
+		 (layout-child (block)
 		   (let ((measurement
 			  (+ dash (move-child block))))
 		     (prog1 measurement 
 		       (incf left measurement)))))
-	  (setf child-widths (mapcar #'layout-child arguments schema)))
+	  (setf child-widths (mapcar #'layout-child arguments)))
 	  (setf width (+ (- left x) (* 4 dash)))
 	  (setf height (+ dash dash max-height))))))
 
@@ -716,7 +711,6 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 (defblock entry 
   (type :initform :data)
-  (schema :iniform nil)
   (data :initform nil))
 
 (define-method execute entry ()
@@ -831,7 +825,6 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 (define-prototype script (:parent =list=)
   (arguments :iniform '(nil))
-  (schema :initform '(:block))
   (target :initform nil)
   (variables :initform (make-hash-table :test 'eq)))
 
