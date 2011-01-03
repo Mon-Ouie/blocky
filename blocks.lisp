@@ -33,20 +33,6 @@
 
 (in-package :ioforms)
 
-;; For the design of IOFORMS, I've followed a motto associated with
-;; the visual programming language Pure Data: "The diagram is the
-;; program." Since the diagram is 2D, the program must therefore be
-;; two-dimensional as well. That means every block in the program
-;; (i.e. every expression) must have an X,Y position. The position
-;; units are abstract "pseudo-pixels" which can be scaled
-;; appropriately for display.
-
-;; Unlike Pure Data and other visual languages that model themselves
-;; after electronic components connected by wires, IOFORMS does away
-;; with the explicitly drawn connections in favor of a tree structure
-;; and evaluation semantics mapping more naturally to Lisp
-;; expressions, although the correspondence is not exact. 
-
 ;; The purpose of a block is to perform some action in response to a
 ;; number of input arguments and then return a value. Each argument is
 ;; itself a block and there are prebuilt block types for integers,
@@ -61,6 +47,8 @@
 ;; block prototype via `define-method'. With the macro `make-block'
 ;; you can convert lisp expressions into working block
 ;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
+
+;; For more information, see http://ioforms.org/design.html
 
 (defvar *target*)
 
@@ -137,7 +125,7 @@ if a binding was found, nil otherwise."
 
 (defun bind-key-to-prompt-insertion (p key modifiers &optional (insertion key))
   "For prompt P ensure that the event (KEY MODIFIERS) causes the
-text INSERTION to be inserted at point."
+text INSERTION to be inserted at point. See `widgets.lisp'."
  (/define-key p (string-upcase key) modifiers
 	      #'(lambda ()
 		  (/insert p insertion))))
