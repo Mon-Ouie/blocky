@@ -33,6 +33,20 @@
 
 (in-package :ioforms)
 
+;; For the design of IOFORMS, I've followed a motto associated with
+;; the visual programming language Pure Data: "The diagram is the
+;; program." Since the diagram is 2D, the program must therefore be
+;; two-dimensional as well. That means every block in the program
+;; (i.e. every expression) must have an X,Y position. The position
+;; units are abstract "pseudo-pixels" which can be scaled
+;; appropriately for display.
+
+;; Unlike Pure Data and other visual languages that model themselves
+;; after electronic components connected by wires, IOFORMS does away
+;; with the explicitly drawn connections in favor of a tree structure
+;; and evaluation semantics mapping more naturally to Lisp
+;; expressions, although the correspondence is not exact. 
+
 ;; The purpose of a block is to perform some action in response to a
 ;; number of input arguments and then return a value. Each argument is
 ;; itself a block and there are prebuilt block types for integers,
@@ -48,8 +62,6 @@
 ;; you can convert lisp expressions into working block
 ;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
 
-;; For more information, see http://ioforms.org/design.html
-
 (defvar *target*)
 
 (define-prototype block ()
@@ -57,7 +69,9 @@
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
   (arguments :initform nil :documentation "List of block argument values.")
   (results :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
-  (arity :initform nil :documentation "When non-nil, number of arguments.")
+  (arity :documentation 
+	  "List of type keywords for corresponding expressions in <arguments>.
+See also `*argument-types*'.")
   (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
   (type :initform :data :documentation "Type name of block. See also `*block-types*'.")
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
@@ -70,7 +84,7 @@
   (visible :initform t :documentation "When non-nil, block will be visible.")
   (keymap :initform nil :documentation "Keybindings, if any.")  
   (child-widths :initform nil :documentation "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
-  (excluded-fields :initform '(:child-widths :keymap :image :results :parent)))
+  (excluded-fields :initform '(:image :results :parent)))
 
 (defmacro defblock (name &body args)
   "Define a new block prototype named =NAME=.
@@ -125,7 +139,7 @@ if a binding was found, nil otherwise."
 
 (defun bind-key-to-prompt-insertion (p key modifiers &optional (insertion key))
   "For prompt P ensure that the event (KEY MODIFIERS) causes the
-text INSERTION to be inserted at point. See `widgets.lisp'."
+text INSERTION to be inserted at point."
  (/define-key p (string-upcase key) modifiers
 	      #'(lambda ()
 		  (/insert p insertion))))
