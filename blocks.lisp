@@ -867,6 +867,8 @@ MOUSE-Y identify a point inside the block (or child block.)"
   ;;     (dolist (block arguments)
   ;; 	(/run block)))))
 	    
+(define-method step script ())
+
 (define-method bring-to-front script (block)
   (with-fields (arguments) self
     (when (find block arguments)
