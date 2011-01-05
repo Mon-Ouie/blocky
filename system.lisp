@@ -178,7 +178,6 @@
 	  (/pop container))))))
 
 (define-prototype listener (:parent =list=)
-  (operation :initform :listener)
   (type :initform :system)
   (schema :initform '(:block)))
 
