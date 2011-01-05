@@ -457,14 +457,21 @@ block."
       (setf image (create-image width height)))))
 
 (define-method resize block (&key height width)
-  "Allocate an image buffer of HEIGHT by WIDTH pixels."
+  "Allocate an image buffer of HEIGHT by WIDTH pixels.
+If there is no existing image, one of HEIGHT x WIDTH pixels is created
+and stored in <IMAGE>. If there is an existing image, it is only
+resized when the new dimensions differ from the existing image."
+  (assert (and (integerp width) (integerp height)))
   (with-fields (image) self
-    (when (not (and (= <width> width) 
-		    (= <height> height)))
-      (assert (and (integerp width) (integerp height)))
-      (setf <width> width 
-	    <height> height) 
-      (when image (/create-image self)))))
+    (if (null image) 
+	(progn (setf <width> width 
+		     <height> height)
+	       (/create-image self))
+	(when (not (and (= <width> width) 
+			(= <height> height)))
+	  (setf <width> width 
+		<height> height) 
+	  (when image (/create-image self))))))
 
 (defmacro with-block-drawing (image &body body)
   "Run BODY forms with drawing primitives set to draw on IMAGE.

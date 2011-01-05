@@ -115,7 +115,7 @@ get-some-object-name transform-declaration-field-descriptor
 show-blocks no-such-field =narrator= find-projects-in-directory goal
 =mission= =gateway= =launchpad= =environment= directory-is-project-p
 find-all-projects *project* transform-tree *after-initialization-hook*
-stat-value draw-line *default-message-verbosities*
+stat-value draw-line *default-message-verbosities* 
 *message-verbosities* add-overlay set-message-verbosities
 operation-symbol message-symbol play-sample set-music-volume
 add-message-verbosities with-message-queue =minimap= draw-pixel

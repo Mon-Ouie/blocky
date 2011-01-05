@@ -48,6 +48,7 @@
   (with-fields (running children shell) self
     (when (null shell)
       (setf shell (clone =shell=))
+      (setf *default-font* *block-font*)
       (/resize shell :width *screen-width* :height *screen-height*)
       (/create-image shell)
       (/move shell 0 0)
@@ -173,6 +174,7 @@
 		 (let ((*make-block-package* (find-package :ioforms)))
 		   (if (symbolp (first sexp))
 		       (make-block-ext sexp)
+
 		       (make-block-ext (first sexp)))))
 	(when (> (/length container) rows)
 	  (/pop container))))))
@@ -185,12 +187,13 @@
 
 (define-method initialize listener ()
   (with-fields (image arguments) self
-    (let ((prompt (setf prompt (clone =block-prompt= self))))
+    (let ((prompt (clone =block-prompt= self)))
       (/parent/initialize self)
       (/resize prompt 
 	       :width *minimum-listener-width*
 	       :height (+ (* 2 *dash*) 
 			  (font-height *default-font*)))
+      (assert (field-value :image prompt))
       (setf (first arguments) prompt))))
 
 (define-method run listener ()
