@@ -294,8 +294,9 @@ something else. See also `defblock' and `send'."
 	       (if (symbolp item)
 		   (make-keyword item)
 		   item)))
-    (apply #'ioforms:send nil operation *target* 
-	   (mapcar #'clean results)))))
+      (assert *target*)
+      (apply #'ioforms:send nil operation *target* 
+	     (mapcar #'clean results)))))
 
 (defmacro with-target (target &body body)
   `(let ((*target* ,target))
@@ -748,9 +749,6 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 (define-method execute list ()
   <results>)
-
-(define-method initialize list (&rest args)
-  (when args (setf <arguments> args)))
 
 (define-method accept list (child &optional prepend)
   (with-fields (arguments) self

@@ -156,6 +156,7 @@
 ;;; Interactive editor shell
 
 (define-prototype block-prompt (:parent =prompt=)
+;;  (operation :initform :prompt)
   output 
   (rows :initform 10))
 
@@ -176,7 +177,8 @@
 	(when (> (/length container) rows)
 	  (/pop container))))))
 
-(defblock listener
+(define-prototype listener (:parent =list=)
+  (operation :initform :listener)
   (type :initform :system)
   (schema :initform '(:block)))
 
@@ -191,6 +193,11 @@
 	       :height (+ (* 2 *dash*) 
 			  (font-height *default-font*)))
       (setf (first arguments) prompt))))
+
+(define-method run listener ()
+  (with-fields (arguments) self
+    (destructuring-bind (prompt) arguments
+      (/run prompt))))
 
 (define-prototype shell (:parent =block=)
   (selection :initform ()
