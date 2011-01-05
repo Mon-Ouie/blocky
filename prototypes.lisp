@@ -425,6 +425,7 @@ argument is ignored for now."
 (defvar *send-parent-depth* 2)
 
 (defun initialize ()
+  (format t "~A" *copyright-text*)
   ;;(initialize-documentation-tables)
   (setf *send-parent-depth* 2))
 
@@ -847,8 +848,8 @@ evaluated, then any applicable initializer is triggered."
 ;; are not serialized; typically these will be properly re-initialized
 ;; by the :DESERIALIZE method. 
 
-(defconstant +object-type-key+ :%IOFORMS%OBJECT%)
-(defconstant +hash-type-key+ :%IOFORMS%HASH-TABLE%)
+(defconstant +object-type-key+ :%IOF%OBJECT%)
+(defconstant +hash-type-key+ :%IOF%HASH-TABLE%)
 
 (defun serialize (object)
   "Convert a Lisp object a print-ready S-expression.

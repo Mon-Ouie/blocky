@@ -22,211 +22,7 @@
 
 (in-package :ioforms)
 
-(define-prototype widget
-    (:documentation "A graphical element that responds to events and renders to an offscreen image.
-
-A game can draw directly to the screen if it wants. Widgets.lisp
-defines a reusable `widget' object where you draw to an offscreen
-image. Widgets are also designed to receive input events via the
-`handle-key' method; `define-key' and `undefine-key' can be used to
-manage keybindings.
-
-The main IOFORMS loop is set up to dispatch event messages to
-widgets. After the events have been processed and the widgets have
-drawn their images to their respective offscreen buffers, the
-engine copies the buffers to the screen. (see console.lisp)
-
-This module contains the basic widget code and some standard widgets,
-including an output formatter and a configurable command prompt.
-")
-  (keymap :documentation "A hash table mapping keylists to lambdas.")
-  (image :documentation "The offscreen image buffer containing the widget's rendered output.")
-  (width :documentation "The current allocated image width of the widget, in pixels." :initform 0)
-  (height :documentation "The current allocated image height of the widget, in pixels." :initform 0)
-  (visible :initform t :documentation "The boolean visibility of the widget.")
-  (x :documentation "The screen x-coordinate of the left side of the widget's display area." :initform 0)
-  (y :documentation "The screen y-coordinate of the top of the widget's display area." :initform 0))
-
-(defmacro defwidget (name &body args)
-  "Define a widget named NAME, with the fields ARGS as in a normal
-prototype declaration. This is a convenience macro for defining new
-widgets."
-  `(define-prototype ,name (:parent =widget=)
-     ,@args))
-
-(define-method initialize widget ()
-  (setf <keymap> (make-hash-table :test 'equal)))
-
-(define-method resize widget (&key height width)
-  "Allocate an image buffer of HEIGHT by WIDTH pixels."
-  (unless (and (= <width> width)
-	       (= <height> height))
-    (setf <width> width 
-	  <height> height)  
-    (let ((oldimage <image>))
-      (setf <image> (create-image width height))
-      (when oldimage (sdl:free oldimage)))))
-
-(define-method move widget (&key x y)
-  "Move the widget to the location X, Y."
-  (setf <x> x <y> y))
-
-(define-method show widget ()
-  (setf <visible> t))
-
-(define-method hide widget ()
-  (setf <visible> nil))
-
-(define-method toggle-visible widget ()
-  (if <visible>
-      (/hide self)
-      (/show self)))
-
-(define-method render widget ()
-  "Render the widget to its image. The default implementation leaves
-the image blank."  nil)
-
-(define-method get-image widget ()
-  "Return the widget's offscreen drawing image."
-  <image>)
-
-(define-method clear widget (&optional (color ".black"))
-  "Clear the widget's offscreen buffer by drawing a rectangle of COLOR
-that covers the entire buffer."
-  (draw-box 0 0 <width> <height> :color color :stroke-color color :destination <image>))
-
-(define-method define-key widget (key-name modifiers func)
-  "Bind the described keypress to invoke FUNC.
-KEY-NAME is a string giving the key name; MODIFIERS is a list of
-keywords like :control, :alt, and so on."
-  (setf (gethash (normalize-event (cons key-name modifiers))
-		 <keymap>)
-	func))
-
-(define-method undefine-key widget (key-name modifiers)
-  "Remove the described keybinding."
-  (remhash (normalize-event (cons key-name modifiers))
-	   <keymap>))
-
-(define-method clear-keymap widget ()
-  (setf <keymap> (make-hash-table :test 'equal)))
-
-(define-method handle-key widget (keylist)
-  "Look up and invoke the function (if any) bound to KEYLIST. Return t
-if a binding was found, nil otherwise."
-  (let ((func (gethash keylist <keymap>)))
-    (when func
-      (prog1 t
-	(funcall func)))))
-
-(defun bind-key-to-prompt-insertion (p key modifiers &optional (insertion key))
-  "For prompt P ensure that the event (KEY MODIFIERS) causes the
-text INSERTION to be inserted at point."
- (/define-key p (string-upcase key) modifiers
-	      #'(lambda ()
-		  (/insert p insertion))))
-
-(defun bind-key-to-method (p key modifiers method-keyword)
-  (/define-key p (string-upcase key) modifiers
-	      #'(lambda ()
-		  (send nil method-keyword p))))
-
-(define-method generic-keybind widget (binding) 
-  (destructuring-bind (key modifiers data) binding
-    (apply (etypecase data
-	     (keyword #'bind-key-to-method)
-	     (string #'bind-key-to-prompt-insertion))
-	   self binding)))
-
-;;; Hit testing for mouse cursor support
-
-(define-method hit widget (x y)
-  "Find a widget by screen position. The default implementation
-returns itself when the widget's own onscreen image is clicked.  Child
-implementations may do subsequent hit-testing on child widgets, and
-possibly return one of them."
-  (let ((x0 <x>)
-	(y0 <y>)) self
-    (when (within-extents x y 
-			  x0 y0 
-			  (+ x0 <width>)
-			  (+ y0 <height>))
-      self)))
-
-;;; Stack layout
-
-(define-prototype stack 
-    (:parent =widget= :documentation "Stack all the child widgets on top of one another in a column.")
-  (children :initform nil :documentation "The widgets in the stack."))
-
-(define-method initialize stack (&rest children)
-  (setf <children> children))
-
-(define-method render stack ()
-  (when <visible>
-    (let ((y <y>)
-          (x <x>))
-      (dolist (widget <children>)
-	(assert (integerp x))
-	(assert (integerp y))
-        (/move widget :x x :y y)
-        (incf y (field-value :height widget))))))
-
-(define-method set-children stack (children)
-  (setf <children> children))
-
-(define-method hit stack (x y)
-  (hit-widgets x y <children>))
-
-;;; Splitscreen view on 2 widgets with focus border
-
-(define-prototype split (:parent =widget=)
-  (active-color :initform ".red")
-  (inactive-color :initform ".blue")
-  (focus :initform 0)
-  children)
-
-(define-method initialize split (&rest children)
-  (setf <children> children))
-  
-(define-method set-children split (children)
-  (setf <children> children))
-
-(define-method render split ()
-  (when <visible>
-    (let ((y <y>)
-          (x <x>)
-	  (image <image>)
-	  (focused-widget (nth <focus> <children>)))
-      (dolist (widget <children>)
-        (/move widget :x x :y y)
-	(/render widget)
-	(draw-image (field-value :image widget) x y :destination image)
-	(when (eq widget focused-widget)
-	  (draw-rectangle x y (field-value :width widget)
-			  (field-value :height widget)
-			  :color <active-color>
-			  :destination <image>))
-        (incf x (1+ (field-value :width widget)))))))
-
-(define-method hit split (x y)
-  (hit-widgets x y <children>))
-
-(define-method switch-panes split ()
-  (let ((newpos (mod (1+ <focus>) (length <children>))))
-    (setf <focus> newpos)))
-
-(define-method handle-key split (event)
-  (or (let ((func (gethash event <keymap>)))
-	(when func
-	  (prog1 t
-	    (funcall func))))
-      (/handle-key (nth <focus> <children>) event)))
-
-(define-method forward split (method &rest args)
-  (apply #'send self method (nth <focus> <children>) args))
-
-;;; Formatted display widget
+;;; Formatted display block
 
 (defvar *default-formatter-scrollback-size* 1000)
 
@@ -306,12 +102,12 @@ Return the height of the rendered line."
 	(incf current-x (formatted-string-width string)))
       line-height)))
   
-;; Next comes the CLON formatter widget that uses the utility
+;; Next comes the formatted-text output block, which uses the utility
 ;; functions just defined.
 
 (define-prototype formatter 
-    (:parent =widget= :documentation 
-"=FORMATTER= is a simple output formatting widget for the
+    (:parent =block= :documentation 
+"=FORMATTER= is a simple output formatting block for the
 presentation of messages and other in-game data. Foreground and
 background colors are supported, as well as displaying images
 in-line with text of different fonts.
@@ -375,6 +171,7 @@ line."
   (/delete-line self (fill-pointer <lines>)))
 
 (define-method initialize formatter ()
+  (/parent/initialize self)
   (/reset-lines self)
   (/newline self))
 
@@ -433,7 +230,7 @@ auto-updated displays."
     (loop for line = (read-line stream nil)
 	  while line collect line)))
 	   
-;;; Command prompt widget
+;;; Command prompt block
 
 (defparameter *prompt-blink-time* 24)
 (defparameter *prompt-cursor-color* ".magenta")
@@ -452,8 +249,8 @@ auto-updated displays."
 (defvar *numeric-characters* "0123456789")
 
 (define-prototype prompt
-    (:parent ioforms:=widget= :documentation 
-"The command prompt widget is a text input area with Emacs-like
+    (:parent ioforms:=block= :documentation 
+"The command prompt block is a text input area with Emacs-like
 keybindings. It is used to send messages to objects. (For ease of
 use, prompt commands may also be bound to single keystrokes.)
 
@@ -489,15 +286,15 @@ Examples:
 :    M-1      -->    choose 1 .    ;; choose option 1 from output
 
 The prompt has two input modes; direct mode and forward mode. In
-direct mode, the prompt widget's own keymap is used. In forward
+direct mode, the prompt block's own keymap is used. In forward
 mode, all keypresses (except for the mode escape key) are rejected
 by returning `nil' from `handle-key'.
 
-In the typical setup, the first widget to receive the keypress
+In the typical setup, the first block to receive the keypress
 would be the default command prompt; a customized prompt, with
 game-specific keybindings, would come second. During play, the
 command prompt would reject all keypresses, which would pass on to
-the next widget in the frame (the customized prompt.) To 'escape'
+the next block in the frame (the customized prompt.) To 'escape'
 this and enter commands, hit ESCAPE (and again to return to forward
 mode.)
 
@@ -520,7 +317,7 @@ These are the arguments to `bind-key-to-prompt-insertion', which see.")
   "Reject all keypresses when in :forward mode; otherwise handle them
 normally."
   (ecase <mode>
-    ;; returning t stops the frame from trying other widgets
+    ;; returning t stops the frame from trying other blocks
     (:direct (prog1 t (let ((func (gethash keylist <keymap>)))
 			(when func
 			  (funcall func)))))
@@ -540,8 +337,11 @@ normally."
   (setf <mode> mode))
 
 (define-method install-keybindings prompt ()
-  (dolist (k <keybindings>)
-    (apply #'bind-key-to-prompt-insertion self k)))
+  (with-fields (keybindings) self
+    (when (null keybindings)
+      (setf keybindings (make-hash-table :test 'equal)))
+    (dolist (k keybindings)
+      (apply #'bind-key-to-prompt-insertion self k))))
 
 (defparameter *prompt-qwerty-keybindings*
   '(("A" (:control) :move-beginning-of-line)
@@ -563,6 +363,15 @@ normally."
     ("UP" nil :backward-history)
     ("DOWN" nil :forward-history)  
     ("MINUS" nil "-")
+    ("HASH" nil "#")
+    ("SLASH" nil "/")
+    ("BACKSLASH" nil "\\")
+    ("BACKQUOTE" nil "`")
+    ("EXCLAIM" nil "!")
+    ("PERIOD" nil ".")
+    ("PERIOD" (:shift) ">")
+    ("COMMA" nil ",")
+    ("COMMA" (:shift) "<")
     ("EQUALS" nil "=")
     ("EQUALS" (:shift) "+")
     ("SEMICOLON" nil ";")
@@ -571,6 +380,7 @@ normally."
     ("9" (:shift) "(")
     ("8" (:shift) "*")
     ("SPACE" nil " ")
+    ("SLASH" (:shift) "?")
     ("QUOTE" nil "'")
     ("QUOTE" (:shift) "\"")))
 
@@ -606,21 +416,23 @@ normally."
 
 (define-method install-keybindings prompt ()
   ;; install varying keybindings
-  (dolist (binding (ecase *user-keyboard-layout*
-		     (:qwerty *prompt-qwerty-keybindings*)
-		     (:sweden *prompt-sweden-keybindings*)))
-    (/generic-keybind self binding))
-  ;; install keybindings for self-inserting characters
-  (map nil #'(lambda (char)
-	       (bind-key-to-prompt-insertion self (string char) nil
-					     (string-downcase char)))
-       *lowercase-alpha-characters*)
-  (map nil #'(lambda (char)
-	       (bind-key-to-prompt-insertion self (string char) '(:shift)))
-       *uppercase-alpha-characters*)
-  (map nil #'(lambda (char)
-	       (bind-key-to-prompt-insertion self (string char) nil))
-       *numeric-characters*))
+  (with-fields (keybindings) self
+    (setf keybindings (make-hash-table :test 'equal))
+    (dolist (binding (ecase *user-keyboard-layout*
+		       (:qwerty *prompt-qwerty-keybindings*)
+		       (:sweden *prompt-sweden-keybindings*)))
+      (/generic-keybind self binding))
+    ;; install keybindings for self-inserting characters
+    (map nil #'(lambda (char)
+		 (bind-key-to-prompt-insertion self (string char) nil
+					       (string-downcase char)))
+	 *lowercase-alpha-characters*)
+    (map nil #'(lambda (char)
+		 (bind-key-to-prompt-insertion self (string char) '(:shift)))
+	 *uppercase-alpha-characters*)
+    (map nil #'(lambda (char)
+		 (bind-key-to-prompt-insertion self (string char) nil))
+	 *numeric-characters*)))
 
 (define-method say prompt (&rest args)
   (apply #'message args))
@@ -670,7 +482,7 @@ normally."
 	     receiver 
 	     (mapcar #'eval arguments)))))
 
-(define-method execute prompt ()
+(define-method enter prompt ()
   (labels ((print-it (c) 
 	     (/print-data self c :comment)))
     (let* ((*read-eval* nil)
@@ -797,7 +609,7 @@ normally."
 
 (defparameter *textbox-minimum-width* 10) 
 
-(define-prototype textbox (:parent =widget=)
+(define-prototype textbox (:parent =block=)
   (font :initform ".default-font")
   (buffer :initform nil)
   (read-only :initform nil)
@@ -1079,9 +891,9 @@ text INSERTION to be inserted at point."
 	    		      :destination image))))))))
   
 
-;;; The pager switches between different visible groups of widgets
+;;; The pager switches between different visible groups of blocks
 
-(define-prototype pager (:parent =widget=)
+(define-prototype pager (:parent =block=)
   (pages :initform nil)
   (current-page :initform nil
 		:documentation "Keyword name of current page.")
@@ -1137,16 +949,16 @@ text INSERTION to be inserted at point."
 	  (if (/page-property self newpage :held-keys)
 	      (enable-held-keys)
 	      (disable-held-keys))
-	  ;; insert self always as first widget
-	  (apply #'ioforms:install-widgets self (cdr (assoc newpage <pages>)))))))
+	  ;; insert self always as first block
+	  (apply #'ioforms:install-blocks self (cdr (assoc newpage <pages>)))))))
 
 (define-method auto-position pager (&key (width ioforms:*screen-width*))
   (/resize self :width width :height <pager-height>)
   (/move self :x 0 :y (- ioforms:*screen-height* <pager-height>)))
 
-(define-method add-page pager (keyword widgets &rest properties)
-  (assert (listp widgets))
-  (push (cons keyword widgets) <pages>))
+(define-method add-page pager (keyword blocks &rest properties)
+  (assert (listp blocks))
+  (push (cons keyword blocks) <pages>))
 
 (define-method get-page-names pager ()
   (remove-duplicates (mapcar #'car <pages>)))
@@ -1179,4 +991,53 @@ text INSERTION to be inserted at point."
         (push <pager-message> line))
       ;; draw the string
       (render-formatted-line (nreverse line) 0 0 :destination <image>))))
+
+;;; Splitscreen view on 2 blocks with focus border
+
+(define-prototype split (:parent =block=)
+  (active-color :initform ".red")
+  (inactive-color :initform ".blue")
+  (focus :initform 0)
+  children)
+
+(define-method initialize split (&rest children)
+  (setf <children> children))
+  
+(define-method set-children split (children)
+  (setf <children> children))
+
+(define-method render split ()
+  (when <visible>
+    (let ((y <y>)
+          (x <x>)
+	  (image <image>)
+	  (focused-block (nth <focus> <children>)))
+      (dolist (block <children>)
+        (/move block :x x :y y)
+	(/render block)
+	(draw-image (field-value :image block) x y :destination image)
+	(when (eq block focused-block)
+	  (draw-rectangle x y (field-value :width block)
+			  (field-value :height block)
+			  :color <active-color>
+			  :destination <image>))
+        (incf x (1+ (field-value :width block)))))))
+
+(define-method hit split (x y)
+  (hit-blocks x y <children>))
+
+(define-method switch-panes split ()
+  (let ((newpos (mod (1+ <focus>) (length <children>))))
+    (setf <focus> newpos)))
+
+(define-method handle-key split (event)
+  (or (let ((func (gethash event <keymap>)))
+	(when func
+	  (prog1 t
+	    (funcall func))))
+      (/handle-key (nth <focus> <children>) event)))
+
+(define-method forward split (method &rest args)
+  (apply #'send self method (nth <focus> <children>) args))
    
+;;; widgets.lisp ends here
