@@ -1,6 +1,6 @@
-;;; console.lisp --- core operations for IOFORMS
+;;; console.lisp --- core operations for IOFORM
 
-;; Copyright (C) 2006, 2007, 2008, 2009, 2010  David O'Toole
+;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org> <dto1138@gmail.com>
 ;; Keywords: multimedia, games
@@ -23,9 +23,9 @@
 ;;; Commentary:
 
 ;; The "console" is the library which provides all IOFORMS system
-;; services. Primitive operations such as setting the resolution,
+;; services. Primitive operations such as opening a window,
 ;; displaying bitmaps, drawing lines, playing sounds, file access, and
-;; keyboard/mouse input are handled here. 
+;; keyboard/mouse/joytstick input are handled here. 
 
 ;; Currently it uses the cross-platform SDL library (via
 ;; LISPBUILDER-SDL) as its device driver, and wraps the library for
@@ -187,12 +187,19 @@ elements of the vector produced by evaluating EXPR."
 
 (defvar *blocks* nil "List of active block objects. 
 These blocks receive input events and are rendered to the screen by
-the console. See also `send-event-to-blocks'.
+the console. See also `send-event'.
 
 Do not set this variable directly from a project; instead, call
 `install-blocks'.")
 
-(defun show-blocks ()
+(defun hit-blocks (x y &optional (blocks *blocks*))
+  (labels ((hit (b)
+	     (/hit b x y)))
+    (let ((parent (find-if #'hit blocks :from-end t)))
+      (when parent
+	(hit parent)))))
+
+(defun draw-blocks ()
   "Draw the active blocks to the screen."
   (dolist (block *blocks*)
     (send nil :draw block sdl:*default-surface*)))
@@ -206,11 +213,11 @@ and the like."
 (defun install-block (block)
   (unless (find block *blocks*)
     (setf *blocks* (nconc *blocks* (list block))))
-  (show-blocks))
+  (draw-blocks))
 
 (defun uninstall-block (block)
   (setf *blocks* (delete block *blocks* :test #'eq))
-  (show-blocks))
+  (draw-blocks))
 
 ;;; "Classic" key repeat
 
@@ -251,7 +258,7 @@ for backward-compatibility."
 (defun send-held-events ()
   (unless (null *key-table*)
     (maphash #'(lambda (event counter)
-		 (dispatch-event event)
+		 (send-event event)
 		 ;; A counter value of -1 means that the key release
 		 ;; happened before the event had a chance to be sent.
 		 ;; These must be removed immediately after sending once.
@@ -272,44 +279,29 @@ for backward-compatibility."
 
 ;;; Event handling and blocks
 
-(defun send-event-to-blocks (event)
-  "Keyboard, mouse, joystick, and timer events are represented as
-event lists of the form:
+(defun send-to-blocks (event &optional (blocks *blocks*))
+  (labels ((try (block)
+	     (/handle-key block event)))
+    (some #'try blocks)))
 
-:      (STRING . MODIFIERS)
-
-Where MODIFIERS is a list of symbols like :shift, :control, :alt,
- :timer, :system, :mouse, and so on.
-
-The default event handler attempts to deliver a keypress to one of
-the blocks in `*blocks*'. See blocks.lisp and the docstrings
-below for more information.
-
-This function attempts to deliver EVENT to each of the *blocks*
-one at a time (in list order) until one of them is found to have a
-matching keybinding, in which case the keybinding's corresponding
-function is triggered. If none of the blocks have a matching
-keybinding, nothing happens, and this function returns nil."
-  (some #'(lambda (block)
-	    (send nil :handle-key block event))
-	*blocks*))
-
-(defvar *event-handler-function* #'send-event-to-blocks
-  "Function to be called with keypress events. This function should
-accept an event list of the form
+(defvar *event-handler-function* #'send-to-blocks
+  "Function to be called with keypress events. Keyboard, mouse,
+joystick, and timer events are represented as event lists of the form:
 
   (STRING . MODIFIERS)
 
-where STRING is a string representing the key, and MODIFIERS is a list
-of key modifier symbols like :shift, :control, :alt, and so on.
+where STRING is a string representing the key or button, and MODIFIERS
+is a list of key modifier symbols like :shift, :control, :alt, and so
+on.
 
 The modifier list is sorted; thus, events can be compared for
-equality with `equal' and used as hashtable keys.
+equality with `equal' and used as hashtable keys..")
 
-The default event handler is `send-event-to-blocks', which see. An
-IOFORMS game can use the block framework to do its drawing and event
-handling, or override `*event-handler-function*' and do something
-else.")
+(defun send-event (event)
+  (if (null *event-handler-function*)
+      (error "No event handler function installed. 
+Please set the variable ioforms:*event-handler-function*")
+      (funcall *event-handler-function* event)))
 
 (defun normalize-event (event)
   "Convert EVENT to a normal form suitable for `equal' comparisons."
@@ -317,19 +309,6 @@ else.")
 	(sort (remove-duplicates (delete nil (rest event)))
 	      #'string< :key #'symbol-name))
   event)
-
-(defun dispatch-event (event)
-  "Send EVENT to the handler function."
-  (if *event-handler-function*
-      (progn (message "TRANSLATED EVENT: ~A" event)
-	     (funcall *event-handler-function* event))
-      (error "No event handler registered.")))
-
-(defun hit-blocks (x y &optional (blocks *blocks*))
-  "Hit test the BLOCKS to find the clicked block."
-  (some #'(lambda (block)
-	    (send nil :hit block x y))
-	(reverse blocks)))
 
 ;;; Translating SDL key events into IOFORMS event lists
 
@@ -442,7 +421,7 @@ as hash keys."
 (defvar *joystick-axis-values* (make-array 100 :initial-element 0))
 
 (defun do-joystick-axis-event (axis value state)
-  (dispatch-event (make-event :axis 
+  (send-event (make-event :axis 
 			      (list (axis-value-to-direction axis value)
 				    state))))
 	
@@ -525,7 +504,7 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 	  do (setf state (aref *joystick-buttons* button))
 	     (setf sym (translate-joystick-button button))
 	     (when (and state sym)
-	       (dispatch-event (make-event :joystick sym)))
+	       (send-event (make-event :joystick sym)))
 	     (incf button))))
 
 ;;; The active world
@@ -543,7 +522,11 @@ at the time the cell method is run.")
 
 (defvar *dt* 20)
 
-(defvar *timestep-function* nil)
+(defun step-blocks (&rest args)
+  (dolist (block *blocks*)
+    (apply #'send nil :step block args)))
+
+(defvar *timestep-function* #'step-blocks)
 
 (defun do-timestep (&rest args) 
   (incf *timesteps*)
@@ -642,7 +625,7 @@ display."
     (set-frame-rate *frame-rate*)
     (reset-joystick)
     (sdl:clear-display sdl:*black*)
-    (show-blocks)
+    (draw-blocks)
     (sdl:update-display)
     (run-hook '*after-initialization-hook*)
     (let ((events-this-frame 0))
@@ -657,26 +640,26 @@ display."
 					 :position *window-position*))
 	(:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
 			     (let ((block (hit-blocks x y *blocks*)))
-			       (when (and block (has-method :mouse-move block))
+			       (when block
 				 (/mouse-move block x y))))
 	(:mouse-button-down-event (:button button :state state :x x :y y)
 				  (let ((block (hit-blocks x y *blocks*)))
-				    (when (and block (has-method :mouse-down block))
+				    (when block
 				      (/mouse-down block x y button))))
 	(:mouse-button-up-event (:button button :state state :x x :y y)
 				  (let ((block (hit-blocks x y *blocks*)))
-				    (when (and block (has-method :mouse-up block))
+				    (when block
 				      (/mouse-up block x y button))))
 	(:joy-button-down-event (:which which :button button :state state)
 				(when (assoc button *joystick-mapping*)
 				  (update-joystick button state)
-				  (dispatch-event (make-event :joystick
+				  (send-event (make-event :joystick
 							      (list (translate-joystick-button button) 
 								    :button-down)))))
 	(:joy-button-up-event (:which which :button button :state state)  
 			      (when (assoc button *joystick-mapping*)
 				(update-joystick button state)
-				(dispatch-event (make-event :joystick
+				(send-event (make-event :joystick
 							    (list (translate-joystick-button button) 
 								  :button-up)))))
 	(:joy-axis-motion-event (:which which :axis axis :value value)
@@ -686,7 +669,7 @@ display."
 			 (let ((event (make-event key mod)))
 			   (if *held-keys*
 			       (hold-event event)
-			       (dispatch-event event))))
+			       (send-event event))))
 	(:key-up-event (:key key :mod-key mod)
 		       (when *held-keys*
 			 (let* ((event (make-event key mod))
@@ -711,12 +694,12 @@ display."
 			 (when *held-keys*
 			   (send-held-events))
 			 ;; send timer event
-			 (dispatch-event *timer-event*)
+			 (send-event *timer-event*)
 			 ;; send any joystick button events
 			 ;; (poll-all-buttons)
 			 ;;  (generate-button-events)
 			 ;; update display
-			 (show-blocks)
+			 (draw-blocks)
 			 (sdl:update-display)
 			 (setf *clock* *timer-interval*))
 		       (decf *clock*))
@@ -725,8 +708,8 @@ display."
 		     (sdl:with-timestep ()
 		       (do-timestep))
 		     (sdl:clear-display sdl:*black*)
-		     (when *held-keys* (send-held-events)) ;; TODO move this to do-timestep?
-		     (show-blocks) 
+;;		     (when *held-keys* (send-held-events))
+		     (draw-blocks) 
 		     (sdl:update-display))))))))
   
   
@@ -1749,7 +1732,7 @@ The default destination is the main window."
 
 (defvar *copyright-text*
 "IOFORMS Visual Common Lisp Multimedia Authoring Tool
-Copyright (C) 2006, 2007, 2008, 2009, 2010 by David T O'Toole
+Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 by David T O'Toole
 <dto@gnu.org> <dto1138@gmail.com>
 http://ioforms.org/
 
@@ -1833,8 +1816,6 @@ This program includes the DejaVu fonts family. See the file
 		  "libSDL_image")))
     (cffi:use-foreign-library sdl-image))
 
-(defvar *system* nil)
-
 (defun run (&rest args)
   (destructuring-bind (project &rest arguments) args
     (unwind-protect 
@@ -1843,10 +1824,15 @@ This program includes the DejaVu fonts family. See the file
 	   (setf *system* (clone (symbol-value '=system=)))
 	   (when project 
 	     (apply #'send nil :open-project *system* project arguments))
-	   (send nil :run *system*))
+	   (run-main-loop))
       (sdl:quit-sdl))))
 
 (defun ioforms (&rest args)
+  (setf *after-open-project-hook* nil
+	*after-initialization-hook* nil
+	*initialization-hook* nil
+	*resize-hook* nil
+	*event-handler-function* #'send-to-blocks)
   (if (null args)
       (run nil)
       (apply #'run args)))

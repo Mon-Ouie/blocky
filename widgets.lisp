@@ -482,7 +482,7 @@ normally."
 	     receiver 
 	     (mapcar #'eval arguments)))))
 
-(define-method execute prompt ()
+(define-method enter prompt ()
   (labels ((print-it (c) 
 	     (/print-data self c :comment)))
     (let* ((*read-eval* nil)
