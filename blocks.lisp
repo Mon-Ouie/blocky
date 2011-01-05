@@ -277,7 +277,7 @@ arguments all the time."
     (setf results (mapcar #'/run arguments))))
 
 (define-method execute block ()
-  "Carry out the block's action by sending messages to the object '*target*'.
+  "Carry out the block's action by sending messages to the object `*target*'.
 The *target* is a special variable bound in the execution
 environment. Its value will be the IOFORMS object to send messages to.
 The <RESULTS> field will be a list of results obtained by
