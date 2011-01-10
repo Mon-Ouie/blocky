@@ -39,7 +39,6 @@
   (tile :initform ".asterisk" :documentation "Resource name of image. 
 When nil, the method DRAW is invoked instead of using a tile.")
   (render-cell :initform nil :documentation "Subcell to render. See load-sprite-sheet-resource.")
-  (excluded-fields :initform '(:widget))
   (auto-loadout :initform nil :documentation "When non-nil, the :loadout method is invoked upon entry into a world.")
   (auto-deepcopy :initform nil)
   (menu :initform nil :documentation "Menu objects."))
