@@ -1,12 +1,8 @@
 ;; -*- Mode: lisp -*-
 
-;; You can copy this file to ~/.iosketch and edit it to get IOSKETCH working 
-
-;; Edit the following line to reflect the path where you installed IOSKETCH
-;; And also a "mods" directory to store downloaded modules.
 (setf iosketch:*module-directories* '(#P"/home/dto/iosketch/" #P"/home/dto/mods/"))
 (setf iosketch:*user-keyboard-layout* :qwerty)
 (setf iosketch:*use-sound* t)
 (setf iosketch:*message-logging* t)
-;; fullscreen is a pain if IOSKETCH hangs
+;; fullscreen is a pain if the game hangs
 (setf iosketch:*fullscreen* nil)
