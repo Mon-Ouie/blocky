@@ -446,6 +446,8 @@ as hash keys."
     (when entry 
       (car entry))))
 
+(defvar *joystick-device-identifiers* nil)
+
 (defvar *joystick-device* nil)
 
 (defvar *joystick-buttons* nil
@@ -453,11 +455,19 @@ as hash keys."
 
 (defvar *joystick-position* nil "Current position of the joystick, as a direction keyword.")
 
-(defun reset-joystick ()
+(defun reset-joysticks ()
   "Re-open the joystick device and re-initialize the state."
   (setf *joystick-device* (sdl-cffi::sdl-joystick-open 0))
   (setf *joystick-buttons* (make-array 100 :initial-element nil))
   (setf *joystick-position* :here))
+
+;; TODO (defun detect-joystick ()
+;;   (message "Detecting USB controllers...")
+;;   (assert *joystick-device-identifiers*)
+;;   (block detecting
+;;     (dotimes (j (sdl:num-joysticks))
+;;       (let ((name (sdl:sdl-joystick-name j))
+;; 	    (when (and (stringp name)
 
 (defun update-joystick (button state)
   "Update the table in `*joystick-buttons*' to reflect the STATE of
@@ -623,7 +633,7 @@ display."
 			 :title-caption *window-title*
 			 :position *window-position*)))
     (set-frame-rate *frame-rate*)
-    (reset-joystick)
+    (reset-joysticks)
     (sdl:clear-display sdl:*black*)
     (draw-blocks)
     (sdl:update-display)
