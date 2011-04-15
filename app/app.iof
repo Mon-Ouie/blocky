@@ -5,5 +5,5 @@
  (:name "bloop" :type :sample :file "lymph.wav")
  (:name "woom" :type :sample :file "woom.wav")
  (:name ".default-font" :type :alias :data "sans-condensed-bold-12")
- (:name ".startup" :type :lisp :file "editor.lisp" :properties (:autoload t))
+ (:name ".startup" :type :lisp :file "app.lisp" :properties (:autoload t))
 ) 

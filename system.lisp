@@ -119,7 +119,7 @@
 			    :height *screen-height*)))
 	  (add-hook '*resize-hook* #'resize))
 	(ioforms:install-blocks self))
-
+	
 
 (defparameter *default-shell-width* 1024)
 (defparameter *default-shell-height* 720)

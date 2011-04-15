@@ -599,7 +599,7 @@ window. Set this in the game startup file.")
 
 (defvar *after-initialization-hook* nil)
 
-(defvar *project* "standard")
+(defvar *project* nil)
 
 (defvar *quitting* nil)
 
@@ -956,6 +956,7 @@ Please see the included file BINARY-README for instructions."
 
 (defun find-project-path (project-name)
   "Return the current project path."
+;
   (assert *project*)
   (or *project-path*
       (search-project-path project-name)))

@@ -1,4 +1,4 @@
-;;; editor.lisp --- IOSKETCH main user application window
+;;; editor.lisp --- IOFORMS main user application window
 
 ;; Copyright (C) 2010  David O'Toole
 
@@ -18,11 +18,11 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(defpackage :editor   
-    (:use :iosketch :common-lisp)
+(defpackage :app   
+    (:use :ioforms :common-lisp)
   (:export physics))
 
-(in-package :editor)
+(in-package :app)
 
 ;;; Main program. 
 
@@ -188,7 +188,7 @@
   (/generic-keybind self *qwerty-keybindings*))
 
 (define-method install frame ()
-  (apply #'iosketch:install-widgets self <panes>))
+  (apply #'ioforms:install-blocks self <panes>))
 
 (define-method palette-pane frame ()
   (nth 0 <panes>))
@@ -251,15 +251,15 @@
   (apply #'send self method (/selected-pane self) args))
 
 (defun editor ()
-  (setf iosketch:*window-title* "IOSKETCH")
-  (setf iosketch:*resizable* t)
-  (iosketch:enable-classic-key-repeat 100 100)
-  (iosketch:message "Starting IOSKETCH...")
-  (iosketch:initialize)
-  (iosketch:set-screen-height *window-height*)
-  (iosketch:set-screen-width *window-width*)
+  (setf ioforms:*window-title* "IOFORMS")
+  (setf ioforms:*resizable* t)
+  (ioforms:enable-classic-key-repeat 100 100)
+  (ioforms:message "Starting IOFORMS...")
+  (ioforms:initialize)
+  (ioforms:set-screen-height *window-height*)
+  (ioforms:set-screen-width *window-width*)
   (let* ((frame (clone =frame=)))
-    (add-hook 'iosketch:*resize-hook* 
+    (add-hook 'ioforms:*resize-hook* 
 	      #'(lambda ()
 		  (/resize frame :width *screen-width* :height *screen-height*)))
     ;;
