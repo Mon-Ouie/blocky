@@ -1,6 +1,6 @@
 ;;; blocks.lisp --- A visual programming language inspired by MIT Scratch
 
-;; Copyright (C) 2010  David O'Toole
+;; Copyright (C) 2010, 2011 David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: oop, languages, mouse, lisp, multimedia, hypermedia
