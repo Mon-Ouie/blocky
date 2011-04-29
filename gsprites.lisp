@@ -1,6 +1,6 @@
 ;;; gsprites.lisp --- defining sprite objects
 
-;; Copyright (C) 2008, 2009, 2010  David O'Toole
+;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: 
@@ -43,7 +43,7 @@ world, and collision detection is performed between sprites and cells.")
   (type :initform :sprite))
 
 (define-method image-coordinates gsprite ()
-  (/get-viewport-coordinates-* (field-value :viewport *world*) <x> <y>))
+  (get-viewport-coordinates-* (field-value :viewport *world*) <x> <y>))
 
 ;; Convenience macro for defining cells:
 
@@ -65,18 +65,18 @@ world, and collision detection is performed between sprites and cells.")
     
 (define-method initialize gsprite ()
   (when <image>
-    (/update-image self <image>)))
+    (update-image self <image>)))
 
 (define-method die gsprite ()
-  (/remove-sprite *world* self))
+  (remove-sprite *world* self))
 
 (define-method update-image gsprite (image)
   (setf <image> image)
-  (/resize self))
+  (resize self))
 
 (define-method direction-to-player gsprite ()
-  (multiple-value-bind (r c) (/grid-coordinates self)
-    (multiple-value-bind (pr pc) (/grid-coordinates (/get-player *world*))
+  (multiple-value-bind (r c) (grid-coordinates self)
+    (multiple-value-bind (pr pc) (grid-coordinates (get-player *world*))
       (direction-to r c pr pc))))
 
 (define-method move-to gsprite (unit x y)
@@ -92,7 +92,7 @@ world, and collision detection is performed between sprites and cells.")
 	(setf <x> x
 	      <y> y)))))
 ;;	  (setf <x> 0 <y> 0)))))
-;;	  (/do-collision self nil)))))
+;;	  (do-collision self nil)))))
 
 (define-method move gsprite (direction &optional movement-distance unit)
   (when direction
@@ -102,7 +102,7 @@ world, and collision detection is performed between sprites and cells.")
 	(when (and y x)
 	  (multiple-value-bind (y0 x0) (ioforms:step-in-direction y x direction dist)
 	    (assert (and y0 x0))
-	    (/move-to self :pixel x0 y0)))))))
+	    (move-to self :pixel x0 y0)))))))
   
 (define-method collide gsprite (gsprite)
   ;; (message "COLLIDING A=~S B=~S"
@@ -112,7 +112,7 @@ world, and collision detection is performed between sprites and cells.")
 	(y0 (field-value :y gsprite))
 	(w (field-value :width gsprite))
 	(h (field-value :height gsprite)))
-    (/collide-* self y0 x0 w h)))
+    (collide-* self y0 x0 w h)))
     
 (define-method would-collide gsprite (x0 y0)
   (with-field-values (tile-size grid sprite-grid) *world*
@@ -130,14 +130,14 @@ world, and collision detection is performed between sprites and cells.")
 		    (let ((i0 (+ i top))
 			  (j0 (+ j left)))
 		      (when (array-in-bounds-p grid i0 j0)
-			(when (/collide-* self
+			(when (collide-* self
 					 (* i0 tile-size) 
 					 (* j0 tile-size)
 					 tile-size tile-size)
 			  ;; save this intersection information
 			  (vector-push-extend self (aref sprite-grid i0 j0))
 			  ;; quit when obstacle found
-			  (let ((obstacle (/obstacle-at-p *world* i0 j0)))
+			  (let ((obstacle (obstacle-at-p *world* i0 j0)))
 			    (when obstacle
 			      (setf found obstacle))))))))
 		(return-from colliding found)))
@@ -194,10 +194,10 @@ world, and collision detection is performed between sprites and cells.")
   (setf <saved-y> <y>))
 
 (define-method undo-excursion gsprite ()
-  (/move-to self <saved-x> <saved-y>))
+  (move-to self <saved-x> <saved-y>))
 
 (define-method viewport-coordinates gsprite ()
-  (/get-viewport-coordinates-* (field-value :viewport *world*)
+  (get-viewport-coordinates-* (field-value :viewport *world*)
 			      <x> <y>))
 
 (define-method grid-coordinates gsprite ()
@@ -209,8 +209,8 @@ world, and collision detection is performed between sprites and cells.")
 
 (define-method drop gsprite (cell &optional (delta-row 0) (delta-column 0))
   (multiple-value-bind (r c)
-      (/grid-coordinates self)
-    (/drop-cell *world* cell (+ r delta-row) (+ c delta-column))))
+      (grid-coordinates self)
+    (drop-cell *world* cell (+ r delta-row) (+ c delta-column))))
 
 
 ;;; Proxying and vehicles
@@ -222,19 +222,19 @@ world, and collision detection is performed between sprites and cells.")
       (error "Attempt to overwrite existing occupant cell in proxying."))
     (setf <occupant> occupant)
     ;; The occupant should know when it is proxied, and who its proxy is.
-    (/add-category occupant :proxied)
+    (add-category occupant :proxied)
     (setf (field-value :proxy occupant) self)
     ;; Hide the proxy if it's in a world already.
-    (/remove-sprite world occupant)
+    (remove-sprite world occupant)
     ;; Don't let anyone step on occupied vehicle.
-    (/add-category self :obstacle)
+    (add-category self :obstacle)
     ;; Don't light up the map 
-    (/add-category self :light-source)
+    (add-category self :light-source)
     ;; If it's the player register self as player.
-    (when (/is-player occupant)
-      (/add-category self :player)
-      (/set-player world self)
-      (setf <phase-number> (1- (/get-phase-number world))))))
+    (when (is-player occupant)
+      (add-category self :player)
+      (set-player world self)
+      (setf <phase-number> (1- (get-phase-number world))))))
 
 (define-method unproxy gsprite (&key dr dc dx dy)
   "Remove the occupant from this sprite, dropping it on top."  
@@ -244,22 +244,22 @@ world, and collision detection is performed between sprites and cells.")
       (error "Attempt to unproxy non-occupied sprite."))
     (ecase (field-value :type occupant)
       (:cell
-	 (multiple-value-bind (r c) (/grid-coordinates self)
-	   (/drop-cell world occupant r c)))
+	 (multiple-value-bind (r c) (grid-coordinates self)
+	   (drop-cell world occupant r c)))
       (:sprite
-	 (multiple-value-bind (x y) (/xy-coordinates self)
-	   (/drop-sprite self occupant 
+	 (multiple-value-bind (x y) (xy-coordinates self)
+	   (drop-sprite self occupant 
 			(+ x (or dx 0))
 			(+ y (or dy 0))))))
-    (/delete-category occupant :proxied)
+    (delete-category occupant :proxied)
     (setf (field-value :proxy occupant) nil)
-    (/do-post-unproxied occupant)
-    (when (/is-player occupant)
-      (/delete-category self :light-source)
-      (/delete-category self :player)
-      (/delete-category self :obstacle)
-      (/set-player world occupant)
-      (/run occupant))
+    (do-post-unproxied occupant)
+    (when (is-player occupant)
+      (delete-category self :light-source)
+      (delete-category self :player)
+      (delete-category self :obstacle)
+      (set-player world occupant)
+      (run occupant))
     (setf <occupant> nil)))
 
 (define-method do-post-unproxied gsprite ()
@@ -269,10 +269,10 @@ unproxying. By default, it does nothing."
 
 (define-method forward gsprite (method &rest args)
   "Attempt to deliver the failed message to the occupant, if any."
-  (if (and (/is-player self)
+  (if (and (is-player self)
 	   (not (has-method method self))
 	   (null <occupant>))
-;;      (/say self (format nil "The ~S command is not applicable." method) )
+;;      (say self (format nil "The ~S command is not applicable." method) )
       ;; otherwise maybe we're a vehicle
       (let ((occupant <occupant>))
 	(when (null occupant)
@@ -281,18 +281,18 @@ unproxying. By default, it does nothing."
   
 ;; (define-method embark gsprite (&optional v)
 ;;   "Enter a vehicle V."
-;;   (let ((vehicle (or v (/category-at-p *world* <row> <column> :vehicle))))
+;;   (let ((vehicle (or v (category-at-p *world* <row> <column> :vehicle))))
 ;;     (if (null vehicle)
-;; 	(/>>say :narrator "No vehicle to embark.")
+;; 	(>>say :narrator "No vehicle to embark.")
 ;; 	(if (null (field-value :occupant vehicle))
-;; 	    (progn (/>>say :narrator "Entering vehicle.")
-;; 		   (/proxy vehicle self))
-;; 	    (/>>say :narrator "Already in vehicle.")))))
+;; 	    (progn (>>say :narrator "Entering vehicle.")
+;; 		   (proxy vehicle self))
+;; 	    (>>say :narrator "Already in vehicle.")))))
 
 ;; (define-method disembark gsprite ()
 ;;   "Eject the occupant."
 ;;   (let ((occupant <occupant>))
-;;     (when (and occupant (/in-category self :proxy))
-;; 	  (/unproxy self))))
+;;     (when (and occupant (in-category self :proxy))
+;; 	  (unproxy self))))
   
 ;;; gsprites.lisp ends here

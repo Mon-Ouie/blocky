@@ -101,7 +101,7 @@ ARGS are field specifiers, as with `define-prototype'."
   "Bind the described keypress to invoke FUNC.
 KEY-NAME is a string giving the key name; MODIFIERS is a list of
 keywords like :control, :alt, and so on."
-  (/initialize-keymap-maybe self)
+  (initialize-keymap-maybe self)
   (setf (gethash (normalize-event (cons key-name modifiers))
 		 <keymap>)
 	func))
@@ -117,7 +117,7 @@ keywords like :control, :alt, and so on."
 (define-method handle-key block (keylist)
   "Look up and invoke the function (if any) bound to KEYLIST. Return t
 if a binding was found, nil otherwise."
-  (/initialize-keymap-maybe self)
+  (initialize-keymap-maybe self)
   (with-fields (keymap) self
       (when keymap 
 	(let ((func (gethash keylist keymap)))
@@ -128,14 +128,14 @@ if a binding was found, nil otherwise."
 (defun bind-key-to-prompt-insertion (p key modifiers &optional (insertion key))
   "For prompt P ensure that the event (KEY MODIFIERS) causes the
 text INSERTION to be inserted at point."
- (/define-key p (string-upcase key) modifiers
+ (define-key p (string-upcase key) modifiers
 	      #'(lambda ()
-		  (/insert p insertion))))
+		  (insert p insertion))))
 
 (defun bind-key-to-method (p key modifiers method-keyword)
-  (/define-key p (string-upcase key) modifiers
+  (define-key p (string-upcase key) modifiers
 	      #'(lambda ()
-		  (send nil method-keyword p))))
+		  (send method-keyword p))))
 
 (define-method generic-keybind block (binding) 
   (destructuring-bind (key modifiers data) binding
@@ -153,7 +153,7 @@ text INSERTION to be inserted at point."
       (if (and (symbolp (first value))
 	       (not (boundp (make-special-variable-name (first value)))))
 	  (let ((entry (clone =symbol=)))
-	    (prog1 entry (/set-data entry (first value))))
+	    (prog1 entry (set-data entry (first value))))
 	  (destructuring-bind (operation &rest args) value
 	    (let ((block (apply #'clone 
 				(symbol-value 
@@ -168,7 +168,7 @@ text INSERTION to be inserted at point."
 				    (or value (clone (symbol-value '=null=))))
 				arguments))
 		  (dolist (child arguments)
-		    (/set-parent child block)))))))
+		    (set-parent child block)))))))
       (let ((prototype 
 	     (symbol-value
 	      (make-special-variable-name 
@@ -180,7 +180,7 @@ text INSERTION to be inserted at point."
 		 (symbol :symbol))))))
 	(let ((entry (clone prototype)))
 	  (prog1 entry
-	    (/set-data entry value))))))
+	    (set-data entry value))))))
 
 (defmacro make-block (expression)
   "Expand EXPRESSION specifying a block diagram into real blocks.
@@ -219,8 +219,8 @@ areas.")
 
 (define-method toggle-visible block ()
   (if <visible>
-      (/hide self)
-      (/show self)))
+      (hide self)
+      (show self)))
 
 (define-method is-visible block ()
   <visible>)
@@ -250,23 +250,23 @@ areas.")
 (define-method position block ()
   (with-fields (parent) self
     (when parent 
-      (/child-position parent self))))
+      (child-position parent self))))
 
 (define-method plug block (child n)
   "Connect the block CHILD as the value of the Nth argument."
-  (/set-argument self n child)
-  (/set-parent child self))
+  (set-argument self n child)
+  (set-parent child self))
 
 (define-method unplug block (child)
   "Disconnect the block CHILD from this block."
   (let ((pos (position child <arguments>)))
-    (/plug self (null-block) pos)
-    (/set-parent child nil)))
+    (plug self (null-block) pos)
+    (set-parent child nil)))
 
 (define-method unplug-from-parent block ()
   (with-fields (parent) self
     (when parent
-      (/unplug parent self))))
+      (unplug parent self))))
 
 (define-method execute-arguments block ()
   "Execute all blocks in <ARGUMENTS> from left-to-right. Results are
@@ -305,14 +305,14 @@ something else. See also `defblock' and `send'."
 (define-method run block ()
   "Run child blocks to produce results, then run this block with
 those results as input."
-  (/execute-arguments self)
-  (/execute self))
+  (execute-arguments self)
+  (execute self))
 
-(define-method step block (&rest args)
+(define-method tick block (&rest args)
   "Update the simulation one step forward in time."
   (with-fields (arguments) self
     (dolist (block arguments)
-      (send nil :step block))))
+      (send :tick block))))
 
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
@@ -330,7 +330,7 @@ initialized with its values as arguments."
 
 (define-method deserialize block ()
   "Make sure the block is ready after loading."
-  (/initialize self))
+  (initialize self))
 
 (define-method count block ()
   "Return the number of blocks enclosed in this block, including the
@@ -466,12 +466,12 @@ resized when the new dimensions differ from the existing image."
     (if (null image) 
 	(progn (setf <width> width 
 		     <height> height)
-	       (/create-image self))
+	       (create-image self))
 	(when (not (and (= <width> width) 
 			(= <height> height)))
 	  (setf <width> width 
 		<height> height) 
-	  (when image (/create-image self))))))
+	  (when image (create-image self))))))
 
 (defmacro with-block-drawing (image &body body)
   "Run BODY forms with drawing primitives set to draw on IMAGE.
@@ -479,11 +479,11 @@ The primitives are CIRCLE, DISC, LINE, BOX, and TEXT. These are used
 in subsequent functions as the basis of drawing nested diagrams of
 blocks."
   (let ((image-sym (gensym)))
-    `(let* ((foreground (/find-color self :foreground))
-	    (background (/find-color self :background))
-	    (highlight (/find-color self :highlight))
+    `(let* ((foreground (find-color self :foreground))
+	    (background (find-color self :background))
+	    (highlight (find-color self :highlight))
 	    (selection *selection-color*)
-	    (shadow (/find-color self :shadow))
+	    (shadow (find-color self :shadow))
 	    (dash *dash*)
 	    (radius *dash*)
 	    (diameter (* 2 radius))
@@ -567,23 +567,23 @@ override all colors."
 	   fill))))
 
 (define-method draw-socket block (x0 y0 x1 y1 image)
-  (/draw-patch self x0 y0 x1 y1 image :depressed t :socket t))
+  (draw-patch self x0 y0 x1 y1 image :depressed t :socket t))
     
 (define-method draw-border block (image &optional (color *selection-color*))
   (let ((dash *dash*))
     (with-fields (x y height width) self
-      (/draw-patch self (- x dash) (- y dash)
+      (draw-patch self (- x dash) (- y dash)
 		   (+ x width dash)
 		   (+ y height dash)
 		   image :color color))))
 
 (define-method draw-background block (image)
   (with-fields (x y width height) self
-    (/draw-patch self x y (+ x width) (+ y height) image)))
+    (draw-patch self x y (+ x width) (+ y height) image)))
 
 (define-method draw-ghost block (image)
   (with-fields (x y width height) self
-    (/draw-patch self x y (+ x width) (+ y height) image
+    (draw-patch self x y (+ x width) (+ y height) image
 		 :depressed t :socket t)))
 
 (define-method handle-width block ()
@@ -609,11 +609,11 @@ override all colors."
     (with-field-values (x y operation schema arguments) self
       (let* ((font *block-font*)
 	     (dash *dash*)
-	     (left (+ x (/handle-width self)))
+	     (left (+ x (handle-width self)))
 	     (max-height (font-height font)))
 	(labels ((move-child (child)
-		   (/move child (+ left dash) y)
-		   (/layout child)
+		   (move child (+ left dash) y)
+		   (layout child)
 		   (setf max-height (max max-height (field-value :height child)))
 		   (field-value :width child))
 		 (layout-child (block type)
@@ -634,7 +634,7 @@ override all colors."
 	      ;; draw a socket if there's no block; otherwise wait
 	      ;; until later to draw.
 	      (when (null segment) 
-		(/draw-socket self (+ x0 dash) (+ y0 dash)
+		(draw-socket self (+ x0 dash) (+ y0 dash)
 			      (+ x0 *socket-width*)
 			      (+ y0 (- height dash))
 			      image))
@@ -656,22 +656,22 @@ override all colors."
 	     (y0 (+ y dash 1)))
 	(if <image>
 	    (progn 
-	      (/render self)
+	      (render self)
 	      (draw-image <image>
 			  left y0 :destination image))
 	    (progn 
 	      (text left y0 (print-expression operation))
 	      (dolist (block arguments)
-		(/draw block image))))))))
+		(draw block image))))))))
 
 (define-method draw block (output-image)
   (with-fields (image x y) self
     (if (null image)
 	(progn
-	  (/draw-background self output-image)
-	  (/draw-contents self output-image))
+	  (draw-background self output-image)
+	  (draw-contents self output-image))
 	(progn
-	  (/render self)
+	  (render self)
 	  (draw-image image x y 
 		      :destination output-image)))))
 
@@ -683,7 +683,7 @@ override all colors."
 	      :stroke-color *hover-color* 
 	      :color *hover-color*
 	      :destination image))
-  (/draw-contents self image))
+  (draw-contents self image))
 		    
 (define-method hit block (mouse-x mouse-y)
   "Return this block (or child block) if the coordinates MOUSE-X and
@@ -700,9 +700,9 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (with-field-values (parent) self
     (when parent
       (prog1 t
-	(let ((position (/child-position parent self)))
+	(let ((position (child-position parent self)))
 	  (assert (integerp position))
-	  (/plug parent other-block position))))))
+	  (plug parent other-block position))))))
 
 ;;; Data entry blocks
 
@@ -720,8 +720,8 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-method draw entry (image)
   (with-block-drawing image
     (with-fields (x y data parent) self
-      (when (null parent) (/draw-background self image))
-      (/draw-contents self image))))
+      (when (null parent) (draw-background self image))
+      (draw-contents self image))))
 
 (define-method draw-contents entry (image)
   (with-block-drawing image
@@ -764,15 +764,15 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	    (setf arguments (nconc (list child) arguments))
 	    (setf arguments (nconc arguments (list child))))
 	(setf arguments (list child)))
-    (when (/get-parent child)
-      (/unplug-from-parent child))
-    (/set-parent child self)))
+    (when (get-parent child)
+      (unplug-from-parent child))
+    (set-parent child self)))
 
-(define-method pop list ()
+(define-method take-first list ()
   (with-fields (arguments) self
     (let ((block (first arguments)))
       (prog1 block
-	(/unplug self block)))))
+	(unplug self block)))))
 
 (define-method length list ()
   (with-fields (arguments) self
@@ -781,7 +781,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-method unplug list (child)
   (with-fields (arguments) self
     (setf arguments (delete child arguments))
-    (/set-parent child nil)))
+    (set-parent child nil)))
 
 (define-method layout-header list () 0)
 
@@ -795,14 +795,14 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-method layout-body-as-list list ()
   (with-fields (x y height width arguments) self
     (let* ((dash *dash*)
-	   (header-height (+ dash (/layout-header self)))
+	   (header-height (+ dash (layout-header self)))
 	   (y0 (+ y dash header-height))
 	   (line-height (font-height *block-font*)))
       (setf height (+ (* 2 dash) line-height))
       (setf width (* 8 dash))
       (dolist (block arguments)
-	(/move block (+ x dash) y0)
-	(/layout block)
+	(move block (+ x dash) y0)
+	(layout block)
 	(incf height (field-value :height block))
 	(incf y0 (field-value :height block))
 	(setf width (max width (field-value :width block))))
@@ -811,8 +811,8 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-method layout list ()
   (with-fields (arguments) self
     (if (null arguments)
-	(/layout-body-as-null self)
-	(/layout-body-as-list self))))
+	(layout-body-as-null self)
+	(layout-body-as-list self))))
     
 (define-method draw-header list () 0)
 
@@ -847,15 +847,15 @@ MOUSE-Y identify a point inside the block (or child block.)"
     (setf (field-value :parent block) nil) ;; TODO self?
     (when (and (integerp x)
 	       (integerp y))
-      (/move block x y))))
+      (move block x y))))
 
 (define-method layout-header script ()
   (with-fields (x y arguments) self
     (let ((name (first arguments))
 	  (height (font-height *block-font*)))
       (prog1 height
-	(/move name 
-	       (+ x (/handle-width self))
+	(move name 
+	       (+ x (handle-width self))
 	       (+ y height))))))
 
 (define-method draw-header script (image)
@@ -870,9 +870,9 @@ MOUSE-Y identify a point inside the block (or child block.)"
   ;; (with-fields (arguments target) self
   ;;   (with-target target
   ;;     (dolist (block arguments)
-  ;; 	(/run block)))))
+  ;; 	(run block)))))
 	    
-(define-method step script ())
+(define-method tick script ())
 
 (define-method bring-to-front script (block)
   (with-fields (arguments) self
@@ -880,7 +880,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
       (setf arguments (delete block arguments))
       (setf arguments (nconc arguments (list block))))))
 
-(define-method delete script (block)
+(define-method delete-child script (block)
   (with-fields (arguments) self
     (assert (find block arguments))
     (setf arguments (delete block arguments))))
@@ -892,10 +892,10 @@ MOUSE-Y identify a point inside the block (or child block.)"
 ;;   (gethash var <variables>))
 
 ;; (defun block-variable (var-name)
-;;   (/get *block* var-name))
+;;   (get *block* var-name))
 
 ;; (defun (setf block-variable) (var-name value)
-;;   (/set *block* var-name value))
+;;   (set *block* var-name value))
 
 ;; (defmacro with-block-variables (vars &rest body)
 ;;   (labels ((make-clause (sym)

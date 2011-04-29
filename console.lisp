@@ -104,7 +104,7 @@
 (defvar *keyboard-timestep-number* 0)
 
 (defun get-keys ()
-  (if (/= *keyboard-timestep-number* *timesteps*)
+  (if (= *keyboard-timestep-number* *timesteps*)
       (setf *keys* (keyboard-keys-down)
 	    *mods* (keyboard-modifiers)
 	    *keyboard-timestep-number* *timesteps*)
@@ -281,7 +281,7 @@ for backward-compatibility."
 
 (defun send-to-blocks (event &optional (blocks *blocks*))
   (labels ((try (block)
-	     (/handle-key block event)))
+	     (handle-key block event)))
     (some #'try blocks)))
 
 (defvar *event-handler-function* #'send-to-blocks
@@ -651,15 +651,15 @@ display."
 	(:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
 			     (let ((block (hit-blocks x y *blocks*)))
 			       (when block
-				 (/mouse-move block x y))))
+				 (mouse-move block x y))))
 	(:mouse-button-down-event (:button button :state state :x x :y y)
 				  (let ((block (hit-blocks x y *blocks*)))
 				    (when block
-				      (/mouse-down block x y button))))
+				      (mouse-down block x y button))))
 	(:mouse-button-up-event (:button button :state state :x x :y y)
 				  (let ((block (hit-blocks x y *blocks*)))
 				    (when block
-				      (/mouse-up block x y button))))
+				      (mouse-up block x y button))))
 	(:joy-button-down-event (:which which :button button :state state)
 				(when (assoc button *joystick-mapping*)
 				  (update-joystick button state)
@@ -1501,8 +1501,8 @@ found."
     (setf (aref output n) 0.0))
   ;; mix in voices
   (dolist (voice *voices*)
-    (/run voice)
-    (let ((input (/get-output voice)))
+    (run voice)
+    (let ((input (get-output voice)))
       (dotimes (n *output-chunksize*)
 	(incf (aref output n)
 	      (aref input n))))))
@@ -1848,21 +1848,21 @@ This program includes the DejaVu fonts family. See the file
       (run nil)
       (apply #'run args)))
       
-(defmacro defproject (module-name 
-		   (&key title description
-			 (prompt-prototype =prompt=)
-			 timestep timestep-function
-			 held-keys 
-			 splash-image splash-function splash-music
-			 screen-width screen-height
-			 keybindings pages
-			 &allow-other-keys)
- 		   &body startup-forms)
-  `(progn
-     (ioforms:set-screen-height ,screen-height)
-     (ioforms:set-screen-width ,screen-width)
-     (setf ioforms:*timestep-function* ,timestep-function)
-     (setf ioforms:*dt* ,timestep)
-     ,@startup-forms))
+;; (defmacro defproject (module-name 
+;; 		   (&key title description
+;; 			 (prompt-prototype =prompt=)
+;; 			 timestep timestep-function
+;; 			 held-keys 
+;; 			 splash-image splash-function splash-music
+;; 			 screen-width screen-height
+;; 			 keybindings pages
+;; 			 &allow-other-keys)
+;;  		   &body startup-forms)
+;;   `(progn
+;;      (ioforms:set-screen-height ,screen-height)
+;;      (ioforms:set-screen-width ,screen-width)
+;;      (setf ioforms:*timestep-function* ,timestep-function)
+;;      (setf ioforms:*dt* ,timestep)
+;;      ,@startup-forms))
 
 ;;; console.lisp ends here

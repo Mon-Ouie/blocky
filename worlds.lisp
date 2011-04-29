@@ -1,6 +1,6 @@
 ;;; worlds.lisp --- places where gameplay happens
 
-;; Copyright (C) 2008  David O'Toole
+;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: 
@@ -94,7 +94,7 @@ At the moment, only 0=off and 1=on are supported.")
     (when cells-width (setf <cells-width> cells-width))
     (when name (setf <name> name))
     (setf <variables> (make-hash-table :test 'equal))
-    (/create-default-grid self))
+    (create-default-grid self))
   
 (define-method make world (&rest parameters)
   (apply #'/initialize self parameters))
@@ -109,10 +109,10 @@ At the moment, only 0=off and 1=on are supported.")
   (gethash var <variables>))
 
 (defun world-variable (var-name)
-  (/get *world* var-name))
+  (get *world* var-name))
 
 (defun set-world-variable (var-name value)
-  (/set *world* var-name value))
+  (set *world* var-name value))
 
 (defsetf world-variable set-world-variable)
 
@@ -129,7 +129,7 @@ At the moment, only 0=off and 1=on are supported.")
     (aref <grid> row column)))
 
 (define-method grid-location-list world (row column)
-  (coerce (/grid-location self row column)
+  (coerce (grid-location self row column)
 	  'list))
 
 (define-method category-at-p world (row column category)
@@ -156,18 +156,18 @@ CATEGORY may be a list of keyword symbols or one keyword symbol."
   (aref (aref <grid> row column) n))
 
 (define-method top-cell world (row column)
-  (let ((cells (/grid-location self row column)))
+  (let ((cells (grid-location self row column)))
     (when (and cells (not (zerop (fill-pointer cells))))
       (aref cells (- (fill-pointer cells) 1)))))
 
 (define-method drop-cell world (cell row column)
   (vector-push-extend cell (aref <grid> row column))
-  (/set-location cell row column))
+  (set-location cell row column))
 
 (define-method replace-cell world (cell new-cell row column
 					&optional &key loadout no-collisions)
   "Replace the CELL with NEW-CELL at ROW, COLUMN in this world."
-  (let* ((cells (/grid-location self row column))
+  (let* ((cells (grid-location self row column))
 	 (pos (position cell cells)))
     (if (numberp pos)
 	(setf (aref cells pos) new-cell)
@@ -178,7 +178,7 @@ CATEGORY may be a list of keyword symbols or one keyword symbol."
 replacing them with the single cell (or vector of cells) DATA."
   (when (array-in-bounds-p <grid> row column)
     (do-cells (cell (aref <grid> row column))
-      (/cancel cell))
+      (cancel cell))
     (setf (aref <grid> row column)
 	  (etypecase data
 	    (vector data)
@@ -188,7 +188,7 @@ replacing them with the single cell (or vector of cells) DATA."
 			   (prog1 cells
 			     (vector-push-extend data cells))))))
     (do-cells (cell (aref <grid> row column))
-      (/set-location cell row column))))
+      (set-location cell row column))))
 
 (define-method delete-cell world (cell row column)
   "Delete CELL from the grid at ROW, COLUMN."
@@ -203,14 +203,14 @@ replacing them with the single cell (or vector of cells) DATA."
 	   (replace square square :start1 start :start2 (1+ start))
 	   (decf (fill-pointer square)))))
     (:sprite
-       (/remove-sprite self cell))))
+       (remove-sprite self cell))))
     
 (define-method move-cell world (cell row column)
   "Move CELL to ROW, COLUMN."
   (let* ((old-row (field-value :row cell))
 	 (old-column (field-value :column cell)))
-    (/delete-cell self cell old-row old-column)
-    (/drop-cell self cell row column)))
+    (delete-cell self cell old-row old-column)
+    (drop-cell self cell row column)))
 
 (define-method delete-category-at world (row column category)
   "Delete all cells in CATEGORY at ROW, COLUMN in the grid.
@@ -220,8 +220,8 @@ The cells' :cancel method is invoked."
 	     (optimize (speed 3)))
     (when (array-in-bounds-p grid row column)
       (setf (aref grid row column)
-	    (delete-if #'(lambda (c) (when (/in-category c category)
-				       (prog1 t (/cancel c))))
+	    (delete-if #'(lambda (c) (when (in-category c category)
+				       (prog1 t (cancel c))))
 		       (aref grid row column))))))
  
 (define-method serialize world ()
@@ -238,7 +238,7 @@ The cells' :cancel method is invoked."
       (setf <serialized-grid> sgrid))))
     
 (define-method deserialize world ()
-    (/create-default-grid self)
+    (create-default-grid self)
     (with-field-values (cells-width cells-height grid serialized-grid) self
       (dotimes (i cells-height)
 	(dotimes (j cells-width)
@@ -270,14 +270,14 @@ The cells' :cancel method is invoked."
 initialize the arrays for a world of the size specified there."
   (if (and (numberp <cells-width>)
 	   (numberp <cells-height>))
-      (/create-grid self :cells-width <cells-width> :cells-height <cells-height>)
+      (create-grid self :cells-width <cells-width> :cells-height <cells-height>)
       (error "Cannot create default grid without cells-height and cells-width set.")))
 
 (define-method paste-region world (other-world dest-row dest-column source-row source-column source-cells-height source-cells-width 
 					       &optional deepcopy)
     (loop for row from 0 to source-cells-height
 	  do (loop for column from 0 to source-cells-width
-		   do (let* ((cells (/grid-location other-world (+ row source-row) (+ column source-column)))
+		   do (let* ((cells (grid-location other-world (+ row source-row) (+ column source-column)))
 			     (n 0))
 			(when (vectorp cells)
 			  (loop while (< n (fill-pointer cells)) do
@@ -288,7 +288,7 @@ initialize the arrays for a world of the size specified there."
 						 (deserialize (serialize cell))
 						 ;; create a similar object
 						 (clone proto))))
-			      (/drop-cell self new-cell (+ row dest-row) (+ column dest-column) :exclusive nil))
+			      (drop-cell self new-cell (+ row dest-row) (+ column dest-column) :exclusive nil))
 			    (incf n)))))))
 
 (define-method clone-onto world (other-world &optional deepcopy)
@@ -296,9 +296,9 @@ initialize the arrays for a world of the size specified there."
 		 (string (find-resource-object other-world))
 		 (object other-world))))
     (with-fields (cells-height cells-width) other
-      (/create-grid self :cells-height cells-height :cells-width cells-width)
+      (create-grid self :cells-height cells-height :cells-width cells-width)
       (let ((*world* other))
-	(/paste-region self other 0 0 0 0 cells-height cells-width deepcopy)))))
+	(paste-region self other 0 0 0 0 cells-height cells-width deepcopy)))))
 
 (defun generate-world-name (world)
   (concatenate 'string (get-some-object-name world) "-" (format nil "~S" (genseq))))
@@ -326,7 +326,7 @@ initialize the arrays for a world of the size specified there."
        ;; it's an address
        (destructuring-bind (prototype-name &rest parameters) object
 	 (let ((object (clone (symbol-value prototype-name))))
-	   (/make-with-parameters object parameters)
+	   (make-with-parameters object parameters)
 	   (find-object object))))
     (string (or (find-resource-object object :noerror)
 		(progn (make-object-resource object (create-blank-object :name object))
@@ -341,7 +341,7 @@ initialize the arrays for a world of the size specified there."
 ;;   (when cells-height (setf <cells-height> cells-height))
 ;;   (when cells-width (setf <cells-width> cells-width))
 ;;   (setf <variables> (make-hash-table :test 'equal))
-;;   (/create-default-grid self))
+;;   (create-default-grid self))
 
 (define-method in-category world (category)
   "Returns non-nil when the cell SELF is in the category CATEGORY."
@@ -353,8 +353,8 @@ initialize the arrays for a world of the size specified there."
     (setf paused (if (null paused)
 		     t (when always t)))
     (if (null paused)
-	(/narrateln <narrator> "Resuming game.")
-	(/narrateln <narrator> "The game is now paused. Press Control-P or PAUSE to un-pause."))))
+	(narrateln <narrator> "Resuming game.")
+	(narrateln <narrator> "The game is now paused. Press Control-P or PAUSE to un-pause."))))
 
 (define-prototype environment
     (:documentation "A cell giving general environmental conditions at a world location.")
@@ -373,7 +373,7 @@ initialize the arrays for a world of the size specified there."
     (let ((image (find-resource-object background)))
       (setf cells-height (truncate (/ (image-cells-height background) tile-size)))
       (setf cells-width (truncate (/ (image-cells-width background) tile-size))))
-    (/create-default-grid self)))
+    (create-default-grid self)))
 
 (define-method location-name world ()
   "Return the location name."
@@ -430,7 +430,7 @@ PARAMETERS and interpreting the world's grammar field <GRAMMAR>."
       (or program (message "WARNING: Nothing was generated from this grammar."))
       (message (prin1-to-string program))
       (unless <grid>
-	(/create-default-grid self))
+	(create-default-grid self))
       (dolist (op program)
 	(typecase op
 	  (keyword (if (has-method op self)
@@ -473,7 +473,7 @@ the stack."
 location."
   (with-field-values (paint row column) self
     (if (object-p paint)
-	(/drop-cell self (clone paint) row column)
+	(drop-cell self (clone paint) row column)
 	(error "Nothing to drop. Use =FOO= :COLOR to set the paint color."))))
 
 (define-method jump world ()
@@ -496,7 +496,7 @@ is the integer on the top of the stack."
 	(let ((distance (pop stack)))
 	  (if (integerp distance)
 	      (dotimes (n distance)
-		(/drop-cell self (clone paint) <row> <column>)
+		(drop-cell self (clone paint) <row> <column>)
 		(multiple-value-bind (row column) 
 		    (step-in-direction <row> <column> <direction>)
 		  (setf <row> row <column> column)
@@ -554,7 +554,7 @@ is the integer on the top of the stack."
 		      (unless 
 			  (or (and (numberp distance)
 				   (> distance (distance r c 0 0)))
-			      (/category-at-p self r c :exclusive))
+			      (category-at-p self r c :exclusive))
 			(setf found t)))
 	    while (and (not found) 
 		       (< n limit)))
@@ -566,10 +566,10 @@ object will not be dropped when there is an obstacle. When LOADOUT is
 non-nil, the :loadout method is invoked on the sprite after
 placement."
   (assert (eq :sprite (field-value :type sprite)))
-  (/add-sprite self sprite)
-  (/move-to sprite :pixels x y)
+  (add-sprite self sprite)
+  (move-to sprite :pixels x y)
   (when (or loadout (field-value :auto-loadout sprite))
-    (/loadout sprite))
+    (loadout sprite))
   (unless no-collisions
     ;; TODO do collision test
     nil))
@@ -603,29 +603,29 @@ cell is placed; nil otherwise."
 			(setf (field-value :row cell) row)
 			(setf (field-value :column cell) column)
 			(when (or loadout auto-loadout)
-			  (/loadout cell)))))
+			  (loadout cell)))))
 			;; (unless no-stepping
-			;;   (/step-on-current-square cell)))))
+			;;   (step-on-current-square cell)))))
 	     (if (or no-collisions exclusive)
 		 (progn 
 		   (when no-collisions
-		     (when (not (/obstacle-at-p self row column))
+		     (when (not (obstacle-at-p self row column))
 		       (drop-it row column)))
 		   (when exclusive
-		     (if (/category-at-p self row column :exclusive)
+		     (if (category-at-p self row column :exclusive)
 			 (when probe
 			   (block probing
 			     (dolist (dir *compass-directions*)
 			       (multiple-value-bind (r c) 
 				   (step-in-direction row column dir)
-				 (when (not (/category-at-p self row column :exclusive))
+				 (when (not (category-at-p self row column :exclusive))
 				   (return-from probing (drop-it r c)))))))
 			 (drop-it row column))))
 		 (drop-it row column))))
 	;; handle sprites
 	(:sprite
-	   (/add-sprite self cell)
-	   (/move-to cell 
+	   (add-sprite self cell)
+	   (move-to cell 
 		     (* column tile-size)
 		     (* row tile-size)))))))
   
@@ -636,19 +636,19 @@ cell is placed; nil otherwise."
 	(block seeking
 	  (dotimes (i cells-height)
 	    (dotimes (j cells-width)
-	      (when (/category-at-p self i j :player-entry-point)
+	      (when (category-at-p self i j :player-entry-point)
 		(return-from seeking (values i j)))))
 	  (return-from seeking (values 0 0)))
       (setf <player> player)
       (ecase (field-value :type player)
-	(:cell (/drop-cell self player dest-row dest-column :no-stepping t))
-	(:sprite (/drop-sprite self player 
+	(:cell (drop-cell self player dest-row dest-column :no-stepping t))
+	(:sprite (drop-sprite self player 
 			      (* dest-column tile-size)
 			      (* dest-row tile-size)))))))
 			      
 (define-method drop-player-at-last-location world (player)
   (setf <player> player)
-  (/drop-cell self player <player-exit-row> <player-exit-column>))
+  (drop-cell self player <player-exit-row> <player-exit-column>))
   
 (define-method get-player world ()
   <player>)
@@ -659,7 +659,7 @@ cell is placed; nil otherwise."
       (dotimes (j cells-width) 
 	(do-cells (cell (aref grid i j))
 	  (when (has-method :loadout cell)
-	    (/loadout cell)))))))
+	    (loadout cell)))))))
 
 (define-method player-row world ()
   "Return the grid row the player is on."
@@ -681,19 +681,19 @@ cell is placed; nil otherwise."
   ;; record current location so we can exit back to it
   (setf <player-exit-row> (field-value :row <player>))
   (setf <player-exit-column> (field-value :column <player>))
-  (/exit <player>)
-  (/delete-cell self <player> <player-exit-row> <player-exit-column>))
+  (exit <player>)
+  (delete-cell self <player> <player-exit-row> <player-exit-column>))
   
 (define-method obstacle-at-p world (row column)
   "Returns non-nil if there is any obstacle in the grid at ROW, COLUMN."
   (or (not (array-in-bounds-p <grid> row column))
       (some #'(lambda (cell)
-		(when (/in-category cell :obstacle)
+		(when (in-category cell :obstacle)
 		  cell))
 	    (aref <grid> row column))))
 
 (define-method enemy-at-p world (row column)
-  (/category-at-p self row column :enemy))
+  (category-at-p self row column :enemy))
 
 ;; (define-method category-at-xy-p world (x y category)
 ;;   (let ((
@@ -701,37 +701,37 @@ cell is placed; nil otherwise."
 (define-method direction-to-player world (row column)
   "Return the general compass direction of the player from ROW, COLUMN."
   (direction-to row column 
-		(/player-row self)
-		(/player-column self)))
+		(player-row self)
+		(player-column self)))
 
 (define-method distance-to-player world (row column)
   "Return the straight-line distance to the player from ROW, COLUMN."
   (distance row column
-	    (/player-row self)
-	    (/player-column self)))
+	    (player-row self)
+	    (player-column self)))
 	    
 (define-method adjacent-to-player world (row column)
   "Return non-nil when ROW, COLUMN is adjacent to the player."
-  (<= (/distance-to-player self row column) 1.5))
+  (<= (distance-to-player self row column) 1.5))
 	
 (define-method obstacle-in-direction-p world (row column direction)
   "Return non-nil when there is an obstacle one step in DIRECTION from ROW, COLUMN."
   (multiple-value-bind (nrow ncol)
       (step-in-direction row column direction)
-    (/obstacle-at-p self nrow ncol)))
+    (obstacle-at-p self nrow ncol)))
 
 (define-method category-in-direction-p world (row column direction category)
   "Return non-nil when there is a cell in CATEGORY one step in
 DIRECTION from ROW, COLUMN. CATEGORY may be a list as well."
   (multiple-value-bind (nrow ncol)
       (step-in-direction row column direction)
-    (/category-at-p self nrow ncol category)))
+    (category-at-p self nrow ncol category)))
 
 (define-method target-in-direction-p world (row column direction)
   "Return non-nil when there is a target one step in DIRECTION from ROW, COLUMN."
   (multiple-value-bind (nrow ncol)
       (step-in-direction row column direction)
-    (/category-at-p self nrow ncol :target)))
+    (category-at-p self nrow ncol :target)))
 
 (define-method set-player world (player)
   "Set PLAYER as the player object to which the World will forward
@@ -757,7 +757,7 @@ so on, until no more messages are generated."
       (loop while (queued-messages-p) do
 	   (destructuring-bind (sender method-key receiver args)
 	       (unqueue-message)
-	     (let ((rec (or (/resolve-receiver self receiver) 
+	     (let ((rec (or (resolve-receiver self receiver) 
 			    receiver)))
 	       ;; (when (and <narrator> 
 	       ;; 		  ;; only narrate player-related messages
@@ -765,9 +765,9 @@ so on, until no more messages are generated."
 	       ;; 		      (eq player rec)))
 	       ;; 	 ;; now print message
 	       ;; 	 (when (not (zerop (field-value :verbosity <narrator>)))
-	       ;; 	   (/narrate-message <narrator> sender method-key rec args)))
+	       ;; 	   (narrate-message <narrator> sender method-key rec args)))
 	       ;; stop everything if player dies
-					;(when (not (/in-category player :dead))
+					;(when (not (in-category player :dead))
 	       ;;
 	       ;; don't blow up when no narrator, etc
 	       ;; (if (not (object-p receiver))
@@ -788,25 +788,25 @@ so on, until no more messages are generated."
 	    (phase-number <phase-number>))
 	(with-message-queue <message-queue> 
 	  (when <narrator> 
-	    (/narrate-message <narrator> nil method-key player args))
+	    (narrate-message <narrator> nil method-key player args))
 	  ;; run the player
-	  (/run player)
+	  (run player)
 	  ;; send the message to the player, possibly generating queued messages
 	  (apply #'send self method-key player args)
 	  ;; process any messages that were generated
-	  (/process-messages self))))))
+	  (process-messages self))))))
 
 (define-method run-cpu-phase-maybe world ()
     "If this is the player's last turn, run the cpu phase. otherwise,
 stay in player phase and exit. Always runs cpu when the engine is in
 realtime mode."
-    (when (or *timer-p* (not (/can-act <player> <phase-number>)))
-      (/end-phase <player>)
+    (when (or *timer-p* (not (can-act <player> <phase-number>)))
+      (end-phase <player>)
       (unless <exited>
 	(incf <phase-number>)
-	(when (not (/in-category <player> :dead))
-	  (/run-cpu-phase self))
-	(/begin-phase <player>))))
+	(when (not (in-category <player> :dead))
+	  (run-cpu-phase self))
+	(begin-phase <player>))))
 
 (define-method run-cpu-phase world (&optional phase-p)
   "Run all non-player actor cells."
@@ -816,15 +816,15 @@ realtime mode."
       (incf <phase-number>))
     (with-message-queue <message-queue> 
     (when *mission*
-      (/run *mission*))
+      (run *mission*))
     (let ((cell nil)
 	  (phase-number <phase-number>)
 	  (player <player>)
 	  (grid <grid>)
 	  (categories nil))
 ;;	(declare (type (simple-array vector (* *)) grid))
-	(/run player) 
-	(/clear-light-grid self)
+	(run player) 
+	(clear-light-grid self)
 	(dotimes (i <cells-height>)
 	  (dotimes (j <cells-width>)
 	    (let ((cells (aref grid i j)))
@@ -835,29 +835,29 @@ realtime mode."
 		;; perform lighting
 		(when (or (member :player categories)
 			  (member :light-source categories))
-		  (/render-lighting self cell))
+		  (render-lighting self cell))
 		;; (when (member :player categories)
-		;;   (/do-phase cell))
+		;;   (do-phase cell))
 		(when (and (not (eq player cell))
 			   (member :actor categories)
 			   (not (member :dead categories)))
-		  (/begin-phase cell)
+		  (begin-phase cell)
 		  ;; do cells
-		  (loop while (/can-act cell phase-number) do
-			(/run cell)
-			(/process-messages self)
-			(/end-phase cell)))))))
+		  (loop while (can-act cell phase-number) do
+			(run cell)
+			(process-messages self)
+			(end-phase cell)))))))
 	;; run sprites
 	(dolist (sprite <sprites>)
-	  (/begin-phase sprite)
-	  (loop while (/can-act sprite phase-number) do
-		(/run sprite)
-		(/process-messages self)
-		(/end-phase sprite)))
+	  (begin-phase sprite)
+	  (loop while (can-act sprite phase-number) do
+		(run sprite)
+		(process-messages self)
+		(end-phase sprite)))
 	;; do sprite collisions
 	(when <sprite-table>
-	  (/clear-sprite-grid self)
-	  (/collide-sprites self)
+	  (clear-sprite-grid self)
+	  (collide-sprites self)
 	  )))))
 
 (defvar *lighting-hack-function* nil)
@@ -919,7 +919,7 @@ sources and ray casting."
 				       source-row source-column
 				       r c))
 			    ;; should we stop lighting?
-			    (when (/category-at-p self r c :opaque) ;;'(:opaque :obstacle))
+			    (when (category-at-p self r c :opaque) ;;'(:opaque :obstacle))
 			      (return-from lighting t)))))))
 	       (collect-octagon-point (r c)
 		 (vector-push-extend (list r c) octagon) nil)
@@ -961,7 +961,7 @@ sources and ray casting."
   (setf description (or description <description>))
   (if (stringp description)
       (dolist (line (split-string-on-lines description))
-	(/>>narrateln :narrator line))
+	(>>narrateln :narrator line))
       ;; it's a formatted string
       (dolist (line description)
 	(dolist (string line)
@@ -981,27 +981,27 @@ sources and ray casting."
       (dotimes (j <cells-width>)
 	(do-cells (cell (aref grid i j))
 	  (setf (field-value :phase-number cell) phase-number)
-	  (unless (/is-player cell) (/start cell))))))
+	  (unless (is-player cell) (start cell))))))
   (dolist (sprite <sprites>)
     (setf (field-value :phase-number sprite) <phase-number>))
   ;; mark the world as entered
   (setf <exited> nil)
   ;; light up the world
-  (/render-lighting self <player>)
+  (render-lighting self <player>)
   ;; clear out any pending messages
   (setf <message-queue> (make-queue))
   (with-message-queue <message-queue>
-    (/run-cpu-phase self)
+    (run-cpu-phase self)
     (incf <phase-number>)
-    (/start <player>)
-    (/begin-phase <player>)
+    (start <player>)
+    (begin-phase <player>)
     ;; (when (has-method :show-location <player>)
-    ;;   (/show-location <player>))
-    (/after-start-method self)
-    (/process-messages self))
+    ;;   (show-location <player>))
+    (after-start-method self)
+    (process-messages self))
   ;; get player onscreen
-  (when <viewport> (/adjust <viewport> :snap))
-  (/begin-ambient-loop self))
+  (when <viewport> (adjust <viewport> :snap))
+  (begin-ambient-loop self))
 
 (define-method after-start-method world ()
   nil)
@@ -1040,7 +1040,7 @@ along grid squares between R1,C1 and R2,C2."
 				  (if (and (= r0 r2)
 					   (= c0 c2))
 				      (return-from tracing t)
-				      (when (/category-at-p self r0 c0 category)
+				      (when (category-at-p self r0 c0 category)
 					(return-from tracing nil))))
 				(incf i)))
 			    (return-from tracing t))))
@@ -1080,7 +1080,7 @@ Sends a :do-collision message for every detected collision."
 		  (let ((i0 (+ i top))
 			(j0 (+ j left)))
 		    (when (array-in-bounds-p grid i0 j0)
-		      (when (/collide-* sprite 
+		      (when (collide-* sprite 
 					(* i0 tile-size) 
 					(* j0 tile-size)
 					tile-size tile-size)
@@ -1088,10 +1088,10 @@ Sends a :do-collision message for every detected collision."
 			(vector-push-extend sprite (aref sprite-grid i0 j0))
 			;; collide the sprite with the cells on this square
 			(do-cells (cell (aref grid i0 j0))
-			  (when (and (or (/in-category cell :target)
-					 (/in-category cell :obstacle))
-				     (/is-located cell))
-			    (/do-collision sprite cell)))))))))))
+			  (when (and (or (in-category cell :target)
+					 (in-category cell :obstacle))
+				     (is-located cell))
+			    (do-collision sprite cell)))))))))))
 	;; now find collisions with other sprites
 	;; we can re-use the sprite-grid data from earlier.
 	(let (collision num-sprites ix)
@@ -1101,7 +1101,7 @@ Sends a :do-collision message for every detected collision."
 		     (unless (gethash args sprite-table)
 		       (setf (gethash args sprite-table) t)
 		       (destructuring-bind (a b) args
-			 (/do-collision a b)))))
+			 (do-collision a b)))))
 	    ;; iterate over grid, reporting collisions
 	    (dotimes (i cells-height)
 	      (dotimes (j cells-width)
@@ -1114,7 +1114,7 @@ Sends a :do-collision message for every detected collision."
 				   (b (aref collision ix)))
 			       (incf ix)
 			       (assert (and (object-p a) (object-p b)))
-			       (when (and (not (eq a b)) (/collide a b))
+			       (when (and (not (eq a b)) (collide a b))
 				 (collide-first a b)))
 			  while (< ix num-sprites))))))))))))
     
@@ -1213,16 +1213,16 @@ represents the z-axis of a euclidean 3-D space."))
       (prog1 world
 	;; make sure any loadouts or intializers get run with the proper world
 	(let ((*world* world)) 
-	  (/generate-with world parameters))))))
+	  (generate-with world parameters))))))
 
 (define-method find-world universe (address)
   (assert address)
-  (let ((candidate (/get-world self address)))
+  (let ((candidate (get-world self address)))
     (if (null candidate)
-	(/add-world self (normalize-address address)
+	(add-world self (normalize-address address)
 		   (if (stringp address)
 		       (find-resource-object address)
-		       (/generate-world self address)))
+		       (generate-world self address)))
 	candidate)))
 
 (define-method configure universe (&key address player prompt narrator viewport)
@@ -1242,43 +1242,43 @@ narrator, and VIEWPORT as the viewport."
 ;; (when narrator (setf <narrator> narrator))
   (when viewport (setf <viewport> viewport))
 ;;  (assert (and <prompt> <narrator>))
-  (let ((world (/find-world self <current-address>))
+  (let ((world (find-world self <current-address>))
 	(player <player>)
 	(previous-world (car <stack>)))
     ;; make sure exit coordinates are saved, so we can go back to this point
     (when previous-world 
-      (/exit previous-world))
+      (exit previous-world))
     ;; make the new world the current world
     (push world <stack>)
     (setf *world* world)
     (setf *page* world)
     (setf *universe* self)
-    (/set-viewport world <viewport>)
-    (/set-world <viewport> world)
-    (/drop-player-at-entry world player)
-    (/set-receiver <prompt> world)
-;;  (/set-narrator world <narrator>)
-    (/start world)))
+    (set-viewport world <viewport>)
+    (set-world <viewport> world)
+    (drop-player-at-entry world player)
+    (set-receiver <prompt> world)
+;;  (set-narrator world <narrator>)
+    (start world)))
 
 (define-method exit universe (&key player)
   "Return the player to the previous world on the stack."
   (when player (setf <player> player))
   (with-fields (stack) self
     ;; exit and discard current world
-    (/exit (pop stack))
+    (exit (pop stack))
     ;; 
     (let ((world (car stack)))
       (if world
 	  (progn (setf *world* world)
 		 (setf *universe* self)
 		 ;; resume at previous play coordinates
-		 (/drop-player-at-last-location world <player>)
-		 (/start world)
-		 (/set-receiver <prompt> world)
-		 (/set-world <viewport> world)
-		 (/set-narrator world <narrator>)
-		 (/set-viewport world <viewport>)
-		 (/set-player world <player>))
+		 (drop-player-at-last-location world <player>)
+		 (start world)
+		 (set-receiver <prompt> world)
+		 (set-world <viewport> world)
+		 (set-narrator world <narrator>)
+		 (set-viewport world <viewport>)
+		 (set-player world <player>))
 	  (error "No world.")))))
 
 ;;; Gateways and launchpads connect worlds together
@@ -1298,9 +1298,9 @@ narrator, and VIEWPORT as the viewport."
   (with-fields (destination) self
     (etypecase destination
       ;; it's an address.
-      (list (/play *universe* :address destination))
+      (list (play *universe* :address destination))
       ;; it's a mission name
-      (symbol (/begin (symbol-value destination) (/get-player *world*))))))
+      (symbol (begin (symbol-value destination) (get-player *world*))))))
 	 
 (define-prototype launchpad (:parent =gateway=)
   (tile :initform "launchpad")
@@ -1308,10 +1308,10 @@ narrator, and VIEWPORT as the viewport."
   (description :initform "Press RETURN here to exit this area."))
 
 (define-method activate launchpad ()
-  (/exit *universe* :player (/get-player *world*)))
+  (exit *universe* :player (get-player *world*)))
 
 (define-method drop-entry-point world (row column)
-  (/replace-grid-location self row column (clone =launchpad=)))
+  (replace-grid-location self row column (clone =launchpad=)))
 
 ;;; Convenience macro for defining worlds:
 

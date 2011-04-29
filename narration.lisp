@@ -1,6 +1,6 @@
 ;;; narration.lisp --- log and narrate gameplay
 
-;; Copyright (C) 2009  David O'Toole
+;; Copyright (C) 2009, 2011  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: 
@@ -112,11 +112,11 @@ http://en.wikipedia.org/wiki/Passive_voice"
   (setf <verbosity> value))
 
 (define-method narrate narrator (control-string &rest args)
-  (/print self 
+  (print self 
 	 (apply #'format nil control-string args)))
 
 (define-method narrateln narrator (control-string &rest args)
-  (/println self 
+  (println self 
 	   (apply #'format nil control-string args)))
 
 (define-method say narrator (control-string &rest args)
@@ -127,7 +127,7 @@ http://en.wikipedia.org/wiki/Passive_voice"
 	(progn (incf <repeat-count>)
 	       (vector-pop <lines>)
 	       (message "Repeating message ~Sx" <repeat-count>)
-	       (/println self (apply #'format nil (concatenate 'string 
+	       (println self (apply #'format nil (concatenate 'string 
 						      control-string 
 						      (format nil " (Repeated ~Sx)" <repeat-count>))
 				     args)))
@@ -135,7 +135,7 @@ http://en.wikipedia.org/wiki/Passive_voice"
 	(progn 
 	  (message "New message ~S" (cons control-string args))
 	  (setf <repeat-count> 0)
-	  (/println self (apply #'format nil control-string args))))
+	  (println self (apply #'format nil control-string args))))
     (setf <last-line> (list (list (apply #'format nil control-string args))))))
 
 (define-method narrate-message narrator (sender action receiver args &optional force)
@@ -152,27 +152,27 @@ http://en.wikipedia.org/wiki/Passive_voice"
 		     (or (eq t action-verbosity)
 			 (and (numberp action-verbosity)
 			      (>= <verbosity> action-verbosity)))))
-	(/print self (prin1-to-string <line-number>))
+	(print self (prin1-to-string <line-number>))
 	(incf <line-number>)
-	(/print-separator self)
-	(/print-object-tag self A)
-	(/print-separator self)
-	(/print-image self (icon-image action))
-	(/space self)
-	(/print self (action-translation action)
+	(print-separator self)
+	(print-object-tag self A)
+	(print-separator self)
+	(print-image self (icon-image action))
+	(space self)
+	(print self (action-translation action)
 	       :foreground ".white" :background ".gray30")
-	(/print-separator self)
+	(print-separator self)
 	(if (eq A B)
-	    (/print self "SELF" :foreground ".white" :background ".blue")
-	    (/print-object-tag self B))
-	(/print-separator self)
+	    (print self "SELF" :foreground ".white" :background ".blue")
+	    (print-object-tag self B))
+	(print-separator self)
 	;; print args
 	(dolist (arg args)
-	  (/space self)
+	  (space self)
 	  (if (object-p arg)
-	      (/print-object-tag self arg)
-	      (/print self (format nil "~A" arg))))
-	(/newline self)))))
+	      (print-object-tag self arg)
+	      (print self (format nil "~A" arg))))
+	(newline self)))))
 
 
 

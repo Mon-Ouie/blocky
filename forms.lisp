@@ -1,6 +1,6 @@
 ;;; forms.lisp --- generic object oriented spreadsheet
 
-;; Copyright (C) 2006, 2007, 2010  David O'Toole
+;; Copyright (C) 2006, 2007, 2010, 2011  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: 
@@ -41,8 +41,8 @@
   (origin-column :initform 0 :documentation "Column number of top-left displayed cell.")
   (origin-height :initform nil)
   (origin-width :initform nil)
-  (column-widths :documentation "A vector of integers where v(/x) is the pixel width of form column x.")
-  (row-heights :documentation "A vector of integers where v(/x) is the pixel height of form row x.")
+  (column-widths :documentation "A vector of integers where v(x) is the pixel width of form column x.")
+  (row-heights :documentation "A vector of integers where v(x) is the pixel height of form row x.")
   (column-styles :documentation "A vector of property lists used to customize the appearance of columns.")
   (row-spacing :initform 1 :documentation "Number of pixels to add between rows.")
   (zebra-stripes :documentation "When non-nil, zebra stripes are drawn.")
@@ -61,11 +61,11 @@
   (with-fields (entry) self
     (let ((world (find-world world)))
       (send-parent self :initialize self)
-      (/visit self world))))
+      (visit self world))))
 
 (define-method blank form (&rest parameters)
   "Invoke the current world's default :make method, passing PARAMETER."
-  (/make-with-parameters <world> parameters))
+  (make-with-parameters <world> parameters))
 
 (define-method set-tool form (tool)
   "Set the current sheet's selected tool to TOOL."
@@ -73,9 +73,9 @@
   (setf <tool> tool))
 
 (define-method get-selected-cell-data form ()
-  (let ((cell (/selected-cell self)))
+  (let ((cell (selected-cell self)))
     (when cell
-      (/get cell))))
+      (get cell))))
 
 (define-method focus form ()
   (setf <focused> t))
@@ -90,7 +90,7 @@
       (assert pos)
       (setf tool (nth (mod (1+ pos) (length tool-methods))
 		      tool-methods))
-      (/say self (format nil "Changing tool operation to ~S" tool)))))
+      (say self (format nil "Changing tool operation to ~S" tool)))))
 
 (define-method set-modified form (&optional (value t))
   (with-fields (world) self
@@ -99,7 +99,7 @@
   
 (define-method apply-tool form (data)
   "Apply the current form's tool to the DATA."
-  (/set-modified self)
+  (set-modified self)
   (with-fields (tool tool-methods) self
     (send nil tool self data)))
 
@@ -109,26 +109,26 @@ at the current cursor location. See also APPLY-LEFT and APPLY-RIGHT."
   (if (and (symbolp data)
 	   (boundp data)
 	   (object-p (symbol-value data)))
-      (/drop-cell <world> (clone (symbol-value data)) <cursor-row> <cursor-column>)
-      (/say self "Cannot clone.")))
+      (drop-cell <world> (clone (symbol-value data)) <cursor-row> <cursor-column>)
+      (say self "Cannot clone.")))
 
 (define-method inspect form ()
   nil)
 
 (define-method erase form (&optional data)
   "Erase the top cell at the current location."
-  (/say self "Erasing top cell.")
+  (say self "Erasing top cell.")
   (let ((grid (field-value :grid <world>)))
     (ignore-errors (vector-pop (aref grid <cursor-row> <cursor-column>)))))
 
 (define-method set-mark form ()
   (setf <mark-row> <cursor-row>
 	<mark-column> <cursor-column>)
-  (/say self (format nil "Mark set at (~S, ~S)." <mark-row> <mark-column>)))
+  (say self (format nil "Mark set at (~S, ~S)." <mark-row> <mark-column>)))
    
 (define-method clear-mark form ()
   (setf <mark-row> nil <mark-column> nil)
-  (/say self "Mark cleared."))
+  (say self "Mark cleared."))
 
 (define-method mark-region form ()
   (with-fields (mark-row mark-column cursor-row cursor-column) self
@@ -149,18 +149,18 @@ See also CREATE-WORLD."
   (let ((world (find-world world)))
     (assert (object-p world))
     (setf <world-name> (field-value :name world))
-    (/say self (format nil "Visiting world ~S" <world-name>))
+    (say self (format nil "Visiting world ~S" <world-name>))
     (set-resource-modified-p <world-name> t)
     (setf <world> world)
     (setf *world* world) ;; TODO suspicious
-    (/install-keybindings self)
+    (install-keybindings self)
     (setf <rows> (field-value :height world))
     (setf <columns> (field-value :width world))
     (assert (integerp <rows>))
     (assert (integerp <columns>))
     (setf <cursor-row> 0)
     (setf <cursor-column> 0)
-    (/clear-mark self)
+    (clear-mark self)
     (setf <cursor-column> (min <columns> <cursor-column>))
     (setf <cursor-row> (min <rows> <cursor-row>))
     (setf <cursor-column> (min <columns> <cursor-column>))
@@ -168,11 +168,11 @@ See also CREATE-WORLD."
 	  <row-heights> (make-array (+ 1 <rows>) :initial-element 0)
 	  <column-styles> (make-array (+ 1 <columns>))
 	  <row-styles> (make-array (+ 1 <rows>)))
-    (/layout self)))
+    (layout self)))
 
 (define-method cell-at form (row column)
   (assert (and (integerp row) (integerp column)))
-  (/top-cell <world> row column))
+  (top-cell <world> row column))
 
 (define-method set-prompt form (prompt)
   (setf <prompt> prompt))
@@ -187,37 +187,37 @@ See also CREATE-WORLD."
   "Set the rendering style of the current form to STYLE.
 Must be one of (:image :label)."
   (setf <display-style> style)
-  (/layout self))
+  (layout self))
 
 (define-method image-view form ()
   "Switch to image view in the current form."
-  (/set-display-style self :image))
+  (set-display-style self :image))
 
 (define-method label-view form ()
   "Switch to label view in the current form."
-  (/set-display-style self :label))
+  (set-display-style self :label))
 
 (define-method goto-prompt form ()
   "Jump to the command prompt."
   (when <prompt>
-    (/goto <prompt>)))
+    (goto <prompt>)))
 
 (define-method selected-cell form ()
-  (/cell-at self <cursor-row> <cursor-column>))
+  (cell-at self <cursor-row> <cursor-column>))
 
 (define-method activate form ()
-  (let ((cell (/selected-cell self)))
+  (let ((cell (selected-cell self)))
     (when cell
-      (/activate cell))))
+      (activate cell))))
 
 (define-method eval form (&rest args)
   "Evaluate all the ARGS and print the result."
   (when <prompt> 
-    (/print-data <prompt> args :comment)))
+    (print-data <prompt> args :comment)))
  
 (define-method say form (text)
   (when <prompt>
-    (/say <prompt> text)))
+    (say <prompt> text)))
 
 (define-method help form (&optional (command-name :commands))
   "Print documentation for the command COMMAND-NAME.
@@ -227,59 +227,59 @@ Type HELP :COMMANDS for a list of available commands."
 	 (arglist (method-arglist command)))
     (with-field-values (prompt) self
       (when prompt
-	(/print-data prompt (format nil "Command name: ~A" command) :comment)
-	(/print-data prompt (format nil "Arguments: ~a" (if (eq arglist :not-available)
+	(print-data prompt (format nil "Command name: ~A" command) :comment)
+	(print-data prompt (format nil "Arguments: ~a" (if (eq arglist :not-available)
 					       :none arglist))
 		    :comment)
-	(/print-data prompt (format nil" ~A" docstring) :comment)))))
+	(print-data prompt (format nil" ~A" docstring) :comment)))))
 
 (define-method save-all form ()
-  (/say self "Saving objects...")
+  (say self "Saving objects...")
   (ioforms:save-objects :force)
-  (/say self "Saving objects... Done."))
+  (say self "Saving objects... Done."))
 
 (define-method save form ()
-  (/say self "Saving objects...")
+  (say self "Saving objects...")
   (ioforms:save-objects)
-  (/say self "Saving objects... Done."))
+  (say self "Saving objects... Done."))
   
 (define-method create-world form (&key height width name object)
   "Create and visit a blank world of height HEIGHT, width WIDTH, and name NAME.
 If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
   (let ((world (or object (create-blank-world :height height :width width :name name))))
     (when name (setf (field-value :name world) name))
-    (/make world)
-    (/visit self world)))
+    (make world)
+    (visit self world)))
 
 (define-method enter-or-exit form ()
   (if <entered>
-      (/exit self)
-      (/enter self)))
+      (exit self)
+      (enter self)))
 
 (define-method enter form ()
   "Begin entering LISP data into the current cell."
   (unless <entered>
-    (/say self "Now entering data. Press Control-ENTER to finish, or ESCAPE to cancel.")
+    (say self "Now entering data. Press Control-ENTER to finish, or ESCAPE to cancel.")
     (let ((entry (clone =textbox=))
-	  (cell (/selected-cell self)))
-      (/resize entry :width 150 :height 30)
-      (/move entry :x 0 :y 0)
+	  (cell (selected-cell self)))
+      (resize entry :width 150 :height 30)
+      (move entry :x 0 :y 0)
       (when (null cell)
 	(setf cell (clone =data-cell=))
-	(/drop-cell <world> cell <cursor-row> <cursor-column>))
-      (let ((data (/get cell)))
+	(drop-cell <world> cell <cursor-row> <cursor-column>))
+      (let ((data (get cell)))
 	(when data 
-	  (let* ((output (/print cell))
+	  (let* ((output (print cell))
 		 (lines (etypecase output
 			  (string (list output))
 			  (list output))))
 	    (dolist (line lines)
-	      (/insert entry line)
-	      (/newline entry)))
-	  (/move-end-of-line entry)))
-      (/install-keybindings entry)
+	      (insert entry line)
+	      (newline entry)))
+	  (move-end-of-line entry)))
+      (install-keybindings entry)
       (setf (field-value :auto-fit entry) t)
-      (/resize-to-fit entry)
+      (resize-to-fit entry)
       (setf <entered> t)
       (setf (field-value :widget cell)
 	    entry))))
@@ -287,23 +287,23 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 (define-method exit form (&optional nosave)
   "Stop entering data into the current cell."
   (when <entered>
-    (when nosave (/say self "Canceled data entry."))
-    (with-fields (widget) (/selected-cell self)
-      (let* ((data (/get-buffer-as-string widget)))
+    (when nosave (say self "Canceled data entry."))
+    (with-fields (widget) (selected-cell self)
+      (let* ((data (get-buffer-as-string widget)))
 	(when data
 	  (unless nosave
-	    (let ((cell (/selected-cell self)))
+	    (let ((cell (selected-cell self)))
 	      (handler-case 
-		  (/set cell (/read cell data))
+		  (set cell (read cell data))
 		(condition (c) 
-		  (/say self (format nil "Error reading data: ~S" c)))))))
+		  (say self (format nil "Error reading data: ~S" c)))))))
 	(setf widget nil)
 	(setf <entered> nil)
-	(/say self "Finished entering data.")))))
+	(say self "Finished entering data.")))))
     
 (define-method open-project form (name)
   "Load the IOFORMS project named NAME for development."
-  (/say self (format nil "Loading module ~S" name))
+  (say self (format nil "Loading module ~S" name))
   (ioforms:open-project name))
 
 (define-method quit form ()
@@ -311,17 +311,17 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
   (ioforms:quit t))
 
 (define-method cancel form ()
-  (/clear-mark self)
-  (/exit self :nosave))
+  (clear-mark self)
+  (exit self :nosave))
 
 (defparameter *blank-cell-string* '(" ........ "))
 
 ;; (define-method row-height form (row)
 ;;   (let ((height 0) cell)
 ;;     (dotimes (column <columns>)
-;;       (setf cell (/cell-at self row column))
+;;       (setf cell (cell-at self row column))
 ;;       (when cell
-;; 	(setf height (max height (/height cell)))))
+;; 	(setf height (max height (height cell)))))
 ;;     (ecase <display-style>
 ;;       (:label (max (formatted-string-height *blank-cell-string*) height))
 ;;       (:image height))))
@@ -329,9 +329,9 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 ;; (define-method column-width form (column)
 ;;   (let ((width 0) cell)
 ;;     (dotimes (row <rows>)
-;;       (setf cell (/cell-at self row column))
+;;       (setf cell (cell-at self row column))
 ;;       (when cell
-;; 	(setf width (max width (/width cell)))))
+;; 	(setf width (max width (width cell)))))
 ;;     (ecase <display-style> 
 ;;       (:label (max width (formatted-string-width *blank-cell-string*)))
 ;;       (:image width))))
@@ -361,8 +361,8 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 		(setf location (aref grid row column))
 		(when (and location (not (zerop (fill-pointer location))))
 		  (setf cell (aref location (- (fill-pointer location) 1)))
-		  (update-height row (/height cell))
-		  (update-width column (/width cell)))))))))))
+		  (update-height row (height cell))
+		  (update-width column (width cell)))))))))))
 
 (defparameter *even-columns-format* '(:background ".gray50" :foreground ".gray10"))
 (defparameter *odd-columns-format* '(:background ".gray45" :foreground ".gray10"))
@@ -374,15 +374,15 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 		   (equal :control (second event)))
 	      (equal "ESCAPE" (first event)))
 	  (send-parent self :initialize self)
-	  (let* ((cell (/selected-cell self))
+	  (let* ((cell (selected-cell self))
 		 (widget (when cell (field-value :widget cell))))
 	    (cond ((and cell (has-method :handle-key cell))
-		   (or (/handle-key cell event)
+		   (or (handle-key cell event)
 		       (send-parent self :handle-key self event)))
 		  ((and widget <entered>)
-		   (prog1 nil (/handle-key widget event)))
+		   (prog1 nil (handle-key widget event)))
 		  (t (send-parent self :handle-key self event)))))
-    (/layout self)))
+    (layout self)))
 
 (define-method hit form (x0 y0) 
   (with-field-values (row-heights column-widths origin-row origin-column rows columns x y width height)
@@ -410,15 +410,15 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 ;; TODO break up this method.
 
 (define-method render form ()
-  (/clear self)
+  (clear self)
   (when <world>
     (with-field-values (cursor-row cursor-column row-heights world world-name 
 				   origin-row origin-column header-line status-line
 				   mark-row mark-column width height
 				   display-style header-style tool tool-methods entered focused
 				   row-spacing rows columns draw-blanks column-widths) self
-      (when <computing> (/compute self))
-;;      (/layout self)
+      (when <computing> (compute self))
+;;      (layout self)
       (let* ((image <image>)
 	     (widget-width <width>)
 	     (widget-height <height>)
@@ -448,11 +448,11 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	(setf <origin-width> (- rightmost-visible-column origin-column))
 	(setf <origin-height> (- bottom-visible-row origin-row))
 	;; see if current cell has a tooltip
-	;; (let ((selected-cell (/cell-at self cursor-row cursor-column)))
+	;; (let ((selected-cell (cell-at self cursor-row cursor-column)))
 	;;   (when (object-p selected-cell)
 	;;     (setf header-line (field-value :tooltip selected-cell))))
 	;; draw header line with tooltip, if any
-	(multiple-value-bind (top left bottom right) (/mark-region self)
+	(multiple-value-bind (top left bottom right) (mark-region self)
 	  (let ((x0 0)
 		(y0 0)
 		pending-draws
@@ -471,7 +471,7 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	      (loop for column from origin-column to rightmost-visible-column do
 		(let ((column-width (aref column-widths column))
 		      (row-height (aref row-heights row))
-		      (cell (/cell-at self row column)))
+		      (cell (cell-at self row column)))
 		  ;; possibly set up region drawing info
 		  (when (equal row top)
 		    (setf y0 y))
@@ -493,8 +493,8 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 		      ;; see also cells.lisp
 		      (progn 
 			(ecase display-style
-			  (:label (/render cell image x y column-width))
-			  (:image (if (/in-category cell :drawn)
+			  (:label (render cell image x y column-width))
+			  (:image (if (in-category cell :drawn)
 				     (push (list cell x y) pending-draws)
 				     (when (field-value :image cell)
 				       (draw-image (find-resource-object 
@@ -532,12 +532,12 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	    ;; draw any pending drawn cells
 	    (dolist (args pending-draws)
 	      (destructuring-bind (cell x y) args
-		(/draw cell x y image)))
+		(draw cell x y image)))
 	    ;; create status line
 	    ;; TODO break this formatting out into variables
 	    (setf status-line
 		  (list 
-		   (list (format nil " (/ ~A )     " world-name) :foreground (if focused ".yellow" ".white")
+		   (list (format nil " ( ~A )     " world-name) :foreground (if focused ".yellow" ".white")
 			 :background (if focused ".red" ".blue"))
 		   (list (format nil "  ~A (~S, ~S) ~Sx~S "
 				 tool cursor-row cursor-column rows columns)
@@ -555,13 +555,13 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	    ;; render cursor and mark, if any 
 	    (when cursor-dimensions
 	      (destructuring-bind (x y w h) cursor-dimensions
-	      (/draw-cursor self x y w h)))
+	      (draw-cursor self x y w h)))
 	    (when mark-dimensions
 	      (destructuring-bind (x y w h) mark-dimensions
-		(/draw-mark self x y w h)))
+		(draw-mark self x y w h)))
 	    (when (and (integerp mark-row) (integerp mark-column)
 		       (notany #'null (list x0 y0 x1 y1)))
-	      (/draw-region self x0 y0 (- x1 x0) (- y1 y0)))))))))
+	      (draw-region self x0 y0 (- x1 x0) (- y1 y0)))))))))
   
 ;;; Cursor
   
@@ -620,10 +620,10 @@ DIRECTION is one of :up :down :right :left."
     (with-field-values (cursor-row cursor-column rows columns) self
       (let ((cursor (list cursor-row cursor-column)))
 	(setf cursor (ecase direction
-		       (:up (if (/= 0 cursor-row)
+		       (:up (if (= 0 cursor-row)
 				(list (- cursor-row 1) cursor-column)
 				cursor))
-		       (:left (if (/= 0 cursor-column)
+		       (:left (if (= 0 cursor-column)
 				  (list cursor-row (- cursor-column 1))
 				  cursor))
 		       (:down (if (< cursor-row (- rows 1))
@@ -635,38 +635,38 @@ DIRECTION is one of :up :down :right :left."
 	(destructuring-bind (r c) cursor
 	  (setf <cursor-row> r <cursor-column> c))
 	;; possibly scroll
-	(/scroll self)))))
+	(scroll self)))))
   
 (define-method move-cursor-up form ()
-  (/move-cursor self :up))
+  (move-cursor self :up))
 
 (define-method move-cursor-down form ()
-  (/move-cursor self :down))
+  (move-cursor self :down))
 
 (define-method move-cursor-left form ()
-  (/move-cursor self :left))
+  (move-cursor self :left))
 
 (define-method move-cursor-right form ()
-  (/move-cursor self :right))
+  (move-cursor self :right))
 
 (define-method move-end-of-line form ()
   (unless <entered>
     (setf <cursor-column> (1- <columns>))
-    (/scroll self)))
+    (scroll self)))
 
 (define-method move-beginning-of-line form ()
   (unless <entered>
     (setf <cursor-column> 0)
-    (/scroll self)))
+    (scroll self)))
 
 (define-method move-end-of-column form ()
   (unless <entered>
     (setf <cursor-row> (1- <rows>))
-    (/scroll self)))
+    (scroll self)))
 
 (define-method move-beginning-of-column form ()
   (unless <entered>
     (setf <cursor-row> 0)
-    (/scroll self)))
+    (scroll self)))
 
 ;;; forms.lisp ends here

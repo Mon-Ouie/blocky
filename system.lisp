@@ -1,6 +1,6 @@
 ;;; system.lisp --- blocks library for basic ioforms operations
 
-;; Copyright (C) 2010  David O'Toole
+;; Copyright (C) 2010, 2011  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: 
@@ -49,14 +49,14 @@
     (when (null shell)
       (setf shell (clone =shell=))
       (setf *default-font* *block-font*)
-      (/resize shell :width *screen-width* :height *screen-height*)
-      (/create-image shell)
-      (/move shell 0 0)
-      (/switch-to-script shell (clone =script=))
-      (/add shell (clone =listener=) 0 0)
-      (/add shell (clone =listener=) 20 20)
-      (/add shell (clone =integer=) 80 80)
-      (/add shell (clone =listener=) 90 90))
+      (resize shell :width *screen-width* :height *screen-height*)
+      (create-image shell)
+      (move shell 0 0)
+      (switch-to-script shell (clone =script=))
+      (add shell (clone =listener=) 0 0)
+      (add shell (clone =listener=) 20 20)
+      (add shell (clone =integer=) 80 80)
+      (add shell (clone =listener=) 90 90))
     (when running
       (dolist (block children)
 	(apply #'/step block args)))))
@@ -65,14 +65,14 @@
   (apply #'send nil method <script> args))
 
 (define-method resize system (&key height width)
-  ;; (/parent/resize self :height height :width width)
+  ;; (parent/resize self :height height :width width)
   (with-fields (shell) self
-    (/resize shell :height height :width width)
-    (/layout shell)))
+    (resize shell :height height :width width)
+    (layout shell)))
 
 (define-method hit system (x y)
   (with-fields (shell) self
-    (/hit shell x y)))
+    (hit shell x y)))
 
 (define-method initialize system (&rest args)
   #+linux (do-cffi-loading)
@@ -114,7 +114,7 @@
 	(set-screen-height *default-shell-height*)
 	(set-screen-width *default-shell-width*)
 	(labels ((resize ()
-		   (/resize *system* 
+		   (resize *system* 
 			    :width *screen-width* 
 			    :height *screen-height*)))
 	  (add-hook '*resize-hook* #'resize))
@@ -138,7 +138,7 @@
     (when (directory-is-project-p dir)
       (error "Project ~S aready exists." project))
     (make-directory-maybe dir)
-    (/open-project self project)))
+    (open-project self project)))
 
 (define-method save-everything system ()
   (save-everything))
@@ -151,7 +151,7 @@
     (when shell
       (with-fields (image) shell
 	(when image
-	  (/render shell)
+	  (render shell)
 	  (draw-image image 0 0 :destination destination))))))
 
 ;;; Interactive editor shell
@@ -162,22 +162,22 @@
   (rows :initform 10))
 
 (define-method initialize block-prompt (output)
-  (/parent/initialize self)
+  (parent/initialize self)
   (setf <output> output))
 
 (define-method do-sexp block-prompt (sexp)
   (with-fields (output rows) self
     (assert output)
-    (let ((container (/get-parent output)))
+    (let ((container (get-parent output)))
       (when container
-	(/accept container 
+	(accept container 
 		 (let ((*make-block-package* (find-package :ioforms)))
 		   (if (symbolp (first sexp))
 		       (make-block-ext sexp)
 
 		       (make-block-ext (first sexp)))))
-	(when (> (/length container) rows)
-	  (/pop container))))))
+	(when (> (length container) rows)
+	  (pop container))))))
 
 (define-prototype listener (:parent =list=)
   (type :initform :system)
@@ -188,8 +188,8 @@
 (define-method initialize listener ()
   (with-fields (image arguments) self
     (let ((prompt (clone =block-prompt= self)))
-      (/parent/initialize self)
-      (/resize prompt 
+      (parent/initialize self)
+      (resize prompt 
 	       :width *minimum-listener-width*
 	       :height (+ (* 2 *dash*) 
 			  (font-height *default-font*)))
@@ -199,7 +199,7 @@
 (define-method run listener ()
   (with-fields (arguments) self
     (destructuring-bind (prompt) arguments
-      (/run prompt))))
+      (run prompt))))
 
 (define-prototype shell (:parent =block=)
   (selection :initform ()
@@ -220,10 +220,10 @@
 	  :documentation "Non-nil when modified since last save."))
 
 (define-method layout shell ()
-  (/layout <script>))
+  (layout <script>))
 
 (define-method initialize shell ()
-  (/parent/initialize self))
+  (parent/initialize self))
 
 (define-method script-blocks shell ()
   (field-value :arguments <script>))
@@ -234,11 +234,11 @@
   
 (define-method add shell (block &optional x y)
   (with-fields (needs-redraw script) self
-    (/add script block x y)
+    (add script block x y)
     (setf needs-redraw t)))
 
 (define-method delete shell (block)
-  (/delete <script> block))
+  (delete <script> block))
 
 (define-method select shell (block)
   (with-fields (selection arguments) self
@@ -256,35 +256,35 @@
   (with-fields (selection needs-redraw) self
     (when (= 1 (length selection))
       (when (first selection)
-	(/handle-key (first selection) keys)
+	(handle-key (first selection) keys)
 	(setf needs-redraw t)))))
 
 (define-method resize shell (&key width height)
   (with-fields (prompt buffer needs-redraw image) self
-    (/parent/resize self :width width :height height)
+    (parent/resize self :width width :height height)
     (setf buffer (create-image width height))
     (setf needs-redraw t)))
 
 (define-method redraw shell ()
   (with-fields (buffer selection needs-redraw width height) self
-    (let ((blocks (/script-blocks self)))
+    (let ((blocks (script-blocks self)))
       (draw-box 0 0 width height 
 		:color *background-color*
 		:stroke-color *background-color*
 		:destination buffer)
       (dolist (block blocks)
-	(/layout block))
+	(layout block))
       (dolist (block blocks)
 	(when (find block selection)
-	  (/draw-border block buffer))
-	(/draw block buffer))
+	  (draw-border block buffer))
+	(draw block buffer))
       (setf needs-redraw nil))))
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag arguments script drag-start ghost drag-offset) self
     (setf drag block)
-    (when (/is-member script block)
-      (/delete script block))
+    (when (is-member script block)
+      (delete script block))
     (let ((dx (field-value :x block))
 	  (dy (field-value :y block))
 	  (dw (field-value :width block))
@@ -299,11 +299,11 @@
 
 (define-method hit-blocks shell (x y)
   (labels ((hit (b)
-	     (/hit b x y)))
+	     (hit b x y)))
     (let ((parent 
 	   (find-if 
 	    #'hit  
-	    (/script-blocks self)
+	    (script-blocks self)
 	    :from-end t)))
       (when parent
 	(hit parent)))))
@@ -316,24 +316,24 @@
     (dolist (block selection)
       (let ((block-image (field-value :image block)))
     	(when block-image 
-    	  (/render block))))
+    	  (render block))))
     ;; now render
     (when needs-redraw 
-      (/redraw self))
+      (redraw self))
     (draw-image buffer 0 0 :destination image)
     (when drag 
-      (/layout drag)
-      (/draw-ghost ghost image)
-      (/draw drag image)
+      (layout drag)
+      (draw-ghost ghost image)
+      (draw drag image)
       (when hover 
-	(/draw-hover hover image)))))
+	(draw-hover hover image)))))
 
 (define-method mouse-down shell (x y &optional button)
-  (let ((block (/hit-blocks self x y)))
+  (let ((block (hit-blocks self x y)))
     (when block
       (case button
-	(1 (/begin-drag self x y block))
-	(3 (/run block))))))
+	(1 (begin-drag self x y block))
+	(3 (run block))))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
   (with-fields (arguments hover drag-offset drag-start drag) self
@@ -342,8 +342,8 @@
       (destructuring-bind (ox . oy) drag-offset
 	(let ((target-x (- mouse-x ox))
 	      (target-y (- mouse-y oy)))
-	  (setf hover (/hit-blocks self target-x target-y))
-	  (/move drag target-x target-y))))))
+	  (setf hover (hit-blocks self target-x target-y))
+	  (move drag target-x target-y))))))
 
 (define-method mouse-up shell (x y &optional button)
   (with-fields 
@@ -351,18 +351,18 @@
 	      selection drag modified) 
       self
     (when drag
-      (let ((drag-parent (/get-parent drag)))
+      (let ((drag-parent (get-parent drag)))
 	(when drag-parent
-	  (/unplug-from-parent drag))
+	  (unplug-from-parent drag))
 	(let ((sink hover))
 	  (if sink
 	      ;; dropping on another block
-	      (unless (/accept sink drag)
-		(/add self drag))
+	      (unless (accept sink drag)
+		(add self drag))
 	      ;; dropping on background
-	      (/add self drag)))))
+	      (add self drag)))))
     (setf selection nil)
-    (when drag (/select self drag))
+    (when drag (select self drag))
     (setf drag-start nil
 	  drag-offset nil
 	  drag nil
@@ -382,9 +382,9 @@
 (define-method execute-arguments if ()
   (with-fields (arguments results) self
     (destructuring-bind (predicate then else) arguments
-      (if (/run predicate)
-	  (/run then)
-	  (/run else)))))
+      (if (run predicate)
+	  (run then)
+	  (run else)))))
 
 ;;; Get field value
 
@@ -411,7 +411,7 @@
   (schema :initform '(:string)))
 
 (define-method execute emote ()
-  (/emote *target* 
+  (emote *target* 
 	  (list (list (list (first <results>) :font *block-font*
 			    :foreground ".black")))
 	  :timeout 200 :style :clear))
@@ -459,7 +459,7 @@
   (arguments :initform '("fanfare")))
 
 (define-method execute play-music ()
-  (/play-music *target* (first <results>) :loop t))
+  (play-music *target* (first <results>) :loop t))
 
 (defblock play-sound 
   (type :initform :sound)

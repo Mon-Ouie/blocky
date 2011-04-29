@@ -613,20 +613,27 @@ was invoked."
 			(first body2)))
 	 (prototype-special-name (make-special-variable-name prototype-name))
 	 (field-name (make-keyword method-name))
-	 (method-symbol (symbol-name method-name))
+	 (method-symbol-name (symbol-name method-name))
+	 (method-symbol method-name) ;; fixme, unclear naming
 	 (defun-symbol (intern (concatenate 'string
 					    (symbol-name prototype-name) 
 					    "/"
-					    method-symbol)))
+					    method-symbol-name)))
 	 (slash-defun-symbol (intern (concatenate 'string
 						  "/"
-						  method-symbol)))
+						  method-symbol-name)))
 	 (queue-defun-symbol (intern (concatenate 'string
 						  "/QUEUE/"
-						  method-symbol)))
+						  method-symbol-name)))
 	 (parent-defun-symbol (intern (concatenate 'string
 						  "/PARENT/"
-						  method-symbol))))
+						  method-symbol-name)))
+	 (queue-defun-symbol-noslash (intern (concatenate 'string
+						  "QUEUE/"
+						  method-symbol-name)))
+	 (parent-defun-symbol-noslash (intern (concatenate 'string
+						  "PARENT/"
+						  method-symbol-name))))
     (let ((name (gensym)))
       `(progn 
 	 (if (not (boundp ',prototype-special-name))
@@ -650,12 +657,12 @@ was invoked."
 	   (setf (method-arglist ',method-name) ',arglist)
 	   (export ',defun-symbol)
 	   (let ((,name ,(make-keyword method-name)))
-	     (unless (fboundp ,method-symbol)
+	     (unless (fboundp ',method-symbol)
 	       (defun ,method-symbol (self &rest args)
 		 ,@(when documentation (list documentation))
 		 (apply #'send ,name self args))
 	       (export ',method-symbol)
-	       ;; for (/foo bar baz...)
+	       ;; for (foo bar baz...)
 	       (defun ,slash-defun-symbol (self &rest args)
 		 ,@(when documentation (list documentation))
 		 (apply #'send ,name self args))
@@ -665,11 +672,19 @@ was invoked."
 		 ,@(if documentation (list documentation))
 		 (apply #'send-queue ,name self args))
 	       (export ',queue-defun-symbol)
+	       (defun ,queue-defun-symbol-noslash (self &rest args)
+		 ,@(if documentation (list documentation))
+		 (apply #'send-queue ,name self args))
+	       (export ',queue-defun-symbol-noslash)
 	       ;; and for parent calls.
 	       (defun ,parent-defun-symbol (self &rest args)
 		 ,@(if documentation (list documentation))
 		 (apply #'send-parent ,name self args))
-	       (export ',parent-defun-symbol))))))))
+	       (export ',parent-defun-symbol)
+	       (defun ,parent-defun-symbol-noslash (self &rest args)
+		 ,@(if documentation (list documentation))
+		 (apply #'send-parent ,name self args))
+	       (export ',parent-defun-symbol-noslash))))))))
 
 ;;; Defining prototypes
 
@@ -932,7 +947,13 @@ objects after reconstruction, wherever present."
 (defun /parent/initialize (object &rest args)
   (apply #'send-parent :initialize object args))
 
+(defun parent/initialize (object &rest args)
+  (apply #'send-parent :initialize object args))
+
 (defun /queue/initialize (object &rest args)
+  (apply #'send-queue :initialize object args))
+
+(defun queue/initialize (object &rest args)
   (apply #'send-queue :initialize object args))
       
 ;;; prototypes.lisp ends here

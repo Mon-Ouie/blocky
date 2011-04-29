@@ -1,6 +1,6 @@
 ;;; cells.lisp --- defining objects
 
-;; Copyright (C) 2008  David O'Toole
+;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: 
@@ -73,7 +73,7 @@ When nil, the method DRAW is invoked instead of using a tile.")
 (define-method render cell (dest x y width)
   (with-field-values (widget image) self
       (cond (widget 
-	     (/render widget)
+	     (render widget)
 	     (draw-image (field-value :image widget)
 			 x y :destination dest))
 	    ;; it's an image
@@ -123,19 +123,19 @@ When nil, the method DRAW is invoked instead of using a tile.")
 (define-method viewport-coordinates cell ()
   "Return as values X,Y the world coordinates of CELL."
   (assert (and <row> <column>))
-  (/get-viewport-coordinates (field-value :viewport *world*)
+  (get-viewport-coordinates (field-value :viewport *world*)
                             <row> <column>))
 
 (define-method image-coordinates cell ()
   "Return as values X,Y the viewport image coordinates of CELL."
   (assert (and <row> <column>))
-  (/get-image-coordinates (field-value :viewport *world*)
+  (get-image-coordinates (field-value :viewport *world*)
                          <row> <column>))
 
 (define-method screen-coordinates cell ()
   "Return as values X,Y the screen coordinates of CELL."
   (assert (and <row> <column>))
-  (/get-screen-coordinates (field-value :viewport *world*)
+  (get-screen-coordinates (field-value :viewport *world*)
 			  <row> <column>))
 
 ;;; Cell categories
@@ -157,7 +157,7 @@ interpretation:
       cells participate in the Action Points system.
  -    :target --- This cell is susceptible to targeting.
  -    :proxy --- This cell is a proxy for another cell.
- -    :drawn --- This cell has a (/draw) method used for custom drawing.
+ -    :drawn --- This cell has a (draw) method used for custom drawing.
  -    :proxied  --- This cell is an occupant of a proxy.
  -    :dead --- This cell is no longer receiving run messages.
  -    :player --- Only one cell (your player avatar) has this category.
@@ -191,15 +191,15 @@ interpretation:
 (define-method distance-to-player cell ()
   "Calculate the distance from the current location to the player."
   ;; todo fix for sprites
-  (multiple-value-bind (row column) (/grid-coordinates self)
-    (/distance-to-player *world* row column)))
+  (multiple-value-bind (row column) (grid-coordinates self)
+    (distance-to-player *world* row column)))
 
 (define-method direction-to-player cell ()
   "Calculate the general compass direction of the player."
-  (/direction-to-player *world* <row> <column>))
+  (direction-to-player *world* <row> <column>))
 
 (define-method adjacent-to-player cell ()
-  (/adjacent-to-player *world* <row> <column>))
+  (adjacent-to-player *world* <row> <column>))
 
 ;;; Convenience macro for defining cells.
 
@@ -221,24 +221,24 @@ is in the way. Returns non-nil if a move occurred."
     (multiple-value-bind (r c) 
 	(step-in-direction <row> <column> direction)
       ;; 
-      (cond ((null (/grid-location world r c)) ;; are we at the edge?
+      (cond ((null (grid-location world r c)) ;; are we at the edge?
 	     ;; return nil because we didn't move
 	     (prog1 nil
 	     ;; edge conditions only affect player for now
-	       (when (/is-player self)
+	       (when (is-player self)
 		 (ecase (field-value :edge-condition world)
-		   (:block (/say self "You cannot move in that direction."))
+		   (:block (say self "You cannot move in that direction."))
 		   (:wrap nil) ;; TODO implement this for planet maps
-		   (:exit (/exit *universe*))))))
+		   (:exit (exit *universe*))))))
 	    (t
 	     (when (or ignore-obstacles 
-		       (not (/obstacle-at-p *world* r c)))
+		       (not (obstacle-at-p *world* r c)))
 	       ;; return t because we moved
 	       (prog1 t
-;;		 (/expend-action-points self (/stat-value self :movement-cost))
-		 (/move world self r c))))))))
+;;		 (expend-action-points self (stat-value self :movement-cost))
+		 (move world self r c))))))))
 		 ;; (when <stepping>
-		 ;;   (/step-on-current-square self)))))))))
+		 ;;   (step-on-current-square self)))))))))
 
 (define-method set-location cell (r c)
   "Set the row R and column C of the cell."
@@ -246,8 +246,8 @@ is in the way. Returns non-nil if a move occurred."
 
 (define-method move-to cell (unit r c)
   (assert (member unit '(:space :spaces)))
-  (/delete-cell *world* self <row> <column>)
-  (/drop-cell *world* self r c))
+  (delete-cell *world* self <row> <column>)
+  (drop-cell *world* self r c))
 
 ;;; Adding items to the world 
 
@@ -255,20 +255,20 @@ is in the way. Returns non-nil if a move occurred."
   "Add CELL to the world at the current location. By default,
 EXCLUSIVE is nil; this allows one to drop objects on top of oneself.
 When LOADOUT is non-nil, call the :loadout method."
-  (/drop-cell *world* cell <row> <column> :loadout loadout :exclusive exclusive))
+  (drop-cell *world* cell <row> <column> :loadout loadout :exclusive exclusive))
 
 (define-method drop-sprite cell (sprite &optional x y)
   "Add SPRITE to the world at location X,Y."
   (multiple-value-bind (x0 y0)
-      (/xy-coordinates self)
+      (xy-coordinates self)
     (let ((x1 (or x x0))
 	  (y1 (or y y0)))
-      (/add-sprite *world* sprite)
+      (add-sprite *world* sprite)
       (assert (and x1 y1))
-      (/move-to sprite x1 y1))))
+      (move-to sprite x1 y1))))
 
 (define-method is-player cell ()
-  (/in-category self :player))
+  (in-category self :player))
 
 ;;; Finding and manipulating objects
 
@@ -276,12 +276,12 @@ When LOADOUT is non-nil, call the :loadout method."
   (let ((world *world*))
     (multiple-value-bind (nrow ncol)
 	(step-in-direction <row> <column> direction)
-      (if (/in-bounds-p world nrow ncol)
+      (if (in-bounds-p world nrow ncol)
 	  (let (cell)
-	    (let* ((cells (/grid-location world nrow ncol))
+	    (let* ((cells (grid-location world nrow ncol))
 		   (index2 (cond 
 			     ((not (null category))
-				(setf cell (/category-at-p world nrow ncol category))
+				(setf cell (category-at-p world nrow ncol category))
 				(position cell cells :test 'eq))
 			     ((and (eq :top index) (eq :here direction))
 			      ;; skip yourself and instead get the item you're standing on
@@ -299,11 +299,11 @@ When LOADOUT is non-nil, call the :loadout method."
   (setf <row> nil <column> nil))
 
 (define-method delete-from-world cell ()
-  (/delete-cell *world* self <row> <column>))
+  (delete-cell *world* self <row> <column>))
 
 (define-method quit cell ()
   "Leave the gameworld."
-  (/delete-from-world self))
+  (delete-from-world self))
 
 ;;; Custom rendering
 

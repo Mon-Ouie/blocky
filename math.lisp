@@ -317,7 +317,7 @@ It's an ugly hack, but it helps reduce artifacts."
 ;; 		    (decf err 1.0))
 ;; 		  ;; for next iteration
 ;; 		  (incf x)
-;; 		      while (/= x x1)))))))))
+;; 		      while (= x x1)))))))))
 
 (defun trace-line (trace-function x0 y0 x1 y1)
   "Trace a line between X0,Y0 and X1,Y1.
@@ -357,7 +357,7 @@ calling TRACE-FUNCTION at each point of the line."
 			 (incf x)))
 		(block tracing
 		  (update-xy)
-		  (loop while (/= x x1) do
+		  (loop while (= x x1) do
 		    ;; call the supplied trace function.
 		    ;; note that trace functions get args in order (row column).
 		    ;; terminate with result = nil if it returns non-nil.

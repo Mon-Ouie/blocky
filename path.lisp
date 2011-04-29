@@ -1,6 +1,6 @@
 ;;; path.lisp --- A* pathfinding for IOFORMS
 
-;; Copyright (C) 2009  David O'Toole
+;; Copyright (C) 2009, 2011  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: 
