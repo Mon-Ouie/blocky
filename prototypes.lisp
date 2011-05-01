@@ -422,10 +422,10 @@ If the method is not found, attempt to forward the message."
 
 (defvar *send-parent-depth* 2)
 
-(defun initialize ()
+(defun initialize-ioforms ()
   (format t "~A" *copyright-text*)
   ;;(initialize-documentation-tables)
-  (setf *send-parent-depth* 2))
+  (setf *send-parent-depth* 2)) ;;FIXME
 
 (defvar *send-parent-key* nil)
 

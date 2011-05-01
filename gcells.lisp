@@ -111,16 +111,16 @@ Sprites are also based on cells. See `defsprite'.")
 
 (define-method compute gcell () nil)
     
-(define-method set gcell (field value)
+(define-method set-data gcell (field value)
   (setf (field-value field self) value))
 
-(define-method get gcell ()
+(define-method get-data gcell ()
   (object-name (object-parent self)))
 
-(define-method print gcell ()
+(define-method print-data gcell ()
   "")
 
-(define-method read gcell (text)
+(define-method read-data gcell (text)
   (read-from-string text))
 
 (define-method is-located gcell ()
@@ -208,10 +208,10 @@ You must provide at least a :base value."
   (assert (numberp base))
   (list :base base :min min :max max :delta delta :unit unit))
 
-;;; Pushing stuff; let the cell decide whether to move
+;; ;;; Pushing stuff; let the cell decide whether to move
 
-(define-method push gcell (direction)
-  nil)
+;; (define-method push gcell (direction)
+;;   nil)
 
 ;;; Run method
 
@@ -296,12 +296,12 @@ place. (See also worlds.lisp)
   "End this cell's phase."
   (setf <phase-number> (get-phase-number *world*)))
 
-(define-method step-on-current-square gcell ()
-  "Send :step events to all the cells on the current square."
-  (when <stepping>
-    (do-cells (gcell (grid-location *world* <row> <column>))
-      (unless (eq cell self) 
-	(on-step cell self)))))
+;; (define-method step-on-current-square gcell ()
+;;   "Send :step events to all the cells on the current square."
+;;   (when <stepping>
+;;     (do-cells (gcell (grid-location *world* <row> <column>))
+;;       (unless (eq cell self) 
+;; 	(on-step cell self)))))
 
 (define-method on-step gcell (stepper)
   "Respond to being stepped on by the STEPPER."
@@ -409,49 +409,49 @@ Return ITEM if successful, nil otherwise."
 
 ;;  (clear-location self))
 		       
-(define-method take gcell (&key (direction :here) index category)
-  "Take the item and return non-nil if successful."
-  (multiple-value-bind (cell row column)
-      (find self :direction direction :index index :category category)
-    (when (and (in-category cell :item)
-	       (first-open-slot self))
-      (prog1 t
-	(expend-default-action-points self)
-	(delete-from-world cell)
-	(add-item self cell)))))
+;; (define-method take gcell (&key (direction :here) index category)
+;;   "Take the item and return non-nil if successful."
+;;   (multiple-value-bind (cell row column)
+;;       (find self :direction direction :index index :category category)
+;;     (when (and (in-category cell :item)
+;; 	       (first-open-slot self))
+;;       (prog1 t
+;; 	(expend-default-action-points self)
+;; 	(delete-from-world cell)
+;; 	(add-item self cell)))))
 
-(define-method use gcell (user)
-  "Return non-nil if cell is used up and should disappear."
-  (declare (ignore user))
-  (prog1 nil
-    (say self "Nothing happens.")))
+;; (define-method use gcell (user)
+;;   "Return non-nil if cell is used up and should disappear."
+;;   (declare (ignore user))
+;;   (prog1 nil
+;;     (say self "Nothing happens.")))
     
-(define-method resolve gcell (reference &optional category)
-  "Accept a REFERENCE to a cell, and try to get the real cell.
-The REFERENCE may be an object, one of the `*compass-directions*', an
-equipment slot keyword, or an integer denoting the nth inventory
-slot."
-  (etypecase reference
-    (keyword (if (member reference *compass-directions*)
-		 (find self :direction reference :category category)
-		 (equipment-slot self reference)))
-    (integer (item-at self reference))
-    (ioforms:object reference)))
+;; (define-method resolve gcell (reference &optional category)
+;;   "Accept a REFERENCE to a cell, and try to get the real cell.
+;; The REFERENCE may be an object, one of the `*compass-directions*', an
+;; equipment slot keyword, or an integer denoting the nth inventory
+;; slot."
+;;   (etypecase reference
+;;     (keyword (if (member reference *compass-directions*)
+;; 		 (find-object self :direction reference :category category)
+;; 		 (equipment-slot self reference)))
+;;     (integer (item-at self reference))
+;;     (ioforms:object reference)))
 
-;;; Knowledge of objects
+;; ;;; Knowledge of objects
 
-;; TODO port and document knowledge code
+;; ;; TODO port and document knowledge code
 
-(defun some-name-of (ob)
-  (let ((name (if (has-field :name ob)
-		  (field-value :name ob)
-		  nil)))
-    (if (stringp name)
-	name
-	(progn
-	  (setf name (symbol-name (object-name (object-parent ob))))
-	  (subseq name (1+ (search "=" name))
-		  (search "=" name :from-end t))))))
+;; (defun some-name-of (ob)
+;;   (let ((name (if (has-field :name ob)
+;; 		  (field-value :name ob)
+;; 		  nil)))
+;;     (if (stringp name)
+;; 	name
+;; 	(progn
+;; 	  (setf name (symbol-name (object-name (object-parent ob))))
+;; 	  (subseq name (1+ (search "=" name))
+;; 		  (search "=" name :from-end t))))))
 
 ;;; Equipment
 
@@ -757,7 +757,7 @@ are as with `format'."
   (sprite-name :initform nil)
   (categories :initform '(:actor :drawn)))
 
-(define-method set sprite-special (value)
+(define-method set-data sprite-special (value)
   (assert (symbolp value))
   (setf <sprite-name> value))
 

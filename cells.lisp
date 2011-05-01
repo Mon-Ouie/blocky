@@ -272,7 +272,7 @@ When LOADOUT is non-nil, call the :loadout method."
 
 ;;; Finding and manipulating objects
 
-(define-method find cell (&key (direction :here) (index :top) category)
+(define-method find-object cell (&key (direction :here) (index :top) category)
   (let ((world *world*))
     (multiple-value-bind (nrow ncol)
 	(step-in-direction <row> <column> direction)

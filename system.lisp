@@ -44,7 +44,7 @@
 (define-method stop system ()
   (setf <running> nil))
 
-(define-method step system (&rest args)
+(define-method tick system (&rest args)
   (with-fields (running children shell) self
     (when (null shell)
       (setf shell (clone =shell=))
@@ -59,7 +59,7 @@
       (add shell (clone =listener=) 90 90))
     (when running
       (dolist (block children)
-	(apply #'/step block args)))))
+	(apply #'tick block args)))))
 
 (define-method forward system (method &rest args)
   (apply #'send nil method <script> args))
@@ -77,7 +77,7 @@
 (define-method initialize system (&rest args)
   #+linux (do-cffi-loading)
   (message "Starting IOFORMS Shell...")
-  (ioforms:initialize)
+  (initialize-ioforms)
   (apply #'/parent/initialize self args)
   (reset-message-function)
   (setf *project-package-name* nil
@@ -113,11 +113,11 @@
 	(enable-classic-key-repeat 100 100)
 	(set-screen-height *default-shell-height*)
 	(set-screen-width *default-shell-width*)
-	(labels ((resize ()
+	(labels ((do-resize ()
 		   (resize *system* 
 			    :width *screen-width* 
 			    :height *screen-height*)))
-	  (add-hook '*resize-hook* #'resize))
+	  (add-hook '*resize-hook* #'do-resize))
 	(ioforms:install-blocks self))
 	
 
@@ -141,9 +141,9 @@
     (open-project self project)))
 
 (define-method save-everything system ()
-  (save-everything))
+  (save-project :force))
 
-(define-method get-ticks system ()
+(define-method ticks system ()
   (get-ticks))
 
 (define-method draw system (destination)
@@ -237,7 +237,7 @@
     (add script block x y)
     (setf needs-redraw t)))
 
-(define-method delete shell (block)
+(define-method delete-child shell (block)
   (delete <script> block))
 
 (define-method select shell (block)
@@ -284,7 +284,7 @@
   (with-fields (drag arguments script drag-start ghost drag-offset) self
     (setf drag block)
     (when (is-member script block)
-      (delete script block))
+      (delete-child script block))
     (let ((dx (field-value :x block))
 	  (dy (field-value :y block))
 	  (dw (field-value :width block))
@@ -298,11 +298,11 @@
 	    (setf drag-offset (cons x-offset y-offset))))))))
 
 (define-method hit-blocks shell (x y)
-  (labels ((hit (b)
+  (labels ((hit-it (b)
 	     (hit b x y)))
     (let ((parent 
 	   (find-if 
-	    #'hit  
+	    #'hit-it 
 	    (script-blocks self)
 	    :from-end t)))
       (when parent
@@ -411,10 +411,10 @@
   (schema :initform '(:string)))
 
 (define-method execute emote ()
-  (emote *target* 
-	  (list (list (list (first <results>) :font *block-font*
-			    :foreground ".black")))
-	  :timeout 200 :style :clear))
+  (send :emote *target* 
+	(list (list (list (first <results>) :font *block-font*
+			  :foreground ".black")))
+	:timeout 200 :style :clear))
 
 ;;; Other blocks
 

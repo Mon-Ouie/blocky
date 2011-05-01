@@ -129,16 +129,16 @@ PROPERTIES are chosen from:
   (display-current-line :initform nil)
   (current-line :documentation "Formatted line currently being composed."))
 
-(define-method print formatter (string &rest keys &key image foreground background font)
+(define-method printf formatter (string &rest keys &key image foreground background font)
   "Add a formatted STRING to the end of the current line.
-Example: (print my-formatter \"hello\" :foreground \"red\")"
+Example: (printf my-formatter \"hello\" :foreground \"red\")"
   (vector-push-extend (cons string keys) <current-line>))
 
 (define-method print-formatted-string formatter (formatted-string)
   (vector-push-extend formatted-string <current-line>))	       
 
 (define-method print-image formatter (image)
-  (print self nil :image image))
+  (printf self nil :image image))
 
 (define-method println formatter (&rest args)
   "Print the ARGS as a formatted string, following up with a newline."
@@ -146,7 +146,7 @@ Example: (print my-formatter \"hello\" :foreground \"red\")"
   (newline self))
 
 (define-method insert-space formatter ()
-  (print self " "))
+  (printf self " "))
 
 (define-method clear-line formatter ()
   (setf <current-line> (make-array 10 :adjustable t :fill-pointer 0)))
@@ -189,11 +189,11 @@ auto-updated displays."
 (define-method print-object-tag formatter (ob)
   (print-image self (or (field-value :tile ob) (field-value :image ob)))
   (insert-space self)
-  (print self (get-some-object-name ob))
+  (printf self (get-some-object-name ob))
   (insert-space self))
 
 (define-method print-separator formatter ()
-  (print self "  :  " :foreground ".gray20"))
+  (printf self "  :  " :foreground ".gray20"))
 
 (define-method render formatter ()
   (when <visible>

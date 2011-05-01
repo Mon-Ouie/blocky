@@ -1121,9 +1121,6 @@ OBJECT as the data."
       (write-iof (find-project-file *project* (object-index-filename *project*)) 
 		 (nreverse index)))))
 
-(defun save-everything ()
-  (save-project :force))
-
 (defparameter *export-formats* '(:archive :application))
 
 ;; (defun export-archive (pathname)

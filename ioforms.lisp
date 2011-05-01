@@ -183,8 +183,9 @@
 	   object-fields define-method define-prototype clone object-p
 	   self transform-declaration-field-descriptor is-a
 	   compose-blank-fields make-field-initializer initialize
-	   object-address-string draw-string-blended =block=
-	   *token-types* *block-categories* *block-colors*
-	   *block-text-colors* defblock =beep= =program=))
+	   initialize-ioforms object-address-string
+	   draw-string-blended =block= *token-types*
+	   *block-categories* *block-colors* *block-text-colors*
+	   defblock =beep= =program=))
 
 ;;; ioforms.lisp ends here

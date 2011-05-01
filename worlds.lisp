@@ -102,17 +102,17 @@ At the moment, only 0=off and 1=on are supported.")
 (define-method make-with-parameters world (parameters)
   (apply #'send self :make self parameters))
 
-(define-method set world (var value)
+(define-method setvar world (var value)
   (setf (gethash var <variables>) value))
 
-(define-method get world (var)
+(define-method getvar world (var)
   (gethash var <variables>))
 
 (defun world-variable (var-name)
-  (get *world* var-name))
+  (getvar *world* var-name))
 
 (defun set-world-variable (var-name value)
-  (set *world* var-name value))
+  (setvar *world* var-name value))
 
 (defsetf world-variable set-world-variable)
 
