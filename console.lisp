@@ -876,9 +876,7 @@ A `project' is a directory full of resource files. The name of the
 project is the name of the directory. Each project must contain a
 file called {project-name}.iof, which should contain an index of
 all the project's resources. Multiple projects may be loaded at one
-time. In addition the special resource `.startup' will be loaded;
-if this is of type :lisp, the startup code for your game can go in
-that external lisp file.")
+time.")
 
 (defun initialize-resource-table ()
   "Create a new empty resource table."
@@ -1059,8 +1057,6 @@ table."
     (index-iof project-name index-file)))
 
 ;;; Standard resource names
-
-(defvar *startup* ".startup")
 
 (defvar *default-font* ".default-font")
 
