@@ -893,8 +893,8 @@ named in the list ^EXCLUDED-FIELDS of said object will be ignored."
       (object (let ((excluded-fields (when (has-field :excluded-fields object)
 					    (field-value :excluded-fields object))))
 		     ;; possibly prepare object for serialization.
-		     (when (has-method :serialize object)
-		       (send :serialize object))
+		     (when (has-method :before-serialize object)
+		       (send :before-serialize object))
 		     (let ((parent-name (object-name (object-parent object)))
 			   (name (object-name object))
 			   (fields (object-fields object))
@@ -931,8 +931,8 @@ objects after reconstruction, wherever present."
 	 (prog1 object
 	   (initialize-method-cache object)
 	   ;; possibly recover from deserialization
-	   (when (has-method :deserialize object)
-	     (send :deserialize object))))))
+	   (when (has-method :after-deserialize object)
+	     (send :after-deserialize object))))))
     ;; handle hashes
     ((and (listp data) (eq +hash-type-key+ (first data)))
      (destructuring-bind (type-key test &rest plist)
