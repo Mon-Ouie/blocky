@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2010, 2011 David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: oop, languages, mouse, lisp, multimedia, hypermedia
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Commentary:
 
@@ -58,7 +58,7 @@
   (arguments :initform nil :documentation "List of block argument values.")
   (results :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
   (schema :documentation 
-	  "List of type keywords for corresponding expressions in <arguments>.
+	  "List of type keywords for corresponding expressions in ^arguments.
 See also `*argument-types*'.")
   (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
   (type :initform :data :documentation "Type name of block. See also `*block-types*'.")
@@ -82,13 +82,13 @@ ARGS are field specifiers, as with `define-prototype'."
      ,@args))
 
 (define-method pin block ()
-  (setf <pinned> t))
+  (setf ^pinned t))
 
 (define-method unpin block ()
-  (setf <pinned> nil))
+  (setf ^pinned nil))
 
 (define-method is-pinned block ()
-  <pinned>)
+  ^pinned)
 
 ;;; Defining input events for blocks
 
@@ -103,16 +103,16 @@ KEY-NAME is a string giving the key name; MODIFIERS is a list of
 keywords like :control, :alt, and so on."
   (initialize-keymap-maybe self)
   (setf (gethash (normalize-event (cons key-name modifiers))
-		 <keymap>)
+		 ^keymap)
 	func))
 
 (define-method undefine-key block (key-name modifiers)
   "Remove the described keybinding."
   (remhash (normalize-event (cons key-name modifiers))
-	   <keymap>))
+	   ^keymap))
 
 (define-method clear-keymap block ()
-  (setf <keymap> (make-hash-table :test 'equal)))
+  (setf ^keymap (make-hash-table :test 'equal)))
 
 (define-method handle-key block (keylist)
   "Look up and invoke the function (if any) bound to KEYLIST. Return t
@@ -208,40 +208,40 @@ areas.")
 
 (define-method move block (x y)
   "Move the block to a new (X Y) location."
-  (setf <x> x)
-  (setf <y> y))
+  (setf ^x x)
+  (setf ^y y))
 
 (define-method show block ()
-  (setf <visible> t))
+  (setf ^visible t))
 
 (define-method hide block ()
-  (setf <visible> nil))
+  (setf ^visible nil))
 
 (define-method toggle-visible block ()
-  (if <visible>
+  (if ^visible
       (hide self)
       (show self)))
 
 (define-method is-visible block ()
-  <visible>)
+  ^visible)
 
 (define-method set-parent block (parent)
   "Store a link to an enclosing PARENT block, if any."
-  (setf <parent> parent))
+  (setf ^parent parent))
 
 (define-method get-parent block ()
-  <parent>)
+  ^parent)
 
 (define-method get-image block ()
-  <image>)
+  ^image)
 
 (define-method get-argument block (n)
   "Return the value of the Nth block argument."
-  (nth n <arguments>))
+  (nth n ^arguments))
 
 (define-method set-argument block (n value)
   "Set the Nth argument value to VALUE."
-    (setf (nth n <arguments>) value))
+    (setf (nth n ^arguments) value))
 
 (define-method child-position block (child)
   (with-fields (arguments) self
@@ -259,7 +259,7 @@ areas.")
 
 (define-method unplug block (child)
   "Disconnect the block CHILD from this block."
-  (let ((pos (position child <arguments>)))
+  (let ((pos (position child ^arguments)))
     (plug self (null-block) pos)
     (set-parent child nil)))
 
@@ -269,8 +269,8 @@ areas.")
       (unplug parent self))))
 
 (define-method execute-arguments block ()
-  "Execute all blocks in <ARGUMENTS> from left-to-right. Results are
-placed in corresponding positions of <RESULTS>. Override this method
+  "Execute all blocks in ^ARGUMENTS from left-to-right. Results are
+placed in corresponding positions of ^RESULTS. Override this method
 when defining new blocks if you don't want to evaluate all the
 arguments all the time."
   (with-fields (arguments results) self
@@ -280,12 +280,12 @@ arguments all the time."
   "Carry out the block's action by sending messages to the object `*target*'.
 The *target* is a special variable bound in the execution
 environment. Its value will be the IOFORMS object to send messages to.
-The <RESULTS> field will be a list of results obtained by
-executing/evaluating the blocks in <ARGUMENTS> (see also
+The ^RESULTS field will be a list of results obtained by
+executing/evaluating the blocks in ^ARGUMENTS (see also
 `BLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
-send the <OPERATION> field's value as a message to the target, with
+send the ^OPERATION field's value as a message to the target, with
 the arguments to the target's method being the current computed
-<RESULTS>, and return the result of the method call. This default
+^RESULTS, and return the result of the method call. This default
 action is sufficient for many blocks whose main purpose is to send a
 single message; other blocks can redefine this /EXECUTE method to do
 something else. See also `defblock' and `send'."
@@ -445,7 +445,7 @@ block."
 		  (:highlight *block-highlight-colors*)
 		  (:shadow *block-shadow-colors*)
 		  (:foreground *block-foreground-colors*))))
-    (getf colors <type>)))
+    (getf colors ^type)))
 
 (defparameter *selection-color* ".red")
 
@@ -459,18 +459,18 @@ block."
 (define-method resize block (&key height width)
   "Allocate an image buffer of HEIGHT by WIDTH pixels.
 If there is no existing image, one of HEIGHT x WIDTH pixels is created
-and stored in <IMAGE>. If there is an existing image, it is only
+and stored in ^IMAGE. If there is an existing image, it is only
 resized when the new dimensions differ from the existing image."
   (assert (and (integerp width) (integerp height)))
   (with-fields (image) self
     (if (null image) 
-	(progn (setf <width> width 
-		     <height> height)
+	(progn (setf ^width width 
+		     ^height height)
 	       (create-image self))
-	(when (not (and (= <width> width) 
-			(= <height> height)))
-	  (setf <width> width 
-		<height> height) 
+	(when (not (and (= ^width width) 
+			(= ^height height)))
+	  (setf ^width width 
+		^height height) 
 	  (when image (create-image self))))))
 
 (defmacro with-block-drawing (image &body body)
@@ -588,7 +588,7 @@ override all colors."
 
 (define-method handle-width block ()
   (+ (* 2 *dash*)
-     (expression-width <operation>)))
+     (expression-width ^operation)))
 
 (defparameter *socket-width* (* 18 *dash*))
 
@@ -654,10 +654,10 @@ override all colors."
       (let* ((dash *dash*)
 	     (left (+ x (* 2 dash)))
 	     (y0 (+ y dash 1)))
-	(if <image>
+	(if ^image
 	    (progn 
 	      (render self)
-	      (draw-image <image>
+	      (draw-image ^image
 			  left y0 :destination image))
 	    (progn 
 	      (text left y0 (print-expression operation))
@@ -712,10 +712,10 @@ MOUSE-Y identify a point inside the block (or child block.)"
   (data :initform nil))
 
 (define-method execute entry ()
-  <data>)
+  ^data)
 
 (define-method set-data entry (data)
-  (setf <data> data))
+  (setf ^data data))
 
 (define-method draw entry (image)
   (with-block-drawing image
@@ -755,7 +755,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (defun null-block () (clone =list=))
 
 (define-method execute list ()
-  <results>)
+  ^results)
 
 (define-method accept list (child &optional prepend)
   (with-fields (arguments) self
@@ -827,14 +827,14 @@ MOUSE-Y identify a point inside the block (or child block.)"
 (define-method layout script ())
 
 (define-method initialize script (&key blocks variables target)
-  (setf <arguments> blocks)
-  (when variables (setf <variables> variables))
-  (when target (setf <target> target)))
+  (setf ^arguments blocks)
+  (when variables (setf ^variables variables))
+  (when target (setf ^target target)))
 
 (defvar *target* nil)
 
 (define-method set-target script (target)
-  (setf <target> target))
+  (setf ^target target))
 
 (define-method is-member script (block)
   (with-fields (arguments) self
@@ -886,10 +886,10 @@ MOUSE-Y identify a point inside the block (or child block.)"
     (setf arguments (delete block arguments))))
 
 ;; (define-method set script (var value)
-;;   (setf (gethash var <variables>) value))
+;;   (setf (gethash var ^variables) value))
 
 ;; (define-method get script (var)
-;;   (gethash var <variables>))
+;;   (gethash var ^variables))
 
 ;; (defun block-variable (var-name)
 ;;   (get *block* var-name))

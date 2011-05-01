@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Code:
 
@@ -132,10 +132,10 @@ PROPERTIES are chosen from:
 (define-method printf formatter (string &rest keys &key image foreground background font)
   "Add a formatted STRING to the end of the current line.
 Example: (printf my-formatter \"hello\" :foreground \"red\")"
-  (vector-push-extend (cons string keys) <current-line>))
+  (vector-push-extend (cons string keys) ^current-line))
 
 (define-method print-formatted-string formatter (formatted-string)
-  (vector-push-extend formatted-string <current-line>))	       
+  (vector-push-extend formatted-string ^current-line))	       
 
 (define-method print-image formatter (image)
   (printf self nil :image image))
@@ -149,26 +149,26 @@ Example: (printf my-formatter \"hello\" :foreground \"red\")"
   (printf self " "))
 
 (define-method clear-line formatter ()
-  (setf <current-line> (make-array 10 :adjustable t :fill-pointer 0)))
+  (setf ^current-line (make-array 10 :adjustable t :fill-pointer 0)))
 
 (define-method newline formatter ()
   "Add the current line to the display, and start a fresh offscreen
 line."
-  (when (and (vectorp <current-line>)
-	     (> (fill-pointer <current-line>) 0))
-    (vector-push-extend (coerce <current-line> 'list) <lines>))
-  (setf <current-line> (make-array 10 :adjustable t :fill-pointer 0)))
+  (when (and (vectorp ^current-line)
+	     (> (fill-pointer ^current-line) 0))
+    (vector-push-extend (coerce ^current-line 'list) ^lines))
+  (setf ^current-line (make-array 10 :adjustable t :fill-pointer 0)))
 
 (define-method reset-lines formatter ()
-  (setf <lines> (make-array 10 :adjustable t :fill-pointer 0)))
+  (setf ^lines (make-array 10 :adjustable t :fill-pointer 0)))
 
 (define-method delete-line formatter (&optional (num-lines 1))
-  (when (>= (length <lines>) num-lines)
+  (when (>= (length ^lines) num-lines)
     (dotimes (n num-lines)
-      (vector-pop <lines>))))
+      (vector-pop ^lines))))
 
 (define-method delete-all-lines formatter ()
-  (delete-line self (fill-pointer <lines>)))
+  (delete-line self (fill-pointer ^lines)))
 
 (define-method initialize formatter ()
   (parent/initialize self)
@@ -196,21 +196,21 @@ auto-updated displays."
   (printf self "  :  " :foreground ".gray20"))
 
 (define-method render formatter ()
-  (when <visible>
+  (when ^visible
     (clear self)
     (update self)
-    (let* ((current-line (coerce <current-line> 'list))
+    (let* ((current-line (coerce ^current-line 'list))
 	   (y-offset (if current-line
 			 (formatted-line-height current-line)
 			 0)))
-      (let ((y (- <height> (if <display-current-line>
+      (let ((y (- ^height (if ^display-current-line
 			       y-offset 0)))
 	    (n 0)
 	    line
-	    (lines <lines>)
-	    (image <image>))
-	(when (and current-line <display-current-line>)
-	  (render-formatted-line current-line 0 (- <height> y-offset)
+	    (lines ^lines)
+	    (image ^image))
+	(when (and current-line ^display-current-line)
+	  (render-formatted-line current-line 0 (- ^height y-offset)
 				 :destination image))
 	(setf n (fill-pointer lines))
 	(when (plusp n)
@@ -263,9 +263,9 @@ All tokens must be Lisp-readable symbols, strings, or numbers.
 The command prompt will change its commands into message sends, and
 send them to a designated command receiver:
 
-:  yes             -->   (yes <receiver>)
-:  move :north     -->   (move <receiver> :north)
-:  attack :west :with :left-hand  --> (attack <receiver> :west 
+:  yes             -->   (yes ^receiver)
+:  move :north     -->   (move ^receiver :north)
+:  attack :west :with :left-hand  --> (attack ^receiver :west 
 :                                             :with :left-hand)
 
 So the commands are just the receiver's methods. The command
@@ -280,8 +280,8 @@ the command input, causing the resulting command to be executed.
 
 Examples: 
 
-:   <up>      -->    move :north .
-:  shift-<up> -->    push :north .
+:   ^up      -->    move :north .
+:  shift-^up -->    push :north .
 :    C-q      -->    quaff         ;; also shows potion list as output
 :    M-1      -->    choose 1 .    ;; choose option 1 from output
 
@@ -316,9 +316,9 @@ These are the arguments to `bind-key-to-prompt-insertion', which see.")
 (define-method handle-key prompt (keylist)
   "Reject all keypresses when in :forward mode; otherwise handle them
 normally."
-  (ecase <mode>
+  (ecase ^mode
     ;; returning t stops the frame from trying other blocks
-    (:direct (prog1 t (let ((func (gethash keylist <keymap>)))
+    (:direct (prog1 t (let ((func (gethash keylist ^keymap)))
 			(when func
 			  (funcall func)))))
     (:forward (when (equal (normalize-event '("X" :control))
@@ -327,14 +327,14 @@ normally."
 
 (define-method exit prompt ()
   (clear-line self)
-  (setf <mode> :forward))
+  (setf ^mode :forward))
 
 (define-method goto prompt ()
   (say self "Enter command below at the >> prompt. Press ENTER when finished, or CONTROL-X to cancel.")
-  (setf <mode> :direct))
+  (setf ^mode :direct))
 
 (define-method set-mode prompt (mode)
-  (setf <mode> mode))
+  (setf ^mode mode))
 
 (define-method install-keybindings prompt ()
   (with-fields (keybindings) self
@@ -442,30 +442,30 @@ normally."
   (install-keybindings self))
 
 (define-method forward-char prompt ()
-  (setf <point> (min (1+ <point>)
-		     (length <line>))))
+  (setf ^point (min (1+ ^point)
+		     (length ^line))))
 
 (define-method backward-char prompt ()
-  (setf <point> (max 0 (1- <point>))))
+  (setf ^point (max 0 (1- ^point))))
 
 (define-method insert prompt (string)
-  (setf <line> (concatenate 'string
-			    (subseq <line> 0 <point>)
+  (setf ^line (concatenate 'string
+			    (subseq ^line 0 ^point)
 			    string
-			    (subseq <line> <point>)))
-  (incf <point> (length string))
+			    (subseq ^line ^point)))
+  (incf ^point (length string))
   ;; if the insertion ends with a period, also execute the command
   ;; line.
   (when (string= "." (subseq string (1- (length string))))
-    (setf <line> (subseq string 0 (1- (length string))))
+    (setf ^line (subseq string 0 (1- (length string))))
     (execute self)))
 
 (define-method backward-delete-char prompt ()
-  (when (< 0 <point>) 
-    (setf <line> (concatenate 'string
-			      (subseq <line> 0 (1- <point>))
-			      (subseq <line> <point>)))
-    (decf <point>)))
+  (when (< 0 ^point) 
+    (setf ^line (concatenate 'string
+			      (subseq ^line 0 (1- ^point))
+			      (subseq ^line ^point)))
+    (decf ^point)))
 
 (define-method print-data prompt (data &optional comment)
   (dolist (line (split-string-on-lines (write-to-string data :circle t :pretty t :escape nil :lines 5)))
@@ -486,7 +486,7 @@ normally."
   (labels ((print-it (c) 
 	     (print-data self c :comment)))
     (let* ((*read-eval* nil)
-	   (line <line>)
+	   (line ^line)
 	   (sexp (handler-case 
 		     (read-from-string (concatenate 'string "(" line ")"))
 		   (condition (c)
@@ -508,7 +508,7 @@ normally."
 		  (do-sexp self sexp))
 	      (serious-condition (c)
 		(print-it c))))
-	(queue line <history>))))
+	(queue line ^history))))
   (do-after-execute self))
 
 (define-method do-after-execute prompt ()
@@ -516,69 +516,69 @@ normally."
 
 (define-method history-item prompt (n)
   (assert (integerp n))
-  (nth (- (queue-count <history>) n)
-       (queue-head <history>)))
+  (nth (- (queue-count ^history) n)
+       (queue-head ^history)))
 
 (define-method forward-history prompt ()
-  (when (> <history-position> 0)
-    (setf <line> (history-item self (progn (decf <history-position>)
-					   <history-position>)))
-    (setf <point> (length <line>))))
+  (when (> ^history-position 0)
+    (setf ^line (history-item self (progn (decf ^history-position)
+					   ^history-position)))
+    (setf ^point (length ^line))))
  
 
 (define-method backward-history prompt ()
-  (when (< <history-position> (queue-count <history>))
-    (setf <line> (history-item self (progn (incf <history-position>)
-					   <history-position>)))
-    (setf <point> (length <line>))))
+  (when (< ^history-position (queue-count ^history))
+    (setf ^line (history-item self (progn (incf ^history-position)
+					   ^history-position)))
+    (setf ^point (length ^line))))
 
 (define-method set-receiver prompt (receiver)
-  (setf <receiver> receiver))
+  (setf ^receiver receiver))
 
 (define-method clear-line prompt ()
-  (setf <line> "")
-  (setf <point> 0)
-  (setf <history-position> 0))
+  (setf ^line "")
+  (setf ^point 0)
+  (setf ^history-position 0))
 
 (define-method move-end-of-line prompt ()
-  (setf <point> (length <line>)))
+  (setf ^point (length ^line)))
 
 (define-method move-beginning-of-line prompt ()
-  (setf <point> 0))
+  (setf ^point 0))
 
 (define-method render prompt ()
-  (decf <clock>)
-  (when (> (- 0 *prompt-blink-time*) <clock>)
-    (setf <clock> *prompt-blink-time*))
-  (let* ((image <image>)
+  (decf ^clock)
+  (when (> (- 0 *prompt-blink-time*) ^clock)
+    (setf ^clock *prompt-blink-time*))
+  (let* ((image ^image)
 	 (font-height (font-height *default-font*))
 	 (prompt-height (+ (* 2 *default-prompt-margin*)
 			   font-height))
 	 (strings-y *default-prompt-margin*)
-	 (prompt-string (ecase <mode>
+	 (prompt-string (ecase ^mode
 			  (:direct *direct-prompt-string*)
 			  (:forward *forward-prompt-string*))))
-    (draw-box 0 0 <width> prompt-height :color ".gray40" :stroke-color ".gray80"
+    (draw-box 0 0 ^width prompt-height :color ".gray40" :stroke-color ".gray80"
     	      :destination image)
     ;; draw cursor
-    (when (eq :direct <mode>)
-      (let ((color (if (minusp <clock>)
+    (when (eq :direct ^mode)
+      (let ((color (if (minusp ^clock)
 		       *prompt-cursor-color*
 		       *prompt-cursor-blink-color*)))
-	(when (> <point> (length <line>))
-	  (setf <point> (1- (length <line>))))
-	(draw-box (+ (font-text-extents (if (<= <point> (length <line>))
-					    (subseq <line> 0 <point>)
+	(when (> ^point (length ^line))
+	  (setf ^point (1- (length ^line))))
+	(draw-box (+ (font-text-extents (if (<= ^point (length ^line))
+					    (subseq ^line 0 ^point)
 					    " ")
 					*default-font*)
 		     (font-text-extents prompt-string *default-font*))
 		  strings-y
 		  (font-text-extents 
-		   (string (if (< <point> (length <line>))
-			       (aref <line> 
+		   (string (if (< ^point (length ^line))
+			       (aref ^line 
 				     (max (max 0 
-					       (1- (length <line>)))
-					  <point>))
+					       (1- (length ^line)))
+					  ^point))
 			       #\Space))
 		   *default-font*)
 		  font-height
@@ -592,9 +592,9 @@ normally."
 			   :foreground ".white"
 			   :destination image))
     ;; draw current command line text
-    (when (null <line>) (setf <line> ""))
-    (unless (zerop (length <line>))
-      (draw-string-blended <line>
+    (when (null ^line) (setf ^line ""))
+    (unless (zerop (length ^line))
+      (draw-string-blended ^line
 			   (+ 0
 			      (font-text-extents prompt-string *default-font*))
 			   strings-y
@@ -625,34 +625,34 @@ normally."
   (visible :initform t))
 
 (define-method handle-key textbox (event)
-  (unless <read-only>
-    (let ((func (gethash event <keymap>)))
+  (unless ^read-only
+    (let ((func (gethash event ^keymap)))
       (when func
 	(prog1 t
 	  (funcall func))))))
 
 (define-method set-buffer textbox (buffer)
-  (setf <buffer> buffer))
+  (setf ^buffer buffer))
 
 (define-method get-buffer-as-string textbox ()
-  (apply #'concatenate 'string <buffer>))
+  (apply #'concatenate 'string ^buffer))
 
 (defparameter *next-screen-context-lines* 3)
 
 (define-method page-up textbox ()
-  "Scroll up one page, only when <max-displayed-rows> is set."
+  "Scroll up one page, only when ^max-displayed-rows is set."
   (with-field-values (max-displayed-rows) self
     (when (integerp max-displayed-rows)
-      (setf <point-row> (max 0
-			   (- <point-row> (- max-displayed-rows
+      (setf ^point-row (max 0
+			   (- ^point-row (- max-displayed-rows
 					     *next-screen-context-lines*)))))))
 
 (define-method page-down textbox ()
-  "Scroll down one page, only when <max-displayed-rows> is set."
+  "Scroll down one page, only when ^max-displayed-rows is set."
   (with-field-values (max-displayed-rows) self
     (when (integerp max-displayed-rows)
-      (setf <point-row> (min (- (length <buffer>) max-displayed-rows)
-			     (+ <point-row> (- max-displayed-rows
+      (setf ^point-row (min (- (length ^buffer) max-displayed-rows)
+			     (+ ^point-row (- max-displayed-rows
 					     *next-screen-context-lines*)))))))
 
 (define-method auto-center textbox ()
@@ -660,26 +660,26 @@ normally."
   (with-field-values (x y width height) self
     (let ((center-x (truncate (/ *screen-width* 2)))
 	  (center-y (truncate (/ *screen-height* 2))))
-      (setf <x> (- center-x (truncate (/ width 2)))
-	    <y> (- center-y (truncate (/ height 2)))))))
+      (setf ^x (- center-x (truncate (/ width 2)))
+	    ^y (- center-y (truncate (/ height 2)))))))
 
 (define-method resize-to-scroll textbox (&key width height)
   "Resize the textbox to WIDTH * HEIGHT and enable scrolling of contents.
 This method allocates a new SDL surface."
   (assert (and (numberp width) (numberp height)))
   (resize self :height height :width width)
-  (setf <max-displayed-rows> (truncate (/ height (font-height <font>)))))
+  (setf ^max-displayed-rows (truncate (/ height (font-height ^font)))))
 
 (define-method resize-to-fit textbox ()
   "Automatically resize the textbox to fit the text, and disable scrolling.
 This method allocates a new SDL surface when necessary."
   ;; disable scrolling
-  (setf <max-displayed-rows> nil)
+  (setf ^max-displayed-rows nil)
   ;; measure text
-  (let* ((buffer <buffer>)
-	 (line-height (font-height <font>))
+  (let* ((buffer ^buffer)
+	 (line-height (font-height ^font))
 	 (line-lengths (mapcar #'(lambda (s)
-				   (font-text-extents s <font>))
+				   (font-text-extents s ^font))
 			       buffer)))
     ;; update geometry
     (let ((width0 (max *textbox-minimum-width*
@@ -689,16 +689,16 @@ This method allocates a new SDL surface when necessary."
 			      (apply #'max line-lengths)))))
 	  (height0 (+ (* 2 *textbox-margin*)
 		      (* line-height (max 1 (length buffer))))))
-      (when (or (< <width> width0)
-		(< <height> height0))
+      (when (or (< ^width width0)
+		(< ^height height0))
 	(message "resizing textbox H:~S W:~S" height0 width0)
 	(resize self :height height0 :width width0)))))
 
 (define-method move-end-of-line textbox ()
-  (setf <point-column> (length (nth <point-row> <buffer>))))
+  (setf ^point-column (length (nth ^point-row ^buffer))))
 
 (define-method move-beginning-of-line textbox ()
-  (setf <point-column> 0))
+  (setf ^point-column 0))
 
 (defun bind-key-to-textbox-insertion (textbox key modifiers &optional (insertion key))
   "For textbox P ensure that the event (KEY MODIFIERS) causes the
@@ -849,9 +849,9 @@ text INSERTION to be inserted at point."
 	  (incf point-column)))))
 
 (define-method render textbox ()
-  (when <visible>
+  (when ^visible
     (clear self)
-    (when <auto-fit>
+    (when ^auto-fit
       (resize-to-fit self))
     (with-fields (buffer x y width height) self
       (with-field-values (font image point-row) self
@@ -862,32 +862,32 @@ text INSERTION to be inserted at point."
 				     buffer)))
 	  ;; draw background
 	  (draw-box 0 0 width height :destination image
-		    :stroke-color (if <bordered>
-				      <foreground-color>
-				      <background-color>)
-		    :color <background-color>)
+		    :stroke-color (if ^bordered
+				      ^foreground-color
+				      ^background-color)
+		    :color ^background-color)
 	  ;; draw text
 	  (let ((x0 (+ 0 *textbox-margin*))
 		(y0 (+ 0 *textbox-margin*))
-		(lines (if <auto-fit> 
+		(lines (if ^auto-fit 
 			   buffer
-			   (nthcdr <point-row> buffer))))
+			   (nthcdr ^point-row buffer))))
 	    (dolist (line lines)
 	      (draw-string-solid line x0 y0 :destination image
-				 :font font :color <foreground-color>)
+				 :font font :color ^foreground-color)
 	      (incf y0 line-height)))
 	  ;; draw cursor
-	  ;; TODO fix <point-row> to be drawn relative pos in scrolling
-	  (when (null <read-only>)
-	    (let* ((current-line (nth <point-row> buffer))
+	  ;; TODO fix ^point-row to be drawn relative pos in scrolling
+	  (when (null ^read-only)
+	    (let* ((current-line (nth ^point-row buffer))
 	    	   (cursor-width (font-width font))
 	    	   (x1 (+ 0 *textbox-margin*
-	    		  (font-text-extents (subseq current-line 0 <point-column>)
+	    		  (font-text-extents (subseq current-line 0 ^point-column)
 	    				     font)))
 	    	   (y1 (+ 0 *textbox-margin*
-	    		  (* line-height <point-row>))))
+	    		  (* line-height ^point-row))))
 	      (draw-rectangle x1 y1 cursor-width line-height 
-	    		      :color <cursor-color>
+	    		      :color ^cursor-color
 	    		      :destination image))))))))
   
 
@@ -925,72 +925,72 @@ text INSERTION to be inserted at point."
     (define-key self "F5" nil #'s5)))
 
 (define-method page-property pager (page-name property-keyword)
-  (getf (gethash page-name <properties>) property-keyword))
+  (getf (gethash page-name ^properties) property-keyword))
 
 (define-method set-page-property pager (page-name property-keyword value)
-  (setf (gethash page-name <properties>)
-	(let ((props (gethash page-name <properties>)))
+  (setf (gethash page-name ^properties)
+	(let ((props (gethash page-name ^properties)))
 	  (setf (getf props property-keyword) value)
 	  props))
-  (message "Page property set. ~A" (list page-name (gethash page-name <properties>))))
+  (message "Page property set. ~A" (list page-name (gethash page-name ^properties))))
 
 (define-method hit pager (x y)
   nil)
 
 (define-method select pager (page)
   (let ((newpage (etypecase page
-		   (number (car (nth (- page 1) <pages>)))
+		   (number (car (nth (- page 1) ^pages)))
 		   (keyword page))))
     (if (null newpage)
 	(message "WARNING: Cannot find page.")
 	(progn 
-	  (setf <current-page> newpage)
+	  (setf ^current-page newpage)
 	  ;; respect held keys property setting
 	  (if (page-property self newpage :held-keys)
 	      (enable-held-keys)
 	      (disable-held-keys))
 	  ;; insert self always as first block
-	  (apply #'ioforms:install-blocks self (cdr (assoc newpage <pages>)))))))
+	  (apply #'ioforms:install-blocks self (cdr (assoc newpage ^pages)))))))
 
 (define-method auto-position pager (&key (width ioforms:*screen-width*))
-  (resize self :width width :height <pager-height>)
-  (move self :x 0 :y (- ioforms:*screen-height* <pager-height>)))
+  (resize self :width width :height ^pager-height)
+  (move self :x 0 :y (- ioforms:*screen-height* ^pager-height)))
 
 (define-method add-page pager (keyword blocks &rest properties)
   (assert (listp blocks))
-  (push (cons keyword blocks) <pages>))
+  (push (cons keyword blocks) ^pages))
 
 (define-method get-page-names pager ()
-  (remove-duplicates (mapcar #'car <pages>)))
+  (remove-duplicates (mapcar #'car ^pages)))
 
 (define-method message pager (formatted-string)
-  (setf <pager-message> formatted-string))
+  (setf ^pager-message formatted-string))
 
 (define-method render pager ()
   ;; calculate geometry. always draw
-  (when <visible>
-    (clear self <background-color>)
+  (when ^visible
+    (clear self ^background-color)
     (let ((n 1)
           (line '()))
-      (dolist (page <pages>)
+      (dolist (page ^pages)
         (let ((page-name (car page)))
           ;; build a list of formatted strings
           (push (cons (concatenate 'string 
-                                   <prefix-string>
+                                   ^prefix-string
                                    (format nil "~D" n)
-                                   <number-separator-string>
+                                   ^number-separator-string
                                    (symbol-name page-name)
-                                   <separator-string>)
+                                   ^separator-string)
                       ;; highlight current page
-                      (if (eq page-name <current-page>)
-                          <highlighted-style> <style>))
+                      (if (eq page-name ^current-page)
+                          ^highlighted-style ^style))
                 line))
         (incf n))
       (push (list " ") line)
-      (when <pager-message> 
-        (push <pager-message> line))
+      (when ^pager-message 
+        (push ^pager-message line))
       ;; draw the string
-      (render-formatted-line (nreverse line) 0 0 :destination <image>))))
+      (render-formatted-line (nreverse line) 0 0 :destination ^image))))
 
 ;;; Splitscreen view on 2 blocks with focus border
 
@@ -1001,43 +1001,43 @@ text INSERTION to be inserted at point."
   children)
 
 (define-method initialize split (&rest children)
-  (setf <children> children))
+  (setf ^children children))
   
 (define-method set-children split (children)
-  (setf <children> children))
+  (setf ^children children))
 
 (define-method render split ()
-  (when <visible>
-    (let ((y <y>)
-          (x <x>)
-	  (image <image>)
-	  (focused-block (nth <focus> <children>)))
-      (dolist (block <children>)
+  (when ^visible
+    (let ((y ^y)
+          (x ^x)
+	  (image ^image)
+	  (focused-block (nth ^focus ^children)))
+      (dolist (block ^children)
         (move block :x x :y y)
 	(render block)
 	(draw-image (field-value :image block) x y :destination image)
 	(when (eq block focused-block)
 	  (draw-rectangle x y (field-value :width block)
 			  (field-value :height block)
-			  :color <active-color>
-			  :destination <image>))
+			  :color ^active-color
+			  :destination ^image))
         (incf x (1+ (field-value :width block)))))))
 
 (define-method hit split (x y)
-  (hit-blocks x y <children>))
+  (hit-blocks x y ^children))
 
 (define-method switch-panes split ()
-  (let ((newpos (mod (1+ <focus>) (length <children>))))
-    (setf <focus> newpos)))
+  (let ((newpos (mod (1+ ^focus) (length ^children))))
+    (setf ^focus newpos)))
 
 (define-method handle-key split (event)
-  (or (let ((func (gethash event <keymap>)))
+  (or (let ((func (gethash event ^keymap)))
 	(when func
 	  (prog1 t
 	    (funcall func))))
-      (handle-key (nth <focus> <children>) event)))
+      (handle-key (nth ^focus ^children) event)))
 
 (define-method forward split (method &rest args)
-  (apply #'send self method (nth <focus> <children>) args))
+  (apply #'send self method (nth ^focus ^children) args))
    
 ;;; widgets.lisp ends here

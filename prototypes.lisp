@@ -537,7 +537,7 @@ message queue resulting from the evaluation of EXPR."
 ;; Because `self' is not bound outside of method bodies, we use a
 ;; code-walker to implement the syntax described above. 
 
-(defconstant +field-reference-prefix+ "^")
+(defvar *field-reference-prefix* "^")
 
 (defun transform-tree (tester transformer tree)
   (cond ((consp tree)
@@ -562,7 +562,7 @@ message queue resulting from the evaluation of EXPR."
 ;; Now we turn to the syntax itself and the required tree
 ;; transformations.
 
-;;; field references of the form @foo
+;;; field references of the form ^foo
 
 (defun field-reference-p (form)
   "Return non-nil if FORM is a symbol like ^foo."
@@ -570,7 +570,7 @@ message queue resulting from the evaluation of EXPR."
       (let* ((name (symbol-name form))
 	     (len (length name)))
 	(string= (subseq name 0 1)
-		 +field-reference-prefix+))))
+		 *field-reference-prefix*))))
 	     ;; (string= ">" (subseq name (- len 1) len))))))
 
 (defun transform-field-reference (ref)

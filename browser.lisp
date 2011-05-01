@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2008, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Commentary:
 
@@ -50,17 +50,17 @@
   (when item-spec
     (destructuring-bind (command-string &key key description sub-menu name
 					&allow-other-keys) item-spec
-      (setf <key> key 
-	    <description> description
-	    <name> name
-	    <sub-menu> sub-menu
-	    <command-string> command-string))))
+      (setf ^key key 
+	    ^description description
+	    ^name name
+	    ^sub-menu sub-menu
+	    ^command-string command-string))))
 
 ;; (define-method is-disabled item
 
 (define-method open menu-item ()
-  (values <command-string> 
-	  <sub-menu>))
+  (values ^command-string 
+	  ^sub-menu))
 
 ;;; browser menu
 
@@ -73,28 +73,28 @@
   (prompt :documentation "Prompt to receive command messages."))
 
 (define-method set-prompt browser (prompt)
-  (setf <prompt> prompt))
+  (setf ^prompt prompt))
 
 (define-method cursor-next browser ()
-  (when (array-in-bounds-p <collection> (+ 1 <cursor>))
-    (incf <cursor>)))
+  (when (array-in-bounds-p ^collection (+ 1 ^cursor))
+    (incf ^cursor)))
 
 (define-method cursor-previous browser ()
-  (when (array-in-bounds-p <collection> (- <cursor> 1))
-    (decf <cursor>)))
+  (when (array-in-bounds-p ^collection (- ^cursor 1))
+    (decf ^cursor)))
 
 (define-method cursor-item browser ()
-  (aref <collection> <cursor>))
+  (aref ^collection ^cursor))
 
 (define-method follow browser ()
   (let* ((item (cursor-item self)))
-    (push <collection> <history>)
+    (push ^collection ^history)
     (multiple-value-bind (result sub-menu) (open item)
       (cond ((and (vectorp result) (every #'object-p result))
 	     (set-collection self result))
 	    ((stringp result)
-	     (assert <prompt>)
-	     (insert <prompt> result)))
+	     (assert ^prompt)
+	     (insert ^prompt result)))
       ;; ((null result)
       ;;  (hide self)))
       (when (and (not (null sub-menu)) (boundp sub-menu))
@@ -102,7 +102,7 @@
 	(set-collection-from-menu-spec self (symbol-value sub-menu))))))
 	    	     
 (define-method back browser ()
-  (setf <collection> (pop <history>)))
+  (setf ^collection (pop ^history)))
 
 (define-method print-object browser (object &optional selected-p)
   "Print the OBJECT in the browser as a new formatted line.
@@ -123,15 +123,15 @@ visually distinguished) version of the line."
 	  (println self label)))))
 
 (define-method update browser ()
-  (let ((collection <collection>)
-	(cursor <cursor>))
+  (let ((collection ^collection)
+	(cursor ^cursor))
     (delete-all-lines self)
     (dotimes (n (length collection))
       (print-object self (aref collection n) (= cursor n)))))
 
 (define-method set-collection browser (collection)
-  (setf <collection> collection)
-  (setf <cursor> 0))
+  (setf ^collection collection)
+  (setf ^cursor 0))
 
 (define-method set-collection-from-menu-spec browser (menu-spec)
   (let ((c nil))

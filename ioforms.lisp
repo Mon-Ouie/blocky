@@ -2,7 +2,7 @@
                
 ;; Copyright (C) 2006, 2007, 2008, 2009  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: multimedia, games
 ;; Version: 2.0
 

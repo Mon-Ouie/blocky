@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2009, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Code:
 
@@ -109,7 +109,7 @@ http://en.wikipedia.org/wiki/Passive_voice"
   (line-number :initform 0))
 
 (define-method set-verbosity narrator (&optional (value 1))
-  (setf <verbosity> value))
+  (setf ^verbosity value))
 
 (define-method narrate narrator (control-string &rest args)
   (print self 
@@ -120,40 +120,40 @@ http://en.wikipedia.org/wiki/Passive_voice"
 	   (apply #'format nil control-string args)))
 
 (define-method say narrator (control-string &rest args)
-  (let ((last-line <last-line>)
+  (let ((last-line ^last-line)
 	(this-line (list (list (apply #'format nil control-string args)))))
     (if (equal last-line this-line)
 	;; it's a repeat. make new line with Nx repeat 
-	(progn (incf <repeat-count>)
-	       (vector-pop <lines>)
-	       (message "Repeating message ~Sx" <repeat-count>)
+	(progn (incf ^repeat-count)
+	       (vector-pop ^lines)
+	       (message "Repeating message ~Sx" ^repeat-count)
 	       (println self (apply #'format nil (concatenate 'string 
 						      control-string 
-						      (format nil " (Repeated ~Sx)" <repeat-count>))
+						      (format nil " (Repeated ~Sx)" ^repeat-count))
 				     args)))
 	;; new 
 	(progn 
 	  (message "New message ~S" (cons control-string args))
-	  (setf <repeat-count> 0)
+	  (setf ^repeat-count 0)
 	  (println self (apply #'format nil control-string args))))
-    (setf <last-line> (list (list (apply #'format nil control-string args))))))
+    (setf ^last-line (list (list (apply #'format nil control-string args))))))
 
 (define-method narrate-message narrator (sender action receiver args &optional force)
-  (unless (zerop <verbosity>)
+  (unless (zerop ^verbosity)
     (let ((A (or sender ioforms:=asterisk=))
 	  (B (if (has-field :tile receiver) 
 		 receiver 
 		 ioforms:=gray-asterisk=))
 	  (action-verbosity (getf *message-verbosities* action t)))
-      (when (member action <passive-voice-actions>)
+      (when (member action ^passive-voice-actions)
 	(rotatef A B))
       (when (or force
 		(and (not (null action-verbosity))
 		     (or (eq t action-verbosity)
 			 (and (numberp action-verbosity)
-			      (>= <verbosity> action-verbosity)))))
-	(print self (prin1-to-string <line-number>))
-	(incf <line-number>)
+			      (>= ^verbosity action-verbosity)))))
+	(print self (prin1-to-string ^line-number))
+	(incf ^line-number)
 	(print-separator self)
 	(print-object-tag self A)
 	(print-separator self)

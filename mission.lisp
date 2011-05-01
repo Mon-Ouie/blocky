@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2009, 2010, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Commentary:
 
@@ -104,10 +104,10 @@ concatenation.")
   variables)
 
 (define-method set-variable mission (var value)
-  (setf (gethash var <variables>) value))
+  (setf (gethash var ^variables) value))
 
 (define-method get-variable mission (var)
-  (gethash var <variables>))
+  (gethash var ^variables))
 
 (defun mission-variable-value (var-name)
   (get-variable *mission* var-name))

@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Code:
 
@@ -44,7 +44,7 @@ When nil, the method DRAW is invoked instead of using a tile.")
   (menu :initform nil :documentation "Menu objects."))
   
 (define-method in-category cell (category)
-  (member category <categories>))
+  (member category ^categories))
 
 (defparameter *default-cell-width* 16)
 
@@ -81,9 +81,9 @@ When nil, the method DRAW is invoked instead of using a tile.")
 	     (if (stringp image)
 		 (draw-resource-image image x y :destination dest)
 		 (draw-image image x y :destination dest)))
-	    (<label>
+	    (^label
 	     ;; we have a formatted line
-	     (let ((label <label>))
+	     (let ((label ^label))
 	       (when (listp label)
 		 (let*
 		     ((shortfall (- width (formatted-line-width label)))
@@ -107,36 +107,36 @@ When nil, the method DRAW is invoked instead of using a tile.")
 
 (define-method set-location cell (r c)
   "Set the row R and column C of the cell."
-  (setf <row> r <column> c))
+  (setf ^row r ^column c))
 
 (define-method is-located cell ()
   "Returns non-nil if this cell is located somewhere on the grid."
-  (or (and (integerp <row>) (integerp <column>))))
+  (or (and (integerp ^row) (integerp ^column))))
 
 (define-method dislocate cell ()
   "Remove any location data from the cell."
-  (when (integerp <row>)
-    (setf <row> nil <column> nil))
-  (when (integerp <x>)
-    (setf <x> nil <y> nil)))
+  (when (integerp ^row)
+    (setf ^row nil ^column nil))
+  (when (integerp ^x)
+    (setf ^x nil ^y nil)))
 
 (define-method viewport-coordinates cell ()
   "Return as values X,Y the world coordinates of CELL."
-  (assert (and <row> <column>))
+  (assert (and ^row ^column))
   (get-viewport-coordinates (field-value :viewport *world*)
-                            <row> <column>))
+                            ^row ^column))
 
 (define-method image-coordinates cell ()
   "Return as values X,Y the viewport image coordinates of CELL."
-  (assert (and <row> <column>))
+  (assert (and ^row ^column))
   (get-image-coordinates (field-value :viewport *world*)
-                         <row> <column>))
+                         ^row ^column))
 
 (define-method screen-coordinates cell ()
   "Return as values X,Y the screen coordinates of CELL."
-  (assert (and <row> <column>))
+  (assert (and ^row ^column))
   (get-screen-coordinates (field-value :viewport *world*)
-			  <row> <column>))
+			  ^row ^column))
 
 ;;; Cell categories
 
@@ -144,7 +144,7 @@ When nil, the method DRAW is invoked instead of using a tile.")
   "Return non-nil if this cell is in the specified CATEGORY.
 
 Cells may be placed into categories that influence their processing by
-the engine. The field `<categories>' is a set of keyword symbols; if a
+the engine. The field `^categories' is a set of keyword symbols; if a
 symbol `:foo' is in the list, then the cell is in the category `:foo'.
 
 Although a game built on IOFORMS can define whatever categories are
@@ -169,22 +169,22 @@ interpretation:
  -    :combining --- This cell automatically combines units with other cells in a container.
  -    :light-source --- This object casts light. 
  -    :opaque --- Blocks line-of-sight, casts shadows. 
- -    :container --- This cell contains other cells, and has an <inventory> field
+ -    :container --- This cell contains other cells, and has an ^inventory field
  -    :contained ---  This cell is contained in another cell (i.e. not in open space on the map)
  -    :item --- A potential inventory item. 
  -    :equipper --- Uses equipment. 
  -    :equipped --- This item is currently equipped.
  -    :equipment --- This item can be equipped. 
 "
-  (member category <categories>))
+  (member category ^categories))
 
 (define-method add-category cell (category)
   "Add this cell to the specified CATEGORY."
-  (pushnew category <categories>))
+  (pushnew category ^categories))
 
 (define-method delete-category cell (category)
   "Remove this cell from the specified CATEGORY."
-  (setf <categories> (remove category <categories>)))
+  (setf ^categories (remove category ^categories)))
 
 ;;; Player orientation
 
@@ -196,10 +196,10 @@ interpretation:
 
 (define-method direction-to-player cell ()
   "Calculate the general compass direction of the player."
-  (direction-to-player *world* <row> <column>))
+  (direction-to-player *world* ^row ^column))
 
 (define-method adjacent-to-player cell ()
-  (adjacent-to-player *world* <row> <column>))
+  (adjacent-to-player *world* ^row ^column))
 
 ;;; Convenience macro for defining cells.
 
@@ -219,7 +219,7 @@ is in the way. Returns non-nil if a move occurred."
   (declare (ignore unit))
   (let ((world *world*))
     (multiple-value-bind (r c) 
-	(step-in-direction <row> <column> direction)
+	(step-in-direction ^row ^column direction)
       ;; 
       (cond ((null (grid-location world r c)) ;; are we at the edge?
 	     ;; return nil because we didn't move
@@ -237,16 +237,16 @@ is in the way. Returns non-nil if a move occurred."
 	       (prog1 t
 ;;		 (expend-action-points self (stat-value self :movement-cost))
 		 (move world self r c))))))))
-		 ;; (when <stepping>
+		 ;; (when ^stepping
 		 ;;   (step-on-current-square self)))))))))
 
 (define-method set-location cell (r c)
   "Set the row R and column C of the cell."
-  (setf <row> r <column> c))
+  (setf ^row r ^column c))
 
 (define-method move-to cell (unit r c)
   (assert (member unit '(:space :spaces)))
-  (delete-cell *world* self <row> <column>)
+  (delete-cell *world* self ^row ^column)
   (drop-cell *world* self r c))
 
 ;;; Adding items to the world 
@@ -255,7 +255,7 @@ is in the way. Returns non-nil if a move occurred."
   "Add CELL to the world at the current location. By default,
 EXCLUSIVE is nil; this allows one to drop objects on top of oneself.
 When LOADOUT is non-nil, call the :loadout method."
-  (drop-cell *world* cell <row> <column> :loadout loadout :exclusive exclusive))
+  (drop-cell *world* cell ^row ^column :loadout loadout :exclusive exclusive))
 
 (define-method drop-sprite cell (sprite &optional x y)
   "Add SPRITE to the world at location X,Y."
@@ -275,7 +275,7 @@ When LOADOUT is non-nil, call the :loadout method."
 (define-method find-object cell (&key (direction :here) (index :top) category)
   (let ((world *world*))
     (multiple-value-bind (nrow ncol)
-	(step-in-direction <row> <column> direction)
+	(step-in-direction ^row ^column direction)
       (if (in-bounds-p world nrow ncol)
 	  (let (cell)
 	    (let* ((cells (grid-location world nrow ncol))
@@ -296,10 +296,10 @@ When LOADOUT is non-nil, call the :loadout method."
 	      (values cell nrow ncol index2)))))))
 
 (define-method clear-location cell ()
-  (setf <row> nil <column> nil))
+  (setf ^row nil ^column nil))
 
 (define-method delete-from-world cell ()
-  (delete-cell *world* self <row> <column>))
+  (delete-cell *world* self ^row ^column))
 
 (define-method quit cell ()
   "Leave the gameworld."
@@ -342,11 +342,11 @@ world or have a location."
   nil)
 
 (define-method grid-coordinates cell ()
-  (values <row> <column>))
+  (values ^row ^column))
 
 (define-method xy-coordinates cell ()
-  (values (* <column> (field-value :tile-size *world*))
-	  (* <row> (field-value :tile-size *world*))))
+  (values (* ^column (field-value :tile-size *world*))
+	  (* ^row (field-value :tile-size *world*))))
 
 
 

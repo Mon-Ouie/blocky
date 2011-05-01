@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2009  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: lisp, data, tools, etc
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Commentary:
 
@@ -51,8 +51,8 @@
   growth-rate ;; Real size multiplier when growing array.
   ;; Read-only slots. 
   vector ;; The storage array for the data.
-  size ;; Number of positions in <vector>
-  count ;; Number of data-occupied positions in <vector>
+  size ;; Number of positions in ^vector
+  count ;; Number of data-occupied positions in ^vector
   )
 
 (defun create-pool (&key constructor growth-rate initial-size)

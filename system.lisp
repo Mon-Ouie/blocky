@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2010, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Commentary:
 
@@ -32,17 +32,17 @@
   (running :initform nil))
 
 (define-method get-blocks system ()
-  <children>)
+  ^children)
 
 (define-method count-blocks system ()
   (with-fields (children) self
     (apply #'+ (mapcar #'/count children))))
 
 (define-method start system ()
-  (setf <running> t))
+  (setf ^running t))
 
 (define-method stop system ()
-  (setf <running> nil))
+  (setf ^running nil))
 
 (define-method tick system (&rest args)
   (with-fields (running children shell) self
@@ -62,7 +62,7 @@
 	(apply #'tick block args)))))
 
 (define-method forward system (method &rest args)
-  (apply #'send nil method <script> args))
+  (apply #'send nil method ^script args))
 
 (define-method resize system (&key height width)
   ;; (parent/resize self :height height :width width)
@@ -163,7 +163,7 @@
 
 (define-method initialize block-prompt (output)
   (parent/initialize self)
-  (setf <output> output))
+  (setf ^output output))
 
 (define-method do-sexp block-prompt (sexp)
   (with-fields (output rows) self
@@ -220,17 +220,17 @@
 	  :documentation "Non-nil when modified since last save."))
 
 (define-method layout shell ()
-  (layout <script>))
+  (layout ^script))
 
 (define-method initialize shell ()
   (parent/initialize self))
 
 (define-method script-blocks shell ()
-  (field-value :arguments <script>))
+  (field-value :arguments ^script))
 
 (define-method switch-to-script shell (script) 
   (assert (ioforms:object-p script))
-  (setf <script> script))
+  (setf ^script script))
   
 (define-method add shell (block &optional x y)
   (with-fields (needs-redraw script) self
@@ -238,7 +238,7 @@
     (setf needs-redraw t)))
 
 (define-method delete-child shell (block)
-  (delete <script> block))
+  (delete ^script block))
 
 (define-method select shell (block)
   (with-fields (selection arguments) self
@@ -377,7 +377,7 @@
   (arguments :initform '(nil nil nil)))
 
 (define-method execute if ()
-  <results>)
+  ^results)
 
 (define-method execute-arguments if ()
   (with-fields (arguments results) self
@@ -412,7 +412,7 @@
 
 (define-method execute emote ()
   (send :emote *target* 
-	(list (list (list (first <results>) :font *block-font*
+	(list (list (list (first ^results) :font *block-font*
 			  :foreground ".black")))
 	:timeout 200 :style :clear))
 
@@ -459,7 +459,7 @@
   (arguments :initform '("fanfare")))
 
 (define-method execute play-music ()
-  (play-music *target* (first <results>) :loop t))
+  (play-music *target* (first ^results) :loop t))
 
 (defblock play-sound 
   (type :initform :sound)

@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2009, 2010, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: games
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Commentary:
 
@@ -53,56 +53,56 @@
   (excluded-fields :initform '(:world)))
 
 (define-method get-viewport-coordinates viewport (cell-row cell-column)
-  (let ((size <tile-size>))
+  (let ((size ^tile-size))
     (let ((x0 (* size cell-column))
 	  (y0 (* size cell-row)))
       (values x0 y0))))
 
 (define-method get-image-coordinates viewport (cell-row cell-column)
-  (let ((size <tile-size>))
-    (let ((x0 (* size (- cell-column <origin-x>)))
-	  (y0 (* size (- cell-row <origin-y>))))
+  (let ((size ^tile-size))
+    (let ((x0 (* size (- cell-column ^origin-x)))
+	  (y0 (* size (- cell-row ^origin-y))))
       (values x0 y0))))
 
 (define-method get-screen-coordinates viewport (cell-row cell-column)
-  (let ((size <tile-size>))
-    (let ((x0 (+ (* size (- cell-column <origin-x>)) <x>))
-	  (y0 (+ (* size (- cell-row <origin-y>)) <y>)))
+  (let ((size ^tile-size))
+    (let ((x0 (+ (* size (- cell-column ^origin-x)) ^x))
+	  (y0 (+ (* size (- cell-row ^origin-y)) ^y)))
       (values x0 y0))))
 
 ;; (define-method get-viewport-coordinates viewport (cell-row cell-column)
-;;   (let ((size <tile-size>))
-;;     (let ((x0 (* size (- cell-column <origin-x>)))
-;; 	  (y0 (* size (- cell-row <origin-y>))))
+;;   (let ((size ^tile-size))
+;;     (let ((x0 (* size (- cell-column ^origin-x)))
+;; 	  (y0 (* size (- cell-row ^origin-y))))
 ;;       (values x0 y0))))
 
 (define-method get-viewport-coordinates-* viewport (x y)
-  (let* ((size <tile-size>)
-	 (x0 (* <origin-x> size))
-	 (y0 (* <origin-y> size)))
+  (let* ((size ^tile-size)
+	 (x0 (* ^origin-x size))
+	 (y0 (* ^origin-y size)))
     (values (- x x0) (- y y0))))
 
 (define-method add-overlay viewport (overlay)
-  (pushnew overlay <overlays>))
+  (pushnew overlay ^overlays))
 
 (define-method draw-overlays viewport ()
-  (when <use-overlays>
+  (when ^use-overlays
     ;; draw, removing any overlay that returns non-nil
-    (let ((image <image>))
-      (setf <overlays> 
+    (let ((image ^image))
+      (setf ^overlays 
 	    (remove-if #'(lambda (ov)
 			   (funcall ov image))
-		       <overlays>)))))
+		       ^overlays)))))
 
 (define-method set-world viewport (world)
-  (setf <world> world))
+  (setf ^world world))
 
 (define-method set-scrolling viewport (flag)
-  (setf <scrolling> flag))
+  (setf ^scrolling flag))
 
 (define-method set-tile-size viewport (&optional size)
   (with-fields (tile-size origin-width origin-height) self
-    (setf tile-size (or size (field-value :tile-size <world>)))))
+    (setf tile-size (or size (field-value :tile-size ^world)))))
     
 (define-method update-geometry viewport (&optional resize)    
   (with-field-values (tile-size origin-width origin-height width height) self
@@ -114,19 +114,19 @@
 
 (define-method render viewport ()
 ;;(declare (optimize (speed 3)))
-  (when <visible>
-    (when <scrolling> (adjust self))
-    (let* ((world (or <world> *world*))
-           (origin-width <origin-width>)
-           (origin-height <origin-height>)
-           (origin-x <origin-x>)
-           (origin-y <origin-y>)
-	   (drag-x <drag-x>)
-	   (drag-y <drag-y>)
-           (pending-draws <pending-draws>)
-           (image <image>)
+  (when ^visible
+    (when ^scrolling (adjust self))
+    (let* ((world (or ^world *world*))
+           (origin-width ^origin-width)
+           (origin-height ^origin-height)
+           (origin-x ^origin-x)
+           (origin-y ^origin-y)
+	   (drag-x ^drag-x)
+	   (drag-y ^drag-y)
+           (pending-draws ^pending-draws)
+           (image ^image)
            (tile nil)
-           (tile-size <tile-size>)
+           (tile-size ^tile-size)
            objects cell)
       (setf (fill-pointer pending-draws) 0)
       (with-field-values (grid light-grid environment-grid phase-number
@@ -194,15 +194,15 @@
 (define-method hit viewport (x y)
   (with-fields (origin-x origin-y tile-size) self
     (when (send-parent self :hit self x y)
-      (let* ((x0 (- x <x>))
-	     (y0 (- y <y>))
+      (let* ((x0 (- x ^x))
+	     (y0 (- y ^y))
 	     (r (truncate (/ y0 tile-size)))
 	     (c (truncate (/ x0 tile-size)))
 	     (r0 (+ origin-y r))
 	     (c0 (+ origin-x c))
 	     (y1 (* tile-size origin-y))
 	     (x1 (* tile-size origin-x))
-	     (grid (field-value :grid (or <world> *world*)))
+	     (grid (field-value :grid (or ^world *world*)))
 	     (cells (when (array-in-bounds-p grid r0 c0)
 		      (aref grid r0 c0))))
       (labels ((hit (sprite)
@@ -219,21 +219,21 @@
 		(aref cells (1- (fill-pointer cells))))))))))
 
 (define-method set-origin viewport (&key x y height width)
-  (setf <origin-x> x
-	<origin-y> y
-	<origin-width> width
-	<origin-height> height))
+  (setf ^origin-x x
+	^origin-y y
+	^origin-width width
+	^origin-height height))
 
 (define-method adjust viewport (&optional snap)
   "Move the viewport's origin if required to keep the player onscreen."
   (with-fields (drag-x drag-y tile-size) self
-    (let* ((world (or <world> *world*))
+    (let* ((world (or ^world *world*))
 	   (world-width (field-value :width world))
 	   (world-height (field-value :height world))
 	   (player (field-value :player world))
 	   (player-x (player-column world))
 	   (player-y (player-row world))
-	   (margin <margin>))
+	   (margin ^margin))
       (with-fields (origin-x origin-y origin-height origin-width) self
 	;; are we outside the "comfort zone"?
 	(if (or 
@@ -294,17 +294,17 @@
   (border-color :initform ".gray20"))
 		
 (define-method render minimap ()
-  (when <visible>
+  (when ^visible
     (adjust self) ;; hehe
-    (let* ((world (or <world> *world*))
-           (origin-width <origin-width>)
-           (origin-height <origin-height>)
-           (origin-x <origin-x>)
-           (origin-y <origin-y>)
-           (tile-size <tile-size>)
-           (category-map <category-map>)
+    (let* ((world (or ^world *world*))
+           (origin-width ^origin-width)
+           (origin-height ^origin-height)
+           (origin-x ^origin-x)
+           (origin-y ^origin-y)
+           (tile-size ^tile-size)
+           (category-map ^category-map)
            (grid (field-value :grid world))
-           (image <image>)
+           (image ^image)
            objects 
            cell
            categories)
@@ -314,9 +314,9 @@
         ;; blank the display
         (clear self)
         ;; ;; draw the border
-        ;; (draw-rectangle 0 0 <width> <height>
-        ;; 		      :color <border-color>
-        ;; 		      :destination <image>)
+        ;; (draw-rectangle 0 0 ^width ^height
+        ;; 		      :color ^border-color
+        ;; 		      :destination ^image)
         ;; draw the minimap
         (dotimes (i origin-height)
           (dotimes (j origin-width)

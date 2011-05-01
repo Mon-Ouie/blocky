@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,11 +16,11 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Sprites are not restricted to the grid
 
-;; These sit in a different layer, the <sprite> layer in the world
+;; These sit in a different layer, the ^sprite layer in the world
 ;; object.
 
 (in-package :ioforms)
@@ -43,7 +43,7 @@ world, and collision detection is performed between sprites and cells.")
   (type :initform :sprite))
 
 (define-method image-coordinates gsprite ()
-  (get-viewport-coordinates-* (field-value :viewport *world*) <x> <y>))
+  (get-viewport-coordinates-* (field-value :viewport *world*) ^x ^y))
 
 ;; Convenience macro for defining cells:
 
@@ -64,14 +64,14 @@ world, and collision detection is performed between sprites and cells.")
       (setf height (image-height image)))))
     
 (define-method initialize gsprite ()
-  (when <image>
-    (update-image self <image>)))
+  (when ^image
+    (update-image self ^image)))
 
 (define-method die gsprite ()
   (remove-sprite *world* self))
 
 (define-method update-image gsprite (image)
-  (setf <image> image)
+  (setf ^image image)
   (resize self))
 
 (define-method direction-to-player gsprite ()
@@ -89,16 +89,16 @@ world, and collision detection is performed between sprites and cells.")
 		 (plusp y)
 		 (< x world-width)
 		 (< y world-height))
-	(setf <x> x
-	      <y> y)))))
-;;	  (setf <x> 0 <y> 0)))))
+	(setf ^x x
+	      ^y y)))))
+;;	  (setf ^x 0 ^y 0)))))
 ;;	  (do-collision self nil)))))
 
 (define-method move gsprite (direction &optional movement-distance unit)
   (when direction
     (let ((dist (or movement-distance 1)))
-      (let ((y <y>)
-	    (x <x>))
+      (let ((y ^y)
+	    (x ^x))
 	(when (and y x)
 	  (multiple-value-bind (y0 x0) (ioforms:step-in-direction y x direction dist)
 	    (assert (and y0 x0))
@@ -190,22 +190,22 @@ world, and collision detection is performed between sprites and cells.")
   nil)
 
 (define-method save-excursion gsprite ()
-  (setf <saved-x> <x>)
-  (setf <saved-y> <y>))
+  (setf ^saved-x ^x)
+  (setf ^saved-y ^y))
 
 (define-method undo-excursion gsprite ()
-  (move-to self <saved-x> <saved-y>))
+  (move-to self ^saved-x ^saved-y))
 
 (define-method viewport-coordinates gsprite ()
   (get-viewport-coordinates-* (field-value :viewport *world*)
-			      <x> <y>))
+			      ^x ^y))
 
 (define-method grid-coordinates gsprite ()
-  (values (truncate (/ <y> (field-value :tile-size *world*)))
-	  (truncate (/ <x> (field-value :tile-size *world*)))))
+  (values (truncate (/ ^y (field-value :tile-size *world*)))
+	  (truncate (/ ^x (field-value :tile-size *world*)))))
 
 (define-method xy-coordinates gsprite ()
-  (values <x> <y>))
+  (values ^x ^y))
 
 (define-method drop gsprite (cell &optional (delta-row 0) (delta-column 0))
   (multiple-value-bind (r c)
@@ -218,9 +218,9 @@ world, and collision detection is performed between sprites and cells.")
 (define-method proxy gsprite (occupant)
   "Make this sprite a proxy for OCCUPANT."
   (let ((world *world*))
-    (when <occupant> 
+    (when ^occupant 
       (error "Attempt to overwrite existing occupant cell in proxying."))
-    (setf <occupant> occupant)
+    (setf ^occupant occupant)
     ;; The occupant should know when it is proxied, and who its proxy is.
     (add-category occupant :proxied)
     (setf (field-value :proxy occupant) self)
@@ -234,12 +234,12 @@ world, and collision detection is performed between sprites and cells.")
     (when (is-player occupant)
       (add-category self :player)
       (set-player world self)
-      (setf <phase-number> (1- (get-phase-number world))))))
+      (setf ^phase-number (1- (get-phase-number world))))))
 
 (define-method unproxy gsprite (&key dr dc dx dy)
   "Remove the occupant from this sprite, dropping it on top."  
   (let ((world *world*)
-	(occupant <occupant>))
+	(occupant ^occupant))
     (when (null occupant)
       (error "Attempt to unproxy non-occupied sprite."))
     (ecase (field-value :type occupant)
@@ -260,7 +260,7 @@ world, and collision detection is performed between sprites and cells.")
       (delete-category self :obstacle)
       (set-player world occupant)
       (run occupant))
-    (setf <occupant> nil)))
+    (setf ^occupant nil)))
 
 (define-method do-post-unproxied gsprite ()
   "This method is invoked on the unproxied former occupant cell after
@@ -271,17 +271,17 @@ unproxying. By default, it does nothing."
   "Attempt to deliver the failed message to the occupant, if any."
   (if (and (is-player self)
 	   (not (has-method method self))
-	   (null <occupant>))
+	   (null ^occupant))
 ;;      (say self (format nil "The ~S command is not applicable." method) )
       ;; otherwise maybe we're a vehicle
-      (let ((occupant <occupant>))
+      (let ((occupant ^occupant))
 	(when (null occupant)
 	  (error "Cannot forward message ~S. No implementation found." method))
 	(apply #'send self method occupant args))))
   
 ;; (define-method embark gsprite (&optional v)
 ;;   "Enter a vehicle V."
-;;   (let ((vehicle (or v (category-at-p *world* <row> <column> :vehicle))))
+;;   (let ((vehicle (or v (category-at-p *world* ^row ^column :vehicle))))
 ;;     (if (null vehicle)
 ;; 	(>>say :narrator "No vehicle to embark.")
 ;; 	(if (null (field-value :occupant vehicle))
@@ -291,7 +291,7 @@ unproxying. By default, it does nothing."
 
 ;; (define-method disembark gsprite ()
 ;;   "Eject the occupant."
-;;   (let ((occupant <occupant>))
+;;   (let ((occupant ^occupant))
 ;;     (when (and occupant (in-category self :proxy))
 ;; 	  (unproxy self))))
   
