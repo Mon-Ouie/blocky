@@ -3,5 +3,4 @@
 (:name "calm" :type :music :file "xiomacs.ogg")
 (:name "bloop" :type :sample :file "bloop.wav")
 (:name "woom" :type :sample :file "woom.wav")
-
- 
+(:name "startup" :type :lisp :file "example.lisp" :properties (:autoload t))
