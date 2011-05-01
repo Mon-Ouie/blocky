@@ -875,7 +875,7 @@ evaluated, then any applicable initializer is triggered."
 
 (defun serialize (object)
   "Convert a Lisp object a print-ready S-expression.
-Invokes :SERIALIZE on IOFORMS objects whenever present. Any fields
+Invokes :BEFORE-SERIALIZE on IOFORMS objects whenever present. Any fields
 named in the list ^EXCLUDED-FIELDS of said object will be ignored."
   ;; use labels here so we can call #'serialize
   (labels ((hash-to-list (hash)
@@ -919,7 +919,7 @@ named in the list ^EXCLUDED-FIELDS of said object will be ignored."
 
 (defun deserialize (data)
   "Reconstruct Lisp objects (including IOFORMS-derived objects) from an
-S-expression made by SERIALIZE. Invokes :DESERIALIZE on IOFORMS
+S-expression made by SERIALIZE. Invokes :AFTER-DESERIALIZE on IOFORMS
 objects after reconstruction, wherever present."
   (cond 
     ;; handle IOFORMS objects
