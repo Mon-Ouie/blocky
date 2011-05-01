@@ -1,9 +1,7 @@
-(
- (:name "circle" :type :image :file "circle.png")	
- (:name "bluedot" :type :image :file "bluedot.png")	
- (:name "calm" :type :music :file "xiomacs.ogg")
- (:name "bloop" :type :sample :file "lymph.wav")
- (:name "woom" :type :sample :file "woom.wav")
- (:name ".default-font" :type :alias :data "sans-condensed-bold-12")
- (:name ".startup" :type :lisp :file "app.lisp" :properties (:autoload t))
-) 
+(:name "circle" :type :image :file "circle.png")	
+(:name "bluedot" :type :image :file "bluedot.png")	
+(:name "calm" :type :music :file "xiomacs.ogg")
+(:name "bloop" :type :sample :file "bloop.wav")
+(:name "woom" :type :sample :file "woom.wav")
+
+ 

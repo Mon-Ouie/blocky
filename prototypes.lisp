@@ -1,7 +1,7 @@
 ;;; prototypes.lisp --- an alternative object system for Common Lisp
 
 ;; Copyright (C) 2007, 2008, 2009, 2010, 2011  David O'Toole
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: oop
 ;; Version: 1.8
 ;;
@@ -523,7 +523,7 @@ message queue resulting from the evaluation of EXPR."
 ;; Within method bodies, you can access the fields of `self' with the
 ;; shorthand
 ;;
-;;   <foo> 
+;;   ^foo
 ;;
 ;; instead of writing
 ;;
@@ -531,11 +531,13 @@ message queue resulting from the evaluation of EXPR."
 ;;
 ;; For example:
 ;;
-;;   (princ <name>)
-;;   (setf <width> 10)
+;;   (princ ^name)
+;;   (setf ^width 10)
 ;; 
 ;; Because `self' is not bound outside of method bodies, we use a
 ;; code-walker to implement the syntax described above. 
+
+(defconstant +field-reference-prefix+ "^")
 
 (defun transform-tree (tester transformer tree)
   (cond ((consp tree)
@@ -560,22 +562,24 @@ message queue resulting from the evaluation of EXPR."
 ;; Now we turn to the syntax itself and the required tree
 ;; transformations.
 
-;;; field references of the form <foo>
+;;; field references of the form @foo
 
 (defun field-reference-p (form)
-  "Return non-nil if FORM is a symbol like <foo>."
+  "Return non-nil if FORM is a symbol like ^foo."
   (if (symbolp form)
       (let* ((name (symbol-name form))
 	     (len (length name)))
-	(and (string= "<" (subseq name 0 1))
-	     (string= ">" (subseq name (- len 1) len))))))
+	(string= (subseq name 0 1)
+		 +field-reference-prefix+))))
+	     ;; (string= ">" (subseq name (- len 1) len))))))
 
 (defun transform-field-reference (ref)
-  "Change the symbol REF from <foo> to (field-value :foo self)."
+  "Change the symbol REF from ^foo to (field-value :foo self)."
   (let ((name (symbol-name ref)))
-    (list 'field-value (make-keyword (subseq name 1 
-					     (- (length name) 1))) 'self)))
-
+    (list 'field-value 
+	  (make-keyword (subseq name 1))
+	  'self)))
+	
 (defun transform-method-body (body)
   "Process the forms in BODY to transform field references."
   (transform-tree #'field-reference-p
@@ -713,7 +717,7 @@ The returned entry will be of the form:
 
 and will be suitable for use with the functions that operate on field
 descriptors, and for inclusion in the association list
-<field-descriptors>.
+^field-descriptors.
 
 See also `define-prototype'.
 "
@@ -862,7 +866,7 @@ evaluated, then any applicable initializer is triggered."
 ;; this hook to pre-process its fields. :DESERIALIZE is likewise
 ;; invoked (if present) after reading the object from disk, and is
 ;; used to recover from deserialization. The reserved field
-;; <EXCLUDED-FIELDS> is a list of field names (keyword symbols) which
+;; ^EXCLUDED-FIELDS is a list of field names (keyword symbols) which
 ;; are not serialized; typically these will be properly re-initialized
 ;; by the :DESERIALIZE method. 
 
@@ -872,7 +876,7 @@ evaluated, then any applicable initializer is triggered."
 (defun serialize (object)
   "Convert a Lisp object a print-ready S-expression.
 Invokes :SERIALIZE on IOFORMS objects whenever present. Any fields
-named in the list <EXCLUDED-FIELDS> of said object will be ignored."
+named in the list ^EXCLUDED-FIELDS of said object will be ignored."
   ;; use labels here so we can call #'serialize
   (labels ((hash-to-list (hash)
 	     (let (plist)
