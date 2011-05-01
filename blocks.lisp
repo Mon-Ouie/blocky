@@ -70,9 +70,9 @@ See also `*argument-types*'.")
   (data :initform nil :documentation "Data value for data entry blocks.")
   (image :initform nil :documentation "Offscreen buffer image, if any.")
   (visible :initform t :documentation "When non-nil, block will be visible.")
-  (keymap :initform nil :documentation "Keybindings, if any.")  
+  (event-map :initform nil :documentation "Event bindings, if any.")  
   (child-widths :initform nil :documentation "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
-  (excluded-fields :initform '(:image :keymap :child-widths :results :parent)))
+  (excluded-fields :initform '(:image :event-map :child-widths :results :parent)))
 
 (defmacro defblock (name &body args)
   "Define a new block prototype named =NAME=.
@@ -92,56 +92,64 @@ ARGS are field specifiers, as with `define-prototype'."
 
 ;;; Defining input events for blocks
 
-(define-method initialize-keymap-maybe block ()
-  (with-fields (keymap) self
-    (when (null keymap)
-      (setf keymap (make-hash-table :test 'equal)))))
+(define-method initialize-event-map-maybe block ()
+  (with-fields (event-map) self
+    (when (null event-map)
+      (setf event-map (make-hash-table :test 'equal)))))
 
-(define-method define-key block (key-name modifiers func)
-  "Bind the described keypress to invoke FUNC.
-KEY-NAME is a string giving the key name; MODIFIERS is a list of
+(define-method bind-event-to-function block (event-name modifiers func)
+  "Bind the described event to invoke FUNC.
+EVENT-NAME is a string giving the key name; MODIFIERS is a list of
 keywords like :control, :alt, and so on."
-  (initialize-keymap-maybe self)
-  (setf (gethash (normalize-event (cons key-name modifiers))
-		 ^keymap)
+  (initialize-event-map-maybe self)
+  (setf (gethash (normalize-event (cons event-name modifiers))
+		 ^event-map)
 	func))
 
-(define-method undefine-key block (key-name modifiers)
-  "Remove the described keybinding."
-  (remhash (normalize-event (cons key-name modifiers))
-	   ^keymap))
+(define-method unbind-event block (event-name modifiers)
+  "Remove the described event binding."
+  (remhash (normalize-event (cons event-name modifiers))
+	   ^event-map))
 
-(define-method clear-keymap block ()
-  (setf ^keymap (make-hash-table :test 'equal)))
+(define-method clear-event-map block ()
+  (setf ^event-map (make-hash-table :test 'equal)))
 
-(define-method handle-key block (keylist)
-  "Look up and invoke the function (if any) bound to KEYLIST. Return t
+(define-method handle-event block (event)
+  "Look up and invoke the function (if any) bound to EVENT. Return t
 if a binding was found, nil otherwise."
-  (initialize-keymap-maybe self)
-  (with-fields (keymap) self
-      (when keymap 
-	(let ((func (gethash keylist keymap)))
+  (initialize-event-map-maybe self)
+  (with-fields (event-map) self
+      (when event-map 
+	(let ((func (gethash event event-map)))
 	  (when func
 	    (prog1 t
 	      (funcall func)))))))
 
-(defun bind-key-to-prompt-insertion (p key modifiers &optional (insertion key))
-  "For prompt P ensure that the event (KEY MODIFIERS) causes the
-text INSERTION to be inserted at point."
- (define-key p (string-upcase key) modifiers
+(defun bind-event-to-prompt-insertion (prompt event-name modifiers &optional (insertion event-name))
+  "For prompt PROMPT ensure that the event (EVENT-NAME MODIFIERS)
+causes the text INSERTION to be inserted at point."
+ (bind-event-to-function prompt (string-upcase event-name) modifiers
 	      #'(lambda ()
-		  (insert p insertion))))
+		  (insert-string prompt insertion))))
 
-(defun bind-key-to-method (p key modifiers method-keyword)
-  (define-key p (string-upcase key) modifiers
-	      #'(lambda ()
-		  (send method-keyword p))))
+(defun bind-event-to-method (block event-name modifiers method-name)
+  (bind-event-to-function block (string-upcase event-name) modifiers
+			  #'(lambda ()
+			      (send method-name block))))
+
+(defmacro bind-event (self event binding)
+  (destructuring-bind (name modifiers) event
+    (etypecase binding
+      (symbol `(bind-event-to-method ',self ,name ',modifiers ,binding))
+      (list `(bind-event-to-function ',self ,name ',modifiers
+				     #'(lambda ()
+					 ,binding))))))
 
 (define-method generic-keybind block (binding) 
-  (destructuring-bind (key modifiers data) binding
+  (destructuring-bind (event modifiers data) binding
     (apply (etypecase data
-	     (keyword #'bind-key-to-method)
-	     (string #'bind-key-to-prompt-insertion))
+	     (keyword #'bind-event-to-method)
+	     (string #'bind-event-to-prompt-insertion))
 	   self binding)))
 
 ;;; Creating blocks from textual lisp expressions

@@ -84,7 +84,7 @@
         *project-directories* (ioforms:default-project-directories)
 	*world* nil
 	*system* self
-	*timesteps* 0
+	*updates* 0
 	*keyboard-timestep-number* 0
 	*initialization-hook* nil
 	*play-args* args

@@ -43,12 +43,12 @@
   (:export *default-frame-width* *default-frame-height* =null=
 	   null-block =viewport= *frequency* *output-chunksize*
 	   *output-channels* halt-sample *dt* defproject run
-	   *timestep-function* =equipment= *default-world-axis-size*
-	   defgsprite generic-keybind *target* *blocks* *script*
+	   *update-function* =equipment= *default-world-axis-size*
+	   defsprite generic-keybind *target* *blocks* *script*
 	   *default-world-z-size* =browser= install-blocks =balloon=
 	   =form= keyboard-held-p keyboard-pressed-p
 	   keyboard-released-p keyboard-time-in-current-state
-	   keyboard-time-in-previous-state *timesteps* keyboard-down-p
+	   keyboard-time-in-previous-state *updates* keyboard-down-p
 	   keyboard-keys-down keyboard-modifier-down-p
 	   keyboard-modifiers draw-filled-circle draw-aa-circle =my=
 	   =say= =animate= =hide= =show= =set-variable= =variable=
@@ -64,9 +64,9 @@
 	   message *prompt-sweden-keybindings*
 	   *prompt-qwerty-keybindings* *screen-width*
 	   transform-method-body roll-under make-stat =formatter=
-	   initialize-colors *standard-categories* *left-turn*
+	   initialize-colors *standard-categories* *left-turn* bind-event
 	   *right-turn* *default-action-points* =world= roll
-	   bind-key-to-method *colors* enable-classic-key-repeat
+	   bind-event-to-method *colors* enable-classic-key-repeat
 	   disable-classic-key-repeat get-color =prompt= =menu-item=
 	   =direction-chooser= define-method *default-font* 
 	   field-value set-field-value object-fields dispatch-event
@@ -94,7 +94,7 @@
 	   find-resource-object *colors* *world* make-directory-maybe
 	   load-user-init-file *project-directories* resource-to-plist
 	   *osx* *linux* make-resource make-object-resource make-event
-	   =block= *blocks* bind-key-to-prompt-insertion
+	   =block= *blocks* bind-event-to-prompt-insertion
 	   make-field-initializer clone make-field-initializer-body
 	   make-key-modifier-symbol make-key-string normalize-event
 	   make-keyword make-object queue-head queue-max queue-count

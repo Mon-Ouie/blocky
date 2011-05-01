@@ -1,5 +1,5 @@
-(:name "circle" :type :image :file "circle.png")	
-(:name "bluedot" :type :image :file "bluedot.png")	
+(:name "blue-dot" :type :image :file "blue-dot.png")	
+(:name "story" :type :image :file "story.png")	
 (:name "calm" :type :music :file "xiomacs.ogg")
 (:name "bloop" :type :sample :file "bloop.wav")
 (:name "woom" :type :sample :file "woom.wav")

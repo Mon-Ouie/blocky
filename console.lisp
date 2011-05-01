@@ -1,8 +1,8 @@
-;;; console.lisp --- core operations for IOFORM
+;;; console.lisp --- core operations for IOFORMS
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
-;; Author: David O'Toole ^dto@gnu.org ^dto1138@gmail.com
+;; Author: David O'Toole <dto@gnu.org> <dto1138@gmail.com>
 ;; Keywords: multimedia, games
 
 ;; This file is free software; you can redistribute it and/or modify
@@ -95,19 +95,19 @@
 		 (first entry2)))))
     (mapcar #'translate (sdl:mods-down-p))))
 
-;;; Processing once per timestep
+;;; Processing once per update
 
 (defvar *keys* nil "List of keywords of currently pressed keys.")
 
 (defvar *mods* nil "List of keywords of currently pressed modifiers.")
 
-(defvar *keyboard-timestep-number* 0)
+(defvar *keyboard-update-number* 0)
 
 (defun get-keys ()
-  (if (= *keyboard-timestep-number* *timesteps*)
+  (if (= *keyboard-update-number* *updates*)
       (setf *keys* (keyboard-keys-down)
 	    *mods* (keyboard-modifiers)
-	    *keyboard-timestep-number* *timesteps*)
+	    *keyboard-update-number* *updates*)
       (setf *keys* nil *mods* nil))
   (values *keys* *mods*))
 
@@ -305,10 +305,12 @@ Please set the variable ioforms:*event-handler-function*")
 
 (defun normalize-event (event)
   "Convert EVENT to a normal form suitable for `equal' comparisons."
-  (setf (rest event)
-	(sort (remove-duplicates (delete nil (rest event)))
-	      #'string< :key #'symbol-name))
-  event)
+  (let ((name (first event)))
+    (cons (etypecase name
+	    (symbol (symbol-name name))
+	    (string name))
+	  (sort (remove-duplicates (delete nil (rest event)))
+		#'string< :key #'symbol-name))))
 
 ;;; Translating SDL key events into IOFORMS event lists
 
@@ -536,12 +538,12 @@ at the time the cell method is run.")
   (dolist (block *blocks*)
     (apply #'send nil :step block args)))
 
-(defvar *timestep-function* #'step-blocks)
+(defvar *update-function* #'step-blocks)
 
-(defun do-timestep (&rest args) 
-  (incf *timesteps*)
-  (when (functionp *timestep-function*)
-    (apply *timestep-function* args)))
+(defun do-update (&rest args) 
+  (incf *updates*)
+  (when (functionp *update-function*)
+    (apply *update-function* args)))
 
 (defvar *frame-rate* 30 "The intended frame rate of the game.")
 
@@ -550,7 +552,7 @@ at the time the cell method is run.")
   (message "Setting frame rate to ~S" rate)
   (setf (sdl:frame-rate) rate))
 
-(defparameter *timesteps* 0)
+(defparameter *updates* 0)
 
 (defvar *clock* 0 "Number of frames until next timer event.")
 
@@ -716,7 +718,7 @@ display."
 		   ;; clean this up. these two cases aren't that different.
 		   (progn 
 		     (sdl:with-timestep ()
-		       (do-timestep))
+		       (do-update))
 		     (sdl:clear-display sdl:*black*)
 ;;		     (when *held-keys* (send-held-events))
 		     (draw-blocks) 
@@ -1855,7 +1857,7 @@ This program includes the DejaVu fonts family. See the file
 ;; (defmacro defproject (module-name 
 ;; 		   (&key title description
 ;; 			 (prompt-prototype =prompt=)
-;; 			 timestep timestep-function
+;; 			 update update-function
 ;; 			 held-keys 
 ;; 			 splash-image splash-function splash-music
 ;; 			 screen-width screen-height
@@ -1865,8 +1867,8 @@ This program includes the DejaVu fonts family. See the file
 ;;   `(progn
 ;;      (ioforms:set-screen-height ,screen-height)
 ;;      (ioforms:set-screen-width ,screen-width)
-;;      (setf ioforms:*timestep-function* ,timestep-function)
-;;      (setf ioforms:*dt* ,timestep)
+;;      (setf ioforms:*update-function* ,update-function)
+;;      (setf ioforms:*dt* ,update)
 ;;      ,@startup-forms))
 
 ;;; console.lisp ends here

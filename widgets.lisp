@@ -303,7 +303,7 @@ The modes can be toggled with CONTROL-X.
   (mode :documentation "Either :direct or :forward." :initform :direct)
   (clock :initform *prompt-blink-time*)
   (keybindings :documentation "Default keybindings bound during initialization.
-These are the arguments to `bind-key-to-prompt-insertion', which see.")
+These are the arguments to `bind-event-to-prompt-insertion', which see.")
   (visible :documentation "When non-nil, the prompt is drawn." :initform t)
   (receiver :documentation "The object to send command messages to when in :forward mode.")
   (point :initform 0 :documentation "Integer index of cursor within prompt line.")
@@ -341,7 +341,7 @@ normally."
     (when (null keybindings)
       (setf keybindings (make-hash-table :test 'equal)))
     (dolist (k keybindings)
-      (apply #'bind-key-to-prompt-insertion self k))))
+      (apply #'bind-event-to-prompt-insertion self k))))
 
 (defparameter *prompt-qwerty-keybindings*
   '(("A" (:control) :move-beginning-of-line)
@@ -424,14 +424,14 @@ normally."
       (generic-keybind self binding))
     ;; install keybindings for self-inserting characters
     (map nil #'(lambda (char)
-		 (bind-key-to-prompt-insertion self (string char) nil
+		 (bind-event-to-prompt-insertion self (string char) nil
 					       (string-downcase char)))
 	 *lowercase-alpha-characters*)
     (map nil #'(lambda (char)
-		 (bind-key-to-prompt-insertion self (string char) '(:shift)))
+		 (bind-event-to-prompt-insertion self (string char) '(:shift)))
 	 *uppercase-alpha-characters*)
     (map nil #'(lambda (char)
-		 (bind-key-to-prompt-insertion self (string char) nil))
+		 (bind-event-to-prompt-insertion self (string char) nil))
 	 *numeric-characters*)))
 
 (define-method say prompt (&rest args)

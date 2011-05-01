@@ -1,6 +1,6 @@
-;;; editor.lisp --- IOFORMS main user application window
+;;; example.lisp --- IOFORMS example app
 
-;; Copyright (C) 2010  David O'Toole
+;; Copyright (C) 2010, 2011  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: games
@@ -18,39 +18,27 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(defpackage :app   
+(defpackage :example
     (:use :ioforms :common-lisp)
-  (:export physics))
+  (:export update))
 
-(in-package :app)
+(in-package :example)
 
-;;; Main program. 
+(defworld white-room 
+  (background :initform "story"))
 
+(defsprite player
+  (image :initform "blue-dot")
+  (direction :initform :north))
 
-(defgsprite circle
-  (direction :initform :north)
-  (image :initform "circle"))
+(define-method initialize player ()
+  (bind-event self (:up) (move :north 5 :pixels))
+  (bind-event self (:down) (move :south 5 :pixels))
+  (bind-event self (:right) (move :east 5 :pixels))
+  (bind-event self (:left) (move :west 5 :pixels)))
 
-(define-method emote circle (&rest args)
-  (/play-sound self "bloop")
-  (apply #'/parent/emote self args))
-
-(define-prototype circle-prompt (:parent =prompt=))
-
-(define-method install-keybindings circle-prompt ()
-  (dolist (binding '(("UP" nil "move :north 2 :pixels")
-		     ("DOWN" nil "move :south 2 :pixels")
-		     ("LEFT" nil "move :west 2 :pixels")
-		     ("RIGHT" nil "move :east 2 :pixels")))
-    (apply #'bind-key-to-prompt-insertion self binding)))
-
-(defworld myworld 
-  (background :initform "bluedot"))
-
-(defvar *circle*)
-(defvar *viewport*)
-(defvar *myverse*)
-(defvar *prompt*)
+(define-method touch player ()
+  (play-sound self "bloop"))
 
 ;;; Palettes to choose objects from
 
@@ -65,7 +53,7 @@
   (setf *myverse* (clone =universe=))
   (setf *viewport* (clone =viewport=))
   (setf *prompt* (clone =circle-prompt=))
-  (setf *physics-function* 
+  (setf *update-function* 
 	#'(lambda (&rest ignore)
 	    (when *world* (/run-cpu-phase *world* t))))
   (/install-keybindings *prompt*)
@@ -122,8 +110,8 @@
 (define-method initialize frame (&rest panes)
   (/parent/initialize self)
   (if panes
-      (setf <panes> panes)
-      (setf <panes>
+      (setf ^panes panes)
+      (setf ^panes
 	    (list (clone =palette=)
 		  *viewport*
 		  (clone =editor=)))))
@@ -188,29 +176,29 @@
   (/generic-keybind self *qwerty-keybindings*))
 
 (define-method install frame ()
-  (apply #'ioforms:install-blocks self <panes>))
+  (apply #'ioforms:install-blocks self ^panes))
 
 (define-method palette-pane frame ()
-  (nth 0 <panes>))
+  (nth 0 ^panes))
 
 (define-method script-pane frame ()
-  (nth 1 <panes>))
+  (nth 1 ^panes))
 
 (define-method world-pane frame ()
-  (nth 2 <panes>))
+  (nth 2 ^panes))
 
 (define-method other-pane frame ()
-  (ecase <focus>
+  (ecase ^focus
     (0 (/script-pane self))
     (1 (/world-pane self))
     (2 (/palette-pane self))))
 
 (define-method selected-pane frame ()
-  (nth <focus> <panes>))
+  (nth ^focus ^panes))
 
 (define-method switch-panes frame ()
-  (let ((newpos (mod (1+ <focus>) (length <panes>))))
-    (setf <focus> newpos)
+  (let ((newpos (mod (1+ ^focus) (length ^panes))))
+    (setf ^focus newpos)
     (ecase newpos
       (0 (/palette-pane self))
       (1 (/script-pane self))
@@ -232,16 +220,16 @@
 	    (when (eq widget (/selected-pane self))
 	      (draw-rectangle x y (field-value :width widget)
 			      (field-value :height widget)
-			      :color <active-color>
+			      :color ^active-color
 			      :destination image))
 	    (incf x (1+ (first pane-stops)))
 	    (pop pane-stops)))))))
 
 (define-method hit frame (x y)
-  (hit-widgets x y <panes>))
+  (hit-widgets x y ^panes))
 
 (define-method handle-key frame (event)
-  (or (let ((func (gethash event <keymap>)))
+  (or (let ((func (gethash event ^keymap)))
 	(when func
 	  (prog1 t
 	    (funcall func))))

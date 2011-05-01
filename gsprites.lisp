@@ -47,7 +47,7 @@ world, and collision detection is performed between sprites and cells.")
 
 ;; Convenience macro for defining cells:
 
-(defmacro defgsprite (name &body args)
+(defmacro defsprite (name &body args)
   `(define-prototype ,name (:parent =gsprite=)
      ,@args))
 
