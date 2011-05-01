@@ -66,3 +66,4 @@
 
 (:name ".default-font" :type :ttf :file "DejaVuSans.ttf" :properties (:size 12))
 (:name ".startup" :type :lisp :file "standard.lisp" :properties (:autoload t))
+

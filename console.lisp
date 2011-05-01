@@ -820,10 +820,14 @@ This prepares it for printing as part of a IOF file."
       (format file "~S" sexp)))
   (message "Writing data to file ~S... Done." filename))
 
+(defvar *eof-value* (gensym))
+
 (defun read-sexp-from-file (filename)
   (message "Reading data from ~A..." filename)
   (with-open-file (file filename :direction :input)
-    (prog1 (read file)
+    (prog1 (loop as sexp = (read file nil *eof-value*)
+		 until (eq *eof-value* sexp)
+		 collect sexp)
       (message "Reading data from ~A... Done." filename))))
 
 ;; Now tie it all together with routines that read and write
@@ -835,9 +839,16 @@ This prepares it for printing as part of a IOF file."
 
 (defun read-iof (filename)
   "Return a list of resources from the IOF file FILENAME."
-  (mapcar #'(lambda (plist)
-	      (apply #'make-resource plist))
-	  (read-sexp-from-file filename)))
+  (labels ((resourcep (s)
+	     (keywordp (first s))))
+    ;; read the file
+    (let ((sexp (read-sexp-from-file filename)))
+      ;; find the resource plists; see `read-sexp-from-file'
+      (mapcar #'(lambda (s)
+		  (apply #'make-resource s))
+	      (if (every #'resourcep sexp)
+	          sexp
+		  (first sexp))))))
 
 ;;; Resources and projects
 
@@ -1741,7 +1752,7 @@ The default destination is the main window."
 (defvar *copyright-text*
 "IOFORMS Visual Common Lisp Multimedia Authoring Tool
 Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 by David T O'Toole
-^dto@gnu.org ^dto1138@gmail.com
+<dto@gnu.org> <dto1138@gmail.com>
 http://ioforms.org/
 
 This program is free software: you can redistribute it and/or modify
@@ -1755,7 +1766,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see ^http://www.gnu.org/licenses/.
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 This program includes libSDL 1.2 (Simple Direct Media Layer), which is
 provided under the terms of the GNU Lesser General Public License. See
