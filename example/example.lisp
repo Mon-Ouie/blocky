@@ -49,52 +49,25 @@
 
 (define-method initialize palette ()
   (/parent/initialize self)
-  (setf *circle* (clone =circle=))    
+  (setf *player* (clone =player=))    
   (setf *myverse* (clone =universe=))
   (setf *viewport* (clone =viewport=))
-  (setf *prompt* (clone =circle-prompt=))
+  ;; TODO make this happen by default 
   (setf *update-function* 
 	#'(lambda (&rest ignore)
+	    ;; TODO rename archaic "run-cpu-phase"
 	    (when *world* (/run-cpu-phase *world* t))))
-  (/install-keybindings *prompt*)
-  (/set-receiver *prompt* *circle*)
-  (/configure *myverse* :prompt *prompt*
+  (configure *myverse* 
 	      :viewport *viewport*
-	      :player *circle*)
-  (/play *myverse* :address '(=myworld=))
-  (/set-world *viewport* *world*)
-  (/set-scrolling *viewport* nil)
-  (/resize-to-background *world*)
-  (/drop-sprite *world* *circle* 50 100)
+	      :player *player*)
+  (play *myverse* :address '(=myworld=))
+  (set-world *viewport* *world*)
+  (set-scrolling *viewport* nil)
+  (resize-to-background *world*)
+  (drop-sprite *world* *player* 50 100)
     (with-fields (script) self
-      (/set-recipient script *circle*)
-      (/add script (make-block (list (listener))))))
-    ;; (/add script (make-block (null)) 10 10)
-    ;; (/add script (make-block (if (null) (null)
-    ;; 				  (null)
-    ;; 				 )) 60 60)
-    ;; (/add script (make-block (when (see-player) (set direction (player-direction)))) 90 90)
-    ;; (/add script (make-block (animate "blue-costume")) 50 50)
-    ;; (/add script (make-block (when (closer-than 10 spaces to player) (fire (my direction))))
-    ;; 	   54 44)
-    ;; (/add script (make-block (null)) 10 10)
-    ;; (/add script (make-block (move west 5 pixels)) 20 20)
-    ;; (/add script (make-block (move north 5 pixels)) 30 30)
-    ;; (/add script (make-block (move south 5 pixels)) 20 20)
-    ;; (/add script (make-block (move east (+ 1 (+ 2 4)) pixels)) 30 30)
-    ;; (/add script (make-block (move (my direction) 10 pixels))
-    ;; 	  50 50)
-    ;; (/add script (make-block (list 
-    ;; 			      (emote "Well this is very strange.")))
-    ;; 	  55 55)
-    ;; (/add script (make-block (list 
-    ;; 			      (emote "Maybe I'll go west.")
-    ;; 			      (set direction west)))
-    ;; 	  60 60)
-    ;; (/add script (make-block (play-sound "woom")) 20 120)
-    ;; (/add script (make-block (list (play-music "calm")
-    ;; 				   (emote "I feel calm.")))
-    ;; 	  20 200)))
+      (set-recipient script *circle*)
+      (add script (make-block (list (listener))))))
 
 ;;; A "frame" is a top-level application window.
 

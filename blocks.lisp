@@ -138,12 +138,14 @@ causes the text INSERTION to be inserted at point."
 			      (send method-name block))))
 
 (defmacro bind-event (self event binding)
-  (destructuring-bind (name modifiers) event
+  (destructuring-bind (name &rest modifiers) event
     (etypecase binding
-      (symbol `(bind-event-to-method ',self ,name ',modifiers ,binding))
-      (list `(bind-event-to-function ',self ,name ',modifiers
+      (symbol `(bind-event-to-method ,self ,name ',modifiers ,binding))
+      (list `(bind-event-to-function ,self ,name ',modifiers
 				     #'(lambda ()
-					 ,binding))))))
+					 (,(first binding)
+					   self
+					   ,@(rest binding))))))))
 
 (define-method generic-keybind block (binding) 
   (destructuring-bind (event modifiers data) binding
