@@ -70,7 +70,7 @@
 	   disable-classic-key-repeat get-color =prompt= =menu-item=
 	   =direction-chooser= define-method *default-font* 
 	   field-value set-field-value object-fields dispatch-event
-	   run *user-init-file-name* distance icon-resource icon-image
+	   run-project *user-init-file-name* distance icon-resource icon-image
 	   *compass-directions* *compass-opposites*
 	   find-resource-property compose-blank-fields font-width
 	   font-height *browser* browser set-browser find-object

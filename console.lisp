@@ -534,11 +534,11 @@ at the time the cell method is run.")
 
 (defvar *dt* 20)
 
-(defun step-blocks (&rest args)
+(defun update-blocks (&rest args)
   (dolist (block *blocks*)
-    (apply #'send nil :step block args)))
+    (apply #'send :tick block args)))
 
-(defvar *update-function* #'step-blocks)
+(defvar *update-function* #'update-blocks)
 
 (defun do-update (&rest args) 
   (incf *updates*)
@@ -1833,14 +1833,14 @@ This program includes the DejaVu fonts family. See the file
 		  "libSDL_image")))
     (cffi:use-foreign-library sdl-image))
 
-(defun run (&rest args)
+(defun run-project (&rest args)
   (destructuring-bind (project &rest arguments) args
     (unwind-protect 
-	 ;; see shell.lisp
+	 ;; see system.lisp
 	 (progn 
 	   (setf *system* (clone (symbol-value '=system=)))
 	   (when project 
-	     (apply #'send nil :open-project *system* project arguments))
+	     (apply #'send :open *system* project arguments))
 	   (run-main-loop))
       (sdl:quit-sdl))))
 

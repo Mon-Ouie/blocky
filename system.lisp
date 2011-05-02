@@ -85,7 +85,7 @@
 	*world* nil
 	*system* self
 	*updates* 0
-	*keyboard-timestep-number* 0
+	*keyboard-update-number* 0
 	*initialization-hook* nil
 	*play-args* args
 	*random-state* (make-random-state t))
@@ -107,7 +107,7 @@
 	       (setf *use-sound* nil))
 	     ;; set to mix lots of sounds
 	     (sdl-mixer:allocate-channels *channels*))
-	   (index-project "standard"))
+	   (open-project "standard"))
 	(setf *window-title* "ioforms")
 	(setf *resizable* t)
 	(enable-classic-key-repeat 100 100)
@@ -126,13 +126,13 @@
 
 (define-method run system ())
 
-(define-method open-project system (project)
+(define-method open system (project)
   (open-project project))
 
-(define-method save-project system ()
+(define-method save system ()
   (save-project))
 
-(define-method new-project system (project)
+(define-method new system (project)
   (assert (stringp project))
   (let ((dir (find-project-path project)))
     (when (directory-is-project-p dir)

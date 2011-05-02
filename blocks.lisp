@@ -316,11 +316,12 @@ those results as input."
   (execute-arguments self)
   (execute self))
 
-(define-method tick block (&rest args)
+(define-method update block (&rest args)
   "Update the simulation one step forward in time."
-  (with-fields (arguments) self
-    (dolist (block arguments)
-      (send :tick block))))
+  (mapc #'update ^arguments))
+  ;; (with-fields (arguments) self
+  ;;   (dolist (block arguments)
+  ;;     (update block))))
 
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
@@ -880,7 +881,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
   ;;     (dolist (block arguments)
   ;; 	(run block)))))
 	    
-(define-method tick script ())
+(define-method update script ())
 
 (define-method bring-to-front script (block)
   (with-fields (arguments) self
