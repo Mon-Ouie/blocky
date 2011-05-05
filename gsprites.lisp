@@ -57,11 +57,12 @@ world, and collision detection is performed between sprites and cells.")
 (defun is-cell (ob)
   (when (eq :cell (field-value :type ob))))
 
-(define-method resize gsprite ()
-  (with-fields (image height width) self
-    (when image
-      (setf width (image-width image))
-      (setf height (image-height image)))))
+(define-method resize gsprite ())
+  ;; (with-fields (image height width) self
+  ;;   (when image
+  ;;     (sdl:init-sdl :video t :audio t :joystick t)
+  ;;     (setf width (image-width image))
+  ;;     (setf height (image-height image)))))
     
 (define-method initialize gsprite ()
   (when ^image

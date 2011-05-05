@@ -1834,6 +1834,7 @@ This program includes the DejaVu fonts family. See the file
     (cffi:use-foreign-library sdl-image))
 
 (defun run-project (&rest args)
+  (sdl:init-sdl :video t :audio t :joystick t)
   (destructuring-bind (project &rest arguments) args
     (unwind-protect 
 	 ;; see system.lisp
@@ -1841,8 +1842,7 @@ This program includes the DejaVu fonts family. See the file
 	   (setf *system* (clone (symbol-value '=system=)))
 	   (when project 
 	     (apply #'send :open *system* project arguments))
-	   (run-main-loop))
-      (sdl:quit-sdl))))
+	   (run-main-loop)))))
 
 (defun ioforms (&rest args)
   (setf *after-open-project-hook* nil

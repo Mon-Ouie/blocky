@@ -1131,9 +1131,6 @@ represents the z-axis of a euclidean 3-D space."))
 (defun make-universe ()
   (clone =universe=))
 
-(defmacro new (prototype &rest args)
-  `(clone ,(make-special-variable-name prototype) ,@args))
-
 (define-method make-euclidean universe ()
   (setf ^space (make-array *default-space-size* 
 			    :adjustable t
@@ -1246,7 +1243,7 @@ narrator, and VIEWPORT as the viewport."
     (setf *universe* self)
     (set-viewport world ^viewport)
     (set-world ^viewport world)
-    (drop-player-at-entry world player)
+    (add-sprite world player)
     (focus self)
     (start world)))
 

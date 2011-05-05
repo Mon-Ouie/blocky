@@ -18,9 +18,16 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+(defpackage :example 
+    (:use :ioforms :common-lisp))
+  
+(in-package :example)
+
 (defworld whitespace :background "story")
 
-(defsprite player :image "blue-dot")
+(defsprite player 
+  :image "blue-dot" 
+  :x 20 :y 45)
 
 (define-method initialize player ()
   (bind-event self (:up) (move :north 5 :pixels))

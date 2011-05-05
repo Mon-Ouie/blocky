@@ -78,6 +78,7 @@
   #+linux (do-cffi-loading)
   (message "Starting IOFORMS Shell...")
   (initialize-ioforms)
+  (sdl:init-sdl :video t :audio t :joystick t)
   (apply #'/parent/initialize self args)
   (reset-message-function)
   (setf *project-package-name* nil
