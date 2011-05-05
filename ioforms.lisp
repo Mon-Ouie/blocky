@@ -63,7 +63,7 @@
 	   =block-prompt= =listener= =list= split-string-on-lines
 	   message *prompt-sweden-keybindings*
 	   *prompt-qwerty-keybindings* *screen-width*
-	   transform-method-body roll-under make-stat =formatter=
+	   transform-method-body roll-under make-stat =formatter= make-universe
 	   initialize-colors *standard-categories* *left-turn* bind-event
 	   *right-turn* *default-action-points* =world= roll
 	   bind-event-to-method *colors* enable-classic-key-repeat
@@ -180,7 +180,7 @@
 	   message-symbol operation-symbol *sender* message-reader
 	   transform-tree field-reference-p transform-field-reference
 	   transform-method-body object-parent object-name $
-	   object-fields define-method define-prototype clone object-p
+	   object-fields define-method define-prototype new object-p
 	   self transform-declaration-field-descriptor is-a
 	   compose-blank-fields make-field-initializer initialize
 	   initialize-ioforms object-address-string

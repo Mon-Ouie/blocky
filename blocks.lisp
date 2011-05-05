@@ -319,11 +319,8 @@ those results as input."
   (execute self))
 
 (define-method update block (&rest args)
-  "Update the simulation one step forward in time."
-  (mapc #'update ^arguments))
-  ;; (with-fields (arguments) self
-  ;;   (dolist (block arguments)
-  ;;     (update block))))
+  "Update the simulation one step forward in time.")
+;;  (mapc #'update ^arguments)) ;; TODO not by default
 
 (define-method describe block ()
   "Show name and comprehensive help for this block.")

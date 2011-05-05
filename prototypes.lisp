@@ -700,8 +700,8 @@ was invoked."
 ;; First we need to define the written syntax for field options, so
 ;; that we can write these options into prototype declarations later.
 
-(defun transform-declaration-field-descriptor (D)
-  "Convert the declaration-field-descriptor D into a canonical field
+(defun transform-declaration (D)
+  "Convert the declaration D into a canonical field
 descriptor.
 
 The descriptor D must be either a symbol, in which case a field is
@@ -754,11 +754,20 @@ slot value is inherited."
   (destructuring-bind (field (&key initform &allow-other-keys)) descriptor
     (if initform `(set-field-value ,field self ,initform))))
 
+(defun plist-to-descriptors (plist)
+  (let (descriptors)
+    (loop while plist do
+      (let* ((field (pop plist))
+	     (value (pop plist)))
+	(push (list field :initform value)
+	      descriptors)))
+    (nreverse descriptors)))
+	
 (defmacro define-prototype (name
 			    (&key parent 
 				  documentation
 				  &allow-other-keys)
-			    &body declaration-field-descriptors)
+			    &body declarations)
   "Create a new object prototype (possibly based on another prototype).
 
 NAME should be a symbol naming the prototype. A special variable is
@@ -778,14 +787,14 @@ prototype. Valid keys are:
  :PARENT            The parent prototype from which the new prototype will 
                     inherit fields. This form is evaluated.
                      
-DECLARATION-FIELD-DESCRIPTORS should be a list, each entry of which is
+DECLARATIONS should be a list, each entry of which is
 either a list of the form
 
   (FIELD-NAME . OPTIONS)
 
 or, simply a symbol naming the field---a shorthand for declaring a
 field with that name and no options. See also
-`transform-declaration-field-descriptor'.
+`transform-declaration'.
 
 OPTIONS is a property list of field options. Valid keys are:
 
@@ -796,8 +805,11 @@ OPTIONS is a property list of field options. Valid keys are:
                     with the value nil.
  :DOCUMENTATION     Documentation string for the field.
 "
-  (let* ((descriptors (mapcar #'transform-declaration-field-descriptor 
-			      declaration-field-descriptors))
+  (let* ((pre-descriptors (if (keywordp (first declarations))
+			      (plist-to-descriptors declarations)
+			      declarations))
+	 (descriptors (mapcar #'transform-declaration 
+			      pre-descriptors))
 	 (proto-symbol (make-special-variable-name name))
 	 (field-initializer-body (delete nil (mapcar #'make-field-initializer 
 						     descriptors))))
@@ -959,5 +971,5 @@ objects after reconstruction, wherever present."
 
 (defun queue/initialize (object &rest args)
   (apply #'send-queue :initialize object args))
-      
+
 ;;; prototypes.lisp ends here

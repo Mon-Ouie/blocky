@@ -1,4 +1,4 @@
-;;; viewport.lisp --- tile engine display widget
+;;; viewport.lisp --- world display widget
 
 ;; Copyright (C) 2009, 2010, 2011  David O'Toole
 
@@ -32,6 +32,8 @@
 
 (defstruct overlay func parameters clock)
 
+(defvar *default-grid-size* 16)
+
 (defblock viewport 
   (world :documentation "The world object to be displayed.")
   (overlays :documentation "List of closures.")
@@ -40,46 +42,54 @@
   (pending-draws :initform (make-array 100 :initial-element nil 
 				       :adjustable t :fill-pointer 0))
   (margin :initform 15 :documentation "Scroll margin.")
-  (origin-x :initform 0 
-	    :documentation "The world x-coordinate of the tile at the viewport's origin.")
-  (origin-y :initform 0 
-	    :documentation "The world y-coordinate of the tile at the viewport's origin.")
-  (origin-width :initform 10 :documentation "The width in tiles of the viewport.")
-  (origin-height :initform 10 :documentation "The height in tiles of the viewport.")
+  (window-x :initform 0 
+	    :documentation "The world x-coordinate of the tile at the viewport's window.")
+  (window-y :initform 0 
+	    :documentation "The world y-coordinate of the tile at the viewport's window.")
+  (window-width :initform 10 :documentation "The width in tiles of the viewport.")
+  (window-height :initform 10 :documentation "The height in tiles of the viewport.")
   ;; pixel-perfect scrolling "drag"
   (drag-x :initform 0)
   (drag-y :initform 0)
-  (tile-size :initform 16 :documentation "Size in pixels of a tile. They must be square.")
+  (grid-size :initform *default-grid-size* :documentation "Size in pixels of a tile. They must be square.")
   (excluded-fields :initform '(:world)))
 
+(define-method initialize viewport (&key top left width height world grid-size)
+  (setf ^window-y top
+	^window-x left 
+	^window-width width
+	^window-height height
+	^world world
+	^grid-size grid-size))
+
 (define-method get-viewport-coordinates viewport (cell-row cell-column)
-  (let ((size ^tile-size))
+  (let ((size ^grid-size))
     (let ((x0 (* size cell-column))
 	  (y0 (* size cell-row)))
       (values x0 y0))))
 
 (define-method get-image-coordinates viewport (cell-row cell-column)
-  (let ((size ^tile-size))
-    (let ((x0 (* size (- cell-column ^origin-x)))
-	  (y0 (* size (- cell-row ^origin-y))))
+  (let ((size ^grid-size))
+    (let ((x0 (* size (- cell-column ^window-x)))
+	  (y0 (* size (- cell-row ^window-y))))
       (values x0 y0))))
 
 (define-method get-screen-coordinates viewport (cell-row cell-column)
-  (let ((size ^tile-size))
-    (let ((x0 (+ (* size (- cell-column ^origin-x)) ^x))
-	  (y0 (+ (* size (- cell-row ^origin-y)) ^y)))
+  (let ((size ^grid-size))
+    (let ((x0 (+ (* size (- cell-column ^window-x)) ^x))
+	  (y0 (+ (* size (- cell-row ^window-y)) ^y)))
       (values x0 y0))))
 
 ;; (define-method get-viewport-coordinates viewport (cell-row cell-column)
-;;   (let ((size ^tile-size))
-;;     (let ((x0 (* size (- cell-column ^origin-x)))
-;; 	  (y0 (* size (- cell-row ^origin-y))))
+;;   (let ((size ^grid-size))
+;;     (let ((x0 (* size (- cell-column ^window-x)))
+;; 	  (y0 (* size (- cell-row ^window-y))))
 ;;       (values x0 y0))))
 
 (define-method get-viewport-coordinates-* viewport (x y)
-  (let* ((size ^tile-size)
-	 (x0 (* ^origin-x size))
-	 (y0 (* ^origin-y size)))
+  (let* ((size ^grid-size)
+	 (x0 (* ^window-x size))
+	 (y0 (* ^window-y size)))
     (values (- x x0) (- y y0))))
 
 (define-method add-overlay viewport (overlay)
@@ -100,14 +110,14 @@
 (define-method set-scrolling viewport (flag)
   (setf ^scrolling flag))
 
-(define-method set-tile-size viewport (&optional size)
-  (with-fields (tile-size origin-width origin-height) self
-    (setf tile-size (or size (field-value :tile-size ^world)))))
+(define-method set-grid-size viewport (&optional size)
+  (with-fields (grid-size window-width window-height) self
+    (setf grid-size (or size (field-value :grid-size ^world)))))
     
 (define-method update-geometry viewport (&optional resize)    
-  (with-field-values (tile-size origin-width origin-height width height) self
-    (let ((new-width (* tile-size origin-width))
-	  (new-height (* tile-size origin-height)))
+  (with-field-values (grid-size window-width window-height width height) self
+    (let ((new-width (* grid-size window-width))
+	  (new-height (* grid-size window-height)))
       (unless (and (= new-width width)
 		   (= new-height height))
 	(when resize (resize self :height new-height :width new-width))))))
@@ -117,16 +127,16 @@
   (when ^visible
     (when ^scrolling (adjust self))
     (let* ((world (or ^world *world*))
-           (origin-width ^origin-width)
-           (origin-height ^origin-height)
-           (origin-x ^origin-x)
-           (origin-y ^origin-y)
+           (window-width ^window-width)
+           (window-height ^window-height)
+           (window-x ^window-x)
+           (window-y ^window-y)
 	   (drag-x ^drag-x)
 	   (drag-y ^drag-y)
            (pending-draws ^pending-draws)
            (image ^image)
            (tile nil)
-           (tile-size ^tile-size)
+           (grid-size ^grid-size)
            objects cell)
       (setf (fill-pointer pending-draws) 0)
       (with-field-values (grid light-grid environment-grid phase-number
@@ -137,31 +147,31 @@
 	;; draw any background
 	(when (stringp background)
 	  (let ((surface (find-resource-object background))
-		(x-offset (* tile-size origin-x))
-		(y-offset (* tile-size origin-y))
-		(width (* tile-size origin-width))
-		(height (* tile-size origin-height)))
+		(x-offset (* grid-size window-x))
+		(y-offset (* grid-size window-y))
+		(width (* grid-size window-width))
+		(height (* grid-size window-height)))
 	    (draw-resource-image background 0 0 
 				 :render-cell (list (+ x-offset drag-x)
 						    (+ y-offset drag-y)
 						    width height) 
 				 :destination image)))
         ;; draw the tiles
-        (dotimes (i origin-height)
-          (dotimes (j origin-width)
+        (dotimes (i window-height)
+          (dotimes (j window-width)
             ;; is this square lit? 
-            (if (and (array-in-bounds-p grid (+ i origin-y) (+ j origin-x))
+            (if (and (array-in-bounds-p grid (+ i window-y) (+ j window-x))
                      (or (eq :total ambient-light)
-                         (= 1 (aref light-grid (+ i origin-y) (+ j origin-x)))))
+                         (= 1 (aref light-grid (+ i window-y) (+ j window-x)))))
                 (progn 
                   (setf objects (aref grid 
-                                      (+ i origin-y)
-                                      (+ j origin-x)))
+                                      (+ i window-y)
+                                      (+ j window-x)))
                   (dotimes (k (fill-pointer objects))
                     (setf cell (aref objects k))
                     (when (object-p cell)
-                      (let ((j0 (+ (- drag-x) (* j tile-size)))
-                            (i0 (+ (- drag-y) (* i tile-size))))
+                      (let ((j0 (+ (- drag-x) (* j grid-size)))
+                            (i0 (+ (- drag-y) (* i grid-size))))
 			(setf tile (field-value :tile cell))
 			(if (or (member :drawn (field-value :categories cell))
 				(null tile))
@@ -171,16 +181,16 @@
 						   :render-cell (field-value :render-cell cell) 
 						   :destination image)))))))
 	      ;; not in bounds, or not lit; draw blackness
-	      (draw-resource-image ".blackness" (* j tile-size) (* i tile-size)
+	      (draw-resource-image ".blackness" (* j grid-size) (* i grid-size)
 				   :destination image))))
         ;; draw the sprites
         (dolist (sprite sprites)
           ;; pull image and calculate screen coordinates
           (let* ((graphics (field-value :image sprite))
                  (x0 (field-value :x sprite))
-                 (x1 (+ (- drag-x) (- x0 (* tile-size origin-x))))
+                 (x1 (+ (- drag-x) (- x0 (* grid-size window-x))))
                  (y0 (field-value :y sprite))
-                 (y1 (+ (- drag-y) (- y0 (* tile-size origin-y)))))
+                 (y1 (+ (- drag-y) (- y0 (* grid-size window-y)))))
             (when graphics (draw-resource-image graphics x1 y1 :destination image))))
         ;; draw the pending ops
         (map nil #'(lambda (cell)
@@ -192,16 +202,16 @@
         (draw-overlays self)))))
 
 (define-method hit viewport (x y)
-  (with-fields (origin-x origin-y tile-size) self
+  (with-fields (window-x window-y grid-size) self
     (when (send-parent self :hit self x y)
       (let* ((x0 (- x ^x))
 	     (y0 (- y ^y))
-	     (r (truncate (/ y0 tile-size)))
-	     (c (truncate (/ x0 tile-size)))
-	     (r0 (+ origin-y r))
-	     (c0 (+ origin-x c))
-	     (y1 (* tile-size origin-y))
-	     (x1 (* tile-size origin-x))
+	     (r (truncate (/ y0 grid-size)))
+	     (c (truncate (/ x0 grid-size)))
+	     (r0 (+ window-y r))
+	     (c0 (+ window-x c))
+	     (y1 (* grid-size window-y))
+	     (x1 (* grid-size window-x))
 	     (grid (field-value :grid (or ^world *world*)))
 	     (cells (when (array-in-bounds-p grid r0 c0)
 		      (aref grid r0 c0))))
@@ -218,15 +228,15 @@
 	    (when (and cells (> (fill-pointer cells) 0))
 		(aref cells (1- (fill-pointer cells))))))))))
 
-(define-method set-origin viewport (&key x y height width)
-  (setf ^origin-x x
-	^origin-y y
-	^origin-width width
-	^origin-height height))
+(define-method set-window viewport (&key x y height width)
+  (setf ^window-x x
+	^window-y y
+	^window-width width
+	^window-height height))
 
 (define-method adjust viewport (&optional snap)
-  "Move the viewport's origin if required to keep the player onscreen."
-  (with-fields (drag-x drag-y tile-size) self
+  "Move the viewport's window if required to keep the player onscreen."
+  (with-fields (drag-x drag-y grid-size) self
     (let* ((world (or ^world *world*))
 	   (world-width (field-value :width world))
 	   (world-height (field-value :height world))
@@ -234,50 +244,50 @@
 	   (player-x (player-column world))
 	   (player-y (player-row world))
 	   (margin ^margin))
-      (with-fields (origin-x origin-y origin-height origin-width) self
+      (with-fields (window-x window-y window-height window-width) self
 	;; are we outside the "comfort zone"?
 	(if (or 
 	       ;; too far left
-	       (> (+ origin-x margin) 
+	       (> (+ window-x margin) 
 		  player-x)
 	       ;; too far right
 	       (> player-x
-		  (- (+ origin-x origin-width)
+		  (- (+ window-x window-width)
 		     margin))
 	       ;; too far up
-	       (> (+ origin-y margin) 
+	       (> (+ window-y margin) 
 		  player-y)
 	       ;; too far down 
 	       (> player-y 
-		  (- (+ origin-y origin-height)
+		  (- (+ window-y window-height)
 		     margin)))
 	    ;; yes. recenter.
 	    (let ((new-x (max 0
-			      (min (- world-width origin-width)
+			      (min (- world-width window-width)
 				   (- player-x 
-				      (truncate (/ origin-width 2))))))
+				      (truncate (/ window-width 2))))))
 		  (new-y (max 0 
-			      (min (- world-height origin-height)
+			      (min (- world-height window-height)
 				   (- player-y 
-				      (truncate (/ origin-height 2)))))))
+				      (truncate (/ window-height 2)))))))
 	      (if snap
 		  ;; either abruptly
-		  (setf origin-x new-x origin-y new-y)
+		  (setf window-x new-x window-y new-y)
 		  ;; otherwise drag
-		  (let ((dx (if (> new-x origin-x) 1 -1))
-			(dy (if (> new-y origin-y) 1 -1)))
-		    (when (not (= origin-x new-x))
+		  (let ((dx (if (> new-x window-x) 1 -1))
+			(dy (if (> new-y window-y) 1 -1)))
+		    (when (not (= window-x new-x))
 		      (incf drag-x (* 2 dx))
-		      (when (= tile-size (abs drag-x))
+		      (when (= grid-size (abs drag-x))
 			(setf drag-x 0))
 		      (when (zerop drag-x)
-			  (incf origin-x dx)))
-		    (when (not (= origin-y new-y))
+			  (incf window-x dx)))
+		    (when (not (= window-y new-y))
 		      (incf drag-y (* 2 dy))
-		      (when (= tile-size (abs drag-y))
+		      (when (= grid-size (abs drag-y))
 			(setf drag-y 0))
 		      (when (zerop drag-y)
-			(incf origin-y dy)))))))))))
+			(incf window-y dy)))))))))))
 
 ;;; The minimap
 
@@ -297,11 +307,11 @@
   (when ^visible
     (adjust self) ;; hehe
     (let* ((world (or ^world *world*))
-           (origin-width ^origin-width)
-           (origin-height ^origin-height)
-           (origin-x ^origin-x)
-           (origin-y ^origin-y)
-           (tile-size ^tile-size)
+           (window-width ^window-width)
+           (window-height ^window-height)
+           (window-x ^window-x)
+           (window-y ^window-y)
+           (grid-size ^grid-size)
            (category-map ^category-map)
            (grid (field-value :grid world))
            (image ^image)
@@ -318,12 +328,12 @@
         ;; 		      :color ^border-color
         ;; 		      :destination ^image)
         ;; draw the minimap
-        (dotimes (i origin-height)
-          (dotimes (j origin-width)
+        (dotimes (i window-height)
+          (dotimes (j window-width)
             (when (array-in-bounds-p grid i j)
               (setf objects (aref grid 
-                                  (+ i origin-y)
-                                  (+ j origin-x)))
+                                  (+ i window-y)
+                                  (+ j window-x)))
               (block coloring
                 (dolist (mapping category-map)
                   (destructuring-bind (category color) mapping
@@ -332,22 +342,22 @@
                       (setf categories (field-value :categories cell))
                       ;; record location of player-entry-point if any
                       (when (member :player-entry-point categories)
-                        (draw-circle (* tile-size (- j origin-x))
-                                     (* tile-size (- i origin-y))
+                        (draw-circle (* grid-size (- j window-x))
+                                     (* grid-size (- i window-y))
                                      4 
                                      :destination image 
                                      :color ".yellow"))
                       (when (member category categories)
-                        (ioforms:draw-box (* tile-size j) 
-                                      (* tile-size i)
-                                      tile-size tile-size
+                        (ioforms:draw-box (* grid-size j) 
+                                      (* grid-size i)
+                                      grid-size grid-size
                                       :destination image 
                                       :stroke-color color
                                       :color color)
                         (return-from coloring)))))))))
         ;; draw player indicator
-        (draw-circle (* tile-size (- (player-column world) origin-x))
-                     (* tile-size (- (player-row world) origin-y))
+        (draw-circle (* grid-size (- (player-column world) window-x))
+                     (* grid-size (- (player-row world) window-y))
                      4 
                      :destination image :color ".white")))))
 

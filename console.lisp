@@ -536,7 +536,7 @@ at the time the cell method is run.")
 
 (defun update-blocks (&rest args)
   (dolist (block *blocks*)
-    (apply #'send :tick block args)))
+    (apply #'send :update block args)))
 
 (defvar *update-function* #'update-blocks)
 
