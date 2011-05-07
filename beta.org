@@ -1,0 +1,26 @@
+* ALPHA 1
+*** TODO [#B] allow user to embed/generate IOF entries within Lisp (dont require IOF file)
+*** TODO [#A] open a window and do something
+* ALPHA 2
+*** TODO [#C] fix example's README
+*** TODO [#C] change "tile" to grid/cell
+*** TODO more documentation
+*** TODO actual gameplay of XOR
+*** TODO fix worlds/forms mixup
+*** TODO single unified game object type
+* TODO add documentation and HOWTO
+* TODO release!
+
+* TODO BETA RELEASE: GUI stuff
+** TODO INVADER TACTICS remake
+** TODO flesh out XOR design: review Blast Tactics
+** TODO refactor sprites/cells a little
+*** TODO review cells.lisp
+*** TODO review gcells.lisp and remove/change unneeded parts
+*** TODO change sprite to derive from cell, not gcell
+** TODO review blocks.lisp
+** TODO revise blocks.lisp
+*** TODO rewrite "purpose of block" commentary
+*** TODO change define-key to define-event or bind-event
+*** TODO document fields of block prototype better
+    
