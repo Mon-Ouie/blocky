@@ -39,7 +39,7 @@
 (in-package :ioforms)
 
 (define-prototype menu-item (:parent =widget=)
-  (tile :initform ".asterisk")
+  (tile :initform "asterisk")
   (name :initform "<blank menu item>")
   (key :initform nil)
   (description :initform "<blank menu item description>")
@@ -109,13 +109,13 @@
 When SELECTED-P is non-nil, draw the highlighted (or otherwise
 visually distinguished) version of the line."
   (if (null object)
-      (println self " (EMPTY) " :foreground ".gray20")
+      (println self " (EMPTY) " :foreground "gray20")
       (progn 
 	(let ((tile (field-value :tile object))
 	      (label (or (field-value :name object)
 			 (field-value :description object))))
 	  (if selected-p
-	      (print self ">" :foreground ".yellow" :background ".purple")
+	      (print self ">" :foreground "yellow" :background "purple")
 	      (print self " "))
 	  (print self " ")
 	  (print self nil :image tile)

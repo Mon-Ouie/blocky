@@ -202,7 +202,7 @@ Do not set this variable directly from a project; instead, call
 (defun draw-blocks ()
   "Draw the active blocks to the screen."
   (dolist (block *blocks*)
-    (send nil :draw block sdl:*default-surface*)))
+    (send :draw block sdl:*default-surface*)))
 
 (defun install-blocks (&rest blocks)
   "User-level function for setting the active block set. Note that
@@ -281,7 +281,7 @@ for backward-compatibility."
 
 (defun send-to-blocks (event &optional (blocks *blocks*))
   (labels ((try (block)
-	     (handle-key block event)))
+	     (handle-event block event)))
     (some #'try blocks)))
 
 (defvar *event-handler-function* #'send-to-blocks
@@ -1032,9 +1032,9 @@ table. File names are relative to the project PROJECT-NAME."
 	  ;; take this as the name of the project where to look for
 	  ;; that iof file and its resources.
 	  (let ((include-project (or (resource-data res) 
-				    project-name)))
+				     project-name)))
 	    (index-iof include-project (find-project-file include-project
-							(resource-file res))))
+							  (resource-file res))))
 	  ;; we're indexing a single resource.
 	  (progn
 	    (index-resource res)
@@ -1060,7 +1060,7 @@ table."
 
 ;;; Standard resource names
 
-(defvar *default-font* ".default-font")
+(defvar *default-font* "default-font")
 
 ;;; Creating, saving, and loading object resources in IOF files
 
@@ -1593,7 +1593,7 @@ of the music."
 
 ;; An IOF entry for a font looks like this: 
 
-;; (:name ".default-font" 
+;; (:name "default-font" 
 ;;        :type :font 
 ;;        :properties (:height 14 :width 7) 
 ;;        :data "7x14")
@@ -1621,17 +1621,17 @@ of the music."
 		    (sdl:get-font-height :font (resource-object resource)))))))
 
 (defun draw-string-solid (string x y 
-			  &key destination (font *default-font*) (color ".white"))
+			  &key destination (font *default-font*) (color "white"))
   (sdl:draw-string-solid-* string x y :surface destination :font (find-resource-object font)
 			   :color (find-resource-object color)))
 
-(defun draw-string-shaded (string x y &optional (foreground ".white") (background ".black")
+(defun draw-string-shaded (string x y &optional (foreground "white") (background "black")
 			  &key destination (font *default-font*))
   (sdl:draw-string-shaded-* string x y (find-resource-object foreground)
 			    (find-resource-object background)
 			    :surface destination :font (find-resource-object font)))
 
-(defun draw-string-blended (string x y &key (foreground ".black")
+(defun draw-string-blended (string x y &key (foreground "black")
 			    destination (font *default-font*))
   (sdl:draw-string-blended-* string x y 
 			     :color (find-resource-object foreground)
@@ -1646,7 +1646,7 @@ of the music."
   "Load the X11 color data into the resource table."
   (dolist (color *x11-color-data*)
     (destructuring-bind (name red green blue) color
-      (index-resource (make-resource :name (concatenate 'string "." name)
+      (index-resource (make-resource :name name
 				     :type :color
 				     :data (list red green blue))))))
 
@@ -1694,8 +1694,8 @@ The default destination is the main window."
 ;;; Drawing shapes and other primitives
 
 (defun draw-box (x y width height		
-		 &key (stroke-color ".white")
-		 (color ".black")
+		 &key (stroke-color "white")
+		 (color "black")
 		 destination)
   "Draw a filled rectangle at (X Y) of size (* WIDTH HEIGHT)."
   (sdl:draw-box-* x y width height :color (find-resource-object color)
@@ -1703,34 +1703,34 @@ The default destination is the main window."
 		  :surface destination))
 
 (defun draw-rectangle (x y width height
-		       &key (color ".white")
+		       &key (color "white")
 		       destination)
   (sdl:draw-rectangle-* x y width height :color (find-resource-object color)
 			:surface destination))
 
 (defun draw-line (x0 y0 x1 y1 
 		     &key 
-		     (color ".white")
+		     (color "white")
 		     destination)
   (sdl:draw-line-* x0 y0 x1 y1 :surface destination :color (find-resource-object color)))
 
 (defun draw-pixel (x y &key 
-		   (color ".white")
+		   (color "white")
 		   destination)
   (sdl:draw-pixel-* x y :surface destination :color (find-resource-object color)))
 
 (defun draw-circle (x y radius &key 
-		   (color ".white")
+		   (color "white")
 		    destination)
   (sdl:draw-circle-* x y radius :surface destination :color (find-resource-object color)))
 
 (defun draw-filled-circle (x y radius &key 
-			   (color ".white")
+			   (color "white")
 			   destination)
   (sdl-gfx:draw-filled-circle-* x y radius :surface destination :color (find-resource-object color)))
 
 (defun draw-aa-circle (x y radius &key 
-		   (color ".white")
+		   (color "white")
 		    destination)
   (sdl-gfx:draw-aa-circle-* x y radius :surface destination :color (find-resource-object color)))
 

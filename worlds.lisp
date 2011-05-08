@@ -910,7 +910,7 @@ sources and ray casting."
 		     ;; (when *lighting-hack-funtcion*
 		     ;;   (funcall *lighting-hack-function* 
 		     ;; 		source-row source-column
-		     ;; 		row column ".red"))
+		     ;; 		row column "red"))
 	       	     (light-line row column)))))
 	(light-octagon source-row source-column total)
 	(light-octagon source-row source-column (- total 2))))))
@@ -939,39 +939,10 @@ sources and ray casting."
 	(send-queue nil :newline :narrator)
 	(send-queue nil :newline :narrator))))
 
-(define-method start world ()
+(define-method start world ())
   "Prepare the world for play."
-  (assert ^player)
-  ;; start player at same phase (avoid free catch-up turns)
-  ;; get everyone on the same turn, and start 'er up
-  (setf ^phase-number (+ 1 (field-value :phase-number ^player)))
-  (let ((grid ^grid)
-	(phase-number ^phase-number))
-    (dotimes (i ^grid-height)
-      (dotimes (j ^grid-width)
-	(do-cells (cell (aref grid i j))
-	  (setf (field-value :phase-number cell) phase-number)
-	  (unless (is-player cell) (start cell))))))
-  (dolist (sprite ^sprites)
-    (setf (field-value :phase-number sprite) ^phase-number))
-  ;; mark the world as entered
-  (setf ^exited nil)
-  ;; light up the world
-  (render-lighting self ^player)
-  ;; clear out any pending messages
-  (setf ^message-queue (make-queue))
-  (with-message-queue ^message-queue
-    (run-cpu-phase self)
-    (incf ^phase-number)
-    (start ^player)
-    (begin-phase ^player)
-    ;; (when (has-method :show-location ^player)
-    ;;   (show-location ^player))
-    (after-start-method self)
-    (process-messages self))
-  ;; get player onscreen
-  (when ^viewport (adjust ^viewport :snap))
-  (begin-ambient-loop self))
+  ;; (when ^viewport (adjust ^viewport :snap))
+  ;; (begin-ambient-loop self))
 
 (define-method after-start-method world ()
   nil)
@@ -1210,12 +1181,14 @@ represents the z-axis of a euclidean 3-D space."))
 (define-method make-default-viewport universe ()
   (with-fields (viewport) self
     (setf viewport (clone =viewport= 
-			  :top 0 :left 0 
+			  :top 0 :left 0
+			  :world ^world
+			  :grid-size *default-grid-size*
 			  :width (truncate (/ *screen-width* *default-grid-size*))
 			  :height (truncate (/ *screen-height* *default-grid-size*))))))
 
 (define-method focus universe ()
-  (install-blocks self ^player))
+  (install-blocks ^viewport))
 
 (define-method update universe ()
   (when ^world (update ^world)))

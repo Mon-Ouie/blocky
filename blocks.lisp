@@ -355,10 +355,10 @@ current block."
 corresponding IOFORMS:=WIDGET= prototypes used for editing that kind
 of value.")
 
-(defparameter *background-color* ".white" 
+(defparameter *background-color* "white" 
   "The default background color of the IOFORMS user interface.")
 
-(defparameter *socket-color* ".gray80" 
+(defparameter *socket-color* "gray80" 
   "The default background color of block sockets.")
 
 (defparameter *block-font* "sans-condensed-bold-12"
@@ -372,75 +372,75 @@ two words. This is used as a unit for various layout operations.")
   "Size in pixels of a pseudo-pixel.")
 
 (defparameter *block-colors* 
-  '(:motion ".cornflower blue"
-    :system ".gray50"
-    :event ".gray80"
-    :hover ".red"
-    :socket ".gray60"
-    :data ".gray70"
-    :structure ".gray60"
-    :comment ".grey70"
-    :looks ".purple"
-    :sound ".orchid"
-    :message ".sienna3"
-    :control ".orange1"
-    :variables ".DarkOrange2"
-    :operators ".OliveDrab3"
-    :sensing ".DeepSkyBlue3")
+  '(:motion "cornflower blue"
+    :system "gray50"
+    :event "gray80"
+    :hover "red"
+    :socket "gray60"
+    :data "gray70"
+    :structure "gray60"
+    :comment "grey70"
+    :looks "purple"
+    :sound "orchid"
+    :message "sienna3"
+    :control "orange1"
+    :variables "DarkOrange2"
+    :operators "OliveDrab3"
+    :sensing "DeepSkyBlue3")
   "X11 color names of the different block types.")
 
 (defparameter *block-highlight-colors*
-  '(:motion ".sky blue"
-    :system ".gray80"
-    :hover ".dark orange"
-    :event ".gray90"
-    :comment ".grey90"
-    :looks ".medium orchid"
-    :socket ".gray80"
-    :data ".gray80"
-    :structure ".gray80"
-    :sound ".plum"
-    :message ".sienna2"
-    :control ".gold"
-    :variables ".DarkOrange1"
-    :operators ".OliveDrab1"
-    :sensing ".DeepSkyBlue2")
+  '(:motion "sky blue"
+    :system "gray80"
+    :hover "dark orange"
+    :event "gray90"
+    :comment "grey90"
+    :looks "medium orchid"
+    :socket "gray80"
+    :data "gray80"
+    :structure "gray80"
+    :sound "plum"
+    :message "sienna2"
+    :control "gold"
+    :variables "DarkOrange1"
+    :operators "OliveDrab1"
+    :sensing "DeepSkyBlue2")
   "X11 color names of highlights on the different block types.")
 
 (defparameter *block-shadow-colors* 
-  '(:motion ".steel blue"
-    :system ".gray50"
-    :event ".gray70"
-    :socket ".gray90"
-    :data ".gray55"
-    :structure ".gray45"
-    :comment ".grey40"
-    :hover ".orange red"
-    :looks ".dark orchid"
-    :sound ".violet red"
-    :message ".chocolate3"
-    :control ".dark orange"
-    :variables ".OrangeRed2"
-    :operators ".OliveDrab4"
-    :sensing ".turquoise3")
+  '(:motion "steel blue"
+    :system "gray50"
+    :event "gray70"
+    :socket "gray90"
+    :data "gray55"
+    :structure "gray45"
+    :comment "grey40"
+    :hover "orange red"
+    :looks "dark orchid"
+    :sound "violet red"
+    :message "chocolate3"
+    :control "dark orange"
+    :variables "OrangeRed2"
+    :operators "OliveDrab4"
+    :sensing "turquoise3")
   "X11 color names of shadows on the different block types.")
 
 (defparameter *block-foreground-colors* 
-  '(:motion ".white"
-    :system ".white"
-    :event ".gray40"
-    :comment ".gray30"
-    :socket ".gray20"
-    :hover ".yellow"
-    :data ".white"
-    :structure ".gray20"
-    :message ".white"
-    :looks ".white"
-    :sound ".white"
-    :control ".white"
-    :variables ".white"
-    :operators ".white"
-    :sensing ".white")
+  '(:motion "white"
+    :system "white"
+    :event "gray40"
+    :comment "gray30"
+    :socket "gray20"
+    :hover "yellow"
+    :data "white"
+    :structure "gray20"
+    :message "white"
+    :looks "white"
+    :sound "white"
+    :control "white"
+    :variables "white"
+    :operators "white"
+    :sensing "white")
   "X11 color names of the text used for different block types.")
  
 (define-method find-color block (&optional (part :background))
@@ -455,7 +455,7 @@ block."
 		  (:foreground *block-foreground-colors*))))
     (getf colors ^type)))
 
-(defparameter *selection-color* ".red")
+(defparameter *selection-color* "red")
 
 (define-method create-image block ()
   (with-fields (image height width) self
@@ -683,7 +683,7 @@ override all colors."
 	  (draw-image image x y 
 		      :destination output-image)))))
 
-(defparameter *hover-color* ".red")
+(defparameter *hover-color* "red")
 
 (define-method draw-hover block (image)
   (with-fields (x y width height) self

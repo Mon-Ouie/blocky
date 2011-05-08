@@ -36,7 +36,7 @@
   (label :initform nil :documentation "Optional string or formatted line to display.")
   (widget :initform nil)
   (image :initform nil :documentation "Image to display. either a resource name string, or an IOFORMS image object.")
-  (tile :initform ".asterisk" :documentation "Resource name of image. 
+  (tile :initform "asterisk" :documentation "Resource name of image. 
 When nil, the method DRAW is invoked instead of using a tile.")
   (render-cell :initform nil :documentation "Subcell to render. See load-sprite-sheet-resource.")
   (auto-loadout :initform nil :documentation "When non-nil, the :loadout method is invoked upon entry into a world.")
@@ -90,7 +90,7 @@ When nil, the method DRAW is invoked instead of using a tile.")
 		      (color (or (when (and (listp label)
 					    (listp (last label)))
 				   (getf (cdr (car (last label))) :background))
-				 ".black"))
+				 "black"))
 		      (spacer (when (plusp shortfall) 
 				(list nil :width shortfall :background color)))
 		      (line (if spacer (append label (list spacer))

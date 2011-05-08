@@ -121,7 +121,6 @@
 	  (add-hook '*resize-hook* #'do-resize))
 	(ioforms:install-blocks self))
 	
-
 (defparameter *default-shell-width* 1024)
 (defparameter *default-shell-height* 720)
 
@@ -414,7 +413,7 @@
 (define-method execute emote ()
   (send :emote *target* 
 	(list (list (list (first ^results) :font *block-font*
-			  :foreground ".black")))
+			  :foreground "black")))
 	:timeout 200 :style :clear))
 
 ;;; Other blocks

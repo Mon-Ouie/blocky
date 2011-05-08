@@ -160,10 +160,10 @@ http://en.wikipedia.org/wiki/Passive_voice"
 	(print-image self (icon-image action))
 	(space self)
 	(print self (action-translation action)
-	       :foreground ".white" :background ".gray30")
+	       :foreground "white" :background "gray30")
 	(print-separator self)
 	(if (eq A B)
-	    (print self "SELF" :foreground ".white" :background ".blue")
+	    (print self "SELF" :foreground "white" :background "blue")
 	    (print-object-tag self B))
 	(print-separator self)
 	;; print args

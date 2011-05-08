@@ -54,7 +54,7 @@ TEXT-OFFSET is provided, add that many pixels to the Y coordinate for
 rendered text in the line. (This is used to make text align with
 inline images that are larger than the text height---see also
 `render-formatted-line')."
-  (destructuring-bind (string &key (foreground ".white") 
+  (destructuring-bind (string &key (foreground "white") 
 		       width
 		       (font *default-font*)
 		       background image)
@@ -193,7 +193,7 @@ auto-updated displays."
   (insert-space self))
 
 (define-method print-separator formatter ()
-  (printf self "  :  " :foreground ".gray20"))
+  (printf self "  :  " :foreground "gray20"))
 
 (define-method render formatter ()
   (when ^visible
@@ -233,8 +233,8 @@ auto-updated displays."
 ;;; Command prompt block
 
 (defparameter *prompt-blink-time* 24)
-(defparameter *prompt-cursor-color* ".magenta")
-(defparameter *prompt-cursor-blink-color* ".yellow")
+(defparameter *prompt-cursor-color* "magenta")
+(defparameter *prompt-cursor-blink-color* "yellow")
 
 (defparameter *direct-prompt-string* "> ")
 (defparameter *forward-prompt-string* "Press CONTROL-X to enter the prompt.")
@@ -558,7 +558,7 @@ normally."
 	 (prompt-string (ecase ^mode
 			  (:direct *direct-prompt-string*)
 			  (:forward *forward-prompt-string*))))
-    (draw-box 0 0 ^width prompt-height :color ".gray40" :stroke-color ".gray80"
+    (draw-box 0 0 ^width prompt-height :color "gray40" :stroke-color "gray80"
     	      :destination image)
     ;; draw cursor
     (when (eq :direct ^mode)
@@ -589,7 +589,7 @@ normally."
       (draw-string-blended prompt-string
 			   *default-prompt-margin*
 			   strings-y
-			   :foreground ".white"
+			   :foreground "white"
 			   :destination image))
     ;; draw current command line text
     (when (null ^line) (setf ^line ""))
@@ -598,7 +598,7 @@ normally."
 			   (+ 0
 			      (font-text-extents prompt-string *default-font*))
 			   strings-y
-			   :foreground ".white"
+			   :foreground "white"
 			   :destination image))))
 
 ;;; Text display and edit control
@@ -610,15 +610,15 @@ normally."
 (defparameter *textbox-minimum-width* 10) 
 
 (define-prototype textbox (:parent =block=)
-  (font :initform ".default-font")
+  (font :initform "default-font")
   (buffer :initform nil)
   (read-only :initform nil)
   (bordered :initform nil)
   (max-displayed-rows :initform nil :documentation "An integer when scrolling is enabled.")
   (max-displayed-columns :initform nil)
-  (background-color :initform ".gray30")
-  (foreground-color :initform ".white")
-  (cursor-color :initform ".yellow")
+  (background-color :initform "gray30")
+  (foreground-color :initform "white")
+  (cursor-color :initform "yellow")
   (point-row :initform 0)
   (point-column :initform 0)
   (auto-fit :initform nil)
@@ -901,13 +901,13 @@ text INSERTION to be inserted at point."
 		 :documentation "Formatted string to be displayed to right of tabs.")
   (pager-height :initform 20
 		:documentation "Height in pixels of the pager")
-  (background-color :initform ".gray18")
+  (background-color :initform "gray18")
   (prefix-string :initform " F")
   (number-separator-string :initform ": ")
   (separator-string :initform "  ")
-  (style :initform '(:foreground ".gray60")
+  (style :initform '(:foreground "gray60")
 	 :documentation "Text style properties for pager display")
-  (highlighted-style :initform '(:foreground ".gray20" :background ".white"))
+  (highlighted-style :initform '(:foreground "gray20" :background "white"))
   (properties :initform (make-hash-table :test 'eq)))
   
 (define-method initialize pager ()
@@ -995,8 +995,8 @@ text INSERTION to be inserted at point."
 ;;; Splitscreen view on 2 blocks with focus border
 
 (define-prototype split (:parent =block=)
-  (active-color :initform ".red")
-  (inactive-color :initform ".blue")
+  (active-color :initform "red")
+  (inactive-color :initform "blue")
   (focus :initform 0)
   children)
 

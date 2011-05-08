@@ -33,9 +33,9 @@
   (mark-column :initform nil)
   (scroll-margin :initform 0)
   (display-style :initform :label)
-  (cursor-color :initform ".yellow")
+  (cursor-color :initform "yellow")
   (focused :initform nil)
-  (cursor-blink-color :initform ".magenta")
+  (cursor-blink-color :initform "magenta")
   (cursor-blink-clock :initform 0)
   (origin-row :initform 0 :documentation "Row number of top-left displayed cell.") 
   (origin-column :initform 0 :documentation "Column number of top-left displayed cell.")
@@ -364,8 +364,8 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 		  (update-height row (height cell))
 		  (update-width column (width cell)))))))))))
 
-(defparameter *even-columns-format* '(:background ".gray50" :foreground ".gray10"))
-(defparameter *odd-columns-format* '(:background ".gray45" :foreground ".gray10"))
+(defparameter *even-columns-format* '(:background "gray50" :foreground "gray10"))
+(defparameter *odd-columns-format* '(:background "gray45" :foreground "gray10"))
 
 (define-method handle-key form (event)
   ;; possibly forward event to current cell. used for the event cell, see below.
@@ -487,8 +487,8 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 			(draw-box x y 
 				  column-width 
 				  row-height  
-				  :stroke-color ".gray30"
-				  :color (if (evenp column) ".gray50" ".gray45")
+				  :stroke-color "gray30"
+				  :color (if (evenp column) "gray50" "gray45")
 				  :destination image))
 		      ;; see also cells.lisp
 		      (progn 
@@ -503,21 +503,21 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 			  (draw-rectangle x y 
 					  column-width 
 					  row-height
-					  :color ".red"
+					  :color "red"
 					  :destination image))))
 		  ;; visually indicate edges of map with a yellow line
 		  (let ((iwid 2))
 		    (when (= rightmost-visible-column (- columns 1) column)
-		      (draw-box (+ x column-width) y iwid row-height :stroke-color ".yellow" :color ".yellow"
+		      (draw-box (+ x column-width) y iwid row-height :stroke-color "yellow" :color "yellow"
 				:destination image))
 		    (when (= 0 column)
-		      (draw-box 0 y iwid row-height :stroke-color ".yellow" :color ".yellow"
+		      (draw-box 0 y iwid row-height :stroke-color "yellow" :color "yellow"
 				:destination image))
 		    (when (= bottom-visible-row row (- rows 1))
-		      (draw-box x (+ y row-height) column-width iwid :stroke-color ".yellow" :color ".yellow"
+		      (draw-box x (+ y row-height) column-width iwid :stroke-color "yellow" :color "yellow"
 				:destination image))
 		    (when (= 0 row)
-		      (draw-box x 0 column-width iwid :stroke-color ".yellow" :color ".yellow"
+		      (draw-box x 0 column-width iwid :stroke-color "yellow" :color "yellow"
 				:destination image)))
 		  ;; possibly save cursor and mark drawing info for this cell
 		  (when (and (= row cursor-row) (= column cursor-column))
@@ -537,18 +537,18 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	    ;; TODO break this formatting out into variables
 	    (setf status-line
 		  (list 
-		   (list (format nil " ( ~A )     " world-name) :foreground (if focused ".yellow" ".white")
-			 :background (if focused ".red" ".blue"))
+		   (list (format nil " ( ~A )     " world-name) :foreground (if focused "yellow" "white")
+			 :background (if focused "red" "blue"))
 		   (list (format nil "  ~A (~S, ~S) ~Sx~S "
 				 tool cursor-row cursor-column rows columns)
-			 :foreground ".white"
-			 :background ".gray20")))
+			 :foreground "white"
+			 :background "gray20")))
 	    ;; draw status line
 	    (when status-line 
 	      (let* ((ht (formatted-line-height status-line))
 		     (sy (- ^height 1 ht)))
-		(draw-box 0 sy ^width ht :color ".gray20" 
-			  :stroke-color ".gray20" :destination image)
+		(draw-box 0 sy ^width ht :color "gray20" 
+			  :stroke-color "gray20" :destination image)
 		(render-formatted-line status-line 
 				       0 sy 
 				       :destination image)))
@@ -608,10 +608,10 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
       (draw-rectangle x y width height :color color :destination ^image))))
 
 (define-method draw-mark form (x y width height)
-  (draw-rectangle x y width height :color ".white" :destination ^image))
+  (draw-rectangle x y width height :color "white" :destination ^image))
 
 (define-method draw-region form (x y width height)
-  (draw-rectangle x y width height :color ".cyan" :destination ^image))
+  (draw-rectangle x y width height :color "cyan" :destination ^image))
   
 (define-method move-cursor form (direction)
   "Move the cursor one step in DIRECTION. 

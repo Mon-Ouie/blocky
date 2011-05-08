@@ -55,6 +55,7 @@
   (excluded-fields :initform '(:world)))
 
 (define-method initialize viewport (&key top left width height world grid-size)
+;;  (parent/initialize self)
   (setf ^window-y top
 	^window-x left 
 	^window-width width
@@ -143,7 +144,7 @@
                                height width sprites background
                                turn-number ambient-light) world
         ;; blank the display
-        (clear self ".white")
+        (clear self "white")
 	;; draw any background
 	(when (stringp background)
 	  (let ((surface (find-resource-object background))
@@ -181,7 +182,7 @@
 						   :render-cell (field-value :render-cell cell) 
 						   :destination image)))))))
 	      ;; not in bounds, or not lit; draw blackness
-	      (draw-resource-image ".blackness" (* j grid-size) (* i grid-size)
+	      (draw-resource-image "blackness" (* j grid-size) (* i grid-size)
 				   :destination image))))
         ;; draw the sprites
         (dolist (sprite sprites)
@@ -202,8 +203,8 @@
         (draw-overlays self)))))
 
 (define-method hit viewport (x y)
-  (with-fields (window-x window-y grid-size) self
-    (when (send-parent self :hit self x y)
+  (with-fields (window-x window-y grid-size world) self
+    (when (send-parent :hit self x y)
       (let* ((x0 (- x ^x))
 	     (y0 (- y ^y))
 	     (r (truncate (/ y0 grid-size)))
@@ -212,7 +213,7 @@
 	     (c0 (+ window-x c))
 	     (y1 (* grid-size window-y))
 	     (x1 (* grid-size window-x))
-	     (grid (field-value :grid (or ^world *world*)))
+	     (grid (field-value :grid world))
 	     (cells (when (array-in-bounds-p grid r0 c0)
 		      (aref grid r0 c0))))
       (labels ((hit (sprite)
@@ -223,8 +224,7 @@
 		     (when (and (<= sx (+ x0 x1) (+ sx w))
 				(<= sy (+ y0 y1) (+ sy h)))
 		       sprite)))))
-	(assert *world*)
-	(or (some #'hit (field-value :sprites *world*))
+	(or (some #'hit (field-value :sprites world))
 	    (when (and cells (> (fill-pointer cells) 0))
 		(aref cells (1- (fill-pointer cells))))))))))
 
@@ -292,16 +292,16 @@
 ;;; The minimap
 
 (define-prototype minimap (:parent =viewport=)
-  (category-map :initform '((:hidden ".black")
-			    (:player ".white")
-			    (:item ".gold")
-			    (:boss ".yellow")
-			    (:enemy ".red")
-			    (:target ".blue")
-			    (:friend ".green")
-			    (:obstacle ".gray20"))) ;;; TODO ?
-  (background-color :initform ".black")
-  (border-color :initform ".gray20"))
+  (category-map :initform '((:hidden "black")
+			    (:player "white")
+			    (:item "gold")
+			    (:boss "yellow")
+			    (:enemy "red")
+			    (:target "blue")
+			    (:friend "green")
+			    (:obstacle "gray20"))) ;;; TODO ?
+  (background-color :initform "black")
+  (border-color :initform "gray20"))
 		
 (define-method render minimap ()
   (when ^visible
@@ -346,7 +346,7 @@
                                      (* grid-size (- i window-y))
                                      4 
                                      :destination image 
-                                     :color ".yellow"))
+                                     :color "yellow"))
                       (when (member category categories)
                         (ioforms:draw-box (* grid-size j) 
                                       (* grid-size i)
@@ -359,7 +359,7 @@
         (draw-circle (* grid-size (- (player-column world) window-x))
                      (* grid-size (- (player-row world) window-y))
                      4 
-                     :destination image :color ".white")))))
+                     :destination image :color "white")))))
 
 (defparameter *minimap-help-string* 
 "This is the minimap, a form of radar.
@@ -371,7 +371,7 @@ white.")
     (>>narrateln :narrator line)))
 
 (define-method hit minimap (x y)
-  (when (send-parent self :hit self x y)
+  (when (send-parent :hit self x y)
     self))
   
 	

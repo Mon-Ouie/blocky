@@ -664,11 +664,11 @@ are as with `format'."
 ;;; The asterisk cell is a wildcard
 
 (define-prototype asterisk (:parent =cell=)
-  (tile :initform ".asterisk")
+  (tile :initform "asterisk")
   (name :initform "Command"))
 
 (define-prototype gray-asterisk (:parent =cell=)
-  (tile :initform ".gray-asterisk")
+  (tile :initform "gray-asterisk")
   (name :initform "System"))
 
 ;;; Popup text balloons
@@ -678,7 +678,7 @@ are as with `format'."
   (auto-loadout :initform t)
   text stroke-color background-color timeout following scale)
 
-(define-method initialize balloon (&key text (stroke-color ".white") (background-color ".gray30")
+(define-method initialize balloon (&key text (stroke-color "white") (background-color "gray30")
 					(style :balloon) (timeout nil) name tile description following
 					(scale 1))
   (setf ^text text) 
@@ -765,7 +765,7 @@ are as with `format'."
   (with-fields (sprite-name) self
     (let ((im (if (and sprite-name (has-field :image (symbol-value sprite-name)))
 		  (field-value :image (symbol-value sprite-name))
-		  ".asterisk")))
+		  "asterisk")))
       (draw-resource-image im x y :destination image))))
 
 (define-method run sprite-special ()
