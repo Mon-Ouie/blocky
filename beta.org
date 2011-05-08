@@ -1,7 +1,8 @@
-** Consider merging "schema" into field declaration marking which fields are "arguments". get rid of the explicit "arguments" field
-** Browseable interface (zoom down into blocks, showing wider view w more helpxs
 * ALPHA 1
 *** TODO [#B] allow user to embed/generate IOF entries within Lisp (dont require IOF file)
+*** Consider removing *world* as a variable
+*** Consider merging "schema" into field declaration marking which fields are "arguments". get rid of the explicit "arguments" field
+*** Browseable interface (zoom down into blocks, showing wider view w more helpxs
 *** TODO [#A] open a window and do something
 * ALPHA 2
 *** TODO [#C] fix example's README

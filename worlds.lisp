@@ -1206,18 +1206,13 @@ narrator, and VIEWPORT as the viewport."
   (let ((world (or ^world (find-world self address)))
 	(player ^player)
 	(previous-world (car ^stack)))
-    ;; make sure exit coordinates are saved, so we can go back to this point
-    (when previous-world 
-      (exit previous-world))
-    ;; make the new world the current world
-    ;; (push world ^stack)
-    ;; (setf *world* world)
-    ;; (setf *page* world)
     (setf *universe* self)
     (set-viewport world ^viewport)
     (set-world ^viewport world)
+    (set-player world player)
     (add-sprite world player)
     (focus self)
+    (adjust ^viewport :snap)
     (start world)))
 
 (define-method exit universe (&key player)

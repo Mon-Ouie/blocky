@@ -193,9 +193,9 @@ Do not set this variable directly from a project; instead, call
 `install-blocks'.")
 
 (defun hit-blocks (x y &optional (blocks *blocks*))
-  (labels ((hit (b)
-	     (/hit b x y)))
-    (let ((parent (find-if #'hit blocks :from-end t)))
+  (labels ((try (b)
+	     (hit b x y)))
+    (let ((parent (find-if #'try blocks :from-end t)))
       (when parent
 	(hit parent)))))
 
