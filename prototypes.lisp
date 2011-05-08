@@ -424,7 +424,7 @@ If the method is not found, attempt to forward the message."
 
 (defun initialize-ioforms ()
   (format t "~A" *copyright-text*)
-  ;;(initialize-documentation-tables)
+;;  (initialize-documentation-tables)
   (setf *send-parent-depth* 2)) ;;FIXME
 
 (defvar *send-parent-key* nil)

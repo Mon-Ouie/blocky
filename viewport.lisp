@@ -58,8 +58,8 @@
 ;;  (parent/initialize self)
   (setf ^window-y top
 	^window-x left 
-	^window-width width
-	^window-height height
+	^width width
+	^height height
 	^world world
 	^grid-size grid-size))
 
@@ -121,7 +121,10 @@
 	  (new-height (* grid-size window-height)))
       (unless (and (= new-width width)
 		   (= new-height height))
-	(when resize (resize self :height new-height :width new-width))))))
+	(when resize 
+	  (setf ^window-height (truncate (/ new-height ^grid-size)))
+	  (setf ^window-width (truncate (/ new-width ^grid-size)))
+	  (resize-image self :height new-height :width new-width))))))
 
 (define-method render viewport ()
 ;;(declare (optimize (speed 3)))

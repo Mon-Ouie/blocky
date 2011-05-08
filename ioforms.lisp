@@ -143,7 +143,7 @@
 	   *project* *project-path* *window-title* *window-position*
 	   *default-shell-width* *default-shell-height* =split=
 	   =shell= =system= *system* set-timer-interval =gcell=
-	   defgcell =block= *message-logging* overlay
+	   defgcell =block= *message-logging* overlay initialize-console
 	   poll-joystick-axis poll-joystick-button reset-joysticks
 	   *joystick-device-identifiers* set-screen-width =universe=
 	   *universe* *play-args* set-screen-height genseq

@@ -457,14 +457,14 @@ block."
 
 (defparameter *selection-color* "red")
 
-(define-method create-image block ()
+(define-method allocate-image block ()
   (with-fields (image height width) self
     (let ((oldimage image))
       (when oldimage
 	(sdl:free oldimage))
       (setf image (create-image width height)))))
 
-(define-method resize block (&key height width)
+(define-method resize-image block (&key height width)
   "Allocate an image buffer of HEIGHT by WIDTH pixels.
 If there is no existing image, one of HEIGHT x WIDTH pixels is created
 and stored in ^IMAGE. If there is an existing image, it is only
@@ -474,12 +474,12 @@ resized when the new dimensions differ from the existing image."
     (if (null image) 
 	(progn (setf ^width width 
 		     ^height height)
-	       (create-image self))
+	       (allocate-image self))
 	(when (not (and (= ^width width) 
 			(= ^height height)))
 	  (setf ^width width 
 		^height height) 
-	  (when image (create-image self))))))
+	  (when image (allocate-image self))))))
 
 (defmacro with-block-drawing (image &body body)
   "Run BODY forms with drawing primitives set to draw on IMAGE.

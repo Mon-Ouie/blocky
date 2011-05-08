@@ -1183,9 +1183,10 @@ represents the z-axis of a euclidean 3-D space."))
     (setf viewport (clone =viewport= 
 			  :top 0 :left 0
 			  :world ^world
-			  :grid-size *default-grid-size*
-			  :width (truncate (/ *screen-width* *default-grid-size*))
-			  :height (truncate (/ *screen-height* *default-grid-size*))))))
+			  :grid-size *default-grid-size*))
+    (resize-image viewport 
+		  :width *screen-width* 
+		  :height *screen-height*)))
 
 (define-method focus universe ()
   (install-blocks ^viewport))
@@ -1203,16 +1204,14 @@ narrator, and VIEWPORT as the viewport."
   (when viewport (setf ^viewport viewport))
   (when (null ^viewport)
     (make-default-viewport self))
-  (let ((world (or ^world (find-world self address)))
-	(player ^player)
-	(previous-world (car ^stack)))
+  (let ((world (or ^world (find-world self address))))
     (setf *universe* self)
     (set-viewport world ^viewport)
     (set-world ^viewport world)
-    (set-player world player)
-    (add-sprite world player)
+    (set-player world ^player)
+    (add-sprite world ^player)
     (focus self)
-    (adjust ^viewport :snap)
+;;    (adjust ^viewport :snap)
     (start world)))
 
 (define-method exit universe (&key player)
