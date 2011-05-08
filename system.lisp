@@ -90,36 +90,36 @@
 	*initialization-hook* nil
 	*play-args* args
 	*random-state* (make-random-state t))
-	;; add library search paths for Mac if needed
-	(setup-library-search-paths)
-	(sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
-	   (load-user-init-file) ;; this step may override *project-directories*
-	   (initialize-resource-table)
-	   (initialize-colors)
-	   (when *use-sound*
-	     ;; try opening sound
-	     (when (null (sdl-mixer:open-audio :frequency *frequency*
-					       :chunksize *output-chunksize*
-					       :enable-callbacks t
-					       :format *sample-format*
-					       :channels *output-channels*))
-	       ;; if that didn't work, disable effects/music
-	       (message "Could not open audio driver. Disabling sound effects and music.")
-	       (setf *use-sound* nil))
-	     ;; set to mix lots of sounds
-	     (sdl-mixer:allocate-channels *channels*))
-	   (open-project "standard"))
-	(setf *window-title* "ioforms")
-	(setf *resizable* t)
-	(enable-classic-key-repeat 100 100)
-	(set-screen-height *default-shell-height*)
-	(set-screen-width *default-shell-width*)
-	(labels ((do-resize ()
-		   (resize *system* 
-			    :width *screen-width* 
-			    :height *screen-height*)))
-	  (add-hook '*resize-hook* #'do-resize))
-	(ioforms:install-blocks self))
+  ;; add library search paths for Mac if needed
+  (setup-library-search-paths)
+  ;;(sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
+  (load-user-init-file) ;; this step may override *project-directories*
+  (initialize-resource-table)
+  (initialize-colors)
+  (when *use-sound*
+    ;; try opening sound
+    (when (null (sdl-mixer:open-audio :frequency *frequency*
+				      :chunksize *output-chunksize*
+				      :enable-callbacks t
+				      :format *sample-format*
+				      :channels *output-channels*))
+      ;; if that didn't work, disable effects/music
+      (message "Could not open audio driver. Disabling sound effects and music.")
+      (setf *use-sound* nil))
+    ;; set to mix lots of sounds
+    (sdl-mixer:allocate-channels *channels*))
+  (open-project "standard")
+  (setf *window-title* "ioforms")
+  (setf *resizable* t)
+  (enable-classic-key-repeat 100 100)
+  (set-screen-height *default-shell-height*)
+  (set-screen-width *default-shell-width*)
+  (labels ((do-resize ()
+	     (resize *system* 
+		     :width *screen-width* 
+		     :height *screen-height*)))
+    (add-hook '*resize-hook* #'do-resize))
+  (ioforms:install-blocks self))
 	
 (defparameter *default-shell-width* 1024)
 (defparameter *default-shell-height* 720)
