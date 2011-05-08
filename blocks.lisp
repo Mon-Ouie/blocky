@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2010, 2011 David O'Toole
 
-;; Author: David O'Toole ^dto@gnu.org
+;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: oop, languages, mouse, lisp, multimedia, hypermedia
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,13 +16,44 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 ;;; Commentary:
 
-;; This file implements a drag-and-drop visual programming language in
-;; the style of Smalltalk environments such as Squeak Morphic and MIT
-;; Scratch, but with a Lisp flavor. For more information see:
+;; This file implements an interactive visual programming language
+;; based on Common Lisp. The Ioforms language is influenced heavily by
+;; Smalltalk environments like Squeak Morphic and MIT Scratch, in that
+;; programs are assembled by the user from reusable, interchangeable
+;; pieces (or "blocks") represented by colored shapes arranged on a
+;; blank page. The arrangement and connection of the different blocks
+;; on the page determine how the pieces behave (collectively) as a
+;; program.
+
+;; The elements of the user's program---the blocks---also double as
+;; the user interface to whatever the blocks do. For example, a block
+;; called USB-CAMERA could be plugged into another block's "input
+;; image" socket; the receiving block could do simple image-based
+;; motion detection, or overlay graphics/text on the image before
+;; passing the modified frame to the next block. But the block itself,
+;; as a first-class object in a visual programming language, can also
+;; be the programmer's user interface to the camera block; controls
+;; could be provided for choosing a device, changing camera settings,
+;; and so on.
+
+;; He or she can use the mouse, keyboard, touchscreen and so on to
+;; interact with the program, switch between different "pages" of the
+;; program, and so on. 
+
+;; New block types and behaviors can be defined with the macro
+;; `defblock' and subsequently replacing default methods of the base
+;; block prototype via `define-method'. With the macro `make-block'
+;; you can convert lisp expressions into working block
+;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
+
+;; For more information on the design of Ioforms, see
+;; http://ioforms.org/design.html
+
+;;  For more information on  systems, see the following links:
 
 ;; http://scratch.mit.edu/
 ;; http://byob.berkeley.edu/
@@ -33,23 +64,6 @@
 
 (in-package :ioforms)
 
-;; The purpose of a block is to perform some action in response to a
-;; number of input arguments and then return a value. Each argument is
-;; itself a block and there are prebuilt block types for integers,
-;; strings, symbols, and lists. To run a block diagram we proceed
-;; depth-first to the leaves and execute those to obtain values, then
-;; propagate results up the tree until the outermost block is executed
-;; using the propagated results as its input values. See also
-;; `BLOCK/RUN'.
-
-;; New block types and behaviors can be defined with the macro
-;; `defblock' and subsequently replacing default methods of the base
-;; block prototype via `define-method'. With the macro `make-block'
-;; you can convert lisp expressions into working block
-;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
-
-;; For more information, see http://ioforms.org/design.html
-
 (defvar *target*)
 
 (define-prototype block ()
@@ -57,7 +71,7 @@
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
   (arguments :initform nil :documentation "List of block argument values.")
   (results :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
-  (schema :documentation 
+  (schema :documentation
 	  "List of type keywords for corresponding expressions in ^arguments.
 See also `*argument-types*'.")
   (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
@@ -70,7 +84,7 @@ See also `*argument-types*'.")
   (data :initform nil :documentation "Data value for data entry blocks.")
   (image :initform nil :documentation "Offscreen buffer image, if any.")
   (visible :initform t :documentation "When non-nil, block will be visible.")
-  (event-map :initform nil :documentation "Event bindings, if any.")  
+  (event-map :initform nil :documentation "Event bindings, if any.")
   (child-widths :initform nil :documentation "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
   (excluded-fields :initform '(:image :event-map :child-widths :results :parent)))
 
@@ -119,7 +133,7 @@ keywords like :control, :alt, and so on."
 if a binding was found, nil otherwise."
   (initialize-event-map-maybe self)
   (with-fields (event-map) self
-      (when event-map 
+      (when event-map
 	(let ((func (gethash event event-map)))
 	  (when func
 	    (prog1 t
@@ -147,41 +161,41 @@ causes the text INSERTION to be inserted at point."
 					   self
 					   ,@(rest binding))))))))
 
-(define-method generic-keybind block (binding) 
+(define-method generic-keybind block (binding)
   (destructuring-bind (event modifiers data) binding
     (apply (etypecase data
 	     (keyword #'bind-event-to-method)
 	     (string #'bind-event-to-prompt-insertion))
 	   self binding)))
 
-;;; Creating blocks from textual lisp expressions
+;;; Creating blocks from S-expressions
 
 (defvar *make-block-package* nil)
 
 (defun make-block-ext (value)
-  (if (listp value) 
+  (if (listp value)
       (if (and (symbolp (first value))
 	       (not (boundp (make-special-variable-name (first value)))))
 	  (let ((entry (clone =symbol=)))
 	    (prog1 entry (set-data entry (first value))))
 	  (destructuring-bind (operation &rest args) value
-	    (let ((block (apply #'clone 
-				(symbol-value 
-				 (make-special-variable-name 
+	    (let ((block (apply #'clone
+				(symbol-value
+				 (make-special-variable-name
 				  operation
 				  *make-block-package*))
 				(mapcar #'make-block-ext args))))
 	      (prog1 block
 		(with-fields (arguments) block
-		  (setf arguments 
+		  (setf arguments
 			(mapcar #'(lambda (value)
 				    (or value (clone (symbol-value '=null=))))
 				arguments))
 		  (dolist (child arguments)
 		    (set-parent child block)))))))
-      (let ((prototype 
+      (let ((prototype
 	     (symbol-value
-	      (make-special-variable-name 
+	      (make-special-variable-name
 	       (etypecase value
 		 ;; see also `defentry' below.
 		 (integer :integer)
@@ -259,7 +273,7 @@ areas.")
 
 (define-method position block ()
   (with-fields (parent) self
-    (when parent 
+    (when parent
       (child-position parent self))))
 
 (define-method plug block (child n)
@@ -305,7 +319,7 @@ something else. See also `defblock' and `send'."
 		   (make-keyword item)
 		   item)))
       (assert *target*)
-      (apply #'ioforms:send nil operation *target* 
+      (apply #'ioforms:send nil operation *target*
 	     (mapcar #'clean results)))))
 
 (defmacro with-target (target &body body)
@@ -342,7 +356,7 @@ initialized with its values as arguments."
 
 (define-method count block ()
   "Return the number of blocks enclosed in this block, including the
-current block." 
+current block."
   (with-fields (arguments) self
     (+ 1 (length arguments))))
 
@@ -355,23 +369,23 @@ current block."
 corresponding IOFORMS:=WIDGET= prototypes used for editing that kind
 of value.")
 
-(defparameter *background-color* "white" 
+(defparameter *background-color* "white"
   "The default background color of the IOFORMS user interface.")
 
-(defparameter *socket-color* "gray80" 
+(defparameter *socket-color* "gray80"
   "The default background color of block sockets.")
 
 (defparameter *block-font* "sans-condensed-bold-12"
   "The font used in drawing block labels and argument data.")
 
-(defvar *dash* 3 
+(defvar *dash* 3
   "Size in pseudo-pixels of (roughly) the size of the space between
 two words. This is used as a unit for various layout operations.")
 
 (defvar *pseudo-pixel-size* 1.0
   "Size in pixels of a pseudo-pixel.")
 
-(defparameter *block-colors* 
+(defparameter *block-colors*
   '(:motion "cornflower blue"
     :system "gray50"
     :event "gray80"
@@ -407,7 +421,7 @@ two words. This is used as a unit for various layout operations.")
     :sensing "DeepSkyBlue2")
   "X11 color names of highlights on the different block types.")
 
-(defparameter *block-shadow-colors* 
+(defparameter *block-shadow-colors*
   '(:motion "steel blue"
     :system "gray50"
     :event "gray70"
@@ -425,7 +439,7 @@ two words. This is used as a unit for various layout operations.")
     :sensing "turquoise3")
   "X11 color names of shadows on the different block types.")
 
-(defparameter *block-foreground-colors* 
+(defparameter *block-foreground-colors*
   '(:motion "white"
     :system "white"
     :event "gray40"
@@ -442,10 +456,10 @@ two words. This is used as a unit for various layout operations.")
     :operators "white"
     :sensing "white")
   "X11 color names of the text used for different block types.")
- 
+
 (define-method find-color block (&optional (part :background))
   "Return the X11 color name of this block's type as a string.
-If PART is provided, return the color for the corresponding 
+If PART is provided, return the color for the corresponding
 :BACKGROUND, :SHADOW, :FOREGROUND, or :HIGHLIGHT parts of this type of
 block."
   (let ((colors (ecase part
@@ -471,14 +485,14 @@ and stored in ^IMAGE. If there is an existing image, it is only
 resized when the new dimensions differ from the existing image."
   (assert (and (integerp width) (integerp height)))
   (with-fields (image) self
-    (if (null image) 
-	(progn (setf ^width width 
+    (if (null image)
+	(progn (setf ^width width
 		     ^height height)
 	       (allocate-image self))
-	(when (not (and (= ^width width) 
+	(when (not (and (= ^width width)
 			(= ^height height)))
-	  (setf ^width width 
-		^height height) 
+	  (setf ^width width
+		^height height)
 	  (when image (allocate-image self))))))
 
 (defmacro with-block-drawing (image &body body)
@@ -497,7 +511,7 @@ blocks."
 	    (diameter (* 2 radius))
 	    (,image-sym ,image))
        (labels ((circle (x y &optional color)
-		  (draw-aa-circle x y radius 
+		  (draw-aa-circle x y radius
 				  :color (or color background)
 				  :destination ,image-sym))
 		(disc (x y &optional color)
@@ -505,7 +519,7 @@ blocks."
 				      :color (or color background)
 				      :destination ,image-sym))
 		(line (x0 y0 x1 y1 &optional color)
-		  (draw-line x0 y0 x1 y1 
+		  (draw-line x0 y0 x1 y1
 			     :color (or color background)
 			     :destination ,image-sym))
 		(box (x y r b &optional color)
@@ -520,7 +534,7 @@ blocks."
 				       :font *block-font*)))
 	   ,@body))))
 
-(define-method draw-patch block (x0 y0 x1 y1 image 
+(define-method draw-patch block (x0 y0 x1 y1 image
 				    &key depressed dark socket color)
   "Draw a standard IOFORMS block notation patch on IMAGE.
 Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
@@ -532,7 +546,7 @@ override all colors."
     (let ((bevel (or color (if depressed shadow highlight)))
 	  (chisel (or color (if depressed highlight shadow)))
 	  (fill (or color (if socket
-			      *socket-color* 
+			      *socket-color*
 			      (if dark shadow background)))))
       ;; top left
       (disc (+ x0 radius) (+ y0 radius) fill)
@@ -545,7 +559,7 @@ override all colors."
       ;; y1 left
       (disc (+ x0 radius) (- y1 radius 1) fill)
       (circle (+ x0 radius) (- y1 radius 1))
-      ;; y1 
+      ;; y1
       (box (+ x0 radius) (- y1 diameter)
 	   (- x1 radius 1) y1
 	   fill)
@@ -557,8 +571,8 @@ override all colors."
 	   fill)
       (line (+ x0 radius 1) y0
 	    (- x1 radius 1) y0 bevel)
-      ;; left 
-      (box x0 (+ y0 radius) 
+      ;; left
+      (box x0 (+ y0 radius)
 	   (+ x0 diameter) (- y1 radius)
 	   fill)
       (line x0 (+ y0 radius 1)
@@ -576,7 +590,7 @@ override all colors."
 
 (define-method draw-socket block (x0 y0 x1 y1 image)
   (draw-patch self x0 y0 x1 y1 image :depressed t :socket t))
-    
+
 (define-method draw-border block (image &optional (color *selection-color*))
   (let ((dash *dash*))
     (with-fields (x y height width) self
@@ -606,9 +620,9 @@ override all colors."
       (font-text-extents (print-expression expression) font)))
 
 (defun print-expression (expression)
-  (string-downcase 
+  (string-downcase
    (typecase expression
-     (symbol 
+     (symbol
 	(substitute #\Space #\- (symbol-name expression)))
      (otherwise (format nil "~s" expression)))))
 
@@ -627,7 +641,7 @@ override all colors."
 		 (layout-child (block type)
 		   (let ((measurement
 			  (+ dash (move-child block))))
-		     (prog1 measurement 
+		     (prog1 measurement
 		       (incf left measurement)))))
 	  (setf child-widths (mapcar #'layout-child arguments schema)))
 	  (setf width (+ (- left x) (* 4 dash)))
@@ -641,12 +655,12 @@ override all colors."
 	  (if (eq type :block)
 	      ;; draw a socket if there's no block; otherwise wait
 	      ;; until later to draw.
-	      (when (null segment) 
+	      (when (null segment)
 		(draw-socket self (+ x0 dash) (+ y0 dash)
 			      (+ x0 *socket-width*)
 			      (+ y0 (- height dash))
 			      image))
-	      (progn 
+	      (progn
 		(text x0 (+ y0 dash 1)
 		      (print-expression segment))
 		(setf width (expression-width segment))))
@@ -656,18 +670,18 @@ override all colors."
 
 (define-method draw-contents block (image)
   (with-block-drawing image
-    (with-field-values 
+    (with-field-values
 	(x y operation arguments)
 	self
       (let* ((dash *dash*)
 	     (left (+ x (* 2 dash)))
 	     (y0 (+ y dash 1)))
 	(if ^image
-	    (progn 
+	    (progn
 	      (render self)
 	      (draw-image ^image
 			  left y0 :destination image))
-	    (progn 
+	    (progn
 	      (text left y0 (print-expression operation))
 	      (dolist (block arguments)
 		(draw block image))))))))
@@ -680,7 +694,7 @@ override all colors."
 	  (draw-contents self output-image))
 	(progn
 	  (render self)
-	  (draw-image image x y 
+	  (draw-image image x y
 		      :destination output-image)))))
 
 (defparameter *hover-color* "red")
@@ -688,22 +702,22 @@ override all colors."
 (define-method draw-hover block (image)
   (with-fields (x y width height) self
     (draw-box x y (+ *dash* width) (+ *dash* height)
-	      :stroke-color *hover-color* 
+	      :stroke-color *hover-color*
 	      :color *hover-color*
 	      :destination image))
   (draw-contents self image))
-		    
+
 (define-method hit block (mouse-x mouse-y)
   "Return this block (or child block) if the coordinates MOUSE-X and
 MOUSE-Y identify a point inside the block (or child block.)"
   (with-fields (x y width height arguments) self
-    (when (within-extents mouse-x mouse-y x y 
+    (when (within-extents mouse-x mouse-y x y
 			  (+ x width) (+ y height))
       (labels ((hit (block)
 		 (/hit block mouse-x mouse-y)))
 	(let ((child (some #'hit arguments)))
 	  (values (or child self) (when child (/position child))))))))
-     	
+
 (define-method accept block (other-block)
   (with-field-values (parent) self
     (when parent
@@ -714,7 +728,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 ;;; Data entry blocks
 
-(defblock entry 
+(defblock entry
   (type :initform :data)
   (schema :iniform nil)
   (data :initform nil))
@@ -767,7 +781,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 
 (define-method accept list (child &optional prepend)
   (with-fields (arguments) self
-    (if arguments 
+    (if arguments
 	(if prepend
 	    (setf arguments (nconc (list child) arguments))
 	    (setf arguments (nconc arguments (list child))))
@@ -821,7 +835,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
     (if (null arguments)
 	(layout-body-as-null self)
 	(layout-body-as-list self))))
-    
+
 (define-method draw-header list () 0)
 
 ;;; Composing blocks into larger programs, recursively.
@@ -862,7 +876,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
     (let ((name (first arguments))
 	  (height (font-height *block-font*)))
       (prog1 height
-	(move name 
+	(move name
 	       (+ x (handle-width self))
 	       (+ y height))))))
 
@@ -873,13 +887,13 @@ MOUSE-Y identify a point inside the block (or child block.)"
 	(text (+ x *dash* 1)
 	      (+ y *dash* 1)
 	      "script")))))
-			   
+
 (define-method run script ())
   ;; (with-fields (arguments target) self
   ;;   (with-target target
   ;;     (dolist (block arguments)
   ;; 	(run block)))))
-	    
+
 (define-method update script ())
 
 (define-method bring-to-front script (block)
@@ -911,5 +925,5 @@ MOUSE-Y identify a point inside the block (or child block.)"
 ;;     (let* ((symbols (mapcar #'make-non-keyword vars))
 ;; 	   (clauses (mapcar #'make-clause symbols)))
 ;;       `(symbol-macrolet ,clauses ,@body))))
-      
+
 ;;; blocks.lisp ends here
