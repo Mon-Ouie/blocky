@@ -285,8 +285,8 @@ for backward-compatibility."
     (some #'try blocks)))
 
 (defvar *event-handler-function* #'send-to-blocks
-  "Function to be called with keypress events. Keyboard, mouse,
-joystick, and timer events are represented as event lists of the form:
+  "Function to be called with input events. Keyboard, mouse,
+and joystick events are represented as 'event lists' of the form:
 
   (STRING . MODIFIERS)
 
@@ -295,7 +295,7 @@ is a list of key modifier symbols like :shift, :control, :alt, and so
 on.
 
 The modifier list is sorted; thus, events can be compared for
-equality with `equal' and used as hashtable keys..")
+equality with `equal' and used as hashtable keys.")
 
 (defun send-event (event)
   (if (null *event-handler-function*)
@@ -554,31 +554,6 @@ at the time the cell method is run.")
 
 (defparameter *updates* 0)
 
-(defvar *clock* 0 "Number of frames until next timer event.")
-
-(defvar *timer-p* nil "Non-nil if timer events are actually being sent.")
-
-(defun enable-timer ()
-  "Enable timer events. The next scheduled event will be the first sent."
-  (setf *timer-p* t))
-
-(defun disable-timer ()
-  "Disable timer events."
-  (setf *timer-p* nil))
-
-(defvar *timer-event* (list nil :timer) 
-  "Since all timer events are identical, this is the only one we need.")
-
-(defvar *timer-interval* 15 
-"Number of frames to wait before sending each timer event.
-Set this to 0 to get a timer event every frame.
-Don't set this yourself; use `set-timer-interval'.")
-
-(defun set-timer-interval (interval)
-  "Set the number of frames to wait before sending each timer event.
-Set it to 0 to get a timer event every frame."
-  (setf *timer-interval* interval))
-
 ;;; Screen dimensions
 
 (defvar *resizable* nil)
@@ -698,31 +673,11 @@ display."
 				     (release-held-event event)))
 			       (break-events event)))))
 	(:idle ()
-	       (if *timer-p*
-		   (if (zerop *clock*)
-		       (progn 
-			 (sdl:clear-display sdl:*black*)
-			 ;; send held events
-			 (when *held-keys*
-			   (send-held-events))
-			 ;; send timer event
-			 (send-event *timer-event*)
-			 ;; send any joystick button events
-			 ;; (poll-all-buttons)
-			 ;;  (generate-button-events)
-			 ;; update display
-			 (draw-blocks)
-			 (sdl:update-display)
-			 (setf *clock* *timer-interval*))
-		       (decf *clock*))
-		   ;; clean this up. these two cases aren't that different.
-		   (progn 
-		     (sdl:with-timestep ()
-		       (do-update))
-		     (sdl:clear-display sdl:*black*)
-;;		     (when *held-keys* (send-held-events))
-		     (draw-blocks) 
-		     (sdl:update-display))))))))
+	       (sdl:with-timestep ()
+				  (do-update))
+	       (sdl:clear-display sdl:*black*)
+	       (draw-blocks) 
+	       (sdl:update-display))))))
   
   
 ;;; The .ioformsrc user init file
@@ -1840,7 +1795,7 @@ This program includes the DejaVu fonts family. See the file
 	 ;; see system.lisp
 	 (progn 
 	   (setf *system* (clone (symbol-value '=system=)))
-	   (when project 
+	   (when project      
 	     (apply #'send :open *system* project arguments))
 	   (run-main-loop)))))
 
