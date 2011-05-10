@@ -78,7 +78,8 @@ make the names of the objects made with `define-prototype'."
 ;;; Object data structure
 
 ;; Each object's "bookkeeping data" is stored in a structure. The
-;; structure itself stands for the object.
+;; structure represents the object, and typically the programmer will
+;; not need to access these structure fields.
 
 (defstruct object
   ;; The most important features of an object are its "fields" or data
