@@ -876,15 +876,16 @@ evaluated, then any applicable initializer is triggered."
 ;; into printable S-expressions for storing as plain text, and from
 ;; this printed representation back into living IOFORMS objects.
 
-;; The method names :SERIALIZE and :DESERIALIZE are reserved for
-;; serialization use. :SERIALIZE, if such a method is present, is
-;; invoked before serialization. The object being serialized may use
-;; this hook to pre-process its fields. :DESERIALIZE is likewise
-;; invoked (if present) after reading the object from disk, and is
-;; used to recover from deserialization. The reserved field
-;; ^EXCLUDED-FIELDS is a list of field names (keyword symbols) which
-;; are not serialized; typically these will be properly re-initialized
-;; by the :DESERIALIZE method. 
+;; The method names :BEFORE-SERIALIZE and :AFTER-DESERIALIZE are
+;; reserved for serialization use. :BEFORE-SERIALIZE, if such a method
+;; is present, is invoked before serialization. The object being
+;; serialized may use this hook to pre-process its
+;; fields. :AFTER-DESERIALIZE is likewise invoked (if present) after
+;; reading the object from disk, and is used to recover from
+;; deserialization. The reserved field ^EXCLUDED-FIELDS is a list of
+;; field names (keyword symbols) which are not serialized; typically
+;; these will be properly re-initialized by the :AFTER-DESERIALIZE
+;; method.
 
 (defconstant +object-type-key+ :%IOF%OBJECT%)
 (defconstant +hash-type-key+ :%IOF%HASH-TABLE%)
