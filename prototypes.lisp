@@ -96,14 +96,14 @@ make the names of the objects made with `define-prototype'."
   ;; object. Named objects are "prototypes" from which other objects
   ;; may be created or "cloned".
   name
-  ;; The last few methods called are cached in this alist:
+  ;; The last few methods called are cached in this alist.
   cache)
 
 ;;; Fields
 
 ;; An object's field collection is either a hash table or plist. The
 ;; function `field-value' implements the chaining field lookups that
-;; make inheritance work in IOFORMS.
+;; make behavior inheritance work in IOFORMS.
 
 ;; If a field value is not present in a given object's field
 ;; collection, the object's parent is also checked for a value, and
@@ -186,9 +186,6 @@ The new value overrides any inherited value."
 	(setf (object-fields object) fields)))))
   
 (defsetf field-value set-field-value)
-
-(defmacro $ (field expr)
-  `(field-value ,(make-keyword field) ,expr))
 
 (defun has-field (field object)
   "Return non-nil if FIELD has any value in OBJECT."
