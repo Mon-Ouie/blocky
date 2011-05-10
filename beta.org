@@ -1,3 +1,6 @@
+* BLOCKS.LISP revision
+** TODO merge "schema" field into block field descriptor
+** TODO allow (setf (^field object) value) ??
 * ALPHA 1
 *** TODO [#B] allow user to embed/generate IOF entries within Lisp (dont require IOF file)
 *** Consider removing *world* as a variable
