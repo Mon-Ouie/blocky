@@ -137,13 +137,6 @@ if a binding was found, nil otherwise."
 	    (prog1 t
 	      (funcall func)))))))
 
-(defun bind-event-to-prompt-insertion (prompt event-name modifiers &optional (insertion event-name))
-  "For prompt PROMPT ensure that the event (EVENT-NAME MODIFIERS)
-causes the text INSERTION to be inserted at point."
- (bind-event-to-function prompt (string-upcase event-name) modifiers
-	      #'(lambda ()
-		  (insert-string prompt insertion))))
-
 (defun bind-event-to-method (block event-name modifiers method-name)
   (bind-event-to-function block (string-upcase event-name) modifiers
 			  #'(lambda ()
@@ -159,12 +152,19 @@ causes the text INSERTION to be inserted at point."
 					   self
 					   ,@(rest binding))))))))
 
-(define-method generic-keybind block (binding)
-  (destructuring-bind (event modifiers data) binding
-    (apply (etypecase data
-	     (keyword #'bind-event-to-method)
-	     (string #'bind-event-to-prompt-insertion))
-	   self binding)))
+;; (define-method generic-keybind block (binding)
+;;   (destructuring-bind (event modifiers data) binding
+;;     (apply (etypecase data
+;; 	     (keyword #'bind-event-to-method)
+;; 	     (string #'bind-event-to-prompt-insertion))
+;; 	   self binding)))
+
+;; (defun bind-event-to-prompt-insertion (prompt event-name modifiers &optional (insertion event-name))
+;;   "For prompt PROMPT ensure that the event (EVENT-NAME MODIFIERS)
+;; causes the text INSERTION to be inserted at point."
+;;  (bind-event-to-function prompt (string-upcase event-name) modifiers
+;; 	      #'(lambda ()
+;; 		  (insert-string prompt insertion))))
 
 ;;; Creating blocks from S-expressions
 
