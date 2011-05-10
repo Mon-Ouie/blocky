@@ -71,7 +71,7 @@
 
 (define-prototype block ()
   ;; general information
-  (type :initform :data :documentation "Type name of block. See also `*block-types*'.")
+  (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any.")
   (data :initform nil :documentation "Data value for data entry blocks.")
@@ -218,7 +218,7 @@ EXPRESSIONS.
   (assert expression)
   `(make-block-ext ',expression))
 
-(defparameter *block-types*
+(defparameter *block-categories*
   '(:system :motion :event :message :looks :sound :structure :data
     :hover :control :comment :sensing :operators :variables)
   "List of keywords used to group blocks into different functionality
@@ -399,7 +399,7 @@ two words. This is used as a unit for various layout operations.")
     :variables "DarkOrange2"
     :operators "OliveDrab3"
     :sensing "DeepSkyBlue3")
-  "X11 color names of the different block types.")
+  "X11 color names of the different block categories.")
 
 (defparameter *block-highlight-colors*
   '(:motion "sky blue"
@@ -417,7 +417,7 @@ two words. This is used as a unit for various layout operations.")
     :variables "DarkOrange1"
     :operators "OliveDrab1"
     :sensing "DeepSkyBlue2")
-  "X11 color names of highlights on the different block types.")
+  "X11 color names of highlights on the different block categories.")
 
 (defparameter *block-shadow-colors*
   '(:motion "steel blue"
@@ -435,7 +435,7 @@ two words. This is used as a unit for various layout operations.")
     :variables "OrangeRed2"
     :operators "OliveDrab4"
     :sensing "turquoise3")
-  "X11 color names of shadows on the different block types.")
+  "X11 color names of shadows on the different block categories.")
 
 (defparameter *block-foreground-colors*
   '(:motion "white"
@@ -453,19 +453,19 @@ two words. This is used as a unit for various layout operations.")
     :variables "white"
     :operators "white"
     :sensing "white")
-  "X11 color names of the text used for different block types.")
+  "X11 color names of the text used for different block categories.")
 
 (define-method find-color block (&optional (part :background))
-  "Return the X11 color name of this block's type as a string.
+  "Return the X11 color name of this block's category as a string.
 If PART is provided, return the color for the corresponding
-:BACKGROUND, :SHADOW, :FOREGROUND, or :HIGHLIGHT parts of this type of
-block."
+part (:BACKGROUND, :SHADOW, :FOREGROUND, or :HIGHLIGHT) of this category
+of block."
   (let ((colors (ecase part
 		  (:background *block-colors*)
 		  (:highlight *block-highlight-colors*)
 		  (:shadow *block-shadow-colors*)
 		  (:foreground *block-foreground-colors*))))
-    (getf colors ^type)))
+    (getf colors ^category)))
 
 (defparameter *selection-color* "red")
 
@@ -636,7 +636,7 @@ override all colors."
 		   (layout child)
 		   (setf max-height (max max-height (field-value :height child)))
 		   (field-value :width child))
-		 (layout-child (block type)
+		 (layout-child (block category)
 		   (let ((measurement
 			  (+ dash (move-child block))))
 		     (prog1 measurement
@@ -727,7 +727,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 ;;; Data entry blocks
 
 (defblock entry
-  (type :initform :data)
+  (category :initform :data)
   (schema :iniform nil)
   (data :initform nil))
 
@@ -768,7 +768,7 @@ MOUSE-Y identify a point inside the block (or child block.)"
 ;;; Vertically stacked list of blocks
 
 (defblock list
-  (type :initform :structure))
+  (category :initform :structure))
 
 (defparameter *null-display-string* "()")
 
