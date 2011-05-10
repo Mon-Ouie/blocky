@@ -36,9 +36,9 @@
 ;; motion detection, or overlay graphics/text on the image before
 ;; passing the modified frame to the next block. But the block itself,
 ;; as a first-class object in a visual programming language, can also
-;; be the programmer's user interface to the camera block; controls
-;; could be provided for choosing a device, changing camera settings,
-;; and so on.
+;; be the programmer's user interface to the camera; controls could be
+;; provided for choosing a device, changing camera settings, and so
+;; on.
 
 ;; He or she can use the mouse, keyboard, touchscreen and so on to
 ;; interact with the program, switch between different "pages" of the
@@ -49,6 +49,9 @@
 ;; block prototype via `define-method'. With the macro `make-block'
 ;; you can convert lisp expressions into working block
 ;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
+
+;; I want the visual language to be extensible in the same way Lisp
+;; is, via "visual macros". 
 
 ;; For more information on the design of Ioforms, see
 ;; http://ioforms.org/design.html
@@ -67,26 +70,21 @@
 (defvar *target*)
 
 (define-prototype block ()
-  (name :initform nil)
-  (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
-  (arguments :initform nil :documentation "List of block argument values.")
-  (results :initform nil :documentation "Computed output values. See `BLOCK/EXECUTE'.")
-  (schema :documentation
-	  "List of type keywords for corresponding expressions in ^arguments.
-See also `*argument-types*'.")
-  (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
+  ;; general information
   (type :initform :data :documentation "Type name of block. See also `*block-types*'.")
+  (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
+  (events :initform nil :documentation "Event bindings, if any.")
+  (data :initform nil :documentation "Data value for data entry blocks.")
+  (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
+  (excluded-fields :initform '(:image :events :child-widths :results :parent))
+  ;; visual layout
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
-  (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
-  (data :initform nil :documentation "Data value for data entry blocks.")
-  (image :initform nil :documentation "Offscreen buffer image, if any.")
+  (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
   (visible :initform t :documentation "When non-nil, block will be visible.")
-  (event-map :initform nil :documentation "Event bindings, if any.")
-  (child-widths :initform nil :documentation "List of widths of visual block segments. See `BLOCK/LAYOUT'.")
-  (excluded-fields :initform '(:image :event-map :child-widths :results :parent)))
+  (image :initform nil :documentation "Offscreen buffer image, if any."))
 
 (defmacro defblock (name &body args)
   "Define a new block prototype named =NAME=.
@@ -106,35 +104,35 @@ ARGS are field specifiers, as with `define-prototype'."
 
 ;;; Defining input events for blocks
 
-(define-method initialize-event-map-maybe block ()
-  (with-fields (event-map) self
-    (when (null event-map)
-      (setf event-map (make-hash-table :test 'equal)))))
+(define-method initialize-events-maybe block ()
+  (with-fields (events) self
+    (when (null events)
+      (setf events (make-hash-table :test 'equal)))))
 
 (define-method bind-event-to-function block (event-name modifiers func)
   "Bind the described event to invoke FUNC.
 EVENT-NAME is a string giving the key name; MODIFIERS is a list of
 keywords like :control, :alt, and so on."
-  (initialize-event-map-maybe self)
+  (initialize-events-maybe self)
   (setf (gethash (normalize-event (cons event-name modifiers))
-		 ^event-map)
+		 ^events)
 	func))
 
 (define-method unbind-event block (event-name modifiers)
   "Remove the described event binding."
   (remhash (normalize-event (cons event-name modifiers))
-	   ^event-map))
+	   ^events))
 
-(define-method clear-event-map block ()
-  (setf ^event-map (make-hash-table :test 'equal)))
+(define-method clear-events block ()
+  (setf ^events (make-hash-table :test 'equal)))
 
 (define-method handle-event block (event)
   "Look up and invoke the function (if any) bound to EVENT. Return t
 if a binding was found, nil otherwise."
-  (initialize-event-map-maybe self)
-  (with-fields (event-map) self
-      (when event-map
-	(let ((func (gethash event event-map)))
+  (initialize-events-maybe self)
+  (with-fields (events) self
+      (when events
+	(let ((func (gethash event events)))
 	  (when func
 	    (prog1 t
 	      (funcall func)))))))
@@ -350,7 +348,7 @@ initialized with its values as arguments."
 	(setf (nth n arguments)
 	      (nth n args))))))
 
-(define-method deserialize block ()
+(define-method after-deserialize block ()
   "Make sure the block is ready after loading."
   (initialize self))
 
