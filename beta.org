@@ -1,6 +1,10 @@
-* BLOCKS.LISP revision
-** TODO merge "schema" field into block field descriptor
-** TODO allow (setf (^field object) value) ??
+* TODOMAKE A WORKING "example" GAME, XOR 
+** TODO single game object type, most of cells.lisp and gcells.lisp arexs obsolete
+
+* TODO [#B] Get visual language builder working
+** TODO [#A] merge "schema" field into prototypes.lisp field descriptors
+** TODO [#B] (defmacro define 
+** TODO [#C] allow (setf (^field object) value) ??
 * ALPHA 1
 *** TODO [#B] allow user to embed/generate IOF entries within Lisp (dont require IOF file)
 *** Consider removing *world* as a variable

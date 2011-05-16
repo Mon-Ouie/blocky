@@ -1,5 +1,7 @@
 ;;; gcells.lisp --- defining objects
 
+;; NOTE: THIS FILE CONTAINS MOSTLY OBSOLETE CODE.
+
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
 ;; Author: David O'Toole ^dto@gnu.org
@@ -32,7 +34,128 @@
 
 (in-package :ioforms)
 
+;;; Finding and manipulating objects
+
+(define-method find-object cell (&key (direction :here) (index :top) category)
+  (let ((world *world*))
+    (multiple-value-bind (nrow ncol)
+	(step-in-direction ^row ^column direction)
+      (if (in-bounds-p world nrow ncol)
+	  (let (cell)
+	    (let* ((cells (grid-location world nrow ncol))
+		   (index2 (cond 
+			     ((not (null category))
+				(setf cell (category-at-p world nrow ncol category))
+				(position cell cells :test 'eq))
+			     ((and (eq :top index) (eq :here direction))
+			      ;; skip yourself and instead get the item you're standing on
+			      (- (fill-pointer cells) 2))
+			     ((eq :top index)
+			      (- (fill-pointer cells) 1))
+			     ((numberp index) 
+			      (when (array-in-bounds-p cells index)
+				index)))))
+	      (message "INDEX2: ~A" index2)
+	      (setf cell (aref cells index2))
+	      (values cell nrow ncol index2)))))))
+
 ;;; "gCells" implement a 2D game engine.
+
+(defparameter *default-cell-width* 16)
+
+(define-method get cell ())
+
+(define-method activate cell ())
+
+(define-method set cell (data))
+
+(define-method print cell () "")
+
+(define-method width cell () 
+  (with-field-values (widget image label) self
+    (cond (widget (image-width (field-value :image widget)))
+	  (image (image-width image))
+	  (label (formatted-line-width label))
+	  (t *default-cell-width*))))
+
+(define-method height cell () 
+  (with-field-values (widget image label) self
+    (cond (widget (image-height (field-value :image widget)))
+	  (image (image-height image))
+	  (label (formatted-line-height label))
+	  (t *default-cell-width*))))
+
+(define-method render cell (dest x y width)
+  (with-field-values (widget image) self
+      (cond (widget 
+	     (render widget)
+	     (draw-image (field-value :image widget)
+			 x y :destination dest))
+	    ;; it's an image
+	    (image 
+	     (if (stringp image)
+		 (draw-resource-image image x y :destination dest)
+		 (draw-image image x y :destination dest)))
+	    (^label
+	     ;; we have a formatted line
+	     (let ((label ^label))
+	       (when (listp label)
+		 (let*
+		     ((shortfall (- width (formatted-line-width label)))
+		      (color (or (when (and (listp label)
+					    (listp (last label)))
+				   (getf (cdr (car (last label))) :background))
+				 "black"))
+		      (spacer (when (plusp shortfall) 
+				(list nil :width shortfall :background color)))
+		      (line (if spacer (append label (list spacer))
+				      label)))
+		   (render-formatted-line line x y :destination dest))))))))
+
+(defvar *default-cell-label* '((" DEF ")))
+
+(define-method get-label cell ()
+  (when label 
+    (etypecase label
+      (string (list (list label)))
+      (list label))))
+(define-method in-category cell (category) 
+  "Return non-nil if this cell is in the specified CATEGORY.
+
+Cells may be placed into categories that influence their processing by
+the engine. The field `^categories' is a set of keyword symbols; if a
+symbol `:foo' is in the list, then the cell is in the category `:foo'.
+
+Although a game built on IOFORMS can define whatever categories are
+needed, certain base categories are built-in and have a fixed
+interpretation:
+
+ -    :actor --- This cell is active and may be controlled by either the
+      user or the CPU. Only actor cells receive `:run' messages
+      every turn. Other cells are purely `reactive'. Actor
+      cells participate in the Action Points system.
+ -    :target --- This cell is susceptible to targeting.
+ -    :proxy --- This cell is a proxy for another cell.
+ -    :drawn --- This cell has a (draw) method used for custom drawing.
+ -    :proxied  --- This cell is an occupant of a proxy.
+ -    :dead --- This cell is no longer receiving run messages.
+ -    :player --- Only one cell (your player avatar) has this category.
+ -    :enemy --- This cell is playing against you.
+ -    :exclusive --- Prevent some objects from stacking. See also the method `drop-cell' in worlds.lisp
+ -    :obstacle --- Blocks movement and causes collisions
+ -    :pushable --- Can be pushed by impacts.
+ -    :ephemeral --- This cell is not preserved when exiting a world.
+ -    :combining --- This cell automatically combines units with other cells in a container.
+ -    :light-source --- This object casts light. 
+ -    :opaque --- Blocks line-of-sight, casts shadows. 
+ -    :container --- This cell contains other cells, and has an ^inventory field
+ -    :contained ---  This cell is contained in another cell (i.e. not in open space on the map)
+ -    :item --- A potential inventory item. 
+ -    :equipper --- Uses equipment. 
+ -    :equipped --- This item is currently equipped.
+ -    :equipment --- This item can be equipped. 
+"
+  (member category ^categories))
 
 (define-prototype gcell
     (:parent =cell=

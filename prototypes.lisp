@@ -308,8 +308,9 @@ upon binding."
 ;; this implicit `self' argument for you, and implement some syntactic
 ;; sugar.
 
-;; First we implement method caching, which avoids hash table lookups 
-;; for repeatedly used methods. 
+;; First we implement method caching, which avoids hash table lookups
+;; for repeatedly used methods. (This is similar to the GNU Objective C
+;; implementation.)
 
 (defconstant +cache-size+ 6)
 
@@ -338,6 +339,19 @@ upon binding."
 ;; Next comes the basic function for sending a message synchronously
 ;; and obtaining a return value.  
 
+;; When a message cannot be delivered because no corresponding
+;; function was found, IOFORMS attempts to re-send the message via the
+;; object's `forward' method (if any).
+
+;; An object's `forward' method should accept the method-key as the
+;; first argument, and the arguments of the original message as the
+;; remaining arguments.
+
+;; We also want to be able to invoke the prototype (or "parent's")
+;; version of a method; for example during initialization, one might
+;; wish to run the parent's initializer as the first statement in the
+;; child's.
+
 (defun send (method object &rest args)
   "Invoke the method identified by the keyword METHOD on the OBJECT with ARGS.
 If the method is not found, attempt to forward the message."
@@ -361,20 +375,6 @@ If the method is not found, attempt to forward the message."
 			      object method args)
 		       (error (format nil "Could not invoke method ~S" method))))))))
 
-;;; Message forwarding
-
-;; When a message cannot be delivered because no corresponding
-;; function was found, IOFORMS attempts to re-send the message via the
-;; object's `forward' method (if any).
-
-;; An object's `forward' method should accept the method-key as the
-;; first argument, and the arguments of the original message as the
-;; remaining arguments.
-
-;; We also want to be able to invoke the prototype (or "parent's")
-;; version of a method; for example during initialization, one might
-;; wish to run the parent's initializer as the first statement in the
-;; child's.
 
 (define-condition null-parent (error)
   ((method-key :initarg :message :accessor method-key)
@@ -383,8 +383,6 @@ If the method is not found, attempt to forward the message."
 	     (format stream "Cannot find parent method ~S for object ~S." 
 		     (method-key condition)
 		     (object condition)))))
-
-;; TODO Rewrite this function
 
 (defun find-nth-named-parent (object method-key n)
     (assert (plusp n))
@@ -422,7 +420,7 @@ If the method is not found, attempt to forward the message."
 
 (defun initialize-ioforms ()
   (format t "~A" *copyright-text*)
-;;  (initialize-documentation-tables)
+  ;; (initialize-documentation-tables)
   (setf *send-parent-depth* 2)) ;;FIXME
 
 (defvar *send-parent-key* nil)
@@ -482,8 +480,6 @@ If the method is not found, attempt to forward the message."
   (when (and (numberp (queue-max Q))
 	     (< (queue-max Q) (queue-count Q)))
     (unqueue Q)))
-
-;; And now the message queueing functionality.
 
 (defvar *message-queue* nil "This variable is bound to the current
 message queue, if any.")

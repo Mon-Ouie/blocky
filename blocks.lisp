@@ -47,7 +47,7 @@
 ;; New block types and behaviors can be defined with the macro
 ;; `defblock' and subsequently replacing default methods of the base
 ;; block prototype via `define-method'. With the macro `make-block'
-;; you can convert lisp expressions into working block
+-;; you can convert lisp expressions into working block
 ;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
 
 ;; I want the visual language to be extensible in the same way Lisp
@@ -143,6 +143,7 @@ if a binding was found, nil otherwise."
 			      (send method-name block))))
 
 (defmacro bind-event (self event binding)
+  ;; TODO docstring
   (destructuring-bind (name &rest modifiers) event
     (etypecase binding
       (symbol `(bind-event-to-method ,self ,name ',modifiers ,binding))
@@ -152,19 +153,19 @@ if a binding was found, nil otherwise."
 					   self
 					   ,@(rest binding))))))))
 
-;; (define-method generic-keybind block (binding)
-;;   (destructuring-bind (event modifiers data) binding
-;;     (apply (etypecase data
-;; 	     (keyword #'bind-event-to-method)
-;; 	     (string #'bind-event-to-prompt-insertion))
-;; 	   self binding)))
+(define-method generic-keybind block (binding)
+  (destructuring-bind (event modifiers data) binding
+    (apply (etypecase data
+	     (keyword #'bind-event-to-method)
+	     (string #'bind-event-to-prompt-insertion))
+	   self binding)))
 
-;; (defun bind-event-to-prompt-insertion (prompt event-name modifiers &optional (insertion event-name))
-;;   "For prompt PROMPT ensure that the event (EVENT-NAME MODIFIERS)
-;; causes the text INSERTION to be inserted at point."
-;;  (bind-event-to-function prompt (string-upcase event-name) modifiers
-;; 	      #'(lambda ()
-;; 		  (insert-string prompt insertion))))
+(defun bind-event-to-prompt-insertion (prompt event-name modifiers &optional (insertion event-name))
+  "For prompt PROMPT ensure that the event (EVENT-NAME MODIFIERS)
+causes the text INSERTION to be inserted at point."
+ (bind-event-to-function prompt (string-upcase event-name) modifiers
+	      #'(lambda ()
+		  (insert-string prompt insertion))))
 
 ;;; Creating blocks from S-expressions
 
@@ -257,14 +258,6 @@ areas.")
 (define-method get-image block ()
   ^image)
 
-(define-method get-argument block (n)
-  "Return the value of the Nth block argument."
-  (nth n ^arguments))
-
-(define-method set-argument block (n value)
-  "Set the Nth argument value to VALUE."
-    (setf (nth n ^arguments) value))
-
 (define-method child-position block (child)
   (with-fields (arguments) self
     (position child arguments)))
@@ -337,26 +330,26 @@ those results as input."
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
 
-(define-method initialize block (&rest args)
-  "Prepare an empty block, or if ARGS is non-empty, a block
-initialized with its values as arguments."
-  (with-fields (arguments schema results) self
-    (let ((arity (length schema)))
-      (setf arguments (make-list arity))
-      (setf results (make-list arity))
-      (dotimes (n (length args))
-	(setf (nth n arguments)
-	      (nth n args))))))
+(define-method initialize block (&rest args))
+;;   "Prepare an empty block, or if ARGS is non-empty, a block
+;; initialized with its values as arguments."
+;;   (with-fields (arguments schema results) self
+;;     (let ((arity (length schema)))
+;;       (setf arguments (make-list arity))
+;;       (setf results (make-list arity))
+;;       (dotimes (n (length args))
+;; 	(setf (nth n arguments)
+;; 	      (nth n args))))))
 
-(define-method after-deserialize block ()
-  "Make sure the block is ready after loading."
-  (initialize self))
+;; (define-method after-deserialize block ()
+;;   "Make sure the block is ready after loading."
+;;   (initialize self))
 
-(define-method count block ()
-  "Return the number of blocks enclosed in this block, including the
-current block."
-  (with-fields (arguments) self
-    (+ 1 (length arguments))))
+;; (define-method count block ()
+;;   "Return the number of blocks enclosed in this block, including the
+;; current block."
+;;   (with-fields (arguments) self
+;;     (+ 1 (length arguments))))
 
 (defparameter *display-widgets*
    '(:integer =integer=
