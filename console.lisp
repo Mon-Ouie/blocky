@@ -33,6 +33,9 @@
 
 ;; http://lispbuilder.sourceforge.net/
 
+;; The OpenGL support here is derived from 3b's excellent cl-opengl
+;; tutorials: http://3bb.cc/tutorials/cl-opengl/
+
 (in-package :ioforms) 
 
 ;;; Keyboard state
@@ -587,6 +590,19 @@ window. Set this in the game startup file.")
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
 
+(defun draw ()
+  (gl:clear :color-buffer-bit)
+  ;; draw a triangle
+  (gl:with-primitive :triangles
+    (gl:color 1 0 0)
+    (gl:vertex 0 0 0)
+    (gl:color 0 1 0)
+    (gl:vertex 0.5 1 0)
+    (gl:color 0 0 1)
+    (gl:vertex 1 0 0))
+  ;; (draw-blocks) 
+  )
+
 (defun run-main-loop ()
   "Initialize the console, open a window, and play.
 We want to process all inputs, update the game state, then update the
@@ -597,18 +613,23 @@ display."
 	   (sdl:window *screen-width* *screen-height*
 		       :fps fps 
 		       :title-caption *window-title*
-		       :flags sdl:SDL-FULLSCREEN
+		       :flags (logior sdl:SDL-FULLSCREEN sdl:SDL-OPENGL)
 		       :position *window-position*))
 	  (*resizable*
 	   	   (sdl:window *screen-width* *screen-height*
 		       :fps fps 
 		       :title-caption *window-title*
-		       :flags sdl:SDL-RESIZABLE
+		       :flags (logior sdl:SDL-RESIZABLE sdl:SDL-OPENGL)
 		       :position *window-position*))
 	  (t (sdl:window *screen-width* *screen-height*
 			 :fps fps
+			 :flags sdl:SDL-OPENGL
 			 :title-caption *window-title*
 			 :position *window-position*)))
+    ;; cl-opengl needs platform specific support to be able to load GL
+    ;; extensions, so we need to tell it how to do so in lispbuilder-sdl
+    (setf cl-opengl-bindings:*gl-get-proc-address* #'sdl-cffi::sdl-gl-get-proc-address)
+    ;;
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
     (sdl:clear-display sdl:*black*)
@@ -675,10 +696,14 @@ display."
 	(:idle ()
 	       (sdl:with-timestep ()
 				  (do-update))
-	       (sdl:clear-display sdl:*black*)
-	       (draw-blocks) 
-	       (sdl:update-display))))))
-  
+	       ;; this lets slime keep working while the main loop is running
+	       ;; in sbcl using the :fd-handler swank:*communication-style*
+	       #+(and sbcl (not sb-thread)) (restartably
+					     (sb-sys:serve-all-events 0))
+	       (restartably
+		(draw)
+		(gl:flush)
+		(sdl:update-display))))))
   
 ;;; The .ioformsrc user init file
 
@@ -1104,11 +1129,35 @@ also the documentation for DESERIALIZE."
     (setf (resource-data resource) nil) ;; no longer needed
     object))
 
+;;; Loading images and textures
+
+(defun load-texture (filename)
+  (let ((texture (car (gl:gen-textures 1)))
+        (image (sdl-image:load-image filename)))
+    (gl:bind-texture :texture-2d texture)
+    (gl:tex-parameter :texture-2d :generate-mipmap t) 
+    (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear) 
+    (sdl-base::with-pixel (pix (sdl:fp image))
+      (let ((texture-format (ecase (sdl-base::pixel-bpp pix)
+                              (1 :luminance)
+                              (2 :luminance-alpha)
+                              (3 :rgb)
+                              (4 :rgba))))
+        (assert (and (= (sdl-base::pixel-pitch pix)
+                        (* (sdl:width image) (sdl-base::pixel-bpp pix)))
+                     (zerop (rem (sdl-base::pixel-pitch pix) 4))))
+        (gl:tex-image-2d :texture-2d 0 :rgba
+                         (sdl:width image) (sdl:height image)
+                         0
+                         texture-format
+                         :unsigned-byte (sdl-base::pixel-data pix))))
+    texture))
+
 (defun load-image-resource (resource)
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
   (sdl-image:load-image (namestring (resource-file resource))
 			:alpha 255))
-  
+
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
 for :SPRITE-WIDTH and :SPRITE-HEIGHT properties on the resource to
