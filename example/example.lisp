@@ -23,23 +23,23 @@
   
 (in-package :example)
 
-(defworld whitespace :background "story")
+;(defworld whitespace :background "story")
 
-(defsprite player 
-  :image "blue-dot" 
-  :x 20 :y 45)
+;; (defsprite player 
+;;   :image "blue-dot" 
+;;   :x 20 :y 45)
 
-(define-method initialize player ()
-  (bind-event self (:up) (move :north 5 :pixels))
-  (bind-event self (:down) (move :south 5 :pixels))
-  (bind-event self (:right) (move :east 5 :pixels))
-  (bind-event self (:left) (move :west 5 :pixels)))
+;; (define-method initialize player ()
+;;   (bind-event self (:up) (move :north 5 :pixels))
+;;   (bind-event self (:down) (move :south 5 :pixels))
+;;   (bind-event self (:right) (move :east 5 :pixels))
+;;   (bind-event self (:left) (move :west 5 :pixels)))
 
-(define-method bloop player ()
-  (play-sound self "bloop"))
+;; (define-method bloop player ()
+;;   (play-sound self "bloop"))
 
-(play (new universe)
-      :world (new whitespace)
-      :player (new player))
+;; (play (new universe)
+;;       :world (new whitespace)
+;;       :player (new player))
       
 ;;; example.lisp ends here

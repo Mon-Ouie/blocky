@@ -1,4 +1,4 @@
-;;; console.lisp --- core operations for IOFORMS
+;;; console.lisp --- OS/device driver for IOFORMS
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
@@ -33,8 +33,8 @@
 
 ;; http://lispbuilder.sourceforge.net/
 
-;; The OpenGL support here is derived from 3b's excellent cl-opengl
-;; tutorials: http://3bb.cc/tutorials/cl-opengl/
+;; The OpenGL support here is derived from the code in 3b's excellent
+;; cl-opengl tutorials: http://3bb.cc/tutorials/cl-opengl/
 
 (in-package :ioforms) 
 
@@ -559,21 +559,44 @@ at the time the cell method is run.")
 
 ;;; Screen dimensions
 
+(defparameter *actual-screen-width* 640 "Physical width of the window, in pixels.") 
+(defparameter *actual-screen-height* 480 "Physical height of the window, in pixels.")
+
+;; The nominal size of of the window in pixels, in case we just want
+;; to scale the scene to match the window instead of showing more of
+;; the world. If these are the same as the `*actual-screen-' settings
+;; above, then more of the world will be shown when the window size
+;; increases.
+(defparameter *nominal-screen-width* 640 "Nominal width of the window, in pixels.")
+(defparameter *nominal-screen-height* 480 "Nominal height of the window, in pixels.")
+
+(defparameter *gl-screen-width* nil "Width of the window expressed in OpenGL coordinates.")
+(defparameter *gl-screen-height* nil "Height of the window expressed in OpenGL coordinates.")
+
+(defparameter *use-nominal-size* t
+  "When non-nil, always show a fixed amount of the world when changing
+window size. Otherwise, one onscreen pixel equals one unit of world
+space, so that more of the world shows if the window becomes larger.")
+ 
+(defun do-orthographic-projection (width height)
+  "Configure OpenGL so that the screen coordinates go from (0,0) at
+ top left to (WIDTH, HEIGHT) at lower right."
+  (setf *actual-screen-width* width)
+  (setf *actual-screen-height* height)
+  (gl:matrix-mode :projection)
+  (gl:load-identity)
+  (gl:viewport 0 0 width height)
+  (if *use-nominal-size*
+    (setf *gl-screen-width* *nominal-screen-width*
+          *gl-screen-height* *nominal-screen-height*)
+    (setf *gl-screen-width* *actual-screen-width*
+          *gl-screen-height* *actual-screen-height*))
+  (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 0 1)
+  (gl:matrix-mode :modelview))
+
 (defvar *resizable* nil)
 
 (defparameter *resize-hook* nil)
-
-(defvar *screen-width* 640 "The width (in pixels) of the game
-window. Set this in the game startup file.")
-
-(defun set-screen-width (width)
-  (setf *screen-width* width))
-
-(defvar *screen-height* 480 "The height (in pixels) of the game
-window. Set this in the game startup file.")
-
-(defun set-screen-height (height)
-  (setf *screen-height* height))
 
 ;;; The main loop of IOFORMS
 
@@ -632,80 +655,79 @@ display."
     ;;
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
-    (sdl:clear-display sdl:*black*)
-    (draw-blocks)
-    (sdl:update-display)
+    ;; (draw-blocks)
+    ;; (sdl:update-display)
     (run-hook '*after-initialization-hook*)
-    (let ((events-this-frame 0))
-      (sdl:with-events ()
-	(:quit-event () (prog1 t))
-	(:video-resize-event (:w w :h h)  
-			     (setf *screen-width* w
-				   *screen-height* h)
-			     (run-hook '*resize-hook*)
-			     (sdl:window w h :fps fps :title-caption *window-title*
-					 :flags sdl:SDL-RESIZABLE
-					 :position *window-position*))
-	(:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
-			     (let ((block (hit-blocks x y *blocks*)))
-			       (when block
-				 (mouse-move block x y))))
-	(:mouse-button-down-event (:button button :state state :x x :y y)
-				  (let ((block (hit-blocks x y *blocks*)))
-				    (when block
-				      (mouse-down block x y button))))
-	(:mouse-button-up-event (:button button :state state :x x :y y)
-				  (let ((block (hit-blocks x y *blocks*)))
-				    (when block
-				      (mouse-up block x y button))))
-	(:joy-button-down-event (:which which :button button :state state)
-				(when (assoc button *joystick-mapping*)
-				  (update-joystick button state)
-				  (send-event (make-event :joystick
-							      (list (translate-joystick-button button) 
-								    :button-down)))))
-	(:joy-button-up-event (:which which :button button :state state)  
+    (sdl:with-events ()
+      (:quit-event () (prog1 t))
+      (:video-resize-event (:w w :h h)  
+			   (setf *screen-width* w
+				 *screen-height* h)
+			   (run-hook '*resize-hook*)
+			   (sdl:window w h :fps fps :title-caption *window-title*
+				       :flags sdl:SDL-RESIZABLE
+				       :position *window-position*))
+      (:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
+			   (let ((block (hit-blocks x y *blocks*)))
+			     (when block
+			       (mouse-move block x y))))
+      (:mouse-button-down-event (:button button :state state :x x :y y)
+				(let ((block (hit-blocks x y *blocks*)))
+				  (when block
+				    (mouse-down block x y button))))
+      (:mouse-button-up-event (:button button :state state :x x :y y)
+			      (let ((block (hit-blocks x y *blocks*)))
+				(when block
+				  (mouse-up block x y button))))
+      (:joy-button-down-event (:which which :button button :state state)
 			      (when (assoc button *joystick-mapping*)
 				(update-joystick button state)
 				(send-event (make-event :joystick
-							    (list (translate-joystick-button button) 
-								  :button-up)))))
-	(:joy-axis-motion-event (:which which :axis axis :value value)
-				(update-joystick-axis axis value))
-	(:video-expose-event () (sdl:update-display))
-	(:key-down-event (:key key :mod-key mod)
-			 (let ((event (make-event key mod)))
-			   (if *held-keys*
-			       (hold-event event)
-			       (send-event event))))
-	(:key-up-event (:key key :mod-key mod)
-		       (when *held-keys*
-			 (let* ((event (make-event key mod))
-				(entry (gethash event *key-table*)))
-			   (if (numberp entry)
-			       (if (plusp entry)
-				   (progn (message "Removing entry ~A:~A" event entry)
-					  (remhash event *key-table*))
-				   (when (zerop entry)
-				     ;; This event hasn't yet been sent,
-				     ;; but the key release happened
-				     ;; now. Mark this entry as pending
-				     ;; deletion.
-				     (release-held-event event)))
-			       (break-events event)))))
-	(:idle ()
-	       (sdl:with-timestep ()
-				  (do-update))
-	       ;; this lets slime keep working while the main loop is running
-	       ;; in sbcl using the :fd-handler swank:*communication-style*
-	       #+(and sbcl (not sb-thread)) (restartably
-					     (sb-sys:serve-all-events 0))
-	       (restartably
-		(draw)
-		(gl:flush)
-		(sdl:update-display))))))
-  
-;;; The .ioformsrc user init file
+							(list (translate-joystick-button button) 
+							      :button-down)))))
+      (:joy-button-up-event (:which which :button button :state state)  
+			    (when (assoc button *joystick-mapping*)
+			      (update-joystick button state)
+			      (send-event (make-event :joystick
+						      (list (translate-joystick-button button) 
+							    :button-up)))))
+      (:joy-axis-motion-event (:which which :axis axis :value value)
+			      (update-joystick-axis axis value))
+      (:video-expose-event () (sdl:update-display))
+      (:key-down-event (:key key :mod-key mod)
+		       (let ((event (make-event key mod)))
+			 (if *held-keys*
+			     (hold-event event)
+			     (send-event event))))
+      (:key-up-event (:key key :mod-key mod)
+		     ;; is this "held keys" code obsolete? it was useful for CONS control
+		     (when *held-keys*
+		       (let* ((event (make-event key mod))
+			      (entry (gethash event *key-table*)))
+			 (if (numberp entry)
+			     (if (plusp entry)
+				 (progn (message "Removing entry ~A:~A" event entry)
+					(remhash event *key-table*))
+				 (when (zerop entry)
+				   ;; This event hasn't yet been sent,
+				   ;; but the key release happened
+				   ;; now. Mark this entry as pending
+				   ;; deletion.
+				   (release-held-event event)))
+			     (break-events event)))))
+      (:idle ()
+	     (sdl:with-timestep ()
+				(do-update))
+	     ;; this lets slime keep working while the main loop is running
+	     ;; in sbcl using the :fd-handler swank:*communication-style*
+	     #+(and sbcl (not sb-thread)) (restartably
+					   (sb-sys:serve-all-events 0))
+	     (restartably
+	      (draw)
+	      (gl:flush)
+	      (sdl:update-display))))))
+
+;;; The IOFORMS.INI user configuration file
 
 (defvar *initialization-hook* nil 
 "This hook is run after the IOFORMS console is initialized.

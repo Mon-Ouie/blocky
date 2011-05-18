@@ -1,11 +1,14 @@
 * TODO Port to CL-OPENGL
 ** http://3bb.cc/tutorials/cl-opengl/
+** TODO simplify startup procedure of console
+*** TODO allow modules to config variables properly before main loop
+*** TODO fix initialization hook being run in main loop
 * TODO MAKE A WORKING GAME, XOR 
 * ALPHA 1
 *** TODO [#B] allow user to embed/generate IOF entries within Lisp (dont require IOF file)
 *** Consider removing *world* as a variable
 *** Consider merging "schema" into field declaration marking which fields are "arguments". get rid of the explicit "arguments" field
-*** Browseable interface (zoom down into blocks, showing wider view w more helpxs
+*** Browseable interface (zoom down into blocks, showing wider view w more help
 *** TODO [#A] open a window and do something
 * ALPHA 2
 * TODO Add more documentation

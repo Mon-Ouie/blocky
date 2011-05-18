@@ -1,4 +1,4 @@
-;;; system.lisp --- blocks library for basic ioforms operations
+;;; system.lisp --- a block to manage the console.lisp API for you
 
 ;; Copyright (C) 2010, 2011  David O'Toole
 
@@ -112,8 +112,6 @@
   (setf *window-title* "ioforms")
   (setf *resizable* t)
   (enable-classic-key-repeat 100 100)
-  (set-screen-height *default-shell-height*)
-  (set-screen-width *default-shell-width*)
   (labels ((do-resize ()
 	     (resize *system* 
 		     :width *screen-width* 

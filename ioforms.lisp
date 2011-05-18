@@ -84,6 +84,9 @@
 	   find-project-path index-project load-image-resource
 	   load-lisp-resource *executable* *function-buttons*
 	   *corner-buttons* *dance-arrows* *punctuation*
+	   *actual-screen-height* *actual-screen-width*
+	   *nominal-screen-width* *nominal-screen-height*
+	   *gl-screen-width* *gl-screen-height*
 	   *dance-phrase-symbols* *dance-keybindings*
 	   *energy-dance-pad-mapping* *message-function*
 	   *dark-target-arrow-images* get-button-index arrow-image
