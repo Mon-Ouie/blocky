@@ -44,22 +44,22 @@
 (define-method stop system ()
   (setf ^running nil))
 
-(define-method tick system (&rest args)
-  (with-fields (running children shell) self
-    (when (null shell)
-      (setf shell (clone =shell=))
-      (setf *default-font* *block-font*)
-      (resize shell :width *screen-width* :height *screen-height*)
-      (create-image shell)
-      (move shell 0 0)
-      (switch-to-script shell (clone =script=))
-      (add shell (clone =listener=) 0 0)
-      (add shell (clone =listener=) 20 20)
-      (add shell (clone =integer=) 80 80)
-      (add shell (clone =listener=) 90 90))
-    (when running
-      (dolist (block children)
-	(apply #'tick block args)))))
+;; (define-method tick system (&rest args)
+;;   (with-fields (running children shell) self
+;;     (when (null shell)
+;;       (setf shell (clone =shell=))
+;;       (setf *default-font* *block-font*)
+;;       (resize shell :width *screen-width* :height *screen-height*)
+;;       (create-image shell)
+;;       (move shell 0 0)
+;;       (switch-to-script shell (clone =script=))
+;;       (add shell (clone =listener=) 0 0)
+;;       (add shell (clone =listener=) 20 20)
+;;       (add shell (clone =integer=) 80 80)
+;;       (add shell (clone =listener=) 90 90))
+;;     (when running
+;;       (dolist (block children)
+;; 	(apply #'tick block args)))))
 
 (define-method forward system (method &rest args)
   (apply #'send nil method ^script args))
@@ -79,10 +79,9 @@
   (message "Starting IOFORMS Shell...")
   (initialize-ioforms)
   (sdl:init-sdl :video t :audio t :joystick t)
-  (apply #'/parent/initialize self args)
-  (reset-message-function)
+  (apply #'parent/initialize self args)
   (setf *project-package-name* nil
-        *project-directories* (ioforms:default-project-directories)
+        *project-directories* (default-project-directories)
 	*world* nil
 	*system* self
 	*updates* 0
@@ -92,8 +91,7 @@
 	*random-state* (make-random-state t))
   ;; add library search paths for Mac if needed
   (setup-library-search-paths)
-  ;;(sdl:with-init (sdl:SDL-INIT-VIDEO sdl:SDL-INIT-AUDIO sdl:SDL-INIT-JOYSTICK)
-  (load-user-init-file) ;; this step may override *project-directories*
+  (load-user-init-file) ;; this step may override *project-directories* and so on 
   (initialize-resource-table)
   (initialize-colors)
   (when *use-sound*
@@ -110,7 +108,7 @@
     (sdl-mixer:allocate-channels *channels*))
   (open-project "standard")
   (setf *window-title* "ioforms")
-  (setf *resizable* t)
+  (setf *resizable* nil)
   (enable-classic-key-repeat 100 100)
   (labels ((do-resize ()
 	     (resize *system* 

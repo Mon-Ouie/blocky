@@ -38,6 +38,11 @@
 
 (in-package :ioforms) 
 
+(defmacro restartably (&body body)
+  `(restart-case
+      (progn ,@body)
+    (continue () :report "Continue"  )))
+
 ;;; Keyboard state
 
 ;; see also keys.lisp
@@ -196,11 +201,12 @@ Do not set this variable directly from a project; instead, call
 `install-blocks'.")
 
 (defun hit-blocks (x y &optional (blocks *blocks*))
-  (labels ((try (b)
-	     (hit b x y)))
-    (let ((parent (find-if #'try blocks :from-end t)))
-      (when parent
-	(hit parent)))))
+  (when blocks
+    (labels ((try (b)
+	       (hit b x y)))
+      (let ((parent (find-if #'try blocks :from-end t)))
+	(when parent
+	  (hit parent))))))
 
 (defun draw-blocks ()
   "Draw the active blocks to the screen."
@@ -559,8 +565,8 @@ at the time the cell method is run.")
 
 ;;; Screen dimensions
 
-(defparameter *actual-screen-width* 640 "Physical width of the window, in pixels.") 
-(defparameter *actual-screen-height* 480 "Physical height of the window, in pixels.")
+(defparameter *screen-width* 640 "Physical width of the window, in pixels.") 
+(defparameter *screen-height* 480 "Physical height of the window, in pixels.")
 
 ;; The nominal size of of the window in pixels, in case we just want
 ;; to scale the scene to match the window instead of showing more of
@@ -573,24 +579,25 @@ at the time the cell method is run.")
 (defparameter *gl-screen-width* nil "Width of the window expressed in OpenGL coordinates.")
 (defparameter *gl-screen-height* nil "Height of the window expressed in OpenGL coordinates.")
 
-(defparameter *use-nominal-size* t
+(defparameter *use-nominal-screen-size* nil
   "When non-nil, always show a fixed amount of the world when changing
-window size. Otherwise, one onscreen pixel equals one unit of world
-space, so that more of the world shows if the window becomes larger.")
+window size. Otherwise (the default) one onscreen pixel equals one
+unit of world space, so that more of the world shows if the window
+becomes larger.")
  
 (defun do-orthographic-projection (width height)
   "Configure OpenGL so that the screen coordinates go from (0,0) at
  top left to (WIDTH, HEIGHT) at lower right."
-  (setf *actual-screen-width* width)
-  (setf *actual-screen-height* height)
+  (setf *screen-width* width)
+  (setf *screen-height* height)
   (gl:matrix-mode :projection)
   (gl:load-identity)
   (gl:viewport 0 0 width height)
-  (if *use-nominal-size*
+  (if *use-nominal-screen-size*
     (setf *gl-screen-width* *nominal-screen-width*
           *gl-screen-height* *nominal-screen-height*)
-    (setf *gl-screen-width* *actual-screen-width*
-          *gl-screen-height* *actual-screen-height*))
+    (setf *gl-screen-width* *screen-width*
+          *gl-screen-height* *screen-height*))
   (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 0 1)
   (gl:matrix-mode :modelview))
 
@@ -600,7 +607,7 @@ space, so that more of the world shows if the window becomes larger.")
 
 ;;; The main loop of IOFORMS
 
-(defvar *after-initialization-hook* nil)
+(defvar *after-startup-hook* nil)
 
 (defvar *project* nil)
 
@@ -630,7 +637,6 @@ space, so that more of the world shows if the window becomes larger.")
   "Initialize the console, open a window, and play.
 We want to process all inputs, update the game state, then update the
 display."
-  (run-hook '*initialization-hook*)
   (let ((fps (make-instance 'sdl:fps-mixed :dt *dt*)))
     (cond (*fullscreen*
 	   (sdl:window *screen-width* *screen-height*
@@ -655,9 +661,7 @@ display."
     ;;
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
-    ;; (draw-blocks)
-    ;; (sdl:update-display)
-    (run-hook '*after-initialization-hook*)
+    (run-hook '*after-startup-hook*)
     (sdl:with-events ()
       (:quit-event () (prog1 t))
       (:video-resize-event (:w w :h h)  
@@ -716,22 +720,17 @@ display."
 				   (release-held-event event)))
 			     (break-events event)))))
       (:idle ()
-	     (sdl:with-timestep ()
-				(do-update))
 	     ;; this lets slime keep working while the main loop is running
 	     ;; in sbcl using the :fd-handler swank:*communication-style*
 	     #+(and sbcl (not sb-thread)) (restartably
-					   (sb-sys:serve-all-events 0))
+					   (sb-sys:serve-all-events 0))	 
+	     (sdl:with-timestep () (do-update))
 	     (restartably
 	      (draw)
 	      (gl:flush)
 	      (sdl:update-display))))))
 
 ;;; The IOFORMS.INI user configuration file
-
-(defvar *initialization-hook* nil 
-"This hook is run after the IOFORMS console is initialized.
-Set system parameters and other settings here.")
 
 (defparameter *user-init-file-name* "ioforms.ini")
 
@@ -978,6 +977,9 @@ Please see the included file BINARY-README for instructions."
   "Make a pathname for FILE within the project PROJECT-NAME."
   (merge-pathnames file (find-project-path project-name)))
 
+(defun default-project-lisp-file (project-name)
+  (find-project-file project-name (concatenate 'string project-name ".lisp")))
+
 (defun open-project (project &key (autoload t))
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
@@ -995,10 +997,18 @@ object save directory. See also `save-object-resource')."
     (when (probe-file object-index-file)
       (message "Indexing saved objects from ~S" object-index-file)
       (index-iof project object-index-file)))
-  (let ((package (find-package (project-package-name))))
-    (when package
-      (setf *package* package)))
-  (run-hook '*after-open-project-hook*))
+  (let ((lisp (default-project-lisp-file project)))
+    (if (probe-file lisp)
+	(load lisp)
+	(message "No default lisp file found in project."))
+    (let ((package (find-package (project-package-name))))
+      (if package
+	  (let ((start-function (intern project package)))
+	    (if (fboundp start-function)
+		(funcall start-function)
+		(message "No default startup function.")))
+	  (message "No package defined.")))
+    (run-hook '*after-open-project-hook*)))
 
 (defun directory-is-project-p (dir)
   "Test whether a {PROJECTNAME}.IOF index file exists in a directory."
@@ -1449,7 +1459,7 @@ found."
 (define-method get-output voice ()
   ^output)
 
-(define-method play voice (&rest parameters))
+;;(define-method play voice (&rest parameters))
 (define-method halt voice ())
 (define-method run voice ())
 
@@ -1859,21 +1869,16 @@ This program includes the DejaVu fonts family. See the file
 		  "libSDL_image")))
     (cffi:use-foreign-library sdl-image))
 
-(defun run-project (&rest args)
-  (sdl:init-sdl :force t :video t :audio t :joystick t)
-  (destructuring-bind (project &rest arguments) args
-    (unwind-protect 
-	 ;; see system.lisp
-	 (progn 
-	   (setf *system* (clone (symbol-value '=system=)))
-	   (when project      
-	     (apply #'send :open *system* project arguments))
-	   (run-main-loop)))))
+(defun play (&rest input)
+  (setf *system* (clone (symbol-value '=system=)))
+  (when input
+    (destructuring-bind (project &rest arguments) input
+      (apply #'send :open *system* project arguments))
+    (run-main-loop)))
 
 (defun ioforms (&rest args)
   (setf *after-open-project-hook* nil
-	*after-initialization-hook* nil
-	*initialization-hook* nil
+	*after-startup-hook* nil
 	*resize-hook* nil
 	*event-handler-function* #'send-to-blocks)
   (if (null args)

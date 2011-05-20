@@ -18,11 +18,40 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Preamble
+
+;; First, we set up a package (often called a "namespace" in other
+;; languages) with `defpackage' and then enter it with `in-package'.
+
+;; The `:use' declaration shows that we will be importing names from
+;; IOFORMS and from the base Common Lisp package.
+
 (defpackage :example 
     (:use :ioforms :common-lisp))
   
 (in-package :example)
 
+;; Now we should set a few system variables. In Common Lisp, globals
+;; are named `*like-this*' with an asterisk on each end, to
+;; distinguish them from normal variables.
+
+(setf *screen-width* 640)
+(setf *screen-height* 480)
+(setf *window-title* "ioforms example 1")
+
+;; Now we define the code that runs when your game starts. We define
+;; it as a function (using `defun') to be called later by IOFORMS.
+
+;; (What happens is that IOFORMS loads this file before initializing
+;; the system, which allows you to set system variables like
+;; `*screen-height*' and `*screen-width*' before the window actually
+;; opens. Once IOFORMS is fully initialized according to the
+;; parameters you set, it will look for a function with the same name
+;; as the module---in this case `example'---and execute it, which
+;; hands control back to you.
+
+(defun example ())
+  
 ;(defworld whitespace :background "story")
 
 ;; (defsprite player 

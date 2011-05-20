@@ -42,12 +42,13 @@
   (:use :common-lisp) 
   (:export *default-frame-width* *default-frame-height* =null=
 	   null-block =viewport= *frequency* *output-chunksize*
-	   *output-channels* halt-sample *dt* defproject run
+	   *output-channels* halt-sample *dt* defproject run start
 	   *update-function* =equipment= *default-world-axis-size*
 	   defsprite generic-keybind *target* *blocks* *script*
 	   *default-world-z-size* =browser= install-blocks =balloon=
 	   =form= keyboard-held-p keyboard-pressed-p
-	   keyboard-released-p keyboard-time-in-current-state
+	   *use-nominal-screen-size* keyboard-released-p
+	   keyboard-time-in-current-state
 	   keyboard-time-in-previous-state *updates* keyboard-down-p
 	   keyboard-keys-down keyboard-modifier-down-p
 	   keyboard-modifiers draw-filled-circle draw-aa-circle =my=
@@ -63,14 +64,15 @@
 	   =block-prompt= =listener= =list= split-string-on-lines
 	   message *prompt-sweden-keybindings*
 	   *prompt-qwerty-keybindings* *screen-width*
-	   transform-method-body roll-under make-stat =formatter= make-universe
-	   initialize-colors *standard-categories* *left-turn* bind-event
-	   *right-turn* *default-action-points* =world= roll
-	   bind-event-to-method *colors* enable-classic-key-repeat
-	   disable-classic-key-repeat get-color =prompt= =menu-item=
-	   =direction-chooser= define-method *default-font* 
-	   field-value set-field-value object-fields dispatch-event
-	   run-project *user-init-file-name* distance icon-resource icon-image
+	   transform-method-body roll-under make-stat =formatter=
+	   make-universe initialize-colors *standard-categories*
+	   *left-turn* bind-event *right-turn* *default-action-points*
+	   =world= roll bind-event-to-method *colors*
+	   enable-classic-key-repeat disable-classic-key-repeat
+	   get-color =prompt= =menu-item= =direction-chooser=
+	   define-method *default-font* field-value set-field-value
+	   object-fields dispatch-event run-project
+	   *user-init-file-name* distance icon-resource icon-image
 	   *compass-directions* *compass-opposites*
 	   find-resource-property compose-blank-fields font-width
 	   font-height *browser* browser set-browser find-object
@@ -84,15 +86,15 @@
 	   find-project-path index-project load-image-resource
 	   load-lisp-resource *executable* *function-buttons*
 	   *corner-buttons* *dance-arrows* *punctuation*
-	   *actual-screen-height* *actual-screen-width*
-	   *nominal-screen-width* *nominal-screen-height*
-	   *gl-screen-width* *gl-screen-height*
-	   *dance-phrase-symbols* *dance-keybindings*
-	   *energy-dance-pad-mapping* *message-function*
-	   *dark-target-arrow-images* get-button-index arrow-image
-	   message-to-standard-output reset-message-function
-	   arrow-formatted-string ticks-per-beat event-time
-	   event-arrow default-project-directories *step-tolerance*
+	   *screen-height* *screen-width* *nominal-screen-width*
+	   *nominal-screen-height* *gl-screen-width*
+	   *gl-screen-height* *dance-phrase-symbols*
+	   *dance-keybindings* *energy-dance-pad-mapping*
+	   *message-function* *dark-target-arrow-images*
+	   get-button-index arrow-image message-to-standard-output
+	   reset-message-function arrow-formatted-string
+	   ticks-per-beat event-time event-arrow
+	   default-project-directories *step-tolerance*
 	   *resource-handlers* load-resource find-resource
 	   find-resource-object *colors* *world* make-directory-maybe
 	   load-user-init-file *project-directories* resource-to-plist
@@ -122,7 +124,7 @@
 	   =textbox= read-sexp-from-file with-fields with-field-values
 	   write-iof *grammar* one-of left-hand-side right-hand-side
 	   expansions generate send-event-to-blocks play-music
-	   halt-music seek-music *joystick-mapping*
+	   halt-music seek-music *joystick-mapping* play
 	   *generic-joystick-mapping* *ps3-joystick-mapping*
 	   *joystick-button-symbols* draw-resource-image
 	   *event-handler-function* *use-sound* trace-rectangle
@@ -133,28 +135,28 @@
 	   no-such-field =narrator= find-projects-in-directory goal
 	   =mission= =gateway= =launchpad= =environment=
 	   directory-is-project-p find-all-projects *project*
-	   transform-tree *after-initialization-hook* stat-value
-	   draw-line *default-message-verbosities*
-	   *message-verbosities* add-overlay set-message-verbosities
-	   operation-symbol message-symbol play-sample
-	   set-music-volume add-message-verbosities with-message-queue
-	   =minimap= draw-pixel *user-keyboard-layout* *fullscreen*
-	   draw-circle =emote= set-field-option-value =blockr=
-	   =blockr-prompt= open-project =sprite-special= field-options
-	   world set-frame-rate *frame-rate* =stack= *workbook*
+	   transform-tree *after-startup-hook* stat-value draw-line
+	   *default-message-verbosities* *message-verbosities*
+	   add-overlay set-message-verbosities operation-symbol
+	   message-symbol play-sample set-music-volume
+	   add-message-verbosities with-message-queue =minimap=
+	   draw-pixel *user-keyboard-layout* *fullscreen* draw-circle
+	   =emote= set-field-option-value =blockr= =blockr-prompt=
+	   open-project =sprite-special= field-options world
+	   set-frame-rate *frame-rate* =stack= *workbook*
 	   set-resource-modified-p *iof-file-extension* load-project
 	   *project* *project-path* *window-title* *window-position*
-	   *default-shell-width* *default-shell-height* =split=
-	   =shell= =system= *system* set-timer-interval =gcell=
-	   defgcell =block= *message-logging* overlay initialize-console
-	   poll-joystick-axis poll-joystick-button reset-joysticks
-	   *joystick-device-identifiers* set-screen-width =universe=
-	   *universe* *play-args* set-screen-height genseq
-	   *zoom-factor* zoom-image is-zoomed-resource
-	   *timer-interval* save-objects enable-timer disable-timer
-	   while defmission send-to-blocks enable-held-keys
-	   disable-held-keys do-cells draw-box *resizable* achieve
-	   *resize-hook* draw-rectangle *quitting*
+	   restartably *default-shell-width* *default-shell-height*
+	   =split= =shell= =system= *system* set-timer-interval
+	   =gcell= defgcell =block= *message-logging* overlay
+	   initialize-console poll-joystick-axis poll-joystick-button
+	   reset-joysticks *joystick-device-identifiers*
+	   set-screen-width =universe= *universe* *play-args*
+	   set-screen-height genseq *zoom-factor* zoom-image
+	   is-zoomed-resource *timer-interval* save-objects
+	   enable-timer disable-timer while defmission send-to-blocks
+	   enable-held-keys disable-held-keys do-cells draw-box
+	   *resizable* achieve *resize-hook* draw-rectangle *quitting*
 	   *after-open-project-hook* *mission* mission-variable
 	   set-mission-variable with-mission-locals =mission=
 	   *background-color* set-sample-callback set-music-callback
