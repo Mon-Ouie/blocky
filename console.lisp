@@ -728,9 +728,13 @@ display."
 	     (sdl:with-timestep (do-update))
 	     (restartably	
 	       (gl:clear :color-buffer-bit)
+	       (gl:enable :texture-2d :blend)	
+	       (blend :alpha)
 	       (draw-blocks)
 	       (gl:flush)
 	       (sdl:update-display))))))
+
+
 
 ;;; The IOFORMS.INI user configuration file
 
@@ -1185,6 +1189,11 @@ also the documentation for DESERIALIZE."
 
 ;;; Loading images and textures
 
+(defun blend (mode)
+  (ecase mode 
+    (:additive (gl:blend-func :one :one))
+    (:alpha    (gl:blend-func :src-alpha :one-minus-src-alpha))))
+
 (defun load-texture (surface)
   (let ((texture (car (gl:gen-textures 1))))
     (gl:bind-texture :texture-2d texture)
@@ -1204,9 +1213,7 @@ also the documentation for DESERIALIZE."
                          0
                          texture-format
                          :unsigned-byte (sdl-base::pixel-data pix))))
-    (prog1 texture
-      (assert texture)
-      (message "Loaded texture ~A" texture))))
+    texture))
 
 (defvar *textures* nil)
 
