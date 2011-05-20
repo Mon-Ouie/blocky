@@ -479,7 +479,7 @@ rectangles, or NIL if they would be smaller than one pixel."
 	 (dolist (pair (list (list A B) (list A C)
 			     (list B D) (list C D) (list A D)))
 	   (let* ((P1 (first pair)) 
-		  (P2 (second pair))
+		  (P2 (second pair)) 
 		  (M (midpoint P1 P2))
 		  (V (+
 		      ;; average value of values at P1 and P2

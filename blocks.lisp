@@ -324,7 +324,8 @@ those results as input."
   (execute self))
 
 (define-method update block (&rest args)
-  "Update the simulation one step forward in time.")
+  "Update the simulation one step forward in time."
+  nil)
 ;;  (mapc #'update ^arguments)) ;; TODO not by default
 
 (define-method describe block ()
@@ -659,34 +660,28 @@ override all colors."
 
 (define-method render block ())
 
-(define-method draw-contents block (image)
-  (with-block-drawing image
-    (with-field-values
-	(x y operation arguments)
-	self
-      (let* ((dash *dash*)
-	     (left (+ x (* 2 dash)))
-	     (y0 (+ y dash 1)))
-	(if ^image
-	    (progn
-	      (render self)
-	      (draw-image ^image
-			  left y0 :destination image))
-	    (progn
-	      (text left y0 (print-expression operation))
-	      (dolist (block arguments)
-		(draw block image))))))))
+;; (define-method draw-contents block (image)
+;;   (with-block-drawing image
+;;     (with-field-values
+;; 	(x y operation arguments)
+;; 	self
+;;       (let* ((dash *dash*)
+;; 	     (left (+ x (* 2 dash)))
+;; 	     (y0 (+ y dash 1)))
+;; 	(if ^image
+;; 	    (progn
+;; 	      (render self)
+;; 	      (draw-image ^image
+;; 			  left y0 :destination image))
+;; 	    (progn
+;; 	      (text left y0 (print-expression operation))
+;; 	      (dolist (block arguments)
+;; 		(draw block image))))))))
 
-(define-method draw block (output-image)
+(define-method draw block ()
   (with-fields (image x y) self
-    (if (null image)
-	(progn
-	  (draw-background self output-image)
-	  (draw-contents self output-image))
-	(progn
-	  (render self)
-	  (draw-image image x y
-		      :destination output-image)))))
+    (when image
+      (draw-image image x y))))
 
 (defparameter *hover-color* "red")
 

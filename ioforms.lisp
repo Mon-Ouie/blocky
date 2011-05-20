@@ -58,7 +58,7 @@
 	   make-block =integer= =string= =float= =symbol=
 	   *form-command-handler-function* =data-cell= =var-cell=
 	   =option-cell= =toggle-cell= =event-cell= =buffer-cell=
-	   =comment-cell= install-block uninstall-block =button-cell=
+	   =comment-cell= add-block remove-block =button-cell=
 	   =image-cell= *initialization-hook* initialize-engine =fire=
 	   =see-player= hit-blocks =player-direction= =closer-than=
 	   =block-prompt= =listener= =list= split-string-on-lines
@@ -109,33 +109,34 @@
 	   opposite-direction object-address-string object
 	   step-in-direction direction-to =cell= plasma-rect
 	   subdivide-rect render-plasma add-hook run-hook queue-tail
-	   make-resource-link save-resource save-project
-	   save-everything *export-formats* export-archive
+	   make-resource-link save-resource save-project *defined-resources*
+	   save-everything *export-formats* export-archive defresource
 	   export-application export-project make-queue queue unqueue
 	   queue-message queued-messages-p unqueue-message send-queue
-	   field-value random-direction *resources* load-font-resource
-	   save-object-resource /parent/initialize parent/initialize
-	   /queue/initialize queue/initialize draw-string-solid
-	   read-iof initialize-resource-table percent-of-time
-	   render-formatted-paragraph make-formatted-string
-	   draw-string-shaded render-formatted-string
-	   render-formatted-line resource font-text-extents
-	   write-sexp-to-file with-message-sender *message-sender*
-	   =textbox= read-sexp-from-file with-fields with-field-values
-	   write-iof *grammar* one-of left-hand-side right-hand-side
-	   expansions generate send-event-to-blocks play-music
-	   halt-music seek-music *joystick-mapping* play initialize-sound
-	   *generic-joystick-mapping* *ps3-joystick-mapping*
-	   *joystick-button-symbols* draw-resource-image
-	   *event-handler-function* *use-sound* trace-rectangle
-	   trace-row trace-column trace-octagon trace-line midpoint
-	   =asterisk= send-event =gray-asterisk= self *project-blocks*
-	   defsprite =sprite= get-some-object-name
-	   transform-declaration-field-descriptor show-blocks
-	   no-such-field =narrator= find-projects-in-directory goal
-	   =mission= =gateway= =launchpad= =environment=
-	   directory-is-project-p find-all-projects *project*
-	   transform-tree *after-startup-hook* stat-value draw-line
+	   field-value random-direction random-choose *resources*
+	   load-font-resource save-object-resource /parent/initialize
+	   parent/initialize /queue/initialize queue/initialize
+	   draw-string-solid read-iof initialize-resource-table
+	   percent-of-time render-formatted-paragraph
+	   make-formatted-string draw-string-shaded
+	   render-formatted-string render-formatted-line resource
+	   font-text-extents write-sexp-to-file with-message-sender
+	   *message-sender* =textbox= read-sexp-from-file with-fields
+	   with-field-values write-iof *grammar* one-of left-hand-side
+	   right-hand-side expansions generate send-event-to-blocks
+	   play-music halt-music seek-music *joystick-mapping* play
+	   initialize-sound *generic-joystick-mapping*
+	   *ps3-joystick-mapping* *joystick-button-symbols*
+	   draw-resource-image *event-handler-function* *use-sound*
+	   trace-rectangle trace-row trace-column trace-octagon
+	   trace-line midpoint =asterisk= send-event =gray-asterisk=
+	   self *project-blocks* defsprite =sprite=
+	   get-some-object-name transform-declaration-field-descriptor
+	   show-blocks no-such-field =narrator=
+	   find-projects-in-directory goal =mission= =gateway=
+	   =launchpad= =environment= directory-is-project-p
+	   find-all-projects *project* transform-tree
+	   *after-startup-hook* stat-value draw-line
 	   *default-message-verbosities* *message-verbosities*
 	   add-overlay set-message-verbosities operation-symbol
 	   message-symbol play-sample set-music-volume
@@ -188,9 +189,9 @@
 	   object-fields define-method define-prototype new object-p
 	   self transform-declaration-field-descriptor is-a
 	   compose-blank-fields make-field-initializer initialize
-	   initialize-prototypes initialize-ioforms object-address-string
-	   draw-string-blended =block= *token-types*
-	   *block-categories* *block-colors* *block-text-colors*
-	   defblock =beep= =program=))
+	   initialize-prototypes initialize-ioforms
+	   object-address-string draw-string-blended =block=
+	   *token-types* *block-categories* *block-colors*
+	   *block-text-colors* defblock =beep= =program=))
 
 ;;; ioforms.lisp ends here

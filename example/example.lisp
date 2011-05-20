@@ -39,6 +39,28 @@
 (setf *screen-height* 480)
 (setf *window-title* "ioforms example 1")
 
+;; Now make something!
+
+(defresource 
+    (:name "blue-dot" :type :image :file "blue-dot.png")
+    (:name "red-dot" :type :image :file "red-dot.png")
+  (:name "yellow-dot" :type :image :file "yellow-dot.png"))
+
+(defvar *colors* (list "blue-dot" "red-dot" "yellow-dot"))
+
+(defsprite particle 
+  :image (random-choose *colors*)
+  :direction (random-direction)
+  :x (random 100) :y (random 100))
+
+(defresource (:name "bloop" :type :sample :file "bloop.wav"))
+
+(define-method bloop particle ()
+  (play-sound self "bloop"))
+
+(define-method update particle ()
+  (move self ^direction 1 :pixels))
+
 ;; Now we define the code that runs when your game starts. We define
 ;; it as a function (using `defun') to be called later by IOFORMS.
 
@@ -50,25 +72,20 @@
 ;; as the module---in this case `example'---and execute it, which
 ;; hands control back to you.
 
-(defun example ())
-  
+(defun example ()
+  (dotimes (n 20)
+    (add-block (new particle))))
+ 
 ;(defworld whitespace :background "story")
 
-;; (defsprite player 
-;;   :image "blue-dot" 
-;;   :x 20 :y 45)
-
-;; (define-method initialize player ()
+;; (define-method initialize dot ()
 ;;   (bind-event self (:up) (move :north 5 :pixels))
 ;;   (bind-event self (:down) (move :south 5 :pixels))
 ;;   (bind-event self (:right) (move :east 5 :pixels))
 ;;   (bind-event self (:left) (move :west 5 :pixels)))
 
-;; (define-method bloop player ()
-;;   (play-sound self "bloop"))
-
 ;; (play (new universe)
 ;;       :world (new whitespace)
-;;       :player (new player))
+;;       :dot (new dot))
       
 ;;; example.lisp ends here

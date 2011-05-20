@@ -38,6 +38,9 @@
 
 (in-package :ioforms) 
 
+(defun random-choose (set)
+  (nth (random (length set)) set))
+
 (defmacro restartably (&body body)
   `(restart-case
       (progn ,@body)
@@ -121,14 +124,14 @@
 
 ;;; Logging messages to the standard output
 
-(defvar *message-logging* nil)
+(defparameter *message-logging* t)
 
 (defun message-to-standard-output (format-string &rest args)
   (apply #'format t format-string args)
   (fresh-line)
   (force-output))
 
-(defvar *message-function* nil)
+(defparameter *message-function* #'message-to-standard-output)
 
 (defun reset-message-function ()
   (setf *message-function* #'message-to-standard-output))
@@ -211,7 +214,7 @@ Do not set this variable directly from a project; instead, call
 (defun draw-blocks ()
   "Draw the active blocks to the screen."
   (dolist (block *blocks*)
-    (send :draw block sdl:*default-surface*)))
+    (send :draw block)))
 
 (defun install-blocks (&rest blocks)
   "User-level function for setting the active block set. Note that
@@ -219,14 +222,12 @@ IOFORMS may override the current block set at any time for system menus
 and the like."
   (setf *blocks* blocks))
 
-(defun install-block (block)
+(defun add-block (block)
   (unless (find block *blocks*)
-    (setf *blocks* (nconc *blocks* (list block))))
-  (draw-blocks))
+    (setf *blocks* (nconc *blocks* (list block)))))
 
-(defun uninstall-block (block)
-  (setf *blocks* (delete block *blocks* :test #'eq))
-  (draw-blocks))
+(defun remove-block (block)
+  (setf *blocks* (delete block *blocks* :test #'eq)))
 
 ;;; "Classic" key repeat
 
@@ -544,9 +545,9 @@ at the time the cell method is run.")
 
 (defvar *dt* 20)
 
-(defun update-blocks (&rest args)
+(defun update-blocks ()
   (dolist (block *blocks*)
-    (apply #'send :update block args)))
+    (send :update block)))
 
 (defvar *update-function* #'update-blocks)
 
@@ -621,17 +622,15 @@ becomes larger.")
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
 
-(defun draw ()
-  (gl:clear :color-buffer-bit)
+;; (defun draw-everything ()
   ;; draw a triangle
-  (gl:with-primitive :triangles
-    (gl:color 0 0 0)
-    (gl:vertex 10 0 0)
-    (gl:color (random 0.9) (random 0.2) (random 0.5))
-    (gl:vertex 0 10 0)
-    (gl:color 1 0 1)
-    (gl:vertex 0 0 0)))
-  ;; (draw-blocks) 
+  ;; (gl:with-primitive :triangles
+  ;;   (gl:color 0 0 0)
+  ;;   (gl:vertex 400 0 0)
+  ;;   (gl:color (random 0.9) (random 0.2) (random 0.5))
+  ;;   (gl:vertex 0 400 0)
+  ;;   (gl:color 1 0 1)
+  ;;   (gl:vertex 0 0 0))
 
 (defun run-main-loop ()
   "Initialize the console, open a window, and play.
@@ -727,10 +726,11 @@ display."
 	     #+(and sbcl (not sb-thread)) (restartably
 					   (sb-sys:serve-all-events 0))	 
 	     (sdl:with-timestep () (do-update))
-	     (restartably
-	      (draw)
-	      (gl:flush)
-	      (sdl:update-display))))))
+	     (restartably	
+	       (gl:clear :color-buffer-bit)
+	       (draw-blocks)
+	       (gl:flush)
+	       (sdl:update-display))))))
 
 ;;; The IOFORMS.INI user configuration file
 
@@ -887,18 +887,6 @@ time.")
   "Create a new empty resource table."
    (setf *resources* (make-hash-table :test 'equal)))
 
-(defun index-resource (resource)
-  "Add the RESOURCE's record to the resource table.
-If a record with that name already exists, it is replaced.  However,
-if the resource is an :alias, just the string name of the target
-resource is stored; see also `find-resource'."
-  (let ((val (if (eq :alias (resource-type resource))
-		 (resource-data resource)
-		 resource)))
-    (setf (gethash (resource-name resource)
-		   *resources*) 
-	  val)))
-
 ;;; Opening and saving projects
 
 (defvar *project* nil "The name of the current project.")
@@ -968,9 +956,39 @@ You must set the variable IOFORMS:*PROJECT-DIRECTORIES* in the configuration fil
 Please see the included file BINARY-README for instructions."
 	    project-name dirs))))
 
+(defun expand-file-name (resource)
+  (when (stringp (resource-file resource))
+    (setf (resource-file resource)
+	  (merge-pathnames (resource-file resource)
+			   (find-project-path *project*)))))
+
+(defun index-resource (resource)
+  "Add the RESOURCE's record to the resource table.
+If a record with that name already exists, it is replaced.  However,
+if the resource is an :alias, just the string name of the target
+resource is stored; see also `find-resource'."
+  (expand-file-name resource)
+  (let ((val (if (eq :alias (resource-type resource))
+		 (resource-data resource)
+		 resource)))
+    (setf (gethash (resource-name resource)
+		   *resources*) 
+	  val)))
+
+(defmacro defresource (&rest entries)
+  (assert (every #'listp entries))
+  (let ((each (gensym)))
+  `(dolist (,each ',entries)
+     (index-resource (apply #'make-resource ,each)))))
+
+;; (defun index-defined-resources ()
+;;   (dolist (entry *defined-resources*)
+;;     (message "Creating resource: ~A" entry) 
+;;     (index-resource (apply #'make-resource entry)))
+;;   (setf *defined-resources* nil))
+
 (defun find-project-path (project-name)
   "Return the current project path."
-;
   (assert *project*)
   (or *project-path*
       (search-project-path project-name)))
@@ -1008,6 +1026,7 @@ object save directory. See also `save-object-resource')."
   (setf *pending-autoload-resources* nil)
   (load-project-objects project)
   (load-project-lisp project)
+  (message "Started up successfully. Indexed ~A resources." (hash-table-count *resources*))
   (run-hook '*after-open-project-hook*))
 
 (defun run-project-lisp (project)
@@ -1059,12 +1078,6 @@ table. File names are relative to the project PROJECT-NAME."
 	  ;; we're indexing a single resource.
 	  (progn
 	    (index-resource res)
-	    ;; change the file field into a full pathname, for resources
-	    ;; that need to load data from an external file later.
-	    (when (resource-file res)
-	      (setf (resource-file res)
-		    (merge-pathnames (resource-file res)
-				     (find-project-path project-name))))
 	    ;; save the resource name for later autoloading, if needed
 	    (when (getf (resource-properties res) :autoload)
 	      (push res *pending-autoload-resources*)))))))
@@ -1077,7 +1090,9 @@ table. File names are relative to the project PROJECT-NAME."
 table."
   (let ((index-file (find-project-file project-name
 				       (object-index-filename project-name))))
-    (index-iof project-name index-file)))
+    (if (probe-file index-file)
+	(index-iof project-name index-file)
+	(message "No IOF file found in module. Continuing."))))
 
 ;;; Standard resource names
 
@@ -1213,7 +1228,7 @@ also the documentation for DESERIALIZE."
     (prog1 surface
       (setf (gethash (resource-name resource)
 		     *textures*)
-	    surface))))
+	    texture))))
 
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
@@ -1933,6 +1948,7 @@ This program includes the DejaVu fonts family. See the file
 (defun initialize-ioforms ()
   (sdl:init-sdl :video t :audio t :joystick t)
   (setf *project-package-name* nil
+	*defined-resources* nil
         *project-directories* (default-project-directories)
 	*world* nil
 	*window-title* "ioforms"
