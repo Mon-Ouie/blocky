@@ -45,7 +45,7 @@
 
 ;;; Keyboard state
 
-;; see also keys.lisp
+;; (see also keys.lisp for the symbol listing)
 
 (defun keyboard-id (key)
   "Look up the SDL symbol corresponding to the IOFORMS symbol KEY. See keys.lisp."
@@ -121,7 +121,7 @@
 
 ;;; Logging messages to the standard output
 
-(defparameter *message-logging* nil)
+(defvar *message-logging* nil)
 
 (defun message-to-standard-output (format-string &rest args)
   (apply #'format t format-string args)
@@ -239,6 +239,7 @@ and the like."
   (sdl:disable-key-repeat))
 
 ;;; "Held Keys" key repeat emulation
+;; NOTE: THIS SECTION IS OBSOLETE.
 
 (defvar *key-table* (make-hash-table :test 'equal))
 
@@ -570,7 +571,7 @@ at the time the cell method is run.")
 
 ;; The nominal size of of the window in pixels, in case we just want
 ;; to scale the scene to match the window instead of showing more of
-;; the world. If these are the same as the `*actual-screen-' settings
+;; the world. If these are the same as the `*screen-' settings
 ;; above, then more of the world will be shown when the window size
 ;; increases.
 (defparameter *nominal-screen-width* 640 "Nominal width of the window, in pixels.")
@@ -585,19 +586,19 @@ window size. Otherwise (the default) one onscreen pixel equals one
 unit of world space, so that more of the world shows if the window
 becomes larger.")
  
-(defun do-orthographic-projection (width height)
+(defun do-orthographic-projection ()
   "Configure OpenGL so that the screen coordinates go from (0,0) at
  top left to (WIDTH, HEIGHT) at lower right."
-  (setf *screen-width* width)
-  (setf *screen-height* height)
   (gl:matrix-mode :projection)
   (gl:load-identity)
-  (gl:viewport 0 0 width height)
+  (gl:viewport 0 0 *screen-width* *screen-height*)
   (if *use-nominal-screen-size*
     (setf *gl-screen-width* *nominal-screen-width*
           *gl-screen-height* *nominal-screen-height*)
     (setf *gl-screen-width* *screen-width*
           *gl-screen-height* *screen-height*))
+  (message "Orthographic projection left:~A right:~A bottom:~A top:~A"
+	   0 *gl-screen-width* *gl-screen-height* 0)
   (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 0 1)
   (gl:matrix-mode :modelview))
 
@@ -624,14 +625,13 @@ becomes larger.")
   (gl:clear :color-buffer-bit)
   ;; draw a triangle
   (gl:with-primitive :triangles
-    (gl:color 1 0 0)
-    (gl:vertex 0 0 0)
-    (gl:color 0 1 0)
-    (gl:vertex 0.5 1 0)
-    (gl:color 0 0 1)
-    (gl:vertex 1 0 0))
+    (gl:color 0 0 0)
+    (gl:vertex 10 0 0)
+    (gl:color (random 0.9) (random 0.2) (random 0.5))
+    (gl:vertex 0 10 0)
+    (gl:color 1 0 1)
+    (gl:vertex 0 0 0)))
   ;; (draw-blocks) 
-  )
 
 (defun run-main-loop ()
   "Initialize the console, open a window, and play.
@@ -661,6 +661,8 @@ display."
     ;;
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
+    (do-orthographic-projection)
+    (run-project-lisp *project*)
     (run-hook '*after-startup-hook*)
     (sdl:with-events ()
       (:quit-event () (prog1 t))
@@ -980,6 +982,18 @@ Please see the included file BINARY-README for instructions."
 (defun default-project-lisp-file (project-name)
   (find-project-file project-name (concatenate 'string project-name ".lisp")))
 
+(defun load-project-objects (project)
+  (let ((object-index-file (find-project-file project (object-index-filename project))))
+    (when (probe-file object-index-file)
+      (message "Reading saved objects from ~S" object-index-file)
+      (index-iof project object-index-file))))
+
+(defun load-project-lisp (project)
+  (let ((lisp (default-project-lisp-file project)))
+    (if (probe-file lisp)
+	(load lisp)
+	(message "No default lisp file found in project ~S. Continuing." project))))
+
 (defun open-project (project &key (autoload t))
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
@@ -992,23 +1006,18 @@ object save directory. See also `save-object-resource')."
   (when autoload 
     (mapc #'load-resource (nreverse *pending-autoload-resources*)))
   (setf *pending-autoload-resources* nil)
-  ;; now load any objects
-  (let ((object-index-file (find-project-file project (object-index-filename project))))
-    (when (probe-file object-index-file)
-      (message "Indexing saved objects from ~S" object-index-file)
-      (index-iof project object-index-file)))
-  (let ((lisp (default-project-lisp-file project)))
-    (if (probe-file lisp)
-	(load lisp)
-	(message "No default lisp file found in project."))
-    (let ((package (find-package (project-package-name))))
-      (if package
-	  (let ((start-function (intern project package)))
-	    (if (fboundp start-function)
-		(funcall start-function)
-		(message "No default startup function.")))
-	  (message "No package defined.")))
-    (run-hook '*after-open-project-hook*)))
+  (load-project-objects project)
+  (load-project-lisp project)
+  (run-hook '*after-open-project-hook*))
+
+(defun run-project-lisp (project)
+  (let ((package (find-package (project-package-name project))))
+    (if package
+	(let ((start-function (intern project package)))
+	  (if (fboundp start-function)
+	      (funcall start-function)
+	      (message "No default startup function.")))
+	(message "No package defined."))))
 
 (defun directory-is-project-p (dir)
   "Test whether a {PROJECTNAME}.IOF index file exists in a directory."
@@ -1163,32 +1172,48 @@ also the documentation for DESERIALIZE."
 
 ;;; Loading images and textures
 
-(defun load-texture (filename)
-  (let ((texture (car (gl:gen-textures 1)))
-        (image (sdl-image:load-image filename)))
+(defun load-texture (surface)
+  (let ((texture (car (gl:gen-textures 1))))
     (gl:bind-texture :texture-2d texture)
     (gl:tex-parameter :texture-2d :generate-mipmap t) 
     (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear) 
-    (sdl-base::with-pixel (pix (sdl:fp image))
+    (sdl-base::with-pixel (pix (sdl:fp surface))
       (let ((texture-format (ecase (sdl-base::pixel-bpp pix)
                               (1 :luminance)
                               (2 :luminance-alpha)
                               (3 :rgb)
                               (4 :rgba))))
         (assert (and (= (sdl-base::pixel-pitch pix)
-                        (* (sdl:width image) (sdl-base::pixel-bpp pix)))
+                        (* (sdl:width surface) (sdl-base::pixel-bpp pix)))
                      (zerop (rem (sdl-base::pixel-pitch pix) 4))))
         (gl:tex-image-2d :texture-2d 0 :rgba
-                         (sdl:width image) (sdl:height image)
+                         (sdl:width surface) (sdl:height surface)
                          0
                          texture-format
                          :unsigned-byte (sdl-base::pixel-data pix))))
     texture))
 
+(defvar *textures* nil)
+
+(defun initialize-textures-maybe (&optional force)
+  (when (or force (null *textures*))
+    (setf *textures* (make-hash-table))))
+
+(defun find-texture (name)
+  (initialize-textures-maybe)
+  (gethash name *textures*)) 
+
 (defun load-image-resource (resource)
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
-  (sdl-image:load-image (namestring (resource-file resource))
-			:alpha 255))
+  (initialize-textures-maybe)
+  (let* ((surface (sdl-image:load-image (namestring (resource-file resource))
+				       :alpha 255))
+	 (texture (load-texture surface))
+	 (name (resource-name resource)))
+    (prog1 surface
+      (setf (gethash (resource-name resource)
+		     *textures*)
+	    surface))))
 
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
@@ -1625,6 +1650,19 @@ of the music."
   (when *use-sound*
     (apply #'sdl-mixer:halt-sample :channel channel args)))
 
+(defun initialize-sound ()
+  ;; try opening sound
+  (when (null (sdl-mixer:open-audio :frequency *frequency*
+				    :chunksize *output-chunksize*
+				    :enable-callbacks t
+				    :format *sample-format*
+				    :channels *output-channels*))
+    ;; if that didn't work, disable effects/music
+    (message "Could not open audio driver. Disabling sound effects and music.")
+    (setf *use-sound* nil))
+  ;; set to mix lots of sounds
+  (sdl-mixer:allocate-channels *channels*))
+
 ;;; Font operations
 
 ;; An IOF entry for a font looks like this: 
@@ -1700,19 +1738,6 @@ of the music."
   (assert (and (integerp width) (integerp height)))
   (sdl:create-surface width height))
 
-(defun draw-image (image x y &key (destination sdl:*default-surface*) (render-cell nil))
-  "Draw the IMAGE at offset (X Y) on the image DESTINATION.
-The default destination is the main window."
-  (when render-cell
-    (destructuring-bind (x0 y0 w h) render-cell
-      (sdl:set-cell-* x0 y0 w h :surface image :index 0)))
-  (sdl:draw-surface-at-* image x y :cell 0 :surface destination))
-
-(defun draw-resource-image (name x y &key (destination sdl:*default-surface*) (render-cell nil))
-  "Draw the image named by NAME at offset (X Y) on the image DESTINATION.
-The default destination is the main window."
-  (draw-image (find-resource-object name) x y :render-cell render-cell :destination destination))
-
 (defun image-height (image)
   "Return the height in pixels of IMAGE."
   (let ((img (if (stringp image)
@@ -1726,6 +1751,33 @@ The default destination is the main window."
 		 (find-resource-object image)
 		 image)))
     (sdl:width img)))
+
+(defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
+  (gl:bind-texture :texture-2d texture)
+  (gl:with-primitive :quads
+    (let* ((w/2 (/ width 2.0))
+	   (h/2 (/ height 2.0))
+	   (x1 (- x w/2))
+	   (x2 (+ x w/2))
+	   (y1 (- y h/2))
+	   (y2 (+ y h/2)))
+      (gl:tex-coord u1 v2)
+      (gl:vertex x1 y1 0)
+      (gl:tex-coord u2 v2)
+      (gl:vertex x2 y1 0)
+      (gl:tex-coord u2 v1)
+      (gl:vertex x2 y2 0)
+      (gl:tex-coord u1 v1)
+      (gl:vertex x1 y2 0))))
+
+(defun draw-image (name x y)
+  (let* ((image (if (stringp name)
+		    (find-resource-object name)
+		    name))
+	 (texture (find-texture name))
+	 (height (sdl:height image))
+	 (width (sdl:width image)))
+    (draw-textured-rectangle x y width height texture)))
 
 ;;; Drawing shapes and other primitives
 
@@ -1820,8 +1872,6 @@ This program includes the DejaVu fonts family. See the file
                         '(#P"/opt/local/lib" #P"/sw/lib/")
                         :test #'equal)))
 
-(defvar *play-args* nil)
-
 (defparameter *do-cffi-loading* t)
 
 (defun do-cffi-loading ()
@@ -1869,21 +1919,45 @@ This program includes the DejaVu fonts family. See the file
 		  "libSDL_image")))
     (cffi:use-foreign-library sdl-image))
 
-(defun play (&rest input)
-  (setf *system* (clone (symbol-value '=system=)))
-  (when input
-    (destructuring-bind (project &rest arguments) input
-      (apply #'send :open *system* project arguments))
+(defun play (&optional project)
+  #+linux (do-cffi-loading)
+  (message "Starting IOFORMS...")
+  (initialize-prototypes)
+  (initialize-ioforms)
+  (let ((proj (or project *project*)))
+    (when (null proj)
+      (error "No current project. You must provide an argument naming the project."))
+    (open-project proj)
     (run-main-loop)))
 
-(defun ioforms (&rest args)
-  (setf *after-open-project-hook* nil
-	*after-startup-hook* nil
-	*resize-hook* nil
-	*event-handler-function* #'send-to-blocks)
-  (if (null args)
-      (run nil)
-      (apply #'run args)))
+(defun initialize-ioforms ()
+  (sdl:init-sdl :video t :audio t :joystick t)
+  (setf *project-package-name* nil
+        *project-directories* (default-project-directories)
+	*world* nil
+	*window-title* "ioforms"
+	*updates* 0
+	*resizable* nil
+	*keyboard-update-number* 0
+	*initialization-hook* nil
+	*random-state* (make-random-state t))
+  ;; add library search paths for Mac if needed
+  (setup-library-search-paths)
+  (load-user-init-file) ;; this step may override *project-directories* and so on 
+  (initialize-resource-table)
+  (initialize-textures-maybe :force)
+  (initialize-colors)
+  (initialize-sound)
+  (open-project "standard"))
+
+;; (defun ioforms (&rest args)
+;;   (setf *after-open-project-hook* nil
+;; 	*after-startup-hook* nil
+;; 	*resize-hook* nil
+;; 	*event-handler-function* #'send-to-blocks)
+;;   (if (null args)
+;;       (run nil)
+;;       (apply #'run args)))
       
 ;; (defmacro defproject (module-name 
 ;; 		   (&key title description

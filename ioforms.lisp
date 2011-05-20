@@ -124,7 +124,7 @@
 	   =textbox= read-sexp-from-file with-fields with-field-values
 	   write-iof *grammar* one-of left-hand-side right-hand-side
 	   expansions generate send-event-to-blocks play-music
-	   halt-music seek-music *joystick-mapping* play
+	   halt-music seek-music *joystick-mapping* play initialize-sound
 	   *generic-joystick-mapping* *ps3-joystick-mapping*
 	   *joystick-button-symbols* draw-resource-image
 	   *event-handler-function* *use-sound* trace-rectangle
@@ -188,7 +188,7 @@
 	   object-fields define-method define-prototype new object-p
 	   self transform-declaration-field-descriptor is-a
 	   compose-blank-fields make-field-initializer initialize
-	   initialize-ioforms object-address-string
+	   initialize-prototypes initialize-ioforms object-address-string
 	   draw-string-blended =block= *token-types*
 	   *block-categories* *block-colors* *block-text-colors*
 	   defblock =beep= =program=))

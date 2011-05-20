@@ -1,19 +1,16 @@
 * TODO [#A] Port to CL-OPENGL
 ** http://3bb.cc/tutorials/cl-opengl/
-** TODO simplify startup procedure of console
-*** TODO [#A] allow simpler non-module ioforms programs 
-*** TODO [#A] module default startup function is name of module
-**** TODO do before-init stuff in file (set vars)
-**** TODO do after-init stuff in main function
-*** TODO [#A] allow modules to config variables properly before main loop
-*** TODO [#B] fix initialization hook being run in main loop
-* TODO GET TRIANGLE EXAMPLE RUNNING
+** TODO sprites w/ texture support
+** TODO display bouncing textured sprites in a viewport!
+** TODO enable alpha blending and additive blending
+** TODO add vecto support
 * TODO "china syndrome" 2600 clone
 * TODO [#B] watch farbrausch video presentations
 * TODO [#B] MAKE A WORKING GAME, XOR 
 * ALPHA 1
 *** TODO [#B] allow user to embed/generate IOF entries within Lisp (dont require IOF file)
 *** Consider removing *world* as a variable
+*** TODO blocks should no longer draw onto sdl:*default-surface*
 *** Consider removing "held-keys" feature
 *** Consider merging "schema" into field declaration marking which fields are "arguments". get rid of the explicit "arguments" field
 *** Browseable interface (zoom down into blocks, showing wider view w more help

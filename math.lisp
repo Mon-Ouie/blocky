@@ -478,7 +478,7 @@ rectangles, or NIL if they would be smaller than one pixel."
        ;; do for all edge midpoints and center:
 	 (dolist (pair (list (list A B) (list A C)
 			     (list B D) (list C D) (list A D)))
-	   (let* ((P1 (first pair))
+	   (let* ((P1 (first pair)) 
 		  (P2 (second pair))
 		  (M (midpoint P1 P2))
 		  (V (+

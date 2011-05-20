@@ -418,7 +418,7 @@ If the method is not found, attempt to forward the message."
 
 (defvar *send-parent-depth* 2)
 
-(defun initialize-ioforms ()
+(defun initialize-prototypes ()
   (format t "~A" *copyright-text*)
   ;; (initialize-documentation-tables)
   (setf *send-parent-depth* 2)) ;;FIXME
