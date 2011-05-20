@@ -80,6 +80,7 @@
   ;; visual layout
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
+  (z :initform 0 :documentation "Integer Z coordinate of this block's position.")
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")

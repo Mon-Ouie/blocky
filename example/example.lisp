@@ -51,15 +51,35 @@
 (defsprite particle 
   :image (random-choose *colors*)
   :direction (random-direction)
-  :x (random 100) :y (random 100))
+  :x (+ 80 (random 100)) 
+  :y (+ 80 (random 100)))
 
-(defresource (:name "bloop" :type :sample :file "bloop.wav"))
+(define-method draw particle () 
+  (gl:with-primitive :triangles
+    (with-fields (x y) self
+      (gl:color 0 0 0)
+      (gl:vertex x y 0)
+      (gl:color (random 0.9) (random 0.2) (random 0.5))
+      (gl:vertex (+ x 80) (+ y 80) 0)
+      (gl:color 1 0 1)
+      (gl:vertex (+ x 120) (+ y 100) 0))))
 
-(define-method bloop particle ()
-  (play-sound self "bloop"))
+(defresource (:name "bleep" :type :sample :file "bleep.wav"))
+
+(define-method hit particle (x y))
+
+(define-method bleep particle ()
+  (play-sound self "bleep"))
 
 (define-method update particle ()
-  (move self ^direction 1 :pixels))
+  (incf ^x (random-choose (list 1 -1)))
+  (incf ^y (random-choose (list 1 -1))))
+
+(defun example ()
+  (message "RUNNING EXAMPLE!")
+  (dotimes (n 500)
+    (add-block (new particle))))
+
 
 ;; Now we define the code that runs when your game starts. We define
 ;; it as a function (using `defun') to be called later by IOFORMS.
@@ -72,9 +92,6 @@
 ;; as the module---in this case `example'---and execute it, which
 ;; hands control back to you.
 
-(defun example ()
-  (dotimes (n 20)
-    (add-block (new particle))))
  
 ;(defworld whitespace :background "story")
 

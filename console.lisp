@@ -214,7 +214,7 @@ Do not set this variable directly from a project; instead, call
 (defun draw-blocks ()
   "Draw the active blocks to the screen."
   (dolist (block *blocks*)
-    (send :draw block)))
+    (draw block)))
 
 (defun install-blocks (&rest blocks)
   "User-level function for setting the active block set. Note that
@@ -224,7 +224,7 @@ and the like."
 
 (defun add-block (block)
   (unless (find block *blocks*)
-    (setf *blocks* (nconc *blocks* (list block)))))
+    (setf *blocks* (adjoin block *blocks*))))
 
 (defun remove-block (block)
   (setf *blocks* (delete block *blocks* :test #'eq)))
@@ -600,7 +600,7 @@ becomes larger.")
           *gl-screen-height* *screen-height*))
   (message "Orthographic projection left:~A right:~A bottom:~A top:~A"
 	   0 *gl-screen-width* *gl-screen-height* 0)
-  (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 0 1)
+  (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 0 100)
   (gl:matrix-mode :modelview))
 
 (defvar *resizable* nil)
@@ -725,7 +725,7 @@ display."
 	     ;; in sbcl using the :fd-handler swank:*communication-style*
 	     #+(and sbcl (not sb-thread)) (restartably
 					   (sb-sys:serve-all-events 0))	 
-	     (sdl:with-timestep () (do-update))
+	     (sdl:with-timestep (do-update))
 	     (restartably	
 	       (gl:clear :color-buffer-bit)
 	       (draw-blocks)
@@ -981,12 +981,6 @@ resource is stored; see also `find-resource'."
   `(dolist (,each ',entries)
      (index-resource (apply #'make-resource ,each)))))
 
-;; (defun index-defined-resources ()
-;;   (dolist (entry *defined-resources*)
-;;     (message "Creating resource: ~A" entry) 
-;;     (index-resource (apply #'make-resource entry)))
-;;   (setf *defined-resources* nil))
-
 (defun find-project-path (project-name)
   "Return the current project path."
   (assert *project*)
@@ -1009,13 +1003,15 @@ resource is stored; see also `find-resource'."
 (defun load-project-lisp (project)
   (let ((lisp (default-project-lisp-file project)))
     (if (probe-file lisp)
-	(load lisp)
+	(progn (message "Loading lisp for project ~A..." project)
+	       (load lisp))
 	(message "No default lisp file found in project ~S. Continuing." project))))
 
 (defun open-project (project &key (autoload t))
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
 object save directory. See also `save-object-resource')."
+  (message "Opening project: ~A" (string-upcase project))
   (setf *project* project
 	*project-path* (search-project-path project)
 	*pending-autoload-resources* nil)
@@ -1030,12 +1026,14 @@ object save directory. See also `save-object-resource')."
   (run-hook '*after-open-project-hook*))
 
 (defun run-project-lisp (project)
+  (message "Running project startup function...")
   (let ((package (find-package (project-package-name project))))
     (if package
-	(let ((start-function (intern project package)))
+	(let ((start-function (intern (string-upcase project) package)))
+	  (message "Checking for startup function ~S" start-function)
 	  (if (fboundp start-function)
 	      (funcall start-function)
-	      (message "No default startup function.")))
+	      (message "No default startup function for: ~S" (string-upcase (symbol-name start-function)))))
 	(message "No package defined."))))
 
 (defun directory-is-project-p (dir)
@@ -1792,6 +1790,7 @@ of the music."
 	 (texture (find-texture name))
 	 (height (sdl:height image))
 	 (width (sdl:width image)))
+    (assert texture)
     (draw-textured-rectangle x y width height texture)))
 
 ;;; Drawing shapes and other primitives
@@ -1951,6 +1950,7 @@ This program includes the DejaVu fonts family. See the file
 	*defined-resources* nil
         *project-directories* (default-project-directories)
 	*world* nil
+	*blocks* nil
 	*window-title* "ioforms"
 	*updates* 0
 	*resizable* nil
