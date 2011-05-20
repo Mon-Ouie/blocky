@@ -1188,8 +1188,8 @@ also the documentation for DESERIALIZE."
 (defun load-texture (surface)
   (let ((texture (car (gl:gen-textures 1))))
     (gl:bind-texture :texture-2d texture)
-    (gl:tex-parameter :texture-2d :generate-mipmap t) 
-    (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear) 
+    ;; (gl:tex-parameter :texture-2d :generate-mipmap t) 
+    ;; (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear) 
     (sdl-base::with-pixel (pix (sdl:fp surface))
       (let ((texture-format (ecase (sdl-base::pixel-bpp pix)
                               (1 :luminance)
@@ -1204,17 +1204,21 @@ also the documentation for DESERIALIZE."
                          0
                          texture-format
                          :unsigned-byte (sdl-base::pixel-data pix))))
-    texture))
+    (prog1 texture
+      (assert texture)
+      (message "Loaded texture ~A" texture))))
 
 (defvar *textures* nil)
 
 (defun initialize-textures-maybe (&optional force)
   (when (or force (null *textures*))
-    (setf *textures* (make-hash-table))))
+    (setf *textures* (make-hash-table :test 'equal))))
 
 (defun find-texture (name)
+  (assert (stringp name))
   (initialize-textures-maybe)
-  (gethash name *textures*)) 
+  (find-resource name)
+  (gethash name *textures*))
 
 (defun load-image-resource (resource)
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
@@ -1224,9 +1228,8 @@ also the documentation for DESERIALIZE."
 	 (texture (load-texture surface))
 	 (name (resource-name resource)))
     (prog1 surface
-      (setf (gethash (resource-name resource)
-		     *textures*)
-	    texture))))
+      (setf (gethash name *textures*) texture)
+      (message "Now loaded total of ~A textures." (hash-table-count *textures*)))))
 
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
@@ -1784,14 +1787,13 @@ of the music."
       (gl:vertex x1 y2 0))))
 
 (defun draw-image (name x y)
-  (let* ((image (if (stringp name)
-		    (find-resource-object name)
-		    name))
-	 (texture (find-texture name))
+  (let* ((image (find-resource-object name))
 	 (height (sdl:height image))
 	 (width (sdl:width image)))
-    (assert texture)
-    (draw-textured-rectangle x y width height texture)))
+    ;; (message "height:~S width:~S" height width)
+    ;; (message "*textures* = ~S" (hash-table-count *textures*))
+    (let ((texture (find-texture name)))
+      (draw-textured-rectangle x y width height texture))))
 
 ;;; Drawing shapes and other primitives
 

@@ -54,15 +54,18 @@
   :x (+ 80 (random 100)) 
   :y (+ 80 (random 100)))
 
-(define-method draw particle () 
-  (gl:with-primitive :triangles
-    (with-fields (x y) self
-      (gl:color 0 0 0)
-      (gl:vertex x y 0)
-      (gl:color (random 0.9) (random 0.2) (random 0.5))
-      (gl:vertex (+ x 80) (+ y 80) 0)
-      (gl:color 1 0 1)
-      (gl:vertex (+ x 120) (+ y 100) 0))))
+(define-method draw particle ()  
+  (with-fields (x y image) self
+    (draw-image image x y)))
+
+  ;; (gl:with-primitive :triangles
+  ;;   (with-fields (x y) self
+  ;;     (gl:color 0 0 0)
+  ;;     (gl:vertex x y 0)
+  ;;     (gl:color (random 0.9) (random 0.2) (random 0.5))
+  ;;     (gl:vertex (+ x 80) (+ y 80) 0)
+  ;;     (gl:color 1 0 1)
+  ;;     (gl:vertex (+ x 120) (+ y 100) 0))))
 
 (defresource (:name "bleep" :type :sample :file "bleep.wav"))
 
@@ -77,7 +80,7 @@
 
 (defun example ()
   (message "RUNNING EXAMPLE!")
-  (dotimes (n 500)
+  (dotimes (n 50)
     (add-block (new particle))))
 
 
