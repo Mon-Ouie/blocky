@@ -71,6 +71,10 @@ interpretation:
   (values (* ^column (field-value :grid-size *world*))
 	  (* ^row (field-value :grid-size *world*))))
 
+(define-method coordinates cell ()
+  (multiple-value-bind (x y) (xy-coordinates self)
+    (values x y 0)))
+
 ;; (define-method viewport-coordinates cell ()
 ;;   "Return as values X,Y the world coordinates of CELL."
 ;;   (assert (and ^row ^column))
@@ -105,13 +109,16 @@ cells."
 
 ;;; Cell movement
 
-(define-method move-to-grid cell (unit r c)
-  (assert (member unit '(:space :spaces)))
+(define-method move-to-grid cell (r c)
   (delete-cell *world* self ^row ^column)
   (drop-cell *world* self r c))
 
-(define-method play-sound cell (sample-name)
-  (play-sample sample-name))
+(define-method move-to cell (x y &optional z)
+  (assert (and (integerp x) (integerp y)))
+  (with-field-values (grid-size) *world*
+    (let ((nearest-row (round y grid-size))
+	  (nearest-column (round x grid-size)))
+      (move-to-grid self nearest-row nearest-column))))
 
 (define-method move cell (direction &optional (distance 1) ignore-obstacles)
   "Move this cell one step in DIRECTION on the grid. If
@@ -148,15 +155,11 @@ is in the way. Returns non-nil if a move occurred."
 behaviors are compatible, sprites can take any pixel location in the
 world, and collision detection is performed between sprites and cells.")
   (type :initform :sprite)
-  (x :initform 0 :documentation "The world x-coordinate of the sprite.") 
-  (y :initform 0 :documentation "The world y-coordinate of the sprite.") 
   (saved-x :initform nil :documentation "Saved x-coordinate used to jump back from a collision.")
   (saved-y :initform nil :documentation "Saved y-coordinate used to jump back from a collision.")
+  (saved-z :initform nil :documentation "Saved z-coordinate used to jump back from a collision.")
   (height :initform nil :documentation "The cached width of the bounding box.")
   (width :initform nil :documentation "The cached height of the bounding box."))
-
-(define-method image-coordinates sprite ()
-  (get-viewport-coordinates-* (field-value :viewport *world*) ^x ^y))
 
 ;; Convenience macro for defining sprites
 
@@ -170,41 +173,37 @@ world, and collision detection is performed between sprites and cells.")
 (defun is-cell (ob)
   (when (eq :cell (field-value :type ob))))
 
-(define-method resize sprite ()
+(define-method update-image-dimensions sprite ()
   (with-fields (image height width) self
     (when image
       (setf width (image-width image))
       (setf height (image-height image)))))
 
 (define-method initialize sprite ()
-  (when ^image
-    (resize self)))
+  (update-image-dimensions self))
 
 (define-method die sprite ()
   (remove-sprite *world* self))
 
-(define-method move-to sprite (unit x y)
-  (declare (ignore ignore-obstacles))
-  (assert (and (integerp x) (integerp y)))
-  (with-field-values (grid tile-size width height) *world*
-    (let ((world-height (* tile-size height))
-	  (world-width (* tile-size width)))
-      (when (and (plusp x)
-		 (plusp y)
-		 (< x world-width)
-		 (< y world-height))
-	(setf ^x x
-	      ^y y)))))
+;;; Sprite movement
 
-(define-method move sprite (direction &optional movement-distance unit)
-  (when direction
-    (let ((dist (or movement-distance 1)))
-      (let ((y ^y)
-	    (x ^x))
-	(when (and y x)
-	  (multiple-value-bind (y0 x0) (ioforms:step-in-direction y x direction dist)
-	    (assert (and y0 x0))
-	    (move-to self :pixel x0 y0)))))))
+(define-method move-to sprite (x y &optional z)
+  (assert (and (integerp x) (integerp y)))
+  (setf ^x x ^y y)
+  (when (numberp z)
+    (setf ^z z)))
+
+(define-method move-to-grid sprite (row column)
+  (with-field-values (grid-size) *world*
+    (move-to self (* grid-size row) (* grid-size column))))
+
+(define-method move sprite (direction &optional (distance 1))
+  (assert (member direction *compass-directions*))
+  (with-field-values (x y) self
+    (multiple-value-bind (y0 x0) 
+	(ioforms:step-in-direction y x direction distance)
+      (assert (and y0 x0))
+      (move-to self x0 y0))))
 
 (define-method collide sprite (sprite)
   ;; (message "COLLIDING A=~S B=~S"
@@ -270,11 +269,7 @@ world, and collision detection is performed between sprites and cells.")
 				  while (< ix num-sprites)))))))))
 	      nil))))))
 	    
-(define-method collide-* sprite (o-top o-left o-width o-height)
-  (with-field-values (x y width height) self
-    (collide x y width height o-top o-left o-width o-height)))
-
-(defun collide (x y width height o-top o-left o-width o-height)
+(defun check-point-against-rectangle (x y width height o-top o-left o-width o-height)
   (let ((o-right (+ o-left o-width))
 	(o-bottom (+ o-top o-height)))
     (not (or 
@@ -287,6 +282,10 @@ world, and collision detection is performed between sprites and cells.")
 	  ;; is left to right of other right?
 	  (< o-right x)))))
 
+(define-method collide-* sprite (o-top o-left o-width o-height)
+  (with-field-values (x y width height) self
+    (check-point-against-rectangle x y width height o-top o-left o-width o-height)))
+
 (define-method on-collide sprite (object)
   "Respond to a collision detected with OBJECT."
   (declare (ignore object))
@@ -294,14 +293,11 @@ world, and collision detection is performed between sprites and cells.")
 
 (define-method save-excursion sprite ()
   (setf ^saved-x ^x)
-  (setf ^saved-y ^y))
+  (setf ^saved-y ^y)
+  (setf ^saved-z ^z))
 
 (define-method undo-excursion sprite ()
-  (move-to self ^saved-x ^saved-y))
-
-(define-method viewport-coordinates sprite ()
-  (get-viewport-coordinates-* (field-value :viewport *world*)
-			      ^x ^y))
+  (move-to self ^saved-x ^saved-y ^saved-z))
 
 (define-method grid-coordinates sprite ()
   (values (truncate (/ ^y (field-value :tile-size *world*)))
@@ -310,9 +306,17 @@ world, and collision detection is performed between sprites and cells.")
 (define-method xy-coordinates sprite ()
   (values ^x ^y))
 
+(define-method coordinates sprite ()
+  (values ^x ^y ^z))
+
 (define-method drop sprite (cell &optional (delta-row 0) (delta-column 0))
   (multiple-value-bind (r c)
       (grid-coordinates self)
     (drop-cell *world* cell (+ r delta-row) (+ c delta-column))))
+
+;;; Playing a sound
+
+(define-method play-sound cell (sample-name)
+  (play-sample sample-name))
 
 ;;; cells.lisp ends here
