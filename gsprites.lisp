@@ -24,7 +24,9 @@
 ;; object.
 
 (in-package :ioforms)
-OBSOLETE
+
+(error "This file is obsolete. Don't compile it.")
+
 (define-prototype sprite (:parent =gcell=
 				  :documentation 
 "Sprites are IOFORMS game objects derived from gcells. Although most
