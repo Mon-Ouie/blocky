@@ -1,7 +1,7 @@
 ;;; prototypes.lisp --- an alternative object system for Common Lisp
 
-;; Copyright (C) 2007, 2008, 2009, 2010  David O'Toole
-;; Author: David O'Toole <dto@gnu.org>
+;; Copyright (C) 2007, 2008, 2009, 2010, 2011  David O'Toole
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: oop
 ;; Version: 1.8
 ;;
@@ -78,7 +78,8 @@ make the names of the objects made with `define-prototype'."
 ;;; Object data structure
 
 ;; Each object's "bookkeeping data" is stored in a structure. The
-;; structure itself stands for the object.
+;; structure represents the object, and typically the programmer will
+;; not need to access these structure fields.
 
 (defstruct object
   ;; The most important features of an object are its "fields" or data
@@ -95,14 +96,14 @@ make the names of the objects made with `define-prototype'."
   ;; object. Named objects are "prototypes" from which other objects
   ;; may be created or "cloned".
   name
-  ;; The last few methods called are cached in this alist:
+  ;; The last few methods called are cached in this alist.
   cache)
 
 ;;; Fields
 
 ;; An object's field collection is either a hash table or plist. The
 ;; function `field-value' implements the chaining field lookups that
-;; make inheritance work in IOFORMS.
+;; make behavior inheritance work in IOFORMS.
 
 ;; If a field value is not present in a given object's field
 ;; collection, the object's parent is also checked for a value, and
@@ -185,9 +186,6 @@ The new value overrides any inherited value."
 	(setf (object-fields object) fields)))))
   
 (defsetf field-value set-field-value)
-
-(defmacro $ (field expr)
-  `(field-value ,(make-keyword field) ,expr))
 
 (defun has-field (field object)
   "Return non-nil if FIELD has any value in OBJECT."
@@ -310,8 +308,9 @@ upon binding."
 ;; this implicit `self' argument for you, and implement some syntactic
 ;; sugar.
 
-;; First we implement method caching, which avoids hash table lookups 
-;; for repeatedly used methods. 
+;; First we implement method caching, which avoids hash table lookups
+;; for repeatedly used methods. (This is similar to the GNU Objective C
+;; implementation.)
 
 (defconstant +cache-size+ 6)
 
@@ -340,12 +339,23 @@ upon binding."
 ;; Next comes the basic function for sending a message synchronously
 ;; and obtaining a return value.  
 
-(defun send (sender method object &rest args)
+;; When a message cannot be delivered because no corresponding
+;; function was found, IOFORMS attempts to re-send the message via the
+;; object's `forward' method (if any).
+
+;; An object's `forward' method should accept the method-key as the
+;; first argument, and the arguments of the original message as the
+;; remaining arguments.
+
+;; We also want to be able to invoke the prototype (or "parent's")
+;; version of a method; for example during initialization, one might
+;; wish to run the parent's initializer as the first statement in the
+;; child's.
+
+(defun send (method object &rest args)
   "Invoke the method identified by the keyword METHOD on the OBJECT with ARGS.
-If the method is not found, attempt to forward the message. The SENDER
-argument is ignored for now."
+If the method is not found, attempt to forward the message."
   ;; See also `send-queue' and `send-parent'
-  (declare (ignore sender))
   (assert (object-p object))
   ;; check the cache
   (let ((func (cache-lookup object method)))
@@ -365,20 +375,6 @@ argument is ignored for now."
 			      object method args)
 		       (error (format nil "Could not invoke method ~S" method))))))))
 
-;;; Message forwarding
-
-;; When a message cannot be delivered because no corresponding
-;; function was found, IOFORMS attempts to re-send the message via the
-;; object's `forward' method (if any).
-
-;; An object's `forward' method should accept the method-key as the
-;; first argument, and the arguments of the original message as the
-;; remaining arguments.
-
-;; We also want to be able to invoke the prototype (or "parent's")
-;; version of a method; for example during initialization, one might
-;; wish to run the parent's initializer as the first statement in the
-;; child's.
 
 (define-condition null-parent (error)
   ((method-key :initarg :message :accessor method-key)
@@ -387,8 +383,6 @@ argument is ignored for now."
 	     (format stream "Cannot find parent method ~S for object ~S." 
 		     (method-key condition)
 		     (object condition)))))
-
-;; TODO Rewrite this function
 
 (defun find-nth-named-parent (object method-key n)
     (assert (plusp n))
@@ -424,16 +418,15 @@ argument is ignored for now."
 
 (defvar *send-parent-depth* 2)
 
-(defun initialize ()
+(defun initialize-prototypes ()
   (format t "~A" *copyright-text*)
-  ;;(initialize-documentation-tables)
-  (setf *send-parent-depth* 2))
+  ;; (initialize-documentation-tables)
+  (setf *send-parent-depth* 2)) ;;FIXME
 
 (defvar *send-parent-key* nil)
 
-(defun send-parent (sender method-key object &rest args)
+(defun send-parent (method-key object &rest args)
   "Invoke the parent's version of a method on OBJECT with ARGS."
-  (declare (ignore sender))
   (let* ((depth (if (not (eq method-key *send-parent-key*))
 		    2 
 		    *send-parent-depth*))
@@ -488,14 +481,12 @@ argument is ignored for now."
 	     (< (queue-max Q) (queue-count Q)))
     (unqueue Q)))
 
-;; And now the message queueing functionality.
-
 (defvar *message-queue* nil "This variable is bound to the current
 message queue, if any.")
 
-(defun queue-message (sender method-key receiver args)
+(defun queue-message (method-key receiver args)
   "Enter a message into the current `*message-queue*'."
-  (queue (list sender method-key receiver args) *message-queue*))
+  (queue (list method-key receiver args) *message-queue*))
 
 (defun queued-messages-p ()
   "Return non-nil if there are queued messages."
@@ -508,8 +499,8 @@ list of the form (METHOD-KEY RECEIVER ARGS)."
 
 (defun unqueue-and-send-message ()
   (let ((msg (unqueue-message)))
-    (destructuring-bind (sender method-key receiver args) msg
-      (apply #'send sender method-key receiver args))))
+    (destructuring-bind (method-key receiver args) msg
+      (apply #'send method-key receiver args))))
 
 (defmacro with-message-queue (expr &body body)
   "Run the BODY forms, capturing any queued output messages to the
@@ -517,16 +508,16 @@ message queue resulting from the evaluation of EXPR."
   `(let ((*message-queue* ,expr))
      ,@body))
 
-(defun send-queue (sender method-key object &rest args)
+(defun send-queue (method-key object &rest args)
   "Queue a message. Returns nil."
-  (queue-message sender method-key object args))
+  (queue-message method-key object args))
 
 ;;; Field reference syntax
 
 ;; Within method bodies, you can access the fields of `self' with the
 ;; shorthand
 ;;
-;;   <foo> 
+;;   ^foo
 ;;
 ;; instead of writing
 ;;
@@ -534,11 +525,13 @@ message queue resulting from the evaluation of EXPR."
 ;;
 ;; For example:
 ;;
-;;   (princ <name>)
-;;   (setf <width> 10)
+;;   (princ ^name)
+;;   (setf ^width 10)
 ;; 
 ;; Because `self' is not bound outside of method bodies, we use a
 ;; code-walker to implement the syntax described above. 
+
+(defvar *field-reference-prefix* "^")
 
 (defun transform-tree (tester transformer tree)
   (cond ((consp tree)
@@ -563,22 +556,24 @@ message queue resulting from the evaluation of EXPR."
 ;; Now we turn to the syntax itself and the required tree
 ;; transformations.
 
-;;; field references of the form <foo>
+;;; field references of the form ^foo
 
 (defun field-reference-p (form)
-  "Return non-nil if FORM is a symbol like <foo>."
+  "Return non-nil if FORM is a symbol like ^foo."
   (if (symbolp form)
       (let* ((name (symbol-name form))
 	     (len (length name)))
-	(and (string= "<" (subseq name 0 1))
-	     (string= ">" (subseq name (- len 1) len))))))
+	(string= (subseq name 0 1)
+		 *field-reference-prefix*))))
+	     ;; (string= ">" (subseq name (- len 1) len))))))
 
 (defun transform-field-reference (ref)
-  "Change the symbol REF from <foo> to (field-value :foo self)."
+  "Change the symbol REF from ^foo to (field-value :foo self)."
   (let ((name (symbol-name ref)))
-    (list 'field-value (make-keyword (subseq name 1 
-					     (- (length name) 1))) 'self)))
-
+    (list 'field-value 
+	  (make-keyword (subseq name 1))
+	  'self)))
+	
 (defun transform-method-body (body)
   "Process the forms in BODY to transform field references."
   (transform-tree #'field-reference-p
@@ -614,21 +609,32 @@ was invoked."
 	 (declaration (when (and (listp (first body2))
 				 (eq 'declare (first (first body2))))
 			(first body2)))
+	 (declaration2 (append '(declare (ignorable self))
+			       (when declaration
+				 (rest declaration))))
 	 (prototype-special-name (make-special-variable-name prototype-name))
 	 (field-name (make-keyword method-name))
+	 (method-symbol-name (symbol-name method-name))
+	 (method-symbol method-name) ;; fixme, unclear naming
 	 (defun-symbol (intern (concatenate 'string
 					    (symbol-name prototype-name) 
 					    "/"
-					    (symbol-name method-name))))
+					    method-symbol-name)))
 	 (slash-defun-symbol (intern (concatenate 'string
 						  "/"
-						  (symbol-name method-name))))
+						  method-symbol-name)))
 	 (queue-defun-symbol (intern (concatenate 'string
 						  "/QUEUE/"
-						  (symbol-name method-name))))
+						  method-symbol-name)))
 	 (parent-defun-symbol (intern (concatenate 'string
 						  "/PARENT/"
-						  (symbol-name method-name)))))
+						  method-symbol-name)))
+	 (queue-defun-symbol-noslash (intern (concatenate 'string
+						  "QUEUE/"
+						  method-symbol-name)))
+	 (parent-defun-symbol-noslash (intern (concatenate 'string
+						  "PARENT/"
+						  method-symbol-name))))
     (let ((name (gensym)))
       `(progn 
 	 (if (not (boundp ',prototype-special-name))
@@ -638,7 +644,7 @@ was invoked."
 	   ;; define the method's Lisp function
 	   (defun ,defun-symbol (self ,@arglist)
 	     ,@(if documentation (list documentation))
-	     ,declaration
+	     ,declaration2
 	     ,@(if declaration 
 		   (rest body2)
 		     body2))
@@ -651,22 +657,35 @@ was invoked."
 	   (when ,documentation (setf (method-documentation ',method-name) ,documentation))
 	   (setf (method-arglist ',method-name) ',arglist)
 	   (export ',defun-symbol)
-	   ;; enable the (/methodname object arg1 arg2 ...) syntax
 	   (let ((,name ,(make-keyword method-name)))
-	     (defun ,slash-defun-symbol (self &rest args)
-	       ,@(if documentation (list documentation))
-	       (apply #'send nil ,name self args))
-	     (export ',slash-defun-symbol)
-	     ;; and for message queueing
-	     (defun ,queue-defun-symbol (self &rest args)
-	       ,@(if documentation (list documentation))
-	       (apply #'send-queue nil ,name self args))
-	     (export ',queue-defun-symbol)
-	     ;; and for parent calls.
-	     (defun ,parent-defun-symbol (self &rest args)
-	       ,@(if documentation (list documentation))
-	       (apply #'send-parent nil ,name self args)))
-	     (export ',parent-defun-symbol))))))
+	     (unless (fboundp ',method-symbol)
+	       (defun ,method-symbol (self &rest args)
+		 ,@(when documentation (list documentation))
+		 (apply #'send ,name self args))
+	       (export ',method-symbol)
+	       ;; for (/foo bar baz...)
+	       (defun ,slash-defun-symbol (self &rest args)
+		 ,@(when documentation (list documentation))
+		 (apply #'send ,name self args))
+	       (export ',slash-defun-symbol)
+	       ;; and for message queueing
+	       (defun ,queue-defun-symbol (self &rest args)
+		 ,@(if documentation (list documentation))
+		 (apply #'send-queue ,name self args))
+	       (export ',queue-defun-symbol)
+	       (defun ,queue-defun-symbol-noslash (self &rest args)
+		 ,@(if documentation (list documentation))
+		 (apply #'send-queue ,name self args))
+	       (export ',queue-defun-symbol-noslash)
+	       ;; and for parent calls.
+	       (defun ,parent-defun-symbol (self &rest args)
+		 ,@(if documentation (list documentation))
+		 (apply #'send-parent ,name self args))
+	       (export ',parent-defun-symbol)
+	       (defun ,parent-defun-symbol-noslash (self &rest args)
+		 ,@(if documentation (list documentation))
+		 (apply #'send-parent ,name self args))
+	       (export ',parent-defun-symbol-noslash))))))))
 
 ;;; Defining prototypes
 
@@ -678,8 +697,8 @@ was invoked."
 ;; First we need to define the written syntax for field options, so
 ;; that we can write these options into prototype declarations later.
 
-(defun transform-declaration-field-descriptor (D)
-  "Convert the declaration-field-descriptor D into a canonical field
+(defun transform-declaration (D)
+  "Convert the declaration D into a canonical field
 descriptor.
 
 The descriptor D must be either a symbol, in which case a field is
@@ -695,7 +714,7 @@ The returned entry will be of the form:
 
 and will be suitable for use with the functions that operate on field
 descriptors, and for inclusion in the association list
-<field-descriptors>.
+^field-descriptors.
 
 See also `define-prototype'.
 "
@@ -732,11 +751,20 @@ slot value is inherited."
   (destructuring-bind (field (&key initform &allow-other-keys)) descriptor
     (if initform `(set-field-value ,field self ,initform))))
 
+(defun plist-to-descriptors (plist)
+  (let (descriptors)
+    (loop while plist do
+      (let* ((field (pop plist))
+	     (value (pop plist)))
+	(push (list field :initform value)
+	      descriptors)))
+    (nreverse descriptors)))
+	
 (defmacro define-prototype (name
 			    (&key parent 
 				  documentation
 				  &allow-other-keys)
-			    &body declaration-field-descriptors)
+			    &body declarations)
   "Create a new object prototype (possibly based on another prototype).
 
 NAME should be a symbol naming the prototype. A special variable is
@@ -756,14 +784,14 @@ prototype. Valid keys are:
  :PARENT            The parent prototype from which the new prototype will 
                     inherit fields. This form is evaluated.
                      
-DECLARATION-FIELD-DESCRIPTORS should be a list, each entry of which is
+DECLARATIONS should be a list, each entry of which is
 either a list of the form
 
   (FIELD-NAME . OPTIONS)
 
 or, simply a symbol naming the field---a shorthand for declaring a
 field with that name and no options. See also
-`transform-declaration-field-descriptor'.
+`transform-declaration'.
 
 OPTIONS is a property list of field options. Valid keys are:
 
@@ -774,8 +802,11 @@ OPTIONS is a property list of field options. Valid keys are:
                     with the value nil.
  :DOCUMENTATION     Documentation string for the field.
 "
-  (let* ((descriptors (mapcar #'transform-declaration-field-descriptor 
-			      declaration-field-descriptors))
+  (let* ((pre-descriptors (if (keywordp (first declarations))
+			      (plist-to-descriptors declarations)
+			      declarations))
+	 (descriptors (mapcar #'transform-declaration 
+			      pre-descriptors))
 	 (proto-symbol (make-special-variable-name name))
 	 (field-initializer-body (delete nil (mapcar #'make-field-initializer 
 						     descriptors))))
@@ -800,11 +831,11 @@ OPTIONS is a property list of field options. Valid keys are:
 						     ,@field-initializer-body)))
 	 (merge-hashes fields blanks)
 	 (defparameter ,proto-symbol prototype)
-	 (send nil :initialize-fields prototype)
+	 (send :initialize-fields prototype)
 	 ;; the prototype's parent may have an initialize method.
 	 ;; if so, we need to initialize the present prototype.
 	 (when (has-field :initialize prototype)   
-	   (send nil :initialize prototype))
+	   (send :initialize prototype))
 	 prototype))))
 
 ;;; Printing objects
@@ -818,6 +849,10 @@ OPTIONS is a property list of field options. Valid keys are:
 
 ;;; Cloning objects
 
+(defmacro new (prototype-name &rest initargs)
+  `(clone ,(make-special-variable-name prototype-name)
+	  ,@initargs))
+
 (defun clone (prototype &rest initargs)
   "Create a new object from PROTOTYPE and pass INITARGS to the
 initializer. The new object is created with fields for which INITFORMS
@@ -826,9 +861,9 @@ evaluated, then any applicable initializer is triggered."
   (let ((new-object (make-object :parent prototype 
 				 :fields (compose-blank-fields nil :list))))
     (initialize-method-cache new-object)
-    (send nil :initialize-fields new-object)
+    (send :initialize-fields new-object)
     (if (has-field :initialize new-object)
-	(apply #'send nil :initialize new-object initargs))
+	(apply #'send :initialize new-object initargs))
     new-object))
 
 ;;; Serialization support
@@ -838,23 +873,24 @@ evaluated, then any applicable initializer is triggered."
 ;; into printable S-expressions for storing as plain text, and from
 ;; this printed representation back into living IOFORMS objects.
 
-;; The method names :SERIALIZE and :DESERIALIZE are reserved for
-;; serialization use. :SERIALIZE, if such a method is present, is
-;; invoked before serialization. The object being serialized may use
-;; this hook to pre-process its fields. :DESERIALIZE is likewise
-;; invoked (if present) after reading the object from disk, and is
-;; used to recover from deserialization. The reserved field
-;; <EXCLUDED-FIELDS> is a list of field names (keyword symbols) which
-;; are not serialized; typically these will be properly re-initialized
-;; by the :DESERIALIZE method. 
+;; The method names :BEFORE-SERIALIZE and :AFTER-DESERIALIZE are
+;; reserved for serialization use. :BEFORE-SERIALIZE, if such a method
+;; is present, is invoked before serialization. The object being
+;; serialized may use this hook to pre-process its
+;; fields. :AFTER-DESERIALIZE is likewise invoked (if present) after
+;; reading the object from disk, and is used to recover from
+;; deserialization. The reserved field ^EXCLUDED-FIELDS is a list of
+;; field names (keyword symbols) which are not serialized; typically
+;; these will be properly re-initialized by the :AFTER-DESERIALIZE
+;; method.
 
 (defconstant +object-type-key+ :%IOF%OBJECT%)
 (defconstant +hash-type-key+ :%IOF%HASH-TABLE%)
 
 (defun serialize (object)
   "Convert a Lisp object a print-ready S-expression.
-Invokes :SERIALIZE on IOFORMS objects whenever present. Any fields
-named in the list <EXCLUDED-FIELDS> of said object will be ignored."
+Invokes :BEFORE-SERIALIZE on IOFORMS objects whenever present. Any fields
+named in the list ^EXCLUDED-FIELDS of said object will be ignored."
   ;; use labels here so we can call #'serialize
   (labels ((hash-to-list (hash)
 	     (let (plist)
@@ -871,8 +907,8 @@ named in the list <EXCLUDED-FIELDS> of said object will be ignored."
       (object (let ((excluded-fields (when (has-field :excluded-fields object)
 					    (field-value :excluded-fields object))))
 		     ;; possibly prepare object for serialization.
-		     (when (has-method :serialize object)
-		       (send nil :serialize object))
+		     (when (has-method :before-serialize object)
+		       (send :before-serialize object))
 		     (let ((parent-name (object-name (object-parent object)))
 			   (name (object-name object))
 			   (fields (object-fields object))
@@ -897,7 +933,7 @@ named in the list <EXCLUDED-FIELDS> of said object will be ignored."
 
 (defun deserialize (data)
   "Reconstruct Lisp objects (including IOFORMS-derived objects) from an
-S-expression made by SERIALIZE. Invokes :DESERIALIZE on IOFORMS
+S-expression made by SERIALIZE. Invokes :AFTER-DESERIALIZE on IOFORMS
 objects after reconstruction, wherever present."
   (cond 
     ;; handle IOFORMS objects
@@ -909,8 +945,8 @@ objects after reconstruction, wherever present."
 	 (prog1 object
 	   (initialize-method-cache object)
 	   ;; possibly recover from deserialization
-	   (when (has-method :deserialize object)
-	     (send nil :deserialize object))))))
+	   (when (has-method :after-deserialize object)
+	     (send :after-deserialize object))))))
     ;; handle hashes
     ((and (listp data) (eq +hash-type-key+ (first data)))
      (destructuring-bind (type-key test &rest plist)
@@ -927,9 +963,15 @@ objects after reconstruction, wherever present."
     (t data)))
 
 (defun /parent/initialize (object &rest args)
-  (apply #'send-parent nil :initialize object args))
+  (apply #'send-parent :initialize object args))
+
+(defun parent/initialize (object &rest args)
+  (apply #'send-parent :initialize object args))
 
 (defun /queue/initialize (object &rest args)
-  (apply #'send-queue nil :initialize object args))
-      
+  (apply #'send-queue :initialize object args))
+
+(defun queue/initialize (object &rest args)
+  (apply #'send-queue :initialize object args))
+
 ;;; prototypes.lisp ends here

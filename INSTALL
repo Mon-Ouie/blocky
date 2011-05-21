@@ -17,6 +17,9 @@ source code.
    Your Linux distribution will have SDL packages for sdl, sdl-image,
    sdl-mixer, and sdl-gfx, all of which are required libraries.
 
+   You will need a working OpenGL implementation and (probably)
+   hardware acceleration.
+
 2. If you have not already done so, download IOFORMS:
   
    mkdir ~/src
@@ -32,17 +35,8 @@ source code.
 4. Install LISPBUILDER-SDL. 
     
     The recommended method is Quicklisp: see http://www.quicklisp.org/
-    It takes only a few moments to install Quicklisp. Once that's done
-    you can install and load everything with just this command at the
-    SBCL prompt:
-
-        (map nil #'ql:quickload 
-   	      '("lispbuilder-sdl-gfx" 
-                "lispbuilder-sdl-mixer" 
-                "lispbuilder-sdl-image"
- 	        "lispbuilder-sdl-ttf"))
-
-   If you don't have Quicklisp, you can follow these instructions.
+    It takes only a few moments to install Quicklisp. 
+    If you don't have Quicklisp, you can follow these instructions.
 
 4a. (OPTIONAL) The latest development version of LISPBUILDER-SDL is
     also available. Use Subversion to check out the source code:
@@ -59,40 +53,40 @@ source code.
 
 6. (OPTIONAL) Configure project folders
 
-   Add something like this to a new file called ~/.ioformsrc:
+   The distribution contains a text configuration file called
+   IOFORMS.INI; by default the executable looks for it in the same
+   directory.
 
-  (setf ioforms:*module-directories* '(#P"/home/USERNAME/src/ioforms/" #P"/home/USERNAME/modules/"))
+   To run projects, IOFORMS needs a line like this added to the INI
+   file so that it will know where to find them.
 
-The first item should be the pathname of wherever you installed the
-IOFORMS source tree. This is auto-detected as the current directory if
-you don't set it. NOTE: These must be pathnames (prefixed with #P) and
-must contain a trailing slash.
+  (setf ioforms:*project-directories* '(#P"~/ioforms/" #P"~/projects/"))
 
-The other directory should contain game modules. For example:
+   The first item should be the pathname of wherever you installed the
+   IOFORMS source tree. This is auto-detected as the current directory
+   if you don't set it. NOTE: These must be pathnames (prefixed with
+   #P) and must contain a trailing slash.
 
-    cd ~/modules
-    git clone git://github.com/dto/terahertz.git
-    mv terahertz thz
+   The other directories should contain game modules. For example:
+
+    mkdir ~/projects
+    cd ~/projects
+    git clone git://github.com/dto/xor.git
+
+   Now that the example game "XOR" is installed, we're ready to go.
 
 7. At the shell, cd to the install directory for IOFORMS, run SBCL, and
-   then at the REPL:
+   then issue the following commands at the REPL one by one:
 
+   ;; load dependencies via Quicklisp
+    (map nil #'ql:quickload (list "lispbuilder-sdl-mixer" "lispbuilder-sdl-ttf" "lispbuilder-sdl-gfx" "lispbuilder-sdl-image" "cl-opengl") 
+
+    ;; compile and load IOFORMS
     (require :ioforms)
-    (ioforms:play "thz")  ;; or the name of a module in ~/modules
 
-  If you get an error about TRIVIAL-FEATURES-TESTS, try this:
-  (require :trivial-features-tests)
+    ;; run the example
+    (ioforms:play "xor")  ;; or the name of any module in your *module-directories*
 
-8. Here is my example .ioformsrc:
+7a. If you get an error about TRIVIAL-FEATURES-TESTS, try this:
+    (require :trivial-features-tests)
 
-    ;; -*- Mode: lisp -*-
-
-    (setf ioforms:*module-directories* '(#P"/home/dto/ioforms/" 
-    	  			     #P"/home/dto/modules/"))
-    (setf ioforms:*user-keyboard-layout* :qwerty)
-    (setf ioforms:*use-sound* t)
-    (setf ioforms:*message-logging* t)
-     ;; fullscreen is a pain if IOFORMS hangs
-    (setf ioforms:*fullscreen* nil)
-
-  

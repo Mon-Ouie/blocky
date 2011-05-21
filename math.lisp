@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2008  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Commentary:
 
@@ -52,8 +52,8 @@ So 2d6+2 would be (roll 2 6 2)."
 
 (defvar *compass-directions* (list :north :south :east :west
 				   :northeast :southeast
-				   :northwest :southwest :here)
-  "List of keywords representing the eight compass directions, plus :here.")
+				   :northwest :southwest)
+  "List of keywords representing the eight compass directions.")
 
 (defvar *compass-opposites* (list :north :south
 				  :south :north
@@ -86,6 +86,12 @@ opposites.")
     :southwest :west
     :west :northwest
     :northwest :north))
+
+(defun left-turn (direction)
+  (getf *left-turn* direction))
+
+(defun right-turn (direction)
+  (getf *right-turn* direction))
 
 (defun opposite-direction (direction)
   "Return the direction keyword that is the opposite direction from
@@ -317,7 +323,7 @@ It's an ugly hack, but it helps reduce artifacts."
 ;; 		    (decf err 1.0))
 ;; 		  ;; for next iteration
 ;; 		  (incf x)
-;; 		      while (/= x x1)))))))))
+;; 		      while (= x x1)))))))))
 
 (defun trace-line (trace-function x0 y0 x1 y1)
   "Trace a line between X0,Y0 and X1,Y1.
@@ -357,7 +363,7 @@ calling TRACE-FUNCTION at each point of the line."
 			 (incf x)))
 		(block tracing
 		  (update-xy)
-		  (loop while (/= x x1) do
+		  (loop while (= x x1) do
 		    ;; call the supplied trace function.
 		    ;; note that trace functions get args in order (row column).
 		    ;; terminate with result = nil if it returns non-nil.
@@ -478,8 +484,8 @@ rectangles, or NIL if they would be smaller than one pixel."
        ;; do for all edge midpoints and center:
 	 (dolist (pair (list (list A B) (list A C)
 			     (list B D) (list C D) (list A D)))
-	   (let* ((P1 (first pair))
-		  (P2 (second pair))
+	   (let* ((P1 (first pair)) 
+		  (P2 (second pair)) 
 		  (M (midpoint P1 P2))
 		  (V (+
 		      ;; average value of values at P1 and P2

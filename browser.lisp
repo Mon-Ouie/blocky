@@ -1,8 +1,8 @@
 ;;; browser.lisp --- object discovery and interaction widget menu thing
 
-;; Copyright (C) 2008  David O'Toole
+;; Copyright (C) 2008, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Commentary:
 
@@ -27,10 +27,10 @@
 
 ;; You must also define some methods:
 
-;;  (/is-disabled item) should return non-nil when the menu item is to
+;;  (is-disabled item) should return non-nil when the menu item is to
 ;;  be grayed out.
 
-;;  (/open item) should return:
+;;  (open item) should return:
 ;; 
 ;;  (values COMMAND-STRING MENU-SPEC)
 
@@ -39,7 +39,7 @@
 (in-package :ioforms)
 
 (define-prototype menu-item (:parent =widget=)
-  (tile :initform ".asterisk")
+  (tile :initform "asterisk")
   (name :initform "<blank menu item>")
   (key :initform nil)
   (description :initform "<blank menu item description>")
@@ -50,17 +50,17 @@
   (when item-spec
     (destructuring-bind (command-string &key key description sub-menu name
 					&allow-other-keys) item-spec
-      (setf <key> key 
-	    <description> description
-	    <name> name
-	    <sub-menu> sub-menu
-	    <command-string> command-string))))
+      (setf ^key key 
+	    ^description description
+	    ^name name
+	    ^sub-menu sub-menu
+	    ^command-string command-string))))
 
 ;; (define-method is-disabled item
 
 (define-method open menu-item ()
-  (values <command-string> 
-	  <sub-menu>))
+  (values ^command-string 
+	  ^sub-menu))
 
 ;;; browser menu
 
@@ -73,74 +73,74 @@
   (prompt :documentation "Prompt to receive command messages."))
 
 (define-method set-prompt browser (prompt)
-  (setf <prompt> prompt))
+  (setf ^prompt prompt))
 
 (define-method cursor-next browser ()
-  (when (array-in-bounds-p <collection> (+ 1 <cursor>))
-    (incf <cursor>)))
+  (when (array-in-bounds-p ^collection (+ 1 ^cursor))
+    (incf ^cursor)))
 
 (define-method cursor-previous browser ()
-  (when (array-in-bounds-p <collection> (- <cursor> 1))
-    (decf <cursor>)))
+  (when (array-in-bounds-p ^collection (- ^cursor 1))
+    (decf ^cursor)))
 
 (define-method cursor-item browser ()
-  (aref <collection> <cursor>))
+  (aref ^collection ^cursor))
 
 (define-method follow browser ()
-  (let* ((item (/cursor-item self)))
-    (push <collection> <history>)
-    (multiple-value-bind (result sub-menu) (/open item)
+  (let* ((item (cursor-item self)))
+    (push ^collection ^history)
+    (multiple-value-bind (result sub-menu) (open item)
       (cond ((and (vectorp result) (every #'object-p result))
-	     (/set-collection self result))
+	     (set-collection self result))
 	    ((stringp result)
-	     (assert <prompt>)
-	     (/insert <prompt> result)))
+	     (assert ^prompt)
+	     (insert ^prompt result)))
       ;; ((null result)
-      ;;  (/hide self)))
+      ;;  (hide self)))
       (when (and (not (null sub-menu)) (boundp sub-menu))
 	(message "HGEY!")
-	(/set-collection-from-menu-spec self (symbol-value sub-menu))))))
+	(set-collection-from-menu-spec self (symbol-value sub-menu))))))
 	    	     
 (define-method back browser ()
-  (setf <collection> (pop <history>)))
+  (setf ^collection (pop ^history)))
 
 (define-method print-object browser (object &optional selected-p)
   "Print the OBJECT in the browser as a new formatted line.
 When SELECTED-P is non-nil, draw the highlighted (or otherwise
 visually distinguished) version of the line."
   (if (null object)
-      (/println self " (/EMPTY) " :foreground ".gray20")
+      (println self " (EMPTY) " :foreground "gray20")
       (progn 
 	(let ((tile (field-value :tile object))
 	      (label (or (field-value :name object)
 			 (field-value :description object))))
 	  (if selected-p
-	      (/print self ">" :foreground ".yellow" :background ".purple")
-	      (/print self " "))
-	  (/print self " ")
-	  (/print self nil :image tile)
-	  (/print self " ")
-	  (/println self label)))))
+	      (print self ">" :foreground "yellow" :background "purple")
+	      (print self " "))
+	  (print self " ")
+	  (print self nil :image tile)
+	  (print self " ")
+	  (println self label)))))
 
 (define-method update browser ()
-  (let ((collection <collection>)
-	(cursor <cursor>))
-    (/delete-all-lines self)
+  (let ((collection ^collection)
+	(cursor ^cursor))
+    (delete-all-lines self)
     (dotimes (n (length collection))
-      (/print-object self (aref collection n) (= cursor n)))))
+      (print-object self (aref collection n) (= cursor n)))))
 
 (define-method set-collection browser (collection)
-  (setf <collection> collection)
-  (setf <cursor> 0))
+  (setf ^collection collection)
+  (setf ^cursor 0))
 
 (define-method set-collection-from-menu-spec browser (menu-spec)
   (let ((c nil))
     (dolist (m menu-spec)
       (push (clone =menu-item= m) c))
-    (/set-collection self (coerce (nreverse c) 'vector))))
+    (set-collection self (coerce (nreverse c) 'vector))))
 
 (define-method initialize browser ()
-  (/parent>>initialize self)
+  (parent>>initialize self)
   (bind-key-to-method self "UP" nil :cursor-previous)
   (bind-key-to-method self "DOWN" nil :cursor-next)
   (bind-key-to-method self "LEFT" nil :back)
@@ -175,19 +175,19 @@ visually distinguished) version of the line."
 ;; 					      (length (symbol-name s)))
 ;; 					  equipment-slots)))
 ;; 	 item)
-;;     (/print self "Equipment for: ")
-;;     (/print self name)
-;;     (/print self nil :image tile)
-;;     (/space self)
-;;     (/println self name)
+;;     (print self "Equipment for: ")
+;;     (print self name)
+;;     (print self nil :image tile)
+;;     (space self)
+;;     (println self name)
 ;;     (dolist (slot equipment-slots)
-;;       (setf item (/equipment-slot object slot))
-;;       (/print self (format nil (format nil "~~~dS " fill-width) slot))
+;;       (setf item (equipment-slot object slot))
+;;       (print self (format nil (format nil "~~~dS " fill-width) slot))
 ;;       (when item
-;; 	(/print self nil :image (field-value :tile item))
-;; 	(/space self)
-;; 	(/print self (field-value :name item)))
-;;       (/newline self))
-;;     (/newline self)))
+;; 	(print self nil :image (field-value :tile item))
+;; 	(space self)
+;; 	(print self (field-value :name item)))
+;;       (newline self))
+;;     (newline self)))
     
 ;;; browser.lisp ends here

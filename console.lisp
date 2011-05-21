@@ -1,4 +1,4 @@
-;;; console.lisp --- core operations for IOFORM
+;;; console.lisp --- OS/device driver for IOFORMS
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
@@ -33,11 +33,22 @@
 
 ;; http://lispbuilder.sourceforge.net/
 
+;; The OpenGL support here is derived from the code in 3b's excellent
+;; cl-opengl tutorials: http://3bb.cc/tutorials/cl-opengl/
+
 (in-package :ioforms) 
+
+(defun random-choose (set)
+  (nth (random (length set)) set))
+
+(defmacro restartably (&body body)
+  `(restart-case
+      (progn ,@body)
+    (continue () :report "Continue"  )))
 
 ;;; Keyboard state
 
-;; see also keys.lisp
+;; (see also keys.lisp for the symbol listing)
 
 (defun keyboard-id (key)
   "Look up the SDL symbol corresponding to the IOFORMS symbol KEY. See keys.lisp."
@@ -95,32 +106,32 @@
 		 (first entry2)))))
     (mapcar #'translate (sdl:mods-down-p))))
 
-;;; Processing once per timestep
+;;; Processing once per update
 
 (defvar *keys* nil "List of keywords of currently pressed keys.")
 
 (defvar *mods* nil "List of keywords of currently pressed modifiers.")
 
-(defvar *keyboard-timestep-number* 0)
+(defvar *keyboard-update-number* 0)
 
 (defun get-keys ()
-  (if (/= *keyboard-timestep-number* *timesteps*)
+  (if (= *keyboard-update-number* *updates*)
       (setf *keys* (keyboard-keys-down)
 	    *mods* (keyboard-modifiers)
-	    *keyboard-timestep-number* *timesteps*)
+	    *keyboard-update-number* *updates*)
       (setf *keys* nil *mods* nil))
   (values *keys* *mods*))
 
 ;;; Logging messages to the standard output
 
-(defparameter *message-logging* nil)
+(defparameter *message-logging* t)
 
 (defun message-to-standard-output (format-string &rest args)
   (apply #'format t format-string args)
   (fresh-line)
   (force-output))
 
-(defvar *message-function* nil)
+(defparameter *message-function* #'message-to-standard-output)
 
 (defun reset-message-function ()
   (setf *message-function* #'message-to-standard-output))
@@ -193,16 +204,17 @@ Do not set this variable directly from a project; instead, call
 `install-blocks'.")
 
 (defun hit-blocks (x y &optional (blocks *blocks*))
-  (labels ((hit (b)
-	     (/hit b x y)))
-    (let ((parent (find-if #'hit blocks :from-end t)))
-      (when parent
-	(hit parent)))))
+  (when blocks
+    (labels ((try (b)
+	       (hit b x y)))
+      (let ((parent (find-if #'try blocks :from-end t)))
+	(when parent
+	  (hit parent))))))
 
 (defun draw-blocks ()
   "Draw the active blocks to the screen."
   (dolist (block *blocks*)
-    (send nil :draw block sdl:*default-surface*)))
+    (draw block)))
 
 (defun install-blocks (&rest blocks)
   "User-level function for setting the active block set. Note that
@@ -210,14 +222,12 @@ IOFORMS may override the current block set at any time for system menus
 and the like."
   (setf *blocks* blocks))
 
-(defun install-block (block)
+(defun add-block (block)
   (unless (find block *blocks*)
-    (setf *blocks* (nconc *blocks* (list block))))
-  (draw-blocks))
+    (setf *blocks* (adjoin block *blocks*))))
 
-(defun uninstall-block (block)
-  (setf *blocks* (delete block *blocks* :test #'eq))
-  (draw-blocks))
+(defun remove-block (block)
+  (setf *blocks* (delete block *blocks* :test #'eq)))
 
 ;;; "Classic" key repeat
 
@@ -230,6 +240,7 @@ and the like."
   (sdl:disable-key-repeat))
 
 ;;; "Held Keys" key repeat emulation
+;; NOTE: THIS SECTION IS OBSOLETE.
 
 (defvar *key-table* (make-hash-table :test 'equal))
 
@@ -281,12 +292,12 @@ for backward-compatibility."
 
 (defun send-to-blocks (event &optional (blocks *blocks*))
   (labels ((try (block)
-	     (/handle-key block event)))
+	     (handle-event block event)))
     (some #'try blocks)))
 
 (defvar *event-handler-function* #'send-to-blocks
-  "Function to be called with keypress events. Keyboard, mouse,
-joystick, and timer events are represented as event lists of the form:
+  "Function to be called with input events. Keyboard, mouse,
+and joystick events are represented as 'event lists' of the form:
 
   (STRING . MODIFIERS)
 
@@ -295,7 +306,7 @@ is a list of key modifier symbols like :shift, :control, :alt, and so
 on.
 
 The modifier list is sorted; thus, events can be compared for
-equality with `equal' and used as hashtable keys..")
+equality with `equal' and used as hashtable keys.")
 
 (defun send-event (event)
   (if (null *event-handler-function*)
@@ -305,10 +316,12 @@ Please set the variable ioforms:*event-handler-function*")
 
 (defun normalize-event (event)
   "Convert EVENT to a normal form suitable for `equal' comparisons."
-  (setf (rest event)
-	(sort (remove-duplicates (delete nil (rest event)))
-	      #'string< :key #'symbol-name))
-  event)
+  (let ((name (first event)))
+    (cons (etypecase name
+	    (symbol (symbol-name name))
+	    (string name))
+	  (sort (remove-duplicates (delete nil (rest event)))
+		#'string< :key #'symbol-name))))
 
 ;;; Translating SDL key events into IOFORMS event lists
 
@@ -455,8 +468,6 @@ as hash keys."
 
 (defvar *joystick-position* nil "Current position of the joystick, as a direction keyword.")
 
-;; (sdl:sdl-joystick-name 0)
-
 (defun reset-joysticks ()
   "Re-open the joystick device and re-initialize the state."
   (setf *joystick-device* (sdl-cffi::sdl-joystick-open 0))
@@ -470,7 +481,7 @@ as hash keys."
 ;;     (dotimes (j (sdl:num-joysticks))
 ;;       (let ((name (sdl:sdl-joystick-name j))
 ;; 	    (when (and (stringp name)
-		       
+
 (defun update-joystick (button state)
   "Update the table in `*joystick-buttons*' to reflect the STATE of
 the BUTTON. STATE should be either 1 (on) or 0 (off)."
@@ -534,16 +545,16 @@ at the time the cell method is run.")
 
 (defvar *dt* 20)
 
-(defun step-blocks (&rest args)
+(defun update-blocks ()
   (dolist (block *blocks*)
-    (apply #'send nil :step block args)))
+    (send :update block)))
 
-(defvar *timestep-function* #'step-blocks)
+(defvar *update-function* #'update-blocks)
 
-(defun do-timestep (&rest args) 
-  (incf *timesteps*)
-  (when (functionp *timestep-function*)
-    (apply *timestep-function* args)))
+(defun do-update (&rest args) 
+  (incf *updates*)
+  (when (functionp *update-function*)
+    (apply *update-function* args)))
 
 (defvar *frame-rate* 30 "The intended frame rate of the game.")
 
@@ -552,56 +563,55 @@ at the time the cell method is run.")
   (message "Setting frame rate to ~S" rate)
   (setf (sdl:frame-rate) rate))
 
-(defparameter *timesteps* 0)
-
-(defvar *clock* 0 "Number of frames until next timer event.")
-
-(defvar *timer-p* nil "Non-nil if timer events are actually being sent.")
-
-(defun enable-timer ()
-  "Enable timer events. The next scheduled event will be the first sent."
-  (setf *timer-p* t))
-
-(defun disable-timer ()
-  "Disable timer events."
-  (setf *timer-p* nil))
-
-(defvar *timer-event* (list nil :timer) 
-  "Since all timer events are identical, this is the only one we need.")
-
-(defvar *timer-interval* 15 
-"Number of frames to wait before sending each timer event.
-Set this to 0 to get a timer event every frame.
-Don't set this yourself; use `set-timer-interval'.")
-
-(defun set-timer-interval (interval)
-  "Set the number of frames to wait before sending each timer event.
-Set it to 0 to get a timer event every frame."
-  (setf *timer-interval* interval))
+(defparameter *updates* 0)
 
 ;;; Screen dimensions
+
+(defparameter *screen-width* 640 "Physical width of the window, in pixels.") 
+(defparameter *screen-height* 480 "Physical height of the window, in pixels.")
+
+;; The nominal size of of the window in pixels, in case we just want
+;; to scale the scene to match the window instead of showing more of
+;; the world. If these are the same as the `*screen-' settings
+;; above, then more of the world will be shown when the window size
+;; increases.
+(defparameter *nominal-screen-width* 640 "Nominal width of the window, in pixels.")
+(defparameter *nominal-screen-height* 480 "Nominal height of the window, in pixels.")
+
+(defparameter *gl-screen-width* nil "Width of the window expressed in OpenGL coordinates.")
+(defparameter *gl-screen-height* nil "Height of the window expressed in OpenGL coordinates.")
+
+(defparameter *use-nominal-screen-size* nil
+  "When non-nil, always show a fixed amount of the world when changing
+window size. Otherwise (the default) one onscreen pixel equals one
+unit of world space, so that more of the world shows if the window
+becomes larger.")
+ 
+(defun do-orthographic-projection ()
+  "Configure OpenGL so that the screen coordinates go from (0,0) at
+ top left to (WIDTH, HEIGHT) at lower right."
+  (gl:matrix-mode :projection)
+  (gl:load-identity)
+  (gl:viewport 0 0 *screen-width* *screen-height*)
+  (if *use-nominal-screen-size*
+    (setf *gl-screen-width* *nominal-screen-width*
+          *gl-screen-height* *nominal-screen-height*)
+    (setf *gl-screen-width* *screen-width*
+          *gl-screen-height* *screen-height*))
+  (message "Orthographic projection left:~A right:~A bottom:~A top:~A"
+	   0 *gl-screen-width* *gl-screen-height* 0)
+  (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 0 100)
+  (gl:matrix-mode :modelview))
 
 (defvar *resizable* nil)
 
 (defparameter *resize-hook* nil)
 
-(defvar *screen-width* 640 "The width (in pixels) of the game
-window. Set this in the game startup file.")
-
-(defun set-screen-width (width)
-  (setf *screen-width* width))
-
-(defvar *screen-height* 480 "The height (in pixels) of the game
-window. Set this in the game startup file.")
-
-(defun set-screen-height (height)
-  (setf *screen-height* height))
-
 ;;; The main loop of IOFORMS
 
-(defvar *after-initialization-hook* nil)
+(defvar *after-startup-hook* nil)
 
-(defvar *project* "standard")
+(defvar *project* nil)
 
 (defvar *quitting* nil)
 
@@ -612,124 +622,121 @@ window. Set this in the game startup file.")
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
 
+;; (defun draw-everything ()
+  ;; draw a triangle
+  ;; (gl:with-primitive :triangles
+  ;;   (gl:color 0 0 0)
+  ;;   (gl:vertex 400 0 0)
+  ;;   (gl:color (random 0.9) (random 0.2) (random 0.5))
+  ;;   (gl:vertex 0 400 0)
+  ;;   (gl:color 1 0 1)
+  ;;   (gl:vertex 0 0 0))
+
 (defun run-main-loop ()
   "Initialize the console, open a window, and play.
 We want to process all inputs, update the game state, then update the
 display."
-  (run-hook '*initialization-hook*)
   (let ((fps (make-instance 'sdl:fps-mixed :dt *dt*)))
     (cond (*fullscreen*
 	   (sdl:window *screen-width* *screen-height*
 		       :fps fps 
 		       :title-caption *window-title*
-		       :flags sdl:SDL-FULLSCREEN
+		       :flags (logior sdl:SDL-FULLSCREEN sdl:SDL-OPENGL)
 		       :position *window-position*))
 	  (*resizable*
 	   	   (sdl:window *screen-width* *screen-height*
 		       :fps fps 
 		       :title-caption *window-title*
-		       :flags sdl:SDL-RESIZABLE
+		       :flags (logior sdl:SDL-RESIZABLE sdl:SDL-OPENGL)
 		       :position *window-position*))
 	  (t (sdl:window *screen-width* *screen-height*
 			 :fps fps
+			 :flags sdl:SDL-OPENGL
 			 :title-caption *window-title*
 			 :position *window-position*)))
+    ;; cl-opengl needs platform specific support to be able to load GL
+    ;; extensions, so we need to tell it how to do so in lispbuilder-sdl
+    (setf cl-opengl-bindings:*gl-get-proc-address* #'sdl-cffi::sdl-gl-get-proc-address)
+    ;;
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
-    (sdl:clear-display sdl:*black*)
-    (draw-blocks)
-    (sdl:update-display)
-    (run-hook '*after-initialization-hook*)
-    (let ((events-this-frame 0))
-      (sdl:with-events ()
-	(:quit-event () (prog1 t))
-	(:video-resize-event (:w w :h h)  
-			     (setf *screen-width* w
-				   *screen-height* h)
-			     (run-hook '*resize-hook*)
-			     (sdl:window w h :fps fps :title-caption *window-title*
-					 :flags sdl:SDL-RESIZABLE
-					 :position *window-position*))
-	(:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
-			     (let ((block (hit-blocks x y *blocks*)))
-			       (when block
-				 (/mouse-move block x y))))
-	(:mouse-button-down-event (:button button :state state :x x :y y)
-				  (let ((block (hit-blocks x y *blocks*)))
-				    (when block
-				      (/mouse-down block x y button))))
-	(:mouse-button-up-event (:button button :state state :x x :y y)
-				  (let ((block (hit-blocks x y *blocks*)))
-				    (when block
-				      (/mouse-up block x y button))))
-	(:joy-button-down-event (:which which :button button :state state)
-				(when (assoc button *joystick-mapping*)
-				  (update-joystick button state)
-				  (send-event (make-event :joystick
-							      (list (translate-joystick-button button) 
-								    :button-down)))))
-	(:joy-button-up-event (:which which :button button :state state)  
+    (do-orthographic-projection)
+    (run-project-lisp *project*)
+    (run-hook '*after-startup-hook*)
+    (sdl:with-events ()
+      (:quit-event () (prog1 t (sdl:quit-sdl :force t)))
+      (:video-resize-event (:w w :h h)  
+			   (setf *screen-width* w
+				 *screen-height* h)
+			   (run-hook '*resize-hook*)
+			   (sdl:window w h :fps fps :title-caption *window-title*
+				       :flags sdl:SDL-RESIZABLE
+				       :position *window-position*))
+      (:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
+			   (let ((block (hit-blocks x y *blocks*)))
+			     (when block
+			       (mouse-move block x y))))
+      (:mouse-button-down-event (:button button :state state :x x :y y)
+				(let ((block (hit-blocks x y *blocks*)))
+				  (when block
+				    (mouse-down block x y button))))
+      (:mouse-button-up-event (:button button :state state :x x :y y)
+			      (let ((block (hit-blocks x y *blocks*)))
+				(when block
+				  (mouse-up block x y button))))
+      (:joy-button-down-event (:which which :button button :state state)
 			      (when (assoc button *joystick-mapping*)
 				(update-joystick button state)
 				(send-event (make-event :joystick
-							    (list (translate-joystick-button button) 
-								  :button-up)))))
-	(:joy-axis-motion-event (:which which :axis axis :value value)
-				(update-joystick-axis axis value))
-	(:video-expose-event () (sdl:update-display))
-	(:key-down-event (:key key :mod-key mod)
-			 (let ((event (make-event key mod)))
-			   (if *held-keys*
-			       (hold-event event)
-			       (send-event event))))
-	(:key-up-event (:key key :mod-key mod)
-		       (when *held-keys*
-			 (let* ((event (make-event key mod))
-				(entry (gethash event *key-table*)))
-			   (if (numberp entry)
-			       (if (plusp entry)
-				   (progn (message "Removing entry ~A:~A" event entry)
-					  (remhash event *key-table*))
-				   (when (zerop entry)
-				     ;; This event hasn't yet been sent,
-				     ;; but the key release happened
-				     ;; now. Mark this entry as pending
-				     ;; deletion.
-				     (release-held-event event)))
-			       (break-events event)))))
-	(:idle ()
-	       (if *timer-p*
-		   (if (zerop *clock*)
-		       (progn 
-			 (sdl:clear-display sdl:*black*)
-			 ;; send held events
-			 (when *held-keys*
-			   (send-held-events))
-			 ;; send timer event
-			 (send-event *timer-event*)
-			 ;; send any joystick button events
-			 ;; (poll-all-buttons)
-			 ;;  (generate-button-events)
-			 ;; update display
-			 (draw-blocks)
-			 (sdl:update-display)
-			 (setf *clock* *timer-interval*))
-		       (decf *clock*))
-		   ;; clean this up. these two cases aren't that different.
-		   (progn 
-		     (sdl:with-timestep ()
-		       (do-timestep))
-		     (sdl:clear-display sdl:*black*)
-;;		     (when *held-keys* (send-held-events))
-		     (draw-blocks) 
-		     (sdl:update-display))))))))
-  
-  
-;;; The .ioformsrc user init file
+							(list (translate-joystick-button button) 
+							      :button-down)))))
+      (:joy-button-up-event (:which which :button button :state state)  
+			    (when (assoc button *joystick-mapping*)
+			      (update-joystick button state)
+			      (send-event (make-event :joystick
+						      (list (translate-joystick-button button) 
+							    :button-up)))))
+      (:joy-axis-motion-event (:which which :axis axis :value value)
+			      (update-joystick-axis axis value))
+      (:video-expose-event () (sdl:update-display))
+      (:key-down-event (:key key :mod-key mod)
+		       (let ((event (make-event key mod)))
+			 (if *held-keys*
+			     (hold-event event)
+			     (send-event event))))
+      (:key-up-event (:key key :mod-key mod)
+		     ;; is this "held keys" code obsolete? it was useful for CONS control
+		     (when *held-keys*
+		       (let* ((event (make-event key mod))
+			      (entry (gethash event *key-table*)))
+			 (if (numberp entry)
+			     (if (plusp entry)
+				 (progn (message "Removing entry ~A:~A" event entry)
+					(remhash event *key-table*))
+				 (when (zerop entry)
+				   ;; This event hasn't yet been sent,
+				   ;; but the key release happened
+				   ;; now. Mark this entry as pending
+				   ;; deletion.
+				   (release-held-event event)))
+			     (break-events event)))))
+      (:idle ()
+	     ;; this lets slime keep working while the main loop is running
+	     ;; in sbcl using the :fd-handler swank:*communication-style*
+	     #+(and sbcl (not sb-thread)) (restartably
+					   (sb-sys:serve-all-events 0))	 
+	     (sdl:with-timestep (do-update))
+	     (restartably	
+	       (gl:clear :color-buffer-bit)
+	       (gl:enable :texture-2d :blend)	
+	       (set-blending-mode :alpha)
+	       (draw-blocks)
+	       (gl:flush)
+	       (sdl:update-display))))))
 
-(defvar *initialization-hook* nil 
-"This hook is run after the IOFORMS console is initialized.
-Set system parameters and other settings here.")
+
+
+;;; The IOFORMS.INI user configuration file
 
 (defparameter *user-init-file-name* "ioforms.ini")
 
@@ -822,10 +829,14 @@ This prepares it for printing as part of a IOF file."
       (format file "~S" sexp)))
   (message "Writing data to file ~S... Done." filename))
 
+(defvar *eof-value* (gensym))
+
 (defun read-sexp-from-file (filename)
   (message "Reading data from ~A..." filename)
   (with-open-file (file filename :direction :input)
-    (prog1 (read file)
+    (prog1 (loop as sexp = (read file nil *eof-value*)
+		 until (eq *eof-value* sexp)
+		 collect sexp)
       (message "Reading data from ~A... Done." filename))))
 
 ;; Now tie it all together with routines that read and write
@@ -837,9 +848,16 @@ This prepares it for printing as part of a IOF file."
 
 (defun read-iof (filename)
   "Return a list of resources from the IOF file FILENAME."
-  (mapcar #'(lambda (plist)
-	      (apply #'make-resource plist))
-	  (read-sexp-from-file filename)))
+  (labels ((resourcep (s)
+	     (keywordp (first s))))
+    ;; read the file
+    (let ((sexp (read-sexp-from-file filename)))
+      ;; find the resource plists; see `read-sexp-from-file'
+      (mapcar #'(lambda (s)
+		  (apply #'make-resource s))
+	      (if (every #'resourcep sexp)
+	          sexp
+		  (first sexp))))))
 
 ;;; Resources and projects
 
@@ -867,25 +885,11 @@ A `project' is a directory full of resource files. The name of the
 project is the name of the directory. Each project must contain a
 file called {project-name}.iof, which should contain an index of
 all the project's resources. Multiple projects may be loaded at one
-time. In addition the special resource `.startup' will be loaded;
-if this is of type :lisp, the startup code for your game can go in
-that external lisp file.")
+time.")
 
 (defun initialize-resource-table ()
   "Create a new empty resource table."
    (setf *resources* (make-hash-table :test 'equal)))
-
-(defun index-resource (resource)
-  "Add the RESOURCE's record to the resource table.
-If a record with that name already exists, it is replaced.  However,
-if the resource is an :alias, just the string name of the target
-resource is stored; see also `find-resource'."
-  (let ((val (if (eq :alias (resource-type resource))
-		 (resource-data resource)
-		 resource)))
-    (setf (gethash (resource-name resource)
-		   *resources*) 
-	  val)))
 
 ;;; Opening and saving projects
 
@@ -956,6 +960,31 @@ You must set the variable IOFORMS:*PROJECT-DIRECTORIES* in the configuration fil
 Please see the included file BINARY-README for instructions."
 	    project-name dirs))))
 
+(defun expand-file-name (resource)
+  (when (stringp (resource-file resource))
+    (setf (resource-file resource)
+	  (merge-pathnames (resource-file resource)
+			   (find-project-path *project*)))))
+
+(defun index-resource (resource)
+  "Add the RESOURCE's record to the resource table.
+If a record with that name already exists, it is replaced.  However,
+if the resource is an :alias, just the string name of the target
+resource is stored; see also `find-resource'."
+  (expand-file-name resource)
+  (let ((val (if (eq :alias (resource-type resource))
+		 (resource-data resource)
+		 resource)))
+    (setf (gethash (resource-name resource)
+		   *resources*) 
+	  val)))
+
+(defmacro defresource (&rest entries)
+  (assert (every #'listp entries))
+  (let ((each (gensym)))
+  `(dolist (,each ',entries)
+     (index-resource (apply #'make-resource ,each)))))
+
 (defun find-project-path (project-name)
   "Return the current project path."
   (assert *project*)
@@ -966,10 +995,27 @@ Please see the included file BINARY-README for instructions."
   "Make a pathname for FILE within the project PROJECT-NAME."
   (merge-pathnames file (find-project-path project-name)))
 
+(defun default-project-lisp-file (project-name)
+  (find-project-file project-name (concatenate 'string project-name ".lisp")))
+
+(defun load-project-objects (project)
+  (let ((object-index-file (find-project-file project (object-index-filename project))))
+    (when (probe-file object-index-file)
+      (message "Reading saved objects from ~S" object-index-file)
+      (index-iof project object-index-file))))
+
+(defun load-project-lisp (project)
+  (let ((lisp (default-project-lisp-file project)))
+    (if (probe-file lisp)
+	(progn (message "Loading lisp for project ~A..." project)
+	       (load lisp))
+	(message "No default lisp file found in project ~S. Continuing." project))))
+
 (defun open-project (project &key (autoload t))
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
 object save directory. See also `save-object-resource')."
+  (message "Opening project: ~A" (string-upcase project))
   (setf *project* project
 	*project-path* (search-project-path project)
 	*pending-autoload-resources* nil)
@@ -978,15 +1024,21 @@ object save directory. See also `save-object-resource')."
   (when autoload 
     (mapc #'load-resource (nreverse *pending-autoload-resources*)))
   (setf *pending-autoload-resources* nil)
-  ;; now load any objects
-  (let ((object-index-file (find-project-file project (object-index-filename project))))
-    (when (probe-file object-index-file)
-      (message "Indexing saved objects from ~S" object-index-file)
-      (index-iof project object-index-file)))
-  (let ((package (find-package (project-package-name))))
-    (when package
-      (setf *package* package)))
+  (load-project-objects project)
+  (load-project-lisp project)
+  (message "Started up successfully. Indexed ~A resources." (hash-table-count *resources*))
   (run-hook '*after-open-project-hook*))
+
+(defun run-project-lisp (project)
+  (message "Running project startup function...")
+  (let ((package (find-package (project-package-name project))))
+    (if package
+	(let ((start-function (intern (string-upcase project) package)))
+	  (message "Checking for startup function ~S" start-function)
+	  (if (fboundp start-function)
+	      (funcall start-function)
+	      (message "No default startup function for: ~S" (string-upcase (symbol-name start-function)))))
+	(message "No package defined."))))
 
 (defun directory-is-project-p (dir)
   "Test whether a {PROJECTNAME}.IOF index file exists in a directory."
@@ -1022,18 +1074,12 @@ table. File names are relative to the project PROJECT-NAME."
 	  ;; take this as the name of the project where to look for
 	  ;; that iof file and its resources.
 	  (let ((include-project (or (resource-data res) 
-				    project-name)))
+				     project-name)))
 	    (index-iof include-project (find-project-file include-project
-							(resource-file res))))
+							  (resource-file res))))
 	  ;; we're indexing a single resource.
 	  (progn
 	    (index-resource res)
-	    ;; change the file field into a full pathname, for resources
-	    ;; that need to load data from an external file later.
-	    (when (resource-file res)
-	      (setf (resource-file res)
-		    (merge-pathnames (resource-file res)
-				     (find-project-path project-name))))
 	    ;; save the resource name for later autoloading, if needed
 	    (when (getf (resource-properties res) :autoload)
 	      (push res *pending-autoload-resources*)))))))
@@ -1046,13 +1092,13 @@ table. File names are relative to the project PROJECT-NAME."
 table."
   (let ((index-file (find-project-file project-name
 				       (object-index-filename project-name))))
-    (index-iof project-name index-file)))
+    (if (probe-file index-file)
+	(index-iof project-name index-file)
+	(message "No IOF file found in module. Continuing."))))
 
 ;;; Standard resource names
 
-(defvar *startup* ".startup")
-
-(defvar *default-font* ".default-font")
+(defvar *default-font* "default-font")
 
 ;;; Creating, saving, and loading object resources in IOF files
 
@@ -1122,9 +1168,6 @@ OBJECT as the data."
       (write-iof (find-project-file *project* (object-index-filename *project*)) 
 		 (nreverse index)))))
 
-(defun save-everything ()
-  (save-project :force))
-
 (defparameter *export-formats* '(:archive :application))
 
 ;; (defun export-archive (pathname)
@@ -1144,11 +1187,58 @@ also the documentation for DESERIALIZE."
     (setf (resource-data resource) nil) ;; no longer needed
     object))
 
+;;; Loading images and textures
+
+(defun set-blending-mode (mode)
+  (ecase mode 
+    (:additive (gl:blend-func :src-alpha :one))
+    (:additive2 (gl:blend-func :one :one))
+    (:alpha (gl:blend-func :src-alpha :one-minus-src-alpha))))
+
+(defun load-texture (surface)
+  (let ((texture (car (gl:gen-textures 1))))
+    (gl:bind-texture :texture-2d texture)
+    (gl:tex-parameter :texture-2d :generate-mipmap t) 
+    (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear) 
+    (sdl-base::with-pixel (pix (sdl:fp surface))
+      (let ((texture-format (ecase (sdl-base::pixel-bpp pix)
+                              (1 :luminance)
+                              (2 :luminance-alpha)
+                              (3 :rgb)
+                              (4 :rgba))))
+        (assert (and (= (sdl-base::pixel-pitch pix)
+                        (* (sdl:width surface) (sdl-base::pixel-bpp pix)))
+                     (zerop (rem (sdl-base::pixel-pitch pix) 4))))
+        (gl:tex-image-2d :texture-2d 0 :rgba
+                         (sdl:width surface) (sdl:height surface)
+                         0
+                         texture-format
+                         :unsigned-byte (sdl-base::pixel-data pix))))
+    texture))
+
+(defvar *textures* nil)
+
+(defun initialize-textures-maybe (&optional force)
+  (when (or force (null *textures*))
+    (setf *textures* (make-hash-table :test 'equal))))
+
+(defun find-texture (name)
+  (assert (stringp name))
+  (initialize-textures-maybe)
+  (find-resource name)
+  (gethash name *textures*))
+
 (defun load-image-resource (resource)
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
-  (sdl-image:load-image (namestring (resource-file resource))
-			:alpha 255))
-  
+  (initialize-textures-maybe)
+  (let* ((surface (sdl-image:load-image (namestring (resource-file resource))
+				       :alpha 255))
+	 (texture (load-texture surface))
+	 (name (resource-name resource)))
+    (prog1 surface
+      (setf (gethash name *textures*) texture)
+      (message "Now loaded total of ~A textures." (hash-table-count *textures*)))))
+
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
 for :SPRITE-WIDTH and :SPRITE-HEIGHT properties on the resource to
@@ -1412,13 +1502,13 @@ found."
 (define-prototype voice () output)
 
 (define-method initialize voice (&optional (size *output-chunksize*))
-  (setf <output> (make-array size :element-type 'float :initial-element 0.0))
+  (setf ^output (make-array size :element-type 'float :initial-element 0.0))
   (register-voice self))
 
 (define-method get-output voice ()
-  <output>)
+  ^output)
 
-(define-method play voice (&rest parameters))
+;;(define-method play voice (&rest parameters))
 (define-method halt voice ())
 (define-method run voice ())
 
@@ -1502,8 +1592,8 @@ found."
     (setf (aref output n) 0.0))
   ;; mix in voices
   (dolist (voice *voices*)
-    (/run voice)
-    (let ((input (/get-output voice)))
+    (run voice)
+    (let ((input (get-output voice)))
       (dotimes (n *output-chunksize*)
 	(incf (aref output n)
 	      (aref input n))))))
@@ -1584,11 +1674,24 @@ of the music."
   (when *use-sound*
     (apply #'sdl-mixer:halt-sample :channel channel args)))
 
+(defun initialize-sound ()
+  ;; try opening sound
+  (when (null (sdl-mixer:open-audio :frequency *frequency*
+				    :chunksize *output-chunksize*
+				    :enable-callbacks t
+				    :format *sample-format*
+				    :channels *output-channels*))
+    ;; if that didn't work, disable effects/music
+    (message "Could not open audio driver. Disabling sound effects and music.")
+    (setf *use-sound* nil))
+  ;; set to mix lots of sounds
+  (sdl-mixer:allocate-channels *channels*))
+
 ;;; Font operations
 
 ;; An IOF entry for a font looks like this: 
 
-;; (:name ".default-font" 
+;; (:name "default-font" 
 ;;        :type :font 
 ;;        :properties (:height 14 :width 7) 
 ;;        :data "7x14")
@@ -1616,17 +1719,17 @@ of the music."
 		    (sdl:get-font-height :font (resource-object resource)))))))
 
 (defun draw-string-solid (string x y 
-			  &key destination (font *default-font*) (color ".white"))
+			  &key destination (font *default-font*) (color "white"))
   (sdl:draw-string-solid-* string x y :surface destination :font (find-resource-object font)
 			   :color (find-resource-object color)))
 
-(defun draw-string-shaded (string x y &optional (foreground ".white") (background ".black")
+(defun draw-string-shaded (string x y &optional (foreground "white") (background "black")
 			  &key destination (font *default-font*))
   (sdl:draw-string-shaded-* string x y (find-resource-object foreground)
 			    (find-resource-object background)
 			    :surface destination :font (find-resource-object font)))
 
-(defun draw-string-blended (string x y &key (foreground ".black")
+(defun draw-string-blended (string x y &key (foreground "black")
 			    destination (font *default-font*))
   (sdl:draw-string-blended-* string x y 
 			     :color (find-resource-object foreground)
@@ -1641,7 +1744,7 @@ of the music."
   "Load the X11 color data into the resource table."
   (dolist (color *x11-color-data*)
     (destructuring-bind (name red green blue) color
-      (index-resource (make-resource :name (concatenate 'string "." name)
+      (index-resource (make-resource :name name
 				     :type :color
 				     :data (list red green blue))))))
 
@@ -1659,19 +1762,6 @@ of the music."
   (assert (and (integerp width) (integerp height)))
   (sdl:create-surface width height))
 
-(defun draw-image (image x y &key (destination sdl:*default-surface*) (render-cell nil))
-  "Draw the IMAGE at offset (X Y) on the image DESTINATION.
-The default destination is the main window."
-  (when render-cell
-    (destructuring-bind (x0 y0 w h) render-cell
-      (sdl:set-cell-* x0 y0 w h :surface image :index 0)))
-  (sdl:draw-surface-at-* image x y :cell 0 :surface destination))
-
-(defun draw-resource-image (name x y &key (destination sdl:*default-surface*) (render-cell nil))
-  "Draw the image named by NAME at offset (X Y) on the image DESTINATION.
-The default destination is the main window."
-  (draw-image (find-resource-object name) x y :render-cell render-cell :destination destination))
-
 (defun image-height (image)
   "Return the height in pixels of IMAGE."
   (let ((img (if (stringp image)
@@ -1686,11 +1776,38 @@ The default destination is the main window."
 		 image)))
     (sdl:width img)))
 
+(defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
+  (gl:bind-texture :texture-2d texture)
+  (gl:with-primitive :quads
+    (let* ((w/2 (/ width 2.0))
+	   (h/2 (/ height 2.0))
+	   (x1 (- x w/2))
+	   (x2 (+ x w/2))
+	   (y1 (- y h/2))
+	   (y2 (+ y h/2)))
+      (gl:tex-coord u1 v2)
+      (gl:vertex x1 y1 0)
+      (gl:tex-coord u2 v2)
+      (gl:vertex x2 y1 0)
+      (gl:tex-coord u2 v1)
+      (gl:vertex x2 y2 0)
+      (gl:tex-coord u1 v1)
+      (gl:vertex x1 y2 0))))
+
+(defun draw-image (name x y)
+  (let* ((image (find-resource-object name))
+	 (height (sdl:height image))
+	 (width (sdl:width image)))
+    ;; (message "height:~S width:~S" height width)
+    ;; (message "*textures* = ~S" (hash-table-count *textures*))
+    (let ((texture (find-texture name)))
+      (draw-textured-rectangle x y width height texture))))
+
 ;;; Drawing shapes and other primitives
 
 (defun draw-box (x y width height		
-		 &key (stroke-color ".white")
-		 (color ".black")
+		 &key (stroke-color "white")
+		 (color "black")
 		 destination)
   "Draw a filled rectangle at (X Y) of size (* WIDTH HEIGHT)."
   (sdl:draw-box-* x y width height :color (find-resource-object color)
@@ -1698,34 +1815,34 @@ The default destination is the main window."
 		  :surface destination))
 
 (defun draw-rectangle (x y width height
-		       &key (color ".white")
+		       &key (color "white")
 		       destination)
   (sdl:draw-rectangle-* x y width height :color (find-resource-object color)
 			:surface destination))
 
 (defun draw-line (x0 y0 x1 y1 
 		     &key 
-		     (color ".white")
+		     (color "white")
 		     destination)
   (sdl:draw-line-* x0 y0 x1 y1 :surface destination :color (find-resource-object color)))
 
 (defun draw-pixel (x y &key 
-		   (color ".white")
+		   (color "white")
 		   destination)
   (sdl:draw-pixel-* x y :surface destination :color (find-resource-object color)))
 
 (defun draw-circle (x y radius &key 
-		   (color ".white")
+		   (color "white")
 		    destination)
   (sdl:draw-circle-* x y radius :surface destination :color (find-resource-object color)))
 
 (defun draw-filled-circle (x y radius &key 
-			   (color ".white")
+			   (color "white")
 			   destination)
   (sdl-gfx:draw-filled-circle-* x y radius :surface destination :color (find-resource-object color)))
 
 (defun draw-aa-circle (x y radius &key 
-		   (color ".white")
+		   (color "white")
 		    destination)
   (sdl-gfx:draw-aa-circle-* x y radius :surface destination :color (find-resource-object color)))
 
@@ -1743,7 +1860,7 @@ The default destination is the main window."
   (sdl:push-quit-event))
 
 (defvar *copyright-text*
-"IOFORMS Visual Common Lisp Multimedia Authoring Tool
+"Welcome to IOFORMS!
 Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 by David T O'Toole
 <dto@gnu.org> <dto1138@gmail.com>
 http://ioforms.org/
@@ -1778,8 +1895,6 @@ This program includes the DejaVu fonts family. See the file
                  (union cffi:*foreign-library-directories*
                         '(#P"/opt/local/lib" #P"/sw/lib/")
                         :test #'equal)))
-
-(defvar *play-args* nil)
 
 (defparameter *do-cffi-loading* t)
 
@@ -1828,42 +1943,63 @@ This program includes the DejaVu fonts family. See the file
 		  "libSDL_image")))
     (cffi:use-foreign-library sdl-image))
 
-(defun run (&rest args)
-  (destructuring-bind (project &rest arguments) args
-    (unwind-protect 
-	 ;; see shell.lisp
-	 (progn 
-	   (setf *system* (clone (symbol-value '=system=)))
-	   (when project 
-	     (apply #'send nil :open-project *system* project arguments))
-	   (run-main-loop))
-      (sdl:quit-sdl))))
+(defun play (&optional project)
+  #+linux (do-cffi-loading)
+  (message "Starting IOFORMS...")
+  (initialize-prototypes)
+  (initialize-ioforms)
+  (let ((proj (or project *project*)))
+    (when (null proj)
+      (error "No current project. You must provide an argument naming the project."))
+    (open-project proj)
+    (run-main-loop)))
 
-(defun ioforms (&rest args)
-  (setf *after-open-project-hook* nil
-	*after-initialization-hook* nil
+(defun initialize-ioforms ()
+  (sdl:init-sdl :video t :audio t :joystick t)
+  (setf *project-package-name* nil
+	*defined-resources* nil
+        *project-directories* (default-project-directories)
+	*world* nil
+	*blocks* nil
+	*window-title* "ioforms"
+	*updates* 0
+	*resizable* nil
+	*keyboard-update-number* 0
 	*initialization-hook* nil
-	*resize-hook* nil
-	*event-handler-function* #'send-to-blocks)
-  (if (null args)
-      (run nil)
-      (apply #'run args)))
+	*random-state* (make-random-state t))
+  ;; add library search paths for Mac if needed
+  (setup-library-search-paths)
+  (load-user-init-file) ;; this step may override *project-directories* and so on 
+  (initialize-resource-table)
+  (initialize-textures-maybe :force)
+  (initialize-colors)
+  (initialize-sound)
+  (open-project "standard"))
+
+;; (defun ioforms (&rest args)
+;;   (setf *after-open-project-hook* nil
+;; 	*after-startup-hook* nil
+;; 	*resize-hook* nil
+;; 	*event-handler-function* #'send-to-blocks)
+;;   (if (null args)
+;;       (run nil)
+;;       (apply #'run args)))
       
-(defmacro defproject (module-name 
-		   (&key title description
-			 (prompt-prototype =prompt=)
-			 timestep timestep-function
-			 held-keys 
-			 splash-image splash-function splash-music
-			 screen-width screen-height
-			 keybindings pages
-			 &allow-other-keys)
- 		   &body startup-forms)
-  `(progn
-     (ioforms:set-screen-height ,screen-height)
-     (ioforms:set-screen-width ,screen-width)
-     (setf ioforms:*timestep-function* ,timestep-function)
-     (setf ioforms:*dt* ,timestep)
-     ,@startup-forms))
+;; (defmacro defproject (module-name 
+;; 		   (&key title description
+;; 			 (prompt-prototype =prompt=)
+;; 			 update update-function
+;; 			 held-keys 
+;; 			 splash-image splash-function splash-music
+;; 			 screen-width screen-height
+;; 			 keybindings pages
+;; 			 &allow-other-keys)
+;;  		   &body startup-forms)
+;;   `(progn
+;;      (ioforms:set-screen-height ,screen-height)
+;;      (ioforms:set-screen-width ,screen-width)
+;;      (setf ioforms:*update-function* ,update-function)
+;;      (setf ioforms:*dt* ,update)
+;;      ,@startup-forms))
 
 ;;; console.lisp ends here

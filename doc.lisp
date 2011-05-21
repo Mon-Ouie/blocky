@@ -1,8 +1,8 @@
 ;;; ldoc.lisp --- extract and format documentation from lisp files
 
-;; Copyright (C) 2009  David O'Toole
+;; Copyright (C) 2009, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: lisp, tools
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 (in-package :ioforms)
 
@@ -74,7 +74,7 @@
 		   (remove-delimiters symbol)
 		   (if (clon-method-p symbol)
 		       (multiple-value-bind (method-name prototype-name) (clon-method-p symbol)
-			 (format nil "~A (/~A)" method-name prototype-name))
+			 (format nil "~A (~A)" method-name prototype-name))
 		       (symbol-name symbol))))
 	 (args (when (fboundp symbol) (sb-introspect:function-lambda-list (fdefinition symbol)))))
     (format stream "** ~A (~A)" name type-name)

@@ -1,8 +1,10 @@
 ;;; gcells.lisp --- defining objects
 
-;; Copyright (C) 2008, 2009, 2010  David O'Toole
+;; NOTE: THIS FILE CONTAINS MOSTLY OBSOLETE CODE.
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
+
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Commentary:
 
@@ -32,7 +34,128 @@
 
 (in-package :ioforms)
 
+;;; Finding and manipulating objects
+
+(define-method find-object cell (&key (direction :here) (index :top) category)
+  (let ((world *world*))
+    (multiple-value-bind (nrow ncol)
+	(step-in-direction ^row ^column direction)
+      (if (in-bounds-p world nrow ncol)
+	  (let (cell)
+	    (let* ((cells (grid-location world nrow ncol))
+		   (index2 (cond 
+			     ((not (null category))
+				(setf cell (category-at-p world nrow ncol category))
+				(position cell cells :test 'eq))
+			     ((and (eq :top index) (eq :here direction))
+			      ;; skip yourself and instead get the item you're standing on
+			      (- (fill-pointer cells) 2))
+			     ((eq :top index)
+			      (- (fill-pointer cells) 1))
+			     ((numberp index) 
+			      (when (array-in-bounds-p cells index)
+				index)))))
+	      (message "INDEX2: ~A" index2)
+	      (setf cell (aref cells index2))
+	      (values cell nrow ncol index2)))))))
+
 ;;; "gCells" implement a 2D game engine.
+
+(defparameter *default-cell-width* 16)
+
+(define-method get cell ())
+
+(define-method activate cell ())
+
+(define-method set cell (data))
+
+(define-method print cell () "")
+
+(define-method width cell () 
+  (with-field-values (widget image label) self
+    (cond (widget (image-width (field-value :image widget)))
+	  (image (image-width image))
+	  (label (formatted-line-width label))
+	  (t *default-cell-width*))))
+
+(define-method height cell () 
+  (with-field-values (widget image label) self
+    (cond (widget (image-height (field-value :image widget)))
+	  (image (image-height image))
+	  (label (formatted-line-height label))
+	  (t *default-cell-width*))))
+
+(define-method render cell (dest x y width)
+  (with-field-values (widget image) self
+      (cond (widget 
+	     (render widget)
+	     (draw-image (field-value :image widget)
+			 x y :destination dest))
+	    ;; it's an image
+	    (image 
+	     (if (stringp image)
+		 (draw-resource-image image x y :destination dest)
+		 (draw-image image x y :destination dest)))
+	    (^label
+	     ;; we have a formatted line
+	     (let ((label ^label))
+	       (when (listp label)
+		 (let*
+		     ((shortfall (- width (formatted-line-width label)))
+		      (color (or (when (and (listp label)
+					    (listp (last label)))
+				   (getf (cdr (car (last label))) :background))
+				 "black"))
+		      (spacer (when (plusp shortfall) 
+				(list nil :width shortfall :background color)))
+		      (line (if spacer (append label (list spacer))
+				      label)))
+		   (render-formatted-line line x y :destination dest))))))))
+
+(defvar *default-cell-label* '((" DEF ")))
+
+(define-method get-label cell ()
+  (when label 
+    (etypecase label
+      (string (list (list label)))
+      (list label))))
+(define-method in-category cell (category) 
+  "Return non-nil if this cell is in the specified CATEGORY.
+
+Cells may be placed into categories that influence their processing by
+the engine. The field `^categories' is a set of keyword symbols; if a
+symbol `:foo' is in the list, then the cell is in the category `:foo'.
+
+Although a game built on IOFORMS can define whatever categories are
+needed, certain base categories are built-in and have a fixed
+interpretation:
+
+ -    :actor --- This cell is active and may be controlled by either the
+      user or the CPU. Only actor cells receive `:run' messages
+      every turn. Other cells are purely `reactive'. Actor
+      cells participate in the Action Points system.
+ -    :target --- This cell is susceptible to targeting.
+ -    :proxy --- This cell is a proxy for another cell.
+ -    :drawn --- This cell has a (draw) method used for custom drawing.
+ -    :proxied  --- This cell is an occupant of a proxy.
+ -    :dead --- This cell is no longer receiving run messages.
+ -    :player --- Only one cell (your player avatar) has this category.
+ -    :enemy --- This cell is playing against you.
+ -    :exclusive --- Prevent some objects from stacking. See also the method `drop-cell' in worlds.lisp
+ -    :obstacle --- Blocks movement and causes collisions
+ -    :pushable --- Can be pushed by impacts.
+ -    :ephemeral --- This cell is not preserved when exiting a world.
+ -    :combining --- This cell automatically combines units with other cells in a container.
+ -    :light-source --- This object casts light. 
+ -    :opaque --- Blocks line-of-sight, casts shadows. 
+ -    :container --- This cell contains other cells, and has an ^inventory field
+ -    :contained ---  This cell is contained in another cell (i.e. not in open space on the map)
+ -    :item --- A potential inventory item. 
+ -    :equipper --- Uses equipment. 
+ -    :equipped --- This item is currently equipped.
+ -    :equipment --- This item can be equipped. 
+"
+  (member category ^categories))
 
 (define-prototype gcell
     (:parent =cell=
@@ -111,28 +234,28 @@ Sprites are also based on cells. See `defsprite'.")
 
 (define-method compute gcell () nil)
     
-(define-method set gcell (field value)
+(define-method set-data gcell (field value)
   (setf (field-value field self) value))
 
-(define-method get gcell ()
+(define-method get-data gcell ()
   (object-name (object-parent self)))
 
-(define-method print gcell ()
+(define-method print-data gcell ()
   "")
 
-(define-method read gcell (text)
+(define-method read-data gcell (text)
   (read-from-string text))
 
 (define-method is-located gcell ()
   "Returns non-nil if this cell is located somewhere on the grid."
-  (or (and (integerp <row>) (integerp <column>))))
+  (or (and (integerp ^row) (integerp ^column))))
 
 (define-method dislocate gcell ()
   "Remove any location data from the cell."
-  (when (integerp <row>)
-    (setf <row> nil <column> nil))
-  (when (integerp <x>)
-    (setf <x> nil <y> nil)))
+  (when (integerp ^row)
+    (setf ^row nil ^column nil))
+  (when (integerp ^x)
+    (setf ^x nil ^y nil)))
     
 ;;; Convenience macro for defining gcells:
 
@@ -148,8 +271,8 @@ gcells."
 (define-method describe gcell (&optional description)
   "Narrate a description of the object. By default, uses
 the :description field of the cell."
-  (/emote self (get-some-object-name self) :timeout 5.0))
-  ;; (setf description (or description <description>))
+  (emote self (get-some-object-name self) :timeout 5.0))
+  ;; (setf description (or description ^description))
   ;; (when (stringp description)
   ;;   (dolist (line (split-string-on-lines description))
       
@@ -208,10 +331,10 @@ You must provide at least a :base value."
   (assert (numberp base))
   (list :base base :min min :max max :delta delta :unit unit))
 
-;;; Pushing stuff; let the cell decide whether to move
+;; ;;; Pushing stuff; let the cell decide whether to move
 
-(define-method push gcell (direction)
-  nil)
+;; (define-method push gcell (direction)
+;;   nil)
 
 ;;; Run method
 
@@ -221,16 +344,16 @@ You must provide at least a :base value."
 ;;; Action Points
 
 (define-method get-actions gcell ()
-  <actions>)
+  ^actions)
 
 (define-method is-actor gcell ()
   "Return non-nil if this cell is an actor. Actor cells receive a :run
 message every frame."
-  (member :actor <categories>))
+  (member :actor ^categories))
 
 (define-method is-player gcell ()
   "Return non-nil if this is the player."
-  (member :player <categories>))
+  (member :player ^categories))
 
 (defvar *action-points-over-p* nil 
   "When non-nil, ignore action points limit.")
@@ -241,7 +364,7 @@ message every frame."
   "Give the cell its allotment of action points to begin a phase.
 If the last action of the previous turn brought the AP score into the
 negative, then you'll come up that much short."
-  (incf <action-points> (/stat-value self :speed)))
+  (incf ^action-points (stat-value self :speed)))
 
 (define-method do-phase gcell ()
   "Invoked once at the beginning of each phase.")
@@ -263,7 +386,7 @@ points, its phase ends and another cell's phase begins.
 
 `Action points' (or `AP') control an actor cell's ability to take
 actions during a phase. The AP score for a cell's phase starts at
- (/stat-value cell :speed). The AP cost of an action is determined by
+ (stat-value cell :speed). The AP cost of an action is determined by
 the corresponding method's use of `expend-action-points'; see below. 
 
 First your turn comes up, and IOFORMS waits for your input.  Once you
@@ -278,207 +401,207 @@ or :narrator instead of direct references to objects; the world
 processes the messages before delivery and sends them to the right
 place. (See also worlds.lisp)
 "
-  (when (and (not (/in-category self :dead))
-	     (< <phase-number> phase)
-	     (plusp <action-points>))
-    (incf <phase-number>)))
+  (when (and (not (in-category self :dead))
+	     (< ^phase-number phase)
+	     (plusp ^action-points))
+    (incf ^phase-number)))
   
 (define-method expend-action-points gcell (points &optional min)
   "Expend POINTS action points, possibly going into the negative."
-  (decf <action-points> points)
+  (decf ^action-points points)
   (when (numberp min)
-    (setf <action-points> (max min <action-points>))))
+    (setf ^action-points (max min ^action-points))))
 
 (define-method expend-default-action-points gcell ()
-  (/expend-action-points self (/stat-value self :default-cost)))
+  (expend-action-points self (stat-value self :default-cost)))
 
 (define-method end-phase gcell ()
   "End this cell's phase."
-  (setf <phase-number> (/get-phase-number *world*)))
+  (setf ^phase-number (get-phase-number *world*)))
 
-(define-method step-on-current-square gcell ()
-  "Send :step events to all the cells on the current square."
-  (when <stepping>
-    (do-cells (gcell (/grid-location *world* <row> <column>))
-      (unless (eq cell self) 
-	(/step cell self)))))
+;; (define-method step-on-current-square gcell ()
+;;   "Send :step events to all the cells on the current square."
+;;   (when ^stepping
+;;     (do-cells (gcell (grid-location *world* ^row ^column))
+;;       (unless (eq cell self) 
+;; 	(on-step cell self)))))
 
-(define-method step gcell (stepper)
+(define-method on-step gcell (stepper)
   "Respond to being stepped on by the STEPPER."
   (declare (ignore stepper)))
 
 (define-method is-light-source gcell ()
   "Returns non-nil if this cell is a light source."
-  (/in-category self :light-source))
+  (in-category self :light-source))
 
 ;;; Containers
 
-;; An object's <inventory> field is a vector. Each position of the
+;; An object's ^inventory field is a vector. Each position of the
 ;; vector holds either a cell object or nil. The number of available
-;; slots is stored in the <max-items> field. When an item is added to
+;; slots is stored in the ^max-items field. When an item is added to
 ;; an inventory, the first open slot is used. 
 ;; TODO allow arbitrary placement
 
 (define-method make-inventory gcell ()
-  "Create an empty <inventory> of length <max-items>."
-  (setf <inventory> (make-array (/get-max-items self)
+  "Create an empty ^inventory of length ^max-items."
+  (setf ^inventory (make-array (get-max-items self)
 				:initial-element nil
 				:adjustable nil)))
 
 (define-method make-equipment gcell ()
   "Create an empty equipment property list."
-  (setf <equipment> (mapcon #'(lambda (slot)
+  (setf ^equipment (mapcon #'(lambda (slot)
 				(list slot nil))
-			    <equipment-slots>)))
+			    ^equipment-slots)))
 
 (define-method get-max-items gcell ()
   "Return the maximum number of items this container can hold."
-  (assert <max-items>)
-  (/stat-value self :max-items))
+  (assert ^max-items)
+  (stat-value self :max-items))
 
 (define-method set-container gcell (container)
   "Set the container pointer of this cell to CONTAINER.
 All contained cells maintain a pointer to their containers."
-  (setf <container> container))
+  (setf ^container container))
 
 (define-method is-container gcell ()
   "Returns non-nil if this cell is a container."
-  (/in-category self :container))
+  (in-category self :container))
 
 (define-method is-item gcell ()
   "Returns non-nil if this cell is a potential inventory item."
-  (/in-category self :item))
+  (in-category self :item))
 
 (define-method first-open-slot gcell ()
   "Return the integer position of the first open inventory slot, or
 nil if none."
-  (position nil <inventory>))
+  (position nil ^inventory))
 
 (define-method add-item gcell (item)
-  "Add the ITEM to the cell's <inventory>.
+  "Add the ITEM to the cell's ^inventory.
 Return the new integer position if successful, nil otherwise."
   ;; TODO check whether we can combine items
-  (let ((pos (/first-open-slot self)))
-    (when (and (numberp pos) (/in-category item :item))
+  (let ((pos (first-open-slot self)))
+    (when (and (numberp pos) (in-category item :item))
       (prog1 pos
-	(setf (aref <inventory> pos) item)
-	(/add-category item :contained)
-	(/set-container item self)))))
+	(setf (aref ^inventory pos) item)
+	(add-category item :contained)
+	(set-container item self)))))
       
 (define-method remove-item gcell (item)
-  "Remove ITEM from the <inventory>.
+  "Remove ITEM from the ^inventory.
 Return ITEM if successful, nil otherwise."
-  (let* ((pos (position item <inventory>)))
+  (let* ((pos (position item ^inventory)))
     (when pos
       (prog1 item
-	(setf (aref <inventory> pos) nil)
-	(/delete-category item :contained)
-	(/set-container item nil)))))
+	(setf (aref ^inventory pos) nil)
+	(delete-category item :contained)
+	(set-container item nil)))))
 
 (define-method item-at gcell (pos)
   "Return the item at inventory position POS."
-  (assert <inventory>)
-  (aref <inventory> pos))
+  (assert ^inventory)
+  (aref ^inventory pos))
 
 (define-method replace-item-at gcell (item pos)
   "Replace the inventory item at position POS with ITEM."
-  (setf (aref <inventory> pos) item))
+  (setf (aref ^inventory pos) item))
 
 (define-method weight gcell ()
   "Recursively calculate the weight of this cell."
   (let ((total 0)
-	(inventory <inventory>)
+	(inventory ^inventory)
 	(cell nil))
-    (if (/is-container self)
+    (if (is-container self)
 	;; recursively weigh the contents.
 	(progn
 	  (dotimes (n (length inventory))
 	    (setf gcell (aref inventory n))
 	    (when cell
-	      (incf total (/weight cell))))
+	      (incf total (weight cell))))
 	  total)
 	;; base case; just return the weight
-	(or <weight> 0))))
+	(or ^weight 0))))
 
 (define-method drop-item gcell (pos)
   "Drop the item at inventory position POS."
-  (let ((item (/item-at self pos)))
+  (let ((item (item-at self pos)))
     (when item
-      (/remove-item self item)
-      (/drop self item))))
+      (remove-item self item)
+      (drop self item))))
 
-;;  (/clear-location self))
+;;  (clear-location self))
 		       
-(define-method take gcell (&key (direction :here) index category)
-  "Take the item and return non-nil if successful."
-  (multiple-value-bind (cell row column)
-      (/find self :direction direction :index index :category category)
-    (when (and (/in-category cell :item)
-	       (/first-open-slot self))
-      (prog1 t
-	(/expend-default-action-points self)
-	(/delete-from-world cell)
-	(/add-item self cell)))))
+;; (define-method take gcell (&key (direction :here) index category)
+;;   "Take the item and return non-nil if successful."
+;;   (multiple-value-bind (cell row column)
+;;       (find self :direction direction :index index :category category)
+;;     (when (and (in-category cell :item)
+;; 	       (first-open-slot self))
+;;       (prog1 t
+;; 	(expend-default-action-points self)
+;; 	(delete-from-world cell)
+;; 	(add-item self cell)))))
 
-(define-method use gcell (user)
-  "Return non-nil if cell is used up and should disappear."
-  (declare (ignore user))
-  (prog1 nil
-    (/say self "Nothing happens.")))
+;; (define-method use gcell (user)
+;;   "Return non-nil if cell is used up and should disappear."
+;;   (declare (ignore user))
+;;   (prog1 nil
+;;     (say self "Nothing happens.")))
     
-(define-method resolve gcell (reference &optional category)
-  "Accept a REFERENCE to a cell, and try to get the real cell.
-The REFERENCE may be an object, one of the `*compass-directions*', an
-equipment slot keyword, or an integer denoting the nth inventory
-slot."
-  (etypecase reference
-    (keyword (if (member reference *compass-directions*)
-		 (/find self :direction reference :category category)
-		 (/equipment-slot self reference)))
-    (integer (/item-at self reference))
-    (ioforms:object reference)))
+;; (define-method resolve gcell (reference &optional category)
+;;   "Accept a REFERENCE to a cell, and try to get the real cell.
+;; The REFERENCE may be an object, one of the `*compass-directions*', an
+;; equipment slot keyword, or an integer denoting the nth inventory
+;; slot."
+;;   (etypecase reference
+;;     (keyword (if (member reference *compass-directions*)
+;; 		 (find-object self :direction reference :category category)
+;; 		 (equipment-slot self reference)))
+;;     (integer (item-at self reference))
+;;     (ioforms:object reference)))
 
-;;; Knowledge of objects
+;; ;;; Knowledge of objects
 
-;; TODO port and document knowledge code
+;; ;; TODO port and document knowledge code
 
-(defun some-name-of (ob)
-  (let ((name (if (has-field :name ob)
-		  (field-value :name ob)
-		  nil)))
-    (if (stringp name)
-	name
-	(progn
-	  (setf name (symbol-name (object-name (object-parent ob))))
-	  (subseq name (1+ (search "=" name))
-		  (search "=" name :from-end t))))))
+;; (defun some-name-of (ob)
+;;   (let ((name (if (has-field :name ob)
+;; 		  (field-value :name ob)
+;; 		  nil)))
+;;     (if (stringp name)
+;; 	name
+;; 	(progn
+;; 	  (setf name (symbol-name (object-name (object-parent ob))))
+;; 	  (subseq name (1+ (search "=" name))
+;; 		  (search "=" name :from-end t))))))
 
 ;;; Equipment
 
 (define-method is-equipment gcell ()
   "Return non-nil if this cell is a piece of equipment."
-  (/in-category self :equipment))
+  (in-category self :equipment))
 
 (define-method equipment-slot gcell (slot)
   "Return the equipment item (if any) in the slot named SLOT."
-  (assert (member slot <equipment-slots>))
-  (getf <equipment> slot))
+  (assert (member slot ^equipment-slots))
+  (getf ^equipment slot))
 
 (define-method equipment-match gcell (item)
   "Return a list of possible slots on which this cell could equip
 ITEM. Returns nil if no such match is possible."
-  (when (/is-equipment item)
-    (intersection <equipment-slots> 
+  (when (is-equipment item)
+    (intersection ^equipment-slots 
 		  (field-value :equip-for item))))
 
 (define-method add-equipment gcell (item &optional slot)
-  (let ((match (/equipment-match self item)))
-    (setf (getf <equipment> 
+  (let ((match (equipment-match self item)))
+    (setf (getf ^equipment 
 		(or slot (first match)))
 	  item)))
   		
 (define-method delete-equipment gcell (slot)
-  (setf (getf <equipment> slot) nil))
+  (setf (getf ^equipment slot) nil))
 
 ;; todo rewrite this and decouple the messaging
 
@@ -487,106 +610,106 @@ ITEM. Returns nil if no such match is possible."
     (error "Cannot resolve null reference during equipping."))
   ;; (unless (keywordp slot)
   ;;   (error "Cannot equip null slot---you must supply a keyword."))
-  (let ((item (/resolve self reference)))
+  (let ((item (resolve self reference)))
     (when item
-      (let* ((match (/equipment-match self item))
-	     (valid (/is-equipment item))
+      (let* ((match (equipment-match self item))
+	     (valid (is-equipment item))
 	     (slot2 (or slot (when match 
 			       (first match))))
 	     (open (when slot2
-		     (null (/equipment-slot self slot2)))))
+		     (null (equipment-slot self slot2)))))
 	(if (and valid match open)
 	    (progn 
-	      (/expend-default-action-points self)
-	      (/add-equipment self item)
-	      (/add-category item :equipped)
+	      (expend-default-action-points self)
+	      (add-equipment self item)
+	      (add-category item :equipped)
 	      ;; remove from inventory
-	      (/remove-item self item)
+	      (remove-item self item)
 	      (setf (field-value :equipper item) self)
-	      (when (and *message-queue* (/is-player self))
-		(/>>newline :narrator )))
+	      (when (and *message-queue* (is-player self))
+		(>>newline :narrator )))
 	    (progn
 	      ;; explain failure
-	      (when (and *message-queue* (/is-player self))
-		(/>>say :narrator "You cannot equip ")
-		(/>>print-object-tag :narrator item)
-		(/>>newline :narrator)
+	      (when (and *message-queue* (is-player self))
+		(>>say :narrator "You cannot equip ")
+		(>>print-object-tag :narrator item)
+		(>>newline :narrator)
 		(cond
 		  ((not valid) 
-		   (/>>say :narrator "This item is not a piece of equipment."))
+		   (>>say :narrator "This item is not a piece of equipment."))
 		  ((and match (not open))
-		   (/>>say :narrator "You must un-equip the ~A first." slot2))
+		   (>>say :narrator "You must un-equip the ~A first." slot2))
 		  ((not match)
-		   (/>>say :narrator "This can only be equipped in one of: ~A"
+		   (>>say :narrator "This can only be equipped in one of: ~A"
 			  (field-value :equip-for item)))))))))))
     
 (define-method dequip gcell (slot)
   ;; TODO document
   ;; TODO narration
-  (let ((item (getf <equipment> slot)))
+  (let ((item (getf ^equipment slot)))
     (when item
-      (/>>expend-default-action-points)
-      (/>>delete-equipment self slot)
-      (/>>add-item self item))))
+      (>>expend-default-action-points)
+      (>>delete-equipment self slot)
+      (>>add-item self item))))
 
 ;;; Combat
 
 (define-method attack gcell (target)
-  (if (null <attacking-with>)
-      (/>>say :narrator "No attack method specified.")
-      (let* ((weapon (/equipment-slot self <attacking-with>))
-	     (target-gcell (/resolve self target))
+  (if (null ^attacking-with)
+      (>>say :narrator "No attack method specified.")
+      (let* ((weapon (equipment-slot self ^attacking-with))
+	     (target-gcell (resolve self target))
 	     (target-name (field-value :name target-cell)))
 	(if (null weapon)
-	    (when (/is-player self)
-	      (/>>say :narrator "Cannot attack without a weapon in ~A." 
-		     <attacking-with>))
-	    (let* ((attack-cost (/stat-value weapon :attack-cost))
-		   (accuracy (/stat-value weapon :accuracy))
-		   (dexterity (/stat-value self :dexterity))
-		   (strength (/stat-value self :strength))
+	    (when (is-player self)
+	      (>>say :narrator "Cannot attack without a weapon in ~A." 
+		     ^attacking-with))
+	    (let* ((attack-cost (stat-value weapon :attack-cost))
+		   (accuracy (stat-value weapon :accuracy))
+		   (dexterity (stat-value self :dexterity))
+		   (strength (stat-value self :strength))
 		   (to-hit (< (random 100)
 			      (+ accuracy (* (random 10) (/ dexterity 2))))))
 	      (if to-hit
 		  ;; calculate and send damage
 		  (let ((damage (+ (truncate (/ strength 3))
-				   (/stat-value weapon :attack-power))))
-		    (/>>expend-action-points self attack-cost)
-		    (when (/is-player self)
-		      (/>>say :narrator "You do ~D points of damage on the ~A."
+				   (stat-value weapon :attack-power))))
+		    (>>expend-action-points self attack-cost)
+		    (when (is-player self)
+		      (>>say :narrator "You do ~D points of damage on the ~A."
 			     damage
 			     (get-some-object-name target-cell)))
-		    (/>>damage target-cell damage))
+		    (>>damage target-cell damage))
 		  (progn 
-		    (/>>expend-default-action-points self)
-		    (when (/is-player self)
-		      (/>>narrateln :narrator "You missed.")))))))))
+		    (>>expend-default-action-points self)
+		    (when (is-player self)
+		      (>>narrateln :narrator "You missed.")))))))))
   
 (define-method fire gcell (direction)
-  (let ((weapon (/equipment-slot self <firing-with>)))
+  (let ((weapon (equipment-slot self ^firing-with)))
     (if weapon
 	(progn 
-	  (/expend-action-points self (/stat-value weapon :attack-cost))
-	  (/fire weapon direction))
-	(/>>narrateln :narrator "Nothing to fire with."))))
+	  (expend-action-points self (stat-value weapon :attack-cost))
+	  (fire weapon direction))
+	(>>narrateln :narrator "Nothing to fire with."))))
 
 (define-method damage gcell (damage-points)
   (when (has-field :hit-points self)
     (progn 
-      (/stat-effect self :hit-points (- damage-points))
-      (when (zerop (/stat-value self :hit-points))
-	(/die self)))))
-      ;; (when (/is-player self)
-      ;; 	(/>>say :narrator "You take ~D hit points of damage." damage-points)))))
+      (stat-effect self :hit-points (- damage-points))
+      (when (zerop (stat-value self :hit-points))
+	(die self)))))
+      ;; (when (is-player self)
+      ;; 	(>>say :narrator "You take ~D hit points of damage." damage-points)))))
 	
 (define-method die gcell ()
   "Abandon this cell to the garbage collector."
-  (if (/in-category self :dead)
+  (if (in-category self :dead)
       (message "Warning: called die on dead cell!")
       (progn
-	(setf <action-points> 0)
-	(/add-category self :dead)
-	(/delete-from-world self))))
+	(setf ^action-points 0)
+	(add-category self :dead)
+	(delete-from-world self))))
 
 (define-method cancel gcell ()
   "This cell was scheduled for drop and possible loadout in a world,
@@ -594,25 +717,25 @@ but this was canceled. A canceled cell should update any global state
 to reflect its disappearance; this is different from a dying cell." nil)
 
 (define-method expend-energy gcell (amount)
-  (when (< amount (/stat-value self :energy))
+  (when (< amount (stat-value self :energy))
     (prog1 t
-      (/stat-effect self :energy (- amount)))))
+      (stat-effect self :energy (- amount)))))
 
 (defparameter *default-sample-hearing-range* 15)
 
 (define-method play-sound gcell (sample-name)
   "Play the sample SAMPLE-NAME.
 May be affected by the player's :hearing-range stat, if any."
-  (when (/get-player *world*)
-    (let* ((player (/get-player *world*))
+  (when (get-player *world*)
+    (let* ((player (get-player *world*))
 	   (range (if (has-field :hearing-range player)
 		      (field-value :hearing-range player)
 		      *default-sample-hearing-range*))
 	   (dist (multiple-value-bind (row col) 
-		     (/grid-coordinates self)
+		     (grid-coordinates self)
 		   (distance col row
-			     (/player-column *world*)
-			     (/player-row *world*)))))
+			     (player-column *world*)
+			     (player-row *world*)))))
       (when (> range dist)
 	(play-sample sample-name)))))
 
@@ -620,17 +743,17 @@ May be affected by the player's :hearing-range stat, if any."
   (play-music music-name :loop loop))
 
 (define-method distance-to-player gcell ()
-  (multiple-value-bind (r c) (/grid-coordinates self)
-    (/distance-to-player *world* r c)))
+  (multiple-value-bind (r c) (grid-coordinates self)
+    (distance-to-player *world* r c)))
 
 (define-method say gcell (format-string &rest args)
   "Print a string to the message narration window. Arguments
 are as with `format'."
-  (unless (/in-category self :dead)
+  (unless (in-category self :dead)
     (let ((range (if (has-field :hearing-range self)
-		     <hearing-range>
+		     ^hearing-range
 		     *default-sample-hearing-range*))
-	  (dist (/distance-to-player self)))
+	  (dist (distance-to-player self)))
       (when (> range dist)
 	(apply #'send-queue self :say :narrator format-string args)))))
 
@@ -648,27 +771,27 @@ are as with `format'."
 (define-method hit gcell (&optional other) nil)
 
 (define-method can-see-player gcell ()
-  (/line-of-sight *world* <row> <column> (/player-row *world*) (/player-column *world*)))
+  (line-of-sight *world* ^row ^column (player-row *world*) (player-column *world*)))
 
 (define-method can-see gcell (cell &optional category)
-  (/line-of-sight *world* <row> <column> (field-value :row cell) (field-value :column cell) category))
+  (line-of-sight *world* ^row ^column (field-value :row cell) (field-value :column cell) category))
 
 (define-method can-see-* gcell (r c &optional category)
-  (/line-of-sight *world* <row> <column> r c category))
+  (line-of-sight *world* ^row ^column r c category))
 
 ;;; User Interaction with keyboard and mouse
 
 (define-method select gcell ()
-  (/describe self))
+  (describe self))
 
 ;;; The asterisk cell is a wildcard
 
 (define-prototype asterisk (:parent =cell=)
-  (tile :initform ".asterisk")
+  (tile :initform "asterisk")
   (name :initform "Command"))
 
 (define-prototype gray-asterisk (:parent =cell=)
-  (tile :initform ".gray-asterisk")
+  (tile :initform "gray-asterisk")
   (name :initform "System"))
 
 ;;; Popup text balloons
@@ -678,19 +801,19 @@ are as with `format'."
   (auto-loadout :initform t)
   text stroke-color background-color timeout following scale)
 
-(define-method initialize balloon (&key text (stroke-color ".white") (background-color ".gray30")
+(define-method initialize balloon (&key text (stroke-color "white") (background-color "gray30")
 					(style :balloon) (timeout nil) name tile description following
 					(scale 1))
-  (setf <text> text) 
-  (when following (setf <following> following))
-  (when tile (setf <tile> tile))
-  (when name (setf <name> name))
-  (when description (setf <description> description))
-  (setf <stroke-color> stroke-color)
-  (setf <background-color> background-color)
-  (setf <style> style)
-  (setf <scale> scale)
-  (setf <timeout> (if (floatp timeout)
+  (setf ^text text) 
+  (when following (setf ^following following))
+  (when tile (setf ^tile tile))
+  (when name (setf ^name name))
+  (when description (setf ^description description))
+  (setf ^stroke-color stroke-color)
+  (setf ^background-color background-color)
+  (setf ^style style)
+  (setf ^scale scale)
+  (setf ^timeout (if (floatp timeout)
 		      ;; specify in (roughly) seconds if floating
 		      (truncate (/ (* timeout 1000)
 				   ioforms:*dt*))
@@ -713,8 +836,8 @@ are as with `format'."
 	     (width (+ (* 2 margin) (apply #'max (mapcar #'formatted-line-width text)))))
 	(when (eq style :balloon)
 	  (draw-box x1 y1 width height 
-		    :stroke-color <stroke-color>
-		    :color <background-color>
+		    :stroke-color ^stroke-color
+		    :color ^background-color
 		    :destination image))
 	(draw-line x0 y0 x1 y1 :destination image)
 	(let ((x2 (+ margin x1))
@@ -724,14 +847,14 @@ are as with `format'."
 	    (incf y2 (formatted-line-height line))))))))
 
 (define-method run balloon ()
-  (/expend-default-action-points self)
-  (when <following>
-    (multiple-value-bind (r c) (/grid-coordinates <following>)
+  (expend-default-action-points self)
+  (when ^following
+    (multiple-value-bind (r c) (grid-coordinates ^following)
       ;; follow emoter
-      (/move-to self :space r c)))
-  (when (integerp <timeout>)
-    (when (minusp (decf <timeout>))
-      (/die self))))
+      (move-to self :space r c)))
+  (when (integerp ^timeout)
+    (when (minusp (decf ^timeout))
+      (die self))))
 
 (define-method emote gcell (text &key (timeout 8.0) (style :clear))
   (let* ((ftext (if (stringp text) (list (list (list text)))
@@ -741,10 +864,10 @@ are as with `format'."
 			:scale 2)))
     ;; get rid of any previous balloons first
     (multiple-value-bind (row column)
-	(/grid-coordinates self)
-      (/delete-category-at *world* row column :balloon))
+	(grid-coordinates self)
+      (delete-category-at *world* row column :balloon))
     ;; drop it
-    (/drop self balloon)))
+    (drop self balloon)))
 
 ;;; Sprite specials; editor placeholders for sprites.
 
@@ -757,24 +880,24 @@ are as with `format'."
   (sprite-name :initform nil)
   (categories :initform '(:actor :drawn)))
 
-(define-method set sprite-special (value)
+(define-method set-data sprite-special (value)
   (assert (symbolp value))
-  (setf <sprite-name> value))
+  (setf ^sprite-name value))
 
 (define-method draw sprite-special (x y image)
   (with-fields (sprite-name) self
     (let ((im (if (and sprite-name (has-field :image (symbol-value sprite-name)))
 		  (field-value :image (symbol-value sprite-name))
-		  ".asterisk")))
+		  "asterisk")))
       (draw-resource-image im x y :destination image))))
 
 (define-method run sprite-special ()
   (with-fields (sprite-name) self
     (when sprite-name
-      (/drop-sprite self (clone (symbol-value sprite-name)))
-      (/die self))))
+      (drop-sprite self (clone (symbol-value sprite-name)))
+      (die self))))
 		     
 ;; (define-method run sprite-special ()
-;;   (/die self))
+;;   (die self))
 
 ;;; gcells.lisp ends here

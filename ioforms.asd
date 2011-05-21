@@ -18,25 +18,19 @@
 	       :lispbuilder-sdl-image 
 	       :lispbuilder-sdl-gfx
 	       :lispbuilder-sdl-ttf
-	       :lispbuilder-sdl-mixer)
+	       :lispbuilder-sdl-mixer
+	       :cl-opengl)
   :components ((:file "ioforms")
-	       (:file "prototypes")
-	       (:file "math")
 	       (:file "rgb")
 	       (:file "keys")
+	       (:file "math")
+	       (:file "prototypes")
 	       (:file "console")
 	       (:file "blocks")
 	       (:file "widgets")
-	       (:file "system")
-	       (:file "viewport")
-	       (:file "cells")
-	       (:file "gcells")
-	       (:file "gsprites")
-	       (:file "mission")
-	       (:file "forms")
+	       (:file "things")
+	       (:file "logic")
 	       (:file "worlds")))
-;;	       (:file "dance")))
-;;	       (:file "library")))
 ;;	       (:file "path")
 	       
 	       

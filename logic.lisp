@@ -1,8 +1,8 @@
-;;; mission.lisp --- mission structure
+;;; logic.lisp --- procedural content generation tools
 
-;; Copyright (C) 2009  David O'Toole
+;; Copyright (C) 2009, 2010, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Commentary:
 
@@ -25,6 +25,48 @@
 ;;; Code:
 
 (in-package :ioforms)
+
+;;; Grammars
+
+;; Generate random sentences from context-free grammars, and then
+;; interpret them how you want. The "generate" function and its
+;; subfunctions are based on code written by Peter Norvig for his book
+;; "Paradigms of Artificial Intelligence Programming." There is more
+;; information at http://norvig.com/license.html
+
+(defvar *grammar* nil
+  "The current context-free grammar used for sentence generation.
+This is an association list of the form:
+
+    ((VARIABLE >> EXPANSIONS)
+     (VARIABLE >> EXPANSIONS)
+     ...)
+
+Where EXPANSIONS is a list of alternatives, each of which may be
+either (1) single symbols or (2) a list of symbols, representing
+concatenation.")
+
+(defun one-of (set)
+  (list (nth (random (length set)) set)))
+
+(defun left-hand-side (rule)
+  (first rule))
+
+(defun right-hand-side (rule)
+  (rest (rest rule)))
+
+(defun expansions (variable)
+  (right-hand-side (assoc variable *grammar*)))
+
+(defun generate (phrase)
+  "Generate a random phrase using the grammar in `*grammar*'."
+  (cond ((listp phrase)
+	 (apply #'append (mapcar #'generate phrase)))
+	((expansions phrase)
+	 (generate (one-of (expansions phrase))))
+	(t (list phrase))))
+
+;;; Goals
 
 (defstruct goal 
   name 
@@ -62,16 +104,16 @@
   variables)
 
 (define-method set-variable mission (var value)
-  (setf (gethash var <variables>) value))
+  (setf (gethash var ^variables) value))
 
 (define-method get-variable mission (var)
-  (gethash var <variables>))
+  (gethash var ^variables))
 
 (defun mission-variable-value (var-name)
-  (/get-variable *mission* var-name))
+  (get-variable *mission* var-name))
 
 (defun set-mission-variable-value (var-name value)
-  (/set-variable *mission* var-name value))
+  (set-variable *mission* var-name value))
 
 (defsetf mission-variable-value set-mission-variable-value)
 
@@ -103,8 +145,8 @@
 			 *universe*)))
     ;; this probably works better if you have already set up a universe.
     (setf *mission* self)
-    (/play universe :player player :address address)
-    (/do-prologue self)))
+    (play universe :player player :address address)
+    (do-prologue self)))
       
 (define-method do-prologue mission ())
 
@@ -133,8 +175,6 @@
 
 ;; The flow goes defmission, initialize, begin, win/lose, end
 
-;;; Grammars
-
 (defparameter *test-grammar* 
   '((mission >> (at location please goal+ in exchange for reward))
     (location >> mars zeta-base nebula-m corva-3)
@@ -150,36 +190,4 @@
     (money >> 10000 20000 30000 40000 50000)
     (part >> muon-pistol lepton-cannon ion-shield-belt)))
 
-(defvar *grammar* *test-grammar*
-  "The current context-free grammar used for sentence generation.
-This is an association list of the form:
-
-    ((VARIABLE >> EXPANSIONS)
-     (VARIABLE >> EXPANSIONS)
-     ...)
-
-Where EXPANSIONS is a list of alternatives, each of which may be
-either (1) single symbols or (2) a list of symbols, representing
-concatenation.")
-
-(defun one-of (set)
-  (list (nth (random (length set)) set)))
-
-(defun left-hand-side (rule)
-  (first rule))
-
-(defun right-hand-side (rule)
-  (rest (rest rule)))
-
-(defun expansions (variable)
-  (right-hand-side (assoc variable *grammar*)))
-
-(defun generate (phrase)
-  "Generate a random phrase using the grammar in `*grammar*'."
-  (cond ((listp phrase)
-	 (apply #'append (mapcar #'generate phrase)))
-	((expansions phrase)
-	 (generate (one-of (expansions phrase))))
-	(t (list phrase))))
-
-;;; mission.lisp ends here
+;;; logic.lisp ends here

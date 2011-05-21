@@ -1,8 +1,8 @@
-;;; standard.lisp --- default startup splash screen and menu
+;;; mikmod.lisp --- cffi interface to mikmod
 
-;; Copyright (C) 2008  David O'Toole
+;; Copyright (C) 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole ^dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,25 +16,16 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
 ;;; Commentary:
 
+;; http://mikmod.raphnet.net/doc/libmikmod-3.1.10/docs/mikmod.html
+;; http://common-lisp.net/project/cffi/
+
 ;;; Code:
 
-(eval-when (:execute :load-toplevel :compile-toplevel) 
-  (require :xe2))
+(in-package :ioforms)
 
-(defpackage :xe2-standard
-  (:documentation "A default startup splash screen and menu for XE2.")
-  (:use :xe2 :common-lisp)
-  (:export xe2-standard))
 
-(in-package :xe2-standard)
-
-(defun xe2-standard ()
-  (message "Loading standard resources..."))
-
-(xe2-standard)
-
-;;; standard.lisp ends here
+;;; mikmod.lisp ends here
