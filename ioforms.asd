@@ -18,7 +18,8 @@
 	       :lispbuilder-sdl-image 
 	       :lispbuilder-sdl-gfx
 	       :lispbuilder-sdl-ttf
-	       :lispbuilder-sdl-mixer)
+	       :lispbuilder-sdl-mixer
+	       :cl-opengl)
   :components ((:file "ioforms")
 	       (:file "rgb")
 	       (:file "keys")

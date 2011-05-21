@@ -117,7 +117,7 @@ cells."
   (drop-cell *world* self r c))
 
 (define-method move-to cell (x y &optional z)
-  (assert (and (integerp x) (integerp y)))
+  (assert (and (numberp x) (numberp y)))
   (with-field-values (grid-size) *world*
     (let ((nearest-row (round y grid-size))
 	  (nearest-column (round x grid-size)))
@@ -203,9 +203,10 @@ world, and collision detection is performed between sprites and cells.")
 ;;; Sprite movement
 
 (define-method move-to sprite (x y &optional z)
-  (assert (and (integerp x) (integerp y)))
+  (assert (and (numberp x) (numberp y)))
   (setf ^x x ^y y)
   (when (numberp z)
+    (assert (numberp z))
     (setf ^z z)))
 
 (define-method move-to-grid sprite (row column)
@@ -315,10 +316,10 @@ world, and collision detection is performed between sprites and cells.")
 
 ;;; Object dropping
 
-(define-method drop sprite (cell &optional (delta-row 0) (delta-column 0))
-  (multiple-value-bind (r c)
-      (grid-coordinates self)
-    (drop-cell *world* cell (+ r delta-row) (+ c delta-column))))
+;; (define-method drop sprite (cell &optional (delta-row 0) (delta-column 0))
+;;   (multiple-value-bind (r c)
+;;       (grid-coordinates self)
+;;     (drop-cell *world* cell (+ r delta-row) (+ c delta-column))))
 
 ;;; Playing a sound
 

@@ -81,6 +81,7 @@
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
   (z :initform 0 :documentation "Integer Z coordinate of this block's position.")
+  (blend :initform :alpha)
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
@@ -685,6 +686,7 @@ override all colors."
 ;; 		(draw block image))))))))
 
 (define-method draw block ()
+  (set-blending-mode ^blend)
   (with-fields (image x y) self
     (when image
       (draw-image image x y))))

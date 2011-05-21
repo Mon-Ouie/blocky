@@ -52,8 +52,8 @@ So 2d6+2 would be (roll 2 6 2)."
 
 (defvar *compass-directions* (list :north :south :east :west
 				   :northeast :southeast
-				   :northwest :southwest :here)
-  "List of keywords representing the eight compass directions, plus :here.")
+				   :northwest :southwest)
+  "List of keywords representing the eight compass directions.")
 
 (defvar *compass-opposites* (list :north :south
 				  :south :north
@@ -87,17 +87,20 @@ opposites.")
     :west :northwest
     :northwest :north))
 
+(defun left-turn (direction)
+  (getf *left-turn* direction))
+
+(defun right-turn (direction)
+  (getf *right-turn* direction))
+
 (defun opposite-direction (direction)
   "Return the direction keyword that is the opposite direction from
 DIRECTION."
   (getf *compass-opposites* direction))
 
-(defun random-direction (&optional not-here)
-  (let ((directions (if not-here
-			(remove :here *compass-directions*)
-			*compass-directions*)))
-    (nth (random (length directions))
-	 directions)))
+(defun random-direction ()
+  (nth (random (length *compass-directions*))
+       *compass-directions*))
 
 (defun step-in-direction (row column direction &optional (n 1))
   "Return the point ROW, COLUMN moved by n squares in DIRECTION."

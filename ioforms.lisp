@@ -67,13 +67,13 @@
 	   transform-method-body roll-under make-stat =formatter=
 	   make-universe initialize-colors *standard-categories*
 	   *left-turn* bind-event *right-turn* *default-action-points*
-	   =world= roll bind-event-to-method *colors*
-	   enable-classic-key-repeat disable-classic-key-repeat
-	   get-color =prompt= =menu-item= =direction-chooser=
-	   define-method *default-font* field-value set-field-value
-	   object-fields dispatch-event run-project
-	   *user-init-file-name* distance icon-resource icon-image
-	   *compass-directions* *compass-opposites*
+	   left-turn right-turn =world= roll bind-event-to-method
+	   *colors* enable-classic-key-repeat
+	   disable-classic-key-repeat get-color =prompt= =menu-item=
+	   =direction-chooser= define-method *default-font*
+	   field-value set-field-value object-fields dispatch-event
+	   run-project *user-init-file-name* distance icon-resource
+	   icon-image *compass-directions* *compass-opposites*
 	   find-resource-property compose-blank-fields font-width
 	   font-height *browser* browser set-browser find-object
 	   *windows* transform-field-reference defblock
@@ -109,16 +109,17 @@
 	   opposite-direction object-address-string object
 	   step-in-direction direction-to =cell= plasma-rect
 	   subdivide-rect render-plasma add-hook run-hook queue-tail
-	   make-resource-link save-resource save-project *defined-resources*
-	   save-everything *export-formats* export-archive defresource
-	   export-application export-project make-queue queue unqueue
-	   queue-message queued-messages-p unqueue-message send-queue
-	   field-value random-direction random-choose *resources*
+	   make-resource-link save-resource save-project
+	   *defined-resources* save-everything *export-formats*
+	   export-archive defresource export-application
+	   export-project make-queue queue unqueue queue-message
+	   queued-messages-p unqueue-message send-queue field-value
+	   random-direction random-choose *resources*
 	   load-font-resource save-object-resource /parent/initialize
 	   parent/initialize /queue/initialize queue/initialize
 	   draw-string-solid read-iof initialize-resource-table
 	   percent-of-time render-formatted-paragraph
-	   make-formatted-string draw-string-shaded blend
+	   make-formatted-string draw-string-shaded set-blending-mode 
 	   render-formatted-string render-formatted-line resource
 	   font-text-extents write-sexp-to-file with-message-sender
 	   *message-sender* =textbox= read-sexp-from-file with-fields
