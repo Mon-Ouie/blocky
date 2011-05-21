@@ -321,6 +321,10 @@ world, and collision detection is performed between sprites and cells.")
 ;;       (grid-coordinates self)
 ;;     (drop-cell *world* cell (+ r delta-row) (+ c delta-column))))
 
+(define-method drop sprite (thing &optional (delta-x 0) (delta-y 0))
+  (with-field-values (x y z) self
+    (drop-sprite *world* thing (+ x delta-x) (+ y delta-y))))
+
 ;;; Playing a sound
 
 (define-method play-sound cell (sample-name)

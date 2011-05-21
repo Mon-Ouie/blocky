@@ -1,8 +1,7 @@
-* TODO revamp how cell FOO-coordinates methods get the grid size
-
 * Sweep snake trail across multiplying particles in 3 reactor chambers
+** TODO default-keybindings as an initform 
 ** trail upgrade
-** hot areas that drain HP
+** drifting hot rad areas that drain HP
 ** instakill spots
 ** enemies?
 ** implement turtle graphics
@@ -10,20 +9,19 @@
 
 * ALPHA 1
 *** TODO blocks should no longer draw onto sdl:*default-surface*
-*** Consider removing "held-keys" feature
-*** Consider merging "schema" into field declaration marking which fields are "arguments". get rid of the explicit "arguments" field
-*** Browseable interface (zoom down into blocks, showing wider view w more help
+*** TODO Consider removing "held-keys" feature
+*** TODO Consider merging "schema" into field declaration marking which fields are "arguments". get rid of the explicit "arguments" field
+*** TODO interface (zoom down into blocks, showing wider view w more help
 *** TODO [#A] open a window and do something
-* TODO [#B] watch farbrausch video presentations
 * ALPHA 2
-* TODO fix world edge conditions in MOVE
-* TODO add vecto support and other prox texture stuff
-* TODO Add more documentation
-* TODO fix event list format docstrings
-* TODO [#B] Get visual language builder working
-** TODO [#A] merge "schema" field into prototypes.lisp field descriptors
-** TODO [#B] (defmacro define 
-** TODO [#C] allow (setf (^field object) value) ??
-* TODO add documentation and HOWTO
+* TODO Add more documentation for user-visible API things
+* TODO [#A] Get visual language builder working
+** TODO merge "schema" field into prototypes.lisp field descriptors
+** TODO (defmacro define 
+** TODO allow (setf (^field object) value) ??
+* TODO [#B] fix event list format docstrings
+* TODO [#B] watch farbrausch video presentations
+* TODO [#C] fix world edge conditions in MOVE
+* TODO [#C] add vecto support and other prox texture stuff
 * TODO BETA RELEASE: GUI stuff
 ** TODO INVADER TACTICS remake

@@ -501,12 +501,7 @@ non-nil, the :loadout method is invoked on the sprite after
 placement."
   (assert (eq :sprite (field-value :type sprite)))
   (add-sprite self sprite)
-  (move-to sprite :pixels x y)
-  (when (or loadout (field-value :auto-loadout sprite))
-    (loadout sprite))
-  (unless no-collisions
-    ;; TODO do collision test
-    nil))
+  (move-to sprite x y))
 
 (define-method drop-cell world (cell row column 
 				     &optional &key 
