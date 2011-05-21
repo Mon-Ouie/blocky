@@ -729,7 +729,7 @@ display."
 	     (restartably	
 	       (gl:clear :color-buffer-bit)
 	       (gl:enable :texture-2d :blend)	
-	       (blend :alpha)
+	       (blend :add)
 	       (draw-blocks)
 	       (gl:flush)
 	       (sdl:update-display))))))
@@ -1191,8 +1191,9 @@ also the documentation for DESERIALIZE."
 
 (defun blend (mode)
   (ecase mode 
-    (:additive (gl:blend-func :one :one))
-    (:alpha    (gl:blend-func :src-alpha :one-minus-src-alpha))))
+    (:add (gl:blend-func :src-alpha :one))
+    (:add2 (gl:blend-func :one :one))
+    (:alpha (gl:blend-func :src-alpha :one-minus-src-alpha))))
 
 (defun load-texture (surface)
   (let ((texture (car (gl:gen-textures 1))))
@@ -1859,7 +1860,7 @@ of the music."
   (sdl:push-quit-event))
 
 (defvar *copyright-text*
-"IOFORMS Visual Common Lisp Multimedia Authoring Tool
+"Welcome to IOFORMS!
 Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 by David T O'Toole
 <dto@gnu.org> <dto1138@gmail.com>
 http://ioforms.org/

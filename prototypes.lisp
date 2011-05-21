@@ -609,6 +609,9 @@ was invoked."
 	 (declaration (when (and (listp (first body2))
 				 (eq 'declare (first (first body2))))
 			(first body2)))
+	 (declaration2 (append '(declare (ignorable self))
+			       (when declaration
+				 (rest declaration))))
 	 (prototype-special-name (make-special-variable-name prototype-name))
 	 (field-name (make-keyword method-name))
 	 (method-symbol-name (symbol-name method-name))
@@ -641,7 +644,7 @@ was invoked."
 	   ;; define the method's Lisp function
 	   (defun ,defun-symbol (self ,@arglist)
 	     ,@(if documentation (list documentation))
-	     ,declaration
+	     ,declaration2
 	     ,@(if declaration 
 		   (rest body2)
 		     body2))
@@ -660,7 +663,7 @@ was invoked."
 		 ,@(when documentation (list documentation))
 		 (apply #'send ,name self args))
 	       (export ',method-symbol)
-	       ;; for (foo bar baz...)
+	       ;; for (/foo bar baz...)
 	       (defun ,slash-defun-symbol (self &rest args)
 		 ,@(when documentation (list documentation))
 		 (apply #'send ,name self args))

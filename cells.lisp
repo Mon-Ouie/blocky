@@ -60,45 +60,34 @@ interpretation:
 
 ;;; Locating the cell in grid space
 
-(define-method set-grid-coordinates cell (r c)
-  "Set the row R and column C of the cell."
-  (setf ^row r ^column c))
-
 (define-method is-grid-located cell ()
   "Returns non-nil if this cell is located somewhere on the grid."
   (and (integerp ^row) (integerp ^column)))
-
-(define-method clear-location cell ()
-  "Remove any location data from the cell."
-  (when (integerp ^row)
-    (setf ^row nil ^column nil))
-  (when (integerp ^x)
-    (setf ^x nil ^y nil)))
 
 (define-method grid-coordinates cell ()
   (values ^row ^column))
 
 (define-method xy-coordinates cell ()
-  (values (* ^column (field-value :tile-size *world*))
-	  (* ^row (field-value :tile-size *world*))))
+  (values (* ^column (field-value :grid-size *world*))
+	  (* ^row (field-value :grid-size *world*))))
 
-(define-method viewport-coordinates cell ()
-  "Return as values X,Y the world coordinates of CELL."
-  (assert (and ^row ^column))
-  (get-viewport-coordinates (field-value :viewport *world*)
-                            ^row ^column))
+;; (define-method viewport-coordinates cell ()
+;;   "Return as values X,Y the world coordinates of CELL."
+;;   (assert (and ^row ^column))
+;;   (get-viewport-coordinates (field-value :viewport *world*)
+;;                             ^row ^column))
 
-(define-method image-coordinates cell ()
-  "Return as values X,Y the viewport image coordinates of CELL."
-  (assert (and ^row ^column))
-  (get-image-coordinates (field-value :viewport *world*)
-                         ^row ^column))
+;; (define-method image-coordinates cell ()
+;;   "Return as values X,Y the viewport image coordinates of CELL."
+;;   (assert (and ^row ^column))
+;;   (get-image-coordinates (field-value :viewport *world*)
+;;                          ^row ^column))
 
-(define-method screen-coordinates cell ()
-  "Return as values X,Y the screen coordinates of CELL."
-  (assert (and ^row ^column))
-  (get-screen-coordinates (field-value :viewport *world*)
-			  ^row ^column))
+;; (define-method screen-coordinates cell ()
+;;   "Return as values X,Y the screen coordinates of CELL."
+;;   (assert (and ^row ^column))
+;;   (get-screen-coordinates (field-value :viewport *world*)
+;; 			  ^row ^column))
 
 ;;; Convenience macro for defining cells.
 
@@ -116,10 +105,6 @@ cells."
 
 ;;; Cell movement
 
-(define-method set-grid-location cell (r c)
-  "Set the row R and column C of the cell."
-  (setf ^row r ^column c))
-
 (define-method move-to-grid cell (unit r c)
   (assert (member unit '(:space :spaces)))
   (delete-cell *world* self ^row ^column)
@@ -128,22 +113,20 @@ cells."
 (define-method play-sound cell (sample-name)
   (play-sample sample-name))
 
-(define-method move cell (direction &optional (distance 1) unit)
+(define-method move cell (direction &optional (distance 1) ignore-obstacles)
   "Move this cell one step in DIRECTION on the grid. If
 IGNORE-OBSTACLES is non-nil, the move will occur even if an obstacle
 is in the way. Returns non-nil if a move occurred."
-  (declare (ignore unit))
   (let ((world *world*))
     (multiple-value-bind (r c) 
-	(step-in-direction ^row ^column direction)
-      ;; 
+	(step-in-direction ^row ^column direction distance)
       (cond ((null (grid-location world r c)) ;; are we at the edge?
 	     ;; return nil because we didn't move
 	     (prog1 nil
 	     ;; edge conditions only affect player for now
 	       (when (is-player self)
 		 (ecase (field-value :edge-condition world)
-		   (:block (say self "You cannot move in that direction."))
+		   (:block nil)
 		   (:wrap nil) ;; TODO implement this for planet maps
 		   (:exit (exit *universe*))))))
 	    (t
@@ -151,12 +134,9 @@ is in the way. Returns non-nil if a move occurred."
 		       (not (obstacle-at-p *world* r c)))
 	       ;; return t because we moved
 	       (prog1 t
-;;		 (expend-action-points self (stat-value self :movement-cost))
-		 (move world self r c))))))))
-		 ;; (when ^stepping
-		 ;;   (step-on-current-square self)))))))))
+		 (move-cell world self r c))))))))
 
-(define-method do-collision cell (object)
+(define-method on-collide cell (object)
   "Respond to a collision detected with OBJECT."
   nil)
 
@@ -307,8 +287,9 @@ world, and collision detection is performed between sprites and cells.")
 	  ;; is left to right of other right?
 	  (< o-right x)))))
 
-(define-method do-collision sprite (object)
+(define-method on-collide sprite (object)
   "Respond to a collision detected with OBJECT."
+  (declare (ignore object))
   nil)
 
 (define-method save-excursion sprite ()

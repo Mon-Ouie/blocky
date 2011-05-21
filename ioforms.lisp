@@ -118,7 +118,7 @@
 	   parent/initialize /queue/initialize queue/initialize
 	   draw-string-solid read-iof initialize-resource-table
 	   percent-of-time render-formatted-paragraph
-	   make-formatted-string draw-string-shaded
+	   make-formatted-string draw-string-shaded blend
 	   render-formatted-string render-formatted-line resource
 	   font-text-extents write-sexp-to-file with-message-sender
 	   *message-sender* =textbox= read-sexp-from-file with-fields

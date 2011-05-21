@@ -1,21 +1,23 @@
-* TODO [#A] Port to CL-OPENGL
-** http://3bb.cc/tutorials/cl-opengl/
-** TODO sprites w/ texture support
-** TODO display bouncing textured sprites in a viewport!
-** TODO enable alpha blending and additive blending
-** TODO add vecto support
-* TODO "china syndrome" 2600 clone
-* TODO [#B] watch farbrausch video presentations
-* TODO [#B] MAKE A WORKING GAME, XOR 
+* TODO revamp how cell FOO-coordinates methods get the grid size
+
+* Sweep snake trail across multiplying particles in 3 reactor chambers
+** trail upgrade
+** hot areas that drain HP
+** instakill spots
+** enemies?
+** implement turtle graphics
+** L-systems procedural levels http://en.wikipedia.org/wiki/L-system
+
 * ALPHA 1
-*** TODO [#B] allow user to embed/generate IOF entries within Lisp (dont require IOF file)
-*** Consider removing *world* as a variable
 *** TODO blocks should no longer draw onto sdl:*default-surface*
 *** Consider removing "held-keys" feature
 *** Consider merging "schema" into field declaration marking which fields are "arguments". get rid of the explicit "arguments" field
 *** Browseable interface (zoom down into blocks, showing wider view w more help
 *** TODO [#A] open a window and do something
+* TODO [#B] watch farbrausch video presentations
 * ALPHA 2
+* TODO fix world edge conditions in MOVE
+* TODO add vecto support and other prox texture stuff
 * TODO Add more documentation
 * TODO fix event list format docstrings
 * TODO [#B] Get visual language builder working

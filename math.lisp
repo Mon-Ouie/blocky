@@ -92,9 +92,12 @@ opposites.")
 DIRECTION."
   (getf *compass-opposites* direction))
 
-(defun random-direction ()
-  (nth (random (length *compass-directions*))
-       *compass-directions*))
+(defun random-direction (&optional not-here)
+  (let ((directions (if not-here
+			(remove :here *compass-directions*)
+			*compass-directions*)))
+    (nth (random (length directions))
+	 directions)))
 
 (defun step-in-direction (row column direction &optional (n 1))
   "Return the point ROW, COLUMN moved by n squares in DIRECTION."

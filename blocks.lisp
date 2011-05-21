@@ -94,6 +94,10 @@ ARGS are field specifiers, as with `define-prototype'."
      (operation :initform ,(make-keyword name))
      ,@args))
 
+(define-method update block (&rest args)
+  "Update the simulation one step forward in time."
+  nil)
+
 (define-method pin block ()
   (setf ^pinned t))
 
@@ -235,6 +239,12 @@ areas.")
   (setf ^x x)
   (setf ^y y))
 
+(define-method move-toward block (direction &optional (steps 1))
+  (multiple-value-bind (y x)
+      (step-in-direction ^y ^x direction steps)
+    (setf ^y y 
+	  ^x x)))
+
 (define-method show block ()
   (setf ^visible t))
 
@@ -323,11 +333,6 @@ something else. See also `defblock' and `send'."
 those results as input."
   (execute-arguments self)
   (execute self))
-
-(define-method update block (&rest args)
-  "Update the simulation one step forward in time."
-  nil)
-;;  (mapc #'update ^arguments)) ;; TODO not by default
 
 (define-method describe block ()
   "Show name and comprehensive help for this block.")
@@ -464,29 +469,29 @@ of block."
 
 (defparameter *selection-color* "red")
 
-(define-method allocate-image block ()
-  (with-fields (image height width) self
-    (let ((oldimage image))
-      (when oldimage
-	(sdl:free oldimage))
-      (setf image (create-image width height)))))
+;; (define-method allocate-image block ()
+;;   (with-fields (image height width) self
+;;     (let ((oldimage image))
+;;       (when oldimage
+;; 	(sdl:free oldimage))
+;;       (setf image (create-image width height)))))
 
-(define-method resize-image block (&key height width)
-  "Allocate an image buffer of HEIGHT by WIDTH pixels.
-If there is no existing image, one of HEIGHT x WIDTH pixels is created
-and stored in ^IMAGE. If there is an existing image, it is only
-resized when the new dimensions differ from the existing image."
-  (assert (and (integerp width) (integerp height)))
-  (with-fields (image) self
-    (if (null image)
-	(progn (setf ^width width
-		     ^height height)
-	       (allocate-image self))
-	(when (not (and (= ^width width)
-			(= ^height height)))
-	  (setf ^width width
-		^height height)
-	  (when image (allocate-image self))))))
+;; (define-method resize-image block (&key height width)
+;;   "Allocate an image buffer of HEIGHT by WIDTH pixels.
+;; If there is no existing image, one of HEIGHT x WIDTH pixels is created
+;; and stored in ^IMAGE. If there is an existing image, it is only
+;; resized when the new dimensions differ from the existing image."
+;;   (assert (and (integerp width) (integerp height)))
+;;   (with-fields (image) self
+;;     (if (null image)
+;; 	(progn (setf ^width width
+;; 		     ^height height)
+;; 	       (allocate-image self))
+;; 	(when (not (and (= ^width width)
+;; 			(= ^height height)))
+;; 	  (setf ^width width
+;; 		^height height)
+;; 	  (when image (allocate-image self))))))
 
 (defmacro with-block-drawing (image &body body)
   "Run BODY forms with drawing primitives set to draw on IMAGE.
@@ -694,16 +699,16 @@ override all colors."
 	      :destination image))
   (draw-contents self image))
 
-(define-method hit block (mouse-x mouse-y)
-  "Return this block (or child block) if the coordinates MOUSE-X and
-MOUSE-Y identify a point inside the block (or child block.)"
-  (with-fields (x y width height arguments) self
-    (when (within-extents mouse-x mouse-y x y
-			  (+ x width) (+ y height))
-      (labels ((hit (block)
-		 (/hit block mouse-x mouse-y)))
-	(let ((child (some #'hit arguments)))
-	  (values (or child self) (when child (/position child))))))))
+(define-method hit block (mouse-x mouse-y))
+;;   "Return this block (or child block) if the coordinates MOUSE-X and
+;; MOUSE-Y identify a point inside the block (or child block.)"
+;;   (with-fields (x y width height arguments) self
+;;     (when (within-extents mouse-x mouse-y x y
+;; 			  (+ x width) (+ y height))
+;;       (labels ((hit (block)
+;; 		 (/hit block mouse-x mouse-y)))
+;; 	(let ((child (some #'hit arguments)))
+;; 	  (values (or child self) (when child (/position child))))))))
 
 (define-method accept block (other-block)
   (with-field-values (parent) self
