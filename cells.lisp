@@ -185,6 +185,18 @@ world, and collision detection is performed between sprites and cells.")
 (define-method die sprite ()
   (remove-sprite *world* self))
 
+;;; Sprite locations
+
+(define-method grid-coordinates sprite ()
+  (values (truncate (/ ^y (field-value :tile-size *world*)))
+	  (truncate (/ ^x (field-value :tile-size *world*)))))
+
+(define-method xy-coordinates sprite ()
+  (values ^x ^y))
+
+(define-method coordinates sprite ()
+  (values ^x ^y ^z))
+
 ;;; Sprite movement
 
 (define-method move-to sprite (x y &optional z)
@@ -205,10 +217,9 @@ world, and collision detection is performed between sprites and cells.")
       (assert (and y0 x0))
       (move-to self x0 y0))))
 
+;;; Collision detection
+
 (define-method collide sprite (sprite)
-  ;; (message "COLLIDING A=~S B=~S"
-  ;; 	   (object-name (object-parent self))
-  ;; 	   (object-name (object-parent sprite)))
   (let ((x0 (field-value :x sprite))
 	(y0 (field-value :y sprite))
 	(w (field-value :width sprite))
@@ -299,15 +310,7 @@ world, and collision detection is performed between sprites and cells.")
 (define-method undo-excursion sprite ()
   (move-to self ^saved-x ^saved-y ^saved-z))
 
-(define-method grid-coordinates sprite ()
-  (values (truncate (/ ^y (field-value :tile-size *world*)))
-	  (truncate (/ ^x (field-value :tile-size *world*)))))
-
-(define-method xy-coordinates sprite ()
-  (values ^x ^y))
-
-(define-method coordinates sprite ()
-  (values ^x ^y ^z))
+;;; Object dropping
 
 (define-method drop sprite (cell &optional (delta-row 0) (delta-column 0))
   (multiple-value-bind (r c)
