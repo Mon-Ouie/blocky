@@ -20,53 +20,25 @@
 
 (in-package :ioforms)
 
-(define-prototype world
-    (:parent =block=
-	     :documentation "An IOFORMS game world filled with cells and sprites.
-Worlds are the focus of the action in IOFORMS. A world is a 3-D grid of
-interacting cells. The world object performs the following tasks:
-
-  - Keeps track of a single player in a world of cells
-  - Receives command messages from the user
-  - Handles some messages, forwards the rest on to the player cell.
-  - Runs the CPU phase so that all non-player :actor cells get their turns
-  - Keeps track of lit squares 
-  - Performs collision detection for sprites and cells
-")
+(defblock world
   (name :initform nil :documentation "Name of the world.")
-  (paused :initform nil :documentation "Non-nil when the game is paused.")
   (description :initform "Unknown area." :documentation "Brief description of area.")
-  (background :initform nil
-	      :documentation "String name of image to use as background.")
-  (tile-size :initform 16 :documentation "Size in pixels of a grid tile.")
-  (modified :initform nil)
-  ;; cells 
+  ;; the invisible graph paper underlying our world of sprites
   (grid :documentation "A two-dimensional array of adjustable vectors of cells.")
-  (serialized-grid :documentation "A serialized sexp version.")
-  ;; forms processing
-  (variables :initform nil :documentation "Hash table mapping values to values, local to the form.")
-  ;; queueing 
-  (message-queue :initform (make-queue))
-  (categories :initform nil :documentation "The set of categories this world is in.")
+  (grid-size :initform 16 :documentation "Size of a grid tile in GL units; either height or width (they must be equal.)")
+  (grid-width :initform 16 :documentation "The width of the world map, measured in tiles.")
+  (grid-height :initform 16 :documentation "The height of the world map, measured in tiles.")
+  ;; a world-local dictionary
+  (variables :initform nil :documentation "Hash table mapping values to values, local to the current world.")
   ;; turtle graphics
   (grammar :initform '() :documentation "Context-free grammar for level generation.")
   (stack :initform '() :documentation "Stack for logo system.")
-  (row :initform 0)
-  (column :initform 0)
-  (direction :initform :east)
-  (paint :initform nil)
   ;;
-  (scale :initform '(1 m)
-	 :documentation "Scale per square side in the form (N UNIT) where UNIT is m, km, ly etc.")
   (player :documentation "The player cell (or sprite).")
-  (grid-width :initform 16 :documentation "The width of the world map, measured in tiles.")
-  (grid-height :initform 16 :documentation "The height of the world map, measured in tiles.")
   ;; sprite cells
   (sprites :initform nil :documentation "A list of sprites.")
   (sprite-grid :initform nil :documentation "Grid for collecting sprite collision information.")
   (sprite-table :initform (make-hash-table :test 'equal) :documentation "Hash table to prevent redundant collisions.")
-  ;; environment 
-  (environment-grid :documentation "A two-dimensional array of environment data cells.")
   ;; lighting 
   (automapped :initform nil :documentation "Show all previously lit squares.")
   (light-grid 
@@ -75,19 +47,18 @@ interacting cells. The world object performs the following tasks:
 At the moment, only 0=off and 1=on are supported.")
   (ambient-light :initform :total :documentation 
 		 "Radius of ambient visibility. :total means that lighting is turned off.")
-  ;; viewing
-  (viewport :initform nil :documentation "The viewport object.")
-  ;; space
+  ;; What happens when you hit the edge?
   (edge-condition :initform :exit
 		  :documentation "Either :block the player, :exit the world, or :wrap around.")
+  ;; Obsolete fields
   (exited :initform nil
 	  :documentation "Non-nil when the player has exited. See also `forward'.")
   (player-exit-row :initform 0)
   (player-exit-column :initform 0)
   ;; serialization
+  (serialized-grid :documentation "When non-nil, a serialized sexp version of the grid.")
   (excluded-fields :initform
-  '(:stack :paint :sprite-grid :sprite-table :narrator :browser :viewport :grid
-    :message-queue :player)))
+  '(:stack :sprite-grid :sprite-table :grid :player)))
 
 (define-method initialize world (&key grid-height grid-width name)
     (when grid-height (setf ^grid-height grid-height))
@@ -132,6 +103,31 @@ At the moment, only 0=off and 1=on are supported.")
   (coerce (grid-location self row column)
 	  'list))
 
+  
+(define-method create-grid world (&key grid-width grid-height)
+  "Initialize all the arrays for a world of GRID-WIDTH by GRID-HEIGHT cells."
+  (let ((dims (list grid-height grid-width)))
+    (let ((grid (make-array dims 
+		 :element-type 'vector :adjustable nil)))
+      ;; now put a vector in each square to represent the z-axis
+      (dotimes (i grid-height)
+	(dotimes (j grid-width)
+	  (setf (aref grid i j)
+		(make-array *default-world-z-size* 
+			    :adjustable t
+			    :fill-pointer 0))))
+      (setf ^grid grid
+	    ^grid-height grid-height
+	    ^grid-width grid-width))))
+
+(define-method create-default-grid world ()
+  "If grid-height and grid-width have been set in a world's definition,
+initialize the arrays for a world of the size specified there."
+  (if (and (numberp ^grid-width)
+	   (numberp ^grid-height))
+      (create-grid self :grid-width ^grid-width :grid-height ^grid-height)
+      (error "Cannot create default grid without grid-height and grid-width set.")))
+
 (define-method category-at-p world (row column category)
   "Returns non-nil if there is any cell in CATEGORY at ROW, COLUMN.
 CATEGORY may be a list of keyword symbols or one keyword symbol."
@@ -162,7 +158,8 @@ CATEGORY may be a list of keyword symbols or one keyword symbol."
 
 (define-method drop-cell world (cell row column)
   (vector-push-extend cell (aref ^grid row column))
-  (set-location cell row column))
+  (setf (field-value :row cell) row)
+  (setf (field-value :column cell) column))
 
 (define-method replace-cell world (cell new-cell row column
 					&optional &key loadout no-collisions)
@@ -170,15 +167,17 @@ CATEGORY may be a list of keyword symbols or one keyword symbol."
   (let* ((cells (grid-location self row column))
 	 (pos (position cell cells)))
     (if (numberp pos)
-	(setf (aref cells pos) new-cell)
+	(progn 
+	  (destroy (aref cells pos))
+	  (setf (aref cells pos) new-cell))
 	(error "Could not find cell to replace."))))
 
 (define-method replace-cells-at world (row column data)
-  "Destroy the cells at ROW, COLUMN, invoking CANCEL on each,
+  "Destroy the cells at ROW, COLUMN, invoking DESTROY on each,
 replacing them with the single cell (or vector of cells) DATA."
   (when (array-in-bounds-p ^grid row column)
     (do-cells (cell (aref ^grid row column))
-      (cancel cell))
+      (destroy cell))
     (setf (aref ^grid row column)
 	  (etypecase data
 	    (vector data)
@@ -214,17 +213,17 @@ replacing them with the single cell (or vector of cells) DATA."
 
 (define-method delete-category-at world (row column category)
   "Delete all cells in CATEGORY at ROW, COLUMN in the grid.
-The cells' :cancel method is invoked."
+The cells' :destroy method is invoked."
   (let* ((grid ^grid))
     ;; (declare (type (simple-array vector (* *)) grid)
     ;; 	     (optimize (speed 3)))
     (when (array-in-bounds-p grid row column)
       (setf (aref grid row column)
 	    (delete-if #'(lambda (c) (when (in-category c category)
-				       (prog1 t (cancel c))))
+				       (prog1 t (destroy c))))
 		       (aref grid row column))))))
  
-(define-method serialize world ()
+(define-method before-serialize world ()
   (with-field-values (grid-width grid-height) self
     (let ((grid ^grid)
 	  (sgrid (make-array (list grid-height grid-width) :initial-element nil :adjustable nil)))
@@ -237,7 +236,7 @@ The cells' :cancel method is invoked."
 	       (aref grid i j))))
       (setf ^serialized-grid sgrid))))
     
-(define-method deserialize world ()
+(define-method after-deserialize world ()
     (create-default-grid self)
     (with-field-values (grid-width grid-height grid serialized-grid) self
       (dotimes (i grid-height)
@@ -248,30 +247,6 @@ The cells' :cancel method is invoked."
 					     (aref grid i j))))
 	       (reverse (aref serialized-grid i j)))))
       (setf ^serialized-grid nil)))
-  
-(define-method create-grid world (&key grid-width grid-height)
-  "Initialize all the arrays for a world of GRID-WIDTH by GRID-HEIGHT cells."
-  (let ((dims (list grid-height grid-width)))
-    (let ((grid (make-array dims 
-		 :element-type 'vector :adjustable nil)))
-      ;; now put a vector in each square to represent the z-axis
-      (dotimes (i grid-height)
-	(dotimes (j grid-width)
-	  (setf (aref grid i j)
-		(make-array *default-world-z-size* 
-			    :adjustable t
-			    :fill-pointer 0))))
-      (setf ^grid grid
-	    ^grid-height grid-height
-	    ^grid-width grid-width))))
-
-(define-method create-default-grid world ()
-  "If grid-height and grid-width have been set in a world's definition,
-initialize the arrays for a world of the size specified there."
-  (if (and (numberp ^grid-width)
-	   (numberp ^grid-height))
-      (create-grid self :grid-width ^grid-width :grid-height ^grid-height)
-      (error "Cannot create default grid without grid-height and grid-width set.")))
 
 (define-method paste-region world (other-world dest-row dest-column source-row source-column source-grid-height source-grid-width 
 					       &optional deepcopy)
@@ -347,55 +322,12 @@ initialize the arrays for a world of the size specified there."
   "Returns non-nil when the cell SELF is in the category CATEGORY."
   (member category ^categories))
     
-(define-method pause world (&optional always)
-  "Toggle the pause state of the world."
-  (with-fields (paused) self
-    (setf paused (if (null paused)
-		     t (when always t)))
-    (if (null paused)
-	(narrateln ^narrator "Resuming game.")
-	(narrateln ^narrator "The game is now paused. Press Control-P or PAUSE to un-pause."))))
-
-(define-prototype environment
-    (:documentation "A cell giving general environmental conditions at a world location.")
-  (temperature :initform nil :documentation "Temperature at this location, in degrees Celsius.")
-  (radiation-level :initform nil :documentation "Radiation level at this location, in clicks.")
-  (oxygen :initform nil :documentation "Oxygen level, in percent.")
-  (pressure :initform nil :documentation "Atmospheric pressure, in multiples of Earth's.")
-  (overlay :initform nil 
-	   :documentation "Possibly transparent image overlay to be drawn at this location."))
-
-;; TODO define-method import-region (does not clone)
-
-(define-method resize-to-background world ()
-  (with-fields (background tile-size grid-height grid-width) self
-    (assert (stringp background))
-    (let ((image (find-resource-object background)))
-      (setf grid-height (truncate (/ (image-grid-height background) tile-size)))
-      (setf grid-width (truncate (/ (image-grid-width background) tile-size))))
-    (create-default-grid self)))
-
-(define-method location-name world ()
-  "Return the location name."
-  ^name)
-     
-(define-method environment-at world (row column)
-  (aref ^environment-grid row column))
-
-(define-method environment-condition-at world (row column condition)
-  (field-value condition (aref ^environment-grid row column)))
-
-(define-method set-environment-condition-at world (row column condition value)
-  (setf (field-value condition 
-		     (aref ^environment-grid row column))
-	value))
-
 ;;; LOGO-like level generation capabilities 
 
 ;; Use turtle graphics to generate levels! One may write turtle
 ;; programs by hand, or use context-free grammars to generate the
 ;; turtle commands, or generate them programmatically in other ways.
-;; See also grammars.lisp.
+;; See also logic.lisp.
 
 (defvar *default-z-depth* 16)
 

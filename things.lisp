@@ -1,4 +1,4 @@
-;;; cells.lisp --- defining in-game objects
+;;; things.lisp --- defining in-game objects
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
@@ -105,7 +105,10 @@ cells."
 ;;; Cell death
 
 (define-method die cell ()
+  (destroy self)
   (delete-cell *world* self ^row ^column))
+
+(define-method destroy cell ())
 
 ;;; Cell movement
 
@@ -322,4 +325,4 @@ world, and collision detection is performed between sprites and cells.")
 (define-method play-sound cell (sample-name)
   (play-sample sample-name))
 
-;;; cells.lisp ends here
+;;; things.lisp ends here

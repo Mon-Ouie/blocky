@@ -1,4 +1,4 @@
-;;; mission.lisp --- mission structure
+;;; logic.lisp --- procedural content generation tools
 
 ;; Copyright (C) 2009, 2010, 2011  David O'Toole
 
@@ -34,7 +34,7 @@
 ;; "Paradigms of Artificial Intelligence Programming." There is more
 ;; information at http://norvig.com/license.html
 
-(defvar *grammar* *test-grammar*
+(defvar *grammar* nil
   "The current context-free grammar used for sentence generation.
 This is an association list of the form:
 
@@ -190,4 +190,4 @@ concatenation.")
     (money >> 10000 20000 30000 40000 50000)
     (part >> muon-pistol lepton-cannon ion-shield-belt)))
 
-;;; mission.lisp ends here
+;;; logic.lisp ends here
