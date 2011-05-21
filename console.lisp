@@ -664,7 +664,7 @@ display."
     (run-project-lisp *project*)
     (run-hook '*after-startup-hook*)
     (sdl:with-events ()
-      (:quit-event () (prog1 t))
+      (:quit-event () (prog1 t (sdl:quit-sdl :force t)))
       (:video-resize-event (:w w :h h)  
 			   (setf *screen-width* w
 				 *screen-height* h)
@@ -729,7 +729,7 @@ display."
 	     (restartably	
 	       (gl:clear :color-buffer-bit)
 	       (gl:enable :texture-2d :blend)	
-	       (blend :add)
+	       (set-blending-mode :alpha)
 	       (draw-blocks)
 	       (gl:flush)
 	       (sdl:update-display))))))
@@ -1189,10 +1189,10 @@ also the documentation for DESERIALIZE."
 
 ;;; Loading images and textures
 
-(defun blend (mode)
+(defun set-blending-mode (mode)
   (ecase mode 
-    (:add (gl:blend-func :src-alpha :one))
-    (:add2 (gl:blend-func :one :one))
+    (:additive (gl:blend-func :src-alpha :one))
+    (:additive2 (gl:blend-func :one :one))
     (:alpha (gl:blend-func :src-alpha :one-minus-src-alpha))))
 
 (defun load-texture (surface)
