@@ -24,7 +24,7 @@
 ;; object.
 
 (in-package :ioforms)
-
+OBSOLETE
 (define-prototype sprite (:parent =gcell=
 				  :documentation 
 "Sprites are IOFORMS game objects derived from gcells. Although most
