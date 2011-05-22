@@ -704,7 +704,6 @@ realtime mode."
 	(begin-phase ^player))))
 
 (define-method draw world ()
-  (message "DRAWING WORLD")
   (with-field-values (sprites grid grid-height grid-width) self
 ;    (declare (type (simple-array vector (* *)) grid))
     (dotimes (i grid-height)
