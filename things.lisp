@@ -75,6 +75,14 @@ interpretation:
   (multiple-value-bind (x y) (xy-coordinates self)
     (values x y 0)))
 
+(define-method draw cell ()
+  (with-fields (image) self
+    (when image
+      (set-blending-mode ^blend)
+      (multiple-value-bind (x y)
+	  (xy-coordinates self)
+	(draw-image image x y)))))
+
 ;; (define-method viewport-coordinates cell ()
 ;;   "Return as values X,Y the world coordinates of CELL."
 ;;   (assert (and ^row ^column))

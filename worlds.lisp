@@ -102,7 +102,6 @@ At the moment, only 0=off and 1=on are supported.")
 (define-method grid-location-list world (row column)
   (coerce (grid-location self row column)
 	  'list))
-
   
 (define-method create-grid world (&key grid-width grid-height)
   "Initialize all the arrays for a world of GRID-WIDTH by GRID-HEIGHT cells."
@@ -421,22 +420,22 @@ location."
 	    (message "Turtle left drawing area during MOVE.")))
 	(error "Must pass an integer as distance for MOVE."))))
       
-(define-method draw world ()
-  "Move N squares forward while painting cells. Clones N cells where N
-is the integer on the top of the stack."
-  (with-fields (paint stack) self
-    (if (not (object-p paint))
-	(error "No paint set.")
-	(let ((distance (pop stack)))
-	  (if (integerp distance)
-	      (dotimes (n distance)
-		(drop-cell self (clone paint) ^row ^column)
-		(multiple-value-bind (row column) 
-		    (step-in-direction ^row ^column ^direction)
-		  (setf ^row row ^column column)
-		  (when (array-in-bounds-p ^grid row column)
-		      (message "Turtle left drawing area during DRAW."))))
-	      (error "Must pass an integer as distance for DRAW."))))))
+;; (define-method draw world ()
+;;   "Move N squares forward while painting cells. Clones N cells where N
+;; is the integer on the top of the stack."
+;;   (with-fields (paint stack) self
+;;     (if (not (object-p paint))
+;; 	(error "No paint set.")
+;; 	(let ((distance (pop stack)))
+;; 	  (if (integerp distance)
+;; 	      (dotimes (n distance)
+;; 		(drop-cell self (clone paint) ^row ^column)
+;; 		(multiple-value-bind (row column) 
+;; 		    (step-in-direction ^row ^column ^direction)
+;; 		  (setf ^row row ^column column)
+;; 		  (when (array-in-bounds-p ^grid row column)
+;; 		      (message "Turtle left drawing area during DRAW."))))
+;; 	      (error "Must pass an integer as distance for DRAW."))))))
 
 (define-method pushloc world ()
   "Push the current row,col location (and direction) onto the stack."
@@ -503,26 +502,12 @@ placement."
   (add-sprite self sprite)
   (move-to sprite x y))
 
-(define-method drop-cell world (cell row column 
-				     &optional &key 
-				     loadout no-stepping no-collisions (exclusive t) (probe t))
-  "Put the cell CELL on top of the stack of cells at ROW,
-COLUMN. If LOADOUT is non-nil, then the `loadout' method of the
-dropped cell is invoked after dropping. If the field ^auto-loadout is
-non-nil in the CELL, then the `loadout' method is invoked regardless
-of the value of LOADOUT.
-
-If NO-COLLISIONS is non-nil, then an object is not dropped on top of
-an obstacle. If EXCLUSIVE is non-nil, then two objects with
-category :exclusive will not be placed together. If PROBE is non-nil,
-try to place the cell in the immediate neighborhood.  Return T if a
-cell is placed; nil otherwise."
+(define-method drop-cell world (cell row column &rest ignore)
   (let ((grid ^grid)
-	(tile-size ^tile-size)
-	(auto-loadout (field-value :auto-loadout cell)))
+	(grid-size ^grid-size))
     ;; (declare (optimize (speed 3)) 
     ;; 	     (type (simple-array vector (* *)) grid)
-    ;; 	     (fixnum tile-size row column))
+    ;; 	     (fixnum grid-size row column))
     (when (array-in-bounds-p grid row column)
       (ecase (field-value :type cell)
 	(:cell
@@ -530,33 +515,14 @@ cell is placed; nil otherwise."
 		      (prog1 t
 			(vector-push-extend cell (aref grid row column))
 			(setf (field-value :row cell) row)
-			(setf (field-value :column cell) column)
-			(when (or loadout auto-loadout)
-			  (loadout cell)))))
-			;; (unless no-stepping
-			;;   (step-on-current-square cell)))))
-	     (if (or no-collisions exclusive)
-		 (progn 
-		   (when no-collisions
-		     (when (not (obstacle-at-p self row column))
-		       (drop-it row column)))
-		   (when exclusive
-		     (if (category-at-p self row column :exclusive)
-			 (when probe
-			   (block probing
-			     (dolist (dir *compass-directions*)
-			       (multiple-value-bind (r c) 
-				   (step-in-direction row column dir)
-				 (when (not (category-at-p self row column :exclusive))
-				   (return-from probing (drop-it r c)))))))
-			 (drop-it row column))))
-		 (drop-it row column))))
+			(setf (field-value :column cell) column))))
+	     (drop-it row column)))
 	;; handle sprites
 	(:sprite
 	   (add-sprite self cell)
 	   (move-to cell 
-		     (* column tile-size)
-		     (* row tile-size)))))))
+		     (* column grid-size)
+		     (* row grid-size)))))))
   
 (define-method drop-player-at-entry world (player)
   "Drop the PLAYER at the first entry point."
@@ -737,25 +703,39 @@ realtime mode."
 	  (run-cpu-phase self))
 	(begin-phase ^player))))
 
+(define-method draw world ()
+  (message "DRAWING WORLD")
+  (with-field-values (sprites grid grid-height grid-width) self
+;    (declare (type (simple-array vector (* *)) grid))
+    (dotimes (i grid-height)
+      (dotimes (j grid-width)
+    	(let ((cells (aref grid i j)))
+    	  (dotimes (z (fill-pointer cells))
+    	    (draw (aref cells z))))))
+    ;; draw the sprites
+    (dolist (sprite sprites)
+      (draw sprite))))
+    
 (define-method update world (&rest args)
   ;; (declare (optimize (speed 3)))
   (declare (ignore args))
   (with-field-values (grid sprites sprite-table grid-height grid-width player) self
     (declare (type (simple-array vector (* *)) grid))
     ;; first take care of the player 
-    (run player)
-    ;; run the cells
+    (update player)
+    ;; update the cells
     (dotimes (i grid-height)
       (dotimes (j grid-width)
-	(let ((cells (aref grid i j)))
-	  (dotimes (z (fill-pointer cells))
-	    (run (aref cells z))))))
+    	(let ((cells (aref grid i j)))
+    	  (dotimes (z (fill-pointer cells))
+    	    (update (aref cells z))))))
     ;; run the sprites
-    (map nil #'run sprites)
+    (dolist (sprite sprites)
+      (update sprite))))
     ;; do sprite collisions
-    (when ^sprite-table
-      (clear-sprite-grid self)
-      (collide-sprites self))))
+    ;; (when ^sprite-table
+    ;;   (clear-sprite-grid self)
+    ;;   (collide-sprites self))))
 
 (defvar *lighting-hack-function* nil)
   
@@ -866,10 +846,10 @@ sources and ray casting."
 	(send-queue nil :newline :narrator)
 	(send-queue nil :newline :narrator))))
 
-(define-method start world ())
-  "Prepare the world for play."
-  ;; (when ^viewport (adjust ^viewport :snap))
-  ;; (begin-ambient-loop self))
+;; (define-method start world ())
+;;   "Prepare the world for play."
+;;   ;; (when ^viewport (adjust ^viewport :snap))
+;;   ;; (begin-ambient-loop self))
 
 (define-method after-start-method world ()
   nil)
@@ -1013,8 +993,7 @@ by symbol name. This enables them to be used as hash keys."
 
 (defparameter *default-space-size* 10)
 
-(define-prototype universe 
-    (:documentation "A collection of connected worlds.")
+(defblock universe 
   (worlds :initform (make-hash-table :test 'equal)
 	  :documentation "Address-to-world mapping.")
   prompt
@@ -1101,9 +1080,9 @@ represents the z-axis of a euclidean 3-D space."))
   (when player (setf ^player player))
   (when prompt (setf ^prompt prompt))
   (when narrator (setf ^narrator narrator))
-  (when viewport (setf ^viewport viewport))
-  (when (null ^viewport)
-    (make-default-viewport self)))
+  (when viewport (setf ^viewport viewport)))
+  ;; (when (null ^viewport)
+  ;;   (make-default-viewport self)))
 
 (define-method make-default-viewport universe ()
   (with-fields (viewport) self
@@ -1115,31 +1094,30 @@ represents the z-axis of a euclidean 3-D space."))
 		  :width *screen-width* 
 		  :height *screen-height*)))
 
-(define-method focus universe ()
-  (install-blocks ^viewport))
-
 (define-method update universe ()
   (when ^world (update ^world)))
 
-(define-method play universe (&key address player world prompt narrator viewport)
+(define-method draw universe ()
+  (when ^world (draw ^world)))
+
+(define-method start universe (&key address player world prompt narrator viewport)
   "Prepare a universe for play at the world identified by ADDRESS with
 PLAYER as the player, PROMPT as the prompt, NARRATOR as the
 narrator, and VIEWPORT as the viewport."
-  (when address (setf ^current-address address))
-  (when world (setf ^world world))
+  ;; (when address (setf ^current-address address))
+  (when world 
+    (setf ^world world)
+    (setf *world* world))
   (when player (setf ^player player))
-  (when viewport (setf ^viewport viewport))
-  (when (null ^viewport)
-    (make-default-viewport self))
-  (let ((world (or ^world (find-world self address))))
+  ;; (when viewport (setf ^viewport viewport))
+  ;; (when (null ^viewport)
+  ;;   (make-default-viewport self))
     (setf *universe* self)
-    (set-viewport world ^viewport)
-    (set-world ^viewport world)
     (set-player world ^player)
     (add-sprite world ^player)
-    (focus self)
+    (install-blocks self))
 ;;    (adjust ^viewport :snap)
-    (start world)))
+;;    (start world)))
 
 (define-method exit universe (&key player)
   "Return the player to the previous world on the stack."
@@ -1154,7 +1132,7 @@ narrator, and VIEWPORT as the viewport."
 		 (setf *universe* self)
 		 ;; resume at previous play coordinates
 		 (drop-player-at-last-location world ^player)
-		 (start world)
+;		 (start world)
 		 (set-receiver ^prompt world)
 		 (set-world ^viewport world)
 		 (set-narrator world ^narrator)
