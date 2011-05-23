@@ -526,7 +526,7 @@ placement."
   
 (define-method drop-player-at-entry world (player)
   "Drop the PLAYER at the first entry point."
-  (with-field-values (grid-width grid-height grid tile-size) self
+  (with-field-values (grid-width grid-height grid grid-size) self
     (multiple-value-bind (dest-row dest-column)
 	(block seeking
 	  (dotimes (i grid-height)
@@ -538,8 +538,8 @@ placement."
       (ecase (field-value :type player)
 	(:cell (drop-cell self player dest-row dest-column :no-stepping t))
 	(:sprite (drop-sprite self player 
-			      (* dest-column tile-size)
-			      (* dest-row tile-size)))))))
+			      (* dest-column grid-size)
+			      (* dest-row grid-size)))))))
 			      
 (define-method drop-player-at-last-location world (player)
   (setf ^player player)
@@ -558,16 +558,16 @@ placement."
 
 (define-method player-row world ()
   "Return the grid row the player is on."
-  (with-field-values (player tile-size) self
+  (with-field-values (player grid-size) self
     (ecase (field-value :type player)
-      (:sprite (truncate (/ (field-value :y player) tile-size))) 
+      (:sprite (truncate (/ (field-value :y player) grid-size))) 
       (:cell (field-value :row player)))))
 
 (define-method player-column world ()
   "Return the grid column the player is on."
-  (with-field-values (player tile-size) self
+  (with-field-values (player grid-size) self
     (ecase (field-value :type player)
-      (:sprite (truncate (/ (field-value :x player) tile-size))) 
+      (:sprite (truncate (/ (field-value :x player) grid-size))) 
       (:cell (field-value :column player)))))
 
 (define-method exit world ()
@@ -730,11 +730,11 @@ realtime mode."
     	    (update (aref cells z))))))
     ;; run the sprites
     (dolist (sprite sprites)
-      (update sprite))))
+      (update sprite))
     ;; do sprite collisions
-    ;; (when ^sprite-table
-    ;;   (clear-sprite-grid self)
-    ;;   (collide-sprites self))))
+    (when ^sprite-table
+      (clear-sprite-grid self)
+      (collide-sprites self))))
 
 (defvar *lighting-hack-function* nil)
   
@@ -896,7 +896,8 @@ along grid squares between R1,C1 and R2,C2."
 ;;; The sprite layer. See also viewport.lisp
 
 (define-method add-sprite world (sprite)
-  (pushnew sprite ^sprites :test 'equal))
+  (pushnew sprite ^sprites :test 'equal)
+  (move-to sprite 0 0))
 
 (define-method remove-sprite world (sprite)
   (setf ^sprites (delete sprite ^sprites)))
@@ -909,17 +910,17 @@ along grid squares between R1,C1 and R2,C2."
 
 (define-method collide-sprites world (&optional sprites)
   "Perform collision detection between sprites and the grid.
-Sends a :do-collision message for every detected collision."
-  (with-field-values (grid-width grid-height tile-size sprite-grid sprite-table grid) self
+Sends an :on-collide message for every detected collision."
+  (with-field-values (grid-width grid-height grid-size sprite-grid sprite-table grid) self
     (dolist (sprite (or sprites ^sprites))
       ;; figure out which grid squares we really need to scan
       (let* ((x (field-value :x sprite)) 
 	     (y (field-value :y sprite)))
 	(when (and (numberp x) (numberp y))
-	  (let* ((left (1- (floor (/ x tile-size))))
-		 (right (1+ (floor (/ (+ x (field-value :grid-width sprite)) tile-size))))
-		 (top (1- (floor (/ y tile-size))))
-		 (bottom (1+ (floor (/ (+ y (field-value :grid-height sprite)) tile-size)))))
+	  (let* ((left (1- (floor (/ x grid-size))))
+		 (right (1+ (floor (/ (+ x (field-value :width sprite)) grid-size))))
+		 (top (1- (floor (/ y grid-size))))
+		 (bottom (1+ (floor (/ (+ y (field-value :height sprite)) grid-size)))))
 	    ;; find out which scanned squares actually intersect the sprite
 	    (block colliding
 	      (dotimes (i (max 0 (- bottom top)))
@@ -928,17 +929,16 @@ Sends a :do-collision message for every detected collision."
 			(j0 (+ j left)))
 		    (when (array-in-bounds-p grid i0 j0)
 		      (when (collide-* sprite 
-					(* i0 tile-size) 
-					(* j0 tile-size)
-					tile-size tile-size)
+					(* i0 grid-size) 
+					(* j0 grid-size)
+					grid-size grid-size)
 			;; save this intersection information
 			(vector-push-extend sprite (aref sprite-grid i0 j0))
 			;; collide the sprite with the cells on this square
 			(do-cells (cell (aref grid i0 j0))
-			  (when (and (or (in-category cell :target)
-					 (in-category cell :obstacle))
-				     (is-located cell))
-			    (do-collision sprite cell)))))))))))
+			  (when (or (in-category cell :target)
+				    (in-category cell :obstacle))
+			    (on-collide sprite cell)))))))))))
 	;; now find collisions with other sprites
 	;; we can re-use the sprite-grid data from earlier.
 	(let (collision num-sprites ix)
@@ -948,7 +948,7 @@ Sends a :do-collision message for every detected collision."
 		     (unless (gethash args sprite-table)
 		       (setf (gethash args sprite-table) t)
 		       (destructuring-bind (a b) args
-			 (do-collision a b)))))
+			 (on-collide a b)))))
 	    ;; iterate over grid, reporting collisions
 	    (dotimes (i grid-height)
 	      (dotimes (j grid-width)
@@ -1103,20 +1103,14 @@ represents the z-axis of a euclidean 3-D space."))
   "Prepare a universe for play at the world identified by ADDRESS with
 PLAYER as the player, PROMPT as the prompt, NARRATOR as the
 narrator, and VIEWPORT as the viewport."
-  ;; (when address (setf ^current-address address))
+  (setf *universe* self)
   (when world 
     (setf ^world world)
     (setf *world* world))
   (when player (setf ^player player))
-  ;; (when viewport (setf ^viewport viewport))
-  ;; (when (null ^viewport)
-  ;;   (make-default-viewport self))
-    (setf *universe* self)
-    (set-player world ^player)
-    (add-sprite world ^player)
-    (install-blocks self))
-;;    (adjust ^viewport :snap)
-;;    (start world)))
+  (set-player world ^player)
+  (add-sprite world ^player)
+  (install-blocks self))
 
 (define-method exit universe (&key player)
   "Return the player to the previous world on the stack."

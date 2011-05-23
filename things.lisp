@@ -193,6 +193,11 @@ world, and collision detection is performed between sprites and cells.")
 (define-method initialize sprite ()
   (update-image-dimensions self))
 
+(define-method set-image sprite (image)
+  (assert (stringp image))
+  (setf ^image image)
+  (update-image-dimensions self))
+
 (define-method die sprite ()
   (remove-sprite *world* self))
 
