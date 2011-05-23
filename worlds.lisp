@@ -122,8 +122,8 @@ At the moment, only 0=off and 1=on are supported.")
 (define-method create-default-grid world ()
   "If grid-height and grid-width have been set in a world's definition,
 initialize the arrays for a world of the size specified there."
-  (if (and (numberp ^grid-width)
-	   (numberp ^grid-height))
+  (if (and (integerp ^grid-width)
+	   (integerp ^grid-height))
       (create-grid self :grid-width ^grid-width :grid-height ^grid-height)
       (error "Cannot create default grid without grid-height and grid-width set.")))
 
