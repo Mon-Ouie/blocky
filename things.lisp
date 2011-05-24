@@ -83,24 +83,6 @@ interpretation:
 	  (xy-coordinates self)
 	(draw-image image x y)))))
 
-;; (define-method viewport-coordinates cell ()
-;;   "Return as values X,Y the world coordinates of CELL."
-;;   (assert (and ^row ^column))
-;;   (get-viewport-coordinates (field-value :viewport *world*)
-;;                             ^row ^column))
-
-;; (define-method image-coordinates cell ()
-;;   "Return as values X,Y the viewport image coordinates of CELL."
-;;   (assert (and ^row ^column))
-;;   (get-image-coordinates (field-value :viewport *world*)
-;;                          ^row ^column))
-
-;; (define-method screen-coordinates cell ()
-;;   "Return as values X,Y the screen coordinates of CELL."
-;;   (assert (and ^row ^column))
-;;   (get-screen-coordinates (field-value :viewport *world*)
-;; 			  ^row ^column))
-
 ;;; Convenience macro for defining cells.
 
 (defmacro defcell (name &body args)
@@ -112,11 +94,11 @@ cells."
 
 ;;; Cell death
 
+(define-method destroy cell ())
+
 (define-method die cell ()
   (destroy self)
   (delete-cell *world* self ^row ^column))
-
-(define-method destroy cell ())
 
 ;;; Cell movement
 
