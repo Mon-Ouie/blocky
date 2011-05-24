@@ -1,4 +1,4 @@
-;;; things.lisp --- defining in-game objects
+;;; things.lisp --- defining game objects that live inside a world
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
@@ -44,7 +44,7 @@ needed, certain base categories are built-in and have a fixed
 interpretation:
 
  -    :obstacle --- Blocks movement and causes collisions
- -    :ephemeral --- This cell is not preserved when exiting a world.
+ -    :temporary --- This cell is not preserved when exiting a world.
  -    :light-source --- This object casts light. 
  -    :opaque --- Blocks line-of-sight, casts shadows. 
 "
@@ -166,9 +166,6 @@ is in the way. Returns non-nil if a move occurred."
 behaviors are compatible, sprites can take any pixel location in the
 world, and collision detection is performed between sprites and cells.")
   (type :initform :sprite)
-  (saved-x :initform nil :documentation "Saved x-coordinate used to jump back from a collision.")
-  (saved-y :initform nil :documentation "Saved y-coordinate used to jump back from a collision.")
-  (saved-z :initform nil :documentation "Saved z-coordinate used to jump back from a collision.")
   (height :initform nil :documentation "The cached width of the bounding box.")
   (width :initform nil :documentation "The cached height of the bounding box."))
 
@@ -318,14 +315,6 @@ world, and collision detection is performed between sprites and cells.")
   "Respond to a collision detected with OBJECT."
   (declare (ignore object))
   nil)
-
-(define-method save-excursion sprite ()
-  (setf ^saved-x ^x)
-  (setf ^saved-y ^y)
-  (setf ^saved-z ^z))
-
-(define-method undo-excursion sprite ()
-  (move-to self ^saved-x ^saved-y ^saved-z))
 
 ;;; Object dropping
 
