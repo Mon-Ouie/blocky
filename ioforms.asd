@@ -19,6 +19,7 @@
 	       :lispbuilder-sdl-gfx
 	       :lispbuilder-sdl-ttf
 	       :lispbuilder-sdl-mixer
+	       :cl-fad
 	       :cl-opengl)
   :components ((:file "ioforms")
 	       (:file "rgb")

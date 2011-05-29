@@ -743,7 +743,7 @@ display."
 (defun load-user-init-file ()
   (let ((file (merge-pathnames (make-pathname :name *user-init-file-name*)
 			       (ioforms-directory))))
-    (when (probe-file file)
+    (when (cl-fad:file-exists-p file)
       (load file))))
 
 (defparameter *user-keyboard-layout* :qwerty)
@@ -951,7 +951,7 @@ name PROJECT-NAME. Returns the pathname if found, otherwise nil."
     (or 
      (loop 
        for dir in dirs for path
-	 = (probe-file (make-pathname :directory 
+	 = (cl-fad:file-exists-p (make-pathname :directory 
 				      (append (pathname-directory dir) 
 					      (list project-name))
 			    :defaults dir))
@@ -1001,13 +1001,13 @@ resource is stored; see also `find-resource'."
 
 (defun load-project-objects (project)
   (let ((object-index-file (find-project-file project (object-index-filename project))))
-    (when (probe-file object-index-file)
+    (when (cl-fad:file-exists-p object-index-file)
       (message "Reading saved objects from ~S" object-index-file)
       (index-iof project object-index-file))))
 
 (defun load-project-lisp (project)
   (let ((lisp (default-project-lisp-file project)))
-    (if (probe-file lisp)
+    (if (cl-fad:file-exists-p lisp)
 	(progn (message "Loading lisp for project ~A..." project)
 	       (load lisp))
 	(message "No default lisp file found in project ~S. Continuing." project))))
@@ -1046,7 +1046,7 @@ object save directory. See also `save-object-resource')."
   (let ((index-filename (concatenate 'string
 				     (file-namestring dir)
 				     *iof-file-extension*)))
-    (probe-file (make-pathname :name index-filename
+    (cl-fad:file-exists-p (make-pathname :name index-filename
 			       :directory (if (stringp dir)
 					      dir
 					      (namestring dir))))))
@@ -1093,7 +1093,7 @@ table. File names are relative to the project PROJECT-NAME."
 table."
   (let ((index-file (find-project-file project-name
 				       (object-index-filename project-name))))
-    (if (probe-file index-file)
+    (if (cl-fad:file-exists-p index-file)
 	(index-iof project-name index-file)
 	(message "No IOF file found in module. Continuing."))))
 
@@ -1285,7 +1285,7 @@ control the size of the individual frames or subimages."
   (let* ((source (resource-file resource))
 	 (fasl (compile-file-pathname source)))
     ;; do we need recompilation?
-    (if (probe-file fasl)
+    (if (cl-fad:file-exists-p fasl)
     	(if (> (file-write-date source)
     	       (file-write-date fasl))
 	    ;; recompile. 
