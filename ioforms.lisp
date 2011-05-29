@@ -28,13 +28,6 @@
 ;; This program requires a Common Lisp implementation and the
 ;; LISPBUILDER-SDL packages. See the included file INSTALL.
 
-;; ASDF users can do the following:
-;;
-;;   (require :asdf)
-;;   (require :asdf-install)
-;;   (asdf-install:install :lispbuilder-sdl) 
-;;   (asdf-install:install :lispbuilder-sdl-image)
-
 ;;; Code:
 
 (defpackage :ioforms
