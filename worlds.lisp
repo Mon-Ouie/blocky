@@ -910,7 +910,7 @@ along grid squares between R1,C1 and R2,C2."
 
 ;;; Collision detection
 
-(define-method colliding-sprites world (sprites)
+(define-method colliding-sprites world (&optional sprites)
   "Perform collision detection between sprites, and between sprites and the grid."
   (with-field-values (grid-width grid-height grid-size sprite-grid sprite-table grid) self
     (let (detected)

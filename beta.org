@@ -16,7 +16,7 @@
 * ALPHA 1
 *** TODO blocks should no longer draw onto sdl:*default-surface*
 *** TODO Consider removing "held-keys" feature
-*** TODO add sdl-gfx to 
+*** TODO switch to cl-fad for pathname usage
 *** TODO Consider merging "schema" into field declaration marking which fields are "arguments". get rid of the explicit "arguments" field
 *** TODO interface (zoom down into blocks, showing wider view w more help
 *** TODO [#A] open a window and do something
