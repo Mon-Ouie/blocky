@@ -946,13 +946,14 @@ Directories are searched in list order.")
   "Search the `*project-directories*' path for a directory with the
 name PROJECT-NAME. Returns the pathname if found, otherwise nil."
   (let ((dirs *project-directories*))
+    (assert (stringp project-name))
     (message "Probing directories ~S..." dirs)
     (or 
      (loop 
        for dir in dirs for path
 	 = (probe-file (make-pathname :directory 
-				      (append (pathname-directory
-					       dir) (list project-name))
+				      (append (pathname-directory dir) 
+					      (list project-name))
 			    :defaults dir))
        when path return path)
      (error "Cannot find project ~s in paths ~S. 

@@ -734,7 +734,7 @@ realtime mode."
     ;; do sprite collisions
     (when ^sprite-table
       (clear-sprite-grid self)
-      (collide-sprites self))))
+      (colliding-sprites self))))
 
 (defvar *lighting-hack-function* nil)
   
