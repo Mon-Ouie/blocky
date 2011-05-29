@@ -264,8 +264,6 @@ world, and collision detection is performed between sprites and cells.")
 (define-method play-sound cell (sample-name)
   (play-sample sample-name))
 
-;; ;; TODO this would-collide function is not used?
-
 ;; (define-method would-collide sprite (x0 y0)
 ;;   (with-field-values (grid-size grid sprite-grid) *world*
 ;;     (with-field-values (width height x y) self

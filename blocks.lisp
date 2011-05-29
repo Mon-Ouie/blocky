@@ -274,7 +274,7 @@ areas.")
   (with-fields (arguments) self
     (position child arguments)))
 
-(define-method position block ()
+(define-method this-position block ()
   (with-fields (parent) self
     (when parent
       (child-position parent self))))
