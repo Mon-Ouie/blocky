@@ -85,7 +85,7 @@ source code.
     (require :ioforms)
 
     ;; run the example
-    (ioforms:play "xor")  ;; or the name of any module in your *module-directories*
+    (ioforms:play "example")  ;; or the name of any module in your *module-directories*
 
 7a. If you get an error about TRIVIAL-FEATURES-TESTS, try this:
     (require :trivial-features-tests)
