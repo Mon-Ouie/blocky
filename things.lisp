@@ -248,7 +248,7 @@ world, and collision detection is performed between sprites and cells.")
 (define-method colliding-with sprite (thing)
   (multiple-value-bind (x y width height) 
       (bounding-box thing)
-    (collding-with-rectangle self y x width height)))
+    (colliding-with-rectangle self y x width height)))
 
 (define-method collide sprite (thing))
 
