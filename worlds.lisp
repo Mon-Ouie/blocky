@@ -908,39 +908,41 @@ along grid squares between R1,C1 and R2,C2."
       (dotimes (j ^grid-width)
 	(setf (fill-pointer (aref grid i j)) 0)))))
 
-(define-method collide-sprites world (&optional sprites)
-  "Perform collision detection between sprites and the grid.
-Sends an :on-collide message for every detected collision."
+;;; Collision detection
+
+(define-method colliding-sprites world (sprites)
+  "Perform collision detection between sprites, and between sprites and the grid."
   (with-field-values (grid-width grid-height grid-size sprite-grid sprite-table grid) self
-    (dolist (sprite (or sprites ^sprites))
-      ;; figure out which grid squares we really need to scan
-      (let* ((x (field-value :x sprite)) 
-	     (y (field-value :y sprite)))
-	(when (and (numberp x) (numberp y))
+    (let (detected)
+      (labels ((save-collision (a b)
+		 (push (list a b) detected)))
+	(dolist (sprite (or sprites ^sprites))
+	;; figure out which grid squares we really need to scan
+	(multiple-value-bind (x y width height)
+	    (bounding-box sprite)
 	  (let* ((left (1- (floor (/ x grid-size))))
-		 (right (1+ (floor (/ (+ x (field-value :width sprite)) grid-size))))
+		 (right (1+ (floor (/ (+ x width) grid-size))))
 		 (top (1- (floor (/ y grid-size))))
-		 (bottom (1+ (floor (/ (+ y (field-value :height sprite)) grid-size)))))
+		 (bottom (1+ (floor (/ (+ y height) grid-size)))))
 	    ;; find out which scanned squares actually intersect the sprite
-	    (block colliding
-	      (dotimes (i (max 0 (- bottom top)))
-		(dotimes (j (max 0 (- right left)))
-		  (let ((i0 (+ i top))
+	    (dotimes (i (max 0 (- bottom top)))
+	      (dotimes (j (max 0 (- right left)))
+		(let ((i0 (+ i top))
 			(j0 (+ j left)))
 		    (when (array-in-bounds-p grid i0 j0)
-		      (when (collide-* sprite 
-					(* i0 grid-size) 
-					(* j0 grid-size)
-					grid-size grid-size)
+		      (when (colliding-with-rectangle sprite 
+						    (* i0 grid-size) 
+						    (* j0 grid-size)
+						    grid-size grid-size)
 			;; save this intersection information
 			(vector-push-extend sprite (aref sprite-grid i0 j0))
 			;; collide the sprite with the cells on this square
 			(do-cells (cell (aref grid i0 j0))
 			  (when (or (in-category cell :target)
 				    (in-category cell :obstacle))
-			    (on-collide sprite cell)))))))))))
-	;; now find collisions with other sprites
-	;; we can re-use the sprite-grid data from earlier.
+			    (save-collision sprite cell)))))))))))
+      ;; now find collisions with other sprites
+      ;; we can re-use the sprite-grid data from earlier.
 	(let (collision num-sprites ix)
 	  ;; prepare to detect redundant collisions
 	  (clrhash sprite-table)
@@ -948,7 +950,7 @@ Sends an :on-collide message for every detected collision."
 		     (unless (gethash args sprite-table)
 		       (setf (gethash args sprite-table) t)
 		       (destructuring-bind (a b) args
-			 (on-collide a b)))))
+			 (save-collision a b)))))
 	    ;; iterate over grid, reporting collisions
 	    (dotimes (i grid-height)
 	      (dotimes (j grid-width)
@@ -961,7 +963,7 @@ Sends an :on-collide message for every detected collision."
 				   (b (aref collision ix)))
 			       (incf ix)
 			       (assert (and (object-p a) (object-p b)))
-			       (when (and (not (eq a b)) (collide a b))
+			       (when (and (not (eq a b)) (colliding-with a b))
 				 (collide-first a b)))
 			  while (< ix num-sprites))))))))))))
     

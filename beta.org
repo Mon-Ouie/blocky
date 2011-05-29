@@ -1,4 +1,10 @@
 * Sweep snake trail across multiplying particles in 3 reactor chambers
+** TODO refactor collisions.
+*** TODO write a function (collision *world*
+** TODO don't use clrhash
+** TODO BIGFIX: in cell/move and sprite/move , compute whether a move would cause a collision
+** TODO and then only allow the move to go a certain distance. return number moved
+** TODO then "resting contact" will work; the object won't try to move anymore (if gravity.)
 ** TODO default-keybindings as an initform 
 ** trail upgrade
 ** drifting hot rad areas that drain HP
@@ -10,6 +16,7 @@
 * ALPHA 1
 *** TODO blocks should no longer draw onto sdl:*default-surface*
 *** TODO Consider removing "held-keys" feature
+*** TODO add sdl-gfx to 
 *** TODO Consider merging "schema" into field declaration marking which fields are "arguments". get rid of the explicit "arguments" field
 *** TODO interface (zoom down into blocks, showing wider view w more help
 *** TODO [#A] open a window and do something
