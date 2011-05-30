@@ -641,68 +641,6 @@ most user command messages. (See also the method `forward'.)"
     (:viewport ^viewport)
     (:player ^player)))
 
-(define-method process-messages world ()
-  "Process, narrate, and send all the messages in the queue.
-The processing step allows the sender to specify the receiver
-indirectly as a keyword symbol (like `:world', `:player', or
-`:output'.) Any resulting queued messages are processed and sent, and
-so on, until no more messages are generated."
-  (let ((player ^player))
-    (with-message-queue ^message-queue 
-      (loop while (queued-messages-p) do
-	   (destructuring-bind (sender method-key receiver args)
-	       (unqueue-message)
-	     (let ((rec (or (resolve-receiver self receiver) 
-			    receiver)))
-	       ;; (when (and ^narrator 
-	       ;; 		  ;; only narrate player-related messages
-	       ;; 		  (or (eq player sender)
-	       ;; 		      (eq player rec)))
-	       ;; 	 ;; now print message
-	       ;; 	 (when (not (zerop (field-value :verbosity ^narrator)))
-	       ;; 	   (narrate-message ^narrator sender method-key rec args)))
-	       ;; stop everything if player dies
-					;(when (not (in-category player :dead))
-	       ;;
-	       ;; don't blow up when no narrator, etc
-	       ;; (if (not (object-p receiver))
-	       ;; 	   (message "Warning: null receiver in message processing. ~S" 
-	       ;; 		    (list (object-name (object-parent sender)) method-key rec))
-		   (apply #'send sender method-key rec args)))))))
-
-(define-method get-phase-number world ()
-  ^phase-number)
-
-(define-method forward world (method-key &rest args)
-  "Send unhandled messages to the player object."
-  (assert ^player)
-  (when (or (eq :quit method-key) 
-	    (not ^paused))
-    (prog1 nil
-      (let ((player ^player)
-	    (phase-number ^phase-number))
-	(with-message-queue ^message-queue 
-	  (when ^narrator 
-	    (narrate-message ^narrator nil method-key player args))
-	  ;; run the player
-	  (run player)
-	  ;; send the message to the player, possibly generating queued messages
-	  (apply #'send self method-key player args)
-	  ;; process any messages that were generated
-	  (process-messages self))))))
-
-(define-method run-cpu-phase-maybe world ()
-    "If this is the player's last turn, run the cpu phase. otherwise,
-stay in player phase and exit. Always runs cpu when the engine is in
-realtime mode."
-    (when (or *timer-p* (not (can-act ^player ^phase-number)))
-      (end-phase ^player)
-      (unless ^exited
-	(incf ^phase-number)
-	(when (not (in-category ^player :dead))
-	  (run-cpu-phase self))
-	(begin-phase ^player))))
-
 (define-method draw world ()
   (with-field-values (sprites grid grid-height grid-width) self
 ;    (declare (type (simple-array vector (* *)) grid))
