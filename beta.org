@@ -1,5 +1,5 @@
 * Sweep snake trail across multiplying particles in 3 reactor chambers
-** TODO refactor collisions.
+** TODO refactor collision detection without consing
 *** TODO write a function (collision *world*
 ** TODO don't use clrhash
 ** TODO BIGFIX: in cell/move and sprite/move , compute whether a move would cause a collision

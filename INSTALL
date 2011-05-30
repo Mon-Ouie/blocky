@@ -71,9 +71,9 @@ source code.
 
     mkdir ~/projects
     cd ~/projects
-    git clone git://github.com/dto/xor.git
+    git clone git://github.com/dto/xong.git
 
-   Now that the example game "XOR" is installed, we're ready to go.
+   Now that the example game "XONG" is installed, we're ready to go.
 
 7. At the shell, cd to the install directory for IOFORMS, run SBCL, and
    then issue the following commands at the REPL one by one:
