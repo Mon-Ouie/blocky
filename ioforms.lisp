@@ -1,4 +1,4 @@
-;;; ioforms.lisp --- retro-esque 2d game engine for Common Lisp
+;;; ioforms.lisp --- a free game engine for common lisp
                
 ;; Copyright (C) 2006, 2007, 2008, 2009  David O'Toole
 

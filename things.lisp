@@ -177,6 +177,7 @@ world, and collision detection is performed between sprites and cells.")
       (setf height (image-height image)))))
 
 (define-method initialize sprite ()
+  (parent/initialize self)
   (update-image-dimensions self))
 
 (define-method set-image sprite (image)

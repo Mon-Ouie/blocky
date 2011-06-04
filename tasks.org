@@ -1,17 +1,18 @@
+* TODO investigate blocky.io
+
 * TODO Review task list and reorganize roadmap
 
-* TODO Example 1: Say Hello to Blocky
+* TODO Example 1: Blocky and the Blue Dot
   DEADLINE: <2011-06-04 Sat>
 ** TODO keyboard input with moving character
 ** TODO some text
 ** TODO clickable things?
 
-* TODO Example 2: 
-
+* TODO Example 2: Blocky quest
 
 * TODO Example 3: mini xong
 
-
+* TODO PANGAEA
 
 * Eliminate all compiler warnings. Really.
 

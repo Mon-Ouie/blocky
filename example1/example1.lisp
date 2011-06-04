@@ -37,7 +37,10 @@
 
 (setf *screen-width* 640)
 (setf *screen-height* 480)
-(setf *window-title* "ioforms example 1")
+(setf *window-title* "Hello")
+
+;; (setf *resizable* t)
+;; (setf *use-nominal-screen-size* t)
 
 ;; Now make something!
 
@@ -46,21 +49,26 @@
 
 (defsprite blocky
   :image "blocky"
+  :default-events
+  '(((:up) (move :north 5 :pixels))
+    ((:down) (move :south 5 :pixels)) 
+    ((:right) (move :east 5 :pixels)) 
+    ((:left) (move :west 5 :pixels)))
   :x (/ *screen-width* 2)
   :y (/ *screen-height* 2))
+
+(define-method handle-event blocky (event)
+  (message "BLOCKY EVENT: ~S" event)
+  (parent/handle-event self event)) 
 
 (defresource (:name "bleep" :type :sample :file "bleep.wav"))
 
 (define-method bleep blocky ()
   (play-sound self "bleep"))
 
-;; (define-method update blocky ()
-;;   (incf ^x (random-choose (list 1 -1)))
-;;   (incf ^y (random-choose (list 1 -1))))
+(defresource (:name "story" :type :image :file "story.png"))
 
-(defun example1 ()
-  (dotimes (n 50)
-    (add-block 
+(defworld hello :background "story")
 
 ;; Now we define the code that runs when your game starts. We define
 ;; it as a function (using `defun') to be called later by IOFORMS.
@@ -73,17 +81,11 @@
 ;; as the module---in this case `example1'---and execute it, which
 ;; hands control back to you.
 
- 
-;(defworld whitespace :background "story")
+(defun example1 ()
+  (start (new universe)
+	 :world (new hello)
+	 :player (new blocky)))
 
-;; (define-method initialize dot ()
-;;   (bind-event self (:up) (move :north 5 :pixels))
-;;   (bind-event self (:down) (move :south 5 :pixels))
-;;   (bind-event self (:right) (move :east 5 :pixels))
-;;   (bind-event self (:left) (move :west 5 :pixels)))
+;; Check out example #2 for more fun.
 
-;; (play (new universe)
-;;       :world (new whitespace)
-;;       :dot (new dot))
-      
 ;;; example1.lisp ends here

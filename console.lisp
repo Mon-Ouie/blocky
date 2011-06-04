@@ -292,7 +292,7 @@ for backward-compatibility."
 
 (defun send-to-blocks (event &optional (blocks *blocks*))
   (labels ((try (block)
-	     (handle-event block event)))
+	     (send :handle-event block event)))
     (some #'try blocks)))
 
 (defvar *event-handler-function* #'send-to-blocks
@@ -317,9 +317,7 @@ Please set the variable ioforms:*event-handler-function*")
 (defun normalize-event (event)
   "Convert EVENT to a normal form suitable for `equal' comparisons."
   (let ((name (first event)))
-    (cons (etypecase name
-	    (symbol (symbol-name name))
-	    (string name))
+    (cons (make-keyword name)
 	  (sort (remove-duplicates (delete nil (rest event)))
 		#'string< :key #'symbol-name))))
 
@@ -668,10 +666,11 @@ display."
       (:video-resize-event (:w w :h h)  
 			   (setf *screen-width* w
 				 *screen-height* h)
-			   (run-hook '*resize-hook*)
+;			   (run-hook '*resize-hook*)
 			   (sdl:window w h :fps fps :title-caption *window-title*
 				       :flags sdl:SDL-RESIZABLE
-				       :position *window-position*))
+				       :position *window-position*)
+			   (do-orthographic-projection))
       (:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
 			   (let ((block (hit-blocks x y *blocks*)))
 			     (when block
@@ -1778,22 +1777,38 @@ of the music."
 (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
   (gl:bind-texture :texture-2d texture)
   (gl:with-primitive :quads
-    (let* ((w/2 (/ width 2.0))
-	   (h/2 (/ height 2.0))
-	   (x1 (- x w/2))
-	   (x2 (+ x w/2))
-	   (y1 (- y h/2))
-	   (y2 (+ y h/2)))
+    (let ((x1 x)
+	  (x2 (+ x width))
+	  (y1 y)
+	  (y2 (+ y height)))
       (gl:tex-coord u1 v2)
-      (gl:vertex x1 y1 0)
+      (gl:vertex x y2 0)
       (gl:tex-coord u2 v2)
-      (gl:vertex x2 y1 0)
-      (gl:tex-coord u2 v1)
       (gl:vertex x2 y2 0)
+      (gl:tex-coord u2 v1)
+      (gl:vertex x2 y1 0)
       (gl:tex-coord u1 v1)
-      (gl:vertex x1 y2 0))))
+      (gl:vertex x y 0))))
 
-(defun draw-image (name x y)
+;; (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
+;;   (gl:bind-texture :texture-2d texture)
+;;   (gl:with-primitive :quads
+;;     (let* ((w/2 (/ width 2.0))
+;; 	   (h/2 (/ height 2.0))
+;; 	   (x1 (- x w/2))
+;; 	   (x2 (+ x w/2))
+;; 	   (y1 (- y h/2))
+;; 	   (y2 (+ y h/2)))
+;;       (gl:tex-coord u1 v2)
+;;       (gl:vertex x1 y1 0)
+;;       (gl:tex-coord u2 v2)
+;;       (gl:vertex x2 y1 0)
+;;       (gl:tex-coord u2 v1)
+;;       (gl:vertex x2 y2 0)
+;;       (gl:tex-coord u1 v1)
+;;       (gl:vertex x1 y2 0))))
+
+(defun draw-image (name x y &optional z)
   (let* ((image (find-resource-object name))
 	 (height (sdl:height image))
 	 (width (sdl:width image)))

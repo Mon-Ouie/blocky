@@ -111,38 +111,37 @@ ARGS are field specifiers, as with `define-prototype'."
 
 ;;; Defining input events for blocks
 
-(define-method initialize-events-maybe block ()
-  (with-fields (events) self
-    (when (null events)
-      (setf events (make-hash-table :test 'equal)))))
+(define-method initialize-events-table-maybe block (&optional force)
+  (when (or force 
+	    (null (has-local-value :events self)))
+    (setf ^events (make-hash-table :test 'equal))))
 
 (define-method bind-event-to-function block (event-name modifiers func)
   "Bind the described event to invoke FUNC.
 EVENT-NAME is a string giving the key name; MODIFIERS is a list of
 keywords like :control, :alt, and so on."
-  (initialize-events-maybe self)
-  (setf (gethash (normalize-event (cons event-name modifiers))
-		 ^events)
-	func))
+  (initialize-events-table-maybe self)
+  (let ((event (normalize-event (cons event-name modifiers))))
+    (message "bind-event: ~S" event)
+    (setf (gethash event ^events)
+	  func)))
 
 (define-method unbind-event block (event-name modifiers)
   "Remove the described event binding."
   (remhash (normalize-event (cons event-name modifiers))
 	   ^events))
 
-(define-method clear-events block ()
-  (setf ^events (make-hash-table :test 'equal)))
-
 (define-method handle-event block (event)
   "Look up and invoke the function (if any) bound to EVENT. Return t
-if a binding was found, nil otherwise."
-  (initialize-events-maybe self)
+if a binding was found, nil otherwise. The second value returned is
+the return value of the function (if any)."
+  (message "(handling event ~S" event)
   (with-fields (events) self
-      (when events
-	(let ((func (gethash event events)))
-	  (when func
-	    (prog1 t
-	      (funcall func)))))))
+    (when events
+      (let ((func (gethash event events)))
+	(if func
+	    (values t (funcall func))
+	    (values nil nil))))))
 
 (defun bind-event-to-method (block event-name modifiers method-name)
   (bind-event-to-function block (string-upcase event-name) modifiers
@@ -161,15 +160,17 @@ if a binding was found, nil otherwise."
 		       (rest binding))))
 	 (bind-event-to-function self name modifiers #'do-it))))))
 
-(define-method bind-default-events block ()
+(define-method bind-any-default-events block ()
   (with-fields (default-events) self
     (when default-events
+      (message "Binding default events...")
+      (initialize-events-table-maybe self)
       (dolist (entry default-events)
 	(apply #'bind-event self entry)))))
 
 (define-method initialize block (&rest args)
   (declare (ignore args))
-  (bind-default-events self))
+  (bind-any-default-events self))
 
 ;;   "Prepare an empty block, or if ARGS is non-empty, a block
 ;; initialized with its values as arguments."
@@ -259,6 +260,7 @@ areas.")
 
 (define-method move block (x y)
   "Move the block to a new (X Y) location."
+  (message "moving")
   (setf ^x x)
   (setf ^y y))
 
