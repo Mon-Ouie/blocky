@@ -956,9 +956,7 @@ name PROJECT-NAME. Returns the pathname if found, otherwise nil."
 					      (list project-name))
 			    :defaults dir))
        when path return path)
-     (error "Cannot find project ~s in paths ~S. 
-You must set the variable IOFORMS:*PROJECT-DIRECTORIES* in the configuration file ~~/.ioformsrc
-Please see the included file BINARY-README for instructions."
+     (error "Cannot find project ~s in paths ~S. Try checking the project name, or your *PROJECT-DIRECTORIES* settings in the IOFORMS.INI configuration file."
 	    project-name dirs))))
 
 (defun expand-file-name (resource)
