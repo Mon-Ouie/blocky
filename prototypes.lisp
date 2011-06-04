@@ -611,6 +611,7 @@ was invoked."
 			(first body2)))
 	 (declaration2 (append '(declare (ignorable self))
 			       (when declaration
+				 ;; paste, skipping the declaration keyword
 				 (rest declaration))))
 	 (prototype-special-name (make-special-variable-name prototype-name))
 	 (field-name (make-keyword method-name))

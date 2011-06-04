@@ -37,51 +37,30 @@
 
 (setf *screen-width* 640)
 (setf *screen-height* 480)
-(setf *window-title* "ioforms example1 1")
+(setf *window-title* "ioforms example 1")
 
 ;; Now make something!
 
 (defresource 
-    (:name "blue-dot" :type :image :file "blue-dot.png")
-    (:name "red-dot" :type :image :file "red-dot.png")
-  (:name "yellow-dot" :type :image :file "yellow-dot.png"))
+    (:name "blocky" :type :image :file "blocky.png"))
 
-(defvar *colors* (list "blue-dot" "red-dot" "yellow-dot"))
-
-(defsprite particle 
-  :image (random-choose *colors*)
-  :direction (random-direction)
-  :x (+ 80 (random 100)) 
-  :y (+ 80 (random 100)))
-
-(define-method draw particle ()  
-  (with-fields (x y image) self
-    (draw-image image x y)))
-
-  ;; (gl:with-primitive :triangles
-  ;;   (with-fields (x y) self
-  ;;     (gl:color 0 0 0)
-  ;;     (gl:vertex x y 0)
-  ;;     (gl:color (random 0.9) (random 0.2) (random 0.5))
-  ;;     (gl:vertex (+ x 80) (+ y 80) 0)
-  ;;     (gl:color 1 0 1)
-  ;;     (gl:vertex (+ x 120) (+ y 100) 0))))
+(defsprite blocky
+  :image "blocky"
+  :x (/ *screen-width* 2)
+  :y (/ *screen-height* 2))
 
 (defresource (:name "bleep" :type :sample :file "bleep.wav"))
 
-(define-method hit particle (x y))
-
-(define-method bleep particle ()
+(define-method bleep blocky ()
   (play-sound self "bleep"))
 
-(define-method update particle ()
-  (incf ^x (random-choose (list 1 -1)))
-  (incf ^y (random-choose (list 1 -1))))
+;; (define-method update blocky ()
+;;   (incf ^x (random-choose (list 1 -1)))
+;;   (incf ^y (random-choose (list 1 -1))))
 
 (defun example1 ()
-  (message "RUNNING EXAMPLE1!")
   (dotimes (n 50)
-    (add-block (new particle))))
+    (add-block 
 
 ;; Now we define the code that runs when your game starts. We define
 ;; it as a function (using `defun') to be called later by IOFORMS.

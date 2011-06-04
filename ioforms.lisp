@@ -37,11 +37,10 @@
 	   null-block =viewport= *frequency* *output-chunksize*
 	   *output-channels* halt-sample *dt* defproject run start
 	   *update-function* =equipment= *default-world-axis-size*
-	   defsprite generic-keybind *target* *blocks* *script*
-	   *default-world-z-size* =browser= install-blocks =balloon=
-	   =form= keyboard-held-p keyboard-pressed-p
-	   *use-nominal-screen-size* keyboard-released-p
-	   keyboard-time-in-current-state
+	   defsprite *target* *blocks* *script* *default-world-z-size*
+	   =browser= install-blocks =balloon= =form= keyboard-held-p
+	   keyboard-pressed-p *use-nominal-screen-size*
+	   keyboard-released-p keyboard-time-in-current-state
 	   keyboard-time-in-previous-state *updates* keyboard-down-p
 	   keyboard-keys-down keyboard-modifier-down-p
 	   keyboard-modifiers draw-filled-circle draw-aa-circle =my=
@@ -112,7 +111,7 @@
 	   parent/initialize /queue/initialize queue/initialize
 	   draw-string-solid read-iof initialize-resource-table
 	   percent-of-time render-formatted-paragraph
-	   make-formatted-string draw-string-shaded set-blending-mode 
+	   make-formatted-string draw-string-shaded set-blending-mode
 	   render-formatted-string render-formatted-line resource
 	   font-text-extents write-sexp-to-file with-message-sender
 	   *message-sender* =textbox= read-sexp-from-file with-fields

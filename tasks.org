@@ -1,6 +1,28 @@
-* More examples
+* TODO Review task list and reorganize roadmap
+
+* TODO Example 1: Say Hello to Blocky
+  DEADLINE: <2011-06-04 Sat>
 ** TODO keyboard input with moving character
-** TODO mouse input with clickable objects
+** TODO some text
+** TODO clickable things?
+
+* TODO Example 2: 
+
+
+* TODO Example 3: mini xong
+
+
+
+* Eliminate all compiler warnings. Really.
+
+* ALPHA 1
+*** TODO reconsider pool.lisp
+*** TODO blocks should no longer draw onto sdl:*default-surface*
+*** TODO Consider removing "held-keys" feature
+*** TODO Consider merging "schema" into field declaration marking which fields are "arguments". get rid of the explicit "arguments" field
+*** TODO interface (zoom down into blocks, showing wider view w more help
+*** TODO [#A] open a window and do something
+* ALPHA 2
 
 * Sweep snake trail across multiplying particles in 3 reactor chambers
 ** TODO refactor collision detection without consing
@@ -16,15 +38,6 @@
 ** enemies?
 ** implement turtle graphics
 ** L-systems procedural levels http://en.wikipedia.org/wiki/L-system
-
-* ALPHA 1
-*** TODO blocks should no longer draw onto sdl:*default-surface*
-*** TODO Consider removing "held-keys" feature
-*** TODO switch to cl-fad for pathname usage
-*** TODO Consider merging "schema" into field declaration marking which fields are "arguments". get rid of the explicit "arguments" field
-*** TODO interface (zoom down into blocks, showing wider view w more help
-*** TODO [#A] open a window and do something
-* ALPHA 2
 * TODO Add more documentation for user-visible API things
 * TODO [#A] Get visual language builder working
 ** TODO merge "schema" field into prototypes.lisp field descriptors
