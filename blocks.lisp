@@ -135,7 +135,6 @@ keywords like :control, :alt, and so on."
   "Look up and invoke the function (if any) bound to EVENT. Return t
 if a binding was found, nil otherwise. The second value returned is
 the return value of the function (if any)."
-  (message "(handling event ~S" event)
   (with-fields (events) self
     (when events
       (let ((func (gethash event events)))
@@ -163,7 +162,6 @@ the return value of the function (if any)."
 (define-method bind-any-default-events block ()
   (with-fields (default-events) self
     (when default-events
-      (message "Binding default events...")
       (initialize-events-table-maybe self)
       (dolist (entry default-events)
 	(apply #'bind-event self entry)))))
@@ -260,7 +258,6 @@ areas.")
 
 (define-method move block (x y)
   "Move the block to a new (X Y) location."
-  (message "moving")
   (setf ^x x)
   (setf ^y y))
 
@@ -297,7 +294,7 @@ areas.")
 (define-method draw block ()
   (set-blending-mode ^blend)
   (with-fields (image x y) self
-    (when image
+    (when image 
       (draw-image image x y))))
 
 (define-method hit block (mouse-x mouse-y))

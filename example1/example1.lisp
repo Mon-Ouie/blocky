@@ -55,11 +55,8 @@
     ((:right) (move :east 5 :pixels)) 
     ((:left) (move :west 5 :pixels)))
   :x (/ *screen-width* 2)
-  :y (/ *screen-height* 2))
-
-(define-method handle-event blocky (event)
-  (message "BLOCKY EVENT: ~S" event)
-  (parent/handle-event self event)) 
+  :y (/ *screen-height* 2)
+  :z -1)
 
 (defresource (:name "bleep" :type :sample :file "bleep.wav"))
 
@@ -86,6 +83,6 @@
 	 :world (new hello)
 	 :player (new blocky)))
 
-;; Check out example #2 for more fun.
+;; Check out the other included example projects for more fun.
 
 ;;; example1.lisp ends here

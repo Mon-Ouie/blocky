@@ -71,9 +71,7 @@ At the moment, only 0=off and 1=on are supported.")
   
 (define-method handle-event world (event)
   (with-fields (player) self
-    (message "FOO")
     (when player 
-      (message "bar")
       (prog1 t
 	(handle-event player event)))))
 

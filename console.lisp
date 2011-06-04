@@ -598,7 +598,7 @@ becomes larger.")
           *gl-screen-height* *screen-height*))
   (message "Orthographic projection left:~A right:~A bottom:~A top:~A"
 	   0 *gl-screen-width* *gl-screen-height* 0)
-  (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 0 100)
+  (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 0 1)
   (gl:matrix-mode :modelview))
 
 (defvar *resizable* nil)
@@ -1190,6 +1190,7 @@ also the documentation for DESERIALIZE."
 (defun set-blending-mode (mode)
   (ecase mode 
     (:additive (gl:blend-func :src-alpha :one))
+    (:source (gl:blend-func :src-color :zero))
     (:additive2 (gl:blend-func :one :one))
     (:alpha (gl:blend-func :src-alpha :one-minus-src-alpha))))
 
@@ -1774,6 +1775,25 @@ of the music."
 		 image)))
     (sdl:width img)))
 
+
+
+
+;; (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
+;;   (gl:bind-texture :texture-2d texture)
+;;   (gl:with-primitive :quads
+;;     (let ((x1 x)
+;; 	  (x2 (+ x width))
+;; 	  (y1 y)
+;; 	  (y2 (+ y height)))
+;;       (gl:tex-coord u1 v2)
+;;       (gl:vertex x y2 0)
+;;       (gl:tex-coord u2 v2)
+;;       (gl:vertex x2 y2 0)
+;;       (gl:tex-coord u2 v1)
+;;       (gl:vertex x2 y1 0)
+;;       (gl:tex-coord u1 v1)
+;;       (gl:vertex x y 0))))
+
 (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
   (gl:bind-texture :texture-2d texture)
   (gl:with-primitive :quads
@@ -1781,14 +1801,31 @@ of the music."
 	  (x2 (+ x width))
 	  (y1 y)
 	  (y2 (+ y height)))
-      (gl:tex-coord u1 v2)
+      (gl:tex-coord 0 1)
       (gl:vertex x y2 0)
-      (gl:tex-coord u2 v2)
+      (gl:tex-coord 1 1)
       (gl:vertex x2 y2 0)
-      (gl:tex-coord u2 v1)
+      (gl:tex-coord 1 0)
       (gl:vertex x2 y1 0)
-      (gl:tex-coord u1 v1)
+      (gl:tex-coord 0 0)
       (gl:vertex x y 0))))
+
+;; (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
+;;  ;;bthe good one
+;;   (gl:bind-texture :texture-2d texture)
+;;   (gl:with-primitive :quads
+;;     (let ((x1 x)
+;; 	  (x2 (+ x width))
+;; 	  (y1 y)
+;; 	  (y2 (+ y height)))
+;;       (gl:tex-coord 0 1)
+;;       (gl:vertex x y2 0)
+;;       (gl:tex-coord 1 1)
+;;       (gl:vertex x2 y2 0)
+;;       (gl:tex-coord 1 0)
+;;       (gl:vertex x2 y1 0)
+;;       (gl:tex-coord 0 0)
+;;       (gl:vertex x y 0))))
 
 ;; (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
 ;;   (gl:bind-texture :texture-2d texture)
@@ -1807,6 +1844,7 @@ of the music."
 ;;       (gl:vertex x2 y2 0)
 ;;       (gl:tex-coord u1 v1)
 ;;       (gl:vertex x1 y2 0))))
+
 
 (defun draw-image (name x y &optional z)
   (let* ((image (find-resource-object name))
