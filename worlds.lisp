@@ -498,7 +498,7 @@ location."
 object will not be dropped when there is an obstacle. When LOADOUT is
 non-nil, the :loadout method is invoked on the sprite after
 placement."
-  (assert (is-sprite sprite))
+;  (assert (is-sprite sprite))
   (add-sprite self sprite)
   (move-to sprite x y))
 

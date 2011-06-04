@@ -1,4 +1,4 @@
-;;; things.lisp --- defining game objects that live inside a world
+;;; things.lisp --- defining game objects 
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
