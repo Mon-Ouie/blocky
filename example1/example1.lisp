@@ -1,4 +1,4 @@
-;;; example.lisp --- a basic ioforms example
+;;; example1.lisp --- a basic ioforms example
 
 ;; Copyright (C) 2010, 2011  David O'Toole
 
@@ -26,10 +26,10 @@
 ;; The `:use' declaration shows that we will be importing names from
 ;; IOFORMS and from the base Common Lisp package.
 
-(defpackage :example 
+(defpackage :example1 
     (:use :ioforms :common-lisp))
   
-(in-package :example)
+(in-package :example1)
 
 ;; Now we should set a few system variables. In Common Lisp, globals
 ;; are named `*like-this*' with an asterisk on each end, to
@@ -37,7 +37,7 @@
 
 (setf *screen-width* 640)
 (setf *screen-height* 480)
-(setf *window-title* "ioforms example 1")
+(setf *window-title* "ioforms example1 1")
 
 ;; Now make something!
 
@@ -78,11 +78,10 @@
   (incf ^x (random-choose (list 1 -1)))
   (incf ^y (random-choose (list 1 -1))))
 
-(defun example ()
-  (message "RUNNING EXAMPLE!")
+(defun example1 ()
+  (message "RUNNING EXAMPLE1!")
   (dotimes (n 50)
     (add-block (new particle))))
-
 
 ;; Now we define the code that runs when your game starts. We define
 ;; it as a function (using `defun') to be called later by IOFORMS.
@@ -92,7 +91,7 @@
 ;; `*screen-height*' and `*screen-width*' before the window actually
 ;; opens. Once IOFORMS is fully initialized according to the
 ;; parameters you set, it will look for a function with the same name
-;; as the module---in this case `example'---and execute it, which
+;; as the module---in this case `example1'---and execute it, which
 ;; hands control back to you.
 
  
@@ -108,4 +107,4 @@
 ;;       :world (new whitespace)
 ;;       :dot (new dot))
       
-;;; example.lisp ends here
+;;; example1.lisp ends here

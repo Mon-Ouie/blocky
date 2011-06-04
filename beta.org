@@ -1,7 +1,6 @@
 * More examples
 ** TODO keyboard input with moving character
 ** TODO mouse input with clickable objects
-** TODO more
 
 * Sweep snake trail across multiplying particles in 3 reactor chambers
 ** TODO refactor collision detection without consing
