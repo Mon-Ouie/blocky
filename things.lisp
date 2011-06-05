@@ -176,9 +176,16 @@ world, and collision detection is performed between sprites and cells.")
       (setf width (image-width image))
       (setf height (image-height image)))))
 
-(define-method initialize sprite ()
-  (parent/initialize self)
-  (update-image-dimensions self))
+;; (define-method initialize sprite ()
+;;   (parent/initialize self))
+ 
+(define-method draw sprite ()
+  (set-blending-mode ^blend)
+  (with-fields (image x y height) self
+    (when image
+      (when (null height)
+	(update-image-dimensions self))
+      (draw-image image x y))))
 
 (define-method set-image sprite (image)
   (assert (stringp image))
@@ -237,6 +244,8 @@ world, and collision detection is performed between sprites and cells.")
 	  (< o-right x)))))
 
 (define-method bounding-box sprite ()
+  (when (null ^height)
+    (update-image-dimensions self))
   (values ^x ^y ^width ^height))
 
 (define-method colliding-with-rectangle sprite (o-top o-left o-width o-height)

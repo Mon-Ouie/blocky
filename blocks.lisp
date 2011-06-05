@@ -77,7 +77,7 @@
   (default-events :initform nil)
   (data :initform nil :documentation "Data value for data entry blocks.")
   (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
-  (excluded-fields :initform '(:image :events :child-widths :results :parent))
+  (excluded-fields :initform '(:events :child-widths :results :parent))
   ;; visual layout
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
@@ -122,7 +122,6 @@ EVENT-NAME is a string giving the key name; MODIFIERS is a list of
 keywords like :control, :alt, and so on."
   (initialize-events-table-maybe self)
   (let ((event (normalize-event (cons event-name modifiers))))
-    (message "bind-event: ~S" event)
     (setf (gethash event ^events)
 	  func)))
 

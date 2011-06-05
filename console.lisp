@@ -626,6 +626,7 @@ becomes larger.")
 We want to process all inputs, update the game state, then update the
 display."
   (let ((fps (make-instance 'sdl:fps-mixed :dt *dt*)))
+    (message "Creating OpenGL window...")
     (cond (*fullscreen*
 	   (sdl:window *screen-width* *screen-height*
 		       :fps fps 
@@ -647,6 +648,7 @@ display."
     ;; extensions, so we need to tell it how to do so in lispbuilder-sdl
     (setf cl-opengl-bindings:*gl-get-proc-address* #'sdl-cffi::sdl-gl-get-proc-address)
     ;;
+    (message "Creating OpenGL window... Done.")
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
     (do-orthographic-projection)
@@ -1083,7 +1085,7 @@ table."
 				       (object-index-filename project-name))))
     (if (cl-fad:file-exists-p index-file)
 	(index-iof project-name index-file)
-	(message "No IOF file found in module. Continuing."))))
+	(message "No IOF file found in project. Continuing."))))
 
 ;;; Standard resource names
 
@@ -1187,6 +1189,7 @@ also the documentation for DESERIALIZE."
 
 (defun load-texture (surface)
   (let ((texture (car (gl:gen-textures 1))))
+    (message "Binding new gl texture ~A" texture)
     (gl:bind-texture :texture-2d texture)
     (gl:tex-parameter :texture-2d :generate-mipmap t) 
     (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear) 
@@ -1220,6 +1223,7 @@ also the documentation for DESERIALIZE."
 
 (defun load-image-resource (resource)
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
+  (message "Loading image resource ~A" resource)
   (initialize-textures-maybe)
   (let* ((surface (sdl-image:load-image (namestring (resource-file resource))
 				       :alpha 255))

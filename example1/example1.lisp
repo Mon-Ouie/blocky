@@ -38,17 +38,11 @@
 (setf *screen-width* 640)
 (setf *screen-height* 480)
 (setf *window-title* "Hello")
-;(enable-key-repeat 250 150)
 
-;; (setf *resizable* t)
-;; (setf *use-nominal-screen-size* t)
-
-;; Now make something!
+;; Now make a movable character
 
 (defresource 
     (:name "blocky" :type :image :file "blocky.png"))
-
-(defresource (:name "story" :type :image :file "story.png"))
 
 (defsprite blocky
   :image "blocky"
@@ -56,27 +50,15 @@
   '(((:up) (move :north 5 :pixels))
     ((:down) (move :south 5 :pixels)) 
     ((:right) (move :east 5 :pixels)) 
-    ((:left) (move :west 5 :pixels))) 
-  :x 0
-  :y 0)
-;; :x (/ *screen-width* 2)
-;;   :y (/ *screen-height* 2))
+    ((:left) (move :west 5 :pixels)))
+  :x (/ *screen-width* 2)
+  :y (/ *screen-height* 2))
 
-(defresource (:name "bleep" :type :sample :file "bleep.wav"))
+;;; Then define an empty world with a background.
 
-(define-method bleep blocky ()
-  (play-sound self "bleep"))
+(defresource (:name "message" :type :image :file "message.png"))
 
-;;; The mysterious blue dot 
-
-(defresource 
-    (:name "blue-dot" :type :image :file "blue-dot.png"))
-
-(defsprite blue-dot
-  :image "blue-dot"
-  :x 100 :y 100)
-
-(defworld hello); :background "story")
+(defworld hello :background "message")
 
 ;; Now we define the code that runs when your game starts. We define
 ;; it as a function (using `defun') to be called later by IOFORMS.
@@ -89,11 +71,13 @@
 ;; as the module---in this case `example1'---and execute it, which
 ;; hands control back to you.
 
+;; Put everything together by creating a new "hello" world and putting
+;; a new player inside it.
+
 (defun example1 ()
   (start (new universe)
 	 :world (new hello)
-	 :player (new blocky))
-  (add-sprite *world* (new blue-dot)))
+	 :player (new blocky)))
 
 ;; Check out the other included example projects for more fun.
 
