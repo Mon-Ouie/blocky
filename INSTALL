@@ -49,6 +49,12 @@ More instructions for Mac and Windows will be available soon.
    mkdir ~/src
    cd ~/src
    git clone git://github.com/dto/ioforms.git 
+   
+   If you need to use the development branch of IOFORMS, 
+   do this: 
+  
+   cd ~/src/ioforms
+   git checkout develop
 
 3. Then link the ioforms.asd file into your ~/.sbcl/systems directory:
 
@@ -56,24 +62,11 @@ More instructions for Mac and Windows will be available soon.
    mkdir ~/.sbcl/systems
    ln -s ~/src/ioforms/ioforms.asd ~/.sbcl/systems/ioforms.asd
 
-4. Install LISPBUILDER-SDL. 
+4. Install Quicklisp
     
-    The recommended method is Quicklisp: see http://www.quicklisp.org/
-    It takes only a few moments to install Quicklisp. 
-    If you don't have Quicklisp, you can follow these instructions.
-
-4a. (OPTIONAL) The latest development version of LISPBUILDER-SDL is
-    also available. Use Subversion to check out the source code:
-
-    mkdir ~/src
-    cd ~/src
-    svn checkout http://lispbuilder.googlecode.com/svn/trunk/ lispbuilder
-
-    Then symlink all the .asd files in that tree into ~/.sbcl/systems
-    (or wherever your .ASD files go) like this:
-
-    cd ~/.sbcl/systems
-    for i in `find ~/src/lispbuilder -name "*.asd"`; do ln -s $i .; done
+    http://www.quicklisp.org/ It takes only a few moments to install
+    Quicklisp, and this is the best way to download and install all
+    the Common Lisp libraries that IOFORMS depends on---automatically.
 
 6. (OPTIONAL) Configure project folders
 
@@ -91,7 +84,7 @@ More instructions for Mac and Windows will be available soon.
    if you don't set it. NOTE: These must be pathnames (prefixed with
    #P) and must contain a trailing slash.
 
-   The other directories should contain game modules. For example:
+   The other directories should contain game projects. For example:
 
     mkdir ~/projects
     cd ~/projects
@@ -103,14 +96,12 @@ More instructions for Mac and Windows will be available soon.
    then issue the following commands at the REPL one by one:
 
    ;; load dependencies via Quicklisp
-    (map nil #'ql:quickload (list "lispbuilder-sdl-mixer" "lispbuilder-sdl-ttf" "lispbuilder-sdl-gfx" "lispbuilder-sdl-image" "cl-opengl") 
+    (map nil #'ql:quickload 
+    	 '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad))
 
     ;; compile and load IOFORMS
     (require :ioforms)
 
     ;; run the example
-    (ioforms:play "example")  ;; or the name of any module in your *module-directories*
-
-7a. If you get an error about TRIVIAL-FEATURES-TESTS, try this:
-    (require :trivial-features-tests)
+    (ioforms:play "example1")  ;; or the name of any project in your *project-directories*
 
