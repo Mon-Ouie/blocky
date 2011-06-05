@@ -1228,10 +1228,12 @@ also the documentation for DESERIALIZE."
     (prog1 surface
       (let ((old-texture (gethash name *textures*)))
 	(when old-texture
+	  (message "Deleting old texture ~S..." name)
 	  (gl:delete-textures (list old-texture))
 	  (remhash name *textures*))
-	(progn (setf (gethash name *textures*) texture)
-	       (message "Now loaded total of ~A textures." (hash-table-count *textures*)))))))
+	(progn 
+	  (setf (gethash name *textures*) texture)
+	  (message "Now loaded texture ~S for a total of ~A textures." texture (hash-table-count *textures*)))))))
 
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
