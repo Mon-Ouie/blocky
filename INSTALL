@@ -34,7 +34,8 @@ More instructions for Mac and Windows will be available soon.
 
    Your Linux distribution will most likely have SDL packages for
    sbal, sdl, sdl-image, sdl-mixer, sdl-ttf, and sdl-gfx, all of which
-   are required for to compile IOFORMS.
+   are required for to compile IOFORMS. You may also need to install
+   the sdl-*-dev packages corresponding to each.
 
 1b. System Requirements (Windows)
 

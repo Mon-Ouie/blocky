@@ -67,7 +67,16 @@
 (define-method bleep blocky ()
   (play-sound self "bleep"))
 
-(defworld hello :background "story")
+;;; The mysterious blue dot 
+
+(defresource 
+    (:name "blue-dot" :type :image :file "blue-dot.png"))
+
+(defsprite blue-dot
+  :image "blue-dot"
+  :x 100 :y 100)
+
+(defworld hello); :background "story")
 
 ;; Now we define the code that runs when your game starts. We define
 ;; it as a function (using `defun') to be called later by IOFORMS.
@@ -83,7 +92,8 @@
 (defun example1 ()
   (start (new universe)
 	 :world (new hello)
-	 :player (new blocky)))
+	 :player (new blocky))
+  (add-sprite *world* (new blue-dot)))
 
 ;; Check out the other included example projects for more fun.
 
