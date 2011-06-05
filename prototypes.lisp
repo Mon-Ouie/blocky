@@ -176,6 +176,9 @@ is signaled, unless NOERROR is non-nil; in that case,
 	    *lookup-failure*   
 	    (error 'no-such-field :field-name field :object object)))))
 
+(defun has-local-value (field object)
+  (not (eq *lookup-failure* (fref (object-fields object) field))))
+
 (defun set-field-value (field object value)
   "Set OBJECT's FIELD to VALUE.
 The new value overrides any inherited value."
@@ -611,6 +614,7 @@ was invoked."
 			(first body2)))
 	 (declaration2 (append '(declare (ignorable self))
 			       (when declaration
+				 ;; paste, skipping the declaration keyword
 				 (rest declaration))))
 	 (prototype-special-name (make-special-variable-name prototype-name))
 	 (field-name (make-keyword method-name))

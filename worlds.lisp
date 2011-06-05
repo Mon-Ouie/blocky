@@ -20,14 +20,16 @@
 
 (in-package :ioforms)
 
+(defparameter *default-grid-size* 16)
+
 (defblock world
   (name :initform nil :documentation "Name of the world.")
   (description :initform "Unknown area." :documentation "Brief description of area.")
   ;; the invisible graph paper underlying our world of sprites
   (grid :documentation "A two-dimensional array of adjustable vectors of cells.")
-  (grid-size :initform 16 :documentation "Size of a grid tile in GL units; either height or width (they must be equal.)")
-  (grid-width :initform 16 :documentation "The width of the world map, measured in tiles.")
-  (grid-height :initform 16 :documentation "The height of the world map, measured in tiles.")
+  (grid-size :initform *default-grid-size* :documentation "Size of a grid tile in GL units; either height or width (they must be equal.)")
+  (grid-width :initform nil :documentation "The width of the world map, measured in tiles.")
+  (grid-height :initform nil :documentation "The height of the world map, measured in tiles.")
   ;; a world-local dictionary
   (variables :initform nil :documentation "Hash table mapping values to values, local to the current world.")
   ;; turtle graphics
@@ -35,6 +37,7 @@
   (stack :initform '() :documentation "Stack for logo system.")
   ;;
   (player :documentation "The player cell (or sprite).")
+  (background :initform nil)
   ;; sprite cells
   (sprites :initform nil :documentation "A list of sprites.")
   (sprite-grid :initform nil :documentation "Grid for collecting sprite collision information.")
@@ -60,13 +63,19 @@ At the moment, only 0=off and 1=on are supported.")
   (excluded-fields :initform
   '(:stack :sprite-grid :collisions :grid :player)))
 
-(define-method initialize world (&key grid-height grid-width name)
-    (when grid-height (setf ^grid-height grid-height))
-    (when grid-width (setf ^grid-width grid-width))
-    (when name (setf ^name name))
-    (setf ^variables (make-hash-table :test 'equal))
-    (create-default-grid self))
+(define-method initialize world (&key grid-size grid-height grid-width name)
+  (setf ^grid-size (or grid-size *default-grid-size*))
+  (setf ^grid-height (or grid-height (truncate (/ *screen-height* ^grid-size))))
+  (setf ^grid-width (or grid-width (truncate (/ *screen-width* ^grid-size))))
+  (setf ^variables (make-hash-table :test 'equal))
+  (create-default-grid self))
   
+(define-method handle-event world (event)
+  (with-fields (player) self
+    (when player 
+      (prog1 t
+	(handle-event player event)))))
+
 (define-method make world (&rest parameters)
   (apply #'/initialize self parameters))
 
@@ -590,21 +599,6 @@ placement."
 (define-method enemy-at-p world (row column)
   (category-at-p self row column :enemy))
 
-;; (define-method category-at-xy-p world (x y category)
-;;   (let ((
-
-(define-method direction-to-player world (row column)
-  "Return the general compass direction of the player from ROW, COLUMN."
-  (direction-to row column 
-		(player-row self)
-		(player-column self)))
-
-(define-method distance-to-player world (row column)
-  "Return the straight-line distance to the player from ROW, COLUMN."
-  (distance row column
-	    (player-row self)
-	    (player-column self)))
-	    
 (define-method adjacent-to-player world (row column)
   "Return non-nil when ROW, COLUMN is adjacent to the player."
   (<= (distance-to-player self row column) 1.5))
@@ -642,8 +636,10 @@ most user command messages. (See also the method `forward'.)"
     (:player ^player)))
 
 (define-method draw world ()
-  (with-field-values (sprites grid grid-height grid-width) self
+  (with-field-values (sprites grid grid-height grid-width background) self
 ;    (declare (type (simple-array vector (* *)) grid))
+    (when background
+      (draw-image background 0 0))
     (dotimes (i grid-height)
       (dotimes (j grid-width)
     	(let ((cells (aref grid i j)))
@@ -840,8 +836,10 @@ along grid squares between R1,C1 and R2,C2."
 ;;; The sprite layer. See also viewport.lisp
 
 (define-method add-sprite world (sprite)
-  (pushnew sprite ^sprites :test 'equal)
-  (move-to sprite 0 0))
+  (pushnew sprite ^sprites :test 'eq)
+  (with-field-values (x y) sprite
+    (when (or (null x) (null y))
+      (move-to sprite 0 0))))
 
 (define-method remove-sprite world (sprite)
   (setf ^sprites (delete sprite ^sprites)))
@@ -1049,6 +1047,11 @@ represents the z-axis of a euclidean 3-D space."))
 
 (define-method draw universe ()
   (when ^world (draw ^world)))
+
+(define-method handle-event universe (event)
+  (with-fields (world) self
+    (when world
+      (handle-event world event))))
 
 (define-method start universe (&key address player world prompt narrator viewport)
   "Prepare a universe for play at the world identified by ADDRESS with

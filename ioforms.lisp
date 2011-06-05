@@ -1,4 +1,4 @@
-;;; ioforms.lisp --- retro-esque 2d game engine for Common Lisp
+;;; ioforms.lisp --- a free game engine for common lisp
                
 ;; Copyright (C) 2006, 2007, 2008, 2009  David O'Toole
 
@@ -37,11 +37,10 @@
 	   null-block =viewport= *frequency* *output-chunksize*
 	   *output-channels* halt-sample *dt* defproject run start
 	   *update-function* =equipment= *default-world-axis-size*
-	   defsprite generic-keybind *target* *blocks* *script*
-	   *default-world-z-size* =browser= install-blocks =balloon=
-	   =form= keyboard-held-p keyboard-pressed-p
-	   *use-nominal-screen-size* keyboard-released-p
-	   keyboard-time-in-current-state
+	   defsprite *target* *blocks* *script* *default-world-z-size*
+	   =browser= install-blocks =balloon= =form= keyboard-held-p
+	   keyboard-pressed-p *use-nominal-screen-size*
+	   keyboard-released-p keyboard-time-in-current-state
 	   keyboard-time-in-previous-state *updates* keyboard-down-p
 	   keyboard-keys-down keyboard-modifier-down-p
 	   keyboard-modifiers draw-filled-circle draw-aa-circle =my=
@@ -61,8 +60,8 @@
 	   make-universe initialize-colors *standard-categories*
 	   *left-turn* bind-event *right-turn* *default-action-points*
 	   left-turn right-turn =world= roll bind-event-to-method
-	   *colors* enable-classic-key-repeat
-	   disable-classic-key-repeat get-color =prompt= =menu-item=
+	   *colors* enable-key-repeat
+	   disable-key-repeat get-color =prompt= =menu-item=
 	   =direction-chooser= define-method *default-font*
 	   field-value set-field-value object-fields dispatch-event
 	   run-project *user-init-file-name* distance icon-resource
@@ -112,7 +111,7 @@
 	   parent/initialize /queue/initialize queue/initialize
 	   draw-string-solid read-iof initialize-resource-table
 	   percent-of-time render-formatted-paragraph
-	   make-formatted-string draw-string-shaded set-blending-mode 
+	   make-formatted-string draw-string-shaded set-blending-mode
 	   render-formatted-string render-formatted-line resource
 	   font-text-extents write-sexp-to-file with-message-sender
 	   *message-sender* =textbox= read-sexp-from-file with-fields

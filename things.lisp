@@ -84,6 +84,22 @@ interpretation:
 	  (xy-coordinates self)
 	(draw-image image x y)))))
 
+;;; Locating the player 
+
+(define-method player-direction cell ()
+  "Return the general compass direction of the player from X0,Y0."
+  (with-fields (player) *world*
+    (multiple-value-bind (x0 y0) (xy-coordinates self)
+      (multiple-value-bind (x1 y1) (xy-coordinates player)
+	(direction-to y0 x0 y1 x1)))))
+
+(define-method player-distance cell ()
+  "Return the straight line distance of the player from X0,Y0."
+  (with-fields (player) *world*
+    (multiple-value-bind (x0 y0) (xy-coordinates self)
+      (multiple-value-bind (x1 y1) (xy-coordinates player)
+	(distance x0 y0 x1 y1)))))
+
 ;;; Convenience macro for defining cells.
 
 (defmacro defcell (name &body args)
@@ -176,8 +192,16 @@ world, and collision detection is performed between sprites and cells.")
       (setf width (image-width image))
       (setf height (image-height image)))))
 
-(define-method initialize sprite ()
-  (update-image-dimensions self))
+;; (define-method initialize sprite ()
+;;   (parent/initialize self))
+ 
+(define-method draw sprite ()
+  (set-blending-mode ^blend)
+  (with-fields (image x y height) self
+    (when image
+      (when (null height)
+	(update-image-dimensions self))
+      (draw-image image x y))))
 
 (define-method set-image sprite (image)
   (assert (stringp image))
@@ -236,6 +260,8 @@ world, and collision detection is performed between sprites and cells.")
 	  (< o-right x)))))
 
 (define-method bounding-box sprite ()
+  (when (null ^height)
+    (update-image-dimensions self))
   (values ^x ^y ^width ^height))
 
 (define-method colliding-with-rectangle sprite (o-top o-left o-width o-height)

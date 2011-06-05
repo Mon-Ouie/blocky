@@ -1,30 +1,64 @@
-This is the INSTALL file for IOFORMS, with instructions on getting
-the system installed and running from source.
+This is the INSTALL file for IOFORMS.
 
-NOTE: Users of Windows and Mac OSX do not need to follow the
-instructions in this file unless they are building IOFORMS from
-source code. 
+This file gives you instructions on how to download IOFORMS and
+compile it from source code.
 
-1. System Requirements 
+IOFORMS works on Windows and Mac, but compiling IOFORMS on those
+platforms may require additional steps (such as installing the
+included SDL binary DLL's in the included win32/ subfolder of the
+IOFORMS source directory.)
 
-   Linux users will need a Common Lisp implementation---currently
-   IOFORMS has only been tested with SBCL (Steel Bank Common
-   Lisp). You must also have the SDL (Simple Direct Media Layer)
-   libraries installed on your system. How to do this is beyond the
-   scope of this document. See http://www.libsdl.org for more
-   information.
+More instructions for Mac and Windows will be available soon.
 
-   Your Linux distribution will have SDL packages for sdl, sdl-image,
-   sdl-mixer, and sdl-gfx, all of which are required libraries.
+1. System Requirements (All Platforms)
 
-   You will need a working OpenGL implementation and (probably)
-   hardware acceleration.
+    - A text editor (preferably Emacs or Vim;
+      http://www.gnu.org/software/emacs) If you use Emacs check out
+      SLIME (you may need the CVS version) and if you use Vim check
+      out SLIMV.
+
+    - A Common Lisp implementation such as Steel Bank Common Lisp (see
+      platform-specific notes below for suggestions on SBCL; CLISP and
+      CCL have also been reported to work.)
+
+    - A working OpenGL implementation. Hardware acceleration is
+      strongly recommended. (Most fairly recent Mac and Windows
+      machines will have OpenGL drivers already.)
+
+    - Git, a distributed version control system client.
+      http://git-scm.com/
+
+1a. System Requirements (Linux)
+
+   You need a recent release of SBCL, such as 1.0.47.24. You must also
+   have the SDL (Simple Direct Media Layer) libraries installed on
+   your system. How to do this is beyond the scope of this
+   document. See http://www.libsdl.org for more information.
+
+   Your Linux distribution will most likely have SDL packages for
+   sbal, sdl, sdl-image, sdl-mixer, sdl-ttf, and sdl-gfx, all of which
+   are required for to compile IOFORMS. You may also need to install
+   the sdl-*-dev packages corresponding to each.
+
+1b. System Requirements (Windows)
+
+   You will need a Windows version of SBCL from http://sbcl.org
+
+1c. System Requirements (Macintosh)
+
+   [THIS SECTION REMAINS TO BE WRITTEN]
 
 2. If you have not already done so, download IOFORMS:
   
    mkdir ~/src
    cd ~/src
    git clone git://github.com/dto/ioforms.git 
+   
+   If you need to use the development branch of IOFORMS, 
+   do this: 
+  
+   cd ~/src/ioforms
+   git checkout develop
 
 3. Then link the ioforms.asd file into your ~/.sbcl/systems directory:
 
@@ -32,24 +66,11 @@ source code.
    mkdir ~/.sbcl/systems
    ln -s ~/src/ioforms/ioforms.asd ~/.sbcl/systems/ioforms.asd
 
-4. Install LISPBUILDER-SDL. 
+4. Install Quicklisp
     
-    The recommended method is Quicklisp: see http://www.quicklisp.org/
-    It takes only a few moments to install Quicklisp. 
-    If you don't have Quicklisp, you can follow these instructions.
-
-4a. (OPTIONAL) The latest development version of LISPBUILDER-SDL is
-    also available. Use Subversion to check out the source code:
-
-    mkdir ~/src
-    cd ~/src
-    svn checkout http://lispbuilder.googlecode.com/svn/trunk/ lispbuilder
-
-    Then symlink all the .asd files in that tree into ~/.sbcl/systems
-    (or wherever your .ASD files go) like this:
-
-    cd ~/.sbcl/systems
-    for i in `find ~/src/lispbuilder -name "*.asd"`; do ln -s $i .; done
+    http://www.quicklisp.org/ It takes only a few moments to install
+    Quicklisp, and this is the best way to download and install all
+    the Common Lisp libraries that IOFORMS depends on---automatically.
 
 6. (OPTIONAL) Configure project folders
 
@@ -67,7 +88,7 @@ source code.
    if you don't set it. NOTE: These must be pathnames (prefixed with
    #P) and must contain a trailing slash.
 
-   The other directories should contain game modules. For example:
+   The other directories should contain game projects. For example:
 
     mkdir ~/projects
     cd ~/projects
@@ -79,14 +100,12 @@ source code.
    then issue the following commands at the REPL one by one:
 
    ;; load dependencies via Quicklisp
-    (map nil #'ql:quickload (list "lispbuilder-sdl-mixer" "lispbuilder-sdl-ttf" "lispbuilder-sdl-gfx" "lispbuilder-sdl-image" "cl-opengl") 
+    (map nil #'ql:quickload 
+    	 '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad))
 
     ;; compile and load IOFORMS
     (require :ioforms)
 
     ;; run the example
-    (ioforms:play "example")  ;; or the name of any module in your *module-directories*
-
-7a. If you get an error about TRIVIAL-FEATURES-TESTS, try this:
-    (require :trivial-features-tests)
+    (ioforms:play "example1")  ;; or the name of any project in your *project-directories*
 

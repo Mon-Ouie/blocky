@@ -74,9 +74,10 @@
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any.")
+  (default-events :initform nil)
   (data :initform nil :documentation "Data value for data entry blocks.")
   (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
-  (excluded-fields :initform '(:image :events :child-widths :results :parent))
+  (excluded-fields :initform '(:events :child-widths :results :parent))
   ;; visual layout
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
@@ -95,7 +96,7 @@ ARGS are field specifiers, as with `define-prototype'."
      (operation :initform ,(make-keyword name))
      ,@args))
 
-(define-method update block (&rest args)
+(define-method update block ()
   "Update the simulation one step forward in time."
   nil)
 
@@ -110,68 +111,87 @@ ARGS are field specifiers, as with `define-prototype'."
 
 ;;; Defining input events for blocks
 
-(define-method initialize-events-maybe block ()
-  (with-fields (events) self
-    (when (null events)
-      (setf events (make-hash-table :test 'equal)))))
+(define-method initialize-events-table-maybe block (&optional force)
+  (when (or force 
+	    (null (has-local-value :events self)))
+    (setf ^events (make-hash-table :test 'equal))))
 
 (define-method bind-event-to-function block (event-name modifiers func)
   "Bind the described event to invoke FUNC.
 EVENT-NAME is a string giving the key name; MODIFIERS is a list of
 keywords like :control, :alt, and so on."
-  (initialize-events-maybe self)
-  (setf (gethash (normalize-event (cons event-name modifiers))
-		 ^events)
-	func))
+  (initialize-events-table-maybe self)
+  (let ((event (normalize-event (cons event-name modifiers))))
+    (setf (gethash event ^events)
+	  func)))
 
 (define-method unbind-event block (event-name modifiers)
   "Remove the described event binding."
   (remhash (normalize-event (cons event-name modifiers))
 	   ^events))
 
-(define-method clear-events block ()
-  (setf ^events (make-hash-table :test 'equal)))
-
 (define-method handle-event block (event)
   "Look up and invoke the function (if any) bound to EVENT. Return t
-if a binding was found, nil otherwise."
-  (initialize-events-maybe self)
+if a binding was found, nil otherwise. The second value returned is
+the return value of the function (if any)."
   (with-fields (events) self
-      (when events
-	(let ((func (gethash event events)))
-	  (when func
-	    (prog1 t
-	      (funcall func)))))))
+    (when events
+      (let ((func (gethash event events)))
+	(if func
+	    (values t (funcall func))
+	    (values nil nil))))))
 
 (defun bind-event-to-method (block event-name modifiers method-name)
   (bind-event-to-function block (string-upcase event-name) modifiers
 			  #'(lambda ()
 			      (send method-name block))))
 
-(defmacro bind-event (self event binding)
-  ;; TODO docstring
+(define-method bind-event block (event binding)
   (destructuring-bind (name &rest modifiers) event
     (etypecase binding
-      (symbol `(bind-event-to-method ,self ,name ',modifiers ,binding))
-      (list `(bind-event-to-function ,self ,name ',modifiers
-				     #'(lambda ()
-					 (,(first binding)
-					   self
-					   ,@(rest binding))))))))
+      (symbol (bind-event-to-method self name modifiers binding))
+      (list 
+       (flet ((do-it ()
+		(apply #'send 
+		       (make-keyword (first binding))
+		       self
+		       (rest binding))))
+	 (bind-event-to-function self name modifiers #'do-it))))))
 
-(define-method generic-keybind block (binding)
-  (destructuring-bind (event modifiers data) binding
-    (apply (etypecase data
-	     (keyword #'bind-event-to-method)
-	     (string #'bind-event-to-prompt-insertion))
-	   self binding)))
+(define-method bind-any-default-events block ()
+  (with-fields (default-events) self
+    (when default-events
+      (initialize-events-table-maybe self)
+      (dolist (entry default-events)
+	(apply #'bind-event self entry)))))
 
-(defun bind-event-to-prompt-insertion (prompt event-name modifiers &optional (insertion event-name))
-  "For prompt PROMPT ensure that the event (EVENT-NAME MODIFIERS)
-causes the text INSERTION to be inserted at point."
- (bind-event-to-function prompt (string-upcase event-name) modifiers
-	      #'(lambda ()
-		  (insert-string prompt insertion))))
+(define-method initialize block (&rest args)
+  (declare (ignore args))
+  (bind-any-default-events self))
+
+;;   "Prepare an empty block, or if ARGS is non-empty, a block
+;; initialized with its values as arguments."
+;;   (with-fields (arguments schema results) self
+;;     (let ((arity (length schema)))
+;;       (setf arguments (make-list arity))
+;;       (setf results (make-list arity))
+;;       (dotimes (n (length args))
+;; 	(setf (nth n arguments)
+;; 	      (nth n args))))))
+
+;; (define-method generic-keybind block (binding)
+;;   (destructuring-bind (modifiers data) (rest binding)
+;;     (apply (etypecase data
+;; 	     (keyword #'bind-event-to-method)
+;; 	     (string #'bind-event-to-prompt-insertion))
+;; 	   self binding)))
+
+;; (defun bind-event-to-prompt-insertion (prompt event-name modifiers &optional (insertion event-name))
+;;   "For prompt PROMPT ensure that the event (EVENT-NAME MODIFIERS)
+;; causes the text INSERTION to be inserted at point."
+;;  (bind-event-to-function prompt (string-upcase event-name) modifiers
+;; 	      #'(lambda ()
+;; 		  (insert-string prompt insertion))))
 
 ;;; Creating blocks from S-expressions
 
@@ -270,84 +290,81 @@ areas.")
 (define-method get-image block ()
   ^image)
 
-(define-method child-position block (child)
-  (with-fields (arguments) self
-    (position child arguments)))
+(define-method draw block ()
+  (set-blending-mode ^blend)
+  (with-fields (image x y) self
+    (when image 
+      (draw-image image x y))))
 
-(define-method this-position block ()
-  (with-fields (parent) self
-    (when parent
-      (child-position parent self))))
+(define-method hit block (mouse-x mouse-y))
 
-(define-method plug block (child n)
-  "Connect the block CHILD as the value of the Nth argument."
-  (set-argument self n child)
-  (set-parent child self))
+;; (define-method child-position block (child)
+;;   (with-fields (arguments) self
+;;     (position child arguments)))
 
-(define-method unplug block (child)
-  "Disconnect the block CHILD from this block."
-  (let ((pos (position child ^arguments)))
-    (plug self (null-block) pos)
-    (set-parent child nil)))
+;; (define-method this-position block ()
+;;   (with-fields (parent) self
+;;     (when parent
+;;       (child-position parent self))))
 
-(define-method unplug-from-parent block ()
-  (with-fields (parent) self
-    (when parent
-      (unplug parent self))))
+;; (define-method plug block (child n)
+;;   "Connect the block CHILD as the value of the Nth argument."
+;;   (set-argument self n child)
+;;   (set-parent child self))
 
-(define-method execute-arguments block ()
-  "Execute all blocks in ^ARGUMENTS from left-to-right. Results are
-placed in corresponding positions of ^RESULTS. Override this method
-when defining new blocks if you don't want to evaluate all the
-arguments all the time."
-  (with-fields (arguments results) self
-    (setf results (mapcar #'/run arguments))))
+;; (define-method unplug block (child)
+;;   "Disconnect the block CHILD from this block."
+;;   (let ((pos (position child ^arguments)))
+;;     (plug self (null-block) pos)
+;;     (set-parent child nil)))
 
-(define-method execute block ()
-  "Carry out the block's action by sending messages to the object `*target*'.
-The *target* is a special variable bound in the execution
-environment. Its value will be the IOFORMS object to send messages to.
-The ^RESULTS field will be a list of results obtained by
-executing/evaluating the blocks in ^ARGUMENTS (see also
-`BLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
-send the ^OPERATION field's value as a message to the target, with
-the arguments to the target's method being the current computed
-^RESULTS, and return the result of the method call. This default
-action is sufficient for many blocks whose main purpose is to send a
-single message; other blocks can redefine this /EXECUTE method to do
-something else. See also `defblock' and `send'."
-  (with-fields (operation results) self
-    (labels ((clean (item)
-	       (if (symbolp item)
-		   (make-keyword item)
-		   item)))
-      (assert *target*)
-      (apply #'ioforms:send nil operation *target*
-	     (mapcar #'clean results)))))
+;; (define-method unplug-from-parent block ()
+;;   (with-fields (parent) self
+;;     (when parent
+;;       (unplug parent self))))
 
-(defmacro with-target (target &body body)
-  `(let ((*target* ,target))
-     ,@body))
+;; (define-method execute-arguments block ()
+;;   "Execute all blocks in ^ARGUMENTS from left-to-right. Results are
+;; placed in corresponding positions of ^RESULTS. Override this method
+;; when defining new blocks if you don't want to evaluate all the
+;; arguments all the time."
+;;   (with-fields (arguments results) self
+;;     (setf results (mapcar #'/run arguments))))
 
-(define-method run block ()
-  "Run child blocks to produce results, then run this block with
-those results as input."
-  (execute-arguments self)
-  (execute self))
+;; (define-method execute block ()
+;;   "Carry out the block's action by sending messages to the object `*target*'.
+;; The *target* is a special variable bound in the execution
+;; environment. Its value will be the IOFORMS object to send messages to.
+;; The ^RESULTS field will be a list of results obtained by
+;; executing/evaluating the blocks in ^ARGUMENTS (see also
+;; `BLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
+;; send the ^OPERATION field's value as a message to the target, with
+;; the arguments to the target's method being the current computed
+;; ^RESULTS, and return the result of the method call. This default
+;; action is sufficient for many blocks whose main purpose is to send a
+;; single message; other blocks can redefine this /EXECUTE method to do
+;; something else. See also `defblock' and `send'."
+;;   (with-fields (operation results) self
+;;     (labels ((clean (item)
+;; 	       (if (symbolp item)
+;; 		   (make-keyword item)
+;; 		   item)))
+;;       (assert *target*)
+;;       (apply #'ioforms:send nil operation *target*
+;; 	     (mapcar #'clean results)))))
 
-(define-method describe block ()
-  "Show name and comprehensive help for this block.")
+;; (defmacro with-target (target &body body)
+;;   `(let ((*target* ,target))
+;;      ,@body))
 
-(define-method initialize block (&rest args))
-;;   "Prepare an empty block, or if ARGS is non-empty, a block
-;; initialized with its values as arguments."
-;;   (with-fields (arguments schema results) self
-;;     (let ((arity (length schema)))
-;;       (setf arguments (make-list arity))
-;;       (setf results (make-list arity))
-;;       (dotimes (n (length args))
-;; 	(setf (nth n arguments)
-;; 	      (nth n args))))))
+;; (define-method run block ()
+;;   "Run child blocks to produce results, then run this block with
+;; those results as input."
+;;   (execute-arguments self)
+;;   (execute self))
+
+;; (define-method describe block ()
+;;   "Show name and comprehensive help for this block.")
 
 ;; (define-method after-deserialize block ()
 ;;   "Make sure the block is ready after loading."
@@ -685,12 +702,6 @@ override all colors."
 ;; 	      (dolist (block arguments)
 ;; 		(draw block image))))))))
 
-(define-method draw block ()
-  (set-blending-mode ^blend)
-  (with-fields (image x y) self
-    (when image
-      (draw-image image x y))))
-
 (defparameter *hover-color* "red")
 
 (define-method draw-hover block (image)
@@ -700,6 +711,7 @@ override all colors."
 	      :color *hover-color*
 	      :destination image))
   (draw-contents self image))
+
 
 (define-method hit block (mouse-x mouse-y))
 ;;   "Return this block (or child block) if the coordinates MOUSE-X and

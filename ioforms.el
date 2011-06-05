@@ -23,7 +23,6 @@
 
 ;;; Code:
 
-(require 'cl)
 (require 'rx)
 
 ;;; Font-locking

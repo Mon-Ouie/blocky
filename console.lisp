@@ -33,8 +33,9 @@
 
 ;; http://lispbuilder.sourceforge.net/
 
-;; The OpenGL support here is derived from the code in 3b's excellent
-;; cl-opengl tutorials: http://3bb.cc/tutorials/cl-opengl/
+;; The OpenGL support here is derived from code written by Bart Botta
+;; for his excellent cl-opengl tutorials:
+;; http://3bb.cc/tutorials/cl-opengl/
 
 (in-package :ioforms) 
 
@@ -231,12 +232,12 @@ and the like."
 
 ;;; "Classic" key repeat
 
-(defun enable-classic-key-repeat (delay interval)
-  ;; (let ((delay-milliseconds (truncate (* delay (/ 1000.0 *frame-rate*))))
-  ;; 	(interval-milliseconds (truncate (* interval (/ 1000.0 *frame-rate*)))))
-    (sdl:enable-key-repeat delay interval))
+(defun enable-key-repeat (delay interval)
+  (let ((delay-milliseconds (truncate (* delay (/ 1000.0 *frame-rate*))))
+  	(interval-milliseconds (truncate (* interval (/ 1000.0 *frame-rate*)))))
+    (sdl:enable-key-repeat delay-milliseconds interval-milliseconds)))
 
-(defun disable-classic-key-repeat ()
+(defun disable-key-repeat ()
   (sdl:disable-key-repeat))
 
 ;;; "Held Keys" key repeat emulation
@@ -292,7 +293,7 @@ for backward-compatibility."
 
 (defun send-to-blocks (event &optional (blocks *blocks*))
   (labels ((try (block)
-	     (handle-event block event)))
+	     (send :handle-event block event)))
     (some #'try blocks)))
 
 (defvar *event-handler-function* #'send-to-blocks
@@ -317,9 +318,7 @@ Please set the variable ioforms:*event-handler-function*")
 (defun normalize-event (event)
   "Convert EVENT to a normal form suitable for `equal' comparisons."
   (let ((name (first event)))
-    (cons (etypecase name
-	    (symbol (symbol-name name))
-	    (string name))
+    (cons (make-keyword name)
 	  (sort (remove-duplicates (delete nil (rest event)))
 		#'string< :key #'symbol-name))))
 
@@ -600,7 +599,7 @@ becomes larger.")
           *gl-screen-height* *screen-height*))
   (message "Orthographic projection left:~A right:~A bottom:~A top:~A"
 	   0 *gl-screen-width* *gl-screen-height* 0)
-  (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 0 100)
+  (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 0 1)
   (gl:matrix-mode :modelview))
 
 (defvar *resizable* nil)
@@ -622,21 +621,12 @@ becomes larger.")
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
 
-;; (defun draw-everything ()
-  ;; draw a triangle
-  ;; (gl:with-primitive :triangles
-  ;;   (gl:color 0 0 0)
-  ;;   (gl:vertex 400 0 0)
-  ;;   (gl:color (random 0.9) (random 0.2) (random 0.5))
-  ;;   (gl:vertex 0 400 0)
-  ;;   (gl:color 1 0 1)
-  ;;   (gl:vertex 0 0 0))
-
 (defun run-main-loop ()
   "Initialize the console, open a window, and play.
 We want to process all inputs, update the game state, then update the
 display."
   (let ((fps (make-instance 'sdl:fps-mixed :dt *dt*)))
+    (message "Creating OpenGL window...")
     (cond (*fullscreen*
 	   (sdl:window *screen-width* *screen-height*
 		       :fps fps 
@@ -658,6 +648,7 @@ display."
     ;; extensions, so we need to tell it how to do so in lispbuilder-sdl
     (setf cl-opengl-bindings:*gl-get-proc-address* #'sdl-cffi::sdl-gl-get-proc-address)
     ;;
+    (message "Creating OpenGL window... Done.")
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
     (do-orthographic-projection)
@@ -668,10 +659,11 @@ display."
       (:video-resize-event (:w w :h h)  
 			   (setf *screen-width* w
 				 *screen-height* h)
-			   (run-hook '*resize-hook*)
+;			   (run-hook '*resize-hook*)
 			   (sdl:window w h :fps fps :title-caption *window-title*
 				       :flags sdl:SDL-RESIZABLE
-				       :position *window-position*))
+				       :position *window-position*)
+			   (do-orthographic-projection))
       (:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
 			   (let ((block (hit-blocks x y *blocks*)))
 			     (when block
@@ -956,9 +948,7 @@ name PROJECT-NAME. Returns the pathname if found, otherwise nil."
 					      (list project-name))
 			    :defaults dir))
        when path return path)
-     (error "Cannot find project ~s in paths ~S. 
-You must set the variable IOFORMS:*PROJECT-DIRECTORIES* in the configuration file ~~/.ioformsrc
-Please see the included file BINARY-README for instructions."
+     (error "Cannot find project ~s in paths ~S. Try checking the project name, or your *PROJECT-DIRECTORIES* settings in the IOFORMS.INI configuration file."
 	    project-name dirs))))
 
 (defun expand-file-name (resource)
@@ -1095,7 +1085,7 @@ table."
 				       (object-index-filename project-name))))
     (if (cl-fad:file-exists-p index-file)
 	(index-iof project-name index-file)
-	(message "No IOF file found in module. Continuing."))))
+	(message "No IOF file found in project. Continuing."))))
 
 ;;; Standard resource names
 
@@ -1193,11 +1183,13 @@ also the documentation for DESERIALIZE."
 (defun set-blending-mode (mode)
   (ecase mode 
     (:additive (gl:blend-func :src-alpha :one))
+    (:source (gl:blend-func :src-color :zero))
     (:additive2 (gl:blend-func :one :one))
     (:alpha (gl:blend-func :src-alpha :one-minus-src-alpha))))
 
 (defun load-texture (surface)
   (let ((texture (car (gl:gen-textures 1))))
+    (message "Binding new gl texture ~A" texture)
     (gl:bind-texture :texture-2d texture)
     (gl:tex-parameter :texture-2d :generate-mipmap t) 
     (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear) 
@@ -1231,14 +1223,21 @@ also the documentation for DESERIALIZE."
 
 (defun load-image-resource (resource)
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
+  (message "Loading image resource ~A" resource)
   (initialize-textures-maybe)
   (let* ((surface (sdl-image:load-image (namestring (resource-file resource))
 				       :alpha 255))
 	 (texture (load-texture surface))
 	 (name (resource-name resource)))
     (prog1 surface
-      (setf (gethash name *textures*) texture)
-      (message "Now loaded total of ~A textures." (hash-table-count *textures*)))))
+      (let ((old-texture (gethash name *textures*)))
+	(when old-texture
+	  (message "Deleting old texture ~S..." name)
+	  (gl:delete-textures (list old-texture))
+	  (remhash name *textures*))
+	(progn 
+	  (setf (gethash name *textures*) texture)
+	  (message "Now loaded texture ~S for a total of ~A textures." texture (hash-table-count *textures*)))))))
 
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
@@ -1778,24 +1777,24 @@ of the music."
     (sdl:width img)))
 
 (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
+  (gl:enable :texture-2d :blend)	
   (gl:bind-texture :texture-2d texture)
+;  (gl:color 1 1 1)
   (gl:with-primitive :quads
-    (let* ((w/2 (/ width 2.0))
-	   (h/2 (/ height 2.0))
-	   (x1 (- x w/2))
-	   (x2 (+ x w/2))
-	   (y1 (- y h/2))
-	   (y2 (+ y h/2)))
-      (gl:tex-coord u1 v2)
-      (gl:vertex x1 y1 0)
-      (gl:tex-coord u2 v2)
-      (gl:vertex x2 y1 0)
-      (gl:tex-coord u2 v1)
+    (let ((x1 x)
+	  (x2 (+ x width))
+	  (y1 y)
+	  (y2 (+ y height)))
+      (gl:tex-coord 0 1)
+      (gl:vertex x y2 0)
+      (gl:tex-coord 1 1)
       (gl:vertex x2 y2 0)
-      (gl:tex-coord u1 v1)
-      (gl:vertex x1 y2 0))))
+      (gl:tex-coord 1 0)
+      (gl:vertex x2 y1 0)
+      (gl:tex-coord 0 0)
+      (gl:vertex x y 0))))
 
-(defun draw-image (name x y)
+(defun draw-image (name x y &optional z)
   (let* ((image (find-resource-object name))
 	 (height (sdl:height image))
 	 (width (sdl:width image)))
@@ -1953,7 +1952,9 @@ This program includes the DejaVu fonts family. See the file
     (when (null proj)
       (error "No current project. You must provide an argument naming the project."))
     (open-project proj)
-    (run-main-loop)))
+    (run-main-loop))
+  (loop for texture being the hash-values in *textures*
+	do (gl:delete-textures (list texture))))
 
 (defun initialize-ioforms ()
   (sdl:init-sdl :video t :audio t :joystick t)
