@@ -33,8 +33,9 @@
 
 ;; http://lispbuilder.sourceforge.net/
 
-;; The OpenGL support here is derived from the code in 3b's excellent
-;; cl-opengl tutorials: http://3bb.cc/tutorials/cl-opengl/
+;; The OpenGL support here is derived from the code written by Bart
+;; Botta for his excellent cl-opengl tutorials:
+;; http://3bb.cc/tutorials/cl-opengl/
 
 (in-package :ioforms) 
 
