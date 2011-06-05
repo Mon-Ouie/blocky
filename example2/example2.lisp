@@ -114,27 +114,5 @@
   (add-sprite *world* (new blue-dot))
   (play-music "rappy")) 
 	
-;; Now we define the code that runs when your game starts. We define
-;; it as a function (using `defun') to be called later by IOFORMS.
-
-;; (What happens is that IOFORMS loads this file before initializing
-;; the system, which allows you to set system variables like
-;; `*screen-height*' and `*screen-width*' before the window actually
-;; opens. Once IOFORMS is fully initialized according to the
-;; parameters you set, it will look for a function with the same name
-;; as the module---in this case `example2'---and execute it, which
-;; hands control back to you.
-
- 
-
-;; (define-method initialize dot ()
-;;   (bind-event self (:up) (move :north 5 :pixels))
-;;   (bind-event self (:down) (move :south 5 :pixels))
-;;   (bind-event self (:right) (move :east 5 :pixels))
-;;   (bind-event self (:left) (move :west 5 :pixels)))
-
-;; (play (new universe)
-;;       :world (new whitespace)
-;;       :dot (new dot))
       
 ;;; example2.lisp ends here
