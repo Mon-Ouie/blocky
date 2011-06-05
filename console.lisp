@@ -621,16 +621,6 @@ becomes larger.")
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
 
-;; (defun draw-everything ()
-  ;; draw a triangle
-  ;; (gl:with-primitive :triangles
-  ;;   (gl:color 0 0 0)
-  ;;   (gl:vertex 400 0 0)
-  ;;   (gl:color (random 0.9) (random 0.2) (random 0.5))
-  ;;   (gl:vertex 0 400 0)
-  ;;   (gl:color 1 0 1)
-  ;;   (gl:vertex 0 0 0))
-
 (defun run-main-loop ()
   "Initialize the console, open a window, and play.
 We want to process all inputs, update the game state, then update the
@@ -1780,7 +1770,6 @@ of the music."
 		 image)))
     (sdl:width img)))
 
-;;SEMIGOOD
 (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
   (gl:enable :texture-2d :blend)	
   (gl:bind-texture :texture-2d texture)
@@ -1798,28 +1787,6 @@ of the music."
       (gl:vertex x2 y1 0)
       (gl:tex-coord 0 0)
       (gl:vertex x y 0))))
-
-;; (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
-;;   (gl:bind-texture :texture-2d texture)
-;;   (gl:with-primitive :quads
-;;     (let* ((w/2 (/ width 2.0))
-;; 	   (h/2 (/ height 2.0))
-;; 	   (x1 x)
-;; 	   (x2 (+ x width))
-;; 	   (y1 (- height y))
-;; 	   (y2 (- y)))
-;; 	   ;; (x1 (- x w/2))
-;; 	   ;; (x2 (+ x w/2))
-;; 	   ;; (y1 (- y h/2))
-;; 	   ;; (y2 (+ y h/2)))
-;;       (gl:tex-coord u1 v2)
-;;       (gl:vertex x1 y1 0)
-;;       (gl:tex-coord u2 v2)
-;;       (gl:vertex x2 y1 0)
-;;       (gl:tex-coord u2 v1)
-;;       (gl:vertex x2 y2 0)
-;;       (gl:tex-coord u1 v1)
-;;       (gl:vertex x1 y2 0))))
 
 (defun draw-image (name x y &optional z)
   (let* ((image (find-resource-object name))
