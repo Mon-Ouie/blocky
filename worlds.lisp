@@ -37,6 +37,7 @@
   (stack :initform '() :documentation "Stack for logo system.")
   ;;
   (player :documentation "The player cell (or sprite).")
+  (background :initform nil)
   ;; sprite cells
   (sprites :initform nil :documentation "A list of sprites.")
   (sprite-grid :initform nil :documentation "Grid for collecting sprite collision information.")
@@ -850,8 +851,10 @@ along grid squares between R1,C1 and R2,C2."
 ;;; The sprite layer. See also viewport.lisp
 
 (define-method add-sprite world (sprite)
-  (pushnew sprite ^sprites :test 'equal)
-  (move-to sprite 0 0))
+  (pushnew sprite ^sprites :test 'eq)
+  (with-field-values (x y) sprite
+    (when (or (null x) (null y))
+      (move-to sprite 0 0))))
 
 (define-method remove-sprite world (sprite)
   (setf ^sprites (delete sprite ^sprites)))

@@ -231,12 +231,12 @@ and the like."
 
 ;;; "Classic" key repeat
 
-(defun enable-classic-key-repeat (delay interval)
-  ;; (let ((delay-milliseconds (truncate (* delay (/ 1000.0 *frame-rate*))))
-  ;; 	(interval-milliseconds (truncate (* interval (/ 1000.0 *frame-rate*)))))
-    (sdl:enable-key-repeat delay interval))
+(defun enable-key-repeat (delay interval)
+  (let ((delay-milliseconds (truncate (* delay (/ 1000.0 *frame-rate*))))
+  	(interval-milliseconds (truncate (* interval (/ 1000.0 *frame-rate*)))))
+    (sdl:enable-key-repeat delay-milliseconds interval-milliseconds)))
 
-(defun disable-classic-key-repeat ()
+(defun disable-key-repeat ()
   (sdl:disable-key-repeat))
 
 ;;; "Held Keys" key repeat emulation
@@ -1235,8 +1235,12 @@ also the documentation for DESERIALIZE."
 	 (texture (load-texture surface))
 	 (name (resource-name resource)))
     (prog1 surface
-      (setf (gethash name *textures*) texture)
-      (message "Now loaded total of ~A textures." (hash-table-count *textures*)))))
+      (let ((old-texture (gethash name *textures*)))
+	(when old-texture
+	  (gl:delete-textures (list old-texture))
+	  (remhash name *textures*))
+	(progn (setf (gethash name *textures*) texture)
+	       (message "Now loaded total of ~A textures." (hash-table-count *textures*)))))))
 
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
@@ -1775,27 +1779,11 @@ of the music."
 		 image)))
     (sdl:width img)))
 
-
-
-
-;; (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
-;;   (gl:bind-texture :texture-2d texture)
-;;   (gl:with-primitive :quads
-;;     (let ((x1 x)
-;; 	  (x2 (+ x width))
-;; 	  (y1 y)
-;; 	  (y2 (+ y height)))
-;;       (gl:tex-coord u1 v2)
-;;       (gl:vertex x y2 0)
-;;       (gl:tex-coord u2 v2)
-;;       (gl:vertex x2 y2 0)
-;;       (gl:tex-coord u2 v1)
-;;       (gl:vertex x2 y1 0)
-;;       (gl:tex-coord u1 v1)
-;;       (gl:vertex x y 0))))
-
+;;SEMIGOOD
 (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
+  (gl:enable :texture-2d :blend)	
   (gl:bind-texture :texture-2d texture)
+;  (gl:color 1 1 1)
   (gl:with-primitive :quads
     (let ((x1 x)
 	  (x2 (+ x width))
@@ -1811,31 +1799,18 @@ of the music."
       (gl:vertex x y 0))))
 
 ;; (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
-;;  ;;bthe good one
-;;   (gl:bind-texture :texture-2d texture)
-;;   (gl:with-primitive :quads
-;;     (let ((x1 x)
-;; 	  (x2 (+ x width))
-;; 	  (y1 y)
-;; 	  (y2 (+ y height)))
-;;       (gl:tex-coord 0 1)
-;;       (gl:vertex x y2 0)
-;;       (gl:tex-coord 1 1)
-;;       (gl:vertex x2 y2 0)
-;;       (gl:tex-coord 1 0)
-;;       (gl:vertex x2 y1 0)
-;;       (gl:tex-coord 0 0)
-;;       (gl:vertex x y 0))))
-
-;; (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
 ;;   (gl:bind-texture :texture-2d texture)
 ;;   (gl:with-primitive :quads
 ;;     (let* ((w/2 (/ width 2.0))
 ;; 	   (h/2 (/ height 2.0))
-;; 	   (x1 (- x w/2))
-;; 	   (x2 (+ x w/2))
-;; 	   (y1 (- y h/2))
-;; 	   (y2 (+ y h/2)))
+;; 	   (x1 x)
+;; 	   (x2 (+ x width))
+;; 	   (y1 (- height y))
+;; 	   (y2 (- y)))
+;; 	   ;; (x1 (- x w/2))
+;; 	   ;; (x2 (+ x w/2))
+;; 	   ;; (y1 (- y h/2))
+;; 	   ;; (y2 (+ y h/2)))
 ;;       (gl:tex-coord u1 v2)
 ;;       (gl:vertex x1 y1 0)
 ;;       (gl:tex-coord u2 v2)
@@ -1844,7 +1819,6 @@ of the music."
 ;;       (gl:vertex x2 y2 0)
 ;;       (gl:tex-coord u1 v1)
 ;;       (gl:vertex x1 y2 0))))
-
 
 (defun draw-image (name x y &optional z)
   (let* ((image (find-resource-object name))
@@ -2004,7 +1978,9 @@ This program includes the DejaVu fonts family. See the file
     (when (null proj)
       (error "No current project. You must provide an argument naming the project."))
     (open-project proj)
-    (run-main-loop)))
+    (run-main-loop))
+  (loop for texture being the hash-values in *textures*
+	do (gl:delete-textures (list texture))))
 
 (defun initialize-ioforms ()
   (sdl:init-sdl :video t :audio t :joystick t)

@@ -38,6 +38,7 @@
 (setf *screen-width* 640)
 (setf *screen-height* 480)
 (setf *window-title* "Hello")
+;(enable-key-repeat 250 150)
 
 ;; (setf *resizable* t)
 ;; (setf *use-nominal-screen-size* t)
@@ -47,6 +48,8 @@
 (defresource 
     (:name "blocky" :type :image :file "blocky.png"))
 
+(defresource (:name "story" :type :image :file "story.png"))
+
 (defsprite blocky
   :image "blocky"
   :default-events
@@ -55,15 +58,12 @@
     ((:right) (move :east 5 :pixels)) 
     ((:left) (move :west 5 :pixels)))
   :x (/ *screen-width* 2)
-  :y (/ *screen-height* 2)
-  :z -1)
+  :y (/ *screen-height* 2))
 
 (defresource (:name "bleep" :type :sample :file "bleep.wav"))
 
 (define-method bleep blocky ()
   (play-sound self "bleep"))
-
-(defresource (:name "story" :type :image :file "story.png"))
 
 (defworld hello :background "story")
 

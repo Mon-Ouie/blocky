@@ -60,8 +60,8 @@
 	   make-universe initialize-colors *standard-categories*
 	   *left-turn* bind-event *right-turn* *default-action-points*
 	   left-turn right-turn =world= roll bind-event-to-method
-	   *colors* enable-classic-key-repeat
-	   disable-classic-key-repeat get-color =prompt= =menu-item=
+	   *colors* enable-key-repeat
+	   disable-key-repeat get-color =prompt= =menu-item=
 	   =direction-chooser= define-method *default-font*
 	   field-value set-field-value object-fields dispatch-event
 	   run-project *user-init-file-name* distance icon-resource
