@@ -12,7 +12,10 @@ More instructions for Mac and Windows will be available soon.
 
 1. System Requirements (All Platforms)
 
-    - A text editor (preferably Emacs; http://www.gnu.org/software/emacs)
+    - A text editor (preferably Emacs or Vim;
+      http://www.gnu.org/software/emacs) If you use Emacs check out
+      SLIME (you may need the CVS version) and if you use Vim check
+      out SLIMV.
 
     - A Common Lisp implementation such as Steel Bank Common Lisp (see
       platform-specific notes below for suggestions on SBCL; CLISP and

@@ -103,11 +103,16 @@
 
 (defworld dream :background "story1")
 
+;;; Music!
+
+(defresource (:name "rappy" :type :music :file "rappy.ogg"))
+
 (defun example2 ()
   (start (new universe)
 	:world (new dream)
 	:player (new blocky))
-  (add-sprite *world* (new blue-dot)))
+  (add-sprite *world* (new blue-dot))
+  (play-music "rappy")) 
 	
 ;; Now we define the code that runs when your game starts. We define
 ;; it as a function (using `defun') to be called later by IOFORMS.
