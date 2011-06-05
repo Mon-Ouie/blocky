@@ -33,50 +33,82 @@
 
 (setf *screen-width* 640)
 (setf *screen-height* 480)
-(setf *window-title* "ioforms example2 1")
+(setf *window-title* "Blocky and the Blue Dot")
+
+;;; Here's blocky again, with a new beep feature.
+
+(defresource 
+    (:name "blocky" :type :image :file "blocky.png"))
+
+(defsprite blocky
+  :image "blocky"
+  :default-events
+  '(((:up) (move :north 5 :pixels))
+    ((:down) (move :south 5 :pixels)) 
+    ((:right) (move :east 5 :pixels)) 
+    ((:left) (move :west 5 :pixels))
+    ((:space) (beep)))
+  :x (- (/ *screen-width* 2) 100)
+  :y (/ *screen-height* 2))
+
+(defvar *beeped* nil)
+
+(defresource (:name "beep" :type :sample :file "beep.wav"))
+
+(define-method beep blocky ()
+  (setf *beeped* t)
+  (play-sound self "beep"))
+
+;;; Now the mysterious blue dot.
 
 (defresource 
     (:name "blue-dot" :type :image :file "blue-dot.png")
-    (:name "red-dot" :type :image :file "red-dot.png")
-  (:name "yellow-dot" :type :image :file "yellow-dot.png"))
+    (:name "woom" :type :sample :file "woom.wav"))
 
-(defvar *colors* (list "blue-dot" "red-dot" "yellow-dot"))
+(defsprite blue-dot
+  :image "blue-dot"
+  :x 400 :y 245
+  :steps 0 
+  :speed 1
+  :direction :south)
 
-(defsprite particle 
-  :image (random-choose *colors*)
-  :direction (random-direction)
-  :x (+ 80 (random 100)) 
-  :y (+ 80 (random 100)))
+(defparameter *scare-distance* 100)
 
-(define-method draw particle ()  
-  (with-fields (x y image) self
-    (draw-image image x y)))
+(define-method run-away blue-dot ()  
+  (with-fields (direction steps speed) self
+    (play-sound self "woom")
+    (setf direction 
+	  (opposite-direction (player-direction self)))
+    (setf steps 20 speed 2)))
 
-  ;; (gl:with-primitive :triangles
-  ;;   (with-fields (x y) self
-  ;;     (gl:color 0 0 0)
-  ;;     (gl:vertex x y 0)
-  ;;     (gl:color (random 0.9) (random 0.2) (random 0.5))
-  ;;     (gl:vertex (+ x 80) (+ y 80) 0)
-  ;;     (gl:color 1 0 1)
-  ;;     (gl:vertex (+ x 120) (+ y 100) 0))))
+(define-method creep-closer blue-dot ()  
+  (with-fields (direction steps speed) self
+    (setf *beeped* nil)
+    (setf direction (player-direction self))
+    (setf steps 25 speed 0.5)))
 
-(defresource (:name "bleep" :type :sample :file "bleep.wav"))
+(define-method update blue-dot ()
+  (with-fields (steps direction speed) self
+    (if (> *scare-distance* (player-distance self))
+	(run-away self)
+	(when *beeped*
+	  (creep-closer self)))
+    (when (plusp steps)
+      (move self direction speed :pixels)
+      (decf steps))))
 
-(define-method hit particle (x y))
+;;; And now the dream level. 
 
-(define-method bleep particle ()
-  (play-sound self "bleep"))
+(defresource (:name "story1" :type :image :file "story1.png"))
 
-(define-method update particle ()
-  (incf ^x (random-choose (list 1 -1)))
-  (incf ^y (random-choose (list 1 -1))))
+(defworld dream :background "story1")
 
 (defun example2 ()
-  (message "RUNNING EXAMPLE2!")
-  (dotimes (n 50)
-    (add-block (new particle))))
-
+  (start (new universe)
+	:world (new dream)
+	:player (new blocky))
+  (add-sprite *world* (new blue-dot)))
+	
 ;; Now we define the code that runs when your game starts. We define
 ;; it as a function (using `defun') to be called later by IOFORMS.
 
@@ -89,7 +121,6 @@
 ;; hands control back to you.
 
  
-;(defworld whitespace :background "story")
 
 ;; (define-method initialize dot ()
 ;;   (bind-event self (:up) (move :north 5 :pixels))

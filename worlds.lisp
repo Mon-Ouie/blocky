@@ -599,21 +599,6 @@ placement."
 (define-method enemy-at-p world (row column)
   (category-at-p self row column :enemy))
 
-;; (define-method category-at-xy-p world (x y category)
-;;   (let ((
-
-(define-method direction-to-player world (row column)
-  "Return the general compass direction of the player from ROW, COLUMN."
-  (direction-to row column 
-		(player-row self)
-		(player-column self)))
-
-(define-method distance-to-player world (row column)
-  "Return the straight-line distance to the player from ROW, COLUMN."
-  (distance row column
-	    (player-row self)
-	    (player-column self)))
-	    
 (define-method adjacent-to-player world (row column)
   "Return non-nil when ROW, COLUMN is adjacent to the player."
   (<= (distance-to-player self row column) 1.5))
