@@ -31,7 +31,7 @@
 ;;; Code:
 
 (defpackage :ioforms
-    (:documentation "A 2D game engine in Common Lisp.")
+    (:documentation "Visual Common Lisp.")
   (:use :common-lisp) 
   (:export *default-frame-width* *default-frame-height* =null=
 	   null-block =viewport= *frequency* *output-chunksize*
@@ -60,17 +60,17 @@
 	   make-universe initialize-colors *standard-categories*
 	   *left-turn* bind-event *right-turn* *default-action-points*
 	   left-turn right-turn =world= roll bind-event-to-method
-	   *colors* enable-key-repeat
-	   disable-key-repeat get-color =prompt= =menu-item=
-	   =direction-chooser= define-method *default-font*
-	   field-value set-field-value object-fields dispatch-event
-	   run-project *user-init-file-name* distance icon-resource
-	   icon-image *compass-directions* *compass-opposites*
-	   find-resource-property compose-blank-fields font-width
-	   font-height *browser* browser set-browser find-object
-	   *windows* transform-field-reference defblock
-	   *screen-height* =inventory= formatted-line-width
-	   *last-event* formatted-line-height formatted-string-height
+	   *colors* enable-key-repeat disable-key-repeat get-color
+	   =prompt= =menu-item= =direction-chooser= define-method
+	   *default-font* field-value set-field-value object-fields
+	   dispatch-event run-project *user-init-file-name* distance
+	   icon-resource icon-image *compass-directions*
+	   *compass-opposites* find-resource-property
+	   compose-blank-fields font-width font-height *browser*
+	   browser set-browser find-object *windows*
+	   transform-field-reference defblock *screen-height*
+	   =inventory= formatted-line-width *last-event*
+	   formatted-line-height formatted-string-height
 	   formatted-string-width get-color create-image draw-image
 	   ioforms edit =frame= define-prototype has-field *target*
 	   with-target defcell defworld *choose-direction-menu*
@@ -183,8 +183,9 @@
 	   self transform-declaration-field-descriptor is-a
 	   compose-blank-fields make-field-initializer initialize
 	   initialize-prototypes initialize-ioforms
-	   object-address-string draw-string-blended =block=
-	   *token-types* *block-categories* *block-colors*
+	   object-address-string draw-string draw-string-blended
+	   find-text-image make-text-image clear-text-image-cache
+	   =block= *token-types* *block-categories* *block-colors*
 	   *block-text-colors* defblock =beep= =program=))
 
 ;;; ioforms.lisp ends here

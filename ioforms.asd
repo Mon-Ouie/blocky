@@ -25,12 +25,12 @@
 	       (:file "rgb")
 	       (:file "keys")
 	       (:file "math")
+	       (:file "logic")
 	       (:file "prototypes")
 	       (:file "console")
 	       (:file "blocks")
 	       (:file "widgets")
 	       (:file "things")
-	       (:file "logic")
 	       (:file "worlds")))
 ;;	       (:file "path")
 	       

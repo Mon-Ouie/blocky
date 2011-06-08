@@ -1687,90 +1687,6 @@ of the music."
   ;; set to mix lots of sounds
   (sdl-mixer:allocate-channels *channels*))
 
-;;; Font operations
-
-;; A bitmap font resource looks like this:
-
-;; (:name "default-font" 
-;;        :type :font 
-;;        :properties (:height 14 :width 7) ;; monospace only
-;;        :data "7x14")
-
-;; Or use type :ttf for Truetype fonts. Don't specify :height and
-;; :width in this case.
-
-(defun font-height (font)
-  (let ((resource (find-resource font)))
-    (ecase (resource-type resource)
-      (:font (find-resource-property font :height))
-      (:ttf (sdl:get-font-height :font (resource-object resource))))))
-
-(defun font-width (font)
-  (let ((resource (find-resource font)))
-    (ecase (resource-type resource)
-      (:font (find-resource-property font :width))
-      (:ttf (error "Cannot get width of a TTF font.")))))
-
-(defun font-text-extents (string font)
-  (let ((resource (find-resource font)))  
-    (ecase (resource-type resource)
-      (:font (* (length string)
-		(font-width font)))
-      (:ttf (values (sdl:get-font-size string :size :w :font (resource-object resource))
-		    (sdl:get-font-height :font (resource-object resource)))))))
-
-(defvar *font-string-tables* nil)
-
-(defun initialize-text-image-cache-maybe (&optional force)
-  (when (or force (null *font-string-tables*))
-    (setf *font-string-tables* (make-hash-table :test 'equal))))
-
-(defun cached-text-image (font string)
-  (let ((strings (gethash font *font-string-tables*)))
-    (when strings
-      (gethash string strings))))
-
-(defun (setf cached-text-image) (font string image)
-  (let ((strings 
-	 (or (gethash font *font-string-tables*)
-	     (setf (gethash font *font-string-tables*)
-		   (make-hash-table :test 'equal)))))
-    (setf (gethash string strings) image)))
-
-(defun make-text-image (font string &optional (color "black"))
-  (multiple-value-bind (width height)
-      (font-text-extents string font)
-    (let ((surface (create-surface width height))
-	  (texture (first (gl:gen-textures 1))))
-      (prog1 texture
-	(sdl:draw-string-blended-* string 0 0 :color color :surface surface)
-	(gl:bind-texture :texture-2d texture)
-	(gl:tex-parameter :texture-2d :texture-min-filter :linear)
-	(gl:tex-parameter :texture-2d :texture-mag-filter :linear)
-	(sdl-base::with-pixel (buffer (sdl:fp surface))
-	  (gl:tex-image-2d :texture-2d 0 :rgba width height 0 :luminance :unsigned-byte (sdl-base::pixel-data buffer)))))))
-
-(defun find-text-image (font string &optional color)
-  (or (cached-text-image font string)
-      (setf (cached-text-image font string)
-	    (make-text-image font string color))))
-
-;; (defun draw-string (string x y &key (color "black")
-;; 				    (font *default-font*))
-;;   (draw-image 
-
-;; (defun draw-string-solid (string x y 
-;; 			  &key destination (font *default-font*) (color "white"))
-;;   (sdl:draw-string-solid-* string x y :surface destination :font (find-resource-object font)
-;; 			   :color (find-resource-object color)))
-
-;; (defun draw-string-shaded (string x y &optional (foreground "white") (background "black")
-;; 			  &key destination (font *default-font*))
-;;   (sdl:draw-string-shaded-* string x y (find-resource-object foreground)
-;; 			    (find-resource-object background)
-;; 			    :surface destination :font (find-resource-object font)))
-
-
 ;;; Standard colors
 
 ;; The X11 standard colors are loaded by default into the resource
@@ -1834,10 +1750,79 @@ of the music."
   (let* ((image (find-resource-object name))
 	 (height (sdl:height image))
 	 (width (sdl:width image)))
-    ;; (message "height:~S width:~S" height width)
-    ;; (message "*textures* = ~S" (hash-table-count *textures*))
     (let ((texture (find-texture name)))
       (draw-textured-rectangle x y width height texture))))
+
+;;; Font operations
+
+;; A bitmap font resource looks like this:
+
+;; (:name "default-font" 
+;;        :type :font 
+;;        :properties (:height 14 :width 7) ;; monospace only
+;;        :data "7x14")
+
+;; Or use type :ttf for Truetype fonts. Don't specify :height and
+;; :width in this case.
+
+(defun font-height (font)
+  (let ((resource (find-resource font)))
+    (ecase (resource-type resource)
+      (:font (find-resource-property font :height))
+      (:ttf (sdl:get-font-height :font (resource-object resource))))))
+
+(defun font-width (font)
+  (let ((resource (find-resource font)))
+    (ecase (resource-type resource)
+      (:font (find-resource-property font :width))
+      (:ttf (error "Cannot get width of a TTF font.")))))
+
+(defun font-text-extents (string font)
+  (let ((resource (find-resource font)))  
+    (ecase (resource-type resource)
+      (:font (* (length string)
+		(font-width font)))
+      (:ttf (values (sdl:get-font-size string :size :w :font (resource-object resource))
+		    (sdl:get-font-height :font (resource-object resource)))))))
+
+(defun make-text-image (font string color)
+  (multiple-value-bind (width height)
+      (font-text-extents string font)
+    (let ((surface (create-surface width height))
+	  (texture (first (gl:gen-textures 1))))
+      (prog1 texture
+	(sdl:draw-string-blended-* string 0 0 
+				   :color (or color "black")
+				   :surface surface)
+	(gl:bind-texture :texture-2d texture)
+	(gl:tex-parameter :texture-2d :texture-min-filter :linear)
+	(gl:tex-parameter :texture-2d :texture-mag-filter :linear)
+	(sdl-base::with-pixel (buffer (sdl:fp surface))
+	  (gl:tex-image-2d :texture-2d 0 :rgba width height 0 :luminance :unsigned-byte (sdl-base::pixel-data buffer)))))))
+
+(defun-memo find-text-image (font string color) 
+  (:key #'identity :test 'equal)
+  (make-text-image font string color))
+  
+(defun clear-text-image-cache ()
+  (clear-memoize 'find-text-image))
+
+(defun draw-string (string x y &key (color "black")
+				    (font *default-font*))
+  (let ((texture (find-text-image font string color)))
+    (draw-textured-rectangle x y width height texture)))
+
+
+;; (defun draw-string-solid (string x y 
+;; 			  &key destination (font *default-font*) (color "white"))
+;;   (sdl:draw-string-solid-* string x y :surface destination :font (find-resource-object font)
+;; 			   :color (find-resource-object color)))
+
+;; (defun draw-string-shaded (string x y &optional (foreground "white") (background "black")
+;; 			  &key destination (font *default-font*))
+;;   (sdl:draw-string-shaded-* string x y (find-resource-object foreground)
+;; 			    (find-resource-object background)
+;; 			    :surface destination :font (find-resource-object font)))
 
 ;;; Drawing shapes and other primitives
 
@@ -1894,34 +1879,6 @@ of the music."
   (setf *quitting* nil)
   (setf *project* project-name)
   (sdl:push-quit-event))
-
-(defvar *copyright-text*
-"Welcome to IOFORMS!
-Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 by David T O'Toole
-<dto@gnu.org> <dto1138@gmail.com>
-http://ioforms.org/
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-This program includes libSDL 1.2 (Simple Direct Media Layer), which is
-provided under the terms of the GNU Lesser General Public License. See
-also the file LIBSDL-LICENSE for details.
-
-This program includes the DejaVu fonts family. See the file
-./standard/DEJAVU-FONTS-LICENSE for more information.
-
-")
 
 (defvar *library-search-paths-setup-hook* nil)
 

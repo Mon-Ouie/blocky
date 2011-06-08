@@ -1,20 +1,20 @@
 What follows the dotted line are the licensing terms for the lisp code
-in XE2. XE2 is provided under the terms of the GNU General Public
-License, version 3.
-
-The game subdirectories include MEDIA-COPYING files which place the
-included GRAPHICS AND SOUND files under various licenses, including
-Creative Commons licenses. See each game's MEDIA-COPYING file for
-details. NOTE. SOME OF THE GAMES ARE LICENSED WITH ONE CC LICENSE,
-SOME WITH ANOTHER. CHECK THE MEDIA-COPYING FILE IN EACH GAME'S
-SUBDIRECTORY.
+in IOFORMS. IOFORMS is provided under the terms of the GNU General
+Public License, version 3.
 
 The X11 color data is reproduced here in rgb.lisp under the MIT
 License; see rgb.lisp for details.
 
 On some platforms, binaries of libSDL 1.2 are redistributed with
-XE2. libSDL 1.2 is under the LGPL license; see the file LIBSDL-LICENSE
-for full details.
+IOFORMS. libSDL 1.2 is under the LGPL license; see the file
+LIBSDL-LICENSE for full details.
+
+The game subdirectories may include MEDIA-COPYING files which place
+the included GRAPHICS AND SOUND files under various licenses,
+including Creative Commons licenses. See each game's MEDIA-COPYING
+file for details. NOTE. SOME OF THE GAMES ARE LICENSED WITH ONE CC
+LICENSE, SOME WITH ANOTHER. CHECK THE MEDIA-COPYING FILE IN EACH
+GAME'S SUBDIRECTORY.
 
 THESE ARE ALL VERY DIFFERENT LICENSES AND THEY COVER DIFFERENT PARTS
 OF WHAT IS INCLUDED HERE. PLEASE READ AND COPY CAREFULLY!

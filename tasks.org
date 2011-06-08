@@ -1,6 +1,148 @@
-* TODO investigate blocky.io
+** TODO Add TTF string drawing support
+** TODO allow #RRGGBB color spec in resources
+** TODO Port blocks.lisp to OpenGL
+** TODO Revise blocks execution model re:schema (see below)
+** TODO Revise widgets.lisp
+** TODO Implement this GRAPH UI example:
+   
+Say you want a nice interface helping a designer to explore various
+choices of values for two variables---such as a function y=f(x), or
+perhaps choose a color interactively from a 2D color field (possibly
+via the mouse) while seeing corresponding R/G/B values update (and
+vice versa when you edit the RGB values individually.) So we want to
+make a rectangle with a clickable/draggable point in it, whose X,Y
+position reflects the values of the variables, plus axis labels.
+
+You could write a "native" widget to do this with native drawing
+commands, but extending that in various ways (to choosing multiple
+points, for example) might be harder---whatever the case, if you want
+to make a variation or improvement on this widget, the "native" coders
+have to do it.
+
+But, assume for the moment that we've got the following prebuilt
+visual blocks, with argument or "socket" names listed in parentheses
+after the block name.
+
+  sprite(x,y,z,image,...)  a sprite with operations such as
+                           "move :north 5 :pixels" and "on-click :x 50 :y 29"
+
+  world(height,width,sprites,...)  a rectangular gameworld where objects can
+                                   exist and collide. operations are things like
+                                   draw-background() and add-sprite(sprite, x, y,...)
+  
+  label(x,y,text)          this can be just a specialized sprite() block.
+
+  number(value,format,...)  an editable number widget.
+
+  text(value)               editable plaintext string 
+
+  send(object,message,{arguments})   invoke a method on the OBJECT
+
+  set(name,value)  locally set the variable named NAME to the value
+                     VALUE.
+
+  the(name)        find the value of the variable named NAME.
+                   graphically, this may be abbreviated *NAME, or by color.
+
+  my(name)         find the value of this object's NAME field.
+                   this is distinct from any local variable with that name.
+
+  new(name)        create a new block of the type NAME, i.e. new("number")
+
+  defblock(name,definition)  define a new block in terms of other blocks
+
+  method(name, block, args)   define a method named NAME on the block BLOCK
+                   
+(As in Scratch, the "sockets" are the places in the block's onscreen
+representation that you plug other blocks into.)
+
+I have actually implemented all the prebuilt blocks mentioned, except
+for the last two---defblock exists as a Lisp macro to define blocks,
+but there isn't yet a visual block CALLED defblock that does this
+visually. And similarly with DEFINE-METHOD. But this isn't hard. All
+the basics of what I've described above are shown in the youtube demo
+I put up, I just need to revise the graphics parts now that I moved to
+OpenGL, plus some layout changes.
+
+Anyway, given these blocks, the rough outline of the visual solution,
+starting with a blank page:
+
+1. Add a DEFBLOCK to the blank page.
+2. Type "point-chooser" into the NAME socket of the DEFBLOCK.
+3. Add a blank WORLD to the page. It shows up as a white 256x256 unit
+   square by default, but can be resized, change its background image,
+   and add sprites using various commands.
+4. Add a new SET block. Enter "graph" in the NAME socket.
+5. Drag the blank WORLD into the VALUE socket of the SET block.
+
+   (The idea here is that you now have a WORLD object named "graph")
+
+6.  Drag the resulting SET block into the DEFINITION part of the
+DEFBLOCK block.
+
+7. Now you have a DEFBLOCK whose body (so far) creates a blank WORLD
+   and makes it available as the value of the local variable named
+   GRAPH.
+
+8. By steps similar to steps 4-6 above, create a few more SET blocks:
+
+   SET(X, NEW(NUMBER))
+   SET(Y, NEW(NUMBER))
+   SET(POINT, NEW(SPRITE))
+
+   Add SEND(THE(GRAPH) ADD THE(SPRITE) 0 0) to the main DEFBLOCK, so
+   that the graph starts out with the interactive sprite dot in it.
+
+Now, It's probably not hard to make a simple two-column table widget
+with the variable names on the left and the values on the right,
+instead of having to make each SET statement individually. But you get
+the idea---you have something that looks like a dialog box-ish user
+interface already, with labels on the left, interactive value widgets
+on the right. 
+
+But the graph doesn't yet actually work, so we must continue.
+
+9. Add a SEND block. For the OBJECT (i.e recipient) socket, put in
+   THE(POINT), and enter MOVE-TO as the message name. Add THE(X) and
+   THE(Y) as the arguments.
+
+   You now have a block which, when triggered, moves the sprite POINT
+   to the location given by the values of the local variables X and Y.
+
+   Switching to a Lispy notation, we now have:
+ 
+    (SEND (THE POINT) MOVE-TO (THE X) (THE Y))
+
+10. Add (METHOD UPDATE (THE X)), and as the definition give the SEND
+    block from the previous step. 
+
+    And similarly with (METHOD UPDATE (THE Y)).
+
+12. Add (METHOD CLICK (THE POINT)) and give this as a definition: 
+       
+         (SEND (THE X) SET-VALUE (MY X))
+         (SEND (THE Y) SET-VALUE (MY Y))
+
+13. It's clear we could continue on and improve this with label axes
+    and such. 
+
+14. It's easier for people to change this defblock's behavior because
+    its logic is expressed entirely in blocks. Well, you don't want to
+    encourage copy-and-tweak reuse, but on the other hand requiring
+    conceptual coordination between everyone on these
+    frequently-customized editing tools would be an object-librarian's
+    nightmare. Better to err on the side of people adapting the
+    available "scripts" to their immediate tasks-at-hand.
+
+I've been discussing with a friend who's developed quite an extensive
+Lisp game engine of his own---I'd like to develop this visual language
+toolkit as something not tied to my own game engine, so that my stuff
+can work with his code as well.
 
 * TODO Review task list and reorganize roadmap
+
+** TODO investigate blocky.io
+** TODO investigate quadtrees http://en.wikipedia.org/wiki/Quadtree http://hectorgon.blogspot.com/2006/08/regular-grids-vs-aabb-trees-in-games.html
 
 * TODO Example 1: Blocky and the Blue Dot
   DEADLINE: <2011-06-04 Sat>
@@ -46,7 +188,119 @@
 ** TODO allow (setf (^field object) value) ??
 * TODO [#B] fix event list format docstrings
 * TODO [#B] watch farbrausch video presentations
-* TODO [#C] fix world edge conditions in MOVE
 * TODO [#C] add vecto support and other prox texture stuff
 * TODO BETA RELEASE: GUI stuff
 ** TODO INVADER TACTICS remake
+* TODO timeline: interactive logarithmic time scale with nasa photos that scale., pseudogame
+** TODO altering timelines... seeing results of sending objects far back in time.
+** TODO you can never go home---sending back in time to early universe allows travel to regions that are not causally connected later (neither is in the observable universe of the other)
+
+
+* TODO Review Visual language idea roadmap
+(02:23:25 PM) dto: did you see my new examples
+(02:23:26 PM) dto: of ioforms
+(02:23:32 PM) XORBS112: not yet
+(02:23:35 PM) dto: http://lispgamesdev.blogspot.com/
+(02:23:36 PM) dto: :)
+(02:23:45 PM) dto: they're designed to teach the engine.
+(02:23:57 PM) dto: but also tell a strangle little story.
+(02:24:29 PM) XORBS112: ha
+(02:29:34 PM) dto: now that things are coming together with ioforms i'm excited to make an actual new game after this blocky story
+(02:29:58 PM) XORBS112: is this running on opengl?
+(02:30:02 PM) dto: yes.
+(02:30:23 PM) dto: i still haven't figured out text.
+(02:30:32 PM) dto: and i'll have to rewrite some of the GUI stuff. but it should be ok.
+(02:31:10 PM) XORBS112: I'll be interested to see what you do about GUI
+(02:31:25 PM) XORBS112: so far I haven't had much luck with that
+(02:31:31 PM) dto: its going to end up looking substantially like the blocks from my recent video
+(02:31:42 PM) dto: wher i demoed the blocks ui having some interesting tweaks to the scratch model
+(02:33:12 PM) XORBS112: afk for a sec
+(02:59:07 PM) XORBS112: back
+(03:11:38 PM) XORBS112: interesting
+(03:13:48 PM) XORBS112: have you taken a stab at networked games at all?
+(03:13:56 PM) dto: no.
+(03:15:07 PM) XORBS112: I was fairly proud of the job I did with the networking code in my new game
+(03:15:17 PM) dto: i think it would be great to be able to use my visual blocks stuff with your engine
+(03:15:26 PM) XORBS112: that would be cool
+(03:15:35 PM) XORBS112: my engine needs serious cleanup
+(03:15:49 PM) dto: i've been going through that cleanup process. it's painful, but eventually wonderful and awesome
+(03:15:58 PM) dto: now things are named consistently
+(03:16:04 PM) XORBS112: but I think Lisp could use a high quality game engine
+(03:16:15 PM) dto: much obsolete code has been removed. i'm at 6500 lines now.
+(03:16:18 PM) XORBS112: I think right now everyone's working in their own little corner
+(03:16:21 PM) dto: it was 9k before
+(03:16:24 PM) XORBS112: oh nice
+(03:16:28 PM) dto: i agree
+(03:16:32 PM) dto: (re corner
+(03:17:53 PM) XORBS112: I'll make a release of my game engine
+(03:17:57 PM) XORBS112: in the next week or so
+(03:18:00 PM) dto: cool.
+(03:18:03 PM) XORBS112: and let you try it out
+(03:18:16 PM) dto: there seemed to be lots of stuff. like physics and even skeletal stuff?
+(03:18:20 PM) XORBS112: yeah
+(03:18:23 PM) XORBS112: skeleton animation
+(03:18:27 PM) XORBS112: particle effects
+(03:18:45 PM) XORBS112: arbitrary swept sphere to triangle collisions
+(03:18:51 PM) XORBS112: portals
+(03:19:25 PM) dto: i think eventually it may be good to re-base my object system onto CLOS (wouldn't be hard) and add some extra compatibility so that my visual Lisp isn't just trapped in a game engine.
+(03:19:40 PM) dto: wow.
+(03:20:32 PM) XORBS112: yeah
+(03:20:34 PM) XORBS112: one question
+(03:20:53 PM) XORBS112: is how to interface different games with some sort of a common map system
+(03:21:13 PM) dto: what do you mean by map. game worlds?
+(03:21:21 PM) XORBS112: I mean like use your visual system
+(03:21:27 PM) XORBS112: as a way to write games
+(03:21:34 PM) XORBS112: in an engine-agnostic way
+(03:21:51 PM) dto: i think i can do that.
+(03:22:10 PM) XORBS112: the only thing is
+(03:22:18 PM) XORBS112: 2D and 3D games have fairly different requirements
+(03:22:26 PM) dto: aha :)
+(03:22:32 PM) dto: that's where the visual extensibility comes in.
+(03:22:32 PM) XORBS112: spanning that cognitive gap will be interesting
+(03:23:06 PM) dto: say you need a 3d world view sort of like the multi-view in blender, where you see plan/elevation etc
+(03:23:15 PM) dto: or whatever is "different from the needs of 2d"
+(03:23:29 PM) dto: what about an isometric final fantasy tactics like game? needs a different level editor.
+(03:23:34 PM) dto: so,
+(03:24:01 PM) dto: you could write IOFORMS widgets that bridge the gap.
+(03:25:40 PM) dto: i.e. IOFORMS programs are composed of blocks positioned in 3d opengl space, and they can draw themselves however they want using any opengl commands whatsoever, arranged in a display tree so that a block can choose how/whether to draw its children, or whether to draw an interesting data UI instead of show the child widgets, etc.
+(03:26:17 PM) dto: i dont imagine it would be that hard to get IOFORMS to display pop ups or whatever, in the same opengl context that you're using your game engine in.
+(03:27:00 PM) dto: for example what about all the procedural texturing/modeling buzz
+(03:27:31 PM) dto: a lot of that stuff (farbrausch / werkkzeug etc) are visually programmed procedural synthesis/remixing
+(03:27:35 PM) dto: that is where we need to go.
+(03:27:38 PM) XORBS112: ok
+(03:27:44 PM) dto: is this nuts, or making sense?
+(03:27:58 PM) XORBS112: I think it makes sense in terms of behavior
+(03:28:05 PM) XORBS112: but not necessarily in terms of performance
+(03:28:27 PM) XORBS112: I think 3D game engines have to bend over backwards a bit to get good performance
+(03:28:29 PM) dto: what are your specific concerns?
+(03:28:56 PM) XORBS112: vertex arrays
+(03:29:01 PM) XORBS112: for example
+(03:29:24 PM) dto: the blocks' methods compile to machine code like any other lisp, and its easy to add additional semantics so that blocks reduce to even smaller expressions
+(03:29:51 PM) XORBS112: I'm not sure if I understand how it works 100%
+(03:29:53 PM) dto: do you mean just a Lisp array of (x,y,z) points?
+(03:30:06 PM) XORBS112: which then gets passed to OpenGL
+(03:30:12 PM) XORBS112: and gets stored on teh GPU
+(03:30:43 PM) dto: i guess if something is too performance critical it could always have a hand-written version.
+(03:30:43 PM) XORBS112: in general, I think things are dealt with in more of a batch-like way
+(03:31:00 PM) XORBS112: I'm not sure how to deal with batches in your system
+(03:31:12 PM) XORBS112: I think that's the biggest difference
+(03:31:23 PM) dto: hmm, in that i'm going for scratch-like "live programming"?
+(03:31:36 PM) XORBS112: when everything is an individual object, that costs performance
+(03:31:51 PM) XORBS112: do we have one ioform per game world object?
+(03:31:59 PM) dto: no
+(03:32:35 PM) dto: if you were using ioforms as a visually programmable visual programming language "add-on" and not a game engine
+(03:33:22 PM) dto: probably what would be sufficient is to implement blocks that wrap your objects and worlds so that you can at least get at them. 
+(03:34:07 PM) dto: that way you can program in terms of them (and therefore implement custom editors in terms of them) .
+(03:34:21 PM) dto: now in my case here, I'm using ioforms objects as the game engine too. 
+(03:34:48 PM) XORBS112: ok
+(03:34:54 PM) dto: the little block character, the blue dot, and the gameworld itself are blocks. the gameworld defines its draw method to paint the background, then the sprites..etc)
+(03:34:58 PM) XORBS112: so I could use it as a scripting engine?
+(03:35:01 PM) dto: yeah.
+(03:35:06 PM) XORBS112: I think that would work
+(03:35:16 PM) XORBS112: it would require some refactoring on my part
+(03:35:20 PM) XORBS112: (which I need to do anyway)
+(03:35:59 PM) dto: keep me posted. i bet i could rework things to suit your concerns.
+(03:36:11 PM) dto: have you peeked at any source for a game
+(03:36:16 PM) dto:  mean my exampls?
+(03:36:40 PM) dto: https://github.com/dto/ioforms/blob/master/example2/example2.lisp
+
