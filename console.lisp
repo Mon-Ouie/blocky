@@ -1689,14 +1689,15 @@ of the music."
 
 ;;; Font operations
 
-;; An IOF entry for a font looks like this: 
+;; A bitmap font resource looks like this:
 
 ;; (:name "default-font" 
 ;;        :type :font 
-;;        :properties (:height 14 :width 7) 
+;;        :properties (:height 14 :width 7) ;; monospace only
 ;;        :data "7x14")
 
-;; Or use type :ttf for Truetype fonts.
+;; Or use type :ttf for Truetype fonts. Don't specify :height and
+;; :width in this case.
 
 (defun font-height (font)
   (let ((resource (find-resource font)))
@@ -1718,22 +1719,57 @@ of the music."
       (:ttf (values (sdl:get-font-size string :size :w :font (resource-object resource))
 		    (sdl:get-font-height :font (resource-object resource)))))))
 
-(defun draw-string-solid (string x y 
-			  &key destination (font *default-font*) (color "white"))
-  (sdl:draw-string-solid-* string x y :surface destination :font (find-resource-object font)
-			   :color (find-resource-object color)))
+(defvar *font-string-tables* nil)
 
-(defun draw-string-shaded (string x y &optional (foreground "white") (background "black")
-			  &key destination (font *default-font*))
-  (sdl:draw-string-shaded-* string x y (find-resource-object foreground)
-			    (find-resource-object background)
-			    :surface destination :font (find-resource-object font)))
+(defun initialize-text-image-cache-maybe (&optional force)
+  (when (or force (null *font-string-tables*))
+    (setf *font-string-tables* (make-hash-table :test 'equal))))
 
-(defun draw-string-blended (string x y &key (foreground "black")
-			    destination (font *default-font*))
-  (sdl:draw-string-blended-* string x y 
-			     :color (find-resource-object foreground)
-			     :surface destination :font (find-resource-object font)))
+(defun cached-text-image (font string)
+  (let ((strings (gethash font *font-string-tables*)))
+    (when strings
+      (gethash string strings))))
+
+(defun (setf cached-text-image) (font string image)
+  (let ((strings 
+	 (or (gethash font *font-string-tables*)
+	     (setf (gethash font *font-string-tables*)
+		   (make-hash-table :test 'equal)))))
+    (setf (gethash string strings) image)))
+
+(defun make-text-image (font string &optional (color "black"))
+  (multiple-value-bind (width height)
+      (font-text-extents string font)
+    (let ((surface (create-surface width height))
+	  (texture (first (gl:gen-textures 1))))
+      (prog1 texture
+	(sdl:draw-string-blended-* string 0 0 :color color :surface surface)
+	(gl:bind-texture :texture-2d texture)
+	(gl:tex-parameter :texture-2d :texture-min-filter :linear)
+	(gl:tex-parameter :texture-2d :texture-mag-filter :linear)
+	(sdl-base::with-pixel (buffer (sdl:fp surface))
+	  (gl:tex-image-2d :texture-2d 0 :rgba width height 0 :luminance :unsigned-byte (sdl-base::pixel-data buffer)))))))
+
+(defun find-text-image (font string &optional color)
+  (or (cached-text-image font string)
+      (setf (cached-text-image font string)
+	    (make-text-image font string color))))
+
+;; (defun draw-string (string x y &key (color "black")
+;; 				    (font *default-font*))
+;;   (draw-image 
+
+;; (defun draw-string-solid (string x y 
+;; 			  &key destination (font *default-font*) (color "white"))
+;;   (sdl:draw-string-solid-* string x y :surface destination :font (find-resource-object font)
+;; 			   :color (find-resource-object color)))
+
+;; (defun draw-string-shaded (string x y &optional (foreground "white") (background "black")
+;; 			  &key destination (font *default-font*))
+;;   (sdl:draw-string-shaded-* string x y (find-resource-object foreground)
+;; 			    (find-resource-object background)
+;; 			    :surface destination :font (find-resource-object font)))
+
 
 ;;; Standard colors
 
