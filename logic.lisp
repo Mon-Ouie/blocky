@@ -18,21 +18,31 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
-;;; Commentary:
+;;; Licensed material:
 
-;; http://en.wikipedia.org/wiki/Context-free_grammar
+;; Some functions in this file are modified versions of functions by
+;; Peter Norvig in his book "Paradigms of Artificial Intelligence
+;; Programming". The derivative works (i.e. the functions in this
+;; file) are redistributed here under the terms of the General Public
+;; License as given above.
 
-;;; Code:
+;; You can find more information on Norvig's book at his website:
+
+;; http://www.norvig.com/paip.html
+
+;; The full license for the PAIP code, which governs the terms of
+;; said redistribution under the GPL, can be found at norvig.com:
+
+;; http://www.norvig.com/license.html
 
 (in-package :ioforms)
 
 ;;; Grammars
 
+;; http://en.wikipedia.org/wiki/Context-free_grammar
+
 ;; Generate random sentences from context-free grammars, and then
-;; interpret them how you want. The "generate" function and its
-;; subfunctions are based on code written by Peter Norvig for his book
-;; "Paradigms of Artificial Intelligence Programming." There is more
-;; information at http://norvig.com/license.html
+;; interpret them how you want. 
 
 (defvar *grammar* nil
   "The current context-free grammar used for sentence generation.
@@ -66,128 +76,36 @@ concatenation.")
 	 (generate (one-of (expansions phrase))))
 	(t (list phrase))))
 
-;;; Goals
+;;; Memoization facility
 
-(defstruct goal 
-  name 
-  description
-  condition ;; either a symbol or a function (or nil)
-  state ; one of nil, :achieved, :failed
-  prerequisites)
+(defmacro defun-memo (name args memo-args &body body)
+  "Define a memoized function named NAME.
+ARGS is the lambda list giving the memoized function's arguments.
+MEMO-ARGS is a list with optional keyword arguments for the
+memoization process: :KEY and :TEST."
+  `(memoize (defun ,name ,args . ,body) ,@memo-args))
 
-(defun check-condition (goal)
-  (etypecase goal
-    (keyword (check-condition (mission-variable-value goal)))
-    (goal (or (eq :achieved (goal-state goal))
-	      (let ((condition (goal-condition goal))
-		    (prerequisites (goal-prerequisites goal)))
-		(when (and (etypecase condition
-			     (symbol (symbol-value condition))
-			     (function (funcall condition)))
-			   (or (null prerequisites)
-			       (every #'check-condition prerequisites)))
-		  (setf (goal-state goal) :achieved)))))))
+(defun memo (fn &key (key #'first) (test #'eql) name)
+  "Return a memo-function of fn."
+  (let ((table (make-hash-table :test test)))
+    (setf (get name 'memo) table)
+    #'(lambda (&rest args)
+        (let ((k (funcall key args)))
+          (multiple-value-bind (val found-p)
+              (gethash k table)
+            (if found-p val
+                (setf (gethash k table) (apply fn args))))))))
 
-(defun achieve (goal &optional force)
-  (let ((prerequisites (goal-prerequisites goal)))
-    (when (or force (every #'check-condition prerequisites))
-      (setf (goal-state goal) t))))
+(defun memoize (fn-name &key (key #'first) (test #'eql))
+  "Replace fn-name's global definition with a memoized version."
+  (clear-memoize fn-name)
+  (setf (symbol-function fn-name)
+        (memo (symbol-function fn-name)
+              :name fn-name :key key :test test)))
 
-(defvar *mission* nil)
-
-(define-prototype mission ()
-  name 
-  title
-  description
-  address
-  universe
-  variables)
-
-(define-method set-variable mission (var value)
-  (setf (gethash var ^variables) value))
-
-(define-method get-variable mission (var)
-  (gethash var ^variables))
-
-(defun mission-variable-value (var-name)
-  (get-variable *mission* var-name))
-
-(defun set-mission-variable-value (var-name value)
-  (set-variable *mission* var-name value))
-
-(defsetf mission-variable-value set-mission-variable-value)
-
-(defmacro with-mission-locals (vars &rest body)
-  (labels ((make-clause (sym)
-	     `(,sym (mission-variable-value ,(make-keyword sym)))))
-    (let* ((symbols (mapcar #'make-non-keyword vars))
-	   (clauses (mapcar #'make-clause symbols)))
-      `(symbol-macrolet ,clauses ,@body))))
-
-(define-method is-completed mission ()
-  "Return T if all goal-valued mission variables are achieved."
-  (with-fields (variables) self
-    (block checking 
-      (labels ((check (name goal)
-		 (when (and (goal-p goal) 
-			    (null (check-condition goal)))
-		   (return-from checking nil))))
-	(maphash #'check variables)
-	(return-from checking t)))))
-	       
-(define-method begin mission (player)
-  (assert (object-p player))
-  (with-fields (name description address universe variables) self
-    (assert (listp address))
-    (when (null universe)
-      (setf universe (if (null *universe*)
-			 (clone =universe=)
-			 *universe*)))
-    ;; this probably works better if you have already set up a universe.
-    (setf *mission* self)
-    (play universe :player player :address address)
-    (do-prologue self)))
-      
-(define-method do-prologue mission ())
-
-(define-method win mission ())
-
-(define-method lose mission ())
-
-(define-method end mission ())
-
-(define-method run mission ())
-
-(defmacro defmission (name (&key title description address)
-		      &rest goals)
-  (let ((hash (gensym)))
-    (labels ((set-goal (entry)
-	       (destructuring-bind (var-name &rest goal-props) entry
-		 `(setf (gethash ,(make-keyword var-name) ,hash) (make-goal ,@goal-props)))))
-      `(let ((,hash (make-hash-table)))
-	 (progn ,@(mapcar #'set-goal goals))
-	 (define-prototype ,name (:parent ioforms:=mission=)
-	   (name :initform ,(make-keyword name))
-	   (description :initform ,description)
-	   (address :initform ,address)
-	   (variables :initform ,hash)
-	 (title :initform ,title))))))
-
-;; The flow goes defmission, initialize, begin, win/lose, end
-
-(defparameter *test-grammar* 
-  '((mission >> (at location please goal+ in exchange for reward))
-    (location >> mars zeta-base nebula-m corva-3)
-    (goal+ >> goal (goal and goal+))
-    (goal >> (defeat foe) (defend friend) (activate button) (retrieve documents)
-     (collect mineral+))
-    (mineral+ >> mineral (mineral and mineral+))
-    (mineral >> endurium technetium molybdenum francium a-biosilicates)
-    (foe >> scanner biclops unique)
-    (friend >> transport skiff soldier scientist)
-    (unique >> zx-90 xioblade)
-    (reward >> money part)
-    (money >> 10000 20000 30000 40000 50000)
-    (part >> muon-pistol lepton-cannon ion-shield-belt)))
+(defun clear-memoize (fn-name)
+  "Clear the hash table from a memo function."
+  (let ((table (get fn-name 'memo)))
+    (when table (clrhash table))))
 
 ;;; logic.lisp ends here
