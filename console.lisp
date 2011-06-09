@@ -1802,14 +1802,14 @@ of the music."
       (:ttf (values (sdl:get-font-size string :size :w :font (resource-object resource))
 		    (sdl:get-font-height :font (resource-object resource)))))))
 
-(defun make-text-image (font string)
+(defun make-text-image (font string color)
   (multiple-value-bind (width height)
       (font-text-extents string font)
     (let ((surface (sdl:create-surface width height :pixel-alpha t))
 	  (texture (first (gl:gen-textures 1))))
       (prog1 texture
 	(sdl:draw-string-blended-* string 0 0 
-				   :color (find-resource-object "white")
+				   :color (find-resource-object (or color "black"))
 				   :font (find-resource-object font)
 				   :surface surface)
 	(gl:bind-texture :texture-2d texture)
@@ -1819,10 +1819,10 @@ of the music."
 	  (gl:tex-image-2d :texture-2d 0 :rgba width height 0 :rgba :unsigned-byte (sdl-base::pixel-data buffer)))
 	(sdl:free surface)))))
 
-(defun-memo find-text-image (font string) 
+(defun-memo find-text-image (font string color) 
   (:key #'identity :test 'equal)
-  (message "Rasterizing TTF: ~A: ~A" font string)
-  (let ((texture (make-text-image font string)))
+  (message "Rasterizing TTF: ~A:~A: ~A" font color string)
+  (let ((texture (make-text-image font string color)))
     (prog1 texture
       (message "Rasterized TTF to new texture ~A" texture))))
   
@@ -1845,13 +1845,10 @@ of the music."
 
 (defun draw-string (string x y &key (color "black")
 				    (font *default-font*))
-  (let ((texture (find-text-image font string)))
+  (let ((texture (find-text-image font string color)))
     (multiple-value-bind (width height) 
 	(font-text-extents string font)
-      (multiple-value-bind (red green blue)
-	  (gl-color-values color)
-	(gl:color red green blue 1)
-	(draw-textured-rectangle x y width height texture)))))
+      (draw-textured-rectangle x y width height texture))))
 
 ;; (defun draw-string-solid (string x y 
 ;; 			  &key destination (font *default-font*) (color "white"))
