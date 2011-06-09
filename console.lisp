@@ -937,7 +937,7 @@ Directories are searched in list order.")
 (defun search-project-path (project-name)
   "Search the `*project-directories*' path for a directory with the
 name PROJECT-NAME. Returns the pathname if found, otherwise nil."
-  (let ((dirs *project-directories*))
+  (let ((dirs (cons (asdf:system-relative-pathname 'ioforms "") *project-directories*)))
     (assert (stringp project-name))
     (message "Probing directories ~S..." dirs)
     (or 
@@ -1802,27 +1802,27 @@ of the music."
       (:ttf (values (sdl:get-font-size string :size :w :font (resource-object resource))
 		    (sdl:get-font-height :font (resource-object resource)))))))
 
-(defun make-text-image (font string color)
+(defun make-text-image (font string)
   (multiple-value-bind (width height)
       (font-text-extents string font)
-    (let ((surface (sdl:create-surface width height :pixel-alpha t))
+    (let ((surface (sdl:create-surface width height :bpp 8))
 	  (texture (first (gl:gen-textures 1))))
       (prog1 texture
 	(sdl:draw-string-blended-* string 0 0 
-				   :color (find-resource-object (or color "black"))
+				   :color (find-resource-object "white")
 				   :font (find-resource-object font)
 				   :surface surface)
 	(gl:bind-texture :texture-2d texture)
 	(gl:tex-parameter :texture-2d :texture-min-filter :linear)
 	(gl:tex-parameter :texture-2d :texture-mag-filter :linear)
 	(sdl-base::with-pixel (buffer (sdl:fp surface))
-	  (gl:tex-image-2d :texture-2d 0 :rgba width height 0 :rgba :unsigned-byte (sdl-base::pixel-data buffer)))
+	  (gl:tex-image-2d :texture-2d 0 :alpha width height 0 :alpha :unsigned-byte (sdl-base::pixel-data buffer)))
 	(sdl:free surface)))))
 
-(defun-memo find-text-image (font string color) 
+(defun-memo find-text-image (font string) 
   (:key #'identity :test 'equal)
-  (message "Rasterizing TTF: ~A:~A: ~A" font color string)
-  (let ((texture (make-text-image font string color)))
+  (message "Rasterizing TTF: ~A: ~A" font string)
+  (let ((texture (make-text-image font string)))
     (prog1 texture
       (message "Rasterized TTF to new texture ~A" texture))))
   
@@ -1845,10 +1845,14 @@ of the music."
 
 (defun draw-string (string x y &key (color "black")
 				    (font *default-font*))
-  (let ((texture (find-text-image font string color)))
+  (let ((texture (find-text-image font string)))
     (multiple-value-bind (width height) 
 	(font-text-extents string font)
-      (draw-textured-rectangle x y width height texture))))
+      (multiple-value-bind (red green blue)
+	  (gl-color-values color)
+	(gl:color red green blue 1)
+	;; (message "Drawing string: ~A" (list x y width height color texture string))
+	(draw-textured-rectangle x y width height texture)))))
 
 ;; (defun draw-string-solid (string x y 
 ;; 			  &key destination (font *default-font*) (color "white"))
