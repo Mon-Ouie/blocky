@@ -1745,7 +1745,7 @@ of the music."
 (defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
   (gl:enable :texture-2d :blend)	
   (gl:bind-texture :texture-2d texture)
-;  (gl:color 1 1 1)
+;  (gl:color 1 1 1 1)
   (gl:with-primitive :quads
     (let ((x1 x)
 	  (x2 (+ x width))
@@ -1765,6 +1765,7 @@ of the music."
 	 (height (sdl:height image))
 	 (width (sdl:width image)))
     (let ((texture (find-texture name)))
+      (gl:color 1 1 1 1)
       (draw-textured-rectangle x y width height texture))))
 
 ;;; Font operations
@@ -1801,25 +1802,29 @@ of the music."
       (:ttf (values (sdl:get-font-size string :size :w :font (resource-object resource))
 		    (sdl:get-font-height :font (resource-object resource)))))))
 
-(defun make-text-image (font string color)
+(defun make-text-image (font string)
   (multiple-value-bind (width height)
       (font-text-extents string font)
-    (let ((surface (sdl:create-surface width height))
+    (let ((surface (sdl:create-surface width height :pixel-alpha t))
 	  (texture (first (gl:gen-textures 1))))
       (prog1 texture
 	(sdl:draw-string-blended-* string 0 0 
-				   :color (find-resource-object (or color "black"))
+				   :color (find-resource-object "white")
 				   :font (find-resource-object font)
 				   :surface surface)
 	(gl:bind-texture :texture-2d texture)
 	(gl:tex-parameter :texture-2d :texture-min-filter :linear)
 	(gl:tex-parameter :texture-2d :texture-mag-filter :linear)
 	(sdl-base::with-pixel (buffer (sdl:fp surface))
-	  (gl:tex-image-2d :texture-2d 0 :rgba width height 0 :luminance-alpha :unsigned-byte (sdl-base::pixel-data buffer)))))))
+	  (gl:tex-image-2d :texture-2d 0 :rgba width height 0 :rgba :unsigned-byte (sdl-base::pixel-data buffer)))
+	(sdl:free surface)))))
 
-(defun-memo find-text-image (font string color) 
+(defun-memo find-text-image (font string) 
   (:key #'identity :test 'equal)
-  (make-text-image font string color))
+  (message "Rasterizing TTF: ~A: ~A" font string)
+  (let ((texture (make-text-image font string)))
+    (prog1 texture
+      (message "Rasterized TTF to new texture ~A" texture))))
   
 (defun clear-text-image-cache (&key (delete-textures t))
   (let ((table (get-memo-table 'find-text-image)))
@@ -1829,12 +1834,24 @@ of the music."
 	      do (gl:delete-textures (list texture)))
       (clrhash table)))))
 
+(defun gl-color-values (color-name)
+  (let ((color (find-resource color-name)))
+    (assert (eq :color (resource-type color)))
+    (flet ((floatify (integer)
+	     (/ integer 255.0)))
+      (destructuring-bind (red green blue)
+	  (mapcar #'floatify (resource-data color))
+	(values red green blue)))))
+
 (defun draw-string (string x y &key (color "black")
 				    (font *default-font*))
-  (let ((texture (find-text-image font string color)))
+  (let ((texture (find-text-image font string)))
     (multiple-value-bind (width height) 
 	(font-text-extents string font)
-      (draw-textured-rectangle x y width height texture))))
+      (multiple-value-bind (red green blue)
+	  (gl-color-values color)
+	(gl:color red green blue 1)
+	(draw-textured-rectangle x y width height texture)))))
 
 ;; (defun draw-string-solid (string x y 
 ;; 			  &key destination (font *default-font*) (color "white"))
