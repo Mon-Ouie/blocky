@@ -108,4 +108,7 @@ memoization process: :KEY and :TEST."
   (let ((table (get fn-name 'memo)))
     (when table (clrhash table))))
 
+(defun get-memo-table (fn-name)
+  (get fn-name 'memo))
+
 ;;; logic.lisp ends here

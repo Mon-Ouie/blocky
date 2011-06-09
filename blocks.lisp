@@ -25,9 +25,8 @@
 ;; Smalltalk environments like Squeak Morphic and MIT Scratch, in that
 ;; programs are assembled by the user from reusable, interchangeable
 ;; pieces (or "blocks") represented by colored shapes arranged on a
-;; blank page. The arrangement and connection of the different blocks
-;; on the page determine how the pieces behave (collectively) as a
-;; program.
+;; page. The arrangement and connection of the different blocks on the
+;; page determine how the pieces behave (collectively) as a program.
 
 ;; The elements of the user's program---the blocks---also double as
 ;; the user interface to whatever the blocks do. For example, a block
@@ -56,7 +55,7 @@
 ;; For more information on the design of Ioforms, see
 ;; http://ioforms.org/design.html
 
-;;  For more information on  systems, see the following links:
+;; For more information on similar systems, see the following links:
 
 ;; http://scratch.mit.edu/
 ;; http://byob.berkeley.edu/

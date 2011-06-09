@@ -38,7 +38,7 @@
 	   *output-channels* halt-sample *dt* defproject run start
 	   *update-function* =equipment= *default-world-axis-size*
 	   defsprite *target* *blocks* *script* *default-world-z-size*
-	   =browser= install-blocks =balloon= =form= keyboard-held-p
+	   =browser= install-blocks  =form= keyboard-held-p
 	   keyboard-pressed-p *use-nominal-screen-size*
 	   keyboard-released-p keyboard-time-in-current-state
 	   keyboard-time-in-previous-state *updates* keyboard-down-p

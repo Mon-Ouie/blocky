@@ -373,7 +373,7 @@ key event symbols."
   "Create a normalized event out of the SDL data SDL-KEY and SDL-MODS.
 The purpose of putting events in a normal form is to enable their use
 as hash keys."
-  (message "SDL KEY AND MODS: ~A" (list sdl-key sdl-mods))
+;  (message "SDL KEY AND MODS: ~A" (list sdl-key sdl-mods))
   (normalize-event
    (cons (if (eq sdl-key :joystick) 
 	     "JOYSTICK"
@@ -1215,6 +1215,11 @@ also the documentation for DESERIALIZE."
   (when (or force (null *textures*))
     (setf *textures* (make-hash-table :test 'equal))))
 
+(defun delete-all-textures ()
+  (loop for texture being the hash-values in *textures*
+	do (gl:delete-textures (list texture)))
+  (initialize-textures-maybe :force))
+
 (defun find-texture (name)
   (assert (stringp name))
   (initialize-textures-maybe)
@@ -1485,6 +1490,15 @@ found."
   (let ((res (find-resource resource)))
     (setf (resource-modified-p res) value)))
 
+(defun delete-all-resources ()
+  (loop for resource being the hash-values in *resources*
+	do (let ((object (resource-object resource)))
+	     (case (resource-type resource)
+	       (:image (sdl:free object))
+	       (:music (sdl-mixer:free object))
+	       (:sample (sdl-mixer:free object)))))
+  (initialize-resource-table))
+	   
 ;;; Custom audio generation
 
 (defvar *frequency* 44100)
@@ -1763,7 +1777,9 @@ of the music."
 ;;        :data "7x14")
 
 ;; Or use type :ttf for Truetype fonts. Don't specify :height and
-;; :width in this case.
+;; :width in this case; instead use :size N where N is the number of
+;; points in the font size, for example :size 12 would be a 12-point
+;; version of the font.
 
 (defun font-height (font)
   (let ((resource (find-resource font)))
@@ -1788,30 +1804,37 @@ of the music."
 (defun make-text-image (font string color)
   (multiple-value-bind (width height)
       (font-text-extents string font)
-    (let ((surface (create-surface width height))
+    (let ((surface (sdl:create-surface width height))
 	  (texture (first (gl:gen-textures 1))))
       (prog1 texture
 	(sdl:draw-string-blended-* string 0 0 
-				   :color (or color "black")
+				   :color (find-resource-object (or color "black"))
+				   :font (find-resource-object font)
 				   :surface surface)
 	(gl:bind-texture :texture-2d texture)
 	(gl:tex-parameter :texture-2d :texture-min-filter :linear)
 	(gl:tex-parameter :texture-2d :texture-mag-filter :linear)
 	(sdl-base::with-pixel (buffer (sdl:fp surface))
-	  (gl:tex-image-2d :texture-2d 0 :rgba width height 0 :luminance :unsigned-byte (sdl-base::pixel-data buffer)))))))
+	  (gl:tex-image-2d :texture-2d 0 :rgba width height 0 :luminance-alpha :unsigned-byte (sdl-base::pixel-data buffer)))))))
 
 (defun-memo find-text-image (font string color) 
   (:key #'identity :test 'equal)
   (make-text-image font string color))
   
-(defun clear-text-image-cache ()
-  (clear-memoize 'find-text-image))
+(defun clear-text-image-cache (&key (delete-textures t))
+  (let ((table (get-memo-table 'find-text-image)))
+    (when table
+      (when delete-textures 
+	(loop for texture being the hash-values in table
+	      do (gl:delete-textures (list texture)))
+      (clrhash table)))))
 
 (defun draw-string (string x y &key (color "black")
 				    (font *default-font*))
   (let ((texture (find-text-image font string color)))
-    (draw-textured-rectangle x y width height texture)))
-
+    (multiple-value-bind (width height) 
+	(font-text-extents string font)
+      (draw-textured-rectangle x y width height texture))))
 
 ;; (defun draw-string-solid (string x y 
 ;; 			  &key destination (font *default-font*) (color "white"))
@@ -1946,8 +1969,10 @@ of the music."
       (error "No current project. You must provide an argument naming the project."))
     (open-project proj)
     (run-main-loop))
-  (loop for texture being the hash-values in *textures*
-	do (gl:delete-textures (list texture))))
+  ;; delete any cached textures and surfaces
+  (clear-text-image-cache)
+  (delete-all-textures)
+  (delete-all-resources))
 
 (defun initialize-ioforms ()
   (sdl:init-sdl :video t :audio t :joystick t)

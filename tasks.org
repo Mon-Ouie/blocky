@@ -1,9 +1,11 @@
-** TODO Add TTF string drawing support
-** TODO allow #RRGGBB color spec in resources
-** TODO Port blocks.lisp to OpenGL
-** TODO Revise blocks execution model re:schema (see below)
-** TODO Revise widgets.lisp
-** TODO Implement this GRAPH UI example:
+** DONE Add TTF string drawing functions
+   CLOSED: [2011-06-08 Wed 15:34]
+** TODO [#A] Test TTF drawing functions
+*** TODO allow any font size to be requested
+** TODO [#A] Port blocks.lisp to OpenGL, get basic blocks displayable/movable again
+** TODO [#A] Revise blocks execution model re:schema (see below)
+** TODO [#A] Revise widgets.lisp for OpenGL
+** TODO [#B] Implement this GRAPH UI example:
    
 Say you want a nice interface helping a designer to explore various
 choices of values for two variables---such as a function y=f(x), or
@@ -138,6 +140,8 @@ I've been discussing with a friend who's developed quite an extensive
 Lisp game engine of his own---I'd like to develop this visual language
 toolkit as something not tied to my own game engine, so that my stuff
 can work with his code as well.
+** TODO [#C] add least-recently-used pruning for memoize facility
+** TODO [#C] allow #RRGGBB color spec in resources
 
 * TODO Review task list and reorganize roadmap
 

@@ -39,7 +39,32 @@
 (setf *screen-height* 480)
 (setf *window-title* "Hello")
 
-;; Now make a movable character
+(defparameter *font* "sans-bold-14")
+
+(defun seconds->frames (seconds)
+  (truncate (* seconds ioforms:*frame-rate*)))
+
+(defsprite balloon 
+  :text "..."
+  :clock (seconds->frames 5))
+
+(define-method initialize balloon (string &optional (seconds 5.0))
+  (with-fields (text clock) self
+    (setf clock (seconds->frames seconds))
+    (setf text string)
+    (multiple-value-bind (width height) 
+	(font-text-extents string *font*)
+      (setf ^width width)
+      (setf ^height height))))
+
+(define-method draw balloon ()
+  (with-fields (x y clock text) self
+    (decf clock)
+    (if (plusp clock)
+	(ioforms:draw-string text x y :font *font* :color "black")
+	(remove-sprite *world* self))))
+
+;; Now make a movable character with something to say.
 
 (defresource 
     (:name "blocky" :type :image :file "blocky.png"))
@@ -50,9 +75,23 @@
   '(((:up) (move :north 5 :pixels))
     ((:down) (move :south 5 :pixels)) 
     ((:right) (move :east 5 :pixels)) 
-    ((:left) (move :west 5 :pixels)))
+    ((:left) (move :west 5 :pixels))
+    ((:space) (talk)))
   :x (/ *screen-width* 2)
   :y (/ *screen-height* 2))
+
+(defparameter *phrases* 
+  '("What lovely TTF font rendering!"
+    "My name is Blocky and I'm gonna stomp on you."
+    "Pardon me. Would you have any Grey Poupon?"
+    "Stare deeply into my pixels."
+    "May I help you?"
+    "How art thou feeling, Avatar?"))
+  
+(define-method talk blocky ()
+  (with-fields (x y) self
+    (drop self (new balloon (random-choose *phrases*))
+	  100 100)))
 
 ;;; Then define an empty world with a background.
 
