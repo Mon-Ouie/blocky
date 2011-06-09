@@ -169,3 +169,81 @@ unproxying. By default, it does nothing."
 ;; 	  (unproxy self))))
   
 ;;; sprites.lisp ends here
+;; (define-method would-collide sprite (x0 y0)
+;;   (with-field-values (grid-size grid sprite-grid) *world*
+;;     (with-field-values (width height x y) self
+;;       ;; determine squares sprite would intersect
+;;       (let ((left (1- (floor (/ x0 grid-size))))
+;; 	    (right (1+ (floor (/ (+ x0 width) grid-size))))
+;; 	    (top (1- (floor (/ y0 grid-size))))
+;; 	    (bottom (1+ (floor (/ (+ y0 height) grid-size)))))
+;; 	;; search intersected squares for any obstacle
+;; 	(or (block colliding
+;; 	      (let (found)
+;; 		(dotimes (i (max 0 (- bottom top)))
+;; 		  (dotimes (j (max 0 (- right left)))
+;; 		    (let ((i0 (+ i top))
+;; 			  (j0 (+ j left)))
+;; 		      (when (array-in-bounds-p grid i0 j0)
+;; 			(when (collide-* self
+;; 					 (* i0 grid-size) 
+;; 					 (* j0 grid-size)
+;; 					 grid-size grid-size)
+;; 			  ;; save this intersection information
+;; 			  (vector-push-extend self (aref sprite-grid i0 j0))
+;; 			  ;; quit when obstacle found
+;; 			  (let ((obstacle (obstacle-at-p *world* i0 j0)))
+;; 			    (when obstacle
+;; 			      (setf found obstacle))))))))
+;; 		(return-from colliding found)))
+;; 	    ;; scan for sprite intersections
+;; 	    (block intersecting 
+;; 	      (let (collision num-sprites ix)
+;; 		(dotimes (i (max 0 (- bottom top)))
+;; 		  (dotimes (j (max 0 (- right left)))
+;; 		    (let ((i0 (+ i top))
+;; 			  (j0 (+ j left)))
+;; 		      (when (array-in-bounds-p grid i0 j0)
+;; 			(setf collision (aref sprite-grid i0 j0))
+;; 			(setf num-sprites (length collision))
+;; 			(when (< 1 num-sprites)
+;; 			  (dotimes (i (- num-sprites 1))
+;; 			    (setf ix (1+ i))
+;; 			    (loop do (let ((a (aref collision i))
+;; 					   (b (aref collision ix)))
+;; 				       (incf ix)
+;; 				       (assert (and (object-p a) (object-p b)))
+;; 				       (when (not (eq a b))
+;; 					 (let ((bt (field-value :y b))
+;; 					       (bl (field-value :x b))
+;; 					       (bh (field-value :height b))
+;; 					       (bw (field-value :width b)))
+;; 					   (when (collide y0 x0 width height bt bl bw bh)
+;; 					     (return-from intersecting t)))))
+;; 				  while (< ix num-sprites)))))))))
+;; 	      nil))))))
+
+;; (define-method allocate-image block ()
+;;   (with-fields (image height width) self
+;;     (let ((oldimage image))
+;;       (when oldimage
+;; 	(sdl:free oldimage))
+;;       (setf image (create-image width height)))))
+
+;; (define-method resize-image block (&key height width)
+;;   "Allocate an image buffer of HEIGHT by WIDTH pixels.
+;; If there is no existing image, one of HEIGHT x WIDTH pixels is created
+;; and stored in ^IMAGE. If there is an existing image, it is only
+;; resized when the new dimensions differ from the existing image."
+;;   (assert (and (integerp width) (integerp height)))
+;;   (with-fields (image) self
+;;     (if (null image)
+;; 	(progn (setf ^width width
+;; 		     ^height height)
+;; 	       (allocate-image self))
+;; 	(when (not (and (= ^width width)
+;; 			(= ^height height)))
+;; 	  (setf ^width width
+;; 		^height height)
+;; 	  (when image (allocate-image self))))))
+

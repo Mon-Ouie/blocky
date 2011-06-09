@@ -29,29 +29,20 @@
 (setf *screen-height* 480)
 (setf *window-title* "Blocks demo")
 
-(defparameter *font* "sans-12")
+(defparameter *font* "sans-bold-12")
 
-(defresource 
-    (:name "blocky" :type :image :file "blocky.png"))
+(defblock hello1
+  :x 20 :y 20 :height 100 :width 200 :category :sensing)
 
-(defsprite blocky
-  :image "blocky"
-  :default-events
-  '(((:up) (move :north 5 :pixels))
-    ((:down) (move :south 5 :pixels)) 
-    ((:right) (move :east 5 :pixels)) 
-    ((:left) (move :west 5 :pixels)))
-  :x (/ *screen-width* 2)
-  :y (/ *screen-height* 2))
+(defblock hello2
+  :x 100 :y 140 :height 40 :width 250 :category :control)
 
-(defblock testblock)
-
-(defworld demo)
+(defblock hello3
+  :x 20 :y 400 :height 40 :width 40 :category :operators)
 
 (defun example3 ()
-  (start (new universe)
-	 :world (new demo)
-	 :player (new blocky))
-  (add-sprite *world* (new testblock)))
-
+  (add-block (new hello1))
+  (add-block (new hello2))
+  (add-block (new hello3)))
+	     
 ;;; example3.lisp ends here

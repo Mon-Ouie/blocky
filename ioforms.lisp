@@ -38,9 +38,10 @@
 	   *output-channels* halt-sample *dt* defproject run start
 	   *update-function* =equipment= *default-world-axis-size*
 	   defsprite *target* *blocks* *script* *default-world-z-size*
-	   =browser= install-blocks  =form= keyboard-held-p
-	   keyboard-pressed-p *use-nominal-screen-size*
-	   keyboard-released-p keyboard-time-in-current-state
+	   =browser= install-blocks =balloon= seconds->frames =form=
+	   keyboard-held-p keyboard-pressed-p
+	   *use-nominal-screen-size* keyboard-released-p
+	   keyboard-time-in-current-state
 	   keyboard-time-in-previous-state *updates* keyboard-down-p
 	   keyboard-keys-down keyboard-modifier-down-p
 	   keyboard-modifiers draw-filled-circle draw-aa-circle =my=

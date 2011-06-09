@@ -718,7 +718,9 @@ display."
 	     #+(and sbcl (not sb-thread)) (restartably
 					   (sb-sys:serve-all-events 0))	 
 	     (sdl:with-timestep (do-update))
-	     (restartably	
+	     (restartably
+	       (gl:clear-color 1 1 1 1)
+	       (gl:clear)
 	       (gl:clear :color-buffer-bit)
 	       (gl:enable :texture-2d :blend)	
 	       (set-blending-mode :alpha)
@@ -1821,10 +1823,7 @@ of the music."
 
 (defun-memo find-text-image (font string) 
   (:key #'identity :test 'equal)
-  (message "Rasterizing TTF: ~A: ~A" font string)
-  (let ((texture (make-text-image font string)))
-    (prog1 texture
-      (message "Rasterized TTF to new texture ~A" texture))))
+  (make-text-image font string))
   
 (defun clear-text-image-cache (&key (delete-textures t))
   (let ((table (get-memo-table 'find-text-image)))
@@ -1843,70 +1842,63 @@ of the music."
 	  (mapcar #'floatify (resource-data color))
 	(values red green blue)))))
 
+(defun set-vertex-color (color)
+  (multiple-value-bind (red green blue) 
+      (gl-color-values color)
+    (gl:color red green blue 1)))
+
 (defun draw-string (string x y &key (color "black")
 				    (font *default-font*))
   (let ((texture (find-text-image font string)))
     (multiple-value-bind (width height) 
 	(font-text-extents string font)
-      (multiple-value-bind (red green blue)
-	  (gl-color-values color)
-	(gl:color red green blue 1)
-	;; (message "Drawing string: ~A" (list x y width height color texture string))
-	(draw-textured-rectangle x y width height texture)))))
-
-;; (defun draw-string-solid (string x y 
-;; 			  &key destination (font *default-font*) (color "white"))
-;;   (sdl:draw-string-solid-* string x y :surface destination :font (find-resource-object font)
-;; 			   :color (find-resource-object color)))
-
-;; (defun draw-string-shaded (string x y &optional (foreground "white") (background "black")
-;; 			  &key destination (font *default-font*))
-;;   (sdl:draw-string-shaded-* string x y (find-resource-object foreground)
-;; 			    (find-resource-object background)
-;; 			    :surface destination :font (find-resource-object font)))
+      (set-vertex-color color)
+      (draw-textured-rectangle x y width height texture))))
 
 ;;; Drawing shapes and other primitives
 
-(defun draw-box (x y width height		
-		 &key (stroke-color "white")
-		 (color "black")
-		 destination)
-  "Draw a filled rectangle at (X Y) of size (* WIDTH HEIGHT)."
-  (sdl:draw-box-* x y width height :color (find-resource-object color)
-		  :stroke-color (find-resource-object stroke-color)
-		  :surface destination))
-
-(defun draw-rectangle (x y width height
-		       &key (color "white")
-		       destination)
-  (sdl:draw-rectangle-* x y width height :color (find-resource-object color)
-			:surface destination))
-
 (defun draw-line (x0 y0 x1 y1 
 		     &key 
-		     (color "white")
-		     destination)
-  (sdl:draw-line-* x0 y0 x1 y1 :surface destination :color (find-resource-object color)))
+		     (color "white"))
+  (set-vertex-color color)
+  (gl:disable :texture-2d)
+  (gl:with-primitive :lines 
+    (gl:vertex x0 (- y0))
+    (gl:vertex x1 (- y1))))
 
-(defun draw-pixel (x y &key 
-		   (color "white")
-		   destination)
-  (sdl:draw-pixel-* x y :surface destination :color (find-resource-object color)))
+(defun draw-box (x y width height		
+ 		 &key (color "black"))
+  (set-vertex-color color)
+  (gl:disable :texture-2d)
+  (gl:with-primitive :quads
+    (let ((x1 (+ x width))
+	  (y1 (+ y height)))
+      (gl:vertex x y1)
+      (gl:vertex x1 y1)
+      (gl:vertex x1 y)
+      (gl:vertex x y))))
 
-(defun draw-circle (x y radius &key 
-		   (color "white")
-		    destination)
-  (sdl:draw-circle-* x y radius :surface destination :color (find-resource-object color)))
+(defun draw-rectangle (x y width height &key color) 
+  (let ((x1 (+ x width))
+	(y1 (+ y height)))
+    (draw-line x y x1 y1 :color color)))
 
-(defun draw-filled-circle (x y radius &key 
-			   (color "white")
-			   destination)
-  (sdl-gfx:draw-filled-circle-* x y radius :surface destination :color (find-resource-object color)))
+(defparameter *circle-textures* 
+  '(:outline "circle-outline-flat-128"
+    :solid "circle-flat-128"))
 
-(defun draw-aa-circle (x y radius &key 
-		   (color "white")
-		    destination)
-  (sdl-gfx:draw-aa-circle-* x y radius :surface destination :color (find-resource-object color)))
+(defun draw-circle (x y radius 
+		    &key (color "white") 
+			 (type :outline))
+  (let ((texture (find-texture (getf *circle-textures* type)))
+	(left (- x radius))
+	(top (- y radius))
+	(side (* 2 radius)))
+    (set-vertex-color color)
+    (draw-textured-rectangle left top side side texture)))
+
+(defun draw-solid-circle (x y radius &key color)
+  (draw-circle x y radius :color color :type :solid))
 
 ;;; Engine status
 

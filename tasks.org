@@ -1,7 +1,8 @@
 ** DONE Add TTF string drawing functions
    CLOSED: [2011-06-08 Wed 15:34]
-** TODO [#A] Test TTF drawing functions
-*** TODO allow any font size to be requested
+** DONE [#A] Test TTF drawing functions
+   CLOSED: [2011-06-08 Wed 22:51]
+** TODO [#C] allow any font size to be requested
 ** TODO [#A] Port blocks.lisp to OpenGL, get basic blocks displayable/movable again
 ** TODO [#A] Revise blocks execution model re:schema (see below)
 ** TODO [#A] Revise widgets.lisp for OpenGL

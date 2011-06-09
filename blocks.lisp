@@ -86,14 +86,13 @@
   (height :initform 32 :documentation "Cached height of block.")
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
   (visible :initform t :documentation "When non-nil, block will be visible.")
-  (image :initform nil :documentation "Offscreen buffer image, if any."))
+  (image :initform nil :documentation "Texture to be displayed, if any."))
 
 (defmacro defblock (name &body args)
   "Define a new block prototype named =NAME=.
 ARGS are field specifiers, as with `define-prototype'."
   `(define-prototype ,name (:parent =block=)
-     (operation :initform ,(make-keyword name))
-     ,@args))
+    ,@args))
 
 (define-method update block ()
   "Update the simulation one step forward in time."
@@ -167,30 +166,6 @@ the return value of the function (if any)."
 (define-method initialize block (&rest args)
   (declare (ignore args))
   (bind-any-default-events self))
-
-;;   "Prepare an empty block, or if ARGS is non-empty, a block
-;; initialized with its values as arguments."
-;;   (with-fields (arguments schema results) self
-;;     (let ((arity (length schema)))
-;;       (setf arguments (make-list arity))
-;;       (setf results (make-list arity))
-;;       (dotimes (n (length args))
-;; 	(setf (nth n arguments)
-;; 	      (nth n args))))))
-
-;; (define-method generic-keybind block (binding)
-;;   (destructuring-bind (modifiers data) (rest binding)
-;;     (apply (etypecase data
-;; 	     (keyword #'bind-event-to-method)
-;; 	     (string #'bind-event-to-prompt-insertion))
-;; 	   self binding)))
-
-;; (defun bind-event-to-prompt-insertion (prompt event-name modifiers &optional (insertion event-name))
-;;   "For prompt PROMPT ensure that the event (EVENT-NAME MODIFIERS)
-;; causes the text INSERTION to be inserted at point."
-;;  (bind-event-to-function prompt (string-upcase event-name) modifiers
-;; 	      #'(lambda ()
-;; 		  (insert-string prompt insertion))))
 
 ;;; Creating blocks from S-expressions
 
@@ -290,10 +265,11 @@ areas.")
   ^image)
 
 (define-method draw block ()
-  (set-blending-mode ^blend)
-  (with-fields (image x y) self
-    (when image 
-      (draw-image image x y))))
+  (with-fields (image x y width height) self
+    (if image 
+	(progn (set-blending-mode ^blend)
+	       (draw-image image x y))
+	(draw-patch self x y (+ x width) (+ y height) :depressed t))))
 
 (define-method hit block (mouse-x mouse-y))
 
@@ -486,70 +462,38 @@ of block."
 
 (defparameter *selection-color* "red")
 
-;; (define-method allocate-image block ()
-;;   (with-fields (image height width) self
-;;     (let ((oldimage image))
-;;       (when oldimage
-;; 	(sdl:free oldimage))
-;;       (setf image (create-image width height)))))
-
-;; (define-method resize-image block (&key height width)
-;;   "Allocate an image buffer of HEIGHT by WIDTH pixels.
-;; If there is no existing image, one of HEIGHT x WIDTH pixels is created
-;; and stored in ^IMAGE. If there is an existing image, it is only
-;; resized when the new dimensions differ from the existing image."
-;;   (assert (and (integerp width) (integerp height)))
-;;   (with-fields (image) self
-;;     (if (null image)
-;; 	(progn (setf ^width width
-;; 		     ^height height)
-;; 	       (allocate-image self))
-;; 	(when (not (and (= ^width width)
-;; 			(= ^height height)))
-;; 	  (setf ^width width
-;; 		^height height)
-;; 	  (when image (allocate-image self))))))
-
-(defmacro with-block-drawing (image &body body)
+(defmacro with-block-drawing (&body body)
   "Run BODY forms with drawing primitives set to draw on IMAGE.
 The primitives are CIRCLE, DISC, LINE, BOX, and TEXT. These are used
 in subsequent functions as the basis of drawing nested diagrams of
 blocks."
-  (let ((image-sym (gensym)))
     `(let* ((foreground (find-color self :foreground))
 	    (background (find-color self :background))
 	    (highlight (find-color self :highlight))
 	    (selection *selection-color*)
 	    (shadow (find-color self :shadow))
 	    (dash *dash*)
-	    (radius *dash*)
-	    (diameter (* 2 radius))
-	    (,image-sym ,image))
+	    (radius (+ 2 *dash*))
+	    (diameter (* 2 radius)))
        (labels ((circle (x y &optional color)
-		  (draw-aa-circle x y radius
-				  :color (or color background)
-				  :destination ,image-sym))
+		  (draw-circle x y radius
+			       :color (or color background)))
 		(disc (x y &optional color)
-		  (draw-filled-circle x y radius
-				      :color (or color background)
-				      :destination ,image-sym))
+		  (draw-solid-circle x y radius
+				     :color (or color background)))
 		(line (x0 y0 x1 y1 &optional color)
 		  (draw-line x0 y0 x1 y1
-			     :color (or color background)
-			     :destination ,image-sym))
+			     :color (or color background)))
 		(box (x y r b &optional color)
 		  (draw-box x y (- r x) (- b y)
-			    :color (or color background)
-			    :stroke-color (or color background)
-			    :destination ,image-sym))
+			    :color (or color background)))
 		(text (x y string)
-		  (draw-string-blended string x y
-				       :foreground foreground
-				       :destination ,image-sym
-				       :font *block-font*)))
-	   ,@body))))
+		  (draw-string string x y
+			       :color foreground
+			       :font *block-font*)))
+	   ,@body)))
 
-(define-method draw-patch block (x0 y0 x1 y1 image
+(define-method draw-patch block (x0 y0 x1 y1
 				    &key depressed dark socket color)
   "Draw a standard IOFORMS block notation patch on IMAGE.
 Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
@@ -557,7 +501,7 @@ non-nil, draw an indentation; otherwise a raised area is drawn. If
 DARK is non-nil, paint a darker region. If SOCKET is non-nil, cut a hole
 in the block where the background shows through. If COLOR is non-nil,
 override all colors."
-  (with-block-drawing image
+  (with-block-drawing 
     (let ((bevel (or color (if depressed shadow highlight)))
 	  (chisel (or color (if depressed highlight shadow)))
 	  (fill (or color (if socket
@@ -604,7 +548,7 @@ override all colors."
 	   fill))))
 
 (define-method draw-socket block (x0 y0 x1 y1 image)
-  (draw-patch self x0 y0 x1 y1 image :depressed t :socket t))
+  (draw-patch self x0 y0 x1 y1 :depressed t :socket t))
 
 (define-method draw-border block (image &optional (color *selection-color*))
   (let ((dash *dash*))
@@ -612,15 +556,15 @@ override all colors."
       (draw-patch self (- x dash) (- y dash)
 		   (+ x width dash)
 		   (+ y height dash)
-		   image :color color))))
+		   :color color))))
 
 (define-method draw-background block (image)
   (with-fields (x y width height) self
-    (draw-patch self x y (+ x width) (+ y height) image)))
+    (draw-patch self x y (+ x width) (+ y height))))
 
 (define-method draw-ghost block (image)
   (with-fields (x y width height) self
-    (draw-patch self x y (+ x width) (+ y height) image
+    (draw-patch self x y (+ x width) (+ y height)
 		 :depressed t :socket t)))
 
 (define-method handle-width block ()

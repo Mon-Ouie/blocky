@@ -41,29 +41,6 @@
 
 (defparameter *font* "sans-bold-14")
 
-(defun seconds->frames (seconds)
-  (truncate (* seconds ioforms:*frame-rate*)))
-
-(defsprite balloon 
-  :text "..."
-  :clock (seconds->frames 5))
-
-(define-method initialize balloon (string &optional (seconds 5.0))
-  (with-fields (text clock) self
-    (setf clock (seconds->frames seconds))
-    (setf text string)
-    (multiple-value-bind (width height) 
-	(font-text-extents string *font*)
-      (setf ^width width)
-      (setf ^height height))))
-
-(define-method draw balloon ()
-  (with-fields (x y clock text) self
-    (decf clock)
-    (if (plusp clock)
-	(ioforms:draw-string text x y :font *font* :color "black")
-	(remove-sprite *world* self))))
-
 ;; Now make a movable character with something to say.
 
 (defresource 
