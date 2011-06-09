@@ -46,7 +46,7 @@
 ;; New block types and behaviors can be defined with the macro
 ;; `defblock' and subsequently replacing default methods of the base
 ;; block prototype via `define-method'. With the macro `make-block'
--;; you can convert lisp expressions into working block
+;; you can convert lisp expressions into working block
 ;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
 
 ;; I want the visual language to be extensible in the same way Lisp
@@ -70,10 +70,9 @@
 
 (define-prototype block ()
   ;; general information
+  inputs schema results
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
-  (inputs :initform nil)
-  (schema :initform nil)
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
   (data :initform nil :documentation "Data value for data entry blocks.")
@@ -273,13 +272,6 @@ areas.")
 	(progn (set-blending-mode ^blend)
 	       (draw-image image x y))
 	(draw-patch self x y (+ x width) (+ y height) :depressed t))))
-
-(define-method hit block (mouse-x mouse-y)
-  (with-field-values (x y width height) self
-    (when (within-extents mouse-x mouse-y 
-			  x y 
-			  (+ x width) (+ y height))
-      self)))
 
 (define-method mouse-move block (x y))
 
@@ -641,23 +633,44 @@ override all colors."
 
 (define-method render block ())
 
-;; (define-method draw-contents block (image)
-;;   (with-block-drawing image
-;;     (with-field-values
-;; 	(x y operation inputs)
-;; 	self
-;;       (let* ((dash *dash*)
-;; 	     (left (+ x (* 2 dash)))
-;; 	     (y0 (+ y dash 1)))
-;; 	(if ^image
-;; 	    (progn
-;; 	      (render self)
-;; 	      (draw-image ^image
-;; 			  left y0 :destination image))
-;; 	    (progn
-;; 	      (text left y0 (print-expression operation))
-;; 	      (dolist (block inputs)
-;; 		(draw block image))))))))
+(define-method initialize block (&rest args)
+  "Prepare an empty block, or if ARGS is non-empty, a block
+initialized with its values as inputs."
+  (with-fields (inputs schema results) self
+    (let ((arity (length schema)))
+      (setf inputs (make-list arity))
+      (setf results (make-list arity))
+      (dotimes (n (length args))
+	(setf (nth n inputs)
+	      (nth n args))))))
+
+(define-method after-deserialize block ()
+  "Make sure the block is ready after loading."
+  (initialize self))
+
+(define-method count block ()
+  "Return the number of blocks enclosed in this block, including the
+current block."
+  (with-fields (inputs) self
+    (+ 1 (length inputs))))
+
+(define-method draw-contents block (image)
+  (with-block-drawing image
+    (with-field-values
+	(x y operation inputs)
+	self
+      (let* ((dash *dash*)
+	     (left (+ x (* 2 dash)))
+	     (y0 (+ y dash 1)))
+	(if ^image
+	    (progn
+	      (render self)
+	      (draw-image ^image
+			  left y0 :destination image))
+	    (progn
+	      (text left y0 (print-expression operation))
+	      (dolist (block inputs)
+		(draw block image))))))))
 
 (defparameter *hover-color* "red")
 
@@ -669,17 +682,16 @@ override all colors."
 	      :destination image))
   (draw-contents self image))
 
-
-(define-method hit block (mouse-x mouse-y))
-;;   "Return this block (or child block) if the coordinates MOUSE-X and
-;; MOUSE-Y identify a point inside the block (or child block.)"
-;;   (with-fields (x y width height inputs) self
-;;     (when (within-extents mouse-x mouse-y x y
-;; 			  (+ x width) (+ y height))
-;;       (labels ((hit (block)
-;; 		 (/hit block mouse-x mouse-y)))
-;; 	(let ((child (some #'hit inputs)))
-;; 	  (values (or child self) (when child (/position child))))))))
+(define-method hit block (mouse-x mouse-y)
+  "Return this block (or child block) if the coordinates MOUSE-X and
+MOUSE-Y identify a point inside the block (or child block.)"
+  (with-fields (x y width height inputs) self
+    (when (within-extents mouse-x mouse-y x y
+			  (+ x width) (+ y height))
+      (labels ((try (block)
+		 (hit block mouse-x mouse-y)))
+	(let ((child (some #'try inputs)))
+	  (values (or child self) (when child (child-position child))))))))
 
 (define-method accept block (other-block)
   (with-field-values (parent) self

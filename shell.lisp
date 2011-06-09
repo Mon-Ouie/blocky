@@ -1,6 +1,6 @@
 ;;; shell.lisp --- interactive ioforms visual programming shell
 
-;; Copyright (C) 2011  David O'Toole
+;; Copyright (C) 2011 David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: 
@@ -22,52 +22,9 @@
 
 ;;; Code:
 
+(in-package :ioforms)
+
 ;;; Interactive editor shell
-
-(define-prototype block-prompt (:parent =prompt=)
-;;  (operation :initform :prompt)
-  output 
-  (rows :initform 10))
-
-(define-method initialize block-prompt (output)
-  (parent/initialize self)
-  (setf ^output output))
-
-(define-method do-sexp block-prompt (sexp)
-  (with-fields (output rows) self
-    (assert output)
-    (let ((container (get-parent output)))
-      (when container
-	(accept container 
-		 (let ((*make-block-package* (find-package :ioforms)))
-		   (if (symbolp (first sexp))
-		       (make-block-ext sexp)
-
-		       (make-block-ext (first sexp)))))
-	(when (> (length container) rows)
-	  (pop container))))))
-
-(define-prototype listener (:parent =list=)
-  (type :initform :system)
-  (schema :initform '(:block)))
-
-(defparameter *minimum-listener-width* 200)
-
-(define-method initialize listener ()
-  (with-fields (image inputs) self
-    (let ((prompt (clone =block-prompt= self)))
-      (parent/initialize self)
-      (resize prompt 
-	       :width *minimum-listener-width*
-	       :height (+ (* 2 *dash*) 
-			  (font-height *default-font*)))
-      (assert (field-value :image prompt))
-      (setf (first inputs) prompt))))
-
-(define-method run listener ()
-  (with-fields (inputs) self
-    (destructuring-bind (prompt) inputs
-      (run prompt))))
 
 (define-prototype shell (:parent =block=)
   (selection :initform ()
@@ -100,25 +57,25 @@
   (assert (ioforms:object-p script))
   (setf ^script script))
   
-(define-method add shell (block &optional x y)
+(define-method add shell (new-block &optional x y)
   (with-fields (needs-redraw script) self
-    (add script block x y)
+    (add script new-block x y)
     (setf needs-redraw t)))
 
-(define-method delete-child shell (block)
-  (delete ^script block))
+(define-method delete-child shell (child)
+  (delete ^script child))
 
-(define-method select shell (block)
+(define-method select shell (new-block)
   (with-fields (selection inputs) self
-    (pushnew block selection)))
+    (pushnew new-block selection)))
 
 (define-method select-if shell (predicate)
   (with-fields (selection inputs) self
     (setf selection (remove-if predicate inputs))))
 
-(define-method unselect shell (block)
+(define-method unselect shell (the-block)
   (with-fields (selection) self
-    (setf selection (delete block selection))))
+    (setf selection (delete the-block selection))))
 
 (define-method handle-event shell (event)
   (with-fields (selection needs-redraw) self
@@ -126,25 +83,14 @@
       (when (first selection)
 	(handle-event (first selection) event)))))
 
-(define-method resize shell (&key width height)
-  (with-fields (prompt buffer needs-redraw image) self
-    (parent/resize self :width width :height height)
-    (setf buffer (create-image width height))))
-
-;; (define-method redraw shell ()
-;;   (with-fields (buffer selection needs-redraw width height) self
-;;     (let ((blocks (script-blocks self)))
-;;       (draw-box 0 0 width height 
-;; 		:color *background-color*
-;; 		:stroke-color *background-color*
-;; 		:destination buffer)
-;;       (dolist (block blocks)
-;; 	(layout block))
-;;       (dolist (block blocks)
-;; 	(when (find block selection)
-;; 	  (draw-border block buffer))
-;; 	(draw block buffer))
-;;       (setf needs-redraw nil))))
+(define-method draw shell ()
+  (with-fields (inputs selection) self
+      (dolist (block blocks)
+	(layout block))
+      (dolist (block blocks)
+	(when (find block selection)
+	  (draw-border block))
+	(draw block))))
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag inputs script drag-start ghost drag-offset) self
@@ -174,22 +120,22 @@
       (when parent
 	(try parent)))))
 
-(define-method draw shell ()
-  (with-fields 
-      (script buffer image drag-start selection
-      drag modified hover ghost prompt) self
-    ;; ;; render any selected blocks to their offscreen images
-    ;; (dolist (block selection)
-    ;;   (let ((block-image (field-value :image block)))
-    ;; 	(when block-image 
-    ;; 	  (render block))))
-    ;; (draw-image buffer 0 0 :destination image)
-    (when drag 
-      (layout drag)
-      (draw-ghost ghost image)
-      (draw drag image)
-      (when hover 
-	(draw-hover hover image)))))
+;; (define-method draw shell ()
+;;   (with-fields 
+;;       (script buffer image drag-start selection
+;;       drag modified hover ghost prompt) self
+;;     ;; ;; render any selected blocks to their offscreen images
+;;     ;; (dolist (block selection)
+;;     ;;   (let ((block-image (field-value :image block)))
+;;     ;; 	(when block-image 
+;;     ;; 	  (render block))))
+;;     ;; (draw-image buffer 0 0 :destination image)
+;;     (when drag 
+;;       (layout drag)
+;;       (draw-ghost ghost image)
+;;       (draw drag image)
+;;       (when hover 
+;; 	(draw-hover hover image)))))
 
 (define-method mouse-down shell (x y &optional button)
   (let ((block (hit-blocks self x y)))

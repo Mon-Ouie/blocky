@@ -30,6 +30,7 @@
 	       (:file "console")
 	       (:file "blocks")
 	       (:file "widgets")
+	       (:file "shell")
 	       (:file "things")
 	       (:file "worlds")))
 ;;	       (:file "path")

@@ -1,4 +1,4 @@
-;;; widgets.lisp --- interactive graphical elements with offscreen drawing
+;;; widgets.lisp --- interactive graphical element blocks
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
@@ -414,25 +414,25 @@ normally."
     ("QUOTE" NIL "'") 
     ("2" (:SHIFT) "\"")))
 
-(define-method install-keybindings prompt ()
+(define-method install-keybindings prompt ())
   ;; install varying keybindings
-  (with-fields (keybindings) self
-    (setf keybindings (make-hash-table :test 'equal))
-    (dolist (binding (ecase *user-keyboard-layout*
-		       (:qwerty *prompt-qwerty-keybindings*)
-		       (:sweden *prompt-sweden-keybindings*)))
-      (generic-keybind self binding))
-    ;; install keybindings for self-inserting characters
-    (map nil #'(lambda (char)
-		 (bind-event-to-prompt-insertion self (string char) nil
-					       (string-downcase char)))
-	 *lowercase-alpha-characters*)
-    (map nil #'(lambda (char)
-		 (bind-event-to-prompt-insertion self (string char) '(:shift)))
-	 *uppercase-alpha-characters*)
-    (map nil #'(lambda (char)
-		 (bind-event-to-prompt-insertion self (string char) nil))
-	 *numeric-characters*)))
+  ;; (with-fields (keybindings) self
+  ;;   (setf keybindings (make-hash-table :test 'equal))
+  ;;   ;; (dolist (binding (ecase *user-keyboard-layout*
+  ;;   ;; 		       (:qwerty *prompt-qwerty-keybindings*)
+  ;;   ;; 		       (:sweden *prompt-sweden-keybindings*)))
+  ;;   ;;   (generic-keybind self binding))
+  ;;   ;; install keybindings for self-inserting characters
+  ;;   (map nil #'(lambda (char)
+  ;; 		 (bind-event-to-prompt-insertion self (string char) nil
+  ;; 					       (string-downcase char)))
+  ;; 	 *lowercase-alpha-characters*)
+  ;;   (map nil #'(lambda (char)
+  ;; 		 (bind-event-to-prompt-insertion self (string char) '(:shift)))
+  ;; 	 *uppercase-alpha-characters*)
+  ;;   (map nil #'(lambda (char)
+  ;; 		 (bind-event-to-prompt-insertion self (string char) nil))
+  ;; 	 *numeric-characters*)))
 
 (define-method say prompt (&rest args)
   (apply #'message args))
@@ -1039,5 +1039,52 @@ text INSERTION to be inserted at point."
 
 (define-method forward split (method &rest args)
   (apply #'send self method (nth ^focus ^children) args))
+
+;;; Lisp listener
+
+(define-prototype block-prompt (:parent =prompt=)
+;;  (operation :initform :prompt)
+  output 
+  (rows :initform 10))
+
+(define-method initialize block-prompt (output)
+  (parent/initialize self)
+  (setf ^output output))
+
+(define-method do-sexp block-prompt (sexp)
+  (with-fields (output rows) self
+    (assert output)
+    (let ((container (get-parent output)))
+      (when container
+	(accept container 
+		 (let ((*make-block-package* (find-package :ioforms)))
+		   (if (symbolp (first sexp))
+		       (make-block-ext sexp)
+
+		       (make-block-ext (first sexp)))))
+	(when (> (length container) rows)
+	  (pop container))))))
+
+(define-prototype listener (:parent =list=)
+  (type :initform :system)
+  (schema :initform '(:block)))
+
+(defparameter *minimum-listener-width* 200)
+
+(define-method initialize listener ()
+  (with-fields (image inputs) self
+    (let ((prompt (clone =block-prompt= self)))
+      (parent/initialize self)
+      (resize prompt 
+	       :width *minimum-listener-width*
+	       :height (+ (* 2 *dash*) 
+			  (font-height *default-font*)))
+      (assert (field-value :image prompt))
+      (setf (first inputs) prompt))))
+
+(define-method run listener ()
+  (with-fields (inputs) self
+    (destructuring-bind (prompt) inputs
+      (run prompt))))
    
 ;;; widgets.lisp ends here
