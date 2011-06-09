@@ -72,6 +72,8 @@
   ;; general information
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
+  (inputs :initform nil)
+  (schema :initform nil)
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
   (data :initform nil :documentation "Data value for data entry blocks.")
@@ -84,6 +86,7 @@
   (blend :initform :alpha)
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
+  (depth :initform 32 :documentation "Cached depth of block.")
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
   (visible :initform t :documentation "When non-nil, block will be visible.")
   (image :initform nil :documentation "Texture to be displayed, if any."))
@@ -185,12 +188,12 @@ the return value of the function (if any)."
 				  *make-block-package*))
 				(mapcar #'make-block-ext args))))
 	      (prog1 block
-		(with-fields (arguments) block
-		  (setf arguments
+		(with-fields (inputs) block
+		  (setf inputs
 			(mapcar #'(lambda (value)
 				    (or value (clone (symbol-value '=null=))))
-				arguments))
-		  (dolist (child arguments)
+				inputs))
+		  (dolist (child inputs)
 		    (set-parent child block)))))))
       (let ((prototype
 	     (symbol-value
@@ -271,85 +274,96 @@ areas.")
 	       (draw-image image x y))
 	(draw-patch self x y (+ x width) (+ y height) :depressed t))))
 
-(define-method hit block (mouse-x mouse-y))
+(define-method hit block (mouse-x mouse-y)
+  (with-field-values (x y width height) self
+    (when (within-extents mouse-x mouse-y 
+			  x y 
+			  (+ x width) (+ y height))
+      self)))
 
-;; (define-method child-position block (child)
-;;   (with-fields (arguments) self
-;;     (position child arguments)))
+(define-method mouse-move block (x y))
 
-;; (define-method this-position block ()
-;;   (with-fields (parent) self
-;;     (when parent
-;;       (child-position parent self))))
+(define-method mouse-down block (x y button))
 
-;; (define-method plug block (child n)
-;;   "Connect the block CHILD as the value of the Nth argument."
-;;   (set-argument self n child)
-;;   (set-parent child self))
+(define-method mouse-up block (x y button))
 
-;; (define-method unplug block (child)
-;;   "Disconnect the block CHILD from this block."
-;;   (let ((pos (position child ^arguments)))
-;;     (plug self (null-block) pos)
-;;     (set-parent child nil)))
+(define-method child-position block (child)
+  (with-fields (inputs) self
+    (position child inputs)))
 
-;; (define-method unplug-from-parent block ()
-;;   (with-fields (parent) self
-;;     (when parent
-;;       (unplug parent self))))
+(define-method this-position block ()
+  (with-fields (parent) self
+    (when parent
+      (child-position parent self))))
 
-;; (define-method execute-arguments block ()
-;;   "Execute all blocks in ^ARGUMENTS from left-to-right. Results are
-;; placed in corresponding positions of ^RESULTS. Override this method
-;; when defining new blocks if you don't want to evaluate all the
-;; arguments all the time."
-;;   (with-fields (arguments results) self
-;;     (setf results (mapcar #'/run arguments))))
+(define-method plug block (child n)
+  "Connect the block CHILD as the value of the Nth argument."
+  (set-argument self n child)
+  (set-parent child self))
 
-;; (define-method execute block ()
-;;   "Carry out the block's action by sending messages to the object `*target*'.
-;; The *target* is a special variable bound in the execution
-;; environment. Its value will be the IOFORMS object to send messages to.
-;; The ^RESULTS field will be a list of results obtained by
-;; executing/evaluating the blocks in ^ARGUMENTS (see also
-;; `BLOCK/EXECUTE-ARGUMENTS'.) The default behavior of `EXECUTE' is to
-;; send the ^OPERATION field's value as a message to the target, with
-;; the arguments to the target's method being the current computed
-;; ^RESULTS, and return the result of the method call. This default
-;; action is sufficient for many blocks whose main purpose is to send a
-;; single message; other blocks can redefine this /EXECUTE method to do
-;; something else. See also `defblock' and `send'."
-;;   (with-fields (operation results) self
-;;     (labels ((clean (item)
-;; 	       (if (symbolp item)
-;; 		   (make-keyword item)
-;; 		   item)))
-;;       (assert *target*)
-;;       (apply #'ioforms:send nil operation *target*
-;; 	     (mapcar #'clean results)))))
+(define-method unplug block (child)
+  "Disconnect the block CHILD from this block."
+  (let ((pos (position child ^inputs)))
+    (plug self (null-block) pos)
+    (set-parent child nil)))
 
-;; (defmacro with-target (target &body body)
-;;   `(let ((*target* ,target))
-;;      ,@body))
+(define-method unplug-from-parent block ()
+  (with-fields (parent) self
+    (when parent
+      (unplug parent self))))
 
-;; (define-method run block ()
-;;   "Run child blocks to produce results, then run this block with
-;; those results as input."
-;;   (execute-arguments self)
-;;   (execute self))
+(define-method execute-inputs block ()
+  "Execute all blocks in ^INPUTS from left-to-right. Results are
+placed in corresponding positions of ^RESULTS. Override this method
+when defining new blocks if you don't want to evaluate all the
+inputs all the time."
+  (with-fields (inputs results) self
+    (setf results (mapcar #'/run inputs))))
 
-;; (define-method describe block ()
-;;   "Show name and comprehensive help for this block.")
+(define-method execute block ()
+  "Carry out the block's action by sending messages to the object `*target*'.
+The *target* is a special variable bound in the execution
+environment. Its value will be the IOFORMS object to send messages to.
+The ^RESULTS field will be a list of results obtained by
+executing/evaluating the blocks in ^INPUTS (see also
+`BLOCK/EXECUTE-INPUTS'.) The default behavior of `EXECUTE' is to
+send the ^OPERATION field's value as a message to the target, with
+the inputs to the target's method being the current computed
+^RESULTS, and return the result of the method call. This default
+action is sufficient for many blocks whose main purpose is to send a
+single message; other blocks can redefine this /EXECUTE method to do
+something else. See also `defblock' and `send'."
+  (with-fields (operation results) self
+    (labels ((clean (item)
+	       (if (symbolp item)
+		   (make-keyword item)
+		   item)))
+      (assert *target*)
+      (apply #'ioforms:send nil operation *target*
+	     (mapcar #'clean results)))))
 
-;; (define-method after-deserialize block ()
-;;   "Make sure the block is ready after loading."
-;;   (initialize self))
+(defmacro with-target (target &body body)
+  `(let ((*target* ,target))
+     ,@body))
 
-;; (define-method count block ()
-;;   "Return the number of blocks enclosed in this block, including the
-;; current block."
-;;   (with-fields (arguments) self
-;;     (+ 1 (length arguments))))
+(define-method run block ()
+  "Run child blocks to produce results, then run this block with
+those results as input."
+  (execute-inputs self)
+  (execute self))
+
+(define-method describe block ()
+  "Show name and comprehensive help for this block.")
+
+(define-method after-deserialize block ()
+  "Make sure the block is ready after loading."
+  (initialize self))
+
+(define-method count block ()
+  "Return the number of blocks enclosed in this block, including the
+current block."
+  (with-fields (inputs) self
+    (+ 1 (length inputs))))
 
 (defparameter *display-widgets*
    '(:integer =integer=
@@ -587,7 +601,7 @@ override all colors."
 
 (define-method layout block ()
   (with-fields (child-widths height width) self
-    (with-field-values (x y operation schema arguments) self
+    (with-field-values (x y operation schema inputs) self
       (let* ((font *block-font*)
 	     (dash *dash*)
 	     (left (+ x (handle-width self)))
@@ -602,7 +616,7 @@ override all colors."
 			  (+ dash (move-child block))))
 		     (prog1 measurement
 		       (incf left measurement)))))
-	  (setf child-widths (mapcar #'layout-child arguments schema)))
+	  (setf child-widths (mapcar #'layout-child inputs schema)))
 	  (setf width (+ (- left x) (* 4 dash)))
 	  (setf height (+ dash dash max-height))))))
 
@@ -630,7 +644,7 @@ override all colors."
 ;; (define-method draw-contents block (image)
 ;;   (with-block-drawing image
 ;;     (with-field-values
-;; 	(x y operation arguments)
+;; 	(x y operation inputs)
 ;; 	self
 ;;       (let* ((dash *dash*)
 ;; 	     (left (+ x (* 2 dash)))
@@ -642,7 +656,7 @@ override all colors."
 ;; 			  left y0 :destination image))
 ;; 	    (progn
 ;; 	      (text left y0 (print-expression operation))
-;; 	      (dolist (block arguments)
+;; 	      (dolist (block inputs)
 ;; 		(draw block image))))))))
 
 (defparameter *hover-color* "red")
@@ -659,12 +673,12 @@ override all colors."
 (define-method hit block (mouse-x mouse-y))
 ;;   "Return this block (or child block) if the coordinates MOUSE-X and
 ;; MOUSE-Y identify a point inside the block (or child block.)"
-;;   (with-fields (x y width height arguments) self
+;;   (with-fields (x y width height inputs) self
 ;;     (when (within-extents mouse-x mouse-y x y
 ;; 			  (+ x width) (+ y height))
 ;;       (labels ((hit (block)
 ;; 		 (/hit block mouse-x mouse-y)))
-;; 	(let ((child (some #'hit arguments)))
+;; 	(let ((child (some #'hit inputs)))
 ;; 	  (values (or child self) (when child (/position child))))))))
 
 (define-method accept block (other-block)
@@ -729,29 +743,29 @@ override all colors."
   ^results)
 
 (define-method accept list (child &optional prepend)
-  (with-fields (arguments) self
-    (if arguments
+  (with-fields (inputs) self
+    (if inputs
 	(if prepend
-	    (setf arguments (nconc (list child) arguments))
-	    (setf arguments (nconc arguments (list child))))
-	(setf arguments (list child)))
+	    (setf inputs (nconc (list child) inputs))
+	    (setf inputs (nconc inputs (list child))))
+	(setf inputs (list child)))
     (when (get-parent child)
       (unplug-from-parent child))
     (set-parent child self)))
 
 (define-method take-first list ()
-  (with-fields (arguments) self
-    (let ((block (first arguments)))
+  (with-fields (inputs) self
+    (let ((block (first inputs)))
       (prog1 block
 	(unplug self block)))))
 
 (define-method length list ()
-  (with-fields (arguments) self
-    (length arguments)))
+  (with-fields (inputs) self
+    (length inputs)))
 
 (define-method unplug list (child)
-  (with-fields (arguments) self
-    (setf arguments (delete child arguments))
+  (with-fields (inputs) self
+    (setf inputs (delete child inputs))
     (set-parent child nil)))
 
 (define-method layout-header list () 0)
@@ -764,14 +778,14 @@ override all colors."
 	  height (+ (* 4 *dash*)))))
 
 (define-method layout-body-as-list list ()
-  (with-fields (x y height width arguments) self
+  (with-fields (x y height width inputs) self
     (let* ((dash *dash*)
 	   (header-height (+ dash (layout-header self)))
 	   (y0 (+ y dash header-height))
 	   (line-height (font-height *block-font*)))
       (setf height (+ (* 2 dash) line-height))
       (setf width (* 8 dash))
-      (dolist (block arguments)
+      (dolist (block inputs)
 	(move block (+ x dash) y0)
 	(layout block)
 	(incf height (field-value :height block))
@@ -780,8 +794,8 @@ override all colors."
       (incf width (* 2 dash)))))
 
 (define-method layout list ()
-  (with-fields (arguments) self
-    (if (null arguments)
+  (with-fields (inputs) self
+    (if (null inputs)
 	(layout-body-as-null self)
 	(layout-body-as-list self))))
 
@@ -790,7 +804,7 @@ override all colors."
 ;;; Composing blocks into larger programs, recursively.
 
 (define-prototype script (:parent =list=)
-  (arguments :iniform '(nil))
+  (inputs :iniform '(nil))
   (schema :initform '(:block))
   (target :initform nil)
   (variables :initform (make-hash-table :test 'eq)))
@@ -798,7 +812,7 @@ override all colors."
 (define-method layout script ())
 
 (define-method initialize script (&key blocks variables target)
-  (setf ^arguments blocks)
+  (setf ^inputs blocks)
   (when variables (setf ^variables variables))
   (when target (setf ^target target)))
 
@@ -808,21 +822,21 @@ override all colors."
   (setf ^target target))
 
 (define-method is-member script (block)
-  (with-fields (arguments) self
-    (find block arguments)))
+  (with-fields (inputs) self
+    (find block inputs)))
 
 (define-method add script (block &optional x y)
-  (with-fields (arguments) self
-    (assert (not (find block arguments)))
-    (setf arguments (nconc arguments (list block)))
+  (with-fields (inputs) self
+    (assert (not (find block inputs)))
+    (setf inputs (nconc inputs (list block)))
     (setf (field-value :parent block) nil) ;; TODO self?
     (when (and (integerp x)
 	       (integerp y))
       (move block x y))))
 
 (define-method layout-header script ()
-  (with-fields (x y arguments) self
-    (let ((name (first arguments))
+  (with-fields (x y inputs) self
+    (let ((name (first inputs))
 	  (height (font-height *block-font*)))
       (prog1 height
 	(move name
@@ -838,23 +852,23 @@ override all colors."
 	      "script")))))
 
 (define-method run script ())
-  ;; (with-fields (arguments target) self
+  ;; (with-fields (inputs target) self
   ;;   (with-target target
-  ;;     (dolist (block arguments)
+  ;;     (dolist (block inputs)
   ;; 	(run block)))))
 
 (define-method update script ())
 
 (define-method bring-to-front script (block)
-  (with-fields (arguments) self
-    (when (find block arguments)
-      (setf arguments (delete block arguments))
-      (setf arguments (nconc arguments (list block))))))
+  (with-fields (inputs) self
+    (when (find block inputs)
+      (setf inputs (delete block inputs))
+      (setf inputs (nconc inputs (list block))))))
 
 (define-method delete-child script (block)
-  (with-fields (arguments) self
-    (assert (find block arguments))
-    (setf arguments (delete block arguments))))
+  (with-fields (inputs) self
+    (assert (find block inputs))
+    (setf inputs (delete block inputs))))
 
 ;; (define-method set script (var value)
 ;;   (setf (gethash var ^variables) value))

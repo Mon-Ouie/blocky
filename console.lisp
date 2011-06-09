@@ -210,7 +210,7 @@ Do not set this variable directly from a project; instead, call
 	       (hit b x y)))
       (let ((parent (find-if #'try blocks :from-end t)))
 	(when parent
-	  (hit parent))))))
+	  (try parent))))))
 
 (defun draw-blocks ()
   "Draw the active blocks to the screen."
@@ -1495,11 +1495,12 @@ found."
 (defun delete-all-resources ()
   (loop for resource being the hash-values in *resources*
 	do (let ((object (resource-object resource)))
-	     (case (resource-type resource)
-	       (:image (sdl:free object))
-	       (:music (sdl-mixer:free object))
-	       (:sample (sdl-mixer:free object)))))
-  (initialize-resource-table))
+	     (when object
+	       (case (resource-type resource)
+		 (:image (sdl:free object))
+		 (:music (sdl-mixer:free object))
+		 (:sample (sdl-mixer:free object)))))
+	   (initialize-resource-table)))
 	   
 ;;; Custom audio generation
 
