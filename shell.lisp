@@ -26,7 +26,7 @@
 
 ;;; Interactive editor shell
 
-(define-prototype shell (:parent =block=)
+(defblock shell
   (selection :initform ()
   	     :documentation "Subset of selected blocks.")
   (script :initform nil)
@@ -40,7 +40,7 @@
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
 	       :documentation "A cons (X . Y) of mouse click location on dragged block.")
-  (needs-redraw :initform t)
+  (needs-layout :initform t)
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
@@ -58,9 +58,9 @@
   (setf ^script script))
   
 (define-method add shell (new-block &optional x y)
-  (with-fields (needs-redraw script) self
+  (with-fields (needs-layout script) self
     (add script new-block x y)
-    (setf needs-redraw t)))
+    (setf needs-layout t)))
 
 (define-method delete-child shell (child)
   (delete ^script child))
@@ -78,19 +78,10 @@
     (setf selection (delete the-block selection))))
 
 (define-method handle-event shell (event)
-  (with-fields (selection needs-redraw) self
+  (with-fields (selection needs-layout) self
     (when (= 1 (length selection))
       (when (first selection)
 	(handle-event (first selection) event)))))
-
-(define-method draw shell ()
-  (with-fields (inputs selection) self
-      (dolist (block blocks)
-	(layout block))
-      (dolist (block blocks)
-	(when (find block selection)
-	  (draw-border block))
-	(draw block))))
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag inputs script drag-start ghost drag-offset) self
@@ -120,22 +111,29 @@
       (when parent
 	(try parent)))))
 
-;; (define-method draw shell ()
-;;   (with-fields 
-;;       (script buffer image drag-start selection
-;;       drag modified hover ghost prompt) self
-;;     ;; ;; render any selected blocks to their offscreen images
-;;     ;; (dolist (block selection)
-;;     ;;   (let ((block-image (field-value :image block)))
-;;     ;; 	(when block-image 
-;;     ;; 	  (render block))))
-;;     ;; (draw-image buffer 0 0 :destination image)
-;;     (when drag 
-;;       (layout drag)
-;;       (draw-ghost ghost image)
-;;       (draw drag image)
-;;       (when hover 
-;; 	(draw-hover hover image)))))
+(define-method draw shell ()
+  (with-fields (script buffer drag-start selection inputs drag
+		       needs-layout modified hover ghost prompt) 
+      self
+    ;; update layout if necessary 
+    (when needs-layout 
+      (dolist (block blocks)
+	(layout block)
+	(setf needs-layout nil)))
+    ;; now start drawing blocks
+    (dolist (block blocks)
+      ;; draw border around any selected blocks
+      (when (find block selection)
+	(draw-border block))
+      ;; draw the block itself
+      (draw block))
+    ;; during dragging we draw the dragged block.
+    (when drag 
+      (layout drag)
+      (draw-ghost ghost)
+      (draw drag)
+      (when hover 
+	(draw-hover hover)))))
 
 (define-method mouse-down shell (x y &optional button)
   (let ((block (hit-blocks self x y)))
@@ -156,7 +154,7 @@
 
 (define-method mouse-up shell (x y &optional button)
   (with-fields 
-      (inputs needs-redraw drag-offset drag-start hover
+      (inputs needs-layout drag-offset drag-start hover
 	      selection drag modified) 
       self
     (when drag
@@ -175,7 +173,7 @@
     (setf drag-start nil
 	  drag-offset nil
 	  drag nil
-	  needs-redraw t)))
+	  needs-layout t)))
 
 
 ;;; Other blocks

@@ -1,9 +1,8 @@
-** DONE Add TTF string drawing functions
-   CLOSED: [2011-06-08 Wed 15:34]
-** DONE [#A] Test TTF drawing functions
-   CLOSED: [2011-06-08 Wed 22:51]
-** DONE [#A] Port blocks.lisp to OpenGL, get basic blocks displayable/movable again
-   CLOSED: [2011-06-09 Thu 00:59]
+** TODO (input :foo)  named input access.
+** TODO fix input-widths
+** TODO allow varying inputs length (i.e. no schema)
+** TODO draw-socket should draw types
+** TODO inputs and schema should be plists?
 ** TODO [#B] Rework block layout and make clicking/dragging work
 ** TODO [#A] Revise blocks execution model re:schema (see below)
 ** TODO [#B] Create DEFBLOCK block

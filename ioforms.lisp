@@ -187,6 +187,7 @@
 	   object-address-string draw-string draw-string-blended
 	   find-text-image make-text-image clear-text-image-cache
 	   =block= *token-types* *block-categories* *block-colors*
+	   input 
 	   *block-text-colors* defblock =beep= =program=))
 
 ;;; ioforms.lisp ends here
