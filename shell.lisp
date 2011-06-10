@@ -193,8 +193,10 @@
 		    (script-blocks self)
 		    :from-end t)))
       (when parent
-	(message "HIT/SHELL FOUND PARENT ~S" (list x y))
-	(try parent)))))
+	(message "HIT/SHELL FOUND PARENT ~S" 
+		 (list x y (field-value :operation parent)))
+        parent))))
+;	(try parent)))))
 
 (define-method draw shell ()
   (with-fields (script buffer drag-start selection inputs drag

@@ -556,8 +556,8 @@ override all colors."
 			      *socket-color*
 			      (if dark shadow background)))))
       ;; top left
-      (disc (+ x0 radius) (+ y0 radius) fill)
-      (circle (+ x0 radius) (+ y0 radius) bevel)
+      (disc (+ x0 radius 1) (+ y0 radius) fill)
+      (circle (+ x0 radius 1) (+ y0 radius) bevel)
       ;; top x1
       (disc (- x1 radius 1) (+ y0 radius 1) fill)
       (circle (- x1 radius 1) (+ y0 radius 1) chisel)
@@ -709,8 +709,8 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (when (within-extents mouse-x mouse-y x y
 			  (+ x width) (+ y height))
       (message "HIT BLOCK? ~S" (list x y))
-      (labels ((try (block)
-		 (hit block mouse-x mouse-y)))
+      (labels ((try (it)
+		 (hit it mouse-x mouse-y)))
 	(let ((result (some #'try inputs)))
 	  (message "HIT2: RESULT: ~S" result)
 	  (or result self))))))
