@@ -1,3 +1,4 @@
+** TODO allow string-valued method fields. resource id's of method block, uuid?
 ** TODO (input :foo)  named input access.
 ** TODO fix input-widths
 ** TODO allow varying inputs length (i.e. no schema)
