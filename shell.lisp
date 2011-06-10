@@ -24,6 +24,91 @@
 
 (in-package :ioforms)
 
+;;; Composing blocks into larger programs, recursively.
+
+(define-prototype script (:parent =list=)
+  (inputs :iniform '(nil))
+  (target :initform nil)
+  (variables :initform (make-hash-table :test 'eq)))
+
+(define-method layout script ())
+
+(define-method initialize script (&key blocks variables target)
+  (setf ^inputs blocks)
+  (when variables (setf ^variables variables))
+  (when target (setf ^target target)))
+
+(define-method set-target script (target)
+  (setf ^target target))
+
+(define-method is-member script (block)
+  (with-fields (inputs) self
+    (find block inputs)))
+
+(define-method add script (block &optional x y)
+  (with-fields (inputs) self
+    (assert (not (find block inputs)))
+    (setf inputs (nconc inputs (list block)))
+    (setf (field-value :parent block) nil) ;; TODO self?
+    (when (and (integerp x)
+	       (integerp y))
+      (move block x y))))
+
+(define-method layout-header script ()
+  (with-fields (x y inputs) self
+    (let ((name (first inputs))
+	  (height (font-height *block-font*)))
+      (prog1 height
+	(move name
+	       (+ x (handle-width self))
+	       (+ y height))))))
+
+(define-method draw-header script ()
+  (prog1 (font-height *block-font*)
+    (with-fields (x y) self
+      (with-block-drawing 
+	(text (+ x *dash* 1)
+	      (+ y *dash* 1)
+	      "script")))))
+
+(define-method run script ())
+  ;; (with-fields (inputs target) self
+  ;;   (with-target target
+  ;;     (dolist (block inputs)
+  ;; 	(run block)))))
+
+(define-method update script ())
+
+(define-method bring-to-front script (block)
+  (with-fields (inputs) self
+    (when (find block inputs)
+      (setf inputs (delete block inputs))
+      (setf inputs (nconc inputs (list block))))))
+
+(define-method delete-input script (block)
+  (with-fields (inputs) self
+    (assert (find block inputs))
+    (setf inputs (delete block inputs))))
+
+(define-method set script (var value)
+  (setf (gethash var ^variables) value))
+
+(define-method get script (var)
+  (gethash var ^variables))
+
+;; (defun block-variable (var-name)
+;;   (get *block* var-name))
+
+;; (defun (setf block-variable) (var-name value)
+;;   (set *block* var-name value))
+
+;; (defmacro with-block-variables (vars &rest body)
+;;   (labels ((make-clause (sym)
+;; 	     `(,sym (block-variable ,(make-keyword sym)))))
+;;     (let* ((symbols (mapcar #'make-non-keyword vars))
+;; 	   (clauses (mapcar #'make-clause symbols)))
+;;       `(symbol-macrolet ,clauses ,@body))))
+
 ;;; Interactive editor shell
 
 (defblock shell
@@ -53,7 +138,7 @@
 (define-method script-blocks shell ()
   (field-value :inputs ^script))
 
-(define-method switch-to-script shell (script) 
+(define-method open-script shell (script) 
   (assert (ioforms:object-p script))
   (setf ^script script))
   
@@ -100,15 +185,15 @@
 	    (setf drag-start (cons dx dy))
 	    (setf drag-offset (cons x-offset y-offset))))))))
 
-(define-method hit-blocks shell (x y)
+(define-method hit shell (x y)
   (labels ((try (b)
 	     (hit b x y)))
     (let ((parent 
-	   (find-if 
-	    #'try 
-	    (script-blocks self)
-	    :from-end t)))
+	   (find-if #'try 
+		    (script-blocks self)
+		    :from-end t)))
       (when parent
+	(message "HIT/SHELL FOUND PARENT ~S" (list x y))
 	(try parent)))))
 
 (define-method draw shell ()
@@ -116,26 +201,28 @@
 		       needs-layout modified hover ghost prompt) 
       self
     ;; update layout if necessary 
-    (when needs-layout 
+    (let ((blocks (script-blocks self)))
+      (when needs-layout 
+	(dolist (block blocks)
+	  (layout block)
+	  (setf needs-layout nil)))
+      ;; now start drawing blocks
       (dolist (block blocks)
-	(layout block)
-	(setf needs-layout nil)))
-    ;; now start drawing blocks
-    (dolist (block blocks)
-      ;; draw border around any selected blocks
-      (when (find block selection)
-	(draw-border block))
-      ;; draw the block itself
-      (draw block))
-    ;; during dragging we draw the dragged block.
-    (when drag 
-      (layout drag)
-      (draw-ghost ghost)
-      (draw drag)
-      (when hover 
-	(draw-hover hover)))))
+	;; draw border around any selected blocks
+	(when (find block selection)
+	  (draw-border block))
+	;; draw the block itself
+	(draw block))
+      ;; during dragging we draw the dragged block.
+      (when drag 
+	(layout drag)
+	(draw-ghost ghost)
+	(draw drag)
+	(when hover 
+	  (draw-hover hover))))))
 
 (define-method mouse-down shell (x y &optional button)
+  (message "HEYYA")
   (let ((block (hit-blocks self x y)))
     (when block
       (case button
@@ -174,7 +261,6 @@
 	  drag-offset nil
 	  drag nil
 	  needs-layout t)))
-
 
 ;;; Other blocks
 

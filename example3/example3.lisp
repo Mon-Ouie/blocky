@@ -32,6 +32,7 @@
 (defparameter *font* "sans-bold-12")
 
 (defblock hello1
+  :operation :foo
   :x 20 :y 20 :height 100 :width 200 :category :sensing)
 
 (defblock hello2
@@ -41,8 +42,12 @@
   :x 20 :y 400 :height 40 :width 40 :category :operators)
 
 (defun example3 ()
-  (add-block (new hello1))
-  (add-block (new hello2))
-  (add-block (new hello3)))
+  (let ((script (new script))
+	(shell (new shell)))
+    (open-script shell script)
+    (add-block shell)
+    (add script (new hello1))
+    (add script (new hello2))
+    (add script (new hello3))))
 	     
 ;;; example3.lisp ends here
