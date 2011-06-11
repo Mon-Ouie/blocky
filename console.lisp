@@ -1209,12 +1209,17 @@ also the documentation for DESERIALIZE."
     (:additive2 (gl:blend-func :one :one))
     (:alpha (gl:blend-func :src-alpha :one-minus-src-alpha))))
 
-(defun load-texture (surface)
+(defun load-texture 
+    (surface &key source-format (internal-format :rgba)
+		  (filter :mipmap))
   (let ((texture (car (gl:gen-textures 1))))
     (message "Binding new gl texture ~A" texture)
     (gl:bind-texture :texture-2d texture)
-    (gl:tex-parameter :texture-2d :generate-mipmap t) 
-    (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear) 
+    (ecase filter 
+      (:linear (gl:tex-parameter :texture-2d :texture-min-filter :linear)
+		(gl:tex-parameter :texture-2d :texture-mag-filter :linear))
+      (:mipmap (gl:tex-parameter :texture-2d :generate-mipmap t) 
+       (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear)))
     (sdl-base::with-pixel (pix (sdl:fp surface))
       (let ((texture-format (ecase (sdl-base::pixel-bpp pix)
                               (1 :luminance)
@@ -1224,10 +1229,9 @@ also the documentation for DESERIALIZE."
         (assert (and (= (sdl-base::pixel-pitch pix)
                         (* (sdl:width surface) (sdl-base::pixel-bpp pix)))
                      (zerop (rem (sdl-base::pixel-pitch pix) 4))))
-        (gl:tex-image-2d :texture-2d 0 :rgba
+        (gl:tex-image-2d :texture-2d 0 internal-format
                          (sdl:width surface) (sdl:height surface)
-                         0
-                         texture-format
+                         0 (or source-format texture-format)
                          :unsigned-byte (sdl-base::pixel-data pix))))
     texture))
 
@@ -1252,9 +1256,14 @@ also the documentation for DESERIALIZE."
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
   (message "Loading image resource ~A" resource)
   (initialize-textures-maybe)
-  (let* ((surface (sdl-image:load-image (namestring (resource-file resource))
+  (let* ((brushp (getf (resource-properties resource) :brush))
+	 (surface (sdl-image:load-image (namestring (resource-file resource))
 				       :alpha 255))
-	 (texture (load-texture surface))
+	 (source-format (when brushp :alpha))
+	 (internal-format (if brushp :alpha :rgba))
+	 (texture (load-texture surface
+				:source-format source-format
+				:internal-format internal-format))
 	 (name (resource-name resource)))
     (prog1 surface
       (let ((old-texture (gethash name *textures*)))
@@ -1765,7 +1774,8 @@ of the music."
 		 image)))
     (sdl:width img)))
 
-(defun draw-textured-rectangle (x y width height texture &optional (u1 0) (v1 0) (u2 1) (v2 1))
+;; &optional (u1 0) (v1 0) (u2 1) (v2 1))
+(defun draw-textured-rectangle (x y width height texture)
   (gl:enable :texture-2d :blend)	
   (gl:bind-texture :texture-2d texture)
 ;  (gl:color 1 1 1 1)

@@ -310,13 +310,6 @@ areas.")
 (define-method get-image block ()
   ^image)
 
-(define-method draw block ()
-  (with-fields (image x y width height blend) self
-    (if image 
-	(progn (set-blending-mode blend)
-	       (draw-image image x y))
-	(draw-patch self x y (+ x width) (+ y height) :depressed t))))
-
 (define-method mouse-move block (x y))
 
 (define-method mouse-down block (x y button))
@@ -522,7 +515,7 @@ blocks."
 	    (selection *selection-color*)
 	    (shadow (find-color self :shadow))
 	    (dash *dash*)
-	    (radius (+ 2 *dash*))
+	    (radius (+ 4 *dash*))
 	    (diameter (* 2 radius)))
        (labels ((circle (x y &optional color)
 		  (draw-circle x y radius
@@ -557,17 +550,17 @@ override all colors."
 			      *socket-color*
 			      (if dark shadow background)))))
       ;; top left
-      (disc (+ x0 radius 1) (+ y0 radius) fill)
-      (circle (+ x0 radius 1) (+ y0 radius) bevel)
+      (disc (+ x0 radius ) (+ y0 radius) fill)
+;      (circle (+ x0 radius ) (+ y0 radius) fill) ;;bevel
       ;; top x1
-      (disc (- x1 radius 1) (+ y0 radius 1) fill)
-      (circle (- x1 radius 1) (+ y0 radius 1) chisel)
+      (disc (- x1 radius ) (+ y0 radius ) fill)
+;      (circle (- x1 radius ) (+ y0 radius ) fill) ;; chisel
       ;; y1 x1
-      (disc (- x1 radius 1) (- y1 radius 1) fill)
-      (circle (- x1 radius 1) (- y1 radius 1) chisel)
+      (disc (- x1 radius ) (- y1 radius ) fill)
+;      (circle (- x1 radius ) (- y1 radius ) fill) ;; chisel
       ;; y1 left
-      (disc (+ x0 radius 1) (- y1 radius 1) fill)
-      (circle (+ x0 radius 1) (- y1 radius 1))
+      (disc (+ x0 radius ) (- y1 radius ) fill)
+;      (circle (+ x0 radius ) (- y1 radius ))
       ;; y1
       (box (+ x0 radius) (- y1 diameter)
 	   (- x1 radius 1) y1
@@ -695,6 +688,14 @@ current block."
 	(dolist (each inputs)
 	  (draw each))))))
 
+(define-method draw block ()
+  (with-fields (image x y width height blend) self
+    (if image 
+	(progn (set-blending-mode blend)
+	       (draw-image image x y))
+	(progn (draw-patch self x y (+ x width) (+ y height) :depressed t)
+	       (draw-contents self)))))
+
 (defparameter *hover-color* "red")
 
 (define-method draw-hover block ()
@@ -709,11 +710,9 @@ MOUSE-Y identify a point inside the block (or input block.)"
   (with-fields (x y width height inputs) self
     (when (within-extents mouse-x mouse-y x y
 			  (+ x width) (+ y height))
-      (message "HIT BLOCK? ~S" (list x y))
       (labels ((try (it)
 		 (hit it mouse-x mouse-y)))
 	(let ((result (some #'try inputs)))
-	  (message "HIT2: RESULT: ~S" result)
 	  (or result self))))))
 
 (define-method accept block (other-block)

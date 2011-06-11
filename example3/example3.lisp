@@ -47,6 +47,7 @@
     (add script (new hello1))
     (add script (new hello2))
     (add script (new hello3))
+    (add script (new list))
     (open-script shell script)
     (add-block shell)))
 	     

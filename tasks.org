@@ -1,9 +1,8 @@
-** TODO allow string-valued method fields. resource id's of method block, uuid?
 ** TODO (input :foo)  named input access.
 ** TODO fix input-widths
 ** TODO allow varying inputs length (i.e. no schema)
-** TODO draw-socket should draw types
-** TODO inputs and schema should be plists?
+** TODO [#B] draw-socket should draw types
+** TODO [#B] allow string-valued method fields. resource id's of method block, uuid?
 ** TODO [#B] Rework block layout and make clicking/dragging work
 ** TODO [#A] Revise blocks execution model re:schema (see below)
 ** TODO [#B] Create DEFBLOCK block
