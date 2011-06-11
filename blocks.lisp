@@ -69,6 +69,7 @@
      ,@body))
 
 (define-prototype block ()
+  (uuid :initform (make-uuid))
   ;; general information
   (inputs :initform nil :documentation 
 "List of input blocks. If ^SCHEMA is also present, its corresponding

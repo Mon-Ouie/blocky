@@ -19,6 +19,7 @@
 	       :lispbuilder-sdl-gfx
 	       :lispbuilder-sdl-ttf
 	       :lispbuilder-sdl-mixer
+	       :uuid
 	       :cl-fad
 	       :cl-opengl)
   :components ((:file "ioforms")

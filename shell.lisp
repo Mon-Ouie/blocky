@@ -147,7 +147,7 @@
     (add script new-block x y)
     (setf needs-layout t)))
 
-(define-method delete-child shell (child)
+(define-method delete-input shell (child)
   (delete ^script child))
 
 (define-method select shell (new-block)
@@ -172,7 +172,7 @@
   (with-fields (drag inputs script drag-start ghost drag-offset) self
     (setf drag block)
     (when (is-member script block)
-      (delete-child script block))
+      (delete-input script block))
     (let ((dx (field-value :x block))
 	  (dy (field-value :y block))
 	  (dw (field-value :width block))
@@ -186,6 +186,9 @@
 	    (setf drag-offset (cons x-offset y-offset))))))))
 
 (define-method hit shell (x y)
+  self)
+
+(define-method hit-script shell (x y)
   (labels ((try (b)
 	     (hit b x y)))
     (let ((parent 
@@ -193,10 +196,7 @@
 		    (script-blocks self)
 		    :from-end t)))
       (when parent
-	(message "HIT/SHELL FOUND PARENT ~S" 
-		 (list x y (field-value :operation parent)))
-        parent))))
-;	(try parent)))))
+	(try parent)))))
 
 (define-method draw shell ()
   (with-fields (script buffer drag-start selection inputs drag
@@ -224,8 +224,7 @@
 	  (draw-hover hover))))))
 
 (define-method mouse-down shell (x y &optional button)
-  (message "HEYYA")
-  (let ((block (hit-blocks self x y)))
+  (let ((block (hit-script self x y)))
     (when block
       (case button
 	(1 (begin-drag self x y block))
@@ -238,7 +237,7 @@
       (destructuring-bind (ox . oy) drag-offset
 	(let ((target-x (- mouse-x ox))
 	      (target-y (- mouse-y oy)))
-	  (setf hover (hit-blocks self target-x target-y))
+	  (setf hover (hit-script self target-x target-y))
 	  (move drag target-x target-y))))))
 
 (define-method mouse-up shell (x y &optional button)

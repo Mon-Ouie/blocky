@@ -43,11 +43,11 @@
 
 (defun example3 ()
   (let ((script (new script))
-	(shell (new shell)))
-    (open-script shell script)
-    (add-block shell)
+	(shell (new shell))) 
     (add script (new hello1))
     (add script (new hello2))
-    (add script (new hello3))))
+    (add script (new hello3))
+    (open-script shell script)
+    (add-block shell)))
 	     
 ;;; example3.lisp ends here
