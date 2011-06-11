@@ -65,6 +65,7 @@
 (:name "serif-14" :type :ttf :file "DejaVuSerif.ttf" :properties (:size 14))
 
 (:name "circle-flat-128" :type :image :file "circle-flat-128.png" :properties (:filter :linear))
+(:name "circle-flat-128-mask" :type :image :file "circle-flat-128-mask.png" :properties (:filter :linear))
 (:name "circle-outline-flat-128" :type :image :file "circle-outline-flat-128.png" :properties (:filter :linear))
 (:name "default-font" :type :ttf :file "DejaVuSans.ttf" :properties (:size 12))
 

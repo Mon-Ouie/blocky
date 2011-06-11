@@ -295,6 +295,7 @@ The modes can be toggled with CONTROL-X.
   (receiver :documentation "The object to send command messages to when in :forward mode.")
   (point :initform 0 :documentation "Integer index of cursor within prompt line.")
   (line :initform "" :documentation "Currently edited command line.")
+  (category :initform :data)
   (history :initform (make-queue :max *default-prompt-history-size*)
 	   :documentation "A queue of strings containing the command history.")
   (history-position :initform 0)
@@ -538,6 +539,7 @@ The modes can be toggled with CONTROL-X.
 
 (define-method draw prompt ()
   (with-fields (x y width height clock mode point line) self
+    (draw-background self)
     (decf clock)
     (when (> (- 0 *prompt-blink-time*) clock)
       (setf clock *prompt-blink-time*))
@@ -549,7 +551,7 @@ The modes can be toggled with CONTROL-X.
 	 (prompt-string (ecase mode
 			  (:direct *direct-prompt-string*)
 			  (:forward *forward-prompt-string*))))
-    (draw-box x y width prompt-height :color "gray40")
+      ;;(draw-box x y width prompt-height :color "gray40")
     ;; draw cursor
     (when (eq :direct mode)
       (let ((color (if (minusp clock)

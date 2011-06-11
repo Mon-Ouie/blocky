@@ -526,7 +526,8 @@ blocks."
 			       :color (or color background)))
 		(disc (x y &optional color)
 		  (draw-solid-circle x y radius
-				     :color (or color background)))
+				     :color (or color background)
+				     :blend :alpha))
 		(line (x0 y0 x1 y1 &optional color)
 		  (draw-line x0 y0 x1 y1
 			     :color (or color background)))
@@ -552,7 +553,8 @@ override all colors."
 	  (chisel (or color (if depressed highlight shadow)))
 	  (fill (or color (if socket
 			      *socket-color*
-			      (if dark shadow background)))))
+			      (if dark background background)))))
+      ;; (disc (- x0 10) (- y0 10) fill) ;; a circle by itself
       ;; top left
       (disc (+ x0 radius ) (+ y0 radius) fill)
 ;      (circle (+ x0 radius ) (+ y0 radius) fill) ;;bevel

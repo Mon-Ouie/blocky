@@ -669,6 +669,7 @@ display."
     (setf cl-opengl-bindings:*gl-get-proc-address* #'sdl-cffi::sdl-gl-get-proc-address)
     ;;
     (message "Creating OpenGL window... Done.")
+    (message "SDL driver name: ~A" (sdl:video-driver-name))
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
     (do-orthographic-projection)
@@ -1206,6 +1207,7 @@ also the documentation for DESERIALIZE."
   (ecase mode 
     (:additive (gl:blend-func :src-alpha :one))
     (:source (gl:blend-func :src-color :zero))
+    (:mask (gl:blend-func :one :zero))
     (:additive2 (gl:blend-func :one :one))
     (:alpha (gl:blend-func :src-alpha :one-minus-src-alpha))))
 
@@ -1213,7 +1215,7 @@ also the documentation for DESERIALIZE."
     (surface &key source-format (internal-format :rgba)
 		  (filter :mipmap))
   (let ((texture (car (gl:gen-textures 1))))
-    (message "Binding new gl texture ~A" texture)
+    ;; (message "Binding new gl texture ~A" texture)
     (gl:bind-texture :texture-2d texture)
     (ecase filter 
       (:linear (gl:tex-parameter :texture-2d :texture-min-filter :linear)
@@ -1254,7 +1256,7 @@ also the documentation for DESERIALIZE."
 
 (defun load-image-resource (resource)
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
-  (message "Loading image resource ~A" resource)
+  ;; (message "Loading image resource ~A" resource)
   (initialize-textures-maybe)
   (let* ((brushp (getf (resource-properties resource) :brush))
 	 (surface (sdl-image:load-image (namestring (resource-file resource))
@@ -1268,12 +1270,12 @@ also the documentation for DESERIALIZE."
     (prog1 surface
       (let ((old-texture (gethash name *textures*)))
 	(when old-texture
-	  (message "Deleting old texture ~S..." name)
+	  ;; (message "Deleting old texture ~S..." name)
 	  (gl:delete-textures (list old-texture))
 	  (remhash name *textures*))
 	(progn 
-	  (setf (gethash name *textures*) texture)
-	  (message "Now loaded texture ~S for a total of ~A textures." texture (hash-table-count *textures*)))))))
+	  (setf (gethash name *textures*) texture))))))
+	  ;;(message "Now loaded texture ~S for a total of ~A textures." texture (hash-table-count *textures*)))))))
 
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
@@ -1450,18 +1452,18 @@ Allocates a new image."
 (defun load-resource (resource)
   "Load the driver-dependent object of RESOURCE into the OBJECT field
 so that it can be fed to the console."
-  (message "Attempting to load resource ~S." (resource-name resource))
+  ;; (message "Attempting to load resource ~S." (resource-name resource))
   (let ((handler (getf *resource-handlers* (resource-type resource))))
     (assert (functionp handler))
     ;; fill in the object field by invoking the handler, if needed
     (when (null (resource-object resource))
       (setf (resource-object resource)
 	    (funcall handler resource)))
-    (if (null (resource-object resource))
-	(error "Failed to load resource ~S." (resource-name resource))
-	(message "Loaded resource ~S with result type ~S." 
-		 (resource-name resource)
-		 (type-of (resource-object resource))))))
+    (when (null (resource-object resource))
+      (error "Failed to load resource ~S." (resource-name resource)))))
+	;; (message "Loaded resource ~S with result type ~S." 
+	;; 	 (resource-name resource)
+	;; 	 (type-of (resource-object resource))))))
 
 (defun find-resource (name &optional noerror)
   "Obtain the resource named NAME, performing any necessary loading
@@ -1775,10 +1777,12 @@ of the music."
     (sdl:width img)))
 
 ;; &optional (u1 0) (v1 0) (u2 1) (v2 1))
-(defun draw-textured-rectangle (x y width height texture)
-  (gl:enable :texture-2d :blend)	
+(defun draw-textured-rectangle (x y width height texture &key (blend :alpha))
+  (if (null blend)
+      (gl:disable :blend)
+      (progn (gl:enable :texture-2d :blend)	
+	     (set-blending-mode blend)))
   (gl:bind-texture :texture-2d texture)
-;  (gl:color 1 1 1 1)
   (gl:with-primitive :quads
     (let ((x1 x)
 	  (x2 (+ x width))
@@ -1918,17 +1922,28 @@ of the music."
   '(:outline "circle-outline-flat-128"
     :solid "circle-flat-128"))
 
+(defparameter *circle-mask-textures* 
+  '(:outline "circle-outline-flat-128-mask"
+    :solid "circle-flat-128-mask"))
+
 (defun draw-circle (x y radius 
 		    &key (color "white") 
-			 (type :outline))
-  (let ((texture (find-texture (getf *circle-textures* type)))
+			 (type :outline)
+			 (blend :alpha))
+  (let ((mask (find-texture (getf *circle-mask-textures* type)))
+	(texture (find-texture (getf *circle-textures* type)))
 	(left (- x radius))
 	(top (- y radius))
 	(side (* 2 radius)))
+;    (draw-textured-rectangle left top side side mask :blend :source)
     (set-vertex-color color)
-    (draw-textured-rectangle left top side side texture)))
+    (draw-textured-rectangle left top side side texture :blend :alpha)))
 
-(defun draw-solid-circle (x y radius &key color)
+    ;; (draw-textured-rectangle left top side side mask :blend :source)
+    ;; (set-vertex-color color)
+    ;; (draw-textured-rectangle left top side side texture :blend :additive2)))
+
+(defun draw-solid-circle (x y radius &key color (blend :alpha))
   (draw-circle x y radius :color color :type :solid))
 
 ;;; Engine status
