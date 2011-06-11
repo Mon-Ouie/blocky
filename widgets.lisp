@@ -47,13 +47,12 @@
   (apply #'+ (mapcar #'formatted-string-width line)))
 
 (defun render-formatted-string (formatted-string x y 
-				&key (text-offset 0) blended destination)
-  "Render the FORMATTED-STRING to position X,Y on the image DESTINATION.
-If BLENDED is non-nil, use TrueType antialiasing. If an integer
-TEXT-OFFSET is provided, add that many pixels to the Y coordinate for
-rendered text in the line. (This is used to make text align with
-inline images that are larger than the text height---see also
-`render-formatted-line')."
+				&key (text-offset 0))
+  "Render the FORMATTED-STRING to position X,Y.  
+If an integer TEXT-OFFSET is provided, add that many pixels to the Y
+coordinate for rendered text in the line. (This is used to make text
+align with inline images that are larger than the text height---see
+also `render-formatted-line')."
   (destructuring-bind (string &key (foreground "white") 
 		       width
 		       (font *default-font*)
@@ -62,30 +61,26 @@ inline images that are larger than the text height---see also
     ;; if :width is specified, draw a background square of that width
     (when (integerp width)
       (draw-box x y width (formatted-string-height formatted-string)
-		:stroke-color background :color background
-		:destination destination))
+		:color background))
     ;; now draw foreground image or text
     (if image
 	(draw-image (typecase image
 		      (string (find-resource-object image))
 		      (otherwise image))
-		    x y :destination destination)
+		    x y)
 	(if (null string)
 	    (message "Warning: no string to render.")
-	    (if blended
-		(draw-string-blended string x (+ text-offset y)
-				     :font font :foreground foreground
-				     :destination destination)
-		(if background
-		    (draw-string-shaded string x (+ text-offset y)
-					foreground background
-					:destination destination
-					:font font)
-		    (draw-string-solid string x (+ text-offset y) :font font
-				       :color foreground :destination destination)))))))
+	    (draw-string string x (+ text-offset y)
+			 :font font :color foreground)))))
+	    ;; (if background
+	    ;; 	(draw-string-shaded string x (+ text-offset y)
+	    ;; 				foreground background
+	    ;; 				:font font)
+	    ;; 	    (draw-string-solid string x (+ text-offset y) :font font
+	    ;; 			       :color foreground)))))))
 
-(defun render-formatted-line (line x y &key destination (font *default-font*) blended)
-  "Render the formatted LINE at position X,Y on the image DESTINATION.
+(defun render-formatted-line (line x y &key (font *default-font*))
+  "Render the formatted LINE at position X,Y.
 Return the height of the rendered line."
   (let* ((line-height (formatted-line-height line))
 	 (default-font-height (font-height font))
@@ -97,8 +92,7 @@ Return the height of the rendered line."
 	 (current-x x))
     (dolist (string line)
       (when string
-	(render-formatted-string string current-x y :text-offset text-offset 
-				 :destination destination :blended blended)
+	(render-formatted-string string current-x y :text-offset text-offset )
 	(incf current-x (formatted-string-width string)))
       line-height)))
   
@@ -195,35 +189,30 @@ auto-updated displays."
 (define-method print-separator formatter ()
   (printf self "  :  " :foreground "gray20"))
 
-(define-method render formatter ()
-  (when ^visible
-    (clear self)
-    (update self)
-    (let* ((current-line (coerce ^current-line 'list))
-	   (y-offset (if current-line
-			 (formatted-line-height current-line)
-			 0)))
-      (let ((y (- ^height (if ^display-current-line
-			       y-offset 0)))
-	    (n 0)
-	    line
-	    (lines ^lines)
-	    (image ^image))
-	(when (and current-line ^display-current-line)
-	  (render-formatted-line current-line 0 (- ^height y-offset)
-				 :destination image))
-	(setf n (fill-pointer lines))
-	(when (plusp n)
-	  (loop do
-	    (progn 
-	      (setf line (aref lines (- n 1)))
-	      (decf y (formatted-line-height line))
-	      (render-formatted-line line 0 y :destination image)
-	      (decf n))
-	    ;; reached top of output image?
-		while (and (plusp y) 
-			   ;; ran out of lines to display?
-			   (not (zerop n)))))))))
+(define-method draw formatter ()
+  (let* ((current-line (coerce ^current-line 'list))
+	 (y-offset (if current-line
+		       (formatted-line-height current-line)
+		       0)))
+    (let ((y (- ^height (if ^display-current-line
+			    y-offset 0)))
+	  (n 0)
+	  line
+	  (lines ^lines))
+      (when (and current-line ^display-current-line)
+	(render-formatted-line current-line 0 (- ^height y-offset)))
+      (setf n (fill-pointer lines))
+      (when (plusp n)
+	(loop do
+	  (progn 
+	    (setf line (aref lines (- n 1)))
+	    (decf y (formatted-line-height line))
+	    (render-formatted-line line 0 y)
+	    (decf n))
+	  ;; reached top of output image?
+	      while (and (plusp y) 
+			 ;; ran out of lines to display?
+			 (not (zerop n))))))))
 
 (defun split-string-on-lines (string)
   (with-input-from-string (stream string)
@@ -302,8 +291,6 @@ The modes can be toggled with CONTROL-X.
 ")
   (mode :documentation "Either :direct or :forward." :initform :direct)
   (clock :initform *prompt-blink-time*)
-  (keybindings :documentation "Default keybindings bound during initialization.
-These are the arguments to `bind-event-to-prompt-insertion', which see.")
   (visible :documentation "When non-nil, the prompt is drawn." :initform t)
   (receiver :documentation "The object to send command messages to when in :forward mode.")
   (point :initform 0 :documentation "Integer index of cursor within prompt line.")
@@ -313,17 +300,17 @@ These are the arguments to `bind-event-to-prompt-insertion', which see.")
   (history-position :initform 0)
   (debug-on-error :initform nil))
 
-(define-method handle-key prompt (keylist)
-  "Reject all keypresses when in :forward mode; otherwise handle them
-normally."
-  (ecase ^mode
-    ;; returning t stops the frame from trying other blocks
-    (:direct (prog1 t (let ((func (gethash keylist ^keymap)))
-			(when func
-			  (funcall func)))))
-    (:forward (when (equal (normalize-event '("X" :control))
-			   keylist)
-		(prog1 t (goto self))))))
+;; (define-method handle-event prompt (event)
+;;   "Reject all keypresses when in :forward mode; otherwise handle them
+;; normally."
+;;   (ecase ^mode
+;;     ;; returning t stops the frame from trying other blocks
+;;     (:direct (prog1 t (let ((func (gethash event ^keymap)))
+;; 			(when func
+;; 			  (funcall func)))))
+;;     (:forward (when (equal (normalize-event '("X" :control))
+;; 			   event)
+;; 		(prog1 t (goto self))))))
 
 (define-method exit prompt ()
   (clear-line self)
@@ -336,12 +323,35 @@ normally."
 (define-method set-mode prompt (mode)
   (setf ^mode mode))
 
+(defun bind-event-to-prompt-insertion (self key mods text)
+  (bind-event-to-function self key mods 
+			  #'(lambda ()
+			      (insert self text))))
+
 (define-method install-keybindings prompt ()
+  ;; install varying keybindings
   (with-fields (keybindings) self
-    (when (null keybindings)
-      (setf keybindings (make-hash-table :test 'equal)))
-    (dolist (k keybindings)
-      (apply #'bind-event-to-prompt-insertion self k))))
+    (setf keybindings (make-hash-table :test 'equal))
+    (dolist (binding (ecase *user-keyboard-layout*
+    		       (:qwerty *prompt-qwerty-keybindings*)
+    		       (:sweden *prompt-sweden-keybindings*)))
+      (destructuring-bind (key mods result) binding
+	(etypecase result
+	  (keyword (bind-event-to-method self key mods result))
+	  (string (bind-event-to-prompt-insertion self key mods result)))))
+    ;; install keybindings for self-inserting characters
+    (map nil #'(lambda (char)
+  		 (bind-event-to-prompt-insertion self (string char) nil
+  					       (string-downcase char)))
+  	 *lowercase-alpha-characters*)
+    (map nil #'(lambda (char)
+  		 (bind-event-to-prompt-insertion 
+		  self (string char) '(:shift) (string char)))
+  	 *uppercase-alpha-characters*)
+    (map nil #'(lambda (char)
+  		 (bind-event-to-prompt-insertion self (string char) 
+						 nil (string char)))
+  	 *numeric-characters*)))
 
 (defparameter *prompt-qwerty-keybindings*
   '(("A" (:control) :move-beginning-of-line)
@@ -413,26 +423,6 @@ normally."
     ("SPACE" NIL " ")
     ("QUOTE" NIL "'") 
     ("2" (:SHIFT) "\"")))
-
-(define-method install-keybindings prompt ())
-  ;; install varying keybindings
-  ;; (with-fields (keybindings) self
-  ;;   (setf keybindings (make-hash-table :test 'equal))
-  ;;   ;; (dolist (binding (ecase *user-keyboard-layout*
-  ;;   ;; 		       (:qwerty *prompt-qwerty-keybindings*)
-  ;;   ;; 		       (:sweden *prompt-sweden-keybindings*)))
-  ;;   ;;   (generic-keybind self binding))
-  ;;   ;; install keybindings for self-inserting characters
-  ;;   (map nil #'(lambda (char)
-  ;; 		 (bind-event-to-prompt-insertion self (string char) nil
-  ;; 					       (string-downcase char)))
-  ;; 	 *lowercase-alpha-characters*)
-  ;;   (map nil #'(lambda (char)
-  ;; 		 (bind-event-to-prompt-insertion self (string char) '(:shift)))
-  ;; 	 *uppercase-alpha-characters*)
-  ;;   (map nil #'(lambda (char)
-  ;; 		 (bind-event-to-prompt-insertion self (string char) nil))
-  ;; 	 *numeric-characters*)))
 
 (define-method say prompt (&rest args)
   (apply #'message args))
@@ -546,60 +536,58 @@ normally."
 (define-method move-beginning-of-line prompt ()
   (setf ^point 0))
 
-(define-method render prompt ()
-  (decf ^clock)
-  (when (> (- 0 *prompt-blink-time*) ^clock)
-    (setf ^clock *prompt-blink-time*))
-  (let* ((image ^image)
-	 (font-height (font-height *default-font*))
-	 (prompt-height (+ (* 2 *default-prompt-margin*)
-			   font-height))
+(define-method draw prompt ()
+  (with-fields (x y width height clock mode point line) self
+    (decf clock)
+    (when (> (- 0 *prompt-blink-time*) clock)
+      (setf clock *prompt-blink-time*))
+    (let* ((image ^image)
+	   (font-height (font-height *default-font*))
+	   (prompt-height (+ (* 2 *default-prompt-margin*)
+			     font-height))
 	 (strings-y *default-prompt-margin*)
-	 (prompt-string (ecase ^mode
+	 (prompt-string (ecase mode
 			  (:direct *direct-prompt-string*)
 			  (:forward *forward-prompt-string*))))
-    (draw-box 0 0 ^width prompt-height :color "gray40" :stroke-color "gray80"
-    	      :destination image)
+    (draw-box x y width prompt-height :color "gray40")
     ;; draw cursor
-    (when (eq :direct ^mode)
-      (let ((color (if (minusp ^clock)
+    (when (eq :direct mode)
+      (let ((color (if (minusp clock)
 		       *prompt-cursor-color*
 		       *prompt-cursor-blink-color*)))
-	(when (> ^point (length ^line))
-	  (setf ^point (1- (length ^line))))
-	(draw-box (+ (font-text-extents (if (<= ^point (length ^line))
-					    (subseq ^line 0 ^point)
+	(when (> point (length line))
+	  (setf point (1- (length line))))
+	(draw-box (+ x (font-text-extents (if (<= point (length line))
+					    (subseq line 0 point)
 					    " ")
 					*default-font*)
 		     (font-text-extents prompt-string *default-font*))
-		  strings-y
+		  (+ y strings-y)
 		  (font-text-extents 
-		   (string (if (< ^point (length ^line))
-			       (aref ^line 
+		   (string (if (< point (length line))
+			       (aref line 
 				     (max (max 0 
-					       (1- (length ^line)))
-					  ^point))
+					       (1- (length line)))
+					  point))
 			       #\Space))
 		   *default-font*)
 		  font-height
-		  :color color
-		  :stroke-color color
-		  :destination image))
+		  :color color))
       ;; draw prompt 
-      (draw-string-blended prompt-string
-			   *default-prompt-margin*
-			   strings-y
-			   :foreground "white"
-			   :destination image))
+      (draw-string prompt-string
+		   (+ x *default-prompt-margin*)
+		   (+ y strings-y)
+		   :color "white"))
     ;; draw current command line text
-    (when (null ^line) (setf ^line ""))
-    (unless (zerop (length ^line))
-      (draw-string-blended ^line
-			   (+ 0
-			      (font-text-extents prompt-string *default-font*))
-			   strings-y
-			   :foreground "white"
-			   :destination image))))
+    (when (null line) (setf line ""))
+    (unless (zerop (length line))
+      (setf width (+ 12 (* 2 *dash*) 
+		     (font-text-extents line *default-font*)))
+      (draw-string line
+		   (+ x
+		      (font-text-extents prompt-string *default-font*))
+		   (+ y strings-y)
+		   :color "white")))))
 
 ;;; Text display and edit control
 
@@ -861,10 +849,10 @@ text INSERTION to be inserted at point."
 					 (font-text-extents s font))
 				     buffer)))
 	  ;; draw background
-	  (draw-box 0 0 width height :destination image
-		    :stroke-color (if ^bordered
-				      ^foreground-color
-				      ^background-color)
+	  (draw-box 0 0 width height
+		    ;; :stroke-color (if ^bordered
+		    ;; 		      ^foreground-color
+		    ;; 		      ^background-color)
 		    :color ^background-color)
 	  ;; draw text
 	  (let ((x0 (+ 0 *textbox-margin*))
@@ -873,7 +861,7 @@ text INSERTION to be inserted at point."
 			   buffer
 			   (nthcdr ^point-row buffer))))
 	    (dolist (line lines)
-	      (draw-string-solid line x0 y0 :destination image
+	      (draw-string-solid line x0 y0 
 				 :font font :color ^foreground-color)
 	      (incf y0 line-height)))
 	  ;; draw cursor
@@ -887,9 +875,7 @@ text INSERTION to be inserted at point."
 	    	   (y1 (+ 0 *textbox-margin*
 	    		  (* line-height ^point-row))))
 	      (draw-rectangle x1 y1 cursor-width line-height 
-	    		      :color ^cursor-color
-	    		      :destination image))))))))
-  
+	    		      :color ^cursor-color))))))))
 
 ;;; The pager switches between different visible groups of blocks
 
@@ -990,7 +976,7 @@ text INSERTION to be inserted at point."
       (when ^pager-message 
         (push ^pager-message line))
       ;; draw the string
-      (render-formatted-line (nreverse line) 0 0 :destination ^image))))
+      (render-formatted-line (nreverse line) 0 0))))
 
 ;;; Splitscreen view on 2 blocks with focus border
 
@@ -1015,12 +1001,11 @@ text INSERTION to be inserted at point."
       (dolist (block ^children)
         (move block :x x :y y)
 	(render block)
-	(draw-image (field-value :image block) x y :destination image)
+	(draw-image (field-value :image block) x y)
 	(when (eq block focused-block)
 	  (draw-rectangle x y (field-value :width block)
 			  (field-value :height block)
-			  :color ^active-color
-			  :destination ^image))
+			  :color ^active-color))
         (incf x (1+ (field-value :width block)))))))
 
 (define-method hit split (x y)
@@ -1043,7 +1028,7 @@ text INSERTION to be inserted at point."
 ;;; Lisp listener
 
 (define-prototype block-prompt (:parent =prompt=)
-;;  (operation :initform :prompt)
+  (operation :initform :prompt)
   output 
   (rows :initform 10))
 
@@ -1067,7 +1052,7 @@ text INSERTION to be inserted at point."
 
 (define-prototype listener (:parent =list=)
   (type :initform :system)
-  (schema :initform '(:block)))
+  (schema :initform '((:prompt . :block))))
 
 (defparameter *minimum-listener-width* 200)
 
@@ -1079,8 +1064,7 @@ text INSERTION to be inserted at point."
 	       :width *minimum-listener-width*
 	       :height (+ (* 2 *dash*) 
 			  (font-height *default-font*)))
-      (assert (field-value :image prompt))
-      (setf (first inputs) prompt))))
+      (setf inputs (list prompt)))))
 
 (define-method run listener ()
   (with-fields (inputs) self

@@ -107,6 +107,10 @@ ARGS are field specifiers, as with `define-prototype'."
   "Update the simulation one step forward in time."
   nil)
 
+(define-method resize block (&key height width)
+  (setf ^height height)
+  (setf ^width width))
+
 (define-method pin block ()
   (setf ^pinned t))
 
