@@ -1,4 +1,10 @@
 ** TODO fix confusion between click and drag by req
+** TODO ALPHA issues
+<|3b|> you want 'save color values from transparent pixels', and need to make
+       sure the pixels are white with 0 alpha
+<|3b|> also, looks like you weren't passing blend to draw-circle from
+       draw-solid-circle, not that it matters here  [23:46]
+
 ** TODO (input :foo)  named input access.
 ** TODO fix input-widths
 ** TODO allow varying inputs length (i.e. no schema)

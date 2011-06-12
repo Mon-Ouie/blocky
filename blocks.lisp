@@ -553,7 +553,7 @@ override all colors."
 	  (fill (or color (if socket
 			      *socket-color*
 			      (if dark background background)))))
-      (disc (- x0 10) (- y0 10) fill) ;; a circle by itself
+;      (disc (- x0 10) (- y0 10) fill) ;; a circle by itself
       ;; y1 x1
       (disc (- x1 radius ) (- y1 radius ) fill)
       (circle (- x1 radius ) (- y1 radius ) chisel) ;; chisel
@@ -576,8 +576,8 @@ override all colors."
       (box (+ x0 radius) y0
 	   (- x1 radius) (+ y0 diameter)
 	   fill)
-      (line (+ x0 radius 1) y0
-	    (- x1 radius 1) y0 bevel)
+      (line (+ x0 radius 1) (+ y0 1)
+	    (- x1 radius -4) (+ y0 1) bevel)
       ;; left
       (box x0 (+ y0 radius)
 	   (+ x0 diameter) (- y1 radius)
@@ -593,13 +593,13 @@ override all colors."
       ;; content area
       (box (+ x0 radius) (+ y0 radius)
 	   (- x1 radius) (- y1 radius)
-	   fill))))
-      ;; ;; cover seams
-      ;; (disc (- x1 radius 1) (- y1 radius 1) fill) ;; y1 x1
-      ;; (disc (+ x0 radius 1) (- y1 radius 1) fill) ;; y1 left
-      ;; (disc (+ x0 radius 1) (+ y0 radius 1) fill) ;; top left
-      ;; (disc (- x1 radius 1) (+ y0 radius 1) fill) ;; top x1
-      ;; )))
+	   fill)
+      ;; cover seams
+      (disc (- x1 radius 1) (- y1 radius 1) fill) ;; y1 x1
+      (disc (+ x0 radius 1) (- y1 radius 1) fill) ;; y1 left
+      (disc (+ x0 radius 1) (+ y0 radius 1) fill) ;; top left
+      (disc (- x1 radius 1) (+ y0 radius 1) fill) ;; top x1
+      )))
 
 (define-method draw-socket block (x0 y0 x1 y1)
   (draw-patch self x0 y0 x1 y1 :depressed t :socket t))
@@ -704,7 +704,7 @@ current block."
     (if image 
 	(progn (set-blending-mode blend)
 	       (draw-image image x y))
-	(progn (draw-patch self x y (+ x width) (+ y height) :depressed t)
+	(progn (draw-patch self x y (+ x width) (+ y height))
 	       (draw-contents self)))))
 
 (defparameter *hover-color* "red")

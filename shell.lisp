@@ -36,6 +36,9 @@
 	 :documentation "Block being hovered over, if any.")
   (ghost :initform (clone =block=))
   (buffer :initform nil)
+  (clicked-block :initform nil)
+  (click-start :initform nil
+	      :documentation "A cons (X . Y) of widget location at moment of click.")
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
@@ -133,16 +136,31 @@
 	(when hover 
 	  (draw-hover hover))))))
 
+(defparameter *minimum-drag-distance* 7)
+
+(define-method drag-maybe shell (x y)
+  ;; require some actual mouse movement to initiate a drag
+  (with-fields (click-start clicked-block) self
+    (when click-start
+      (destructuring-bind (x1 . y1) click-start
+	(when (> (distance x y x1 y1)
+		 *minimum-drag-distance*)
+	  (setf click-start nil)
+	  (begin-drag self x y clicked-block))))))
+
 (define-method mouse-down shell (x y &optional button)
   (let ((block (hit-script self x y)))
     (when block
       (case button
-	(1 (begin-drag self x y block))
+	(1  (with-fields (click-start clicked-block) self
+	      (setf clicked-block block)
+	      (setf click-start (cons x y))))
 	(3 (run block))))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
-  (with-fields (inputs hover drag-offset drag-start drag) self
+  (with-fields (inputs hover click-start drag-offset drag-start drag) self
     (setf hover nil)
+    (drag-maybe self mouse-x mouse-y)
     (when drag
       (destructuring-bind (ox . oy) drag-offset
 	(let ((target-x (- mouse-x ox))
@@ -153,20 +171,24 @@
 (define-method mouse-up shell (x y &optional button)
   (with-fields 
       (inputs drag-offset drag-start hover script selection drag
-	      modified) self
-    (when drag
-      (let ((drag-parent (get-parent drag)))
-	(when drag-parent
-	  (unplug-from-parent drag))
-	(let ((sink hover))
-	  (if sink
-	      ;; dropping on another block
-	      (unless (accept sink drag)
-		(add self drag))
-	      ;; dropping on background
-	      (add self drag)))))
-    (setf selection nil)
-    (when drag (select self drag))
+	      click-start clicked-block modified) self
+    (if drag
+	(let ((drag-parent (get-parent drag)))
+	  (when drag-parent
+	    (unplug-from-parent drag))
+	  (let ((sink hover))
+	    (if sink
+		;; dropping on another block
+		(unless (accept sink drag)
+		  (add self drag))
+		;; dropping on background
+		(add self drag)))
+	  (setf selection nil)
+	  (select self drag))
+	(progn
+	  (setf selection nil)
+	  (select self clicked-block)
+	  (setf click-start nil clicked-block nil)))
     (setf drag-start nil
 	  drag-offset nil
 	  drag nil)
