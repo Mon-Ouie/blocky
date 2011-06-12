@@ -1045,7 +1045,7 @@ text INSERTION to be inserted at point."
   action target (expanded :initform nil) (visible :initform t))
 
 (define-method initialize menu 
-    (&key action target inputs (expanded t) (label "blank menu item..."))
+    (&key action target inputs expanded (label "blank menu item..."))
   (parent/initialize self)
   (setf ^action action
 	^expanded expanded
@@ -1054,7 +1054,10 @@ text INSERTION to be inserted at point."
 	^label label)
   (when inputs
     (dolist (each inputs)
+      (pin each)
       (set-parent each self))))
+
+(define-method accept menu (&rest args) nil)
 
 (define-method run menu ())
 
@@ -1069,46 +1072,73 @@ text INSERTION to be inserted at point."
 
 (define-method display-string menu ()	    
   (with-fields (action label) self
+    (let ((ellipsis (concatenate 'string label *null-display-string*)))
     (if (null action)
-	*null-display-string*
+	ellipsis
 	(etypecase action
-	  (ioforms:object 
-	   ;; we're a submenu. display a nice ellipsis.
-	   (concatenate 'string label *null-display-string*))
-	  ;; we're a leaf. just show the menu item text.
-	  (keyword label)))))
+	  (ioforms:object ellipsis)
+	  (keyword label))))))
 
 (define-method layout-as-string menu (string)
-  (setf height (font-height *block-font*))
-  (setf width 
-	(+ (dash 2) (font-text-extents string *block-font*))))
+  (with-fields (height width) self
+    (setf height (dash 1 (font-height *block-font*)))
+    (setf width 
+	  (+ (dash 2) (font-text-extents string *block-font*)))))
 
 (define-method layout menu ()
-  (with-fields (expanded) self
+  (with-fields (expanded dash inputs width) self
     (if expanded 
 	;; we're an expanded submenu. lay it out
-	(layout-body-as-list self)
+	(progn 
+	  (setf dash 1)
+	  (layout-as-list self)
+	  ;; make all inputs equally wide
+	  (dolist (each inputs)
+	    (setf (field-value :width each) (- width (dash 2)))))
 	;; we're not expanded. just lay out for label.
 	(layout-as-string self (display-string self)))))
 
 (define-method header-height menu ()
-  (dash 2 (font-height *block-font*)))
+  (font-height *block-font*))
 
 (define-method draw-expanded menu (&optional label)
   (with-fields (action x y width height parent inputs) self
-    (if (null parent)
+;    (if (null parent)
 	(draw-background self)
-	(draw-box x y width height :color (find-color self)))
+;	(draw-box x y width height :color (find-color self)))
     (draw-label-string self (or label *null-display-string*))
-    (dolist (each inputs)
-      (draw each))))
-    
-(define-method draw menu ()
+    (let ((header (header-height self)))
+      (draw-line (dash 2 x)
+		 (dash 2 y header 1)
+		 (dash -3 x width)
+		 (dash 2 y header 1)
+		 :color (find-color self :shadow))
+      ;; (draw-line (dash 2 x)
+      ;; 		 (dash 2 y header 1)
+      ;; 		 (dash -3 x width)
+      ;; 		 (dash 2 y header 1)
+      ;; 		 :color (find-color self :highlight))
+      (dolist (each inputs)
+	(draw each)))))
+
+(define-method draw-hover menu ()
+  nil)
+
+(define-method draw-highlight menu ()
+  (with-fields (y height expanded parent) self
+    (when parent
+      (with-fields (x width) parent
+	(when (not expanded)
+	  (draw-box x y width height
+		  :color *highlight-background-color*)
+	  (draw-label-string self (display-string self)))))))
+  
+(define-method draw menu (&optional highlight)
   (with-fields (x y width height label action visible expanded) self
     (when visible
       (if expanded 
 	  (draw-expanded self label)
-	  ;; otherwise just draw menu name
+	  ;; otherwise just draw menu name and highlight, if any
 	  (draw-label-string self (display-string self))))))
 
 ;;; widgets.lisp ends here

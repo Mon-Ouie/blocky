@@ -428,8 +428,8 @@ of value.")
   "Size in pseudo-pixels of (roughly) the size of the space between
 two words. This is used as a unit for various layout operations.")
 
-(defun dash (n &optional (b 0))
-  (+ b (* n *dash*)))
+(defun dash (n &rest terms)
+  (apply #'+ (* n *dash*) terms))
 
 (defvar *pseudo-pixel-size* 1.0
   "Size in pixels of a pseudo-pixel.")
@@ -438,7 +438,7 @@ two words. This is used as a unit for various layout operations.")
   '(:motion "cornflower blue"
     :system "gray50"
     :event "gray80"
-    :menu "gray90"
+    :menu "gray95"
     :hover "red"
     :socket "gray60"
     :data "gray50"
@@ -458,7 +458,7 @@ two words. This is used as a unit for various layout operations.")
     :system "gray80"
     :hover "dark orange"
     :event "gray90"
-    :menu "white"
+    :menu "gray80"
     :comment "grey90"
     :looks "medium orchid"
     :socket "gray80"
@@ -478,7 +478,7 @@ two words. This is used as a unit for various layout operations.")
     :event "gray70"
     :socket "gray90"
     :data "gray55"
-    :menu "gray80"
+    :menu "gray70"
     :structure "gray45"
     :comment "grey40"
     :hover "orange red"
@@ -732,6 +732,15 @@ current block."
 	(progn (draw-patch self x y (+ x width) (+ y height))
 	       (draw-contents self)))))
 
+(defparameter *highlight-background-color* "gray80")
+(defparameter *highlight-foreground-color* "gray20")
+
+(define-method draw-highlight block () nil)
+  ;; (with-fields (x y width height) self
+  ;;   (draw-patch self x y (+ x *dash* width) (+ y *dash* height)
+  ;; 	      :color *highlight-background-color*)
+  ;;   (draw-contents self)))
+
 (defparameter *hover-color* "red")
 
 (define-method draw-hover block ()
@@ -802,6 +811,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 ;;; Vertically stacked list of blocks
 
 (defblock list
+  (dash :initform 2)
   (operation :initform :empty-list)
   (category :initform :structure))
 
@@ -844,34 +854,36 @@ MOUSE-Y identify a point inside the block (or input block.)"
   (+ (* 2 *dash*)
      (expression-width *null-display-string*)))
 
-(define-method layout-body-as-null list ()
+(define-method layout-as-null list ()
   (with-fields (height width) self
     (setf width (+ (* 4 *dash*)
 		   (font-text-extents *null-display-string*
 				      *block-font*))
 	  height (+ (font-height *block-font*) (* 4 *dash*)))))
 
-(define-method layout-body-as-list list ()
-  (with-fields (x y height width inputs) self
-    (let* ((dash *dash*)
-	   (header-height (+ dash (header-height self)))
-	   (y0 (+ y dash header-height))
+(define-method layout-as-list list ()
+  (with-fields (x y height width inputs dash) self
+    (flet ((ldash (&rest args)
+	     (apply #'dash dash args)))
+    (let* ((header-height (ldash (header-height self)))
+	   (y0 (ldash y header-height))
 	   (line-height (font-height *block-font*)))
-      (setf height (+ (* 2 dash) line-height))
-      (setf width (* 8 dash))
-      (dolist (block inputs)
-	(move block (+ x dash) y0)
-	(layout block)
-	(incf height (field-value :height block))
-	(incf y0 (field-value :height block))
-	(setf width (max width (field-value :width block))))
-      (incf width (* 2 dash)))))
+      (setf height (ldash line-height))
+      (setf width (dash 8))
+      (dolist (element inputs)
+;	(message "layout: ~S" (list x y0 width))
+	(move element (ldash x) y0)
+	(layout element)
+	(incf height (+ (ldash) (field-value :height element)))
+	(incf y0 (field-value :height element))
+	(setf width (max width (field-value :width element))))
+      (incf width (dash 10))))))
 
 (define-method layout list ()
   (with-fields (inputs) self
     (if (null inputs)
-	(layout-body-as-null self)
-	(layout-body-as-list self))))
+	(layout-as-null self)
+	(layout-as-list self))))
 
 (define-method draw-header list () 0)
 

@@ -87,6 +87,8 @@
   	:documentation "Block being dragged, if any.")
   (hover :initform nil
 	 :documentation "Block being hovered over, if any.")
+  (highlight :initform nil
+	     :documentation "Block being highlighted, if any.")
   (ghost :initform (clone =block=))
   (buffer :initform nil)
   (focused-block :initform nil)
@@ -173,7 +175,7 @@
 
 (define-method draw shell ()
   (with-fields (script buffer drag-start selection inputs drag
-		       focused-block
+		       focused-block highlight
 		       modified hover ghost prompt)
       self
     (let ((blocks (script-blocks self)))
@@ -192,9 +194,11 @@
 		   (draw drag)
 		   (when hover 
 		     (draw-hover hover)))
-	    (when focused-block
-	      (draw-border focused-block)
-	      (draw focused-block)))))))
+	    (progn (when highlight
+		     (draw-highlight highlight))
+		   (when focused-block
+		     (draw-border focused-block)
+		     (draw focused-block))))))))
 
 (defparameter *minimum-drag-distance* 7)
 
@@ -211,23 +215,25 @@
 
 (define-method mouse-down shell (x y &optional button)
   (let ((block (hit-script self x y)))
-    (when block
-      (case button
-	(1  (with-fields (click-start focused-block) self
-	      (setf focused-block block)
-	      (setf click-start (cons x y))))
-	(3 (run block))))))
+    (if block
+	(case button
+	  (1  (with-fields (click-start focused-block) self
+		(setf focused-block block)
+		(setf click-start (cons x y))))
+	  (3 (run block)))
+	(setf ^focused-block nil))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
-  (with-fields (inputs hover click-start drag-offset drag-start drag) self
+  (with-fields (inputs hover highlight click-start drag-offset drag-start drag) self
     (setf hover nil)
     (drag-maybe self mouse-x mouse-y)
-    (when drag
-      (destructuring-bind (ox . oy) drag-offset
-	(let ((target-x (- mouse-x ox))
-	      (target-y (- mouse-y oy)))
-	  (setf hover (hit-script self target-x target-y))
-	  (move drag target-x target-y))))))
+    (if drag
+	(destructuring-bind (ox . oy) drag-offset
+	  (let ((target-x (- mouse-x ox))
+		(target-y (- mouse-y oy)))
+	    (setf hover (hit-script self target-x target-y))
+	    (move drag target-x target-y)))
+	(setf highlight (hit-script self mouse-x mouse-y)))))
 
 (define-method mouse-up shell (x y &optional button)
   (with-fields 

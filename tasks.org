@@ -1,19 +1,17 @@
-** TODO menu bar widget appears at top left when mouse goes there
+
 ** TODO popup/pulldown menu widget
-** TODO show target name in menu
-** TODO highlight menu items (hover)
+** TODO [#A] Fix clicking-on-background bug
+** TODO [#B] highlight menu items (hover)
+** TODO [#B] menu bar widget appears at top left when mouse goes there
+** TODO [#C] x button for closing menu
+** TODO [#C] pin toggle button
+** TODO [#B] show target name in menu
 ** TODO right click context menus!
 ** TODO double click to run blocks
 ** TODO [#B] pretty rubberband movement
 ** TODO fix listener-supplied arguments not spawning
 ** TODO comment block for output messages in listener etc, trap errors
 ** TODO tab to switch focus between all top-level blocks
-** TODO dont allow prompt to be removed from listener
-** TODO ALPHA issues
-<|3b|> you want 'save color values from transparent pixels', and need to make
-       sure the pixels are white with 0 alpha
-<|3b|> also, looks like you weren't passing blend to draw-circle from
-       draw-solid-circle, not that it matters here  [23:46]
 
 ** TODO (input :foo)  named input access.
 ** TODO fix input-widths
@@ -22,6 +20,11 @@
 ** TODO [#A] Create DEFBLOCK block
 ** TODO [#B] Revise widgets.lisp for OpenGL
 ** TODO [#C] yellow comment sticky note boxes
+** TODO [#B] ALPHA issues for PNG images
+<|3b|> you want 'save color values from transparent pixels', and need to make
+       sure the pixels are white with 0 alpha
+<|3b|> also, looks like you weren't passing blend to draw-circle from
+       draw-solid-circle, not that it matters here  [23:46]
 ** TODO [#C] AABB-tree (axis-aligned bounding-box)
 ** TODO [#C] draw-socket should draw types
 ** TODO [#C] Implement this GRAPH UI example:
