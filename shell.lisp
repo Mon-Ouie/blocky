@@ -24,6 +24,59 @@
 
 (in-package :ioforms)
 
+;;; Lisp listener
+
+(define-prototype block-prompt (:parent =prompt=)
+  (operation :initform :prompt)
+  output 
+  (rows :initform 10))
+
+(define-method initialize block-prompt (output)
+  (parent/initialize self)
+  (setf ^output output))
+
+(define-method set-output block-prompt (output)
+  (setf ^output output))
+
+(define-method do-sexp block-prompt (sexp)
+  (with-fields (output rows) self
+    (assert output)
+    (let ((container (get-parent output)))
+      (when container
+	(message "SEXP: ~S" sexp)
+	(accept container 
+		 (let ((*make-block-package* (find-package :ioforms)))
+		   (if (symbolp (first sexp))
+		       (make-block-ext sexp)
+		       (make-block-ext (first sexp)))))))))
+	;; (when (> (count-inputs container) rows)
+	;;   (pop container))))))
+
+(define-prototype listener (:parent =list=)
+  (type :initform :system)
+  (schema :initform '((:prompt . :block))))
+
+(defparameter *minimum-listener-width* 200)
+
+(define-method initialize listener ()
+  (with-fields (image inputs) self
+    (let ((prompt (clone =block-prompt= self)))
+      (parent/initialize self)
+      (set-output prompt prompt)
+      (setf inputs (list prompt))
+      (pin prompt)
+      (set-parent prompt self))))
+
+(define-method run listener ()
+  (with-fields (inputs) self
+    (destructuring-bind (prompt) inputs
+      (run prompt))))
+
+;; forward keypresses to prompt for convenience
+(define-method handle-event listener (event)
+  (with-fields (inputs) self
+    (handle-event (first inputs) event)))
+
 ;;; Interactive editor shell
 
 (defblock shell
@@ -45,6 +98,7 @@
 	       :documentation "A cons (X . Y) of mouse click location on dragged block.")
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
+
 
 (define-method layout shell ())
 
@@ -149,8 +203,9 @@
   (with-fields (click-start focused-block) self
     (when click-start
       (destructuring-bind (x1 . y1) click-start
-	(when (> (distance x y x1 y1)
-		 *minimum-drag-distance*)
+	(when (and (> (distance x y x1 y1)
+		      *minimum-drag-distance*)
+		   (not (is-pinned focused-block)))
 	  (setf click-start nil)
 	  (begin-drag self x y focused-block))))))
 
@@ -179,6 +234,7 @@
       (inputs drag-offset drag-start hover script selection drag
 	      click-start focused-block modified) self
     (if drag
+	;; we're dragging
 	(let ((drag-parent (get-parent drag)))
 	  (when drag-parent
 	    (unplug-from-parent drag))
@@ -191,107 +247,18 @@
 		(add self drag)))
 	  (setf selection nil)
 	  (select self drag))
+	;; we're not dragging.
 	(progn
 	  (setf selection nil)
-	  (when focused-block 
+	  (when focused-block
 	    (select self focused-block)
+	    (with-script script 
+	      (click focused-block))
+	    (setf focused-block nil)
 	    (setf click-start nil))))
     (setf drag-start nil
 	  drag-offset nil
 	  drag nil)
     (report-layout-change script)))
-
-;;; Other blocks
-
-;; (defblock say 
-;;   (type :initform :message)
-;;   (schema :initform '(:string))
-;;   (inputs :initform '("Hello!")))
-
-;; (defblock move
-;;   (type :initform :motion)
-;;   (schema :initform '(:symbol :integer :symbol))
-;;   (inputs :initform '(:north 10 :pixels)))
-
-;; (defblock move-to
-;;   (type :initform :motion)
-;;   (schema :initform '(:unit :integer :integer))
-;;   (inputs :initform '(:space 0 0)))
-
-;; (defblock joystick-button
-;;   (type :initform :sensing)
-;;   (schema :initform '(:integer :symbol))
-;;   (inputs :initform '(1 :down)))
-
-;; (defblock visible?
-;;   (type :initform :variables)
-;;   (schema :initform nil)
-;;   (inputs :initform nil))
-
-;; (defblock set-variable 
-;;   (type :initform :variables)
-;;   (schema :initform '(:symbol :block))
-;;   (inputs :initform '(:n nil)))
-
-;; (defblock animate 
-;;   (type :initform :looks)
-;;   (schema :initform '(:string))
-;;   (inputs :initform '(nil)))
-
-;; (defblock play-music 
-;;   (type :initform :sound)
-;;   (schema :initform '(:string))
-;;   (inputs :initform '("fanfare")))
-
-;; (define-method execute play-music ()
-;;   (play-music *target* (first ^results) :loop t))
-
-;; (defblock play-sound 
-;;   (type :initform :sound)
-;;   (schema :initform '(:string))
-;;   (inputs :initform '("boing")))
-
-;; (defblock when 
-;;   (type :initform :control)
-;;   (schema :initform '(:block :block))
-;;   (inputs :initform '(nil nil)))
-
-;; (defblock unless
-;;   (type :initform :control)
-;;   (schema :initform '(:block :block))
-;;   (inputs :initform '(nil nil)))
-
-;; (defblock fire
-;;   (type :initform :control)
-;;   (schema :initform '(:block))
-;;   (inputs :initform '(:south)))
-
-;; (defblock see-player
-;;   (type :initform :sensing)
-;;   (schema :initform nil)
-;;   (inputs :initform nil))
-
-;; (defblock player-direction
-;;   (type :initform :sensing)
-;;   (schema :initform nil)
-;;   (inputs :initform nil))
-
-;; (defblock closer-than
-;;   (type :initform :sensing)
-;;   (schema :initform '(:block :block :block :block))
-;;   (inputs :initform '(10 spaces to player)))
-  
-;; (defblock +
-;;   (type :initform :operators)
-;;   (schema :initform '(:number :number))
-;;   (inputs :initform '(nil nil)))
-
-;; (define-method execute + ()
-;;   (with-fields (results) self
-;;     (when (every #'integerp results)
-;;       (apply #'+ results))))
-
-;;; system.lisp ends here
-
 
 ;;; shell.lisp ends here

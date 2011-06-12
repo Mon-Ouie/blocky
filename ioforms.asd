@@ -33,7 +33,8 @@
 	       (:file "widgets")
 	       (:file "shell")
 	       (:file "things")
-	       (:file "worlds")))
+	       (:file "worlds")
+	       (:file "library")))
 ;;	       (:file "path")
 	       
 	       

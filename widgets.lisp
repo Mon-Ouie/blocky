@@ -27,14 +27,14 @@
 (defvar *default-formatter-scrollback-size* 1000)
 
 (defun formatted-string-height (S)
-  (destructuring-bind (string &key image (font *default-font*) &allow-other-keys) S
+  (destructuring-bind (string &key image (font *block-font*) &allow-other-keys) S
     (declare (ignore string))
     (if image
 	(image-height image)
 	(font-height font))))
 
 (defun formatted-string-width (S)
-  (destructuring-bind (string &key image width (font *default-font*) &allow-other-keys) S
+  (destructuring-bind (string &key image width (font *block-font*) &allow-other-keys) S
     (or width
 	(if image 
 	    (image-width image)
@@ -55,7 +55,7 @@ align with inline images that are larger than the text height---see
 also `render-formatted-line')."
   (destructuring-bind (string &key (foreground "white") 
 		       width
-		       (font *default-font*)
+		       (font *block-font*)
 		       background image)
       formatted-string
     ;; if :width is specified, draw a background square of that width
@@ -79,7 +79,7 @@ also `render-formatted-line')."
 	    ;; 	    (draw-string-solid string x (+ text-offset y) :font font
 	    ;; 			       :color foreground)))))))
 
-(defun render-formatted-line (line x y &key (font *default-font*))
+(defun render-formatted-line (line x y &key (font *block-font*))
   "Render the formatted LINE at position X,Y.
 Return the height of the rendered line."
   (let* ((line-height (formatted-line-height line))
@@ -117,7 +117,7 @@ PROPERTIES are chosen from:
       found and displayed. If this is an image object, the image 
       itself is displayed.
   - :WIDTH --- Occupy this pixel width if set to an integer.
-  - :FONT ---  Font name. Defaults to *default-font*.
+  - :FONT ---  Font name. Defaults to *block-font*.
 ")
   (lines :documentation "Vector of lines.")
   (display-current-line :initform nil)
@@ -310,6 +310,9 @@ The modes can be toggled with CONTROL-X.
 ;;     (:forward (when (equal (normalize-event '("X" :control))
 ;; 			   event)
 ;; 		(prog1 t (goto self))))))
+
+(define-method accept prompt (&rest args)
+  nil)
 
 (define-method exit prompt ()
   (clear-line self)
@@ -541,7 +544,7 @@ The modes can be toggled with CONTROL-X.
       (setf clock *prompt-blink-time*))
     
     (let* ((image ^image)
-	   (font-height (font-height *default-font*))
+	   (font-height (font-height *block-font*))
 	   (prompt-height (+ (* 2 *default-prompt-margin*)
 			     font-height))
 	   (strings-y *default-prompt-margin*)
@@ -558,8 +561,8 @@ The modes can be toggled with CONTROL-X.
 	(draw-box (+ x (font-text-extents (if (<= point (length line))
 					    (subseq line 0 point)
 					    " ")
-					*default-font*)
-		     (font-text-extents prompt-string *default-font*))
+					*block-font*)
+		     (font-text-extents prompt-string *block-font*))
 		  (+ y strings-y)
 		  (font-text-extents 
 		   (string (if (< point (length line))
@@ -568,7 +571,7 @@ The modes can be toggled with CONTROL-X.
 					       (1- (length line)))
 					  point))
 			       #\Space))
-		   *default-font*)
+		   *block-font*)
 		  font-height
 		  :color color))
       ;; draw prompt string
@@ -582,7 +585,7 @@ The modes can be toggled with CONTROL-X.
     (unless (zerop (length line))
       (draw-string line
 		   (+ x
-		      (font-text-extents prompt-string *default-font*))
+		      (font-text-extents prompt-string *block-font*))
 		   (+ y strings-y)
 		   :color "white")))))
 
@@ -594,10 +597,10 @@ The modes can be toggled with CONTROL-X.
     (resize self 
 	    :width  
 	    (+ 12 (* 5 *dash*)
-	       (font-text-extents line *default-font*)
-	       (font-text-extents *direct-prompt-string* *default-font*))
+	       (font-text-extents line *block-font*)
+	       (font-text-extents *direct-prompt-string* *block-font*))
 	    :height 
-	    (+ (* 2 *default-prompt-margin*) (font-height *default-font*)))))
+	    (+ (* 2 *default-prompt-margin*) (font-height *block-font*)))))
 
 ;;; Text display and edit control
 
@@ -1035,51 +1038,77 @@ text INSERTION to be inserted at point."
 (define-method forward split (method &rest args)
   (apply #'send self method (nth ^focus ^children) args))
 
-;;; Lisp listener
+;;; Menus
 
-(define-prototype block-prompt (:parent =prompt=)
-  (operation :initform :prompt)
-  output 
-  (rows :initform 10))
+(define-prototype menu (:parent =list=)
+  (category :initform :menu)
+  action target (expanded :initform nil) (visible :initform t))
 
-(define-method initialize block-prompt (output)
+(define-method initialize menu 
+    (&key action target inputs (expanded t) (label "blank menu item..."))
   (parent/initialize self)
-  (setf ^output output))
+  (setf ^action action
+	^expanded expanded
+	^target target
+	^inputs inputs
+	^label label)
+  (when inputs
+    (dolist (each inputs)
+      (set-parent each self))))
 
-(define-method set-output block-prompt (output)
-  (setf ^output output))
+(define-method run menu ())
 
-(define-method do-sexp block-prompt (sexp)
-  (with-fields (output rows) self
-    (assert output)
-    (let ((container (get-parent output)))
-      (when container
-	(message "SEXP: ~S" sexp)
-	(accept container 
-		 (let ((*make-block-package* (find-package :ioforms)))
-		   (if (symbolp (first sexp))
-		       (make-block-ext sexp)
-		       (make-block-ext (first sexp)))))
-	(when (> (length container) rows)
-	  (pop container))))))
+(define-method click menu ()
+  (with-fields (expanded action) self
+    (if (keywordp action)
+        (when *target* (send action *target*))
+	(progn 
+	  (setf expanded (if expanded nil t))
+	  (report-layout-change *script*)
+	  (message "EXPANDED = ~S" expanded)))))
 
-(define-prototype listener (:parent =list=)
-  (type :initform :system)
-  (schema :initform '((:prompt . :block))))
+(define-method display-string menu ()	    
+  (with-fields (action label) self
+    (if (null action)
+	*null-display-string*
+	(etypecase action
+	  (ioforms:object 
+	   ;; we're a submenu. display a nice ellipsis.
+	   (concatenate 'string label *null-display-string*))
+	  ;; we're a leaf. just show the menu item text.
+	  (keyword label)))))
 
-(defparameter *minimum-listener-width* 200)
+(define-method layout-as-string menu (string)
+  (setf height (font-height *block-font*))
+  (setf width 
+	(+ (dash 2) (font-text-extents string *block-font*))))
 
-(define-method initialize listener ()
-  (with-fields (image inputs) self
-    (let ((prompt (clone =block-prompt= self)))
-      (parent/initialize self)
-      (set-output prompt prompt)
-      (setf inputs (list prompt))
-      (set-parent prompt self))))
+(define-method layout menu ()
+  (with-fields (expanded) self
+    (if expanded 
+	;; we're an expanded submenu. lay it out
+	(layout-body-as-list self)
+	;; we're not expanded. just lay out for label.
+	(layout-as-string self (display-string self)))))
 
-(define-method run listener ()
-  (with-fields (inputs) self
-    (destructuring-bind (prompt) inputs
-      (run prompt))))
-   
+(define-method header-height menu ()
+  (dash 2 (font-height *block-font*)))
+
+(define-method draw-expanded menu (&optional label)
+  (with-fields (action x y width height parent inputs) self
+    (if (null parent)
+	(draw-background self)
+	(draw-box x y width height :color (find-color self)))
+    (draw-label-string self (or label *null-display-string*))
+    (dolist (each inputs)
+      (draw each))))
+    
+(define-method draw menu ()
+  (with-fields (x y width height label action visible expanded) self
+    (when visible
+      (if expanded 
+	  (draw-expanded self label)
+	  ;; otherwise just draw menu name
+	  (draw-label-string self (display-string self))))))
+
 ;;; widgets.lisp ends here

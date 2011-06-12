@@ -30,7 +30,7 @@
   (type :initform :operators)
   (schema :initform '((:a . :number)
 		      (:b . :number)))
-  (inputs :initform '(0 0)))
+  (inputs :initform '(nil nil)))
 
 (define-method execute + ()
   (with-fields (results) self

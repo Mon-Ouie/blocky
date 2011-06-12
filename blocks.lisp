@@ -100,8 +100,11 @@ alist entries give the names and input types of the inputs here.")
 (defmacro defblock (name &body args)
   "Define a new block prototype named =NAME=.
 ARGS are field specifiers, as with `define-prototype'."
-  `(define-prototype ,name (:parent =block=)
-    ,@args))
+  (let ((proto (gensym)))
+    `(let ((,proto
+	    (define-prototype ,name (:parent =block=)
+	      ,@args)))
+       (setf (field-value :operation ,proto) ,(make-keyword name)))))
 
 (define-method update block ()
   "Update the simulation one step forward in time."
@@ -116,15 +119,19 @@ ARGS are field specifiers, as with `define-prototype'."
 (define-method is-pinned block ()
   ^pinned)
 
-(defun input-position (self name)
-  (etypecase name
-    (integer name)
+(define-method count-inputs block ()
+  (length ^inputs))
+
+(defun input-position (self thing)
+ (with-fields (schema inputs) self
+  (etypecase thing
+    (ioforms:object (position thing inputs))
+    (integer thing)
     (keyword 
-     (with-fields (schema) self
-       (let ((index (position name schema :key #'first)))
+       (let ((index (position thing schema :key #'first)))
 	 (if (numberp index)
 	     index
-	     (error "No such input ~S" name)))))))
+	     (error "No such input ~S" thing)))))))
 
 (defun input (self name)
   (with-fields (inputs) self
@@ -156,6 +163,8 @@ initialized with BLOCKS as inputs."
 		(nth n blocks)))))))
 
 ;;; Defining keyboard/mouse/joystick events for blocks
+
+(define-method click block ())
 
 (define-method initialize-events-table-maybe block (&optional force)
   (when (or force 
@@ -222,6 +231,7 @@ the return value of the function (if any)."
 (defun make-block-ext (value)
   (if (listp value)
       (if (symbolp (first value))
+	  ;; handle keywords that are to be passed thru
 	  ;; (progn
 	  ;;   (when (not (boundp (make-special-variable-name (first value))))
 	  ;;     (let ((entry (clone =symbol=)))
@@ -237,7 +247,7 @@ the return value of the function (if any)."
 		(with-fields (inputs) block
 		  (setf inputs
 			(mapcar #'(lambda (value)
-				    (or value (clone (symbol-value '=null=))))
+				    (or value (null-block)))
 				inputs))
 		  (dolist (input inputs)
 		    (set-parent input block))))))
@@ -270,7 +280,7 @@ EXPRESSIONS.
 
 (defparameter *block-categories*
   '(:system :motion :event :message :looks :sound :structure :data
-    :hover :control :comment :sensing :operators :variables)
+    :menu :hover :control :comment :sensing :operators :variables)
   "List of keywords used to group blocks into different functionality
 areas.")
 
@@ -330,7 +340,7 @@ areas.")
 
 (define-method plug block (input n)
   "Connect the block INPUT as the value of the Nth input."
-  (set (input self n) input)
+  (setf (input self n) input)
   (set-parent input self))
 
 (define-method unplug block (input)
@@ -418,6 +428,9 @@ of value.")
   "Size in pseudo-pixels of (roughly) the size of the space between
 two words. This is used as a unit for various layout operations.")
 
+(defun dash (n &optional (b 0))
+  (+ b (* n *dash*)))
+
 (defvar *pseudo-pixel-size* 1.0
   "Size in pixels of a pseudo-pixel.")
 
@@ -425,6 +438,7 @@ two words. This is used as a unit for various layout operations.")
   '(:motion "cornflower blue"
     :system "gray50"
     :event "gray80"
+    :menu "gray90"
     :hover "red"
     :socket "gray60"
     :data "gray50"
@@ -444,6 +458,7 @@ two words. This is used as a unit for various layout operations.")
     :system "gray80"
     :hover "dark orange"
     :event "gray90"
+    :menu "white"
     :comment "grey90"
     :looks "medium orchid"
     :socket "gray80"
@@ -463,6 +478,7 @@ two words. This is used as a unit for various layout operations.")
     :event "gray70"
     :socket "gray90"
     :data "gray55"
+    :menu "gray80"
     :structure "gray45"
     :comment "grey40"
     :hover "orange red"
@@ -483,7 +499,8 @@ two words. This is used as a unit for various layout operations.")
     :socket "gray20"
     :hover "yellow"
     :data "white"
-    :structure "gray20"
+    :menu "gray40"
+    :structure "gray90"
     :message "white"
     :looks "white"
     :sound "white"
@@ -689,6 +706,12 @@ current block."
     (+ 1 (length inputs))))
 
 (define-method draw-contents block ()
+  (with-fields (operation inputs) self
+    (draw-label self operation)
+    (dolist (each inputs)
+      (draw each))))
+
+(define-method draw-label-string block (string)
   (with-block-drawing 
     (with-field-values
 	(x y operation inputs)
@@ -696,9 +719,10 @@ current block."
       (let* ((dash *dash*)
 	     (left (+ x (* 2 dash)))
 	     (y0 (+ y dash 1)))
-	(text left y0 (print-expression operation))
-	(dolist (each inputs)
-	  (draw each))))))
+	(text left y0 string)))))
+
+(define-method draw-label block (expression)
+  (draw-label-string self (print-expression expression)))
 
 (define-method draw block ()
   (with-fields (image x y width height blend) self
@@ -781,7 +805,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
   (operation :initform :empty-list)
   (category :initform :structure))
 
-(defparameter *null-display-string* "empty list")
+(defparameter *null-display-string* "...")
 
 (defun null-block () (clone =list=))
 
@@ -789,7 +813,6 @@ MOUSE-Y identify a point inside the block (or input block.)"
   ^results)
 
 (define-method accept list (input &optional prepend)
-  (message "list accept")
   (with-fields (inputs) self
     (if inputs
 	(if prepend
@@ -815,7 +838,11 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (setf inputs (delete input inputs))
     (set-parent input nil)))
 
-(define-method layout-header list () 0)
+(define-method header-height list () 0)
+
+(define-method handle-width list ()
+  (+ (* 2 *dash*)
+     (expression-width *null-display-string*)))
 
 (define-method layout-body-as-null list ()
   (with-fields (height width) self
@@ -827,7 +854,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 (define-method layout-body-as-list list ()
   (with-fields (x y height width inputs) self
     (let* ((dash *dash*)
-	   (header-height (+ dash (layout-header self)))
+	   (header-height (+ dash (header-height self)))
 	   (y0 (+ y dash header-height))
 	   (line-height (font-height *block-font*)))
       (setf height (+ (* 2 dash) line-height))
@@ -852,7 +879,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
   (with-fields (inputs) self
     (draw-background self)
     (if (null inputs)
-	(draw-contents self)
+	(draw-label-string self *null-display-string*)
 	(dolist (each inputs)
 	  (draw each)))))
 
@@ -916,22 +943,22 @@ MOUSE-Y identify a point inside the block (or input block.)"
       (move block x y))
     (report-layout-change self)))
 
-(define-method layout-header script ()
-  (with-fields (x y inputs) self
-    (let ((name (first inputs))
-	  (height (font-height *block-font*)))
-      (prog1 height
-	(move name
-	       (+ x (handle-width self))
-	       (+ y height))))))
+;; (define-method header-height script ()
+;;   (with-fields (x y inputs) self
+;;     (let ((name (first inputs))
+;; 	  (height (font-height *block-font*)))
+;;       (prog1 height
+;; 	(move name
+;; 	       (+ x (handle-width self))
+;; 	       (+ y height))))))
 
-(define-method draw-header script ()
-  (prog1 (font-height *block-font*)
-    (with-fields (x y) self
-      (with-block-drawing 
-	(text (+ x *dash* 1)
-	      (+ y *dash* 1)
-	      "script")))))
+;; (define-method draw-header script ()
+;;   (prog1 (font-height *block-font*)
+;;     (with-fields (x y) self
+;;       (with-block-drawing 
+;; 	(text (+ x *dash* 1)
+;; 	      (+ y *dash* 1)
+;; 	      "script")))))
 
 (define-method run script ())
   ;; (with-fields (inputs target) self

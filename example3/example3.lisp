@@ -25,8 +25,8 @@
   
 (in-package :example3)
 
-(setf *screen-width* 640)
-(setf *screen-height* 480)
+(setf *screen-width* 480)
+(setf *screen-height* 380)
 (setf *window-title* "Blocks demo")
 
 (defparameter *font* "sans-bold-12")
@@ -47,8 +47,25 @@
     (add script (new hello1))
     (add script (new hello2))
     (add script (new hello3))
-    (add script (new list) 400 400)
     (add script (new list) 200 200)
+    (add script (new menu) 240 240)
+
+    (add script 
+	 (new menu :label "outer menu" 
+	           :expanded t
+		   :inputs 
+		   (list (new menu :label "move north" :action :move-north)
+			 (new menu :label "move south" :action :move-south)
+			 (new menu :label "move east" :action :move-east)
+			 (new menu :label "move west" :action :move-west)
+			 (new menu :label "other" 
+				   :action (new menu 
+						:label "other menu"
+						:inputs
+						(list (new menu :label "move north" :action :move-north)
+						      (new menu :label "move south" :action :move-south)
+						      (new menu :label "move east" :action :move-east)
+						      (new menu :label "move west" :action :move-west)))))))
     (add script (new listener) 300 100)
     (open-script shell script)
     (add-block shell)))

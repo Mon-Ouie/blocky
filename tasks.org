@@ -1,4 +1,14 @@
-** TODO fix confusion between click and drag by req
+** TODO menu bar widget appears at top left when mouse goes there
+** TODO popup/pulldown menu widget
+** TODO show target name in menu
+** TODO highlight menu items (hover)
+** TODO right click context menus!
+** TODO double click to run blocks
+** TODO [#B] pretty rubberband movement
+** TODO fix listener-supplied arguments not spawning
+** TODO comment block for output messages in listener etc, trap errors
+** TODO tab to switch focus between all top-level blocks
+** TODO dont allow prompt to be removed from listener
 ** TODO ALPHA issues
 <|3b|> you want 'save color values from transparent pixels', and need to make
        sure the pixels are white with 0 alpha
