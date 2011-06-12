@@ -468,10 +468,8 @@ The modes can be toggled with CONTROL-X.
 (define-method do-sexp prompt (sexp)
   (with-fields (receiver) self
     (destructuring-bind (operation &rest arguments) sexp
-      (apply #'send nil 
-	     (make-keyword operation) 
-	     receiver 
-	     (mapcar #'eval arguments)))))
+      (apply #'send (make-keyword operation) 
+	     receiver (mapcar #'eval arguments)))))
 
 (define-method enter prompt ()
   (labels ((print-it (c) 
@@ -516,7 +514,6 @@ The modes can be toggled with CONTROL-X.
 					   ^history-position)))
     (setf ^point (length ^line))))
  
-
 (define-method backward-history prompt ()
   (when (< ^history-position (queue-count ^history))
     (setf ^line (history-item self (progn (incf ^history-position)
@@ -538,20 +535,21 @@ The modes can be toggled with CONTROL-X.
   (setf ^point 0))
 
 (define-method draw prompt ()
-  (with-fields (x y width height clock mode point line) self
+  (with-fields (x y width height clock mode point parent line) self
     (draw-background self)
+    ;; keep the cursor blinking
     (decf clock)
     (when (> (- 0 *prompt-blink-time*) clock)
       (setf clock *prompt-blink-time*))
+    
     (let* ((image ^image)
 	   (font-height (font-height *default-font*))
 	   (prompt-height (+ (* 2 *default-prompt-margin*)
 			     font-height))
-	 (strings-y *default-prompt-margin*)
-	 (prompt-string (ecase mode
-			  (:direct *direct-prompt-string*)
-			  (:forward *forward-prompt-string*))))
-      ;;(draw-box x y width prompt-height :color "gray40")
+	   (strings-y *default-prompt-margin*)
+	   (prompt-string (ecase mode
+			    (:direct *direct-prompt-string*)
+			    (:forward *forward-prompt-string*))))
     ;; draw cursor
     (when (eq :direct mode)
       (let ((color (if (minusp clock)
@@ -575,7 +573,7 @@ The modes can be toggled with CONTROL-X.
 		   *default-font*)
 		  font-height
 		  :color color))
-      ;; draw prompt 
+      ;; draw prompt string
       (draw-string prompt-string
 		   (+ x *default-prompt-margin*)
 		   (+ y strings-y)
@@ -583,13 +581,24 @@ The modes can be toggled with CONTROL-X.
     ;; draw current command line text
     (when (null line) (setf line ""))
     (unless (zerop (length line))
-      (setf width (+ 12 (* 2 *dash*) 
-		     (font-text-extents line *default-font*)))
       (draw-string line
 		   (+ x
 		      (font-text-extents prompt-string *default-font*))
 		   (+ y strings-y)
-		   :color "white")))))
+		   :color "white")
+      (update-layout-maybe self)))))
+
+(define-method layout prompt ())
+
+(define-method update-layout-maybe prompt ()
+  (with-fields (line) self
+    (resize self 
+	    :width  
+	    (+ 12 (* 5 *dash*)
+	       (font-text-extents line *default-font*)
+	       (font-text-extents *direct-prompt-string* *default-font*))
+	    :height 
+	    (+ (* 2 *default-prompt-margin*) (font-height *default-font*)))))
 
 ;;; Text display and edit control
 
@@ -614,7 +623,7 @@ The modes can be toggled with CONTROL-X.
   (auto-fit :initform nil)
   (visible :initform t))
 
-(define-method handle-key textbox (event)
+(define-method handle-event textbox (event)
   (unless ^read-only
     (let ((func (gethash event ^keymap)))
       (when func
@@ -1047,7 +1056,6 @@ text INSERTION to be inserted at point."
 		 (let ((*make-block-package* (find-package :ioforms)))
 		   (if (symbolp (first sexp))
 		       (make-block-ext sexp)
-
 		       (make-block-ext (first sexp)))))
 	(when (> (length container) rows)
 	  (pop container))))))
@@ -1062,11 +1070,8 @@ text INSERTION to be inserted at point."
   (with-fields (image inputs) self
     (let ((prompt (clone =block-prompt= self)))
       (parent/initialize self)
-      (resize prompt 
-	       :width *minimum-listener-width*
-	       :height (+ (* 2 *dash*) 
-			  (font-height *default-font*)))
-      (setf inputs (list prompt)))))
+      (setf inputs (list prompt))
+      (set-parent prompt self))))
 
 (define-method run listener ()
   (with-fields (inputs) self

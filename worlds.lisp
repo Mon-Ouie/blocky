@@ -292,7 +292,7 @@ The cells' :destroy method is invoked."
       (setf (field-value :name world)
 	    (or name (generate-world-name world))))))
 
-(defun create-blank-object ())
+(defun create-blank-object (arg1 arg2))
 
 (defun find-object (object)
   (etypecase object

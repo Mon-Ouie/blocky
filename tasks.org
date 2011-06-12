@@ -1,15 +1,14 @@
+** TODO fix confusion between click and drag by requiring actual mouse movement
 ** TODO (input :foo)  named input access.
 ** TODO fix input-widths
 ** TODO allow varying inputs length (i.e. no schema)
-** TODO [#B] draw-socket should draw types
-** TODO [#B] allow string-valued method fields. resource id's of method block, uuid?
-** TODO [#B] Rework block layout and make clicking/dragging work
-** TODO [#A] Revise blocks execution model re:schema (see below)
-** TODO [#B] Create DEFBLOCK block
-** TODO [#A] Revise widgets.lisp for OpenGL
-** TODO [#B] yellow comment sticky note boxes
-** TODO [#B] AABB-tree (axis-aligned bounding-box)
-** TODO [#B] Implement this GRAPH UI example:
+** TODO [#C] allow string-valued method fields. resource id's of method block, uuid?
+** TODO [#A] Create DEFBLOCK block
+** TODO [#B] Revise widgets.lisp for OpenGL
+** TODO [#C] yellow comment sticky note boxes
+** TODO [#C] AABB-tree (axis-aligned bounding-box)
+** TODO [#C] draw-socket should draw types
+** TODO [#C] Implement this GRAPH UI example:
    
 Say you want a nice interface helping a designer to explore various
 choices of values for two variables---such as a function y=f(x), or

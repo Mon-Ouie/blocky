@@ -107,10 +107,6 @@ ARGS are field specifiers, as with `define-prototype'."
   "Update the simulation one step forward in time."
   nil)
 
-(define-method resize block (&key height width)
-  (setf ^height height)
-  (setf ^width width))
-
 (define-method pin block ()
   (setf ^pinned t))
 
@@ -120,12 +116,24 @@ ARGS are field specifiers, as with `define-prototype'."
 (define-method is-pinned block ()
   ^pinned)
 
-(defun named-input-position (self name)
-  (with-fields (schema) self
-    (let ((index (position name schema :key #'first)))
-      (if (numberp index)
-	  index
-	  (error "No such input ~S" name)))))
+(defun input-position (self name)
+  (etypecase name
+    (integer name)
+    (keyword 
+     (with-fields (schema) self
+       (let ((index (position name schema :key #'first)))
+	 (if (numberp index)
+	     index
+	     (error "No such input ~S" name)))))))
+
+(defun input (self name)
+  (with-fields (inputs) self
+    (nth (input-position self name) inputs)))
+
+(defun (setf input) (self name value)
+  (with-fields (inputs) self
+    (setf (nth (input-position self name) inputs)
+	  value)))
 
 (defun named-input-type (self name)
   (with-fields (schema) self
@@ -133,16 +141,6 @@ ARGS are field specifiers, as with `define-prototype'."
       (if (numberp index)
 	  (cdr (assoc name schema))
 	  (error "No such input ~S" name)))))
-
-(defun input (self name)
-  (with-fields (inputs) self
-    (nth (named-input-position self name) inputs)))
-
-(defun (setf input) (self name value)
-  (with-fields (inputs) self
-    (setf (nth (named-input-position self name) 
-	       inputs) 
-	  value)))
 
 (define-method initialize block (&rest blocks)
   "Prepare an empty block, or if BLOCKS is non-empty, a block
@@ -706,7 +704,7 @@ current block."
 
 (define-method draw-hover block ()
   (with-fields (x y width height) self
-    (draw-box x y (+ *dash* width) (+ *dash* height)
+    (draw-patch self x y (+ x *dash* width) (+ y *dash* height)
 	      :color *hover-color*)
     (draw-contents self)))
 
@@ -839,5 +837,117 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	(layout-body-as-list self))))
 
 (define-method draw-header list () 0)
+
+;;; Composing blocks into larger programs, recursively.
+
+(defvar *script* nil)
+
+(defmacro with-script (script &rest body)
+  `(let ((*script* ,script))
+     ,@body))
+
+(define-method resize block (&key height width)
+  (when (or (not (= height ^height))
+	    (not (= width ^width)))
+    (setf ^height height)
+    (setf ^width width)
+    (when *script* (send :report-layout-change *script*))))
+
+(define-prototype script (:parent =list=)
+  (inputs :iniform '(nil))
+  (target :initform nil)
+  (needs-layout :initform t)
+  (variables :initform (make-hash-table :test 'eq)))
+
+(define-method report-layout-change script ()
+  (setf ^needs-layout t))
+
+(define-method update script ()
+  (with-script self 
+    (dolist (each ^inputs)
+      (update each))
+    (update-layout self)))
+
+(define-method update-layout script (&optional force)
+  (with-fields (inputs needs-layout) self
+    (when (or force needs-layout)
+      (dolist (each inputs)
+	  (layout each)
+	  (setf needs-layout nil)))))
+
+(define-method initialize script (&key blocks variables target)
+  (setf ^inputs blocks)
+  (when variables (setf ^variables variables))
+  (when target (setf ^target target)))
+
+(define-method set-target script (target)
+  (setf ^target target))
+
+(define-method is-member script (block)
+  (with-fields (inputs) self
+    (find block inputs)))
+
+(define-method add script (block &optional x y)
+  (with-fields (inputs) self
+    (assert (not (find block inputs)))
+    (setf inputs (nconc inputs (list block)))
+    (setf (field-value :parent block) nil) ;; TODO self?
+    (when (and (integerp x)
+	       (integerp y))
+      (move block x y))
+    (report-layout-change self)))
+
+(define-method layout-header script ()
+  (with-fields (x y inputs) self
+    (let ((name (first inputs))
+	  (height (font-height *block-font*)))
+      (prog1 height
+	(move name
+	       (+ x (handle-width self))
+	       (+ y height))))))
+
+(define-method draw-header script ()
+  (prog1 (font-height *block-font*)
+    (with-fields (x y) self
+      (with-block-drawing 
+	(text (+ x *dash* 1)
+	      (+ y *dash* 1)
+	      "script")))))
+
+(define-method run script ())
+  ;; (with-fields (inputs target) self
+  ;;   (with-target target
+  ;;     (dolist (block inputs)
+  ;; 	(run block)))))
+
+(define-method bring-to-front script (block)
+  (with-fields (inputs) self
+    (when (find block inputs)
+      (setf inputs (delete block inputs))
+      (setf inputs (nconc inputs (list block))))))
+
+(define-method delete-input script (block)
+  (with-fields (inputs) self
+    (assert (find block inputs))
+    (setf inputs (delete block inputs))))
+
+(define-method set script (var value)
+  (setf (gethash var ^variables) value))
+
+(define-method get script (var)
+  (gethash var ^variables))
+
+;; (defun block-variable (var-name)
+;;   (get *block* var-name))
+
+;; (defun (setf block-variable) (var-name value)
+;;   (set *block* var-name value))
+
+;; (defmacro with-block-variables (vars &rest body)
+;;   (labels ((make-clause (sym)
+;; 	     `(,sym (block-variable ,(make-keyword sym)))))
+;;     (let* ((symbols (mapcar #'make-non-keyword vars))
+;; 	   (clauses (mapcar #'make-clause symbols)))
+;;       `(symbol-macrolet ,clauses ,@body))))
 
 ;;; blocks.lisp ends here
