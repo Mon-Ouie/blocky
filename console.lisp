@@ -1258,11 +1258,10 @@ also the documentation for DESERIALIZE."
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
   ;; (message "Loading image resource ~A" resource)
   (initialize-textures-maybe)
-  (let* ((brushp (getf (resource-properties resource) :brush))
+  (let* ((source-format (getf (resource-properties resource) :format))
 	 (surface (sdl-image:load-image (namestring (resource-file resource))
 				       :alpha 255))
-	 (source-format (when brushp :alpha))
-	 (internal-format (if brushp :alpha :rgba))
+	 (internal-format :rgba)
 	 (texture (load-texture surface
 				:source-format source-format
 				:internal-format internal-format))
@@ -1937,7 +1936,7 @@ of the music."
 	(side (* 2 radius)))
 ;    (draw-textured-rectangle left top side side mask :blend :source)
     (set-vertex-color color)
-    (draw-textured-rectangle left top side side texture :blend :alpha)))
+    (draw-textured-rectangle left top side side texture :blend blend)))
 
     ;; (draw-textured-rectangle left top side side mask :blend :source)
     ;; (set-vertex-color color)

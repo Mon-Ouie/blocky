@@ -292,6 +292,8 @@ The cells' :destroy method is invoked."
       (setf (field-value :name world)
 	    (or name (generate-world-name world))))))
 
+(defun create-blank-object ())
+
 (defun find-object (object)
   (etypecase object
     (object 
@@ -632,7 +634,6 @@ most user command messages. (See also the method `forward'.)"
     (:world self)
     (:browser ^browser)
     (:narrator ^narrator)
-    (:viewport ^viewport)
     (:player ^player)))
 
 (define-method draw world ()
@@ -773,30 +774,9 @@ sources and ray casting."
   "Begin looping your music for this world here."
   nil)
 
-(define-method describe world (&optional description)
-  (setf description (or description ^description))
-  (if (stringp description)
-      (dolist (line (split-string-on-lines description))
-	(>>narrateln :narrator line))
-      ;; it's a formatted string
-      (dolist (line description)
-	(dolist (string line)
-	  (apply #'send-queue nil :print :narrator string))
-	(send-queue nil :newline :narrator)
-	(send-queue nil :newline :narrator))))
-
-;; (define-method start world ())
-;;   "Prepare the world for play."
-;;   ;; (when ^viewport (adjust ^viewport :snap))
-;;   ;; (begin-ambient-loop self))
-
 (define-method after-start-method world ()
   nil)
     
-(define-method set-viewport world (viewport)
-  "Set the viewport widget."
-  (setf ^viewport viewport))
-	
 (define-method line-of-sight world (r1 c1 r2 c2 &optional (category :obstacle))
   "Return non-nil when there is a direct Bresenham's line of sight
 along grid squares between R1,C1 and R2,C2."
@@ -833,7 +813,7 @@ along grid squares between R1,C1 and R2,C2."
 			    (return-from tracing t))))
 	      (prog1 retval nil))))))))
 
-;;; The sprite layer. See also viewport.lisp
+;;; The sprite layer. 
 
 (define-method add-sprite world (sprite)
   (pushnew sprite ^sprites :test 'eq)
@@ -945,7 +925,6 @@ by symbol name. This enables them to be used as hash keys."
   (worlds :initform (make-hash-table :test 'equal)
 	  :documentation "Address-to-world mapping.")
   prompt
-  (viewport :initform nil)
   (current-address :initform nil)
   (player :initform nil)
   (stack :initform '())
@@ -1023,24 +1002,11 @@ represents the z-axis of a euclidean 3-D space."))
 		       (generate-world self address)))
 	candidate)))
 
-(define-method configure universe (&key address player prompt narrator viewport)
+(define-method configure universe (&key address player prompt narrator)
   (when address (setf ^current-address address))
   (when player (setf ^player player))
   (when prompt (setf ^prompt prompt))
-  (when narrator (setf ^narrator narrator))
-  (when viewport (setf ^viewport viewport)))
-  ;; (when (null ^viewport)
-  ;;   (make-default-viewport self)))
-
-(define-method make-default-viewport universe ()
-  (with-fields (viewport) self
-    (setf viewport (clone =viewport= 
-			  :top 0 :left 0
-			  :world ^world
-			  :grid-size *default-grid-size*))
-    (resize-image viewport 
-		  :width *screen-width* 
-		  :height *screen-height*)))
+  (when narrator (setf ^narrator narrator)))
 
 (define-method update universe ()
   (when ^world (update ^world)))
@@ -1053,10 +1019,9 @@ represents the z-axis of a euclidean 3-D space."))
     (when world
       (handle-event world event))))
 
-(define-method start universe (&key address player world prompt narrator viewport)
+(define-method start universe (&key address player world)
   "Prepare a universe for play at the world identified by ADDRESS with
-PLAYER as the player, PROMPT as the prompt, NARRATOR as the
-narrator, and VIEWPORT as the viewport."
+PLAYER as the player."
   (setf *universe* self)
   (when world 
     (setf ^world world)
@@ -1081,9 +1046,7 @@ narrator, and VIEWPORT as the viewport."
 		 (drop-player-at-last-location world ^player)
 ;		 (start world)
 		 (set-receiver ^prompt world)
-		 (set-world ^viewport world)
 		 (set-narrator world ^narrator)
-		 (set-viewport world ^viewport)
 		 (set-player world ^player))
 	  (error "No world.")))))
 
