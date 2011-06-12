@@ -363,7 +363,7 @@ The modes can be toggled with CONTROL-X.
     ("LEFT" nil :backward-char)
     ("K" (:control) :clear-line)
     ("BACKSPACE" nil :backward-delete-char)
-    ("RETURN" nil :execute)
+    ("RETURN" nil :enter)
     ("X" (:control) :exit)
     ("G" (:control) :exit)
     ("ESCAPE" nil :exit)
@@ -404,7 +404,7 @@ The modes can be toggled with CONTROL-X.
     ("LEFT" NIL :BACKWARD-CHAR)
     ("K" (:CONTROL) :CLEAR-LINE) 
     ("BACKSPACE" NIL :BACKWARD-DELETE-CHAR)
-    ("RETURN" NIL :EXECUTE)
+    ("RETURN" NIL :ENTER)
     ("X" (:CONTROL) :EXIT)
     ("ESCAPE" NIL :EXIT)
     ("P" (:ALT) :BACKWARD-HISTORY)
@@ -1046,11 +1046,15 @@ text INSERTION to be inserted at point."
   (parent/initialize self)
   (setf ^output output))
 
+(define-method set-output block-prompt (output)
+  (setf ^output output))
+
 (define-method do-sexp block-prompt (sexp)
   (with-fields (output rows) self
     (assert output)
     (let ((container (get-parent output)))
       (when container
+	(message "SEXP: ~S" sexp)
 	(accept container 
 		 (let ((*make-block-package* (find-package :ioforms)))
 		   (if (symbolp (first sexp))
@@ -1069,6 +1073,7 @@ text INSERTION to be inserted at point."
   (with-fields (image inputs) self
     (let ((prompt (clone =block-prompt= self)))
       (parent/initialize self)
+      (set-output prompt prompt)
       (setf inputs (list prompt))
       (set-parent prompt self))))
 

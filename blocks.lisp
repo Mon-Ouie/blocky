@@ -221,10 +221,11 @@ the return value of the function (if any)."
 
 (defun make-block-ext (value)
   (if (listp value)
-      (if (and (symbolp (first value))
-	       (not (boundp (make-special-variable-name (first value)))))
-	  (let ((entry (clone =symbol=)))
-	    (prog1 entry (set-data entry (first value))))
+      (if (symbolp (first value))
+	  ;; (progn
+	  ;;   (when (not (boundp (make-special-variable-name (first value))))
+	  ;;     (let ((entry (clone =symbol=)))
+	  ;; 	(prog1 entry (set-data entry (first value)))))
 	  (destructuring-bind (operation &rest args) value
 	    (let ((block (apply #'clone
 				(symbol-value
@@ -239,16 +240,16 @@ the return value of the function (if any)."
 				    (or value (clone (symbol-value '=null=))))
 				inputs))
 		  (dolist (input inputs)
-		    (set-parent input block)))))))
+		    (set-parent input block))))))
+	  (make-block-ext (first value)))
       (let ((prototype
 	     (symbol-value
-	      (make-special-variable-name
-	       (etypecase value
-		 ;; see also `defentry' below.
-		 (integer :integer)
-		 (float :float)
-		 (string :string)
-		 (symbol :symbol))))))
+	      (etypecase value
+		;; see also `defentry' below.
+		(integer '=integer=)
+		(float '=float=)
+		(string '=string=)
+		(symbol '=symbol=)))))
 	(let ((entry (clone prototype)))
 	  (prog1 entry
 	    (set-data entry value))))))
@@ -471,7 +472,7 @@ two words. This is used as a unit for various layout operations.")
     :control "dark orange"
     :variables "OrangeRed2"
     :operators "OliveDrab4"
-    :sensing "turquoise3")
+    :sensing "steel blue")
   "X11 color names of shadows on the different block categories.")
 
 (defparameter *block-foreground-colors*
@@ -570,7 +571,7 @@ override all colors."
       (box (+ x0 radius) (- y1 diameter)
 	   (- x1 radius 1) y1
 	   fill)
-      (line (+ x0 radius 1) y1
+      (line (+ x0 radius -2) y1
 	    (- x1 radius 1) y1 chisel)
       ;; top
       (box (+ x0 radius) y0
@@ -582,14 +583,14 @@ override all colors."
       (box x0 (+ y0 radius)
 	   (+ x0 diameter) (- y1 radius)
 	   fill)
-      (line x0 (+ y0 radius 1)
-	    x0 (- y1 radius 1) bevel)
+      (line (+ x0 1) (+ y0 radius)
+	    (+ x0 1) (- y1 radius -3) bevel)
       ;; x1
       (box (- x1 diameter) (+ y0 radius)
 	   x1 (- y1 radius)
 	   fill)
-      (line x1 (+ y0 radius 1)
-	    x1 (- y1 radius 1) chisel)
+      (line x1 (+ y0 radius)
+	    x1 (- y1 radius) chisel)
       ;; content area
       (box (+ x0 radius) (+ y0 radius)
 	   (- x1 radius) (- y1 radius)
@@ -788,6 +789,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
   ^results)
 
 (define-method accept list (input &optional prepend)
+  (message "list accept")
   (with-fields (inputs) self
     (if inputs
 	(if prepend
@@ -867,9 +869,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	    (not (= width ^width)))
     (setf ^height height)
     (setf ^width width)
-    (message "resizing block")
     (when *script* 
-      (message "reporting layout change")
       (send :report-layout-change *script*))))
 
 (define-prototype script (:parent =list=)

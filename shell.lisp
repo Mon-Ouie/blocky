@@ -70,7 +70,6 @@
 
 (define-method select shell (new-block)
   (with-fields (selection inputs) self
-    (message "selecting ~S" (get-some-object-name new-block))
     (pushnew new-block selection)))
 
 (define-method select-if shell (predicate)
@@ -133,14 +132,15 @@
 	  ;; draw the block itself
 	  (draw block))
 	;; during dragging we draw the dragged block.
-	(when drag 
-	  (layout drag)
-	  (draw-ghost ghost)
-	  (draw drag)
-	  (when hover 
-	    (draw-hover hover))
-	  (when focused-block
-	    (draw-border focused-block)))))))
+	(if drag 
+	    (progn (layout drag)
+		   (draw-ghost ghost)
+		   (draw drag)
+		   (when hover 
+		     (draw-hover hover)))
+	    (when focused-block
+	      (draw-border focused-block)
+	      (draw focused-block)))))))
 
 (defparameter *minimum-drag-distance* 7)
 
