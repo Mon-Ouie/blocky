@@ -36,7 +36,7 @@
 	 :documentation "Block being hovered over, if any.")
   (ghost :initform (clone =block=))
   (buffer :initform nil)
-  (clicked-block :initform nil)
+  (focused-block :initform nil)
   (click-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at moment of click.")
   (drag-start :initform nil
@@ -70,6 +70,7 @@
 
 (define-method select shell (new-block)
   (with-fields (selection inputs) self
+    (message "selecting ~S" (get-some-object-name new-block))
     (pushnew new-block selection)))
 
 (define-method select-if shell (predicate)
@@ -81,10 +82,11 @@
     (setf selection (delete the-block selection))))
 
 (define-method handle-event shell (event)
-  (with-fields (selection) self
+  (with-fields (selection script) self
     (when (= 1 (length selection))
       (when (first selection)
-	(handle-event (first selection) event)))))
+	(with-script script
+	  (handle-event (first selection) event))))))
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag inputs script drag-start ghost drag-offset) self
@@ -118,42 +120,46 @@
 
 (define-method draw shell ()
   (with-fields (script buffer drag-start selection inputs drag
+		       focused-block
 		       modified hover ghost prompt)
       self
     (let ((blocks (script-blocks self)))
       ;; now start drawing blocks
-      (dolist (block blocks)
-	;; draw border around any selected blocks
-	(when (find block selection)
-	  (draw-border block))
-	;; draw the block itself
-	(draw block))
-      ;; during dragging we draw the dragged block.
-      (when drag 
-	(layout drag)
-	(draw-ghost ghost)
-	(draw drag)
-	(when hover 
-	  (draw-hover hover))))))
+      (with-script script 
+	(dolist (block blocks)
+	  ;; draw border around any selected blocks
+	  (when (find block selection)
+	    (draw-border block))
+	  ;; draw the block itself
+	  (draw block))
+	;; during dragging we draw the dragged block.
+	(when drag 
+	  (layout drag)
+	  (draw-ghost ghost)
+	  (draw drag)
+	  (when hover 
+	    (draw-hover hover))
+	  (when focused-block
+	    (draw-border focused-block)))))))
 
 (defparameter *minimum-drag-distance* 7)
 
 (define-method drag-maybe shell (x y)
   ;; require some actual mouse movement to initiate a drag
-  (with-fields (click-start clicked-block) self
+  (with-fields (click-start focused-block) self
     (when click-start
       (destructuring-bind (x1 . y1) click-start
 	(when (> (distance x y x1 y1)
 		 *minimum-drag-distance*)
 	  (setf click-start nil)
-	  (begin-drag self x y clicked-block))))))
+	  (begin-drag self x y focused-block))))))
 
 (define-method mouse-down shell (x y &optional button)
   (let ((block (hit-script self x y)))
     (when block
       (case button
-	(1  (with-fields (click-start clicked-block) self
-	      (setf clicked-block block)
+	(1  (with-fields (click-start focused-block) self
+	      (setf focused-block block)
 	      (setf click-start (cons x y))))
 	(3 (run block))))))
 
@@ -171,7 +177,7 @@
 (define-method mouse-up shell (x y &optional button)
   (with-fields 
       (inputs drag-offset drag-start hover script selection drag
-	      click-start clicked-block modified) self
+	      click-start focused-block modified) self
     (if drag
 	(let ((drag-parent (get-parent drag)))
 	  (when drag-parent
@@ -187,8 +193,9 @@
 	  (select self drag))
 	(progn
 	  (setf selection nil)
-	  (select self clicked-block)
-	  (setf click-start nil clicked-block nil)))
+	  (when focused-block 
+	    (select self focused-block)
+	    (setf click-start nil))))
     (setf drag-start nil
 	  drag-offset nil
 	  drag nil)

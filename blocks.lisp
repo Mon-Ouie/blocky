@@ -576,7 +576,7 @@ override all colors."
       (box (+ x0 radius) y0
 	   (- x1 radius) (+ y0 diameter)
 	   fill)
-      (line (+ x0 radius 1) (+ y0 1)
+      (line (+ x0 radius) (+ y0 1)
 	    (- x1 radius -4) (+ y0 1) bevel)
       ;; left
       (box x0 (+ y0 radius)
@@ -867,7 +867,10 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	    (not (= width ^width)))
     (setf ^height height)
     (setf ^width width)
-    (when *script* (send :report-layout-change *script*))))
+    (message "resizing block")
+    (when *script* 
+      (message "reporting layout change")
+      (send :report-layout-change *script*))))
 
 (define-prototype script (:parent =list=)
   (inputs :iniform '(nil))
@@ -888,8 +891,8 @@ MOUSE-Y identify a point inside the block (or input block.)"
   (with-fields (inputs needs-layout) self
     (when (or force needs-layout)
       (dolist (each inputs)
-	  (layout each)
-	  (setf needs-layout nil)))))
+	(layout each))
+      (setf needs-layout nil))))
 
 (define-method initialize script (&key blocks variables target)
   (setf ^inputs blocks)

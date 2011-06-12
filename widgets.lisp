@@ -175,10 +175,8 @@ auto-updated displays."
   nil)
 
 (defun get-some-object-name (ob)
-  (if (stringp (field-value :name ob))
-      (field-value :name ob)
-      (let ((str (symbol-name (object-name (object-parent ob)))))
-	(string-capitalize (subseq str 1 (search "=" str :from-end t))))))
+  (let ((str (symbol-name (object-name (object-parent ob)))))
+    (string-capitalize (subseq str 1 (search "=" str :from-end t)))))
 
 (define-method print-object-tag formatter (ob)
   (print-image self (or (field-value :tile ob) (field-value :image ob)))
@@ -578,6 +576,7 @@ The modes can be toggled with CONTROL-X.
 		   (+ x *default-prompt-margin*)
 		   (+ y strings-y)
 		   :color "white"))
+    (update-layout-maybe self)
     ;; draw current command line text
     (when (null line) (setf line ""))
     (unless (zerop (length line))
@@ -585,8 +584,8 @@ The modes can be toggled with CONTROL-X.
 		   (+ x
 		      (font-text-extents prompt-string *default-font*))
 		   (+ y strings-y)
-		   :color "white")
-      (update-layout-maybe self)))))
+		   :color "white")))))
+
 
 (define-method layout prompt ())
 
