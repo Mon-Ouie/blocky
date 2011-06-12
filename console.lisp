@@ -742,6 +742,7 @@ display."
 	     (restartably
 	       (gl:clear-color 1 1 1 1)
 	       (gl:clear)
+	       (gl:disable :depth-test)
 	       (gl:clear :color-buffer-bit)
 	       (gl:enable :texture-2d :blend)	
 	       (set-blending-mode :alpha)
@@ -1207,6 +1208,7 @@ also the documentation for DESERIALIZE."
   (ecase mode 
     (:additive (gl:blend-func :src-alpha :one))
     (:source (gl:blend-func :src-color :zero))
+    (:alpha2 (gl:blend-func :one :one-minus-src-alpha))
     (:mask (gl:blend-func :one :zero))
     (:additive2 (gl:blend-func :one :one))
     (:alpha (gl:blend-func :src-alpha :one-minus-src-alpha))))
@@ -1894,11 +1896,11 @@ of the music."
 (defun draw-line (x0 y0 x1 y1 
 		     &key 
 		     (color "white"))
-  (set-vertex-color color)
   (gl:disable :texture-2d)
+  (set-vertex-color color)
   (gl:with-primitive :lines 
-    (gl:vertex x0 (- y0))
-    (gl:vertex x1 (- y1))))
+    (gl:vertex x0 (+ y0))
+    (gl:vertex x1 (+ y1))))
 
 (defun draw-box (x y width height		
  		 &key (color "black"))
@@ -1929,12 +1931,10 @@ of the music."
 		    &key (color "white") 
 			 (type :outline)
 			 (blend :alpha))
-  (let ((mask (find-texture (getf *circle-mask-textures* type)))
-	(texture (find-texture (getf *circle-textures* type)))
+  (let ((texture (find-texture (getf *circle-textures* type)))
 	(left (- x radius))
 	(top (- y radius))
 	(side (* 2 radius)))
-;    (draw-textured-rectangle left top side side mask :blend :source)
     (set-vertex-color color)
     (draw-textured-rectangle left top side side texture :blend blend)))
 

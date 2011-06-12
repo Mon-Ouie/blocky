@@ -1,4 +1,4 @@
-** TODO fix confusion between click and drag by requiring actual mouse movement
+** TODO fix confusion between click and drag by req
 ** TODO (input :foo)  named input access.
 ** TODO fix input-widths
 ** TODO allow varying inputs length (i.e. no schema)

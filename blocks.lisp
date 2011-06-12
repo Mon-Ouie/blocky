@@ -426,7 +426,7 @@ two words. This is used as a unit for various layout operations.")
     :event "gray80"
     :hover "red"
     :socket "gray60"
-    :data "gray70"
+    :data "gray50"
     :structure "gray60"
     :comment "grey70"
     :looks "purple"
@@ -517,11 +517,12 @@ blocks."
 	    (selection *selection-color*)
 	    (shadow (find-color self :shadow))
 	    (dash *dash*)
-	    (radius (+ 4 *dash*))
+	    (radius (+ 6 *dash*))
 	    (diameter (* 2 radius)))
        (labels ((circle (x y &optional color)
 		  (draw-circle x y radius
-			       :color (or color background)))
+			       :color (or color background)
+			       :blend :alpha))
 		(disc (x y &optional color)
 		  (draw-solid-circle x y radius
 				     :color (or color background)
@@ -552,19 +553,19 @@ override all colors."
 	  (fill (or color (if socket
 			      *socket-color*
 			      (if dark background background)))))
-      ;; (disc (- x0 10) (- y0 10) fill) ;; a circle by itself
-      ;; top left
-      (disc (+ x0 radius ) (+ y0 radius) fill)
-;      (circle (+ x0 radius ) (+ y0 radius) fill) ;;bevel
-      ;; top x1
-      (disc (- x1 radius ) (+ y0 radius ) fill)
-;      (circle (- x1 radius ) (+ y0 radius ) fill) ;; chisel
+      (disc (- x0 10) (- y0 10) fill) ;; a circle by itself
       ;; y1 x1
       (disc (- x1 radius ) (- y1 radius ) fill)
-;      (circle (- x1 radius ) (- y1 radius ) fill) ;; chisel
+      (circle (- x1 radius ) (- y1 radius ) chisel) ;; chisel
       ;; y1 left
       (disc (+ x0 radius ) (- y1 radius ) fill)
-;      (circle (+ x0 radius ) (- y1 radius ))
+      (circle (+ x0 radius ) (- y1 radius ))
+      ;; top left
+      (disc (+ x0 radius ) (+ y0 radius) fill)
+      (circle (+ x0 radius ) (+ y0 radius) bevel) ;;bevel
+      ;; top x1
+      (disc (- x1 radius ) (+ y0 radius ) fill)
+      (circle (- x1 radius ) (+ y0 radius ) chisel) ;; chisel
       ;; y1
       (box (+ x0 radius) (- y1 diameter)
 	   (- x1 radius 1) y1
@@ -593,6 +594,12 @@ override all colors."
       (box (+ x0 radius) (+ y0 radius)
 	   (- x1 radius) (- y1 radius)
 	   fill))))
+      ;; ;; cover seams
+      ;; (disc (- x1 radius 1) (- y1 radius 1) fill) ;; y1 x1
+      ;; (disc (+ x0 radius 1) (- y1 radius 1) fill) ;; y1 left
+      ;; (disc (+ x0 radius 1) (+ y0 radius 1) fill) ;; top left
+      ;; (disc (- x1 radius 1) (+ y0 radius 1) fill) ;; top x1
+      ;; )))
 
 (define-method draw-socket block (x0 y0 x1 y1)
   (draw-patch self x0 y0 x1 y1 :depressed t :socket t))
@@ -770,9 +777,10 @@ MOUSE-Y identify a point inside the block (or input block.)"
 ;;; Vertically stacked list of blocks
 
 (defblock list
+  (operation :initform :empty-list)
   (category :initform :structure))
 
-(defparameter *null-display-string* "()")
+(defparameter *null-display-string* "empty list")
 
 (defun null-block () (clone =list=))
 
@@ -812,7 +820,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (setf width (+ (* 4 *dash*)
 		   (font-text-extents *null-display-string*
 				      *block-font*))
-	  height (+ (* 4 *dash*)))))
+	  height (+ (font-height *block-font*) (* 4 *dash*)))))
 
 (define-method layout-body-as-list list ()
   (with-fields (x y height width inputs) self
@@ -837,6 +845,14 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	(layout-body-as-list self))))
 
 (define-method draw-header list () 0)
+
+(define-method draw list ()
+  (with-fields (inputs) self
+    (draw-background self)
+    (if (null inputs)
+	(draw-contents self)
+	(dolist (each inputs)
+	  (draw each)))))
 
 ;;; Composing blocks into larger programs, recursively.
 
@@ -931,11 +947,11 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (assert (find block inputs))
     (setf inputs (delete block inputs))))
 
-(define-method set script (var value)
-  (setf (gethash var ^variables) value))
+;; (define-method set script (var value)
+;;   (setf (gethash var ^variables) value))
 
-(define-method get script (var)
-  (gethash var ^variables))
+;; (define-method get script (var)
+;;   (gethash var ^variables))
 
 ;; (defun block-variable (var-name)
 ;;   (get *block* var-name))
