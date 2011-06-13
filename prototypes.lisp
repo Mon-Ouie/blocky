@@ -885,7 +885,7 @@ OPTIONS is a property list of field options. Valid keys are:
 ;;; Cloning objects
 
 (defmacro new (prototype-name &rest initargs)
-  `(clone ,(make-special-variable-name prototype-name)
+  `(clone ',(make-special-variable-name prototype-name)
 	  ,@initargs))
 
 (defun clone (prototype &rest initargs)
@@ -893,7 +893,9 @@ OPTIONS is a property list of field options. Valid keys are:
 initializer. The new object is created with fields for which INITFORMS
 were specified (if any; see `define-prototype'); the INITFORMS are
 evaluated, then any applicable initializer is triggered."
-  (let ((new-object (make-object :parent prototype 
+  (let ((new-object (make-object :parent (etypecase prototype 
+					   (object prototype)
+					   (symbol (symbol-value prototype)))
 				 :fields (compose-blank-fields nil :list))))
     (initialize-method-cache new-object)
     (send :initialize-fields new-object)

@@ -184,7 +184,7 @@
 	   self transform-declaration-field-descriptor is-a
 	   compose-blank-fields make-field-initializer initialize
 	   initialize-prototypes initialize-ioforms =menu= =menubar=
-	   object-address-string draw-string draw-string-blended
+	   object-address-string draw-string draw-string-blended make-menu
 	   find-text-image make-text-image clear-text-image-cache
 	   =block= *token-types* *block-categories* *block-colors*
 	   input 

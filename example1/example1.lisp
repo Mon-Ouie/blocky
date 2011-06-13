@@ -52,23 +52,9 @@
   '(((:up) (move :north 5 :pixels))
     ((:down) (move :south 5 :pixels)) 
     ((:right) (move :east 5 :pixels)) 
-    ((:left) (move :west 5 :pixels))
-    ((:space) (talk)))
+    ((:left) (move :west 5 :pixels)))
   :x (/ *screen-width* 2)
   :y (/ *screen-height* 2))
-
-(defparameter *phrases* 
-  '("What lovely TTF font rendering!"
-    "My name is Blocky and I'm gonna stomp on you."
-    "Pardon me. Would you have any Grey Poupon?"
-    "Stare deeply into my pixels."
-    "May I help you?"
-    "How art thou feeling, Avatar?"))
-  
-(define-method talk blocky ()
-  (with-fields (x y) self
-    (drop self (new balloon (random-choose *phrases*))
-	  100 100)))
 
 ;;; Then define an empty world with a background.
 

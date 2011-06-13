@@ -40,7 +40,8 @@
 (in-package :ioforms) 
 
 (defun make-uuid ()
-  (uuid:print-bytes nil (uuid:make-v1-uuid)))
+  (let ((string (uuid:print-bytes nil (uuid:make-v1-uuid))))
+    (prog1 string (message "generated uuid:~A" string))))
 
 (defvar *database*)
 
@@ -48,16 +49,17 @@
   (setf *database* (make-hash-table :test 'equal)))
 
 (defun add-object-to-database (object)
-  (let (uuid)
-    (when (not (has-local-value :uuid object))
-      (setf uuid (make-uuid))
-      (setf (field-value :uuid object) uuid))
-    (setf (gethash (or uuid (field-value :uuid object))
+  ;; (let (uuid)
+  ;;   (when (not (has-local-value :uuid object))
+  ;;     (setf uuid (make-uuid))
+  ;;     (setf (field-value :uuid object) uuid))
+    (setf (gethash (field-value :uuid object)
 		   *database*)
-	  object)))
+	  object))
 
 (defun get-object-by-uuid (uuid)
-  (gethash uuid *database*))
+  (or (gethash uuid *database*)
+      (error "Cannot find object for uuid ~S" uuid)))
 
 (defun random-choose (set)
   (nth (random (length set)) set))
@@ -2049,6 +2051,7 @@ of the music."
   (initialize-textures-maybe :force)
   (initialize-colors)
   (initialize-sound)
+  (initialize-database)
   (open-project "standard"))
 
 ;; (defun ioforms (&rest args)

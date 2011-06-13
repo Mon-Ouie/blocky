@@ -131,27 +131,28 @@ cells."
       (move-to-grid self nearest-row nearest-column))))
 
 (define-method move cell (direction &optional (distance 1) ignore-obstacles)
-  "Move this cell one step in DIRECTION on the grid. If
-IGNORE-OBSTACLES is non-nil, the move will occur even if an obstacle
-is in the way. Returns non-nil if a move occurred."
-  (let ((world *world*))
-    (multiple-value-bind (r c) 
-	(step-in-direction ^row ^column direction distance)
-      (cond ((null (grid-location world r c)) ;; are we at the edge?
-	     ;; return nil because we didn't move
-	     (prog1 nil
-	     ;; edge conditions only affect player for now
-	       (when (is-player self)
-		 (ecase (field-value :edge-condition world)
-		   (:block nil)
-		   (:wrap nil) ;; TODO implement this for planet maps
-		   (:exit (exit *universe*))))))
-	    (t
-	     (when (or ignore-obstacles 
-		       (not (obstacle-at-p *world* r c)))
-	       ;; return t because we moved
-	       (prog1 t
-		 (move-cell world self r c))))))))
+  (error "This move method needs rewriting."))
+;;   "Move this cell one step in DIRECTION on the grid. If
+;; IGNORE-OBSTACLES is non-nil, the move will occur even if an obstacle
+;; is in the way. Returns non-nil if a move occurred."
+;;   (let ((world *world*))
+;;     (multiple-value-bind (r c) 
+;; 	(step-in-direction ^row ^column direction distance)
+;;       (cond ((null (grid-location world r c)) ;; are we at the edge?
+;; 	     ;; return nil because we didn't move
+;; 	     (prog1 nil
+;; 	     ;; edge conditions only affect player for now
+;; 	       (when (is-player self)
+;; 		 (ecase (field-value :edge-condition world)
+;; 		   (:block nil)
+;; 		   (:wrap nil) ;; TODO implement this for planet maps
+;; 		   (:exit (exit *universe*))))))
+;; 	    (t
+;; 	     (when (or ignore-obstacles 
+;; 		       (not (obstacle-at-p *world* r c)))
+;; 	       ;; return t because we moved
+;; 	       (prog1 t
+;; 		 (move-cell world self r c))))))))
 
 (define-method bounding-box cell ()
   (multiple-value-bind (x y)
@@ -160,16 +161,13 @@ is in the way. Returns non-nil if a move occurred."
       (values x y size size))))
 
 (define-method collide cell (object)
+  (declare (ignore object))
   "Respond to a collision detected with OBJECT."
   nil)
 
 ;;; Sprites
 
-(define-prototype sprite (:parent =cell=
-				  :documentation 
-"Sprites are IOFORMS game objects derived from cells. Although most
-behaviors are compatible, sprites can take any pixel location in the
-world, and collision detection is performed between sprites and cells.")
+(defcell sprite 
   (type :initform :sprite)
   (height :initform nil :documentation "The cached width of the bounding box.")
   (width :initform nil :documentation "The cached height of the bounding box."))
@@ -211,6 +209,23 @@ world, and collision detection is performed between sprites and cells.")
 (define-method die sprite ()
   (remove-sprite *world* self))
 
+(defparameter *sprite-context-menu*
+  '((:label "Inspect" :action :inspect)
+    (:label "Create reference" :action :create-reference)
+    (:label "Destroy" :action :destroy)
+    (:label "Make a copy" :action :copy)))
+
+(define-method create-reference sprite ()
+  (with-fields (x y) self
+      (add *script* (new sprite-id self) x y)))
+
+(define-method context-menu sprite ()
+  (let ((label (format nil "Sprite menu for ~A" 
+		       (get-some-object-name self))))
+    (new menu :label label
+	 :expanded t
+	      :inputs (make-menu *sprite-context-menu* self))))
+		    
 ;;; Sprite locations
 
 (define-method grid-coordinates sprite ()
@@ -222,6 +237,17 @@ world, and collision detection is performed between sprites and cells.")
 
 (define-method coordinates sprite ()
   (values ^x ^y ^z))
+
+;;; Layout
+
+(define-method layout sprite ()
+  (with-fields (height width image) self
+    (setf height (image-height image))
+    (setf width (image-width image))))
+
+(define-method draw-highlight sprite ())
+(define-method draw-hover sprite ())
+(define-method draw-border sprite ())
 
 ;;; Sprite movement
 

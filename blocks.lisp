@@ -62,7 +62,7 @@
 
 (in-package :ioforms)
 
-(defvar *target*)
+(defvar *target* nil)
 
 (defmacro with-target (target &body body)
   `(let ((*target* ,target))
@@ -110,6 +110,9 @@ ARGS are field specifiers, as with `define-prototype'."
   "Update the simulation one step forward in time."
   nil)
 
+(define-method change-image block (image)
+  (setf ^image image))
+
 (define-method pin block ()
   (setf ^pinned t))
 
@@ -152,7 +155,7 @@ ARGS are field specifiers, as with `define-prototype'."
 (define-method initialize block (&rest blocks)
   "Prepare an empty block, or if BLOCKS is non-empty, a block
 initialized with BLOCKS as inputs."
-  (with-fields (inputs schema results input-widths) self
+  (with-fields (inputs schema results input-widths uuid) self
     (let ((arity (length schema)))
       (when (not (zerop arity))
 	(setf inputs (make-list arity))
@@ -160,7 +163,8 @@ initialized with BLOCKS as inputs."
 	(setf input-widths (make-list arity))
 	(dotimes (n (length blocks))
 	  (setf (nth n inputs)
-		(nth n blocks)))))))
+		(nth n blocks)))))
+    (add-object-to-database self)))
 
 ;;; Defining keyboard/mouse/joystick events for blocks
 
@@ -228,44 +232,49 @@ the return value of the function (if any)."
 
 (defvar *make-block-package* nil)
 
-(defun make-block-ext (value)
-  (if (listp value)
-      (if (symbolp (first value))
-	  ;; handle keywords that are to be passed thru
-	  ;; (progn
-	  ;;   (when (not (boundp (make-special-variable-name (first value))))
-	  ;;     (let ((entry (clone =symbol=)))
-	  ;; 	(prog1 entry (set-data entry (first value)))))
-	  (destructuring-bind (operation &rest args) value
-	    (let ((block (apply #'clone
-				(symbol-value
-				 (make-special-variable-name
-				  operation
-				  *make-block-package*))
-				(mapcar #'make-block-ext args))))
-	      (prog1 block
-		(with-fields (inputs) block
-		  (setf inputs
-			(mapcar #'(lambda (value)
-				    (or value (null-block)))
-				inputs))
-		  (dolist (input inputs)
-		    (set-parent input block))))))
-	  (make-block-ext (first value)))
-      (let ((prototype
-	     (symbol-value
-	      (etypecase value
-		;; see also `defentry' below.
-		(integer '=integer=)
-		(float '=float=)
-		(string '=string=)
-		(symbol '=symbol=)))))
-	(let ((entry (clone prototype)))
-	  (prog1 entry
-	    (set-data entry value))))))
+(defun make-block-package ()
+  (project-package-name))
 
+(defun make-block-ext (value)
+  (if (null value)
+      (null-block)
+      (if (listp value) 
+	  (if (symbolp (first value))
+	      ;; handle keywords that are to be passed thru
+	      ;; (progn
+	      ;;   (when (not (boundp (make-special-variable-name (first value))))
+	      ;;     (let ((entry (clone =symbol=)))
+	      ;; 	(prog1 entry (set-data entry (first value)))))
+	      (destructuring-bind (operation &rest args) value
+		(let ((block (apply #'clone
+				    (symbol-value
+				     (make-special-variable-name
+				      operation
+				      (make-block-package)))
+				    (mapcar #'make-block-ext args))))
+		  (prog1 block
+		    (with-fields (inputs) block
+		      (setf inputs
+			    (mapcar #'(lambda (value)
+					(or value (null-block)))
+				    inputs))
+		      (dolist (input inputs)
+			(set-parent input block))))))
+	      (make-block-ext (first value)))
+	  (let ((prototype
+		 (symbol-value
+		  (etypecase value
+		    ;; see also `defentry' below.
+		    (integer '=integer=)
+		    (float '=float=)
+		    (string '=string=)
+		    (symbol '=symbol=)))))
+	    (let ((entry (clone prototype)))
+	      (prog1 entry
+		(set-data entry value)))))))
+  
 (defmacro make-block (expression)
-  "Expand EXPRESSION specifying a block diagram into real blocks.
+    "Expand EXPRESSION specifying a block diagram into real blocks.
 EXPRESSION is of the form:
 
   (BLOCK-NAME ARG1 ARG2 ... ARGN)
@@ -288,7 +297,7 @@ areas.")
   '(:block :anything :integer :float :number :string :symbol)
   "List of keywords identifying the type of a particular input.")
 
-(define-method move block (x y)
+(define-method move-to block (x y &optional z)
   "Move the block to a new (X Y) location."
   (setf ^x x)
   (setf ^y y))
@@ -354,6 +363,8 @@ areas.")
     (when parent
       (unplug parent self))))
 
+(define-method context-menu block ())
+
 (define-method execute-inputs block ()
   "Execute all blocks in ^INPUTS from left-to-right. Results are
 placed in corresponding positions of ^RESULTS. Override this method
@@ -383,9 +394,9 @@ something else. See also `defblock' and `send'."
 	       (if (symbolp item)
 		   (make-keyword item)
 		   item)))
-      (assert *target*)
-      (apply #'ioforms:send nil operation *target*
-	     (mapcar #'clean results)))))
+      (when *target*
+	(apply #'ioforms:send nil operation *target*
+	       (mapcar #'clean results))))))
 
 (define-method run block ()
   "Run input blocks to produce results, then run this block with
@@ -665,7 +676,7 @@ override all colors."
 	     (left (+ x (handle-width self)))
 	     (max-height (font-height font)))
 	(labels ((move-input (input)
-		   (move input (+ left dash) y)
+		   (move-to input (+ left dash) y)
 		   (layout input)
 		   (setf max-height (max max-height (field-value :height input)))
 		   (field-value :width input))
@@ -872,7 +883,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
       (setf width (dash 8))
       (dolist (element inputs)
 ;	(message "layout: ~S" (list x y0 width))
-	(move element (ldash x) y0)
+	(move-to element (ldash x) y0)
 	(layout element)
 	(incf height (+ (ldash) (field-value :height element)))
 	(incf y0 (field-value :height element))
@@ -956,7 +967,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (setf (field-value :parent block) nil) ;; TODO self?
     (when (and (integerp x)
 	       (integerp y))
-      (move block x y))
+      (move-to block x y))
     (report-layout-change self)))
 
 ;; (define-method header-height script ()
@@ -964,7 +975,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 ;;     (let ((name (first inputs))
 ;; 	  (height (font-height *block-font*)))
 ;;       (prog1 height
-;; 	(move name
+;; 	(move-to name
 ;; 	       (+ x (handle-width self))
 ;; 	       (+ y height))))))
 

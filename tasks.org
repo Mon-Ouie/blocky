@@ -1,6 +1,13 @@
-** TODO [#A] DEMO VIDEO some working menu items
+** TODO [#A] close all submenus when closing a menu
+** TODO [#A] CONTEXT MENU for sprite, option MAKE REFERENCE
+** TODO [#B] fix glitch at top left corner menu on startup before any click of Project m
+** TODO [#B] fix cursor rendering in prompt not lining up with characters
 ** TODO [#A] fix listener-supplied arguments not spawning
+** TODO [#B] system menus should close when you click on the background or on other widget
+** TODO [#A] DEMO VIDEO some working menu items
+** TODO [#B] editing of numbers/data entry values in-place
 ** TODO [#A] Create DEFBLOCK block
+** TODO [#B] comment textbox
 ** TODO [#A] comment block for output messages in listener etc, trap errors
 ** TODO [#B] button to add arguments to + etc
 ** TODO [#B] Revise widgets.lisp for OpenGL

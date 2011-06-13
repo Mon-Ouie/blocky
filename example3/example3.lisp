@@ -25,46 +25,66 @@
   
 (in-package :example3)
 
-;; (setf *screen-width* 480)
-;; (setf *screen-height* 380)
-
 (setf *screen-width* 640)
 (setf *screen-height* 480)
-
-(setf *window-title* "Blocks demo")
+(setf *window-title* "blocky.io")
+(enable-key-repeat 9 3)
 
 (defparameter *font* "sans-bold-12")
 
-(defblock hello1
-  :operation :foo
-  :x 20 :y 20 :height 100 :width 200 :category :sensing)
+;;; Blocky
 
-(defblock hello2
-  :x 100 :y 140 :height 40 :width 250 :category :control)
+(defresource (:name "blocky" :type :image :file "blocky.png"))
 
-(defblock hello3
-  :x 20 :y 400 :height 40 :width 40 :category :operators)
+(defsprite blocky
+  :image "blocky"
+  :default-events
+  '(((:up) (move :north 5 :pixels))
+    ((:down) (move :south 5 :pixels)) 
+    ((:right) (move :east 5 :pixels)) 
+    ((:left) (move :west 5 :pixels))
+    ((:space) (:talk))))
+
+(defparameter *phrases* 
+  '("What lovely TTF font rendering!"
+    "My name is Blocky and I'm gonna stomp on you."
+    "Pardon me. Would you have any Grey Poupon?"
+    "Stare deeply into my pixels."
+    "May I help you?"
+    "How art thou feeling, Avatar?"))
+  
+(define-method talk blocky ()
+  (with-fields (x y) self
+    (drop self (new balloon (random-choose *phrases*))
+	  100 100)))
+
+;;; Blocky's friend 
+
+(defresource (:name "friend" :type :image :file "friend.png"))
+
+(defsprite friend
+  :image "friend")
 
 (defun example3 ()
   (let ((script (new script :menu t))
 	(shell (new shell)))
-    (add script (new listener) 300 100)
-        (add script 
-    	 (new menu :label "outer menu" 
-    	           :expanded t
-    		   :inputs 
-    		   (list (new menu :label "move north" :action :move-north)
-    			 (new menu :label "move south" :action :move-south)
-    			 (new menu :label "move east" :action :move-east)
-    			 (new menu :label "move west" :action :move-west)
-    			 (new menu :label "other" 
-    				   :inputs
-    				   (list (new menu :label "move north" :action :move-north)
-    					 (new menu :label "move south" :action :move-south)
-    					 (new menu :label "move east" :action :move-east)
-    						      (new menu :label "move west" :action :move-west))))))
-
+    (new system)
     (open-script shell script)
     (add-block shell)))
+
+
+    	 ;; (new menu :label "outer menu" 
+    	 ;;           :expanded t
+    	 ;; 	   :inputs 
+    	 ;; 	   (list (new menu :label "move north" :action :move-north)
+    	 ;; 		 (new menu :label "move south" :action :move-south)
+    	 ;; 		 (new menu :label "move east" :action :move-east)
+    	 ;; 		 (new menu :label "move west" :action :move-west)
+    	 ;; 		 (new menu :label "other" 
+    	 ;; 			   :inputs
+    	 ;; 			   (list (new menu :label "move north" :action :move-north)
+    	 ;; 				 (new menu :label "move south" :action :move-south)
+    	 ;; 				 (new menu :label "move east" :action :move-east)
+    	 ;; 					      (new menu :label "move west" :action :move-west))))))
 	     
 ;;; example3.lisp ends here

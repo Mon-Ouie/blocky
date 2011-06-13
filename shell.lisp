@@ -190,7 +190,8 @@
 	;; during dragging we draw the dragged block.
 	(if drag 
 	    (progn (layout drag)
-		   (draw-ghost ghost)
+		   (when (field-value :parent drag)
+		     (draw-ghost ghost))
 		   (draw drag)
 		   (when hover 
 		     (draw-hover hover)))
@@ -220,11 +221,15 @@
 	  (1  (with-fields (click-start focused-block) self
 		(setf focused-block block)
 		(setf click-start (cons x y))))
-	  (3 (run block)))
+	  (3 (let ((menu (context-menu block)))
+	       (when menu 
+		 (with-script ^script
+		   (add *script* menu x y))))))
 	(setf ^focused-block nil))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
-  (with-fields (inputs hover highlight click-start drag-offset drag-start drag) self
+  (with-fields (inputs hover highlight script click-start drag-offset
+  drag-start drag) self
     (setf hover nil)
     (drag-maybe self mouse-x mouse-y)
     (if drag
@@ -232,9 +237,13 @@
 	  (let ((target-x (- mouse-x ox))
 		(target-y (- mouse-y oy)))
 	    (setf hover (hit-script self target-x target-y))
-	    (move drag target-x target-y)))
+	    (move-to drag target-x target-y)))
 	(progn
-	  (setf highlight (hit-script self mouse-x mouse-y))))))
+	  (setf highlight (hit-script self mouse-x mouse-y))
+	  (when (null highlight)
+	    (let ((menu (field-value :menu script)))
+	      (when menu
+		(with-script script (close-menus menu)))))))))
 
 (define-method mouse-up shell (x y &optional button)
   (with-fields 

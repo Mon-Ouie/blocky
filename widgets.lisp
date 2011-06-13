@@ -221,7 +221,7 @@ auto-updated displays."
 
 (defparameter *prompt-blink-time* 24)
 (defparameter *prompt-cursor-color* "magenta")
-(defparameter *prompt-cursor-blink-color* "yellow")
+(defparameter *prompt-cursor-blink-color* "red")
 
 (defparameter *direct-prompt-string* "> ")
 (defparameter *forward-prompt-string* "Press CONTROL-X to enter the prompt.")
@@ -543,8 +543,7 @@ The modes can be toggled with CONTROL-X.
     (when (> (- 0 *prompt-blink-time*) clock)
       (setf clock *prompt-blink-time*))
     
-    (let* ((image ^image)
-	   (font-height (font-height *block-font*))
+    (let* ((font-height (font-height *block-font*))
 	   (prompt-height (+ (* 2 *default-prompt-margin*)
 			     font-height))
 	   (strings-y *default-prompt-margin*)
@@ -578,7 +577,8 @@ The modes can be toggled with CONTROL-X.
       (draw-string prompt-string
 		   (+ x *default-prompt-margin*)
 		   (+ y strings-y)
-		   :color "white"))
+		   :color "white"
+		   :font *block-font*))
     (update-layout-maybe self)
     ;; draw current command line text
     (when (null line) (setf line ""))
@@ -587,7 +587,8 @@ The modes can be toggled with CONTROL-X.
 		   (+ x
 		      (font-text-extents prompt-string *block-font*))
 		   (+ y strings-y)
-		   :color "white")))))
+		   :color "white"
+		   :font *block-font*)))))
 
 
 (define-method layout prompt ())
@@ -1046,28 +1047,34 @@ text INSERTION to be inserted at point."
   action target (expanded :initform nil) (visible :initform t))
 
 (define-method initialize menu 
-    (&key action (target *system*) top-level inputs
-    expanded (label "blank menu item..."))
+    (&key action target top-level inputs 
+	  schema expanded (label "blank menu item..."))
   (parent/initialize self)
   (setf ^action action
 	^expanded expanded
 	^target target
+	^schema schema
 	^top-level top-level
 	^inputs inputs
 	^label label)
   (when inputs
     (dolist (each inputs)
       (pin each)
-      (set-parent each self))))
+      (set-parent each self)))
+  (message "MENU ~S" 
+	   (mapcar #'(lambda (x)
+		       (with-fields (target) x
+			 (when x (get-some-object-name x))))
+		   inputs)))
 
 (define-method accept menu (&rest args) nil)
 
 (define-method run menu ())
 
 (define-method click menu ()
-  (with-fields (expanded action) self
+  (with-fields (expanded action target) self
     (if (keywordp action)
-        (when *target* (send action *target*))
+        (send action (or target *system*))
 	(progn 
 	  (setf expanded (if expanded nil t))
 	  (report-layout-change *script*)))))
@@ -1091,12 +1098,16 @@ text INSERTION to be inserted at point."
 	  (+ (dash 2) (font-text-extents string *block-font*)))))
 
 (define-method layout menu ()
-  (with-fields (expanded dash inputs width) self
+  (with-fields (expanded dash inputs label width) self
     (if expanded 
 	;; we're an expanded submenu. lay it out
 	(progn 
 	  (setf dash 1)
 	  (layout-as-list self)
+	  (when label 
+	    (setf width 
+		  (max width 
+		       (dash 4 (font-text-extents label *block-font*)))))
 	  ;; make all inputs equally wide
 	  (dolist (each inputs)
 	    (setf (field-value :width each) (- width (dash 2)))))
@@ -1144,6 +1155,21 @@ text INSERTION to be inserted at point."
 	  ;; otherwise just draw menu name and highlight, if any
 	  (draw-label-string self (display-string self))))))
 
+(define-method minimize menu ()
+  (setf ^expanded nil))
+
+;; see system.lisp for example menu
+(defun make-menu (items &optional target)
+  (labels ((expand (item)
+	     (if (listp item)
+		 (if (listp (first item))
+		     (mapcar #'expand item)
+		     (apply #'clone =menu= 
+			    :target target
+			    (mapcar #'expand item)))
+		 item)))
+    (expand items)))
+
 ;;; A global menu bar
 
 (defblock menubar :category :menu)
@@ -1163,7 +1189,7 @@ text INSERTION to be inserted at point."
     (setf x 0 y 0 width *screen-width* height (dash 1))
     (let ((x1 (dash 1)))
       (dolist (item inputs)
-	(move item x1 y)
+	(move-to item x1 y)
 	(layout item)
 	(incf x1 (dash 2 (field-value :width item)))
 	(setf height (max height (field-value :height item)))))))
@@ -1179,5 +1205,11 @@ text INSERTION to be inserted at point."
       (with-fields (inputs) self
 	(dolist (each inputs)
 	  (draw each))))))
+
+(define-method close-menus menubar ()
+  (with-fields (inputs) self
+    (when (some #'is-expanded inputs)
+      (mapc #'minimize ^inputs)
+      (report-layout-change *script*))))
 
 ;;; widgets.lisp ends here

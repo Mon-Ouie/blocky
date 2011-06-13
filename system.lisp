@@ -30,7 +30,8 @@
   '((:label "Project"
      :inputs
      ((:label "Create a new project" :action :create-project)
-      (:label "Open an existing project" :action :open-project)
+      (:label "Open an existing project" :action :open-existing-project)
+;	      :schema ((:name . :string)))
       (:label "Save current changes" :action :save-changes)
       (:label "Show current changes without saving" :action :show-changes)
       (:label "Export as archive" :action :export-archive)
@@ -65,7 +66,7 @@
 	(:label "Browse code" :action :browse-code)))))
     (:label "Tools" 
      :inputs
-     ((:label "Create an interactive command prompt" :action :create-prompt)
+     ((:label "Create a command prompt" :action :create-prompt)
       (:label "Create a note" :action :create-note)
       (:label "Version control" :action :version-control)))
     (:label "Workspace" :inputs
@@ -100,23 +101,36 @@
       (:label "Language Reference" :action :language-reference)
       (:label "Licensing information" :action :licensing-information)))))
     
-(defun make-menu (items)
-  (labels ((expand (item)
-	     (if (listp item)
-		 (if (listp (first item))
-		     (mapcar #'expand item)
-		     (apply #'clone =menu= (mapcar #'expand item)))
-		 item)))
-    (expand items)))
-
 (defblock system
   (type :initform :system)
   (shell :initform nil)
   (running :initform nil))
 
 (define-method initialize system ()
-  (parent/initialize self)
-  (add-block (new menubar (make-menu *system-menu*))))
+  (setf *system* self))
+
+(define-method create-prompt system ()
+  (add *script* (new listener) 100 100))
+
+(define-method create-project system ())
+
+(define-method open-existing-project system ()
+  ;; TODO how to get arguments?
+  (open-project project))
+
+(define-method save-changes system ()
+  (save-project))
+
+(define-method save-everything system ()
+  (save-project :force))
+
+(define-method ticks system ()
+  (get-ticks))
+
+(define-method shutdown system ()
+  ;; TODO destroy textures
+  (ioforms:quit t))
+
 
 ;; (define-method get-blocks system ()
 ;;   ^children)
@@ -160,21 +174,6 @@
 ;;   (run-project *project*)
 ;;   (run-main-loop))
 
-;; (define-method open system (project)
-;;   (open-project project))
-
-;; (define-method save system ()
-;;   (save-project))
-
-;; (define-method save-everything system ()
-;;   (save-project :force))
-
-;; (define-method ticks system ()
-;;   (get-ticks))
-
-;; (define-method shutdown system ()
-;;   ;; TODO destroy textures
-;;   (ioforms:quit t))
 
 ;; (define-method draw system (destination)
 ;;   FIXME)
