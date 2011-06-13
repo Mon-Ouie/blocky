@@ -194,11 +194,11 @@
 		   (draw drag)
 		   (when hover 
 		     (draw-hover hover)))
-	    (progn (when highlight
-		     (draw-highlight highlight))
-		   (when focused-block
-		     (draw-border focused-block)
-		     (draw focused-block))))))))
+	    (when focused-block
+	      (draw-border focused-block)
+	      (draw focused-block)))
+	(when highlight
+	  (draw-highlight highlight))))))
 
 (defparameter *minimum-drag-distance* 7)
 
@@ -233,7 +233,8 @@
 		(target-y (- mouse-y oy)))
 	    (setf hover (hit-script self target-x target-y))
 	    (move drag target-x target-y)))
-	(setf highlight (hit-script self mouse-x mouse-y)))))
+	(progn
+	  (setf highlight (hit-script self mouse-x mouse-y))))))
 
 (define-method mouse-up shell (x y &optional button)
   (with-fields 

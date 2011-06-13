@@ -1042,14 +1042,17 @@ text INSERTION to be inserted at point."
 
 (define-prototype menu (:parent =list=)
   (category :initform :menu)
+  (top-level :initform nil)
   action target (expanded :initform nil) (visible :initform t))
 
 (define-method initialize menu 
-    (&key action target inputs expanded (label "blank menu item..."))
+    (&key action (target *system*) top-level inputs
+    expanded (label "blank menu item..."))
   (parent/initialize self)
   (setf ^action action
 	^expanded expanded
 	^target target
+	^top-level top-level
 	^inputs inputs
 	^label label)
   (when inputs
@@ -1067,17 +1070,19 @@ text INSERTION to be inserted at point."
         (when *target* (send action *target*))
 	(progn 
 	  (setf expanded (if expanded nil t))
-	  (report-layout-change *script*)
-	  (message "EXPANDED = ~S" expanded)))))
+	  (report-layout-change *script*)))))
+
+(define-method is-expanded menu ()
+  ^expanded)
 
 (define-method display-string menu ()	    
-  (with-fields (action label) self
+  (with-fields (action label top-level) self
     (let ((ellipsis (concatenate 'string label *null-display-string*)))
-    (if (null action)
-	ellipsis
-	(etypecase action
-	  (ioforms:object ellipsis)
-	  (keyword label))))))
+      (if action
+	  (etypecase action
+	    (ioforms:object ellipsis)
+	    (keyword label))
+	  (if top-level label ellipsis)))))
 
 (define-method layout-as-string menu (string)
   (with-fields (height width) self
@@ -1113,15 +1118,13 @@ text INSERTION to be inserted at point."
 		 (dash -3 x width)
 		 (dash 2 y header 1)
 		 :color (find-color self :shadow))
-      ;; (draw-line (dash 2 x)
-      ;; 		 (dash 2 y header 1)
-      ;; 		 (dash -3 x width)
-      ;; 		 (dash 2 y header 1)
-      ;; 		 :color (find-color self :highlight))
       (dolist (each inputs)
 	(draw each)))))
 
 (define-method draw-hover menu ()
+  nil)
+
+(define-method draw-border menu ()
   nil)
 
 (define-method draw-highlight menu ()
@@ -1129,7 +1132,7 @@ text INSERTION to be inserted at point."
     (when parent
       (with-fields (x width) parent
 	(when (not expanded)
-	  (draw-box x y width height
+	  (draw-box x (+ y (dash 1)) width (+ height 1)
 		  :color *highlight-background-color*)
 	  (draw-label-string self (display-string self)))))))
   
@@ -1140,5 +1143,41 @@ text INSERTION to be inserted at point."
 	  (draw-expanded self label)
 	  ;; otherwise just draw menu name and highlight, if any
 	  (draw-label-string self (display-string self))))))
+
+;;; A global menu bar
+
+(defblock menubar :category :menu)
+
+(define-method initialize menubar (menus)
+  (parent/initialize self)
+  (with-fields (inputs) self
+    (setf inputs menus)
+    (dolist (each menus)
+      (setf (field-value :top-level each) t)
+      (pin each))))
+
+(define-method draw-border menubar () nil)
+
+(define-method layout menubar ()
+  (with-fields (x y width height inputs) self
+    (setf x 0 y 0 width *screen-width* height (dash 1))
+    (let ((x1 (dash 1)))
+      (dolist (item inputs)
+	(move item x1 y)
+	(layout item)
+	(incf x1 (dash 2 (field-value :width item)))
+	(setf height (max height (field-value :height item)))))))
+        
+(define-method draw menubar ()
+  (with-fields (x y width inputs) self
+    (let ((bar-height (dash 2 1 (font-height *block-font*))))
+      (draw-box x y 
+		width bar-height
+		:color (find-color self))
+      (draw-line x bar-height width bar-height
+		 :color (find-color self :shadow))
+      (with-fields (inputs) self
+	(dolist (each inputs)
+	  (draw each))))))
 
 ;;; widgets.lisp ends here

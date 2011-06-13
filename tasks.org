@@ -1,26 +1,21 @@
-
-** TODO popup/pulldown menu widget
-** TODO [#A] Fix clicking-on-background bug
-** TODO [#B] highlight menu items (hover)
-** TODO [#B] menu bar widget appears at top left when mouse goes there
-** TODO [#C] x button for closing menu
-** TODO [#C] pin toggle button
-** TODO [#B] show target name in menu
-** TODO right click context menus!
-** TODO double click to run blocks
-** TODO [#B] pretty rubberband movement
-** TODO fix listener-supplied arguments not spawning
-** TODO comment block for output messages in listener etc, trap errors
-** TODO tab to switch focus between all top-level blocks
-
-** TODO (input :foo)  named input access.
-** TODO fix input-widths
-** TODO allow varying inputs length (i.e. no schema)
-** TODO [#C] allow string-valued method fields. resource id's of method block, uuid?
+** TODO [#A] DEMO VIDEO some working menu items
+** TODO [#A] fix listener-supplied arguments not spawning
 ** TODO [#A] Create DEFBLOCK block
+** TODO [#A] comment block for output messages in listener etc, trap errors
+** TODO [#B] button to add arguments to + etc
 ** TODO [#B] Revise widgets.lisp for OpenGL
+** TODO [#B] disabled menu items check for presence of method in target and/or condition
+** TODO [#B] double click to run blocks
+** TODO [#B] or, escape to toggle menu
+** TODO [#B] right click context menus!
+** TODO [#B] show target name in menu
+** TODO [#B] tab to switch focus between all top-level blocks
+** TODO [#C] ALPHA issues for PNG images
+** TODO [#C] allow string-valued method fields. resource id's of method block, uuid?
+** TODO [#C] pin toggle button
+** TODO [#C] pretty rubberband movement
+** TODO [#C] x button for closing menu
 ** TODO [#C] yellow comment sticky note boxes
-** TODO [#B] ALPHA issues for PNG images
 <|3b|> you want 'save color values from transparent pixels', and need to make
        sure the pixels are white with 0 alpha
 <|3b|> also, looks like you weren't passing blend to draw-circle from

@@ -32,6 +32,7 @@
 	       (:file "blocks")
 	       (:file "widgets")
 	       (:file "shell")
+	       (:file "system")
 	       (:file "things")
 	       (:file "worlds")
 	       (:file "library")))
