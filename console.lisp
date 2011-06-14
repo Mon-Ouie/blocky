@@ -925,7 +925,10 @@ This is where all saved objects are stored.")
 (defvar *executable* nil)
 
 (defun project-package-name (&optional (project-name *project*))
-  (or *project-package-name* (make-keyword project-name)))
+  (or *project-package-name* 
+      (when project-name 
+	(make-keyword project-name))
+      :ioforms))
 
 (defun make-directory-maybe (directory)
   (ensure-directories-exist (make-pathname :name "NAME" :type "TYPE"
