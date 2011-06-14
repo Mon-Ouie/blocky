@@ -156,14 +156,21 @@ ARGS are field specifiers, as with `define-prototype'."
   "Prepare an empty block, or if BLOCKS is non-empty, a block
 initialized with BLOCKS as inputs."
   (with-fields (inputs schema results input-widths uuid) self
-    (let ((arity (length schema)))
-      (when (not (zerop arity))
+    (message "BEFORE inputs:~S blocks:~S" (length inputs) (length blocks))
+    (let ((arity (if (plusp (length blocks))
+		     (length blocks)
+		     (length schema))))
+      (when (plusp arity)
 	(setf inputs (make-list arity))
 	(setf results (make-list arity))
 	(setf input-widths (make-list arity))
 	(dotimes (n (length blocks))
-	  (setf (nth n inputs)
-		(nth n blocks)))))
+	  (let ((input (nth n blocks)))
+	    (setf (field-value :parent input) self)
+	    (setf (nth n inputs) input)))))
+    (when inputs (message "INITIALIZED BLOCK WITH ~S INPUTS ~S" 
+			  (length inputs) (mapcar #'type-of inputs)))
+    (bind-any-default-events self)
     (add-object-to-database self)))
 
 ;;; Defining keyboard/mouse/joystick events for blocks
@@ -224,9 +231,9 @@ the return value of the function (if any)."
       (dolist (entry default-events)
 	(apply #'bind-event self entry)))))
 
-(define-method initialize block (&rest args)
-  (declare (ignore args))
-  (bind-any-default-events self))
+;; (define-method initialize block (&rest args)
+;;   (declare (ignore args))
+;;   (bind-any-default-events self))
 
 ;;; Creating blocks from S-expressions
 
@@ -259,103 +266,87 @@ the return value of the function (if any)."
      (string '=string=)
      (symbol '=symbol=))))
   
-(defun make-block3 (value)
+(defun is-action-spec (spec)
+  (and (listp spec)
+       (symbolp (first spec))))
+
+(defun is-list-spec (spec)
+    (and (not (null spec))
+	 (listp spec)))
+
+(defun data-block (datum)
+  (let ((entry (clone (data-entry-prototype datum))))
+    (prog1 entry
+      (set-data entry datum))))
+
+(defun make-block (value)
+  ;; use labels because we need to call make-block from inside
   (labels ((action-block (spec)
 	     (destructuring-bind (operation &rest arguments) spec
-	       (let ((block (clone 
-			     (symbol-value 
-			      (make-special-variable-name 
-			       operation
-			       (make-block-package))))))
-		 (prog1 block
-		   (with-fields (inputs) block
-		     (setf inputs  
-			   (mapcar #'(lambda (element)
-				       (if element
-					   (make-block3 element)
-					   (clone (symbol-value '=null=))))
-				   (or arguments inputs))))))))
-		     ;; (dolist (child inputs)
-		     ;;   (set-parent child block)))))))
-	   ;;
-	   (is-action (sexp) 
-	     (and (listp sexp)
-		  (symbolp (first sexp))
-		  (boundp (make-special-variable-name
-			   (first sexp))))) ;; (make-block-package)
-	   ;;
-	   (symbol-block (sym)
-	     (let ((entry (clone =symbol=)))
-	       (prog1 entry (set-data entry sym))))
-	   ;;
-	   (is-list (sexp)
-	     (and (not (null sexp))
-		  (listp sexp)))
-	   ;;
+	       (let ((object (apply #'clone 
+				    (symbol-value 
+				     (make-special-variable-name 
+				      operation
+				      (make-block-package)))
+				    (mapcar #'make-block arguments))))
+		 (prog1 (values object spec)
+		   (message "object inputs: ~S" (mapcar #'type-of 
+							(field-value :inputs object)))))))
 	   (list-block (items)
-	     (apply #'clone =list= (mapcar #'make-block3 items)))
-	   ;;
-	   (data-block (datum)
-	     (let ((entry (clone (data-entry-prototype datum))))
-	      (prog1 entry
-		(set-data entry datum)))))
-    ;;
-    (cond ((is-action value)
+	     (apply #'clone =list= (mapcar #'make-block items))))
+    (cond ((is-action-spec value)
 	   (action-block value))
-	  ((is-list value)
+	  ((is-list-spec value)
 	   (list-block value))
-	  ((symbolp value)
-	   (symbol-block value))
 	  (t (data-block value)))))
       
+;; (defun make-block (sexp)
+;;     "Expand SEXP specifying a block diagram into real blocks.
+;; SEXP is of the form:
 
-(defun make-block (sexp)
-    "Expand SEXP specifying a block diagram into real blocks.
-SEXP is of the form:
+;;   (BLOCK-NAME ARG1 ARG2 ... ARGN)
 
-  (BLOCK-NAME ARG1 ARG2 ... ARGN)
-
-Where BLOCK-NAME is the name of a prototype defined with `defblock'
-and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
-    (when (not (null sexp))
-      (if (listp sexp)
-	  ;; it's a list, handle either as new action block or new
-	  ;; plain list of blocks.
-	  (if (symbolp (first sexp))
-	      ;; ;; handle unbound symbols by making a symbol block
-	      ;; (if (not (boundp (make-special-variable-name (first sexp))))
-	      ;;     (let ((entry (clone =symbol=)))
-	      ;; 	    (prog1 entry (set-data entry (first sexp))))
-		  ;; handle bound symbols by making an action block 
-	      (destructuring-bind (operation &rest args) sexp
-		(let ((block (funcall #'clone
-				      (symbol-value
-				       (make-special-variable-name
-					operation
-					(make-block-package))))))
-		  (prog1 block
-		    (when args
-		      (with-fields (inputs) block
-			(setf inputs
-			      (mapcar #'make-block args))
-			(message "CREATED ACTION BLOCK: ~S" (list :ARGS1 args :INPUTS1 inputs))
-			(dolist (input inputs)
-			  (set-parent input block)))))))
-	      ;; make a list of blocks
-	      (clone =list= 
-		    (mapcar #'make-block sexp)))
-	  ;; we've got a piece of non-list data.
-	  (let ((prototype
-		 (symbol-value
-		  (etypecase sexp
-		    ;; see also `defentry' below.
-		    (integer '=integer=)
-		    (float '=float=)
-		    (string '=string=)
-		    (symbol '=symbol=)))))
-	    (let ((entry (clone prototype)))
-	      (prog1 entry
-		(set-data entry sexp)))))))
+;; Where BLOCK-NAME is the name of a prototype defined with `defblock'
+;; and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
+;;     (when (not (null sexp))
+;;       (if (listp sexp)
+;; 	  ;; it's a list, handle either as new action block or new
+;; 	  ;; plain list of blocks.
+;; 	  (if (symbolp (first sexp))
+;; 	      ;; ;; handle unbound symbols by making a symbol block
+;; 	      ;; (if (not (boundp (make-special-variable-name (first sexp))))
+;; 	      ;;     (let ((entry (clone =symbol=)))
+;; 	      ;; 	    (prog1 entry (set-data entry (first sexp))))
+;; 		  ;; handle bound symbols by making an action block 
+;; 	      (destructuring-bind (operation &rest args) sexp
+;; 		(let ((block (funcall #'clone
+;; 				      (symbol-value
+;; 				       (make-special-variable-name
+;; 					operation
+;; 					(make-block-package))))))
+;; 		  (prog1 block
+;; 		    (when args
+;; 		      (with-fields (inputs) block
+;; 			(setf inputs
+;; 			      (mapcar #'make-block args))
+;; 			(message "CREATED ACTION BLOCK: ~S" (list :ARGS1 args :INPUTS1 inputs))
+;; 			(dolist (input inputs)
+;; 			  (set-parent input block)))))))
+;; 	      ;; make a list of blocks
+;; 	      (clone =list= 
+;; 		    (mapcar #'make-block sexp)))
+;; 	  ;; we've got a piece of non-list data.
+;; 	  (let ((prototype
+;; 		 (symbol-value
+;; 		  (etypecase sexp
+;; 		    ;; see also `defentry' below.
+;; 		    (integer '=integer=)
+;; 		    (float '=float=)
+;; 		    (string '=string=)
+;; 		    (symbol '=symbol=)))))
+;; 	    (let ((entry (clone prototype)))
+;; 	      (prog1 entry
+;; 		(set-data entry sexp)))))))
   
   ;; (assert expression)
   ;; `(make-block-ext ',expression))

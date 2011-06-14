@@ -43,7 +43,7 @@
   (let ((string (uuid:print-bytes nil (uuid:make-v1-uuid))))
     (prog1 string (message "generated uuid:~A" string))))
 
-(defvar *database*)
+(defvar *database* nil)
 
 (defun initialize-database ()
   (setf *database* (make-hash-table :test 'equal)))
@@ -53,9 +53,11 @@
   ;;   (when (not (has-local-value :uuid object))
   ;;     (setf uuid (make-uuid))
   ;;     (setf (field-value :uuid object) uuid))
-    (setf (gethash (field-value :uuid object)
-		   *database*)
-	  object))
+  (when (null *database*)
+    (initialize-database))
+  (setf (gethash (field-value :uuid object)
+		 *database*)
+	object))
 
 (defun get-object-by-uuid (uuid)
   (or (gethash uuid *database*)
