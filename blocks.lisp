@@ -235,35 +235,104 @@ the return value of the function (if any)."
 (defun make-block-package ()
   (project-package-name))
 
-(defun make-block-ext (value)
-  (if (null value)
-      (null-block)
-      (if (listp value) 
-	  (if (symbolp (first value))
-	      ;; handle keywords that are to be passed thru
-	      ;; (progn
-	      ;;   (when (not (boundp (make-special-variable-name (first value))))
+(defun print-block (B)
+  (let (fields)
+    (flet ((add-field (field value)
+	     (push (list field value) fields)))
+      (typecase B
+	(ioforms:object 
+	 (let ((f2 (object-fields B)))
+	   (etypecase f2
+	     (hash-table (maphash #'add-field f2))
+	     (list (setf fields f2)))
+	   (cons (get-some-object-name B) fields)))
+	;; 
+	(list (mapcar #'print-block B))
+	(otherwise B)))))
+
+(defun make-block2 (value)
+  (when value 
+    (if (listp value) 
+	(if (symbolp (first value))
+	    (if (not (boundp (make-special-variable-name 
+			      (first value)
+			      (make-block-package))))
+		;; not bound. pass through as a symbol data entry block
+		(let ((entry (clone =symbol=)))
+		  (prog1 entry (set-data entry (first value))))
+		;; bound. clone the corresponding block and fill in the inputs
+		(destructuring-bind (operation &rest args) value
+		  (let ((block (apply #'clone 
+				      (symbol-value 
+				       (make-special-variable-name 
+					operation
+					(make-block-package))))))
+		    (prog1 block
+		      (with-fields (inputs) block
+			(setf inputs 
+			      (mapcar #'(lambda (element)
+					  (if element
+					      (make-block2 element)
+					      (clone (symbol-value '=null=))))
+				      (or args inputs)))
+			(message "args: ~S inputs: ~S" args inputs)
+			(dolist (child inputs)
+			  (set-parent child block)))))))
+	    ;; not a call. just list the elements
+	    (apply #'clone =list= (mapcar #'make-block2 value)))
+	;; not a list
+	(let ((prototype 
+	       (symbol-value
+		(make-special-variable-name 
+		 (etypecase value
+		   ;; see also `defentry' below.
+		   (integer :integer)
+		   (float :float)
+		   (string :string)
+		   (symbol :symbol))))))
+	  (let ((entry (clone prototype)))
+	    (prog1 entry
+	      (set-data entry value)))))))
+
+(defun make-block (sexp)
+    "Expand SEXP specifying a block diagram into real blocks.
+SEXP is of the form:
+
+  (BLOCK-NAME ARG1 ARG2 ... ARGN)
+
+Where BLOCK-NAME is the name of a prototype defined with `defblock'
+and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
+    (when (not (null sexp))
+      (if (listp sexp)
+	  ;; it's a list, handle either as new action block or new
+	  ;; plain list of blocks.
+	  (if (symbolp (first sexp))
+	      ;; ;; handle unbound symbols by making a symbol block
+	      ;; (if (not (boundp (make-special-variable-name (first sexp))))
 	      ;;     (let ((entry (clone =symbol=)))
-	      ;; 	(prog1 entry (set-data entry (first value)))))
-	      (destructuring-bind (operation &rest args) value
-		(let ((block (apply #'clone
-				    (symbol-value
-				     (make-special-variable-name
-				      operation
-				      (make-block-package)))
-				    (mapcar #'make-block-ext args))))
+	      ;; 	    (prog1 entry (set-data entry (first sexp))))
+		  ;; handle bound symbols by making an action block 
+	      (destructuring-bind (operation &rest args) sexp
+		(let ((block (funcall #'clone
+				      (symbol-value
+				       (make-special-variable-name
+					operation
+					(make-block-package))))))
 		  (prog1 block
-		    (with-fields (inputs) block
-		      (setf inputs
-			    (mapcar #'(lambda (value)
-					(or value (null-block)))
-				    inputs))
-		      (dolist (input inputs)
-			(set-parent input block))))))
-	      (make-block-ext (first value)))
+		    (when args
+		      (with-fields (inputs) block
+			(setf inputs
+			      (mapcar #'make-block args))
+			(message "CREATED ACTION BLOCK: ~S" (list :ARGS1 args :INPUTS1 inputs))
+			(dolist (input inputs)
+			  (set-parent input block)))))))
+	      ;; make a list of blocks
+	      (clone =list= 
+		    (mapcar #'make-block sexp)))
+	  ;; we've got a piece of non-list data.
 	  (let ((prototype
 		 (symbol-value
-		  (etypecase value
+		  (etypecase sexp
 		    ;; see also `defentry' below.
 		    (integer '=integer=)
 		    (float '=float=)
@@ -271,21 +340,10 @@ the return value of the function (if any)."
 		    (symbol '=symbol=)))))
 	    (let ((entry (clone prototype)))
 	      (prog1 entry
-		(set-data entry value)))))))
+		(set-data entry sexp)))))))
   
-(defmacro make-block (expression)
-    "Expand EXPRESSION specifying a block diagram into real blocks.
-EXPRESSION is of the form:
-
-  (BLOCK-NAME ARG1 ARG2 ... ARGN)
-
-Where BLOCK-NAME is the name of a prototype defined with `defblock'
-and ARG1-ARGN are numbers, symbols, strings, or nested
-EXPRESSIONS.
-
- (The equals signs are not needed around BLOCK-NAME.)"
-  (assert expression)
-  `(make-block-ext ',expression))
+  ;; (assert expression)
+  ;; `(make-block-ext ',expression))
 
 (defparameter *block-categories*
   '(:system :motion :event :message :looks :sound :structure :data
@@ -905,6 +963,11 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	(draw-label-string self *null-display-string*)
 	(dolist (each inputs)
 	  (draw each)))))
+
+(define-method initialize list (&rest blocks)
+  (with-fields (inputs) self
+    (parent/initialize self)
+    (setf inputs blocks)))
 
 ;;; Composing blocks into larger programs, recursively.
 
