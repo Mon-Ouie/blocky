@@ -80,15 +80,12 @@
 	  (execute body)))))
 
 (defblock +
-  (type :initform :operators)
-  (schema :initform '((:a . :number)
-		      (:b . :number)))
-  (inputs :initform '(nil nil)))
+  (type :initform :operators))
 
-(define-method execute + ()
-  (with-fields (results) self
-    (when (every #'integerp results)
-      (apply #'+ results))))
+;; (define-method execute + ()
+;;   (with-fields (results) self
+;;     (when (every #'integerp results)
+;;       (apply #'+ results))))
 
 (defblock move
   (type :initform :motion)

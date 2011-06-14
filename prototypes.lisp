@@ -98,14 +98,12 @@ This program includes the free DejaVu fonts family. See the file
 		 (setf (gethash k a) v))
 	     b)))
 	       
-(defun make-special-variable-name (S &optional package)
+(defun make-special-variable-name (S &optional (package :ioforms))
   "Make the symbol S into a special variable name. This is used to
 make the names of the objects made with `define-prototype'."
   (let ((name (concatenate 'string "=" (symbol-name S) "=")))
-    (if package
-	(intern name package)
-	(intern name))))
-
+    (intern name package)))
+    
 ;;; Object data structure
 
 ;; Each object's "bookkeeping data" is stored in a structure. The

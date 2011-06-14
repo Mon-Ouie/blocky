@@ -1,24 +1,34 @@
-** TODO [#A] close all submenus when closing a menu
-** TODO [#A] CONTEXT MENU for sprite, option MAKE REFERENCE
-** TODO [#B] fix glitch at top left corner menu on startup before any click of Project m
-** TODO [#B] fix cursor rendering in prompt not lining up with characters
+** TODO hilbert curve turtle example 
 ** TODO [#A] fix listener-supplied arguments not spawning
-** TODO [#B] system menus should close when you click on the background or on other widget
-** TODO [#A] DEMO VIDEO some working menu items
+** TODO Fix (ioforms::make-block-ext '(a b c)) => ; Evaluation aborted on #<UNBOUND-VARIABLE =A= {BC77691}>.
+** TODO [#A] fix context menus not using correct target
+** TODO [#A] get math and basic blocks working
+** TODO [#A] make easy dialog box block maker
 ** TODO [#B] editing of numbers/data entry values in-place
+** TODO [#A] transcribe BYOB blocks library listing
+** TODO [#A] make a sprite reference (i.e. uuid)
+** TODO [#A] implement "send" block using reference 
 ** TODO [#A] Create DEFBLOCK block
-** TODO [#B] comment textbox
+** TODO [#A] DEMO VIDEO some working menu items with "send" block
+** TODO [#A] bring menubar and its menus to front when opening menu
 ** TODO [#A] comment block for output messages in listener etc, trap errors
-** TODO [#B] button to add arguments to + etc
 ** TODO [#B] Revise widgets.lisp for OpenGL
+** TODO [#B] button to add arguments to + etc
+** TODO [#B] close all submenus when closing a menu
+** TODO [#B] comment textbox
 ** TODO [#B] disabled menu items check for presence of method in target and/or condition
 ** TODO [#B] double click to run blocks
+** TODO [#B] fix cursor rendering in prompt not lining up with characters
+** TODO [#B] fix glitch at top left corner menu on startup before any click of Project m
+** TODO [#B] isolate/trap all block errors
 ** TODO [#B] or, escape to toggle menu
 ** TODO [#B] right click context menus!
 ** TODO [#B] show target name in menu
+** TODO [#B] system menus should close when you click on the background or on other widget
 ** TODO [#B] tab to switch focus between all top-level blocks
 ** TODO [#C] ALPHA issues for PNG images
 ** TODO [#C] allow string-valued method fields. resource id's of method block, uuid?
+** TODO [#C] automatically generate blocky friend faces with given body/face shapes
 ** TODO [#C] pin toggle button
 ** TODO [#C] pretty rubberband movement
 ** TODO [#C] x button for closing menu
@@ -29,6 +39,7 @@
        draw-solid-circle, not that it matters here  [23:46]
 ** TODO [#C] AABB-tree (axis-aligned bounding-box)
 ** TODO [#C] draw-socket should draw types
+** TODO [#C] shawn's emacs port as text widget?
 ** TODO [#C] Implement this GRAPH UI example:
    
 Say you want a nice interface helping a designer to explore various

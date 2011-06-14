@@ -250,49 +250,64 @@ the return value of the function (if any)."
 	(list (mapcar #'print-block B))
 	(otherwise B)))))
 
-(defun make-block2 (value)
-  (when value 
-    (if (listp value) 
-	(if (symbolp (first value))
-	    (if (not (boundp (make-special-variable-name 
-			      (first value)
-			      (make-block-package))))
-		;; not bound. pass through as a symbol data entry block
-		(let ((entry (clone =symbol=)))
-		  (prog1 entry (set-data entry (first value))))
-		;; bound. clone the corresponding block and fill in the inputs
-		(destructuring-bind (operation &rest args) value
-		  (let ((block (apply #'clone 
-				      (symbol-value 
-				       (make-special-variable-name 
-					operation
-					(make-block-package))))))
-		    (prog1 block
-		      (with-fields (inputs) block
-			(setf inputs 
-			      (mapcar #'(lambda (element)
-					  (if element
-					      (make-block2 element)
-					      (clone (symbol-value '=null=))))
-				      (or args inputs)))
-			(message "args: ~S inputs: ~S" args inputs)
-			(dolist (child inputs)
-			  (set-parent child block)))))))
-	    ;; not a call. just list the elements
-	    (apply #'clone =list= (mapcar #'make-block2 value)))
-	;; not a list
-	(let ((prototype 
-	       (symbol-value
-		(make-special-variable-name 
-		 (etypecase value
-		   ;; see also `defentry' below.
-		   (integer :integer)
-		   (float :float)
-		   (string :string)
-		   (symbol :symbol))))))
-	  (let ((entry (clone prototype)))
-	    (prog1 entry
-	      (set-data entry value)))))))
+(defun data-entry-prototype (sexp)
+  (symbol-value
+   (etypecase sexp
+     ;; see also `defentry' below.
+     (integer '=integer=)
+     (float '=float=)
+     (string '=string=)
+     (symbol '=symbol=))))
+  
+(defun make-block3 (value)
+  (labels ((action-block (spec)
+	     (destructuring-bind (operation &rest arguments) spec
+	       (let ((block (clone 
+			     (symbol-value 
+			      (make-special-variable-name 
+			       operation
+			       (make-block-package))))))
+		 (prog1 block
+		   (with-fields (inputs) block
+		     (setf inputs  
+			   (mapcar #'(lambda (element)
+				       (if element
+					   (make-block3 element)
+					   (clone (symbol-value '=null=))))
+				   (or arguments inputs))))))))
+		     ;; (dolist (child inputs)
+		     ;;   (set-parent child block)))))))
+	   ;;
+	   (is-action (sexp) 
+	     (and (listp sexp)
+		  (symbolp (first sexp))
+		  (boundp (make-special-variable-name
+			   (first sexp))))) ;; (make-block-package)
+	   ;;
+	   (symbol-block (sym)
+	     (let ((entry (clone =symbol=)))
+	       (prog1 entry (set-data entry sym))))
+	   ;;
+	   (is-list (sexp)
+	     (and (not (null sexp))
+		  (listp sexp)))
+	   ;;
+	   (list-block (items)
+	     (apply #'clone =list= (mapcar #'make-block3 items)))
+	   ;;
+	   (data-block (datum)
+	     (let ((entry (clone (data-entry-prototype datum))))
+	      (prog1 entry
+		(set-data entry datum)))))
+    ;;
+    (cond ((is-action value)
+	   (action-block value))
+	  ((is-list value)
+	   (list-block value))
+	  ((symbolp value)
+	   (symbol-block value))
+	  (t (data-block value)))))
+      
 
 (defun make-block (sexp)
     "Expand SEXP specifying a block diagram into real blocks.
