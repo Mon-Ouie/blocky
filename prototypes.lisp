@@ -388,7 +388,8 @@ upon binding."
   "Invoke the method identified by the keyword METHOD on the OBJECT with ARGS.
 If the method is not found, attempt to forward the message."
   ;; See also `send-queue' and `send-parent'
-  (assert (object-p object))
+  (when (not (object-p object))
+    (error "Cannot send message to non-object: ~A" object))
   ;; check the cache
   (let ((func (cache-lookup object method)))
     (if func
@@ -1008,5 +1009,25 @@ objects after reconstruction, wherever present."
 
 (defun queue/initialize (object &rest args)
   (apply #'send-queue :initialize object args))
+
+;;; Pretty printing objects
+
+(defmethod print-object ((foo ioforms:object) stream) 
+  (format stream "#<IOB ~A " (get-some-object-name foo))
+  (let ((fields (object-fields foo)))
+    (if (listp fields)
+	(format stream "~S" fields)
+	(format stream "... >"))
+    (format stream " >")))
+
+(defun ioforms-trace-all ()
+  (do-external-symbols (sym (find-package :ioforms))
+    (when (fboundp sym)
+      (ignore-errors (eval `(trace ,sym))))))
+
+(defun ioforms-untrace-all ()
+  (do-external-symbols (sym (find-package :ioforms))
+    (when (fboundp sym)
+      (ignore-errors (eval `(untrace ,sym))))))
 
 ;;; prototypes.lisp ends here

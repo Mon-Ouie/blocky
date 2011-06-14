@@ -126,11 +126,15 @@ ARGS are field specifiers, as with `define-prototype'."
   (length ^inputs))
 
 (defun input-position (self thing)
- (with-fields (schema inputs) self
-  (etypecase thing
-    (ioforms:object (position thing inputs))
-    (integer thing)
-    (keyword 
+  (assert thing)
+  (with-fields (schema inputs) self
+    (etypecase thing
+      (ioforms:object (position thing inputs :test 'eq))
+      (integer
+       (if (< thing (length inputs))
+	   thing
+	   (error "No such input index ~S" thing)))
+      (keyword 
        (let ((index (position thing schema :key #'first)))
 	 (if (numberp index)
 	     index
@@ -142,8 +146,11 @@ ARGS are field specifiers, as with `define-prototype'."
 
 (defun (setf input) (self name value)
   (with-fields (inputs) self
+    (assert (not (object-p name)))
+    (assert (not (null inputs)))
+    (message "SETF INPUT ~S" (list :name name :inputs inputs))
     (setf (nth (input-position self name) inputs)
-	  value)))
+  	  value)))
 
 (defun named-input-type (self name)
   (with-fields (schema) self
@@ -164,14 +171,19 @@ initialized with BLOCKS as inputs."
 	(setf inputs (make-list arity))
 	(setf results (make-list arity))
 	(setf input-widths (make-list arity))
-	(dotimes (n (length blocks))
-	  (let ((input (nth n blocks)))
-	    (setf (field-value :parent input) self)
-	    (setf (nth n inputs) input)))))
-    (when inputs (message "INITIALIZED BLOCK WITH ~S INPUTS ~S" 
-			  (length inputs) (mapcar #'type-of inputs)))
-    (bind-any-default-events self)
-    (add-object-to-database self)))
+	(when blocks
+	  (setf inputs blocks)
+	  (dolist (block blocks)
+	    (set-parent block self))))
+      (flet ((has-parent (b)
+	       (and (object-p b)
+		    (has-local-value :parent b))))
+	(when inputs (message "INITIALIZED BLOCK WITH ~S INPUTS ~S" 
+			      (length inputs) (mapcar #'has-parent inputs)))
+      (bind-any-default-events self)
+      (add-object-to-database self)
+      (when inputs (message "INITIALIZED BLOCK 2 WITH ~S INPUTS ~S" 
+			    (length inputs) (mapcar #'has-parent inputs)))))))
 
 ;;; Defining keyboard/mouse/joystick events for blocks
 
@@ -289,16 +301,14 @@ the return value of the function (if any)."
 				      operation
 				      (make-block-package)))
 				    (mapcar #'make-block arguments))))
-		 (prog1 (values object spec)
-		   (message "object inputs: ~S" (mapcar #'type-of 
-							(field-value :inputs object)))))))
+		 object)))
 	   (list-block (items)
 	     (apply #'clone =list= (mapcar #'make-block items))))
     (cond ((is-action-spec value)
 	   (action-block value))
 	  ((is-list-spec value)
 	   (list-block value))
-	  (t (data-block value)))))
+	  ((not (null value)) (data-block value)))))
       
 ;; (defun make-block (sexp)
 ;;     "Expand SEXP specifying a block diagram into real blocks.
@@ -402,19 +412,16 @@ areas.")
 
 (define-method mouse-up block (x y button))
 
-(define-method input-position block (input)
-  (with-fields (inputs) self
-    (position input inputs)))
-
 (define-method this-position block ()
   (with-fields (parent) self
     (when parent
       (input-position parent self))))
 
-(define-method plug block (input n)
+(define-method plug block (thing n)
   "Connect the block INPUT as the value of the Nth input."
-  (setf (input self n) input)
-  (set-parent input self))
+;  (setf (nth n ^inputs) thing)
+  (setf (input self n) thing)
+  (set-parent thing self))
 
 (define-method unplug block (input)
   "Disconnect the block INPUT from this block."
@@ -720,17 +727,18 @@ override all colors."
 
 (defparameter *socket-width* (* 18 *dash*))
 
-(defun expression-width (expression &optional (font *block-font*))
-  (if (ioforms:object-p expression)
-      *socket-width*
-      (font-text-extents (print-expression expression) font)))
-
 (defun print-expression (expression)
+  (assert (not (object-p expression)))
   (string-downcase
    (typecase expression
      (symbol
 	(substitute #\Space #\- (symbol-name expression)))
      (otherwise (format nil "~s" expression)))))
+
+(defun expression-width (expression &optional (font *block-font*))
+  (if (ioforms:object-p expression)
+      *socket-width*
+      (font-text-extents (print-expression expression) font)))
 
 (define-method layout block ()
   (with-fields (input-widths height width) self

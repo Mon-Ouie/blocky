@@ -47,8 +47,8 @@
 	(accept container 
 		 (let ((*make-block-package* (find-package :ioforms)))
 		   (if (symbolp (first sexp))
-		       (make-block-ext sexp)
-		       (make-block-ext (first sexp)))))))))
+		       (make-block sexp)
+		       (make-block (first sexp)))))))))
 	;; (when (> (count-inputs container) rows)
 	;;   (pop container))))))
 

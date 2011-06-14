@@ -1,4 +1,9 @@
+** TODO defblock emacs
+** TODO make thing to search for duplicate method defs
 ** TODO hilbert curve turtle example 
+** TODO allow string resource name / uuid message sends and field lookups
+** TODO fix wrong parent links
+** TODO fix not being able to pull out sublists
 ** TODO [#A] fix listener-supplied arguments not spawning
 ** TODO Fix (ioforms::make-block-ext '(a b c)) => ; Evaluation aborted on #<UNBOUND-VARIABLE =A= {BC77691}>.
 ** TODO [#A] fix context menus not using correct target
