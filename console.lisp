@@ -2015,7 +2015,6 @@ of the music."
 (defun initialize-ioforms ()
   (sdl:init-sdl :video t :audio t :joystick t)
   (setf *project-package-name* nil
-	*defined-resources* nil
         *project-directories* (default-project-directories)
 	*world* nil
 	*blocks* nil
@@ -2023,7 +2022,6 @@ of the music."
 	*updates* 0
 	*resizable* nil
 	*keyboard-update-number* 0
-	*initialization-hook* nil
 	*random-state* (make-random-state t))
   ;; add library search paths for Mac if needed
   (setup-library-search-paths)

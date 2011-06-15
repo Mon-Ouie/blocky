@@ -72,19 +72,4 @@
     (open-script shell script)
     (add-block shell)))
 
-
-    	 ;; (new menu :label "outer menu" 
-    	 ;;           :expanded t
-    	 ;; 	   :inputs 
-    	 ;; 	   (list (new menu :label "move north" :action :move-north)
-    	 ;; 		 (new menu :label "move south" :action :move-south)
-    	 ;; 		 (new menu :label "move east" :action :move-east)
-    	 ;; 		 (new menu :label "move west" :action :move-west)
-    	 ;; 		 (new menu :label "other" 
-    	 ;; 			   :inputs
-    	 ;; 			   (list (new menu :label "move north" :action :move-north)
-    	 ;; 				 (new menu :label "move south" :action :move-south)
-    	 ;; 				 (new menu :label "move east" :action :move-east)
-    	 ;; 					      (new menu :label "move west" :action :move-west))))))
-	     
 ;;; example3.lisp ends here

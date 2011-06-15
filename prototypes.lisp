@@ -154,13 +154,6 @@ This program includes the free DejaVu fonts family. See the file
 		 (setf (gethash k a) v))
 	     b)))
 	       
-;; (defun make-special-variable-name (S &optional package) 
-;;   "Make the symbol S into a special variable name. This is used to
-;; make the names of the objects made with `define-prototype'."
-;;   (error "The function MAKE-SPECIAL-VARIABLE-NAME is obsolete.")
-;;   (let ((name (concatenate 'string "=" (symbol-name S) "=")))
-;;     (intern name (or package :ioforms))))
-
 (defun make-prototype-id (thing &optional package) 
   (let ((delimiter ":"))
     (if (null thing)
@@ -173,11 +166,20 @@ This program includes the free DejaVu fonts family. See the file
 		      (list (package-name (or package *package*))
 			    delimiter thing)))
 		 (symbol 
-		  (let ((sp (symbol-package thing)))
+		  (let ((project-package (symbol-package thing)))
 		    (let ((pak2 
-			   (if (or (eq sp (find-package :cl))
-				   (eq sp (find-package :common-lisp-user)))
-			       :ioforms sp)))
+			   ;; is there a built-in prototype with this
+			   ;; name, or is it something from CL-USER?
+			   (if (or (eq project-package (find-package :cl))
+				   (eq project-package (find-package :common-lisp-user))
+				   (find-prototype 
+				    (concatenate 'string "IOFORMS:" 
+						 (symbol-name thing))
+				    :noerror))
+			       ;; yes. use IOFORMS' version
+ 			       :ioforms 
+			       ;; no. use project package
+			       project-package)))
 		      (list (package-name pak2)
 			    delimiter (symbol-name thing))))))))))
 
