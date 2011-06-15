@@ -69,7 +69,6 @@
      ,@body))
 
 (define-prototype block ()
-  (uuid :initform (make-uuid))
   ;; general information
   (inputs :initform nil :documentation 
 "List of input blocks. If ^SCHEMA is also present, its corresponding
@@ -100,11 +99,13 @@ alist entries give the names and input types of the inputs here.")
 (defmacro defblock (name &body args)
   "Define a new block prototype named =NAME=.
 ARGS are field specifiers, as with `define-prototype'."
-  (let ((proto (gensym)))
-    `(let ((,proto
-	    (define-prototype ,name (:parent =block=)
-	      ,@args)))
-       (setf (field-value :operation ,proto) ,(make-keyword name)))))
+  `(define-prototype ,name (:parent =block=)
+    (operation :initform ,(make-keyword name))
+    ,@(if (keywordp (first args))
+	  (plist-to-descriptors args)
+	  args)))
+
+;; (defblock wap boing boop)
 
 (define-method update block ()
   "Update the simulation one step forward in time."
@@ -162,7 +163,7 @@ ARGS are field specifiers, as with `define-prototype'."
 (define-method initialize block (&rest blocks)
   "Prepare an empty block, or if BLOCKS is non-empty, a block
 initialized with BLOCKS as inputs."
-  (with-fields (inputs schema results input-widths uuid) self
+  (with-fields (inputs schema results input-widths) self
     (message "BEFORE inputs:~S blocks:~S" (length inputs) (length blocks))
     (let ((arity (if (plusp (length blocks))
 		     (length blocks)
@@ -172,18 +173,18 @@ initialized with BLOCKS as inputs."
 	(setf results (make-list arity))
 	(setf input-widths (make-list arity))
 	(when blocks
-	  (setf inputs blocks)
-	  (dolist (block blocks)
-	    (set-parent block self))))
-      (flet ((has-parent (b)
-	       (and (object-p b)
-		    (has-local-value :parent b))))
-	(when inputs (message "INITIALIZED BLOCK WITH ~S INPUTS ~S" 
-			      (length inputs) (mapcar #'has-parent inputs)))
+	  (setf inputs blocks)))
+	  ;; (dolist (block blocks)
+	  ;;   (set-parent block self))))
+      ;; (flet ((has-parent (b)
+      ;; 	       (and (object-p b)
+      ;; 		    (has-local-value :parent b))))
+      ;; 	(when inputs (message "INITIALIZED BLOCK WITH ~S INPUTS ~S" 
+      ;; 			      (length inputs) (mapcar #'has-parent inputs)))
       (bind-any-default-events self)
-      (add-object-to-database self)
-      (when inputs (message "INITIALIZED BLOCK 2 WITH ~S INPUTS ~S" 
-			    (length inputs) (mapcar #'has-parent inputs)))))))
+      (add-object-to-database self))))
+      ;; (when inputs (message "INITIALIZED BLOCK 2 WITH ~S INPUTS ~S" 
+      ;; 			    (length inputs) (mapcar #'has-parent inputs))))))
 
 ;;; Defining keyboard/mouse/joystick events for blocks
 
@@ -270,13 +271,12 @@ the return value of the function (if any)."
 	(otherwise B)))))
 
 (defun data-entry-prototype (sexp)
-  (symbol-value
-   (etypecase sexp
-     ;; see also `defentry' below.
-     (integer '=integer=)
-     (float '=float=)
-     (string '=string=)
-     (symbol '=symbol=))))
+  (etypecase sexp
+    ;; see also `defentry' below.
+    (integer "IOFORMS:INTEGER")
+    (float "IOFORMS:FLOAT")
+    (string "IOFORMS:STRING")
+    (symbol "IOFORMS:SYMBOL")))
   
 (defun is-action-spec (spec)
   (and (listp spec)
@@ -295,20 +295,22 @@ the return value of the function (if any)."
   ;; use labels because we need to call make-block from inside
   (labels ((action-block (spec)
 	     (destructuring-bind (operation &rest arguments) spec
-	       (let ((object (apply #'clone 
-				    (symbol-value 
-				     (make-special-variable-name 
-				      operation
-				      (make-block-package)))
-				    (mapcar #'make-block arguments))))
-		 object)))
+	        (apply #'clone 
+		       (find-prototype (make-non-keyword operation))
+		       (mapcar #'make-block arguments))))
 	   (list-block (items)
-	     (apply #'clone =list= (mapcar #'make-block items))))
+	     (apply #'clone "IOFORMS:LIST" (mapcar #'make-block items))))
     (cond ((is-action-spec value)
 	   (action-block value))
 	  ((is-list-spec value)
 	   (list-block value))
 	  ((not (null value)) (data-block value)))))
+
+(defun connect-parent-links (block)
+  (dolist (child (field-value :inputs block))
+    (when child
+      (set-parent child block)
+      (connect-parent-links child))))
       
 ;; (defun make-block (sexp)
 ;;     "Expand SEXP specifying a block diagram into real blocks.
@@ -374,7 +376,8 @@ areas.")
 (define-method move-to block (x y &optional z)
   "Move the block to a new (X Y) location."
   (setf ^x x)
-  (setf ^y y))
+  (setf ^y y)
+  (when z (setf ^z z)))
 
 (define-method move-toward block (direction &optional (steps 1))
   (multiple-value-bind (y x)
@@ -396,21 +399,25 @@ areas.")
 (define-method is-visible block ()
   ^visible)
 
-(define-method set-parent block (parent)
+(define-method set-parent block (new-parent)
   "Store a link to an enclosing PARENT block, if any."
-  (setf ^parent parent))
-
+  (with-fields (parent) self
+    (setf parent new-parent)))
+	       
 (define-method get-parent block ()
   ^parent)
 
 (define-method get-image block ()
   ^image)
 
-(define-method mouse-move block (x y))
+(define-method mouse-move block (x y)
+  (declare (ignore x y)))
 
-(define-method mouse-down block (x y button))
+(define-method mouse-down block (x y button)
+  (declare (ignore x y button)))
 
-(define-method mouse-up block (x y button))
+(define-method mouse-up block (x y button)
+  (declare (ignore x y button)))
 
 (define-method this-position block ()
   (with-fields (parent) self
@@ -900,7 +907,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 
 (defparameter *null-display-string* "...")
 
-(defun null-block () (clone =list=))
+(defun null-block () (clone "IOFORMS:LIST"))
 
 (define-method execute list ()
   ^results)
@@ -1027,7 +1034,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
   (when variables (setf ^variables variables))
   (when target (setf ^target target))
   (when menu 
-    (setf ^menu (new menubar (make-menu *system-menu*)))
+    (setf ^menu (new menubar (make-menu (symbol-value '*system-menu*))))
     (add self ^menu)))
 
 (define-method set-target script (target)

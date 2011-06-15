@@ -39,30 +39,6 @@
 
 (in-package :ioforms) 
 
-(defun make-uuid ()
-  (let ((string (uuid:print-bytes nil (uuid:make-v1-uuid))))
-    (prog1 string (message "generated uuid:~A" string))))
-
-(defvar *database* nil)
-
-(defun initialize-database ()
-  (setf *database* (make-hash-table :test 'equal)))
-
-(defun add-object-to-database (object)
-  ;; (let (uuid)
-  ;;   (when (not (has-local-value :uuid object))
-  ;;     (setf uuid (make-uuid))
-  ;;     (setf (field-value :uuid object) uuid))
-  (when (null *database*)
-    (initialize-database))
-  (setf (gethash (field-value :uuid object)
-		 *database*)
-	object))
-
-(defun get-object-by-uuid (uuid)
-  (or (gethash uuid *database*)
-      (error "Cannot find object for uuid ~S" uuid)))
-
 (defun random-choose (set)
   (nth (random (length set)) set))
 
@@ -1553,141 +1529,141 @@ found."
 
 ;;; Voice objects
 
-(defvar *voices* nil)
+;; (defvar *voices* nil)
 
-(define-prototype voice () output)
+;; (define-prototype voice () output)
 
-(define-method initialize voice (&optional (size *output-chunksize*))
-  (setf ^output (make-array size :element-type 'float :initial-element 0.0))
-  (register-voice self))
+;; (define-method initialize voice (&optional (size *output-chunksize*))
+;;   (setf ^output (make-array size :element-type 'float :initial-element 0.0))
+;;   (register-voice self))
 
-(define-method get-output voice ()
-  ^output)
+;; (define-method get-output voice ()
+;;   ^output)
 
-;;(define-method play voice (&rest parameters))
-(define-method halt voice ())
-(define-method run voice ())
+;; ;;(define-method play voice (&rest parameters))
+;; (define-method halt voice ())
+;; (define-method run voice ())
 
-(defun register-voice (voice)
-  (pushnew voice *voices* :test 'eq))
+;; (defun register-voice (voice)
+;;   (pushnew voice *voices* :test 'eq))
 
-(defun unregister-voice (voice)
-  (setf *voices*
-	(delete voice *voices* :test 'eq)))
+;; (defun unregister-voice (voice)
+;;   (setf *voices*
+;; 	(delete voice *voices* :test 'eq)))
 
-(defun cffi-sample-type (sdl-sample-type)
-  (ecase sdl-sample-type
-    (SDL-CFFI::AUDIO-U8 :uint8) ; Unsigned 8-bit samples
-    (SDL-CFFI::AUDIO-S8 :int8) ; Signed 8-bit samples
-    (SDL-CFFI::AUDIO-U16LSB :uint16) ; Unsigned 16-bit samples, in little-endian byte order
-    (SDL-CFFI::AUDIO-S16LSB :int16) ; Signed 16-bit samples, in little-endian byte order
-    ;; (SDL-CFFI::AUDIO-U16MSB nil) ; Unsigned 16-bit samples, in big-endian byte order
-    ;; (SDL-CFFI::AUDIO-S16MSB nil) ; Signed 16-bit samples, in big-endian byte order
-    (SDL-CFFI::AUDIO-U16 :uint16)  ; same as SDL(SDL-CFFI::AUDIO-U16LSB (for backwards compatability probably)
-    (SDL-CFFI::AUDIO-S16 :int16) ; same as SDL(SDL-CFFI::AUDIO-S16LSB (for backwards compatability probably)
-    (SDL-CFFI::AUDIO-U16SYS :uint16) ; Unsigned 16-bit samples, in system byte order
-    (SDL-CFFI::AUDIO-S16SYS :int16) ; Signed 16-bit samples, in system byte order
-    ))
+;; (defun cffi-sample-type (sdl-sample-type)
+;;   (ecase sdl-sample-type
+;;     (SDL-CFFI::AUDIO-U8 :uint8) ; Unsigned 8-bit samples
+;;     (SDL-CFFI::AUDIO-S8 :int8) ; Signed 8-bit samples
+;;     (SDL-CFFI::AUDIO-U16LSB :uint16) ; Unsigned 16-bit samples, in little-endian byte order
+;;     (SDL-CFFI::AUDIO-S16LSB :int16) ; Signed 16-bit samples, in little-endian byte order
+;;     ;; (SDL-CFFI::AUDIO-U16MSB nil) ; Unsigned 16-bit samples, in big-endian byte order
+;;     ;; (SDL-CFFI::AUDIO-S16MSB nil) ; Signed 16-bit samples, in big-endian byte order
+;;     (SDL-CFFI::AUDIO-U16 :uint16)  ; same as SDL(SDL-CFFI::AUDIO-U16LSB (for backwards compatability probably)
+;;     (SDL-CFFI::AUDIO-S16 :int16) ; same as SDL(SDL-CFFI::AUDIO-S16LSB (for backwards compatability probably)
+;;     (SDL-CFFI::AUDIO-U16SYS :uint16) ; Unsigned 16-bit samples, in system byte order
+;;     (SDL-CFFI::AUDIO-S16SYS :int16) ; Signed 16-bit samples, in system byte order
+;;     ))
 
-(defun cffi-chunk-buffer (chunk)
-  (sdl:fp chunk))
+;; (defun cffi-chunk-buffer (chunk)
+;;   (sdl:fp chunk))
 
-(defun buffer-length (buffer)
-  (let ((type (cffi-sample-type *sample-format*)))
-    (length (cffi:mem-ref buffer type))))
+;; (defun buffer-length (buffer)
+;;   (let ((type (cffi-sample-type *sample-format*)))
+;;     (length (cffi:mem-ref buffer type))))
 
-(defun convert-cffi-sample-to-internal (chunk)
-  (let* ((input-buffer (cffi-chunk-buffer chunk))
-	 (type (cffi-sample-type *sample-format*))
-	 (size (length (cffi:mem-ref input-buffer type))))
-    (assert (eq *sample-format* SDL-CFFI::AUDIO-S16LSB)) ;; for now
-    (let ((output-buffer (make-array size)))
-	(prog1 output-buffer
-	  (dotimes (n size)
-	    (setf (aref output-buffer n)
-		  (/ (float (cffi:mem-aref input-buffer type n))
-		     32768.0)))))))
+;; (defun convert-cffi-sample-to-internal (chunk)
+;;   (let* ((input-buffer (cffi-chunk-buffer chunk))
+;; 	 (type (cffi-sample-type *sample-format*))
+;; 	 (size (length (cffi:mem-ref input-buffer type))))
+;;     (assert (eq *sample-format* SDL-CFFI::AUDIO-S16LSB)) ;; for now
+;;     (let ((output-buffer (make-array size)))
+;; 	(prog1 output-buffer
+;; 	  (dotimes (n size)
+;; 	    (setf (aref output-buffer n)
+;; 		  (/ (float (cffi:mem-aref input-buffer type n))
+;; 		     32768.0)))))))
 
-(defun convert-internal-sample-to-cffi (input output &optional limit)
-  (let ((type (cffi-sample-type *sample-format*)))
-    (dotimes (n 128)
-      (setf (cffi:mem-aref output type n)
-	    (truncate (* (cffi:mem-aref input type n)
-			 32768.0))))))
+;; (defun convert-internal-sample-to-cffi (input output &optional limit)
+;;   (let ((type (cffi-sample-type *sample-format*)))
+;;     (dotimes (n 128)
+;;       (setf (cffi:mem-aref output type n)
+;; 	    (truncate (* (cffi:mem-aref input type n)
+;; 			 32768.0))))))
 
-(defvar *buffer* (make-array 10000 :element-type 'float :initial-element 0.0))
+;; (defvar *buffer* (make-array 10000 :element-type 'float :initial-element 0.0))
 
-(defvar *sample-generator* nil)
+;; (defvar *sample-generator* nil)
 
-(defvar *foo* nil)
+;; (defvar *foo* nil)
 
-;; (defun music-mixer-callback (user output size)
-;;   (setf *foo* t)
-;;   (format t "XXXX ~S" *foo*))
+;; ;; (defun music-mixer-callback (user output size)
+;; ;;   (setf *foo* t)
+;; ;;   (format t "XXXX ~S" *foo*))
 
-  ;; (let ((type (cffi-sample-type *sample-format*)))
-  ;;   (dotimes (n size)
-  ;;     (setf (cffi:mem-aref output type n) 0))))
+;;   ;; (let ((type (cffi-sample-type *sample-format*)))
+;;   ;;   (dotimes (n size)
+;;   ;;     (setf (cffi:mem-aref output type n) 0))))
 
-  ;; (when *sample-generator*
-  ;;   (message "Generating samples")
-  ;;   (funcall generator *buffer*)
-  ;;   (message "Converting samples to output format...")
-  ;;   (convert-internal-sample-to-cffi *buffer* output size)
-  ;;   ))
+;;   ;; (when *sample-generator*
+;;   ;;   (message "Generating samples")
+;;   ;;   (funcall generator *buffer*)
+;;   ;;   (message "Converting samples to output format...")
+;;   ;;   (convert-internal-sample-to-cffi *buffer* output size)
+;;   ;;   ))
 
-;; (defun register-sample-generator (generator)
-;;   (message "Registering sample generator...")
-;;   (setf *sample-generator* generator)
-;;   (sdl-mixer:register-music-mixer #'music-mixer-callback))
+;; ;; (defun register-sample-generator (generator)
+;; ;;   (message "Registering sample generator...")
+;; ;;   (setf *sample-generator* generator)
+;; ;;   (sdl-mixer:register-music-mixer #'music-mixer-callback))
 
-(defun mix-voices (output)
-  (message "Mixing voices...")
-  ;; create silence
-  (dotimes (n *output-chunksize*)
-    (setf (aref output n) 0.0))
-  ;; mix in voices
-  (dolist (voice *voices*)
-    (run voice)
-    (let ((input (get-output voice)))
-      (dotimes (n *output-chunksize*)
-	(incf (aref output n)
-	      (aref input n))))))
+;; (defun mix-voices (output)
+;;   (message "Mixing voices...")
+;;   ;; create silence
+;;   (dotimes (n *output-chunksize*)
+;;     (setf (aref output n) 0.0))
+;;   ;; mix in voices
+;;   (dolist (voice *voices*)
+;;     (run voice)
+;;     (let ((input (get-output voice)))
+;;       (dotimes (n *output-chunksize*)
+;; 	(incf (aref output n)
+;; 	      (aref input n))))))
 
-;; (defun register-voice-mixer () 
-;;   (message "Registering voice mixer...")
-;;   (setf *voices* nil)
-;;   (register-sample-generator #'mix-voices))
+;; ;; (defun register-voice-mixer () 
+;; ;;   (message "Registering voice mixer...")
+;; ;;   (setf *voices* nil)
+;; ;;   (register-sample-generator #'mix-voices))
 
-(defvar *buffer-cache* nil)
+;; (defvar *buffer-cache* nil)
 
-(defun initialize-buffer-cache ()
-  (setf *buffer-cache* (make-hash-table :test 'eq)))
+;; (defun initialize-buffer-cache ()
+;;   (setf *buffer-cache* (make-hash-table :test 'eq)))
 
-(defun get-sample-buffer (sample)
-  (let ((chunk (if (stringp sample)
-		   (find-resource-object sample)
-		   sample)))
-    ;; (when (null *buffer-cache*)
-    ;;   (initialize-buffer-cache))
-    ;; ;; is it cached?
-    ;; (or (gethash chunk *sample-buffers*)
-    ;; 	(setf (gethash chunk *sample-buffers*)
-	      (convert-cffi-sample-to-internal chunk)))
+;; (defun get-sample-buffer (sample)
+;;   (let ((chunk (if (stringp sample)
+;; 		   (find-resource-object sample)
+;; 		   sample)))
+;;     ;; (when (null *buffer-cache*)
+;;     ;;   (initialize-buffer-cache))
+;;     ;; ;; is it cached?
+;;     ;; (or (gethash chunk *sample-buffers*)
+;;     ;; 	(setf (gethash chunk *sample-buffers*)
+;; 	      (convert-cffi-sample-to-internal chunk)))
 
-;;; Regular music/sample functions
+;; ;;; Regular music/sample functions
 
-;; (defvar *sample-callback* nil)
+;; ;; (defvar *sample-callback* nil)
 
-;; (defun set-sample-callback (func)
-;;   (assert (functionp func))
-;;   (setf *sample-callback* func))
+;; ;; (defun set-sample-callback (func)
+;; ;;   (assert (functionp func))
+;; ;;   (setf *sample-callback* func))
 
-;; (defvar *music-callback* nil)
+;; ;; (defvar *music-callback* nil)
 
-;; (defun set-music-callback (func)
-;;   (assert (functionp func))
-;;   (setf *music-callback* func))
+;; ;; (defun set-music-callback (func)
+;; ;;   (assert (functionp func))
+;; ;;   (setf *music-callback* func))
 
 (defvar *channels* 128 "Number of audio mixer channels to use.")
 
@@ -2024,7 +2000,7 @@ of the music."
 (defun play (&optional project)
   #+linux (do-cffi-loading)
   (message "Starting IOFORMS...")
-  (initialize-prototypes)
+  (initialize-genesis)
   (initialize-ioforms)
   (let ((proj (or project *project*)))
     (when (null proj)

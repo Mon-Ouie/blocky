@@ -100,7 +100,7 @@ Return the height of the rendered line."
 ;; functions just defined.
 
 (define-prototype formatter 
-    (:parent =block= :documentation 
+    (:parent block :documentation 
 "=FORMATTER= is a simple output formatting block for the
 presentation of messages and other in-game data. Foreground and
 background colors are supported, as well as displaying images
@@ -173,10 +173,6 @@ line."
   "Invoked before each render. Replace this method for custom
 auto-updated displays."  
   nil)
-
-(defun get-some-object-name (ob)
-  (let ((str (symbol-name (object-name (object-parent ob)))))
-    (string-capitalize (subseq str 1 (search "=" str :from-end t)))))
 
 (define-method print-object-tag formatter (ob)
   (print-image self (or (field-value :tile ob) (field-value :image ob)))

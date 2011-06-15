@@ -26,7 +26,7 @@
 
 ;;; Lisp listener
 
-(define-prototype block-prompt (:parent =prompt=)
+(define-prototype block-prompt (:parent prompt)
   (operation :initform :prompt)
   output 
   (rows :initform 10))
@@ -41,18 +41,19 @@
 (define-method do-sexp block-prompt (sexp)
   (with-fields (output rows) self
     (assert output)
-    (let ((container (get-parent output)))
+    (let ((*make-block-package* (find-package :ioforms))
+	  (container (get-parent output)))
       (when container
-	(message "SEXP: ~S" sexp)
-	(accept container 
-		 (let ((*make-block-package* (find-package :ioforms)))
-		   (if (symbolp (first sexp))
-		       (make-block sexp)
-		       (make-block (first sexp)))))))))
+	(let ((block 
+		  (if (symbolp (first sexp))
+		      (make-block sexp)
+		      (make-block (first sexp)))))
+	  (connect-parent-links block)
+	  (accept container block))))))
 	;; (when (> (count-inputs container) rows)
 	;;   (pop container))))))
 
-(define-prototype listener (:parent =list=)
+(define-prototype listener (:parent list)
   (type :initform :system)
   (schema :initform '((:prompt . :block))))
 
@@ -60,7 +61,7 @@
 
 (define-method initialize listener ()
   (with-fields (image inputs) self
-    (let ((prompt (clone =block-prompt= self)))
+    (let ((prompt (clone block-prompt self)))
       (parent/initialize self)
       (set-output prompt prompt)
       (setf inputs (list prompt))
@@ -89,7 +90,7 @@
 	 :documentation "Block being hovered over, if any.")
   (highlight :initform nil
 	     :documentation "Block being highlighted, if any.")
-  (ghost :initform (clone =block=))
+  (ghost :initform (clone block))
   (buffer :initform nil)
   (focused-block :initform nil)
   (click-start :initform nil

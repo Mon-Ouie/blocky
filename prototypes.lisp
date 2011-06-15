@@ -73,6 +73,62 @@ This program includes the free DejaVu fonts family. See the file
 ./standard/DEJAVU-FONTS-LICENSE for more information.
 ")
 
+;;; Prototype dictionary
+
+(defvar *prototypes* nil)
+
+(defun initialize-prototypes ()
+  (setf *prototypes* (make-hash-table :test 'equal)))
+
+(initialize-prototypes)
+
+(defun add-prototype (object)
+  (when (null *prototypes*)
+    (initialize-prototypes))
+  (setf (gethash (object-name object)
+		 *prototypes*)
+	object))
+
+(defun find-prototype (name &optional noerror)
+  (assert (hash-table-p *prototypes*))
+  (or (gethash name *prototypes*)
+      (unless noerror
+	(error "Cannot find prototype named ~S" name))))
+
+;;; UUID object dictionary
+
+(defun make-uuid ()
+  (uuid:print-bytes nil (uuid:make-v1-uuid)))
+
+(defvar *database* nil)
+
+(defun initialize-database ()
+  (setf *database* (make-hash-table :test 'equal)))
+
+(initialize-database)
+
+(defun add-object-to-database (object)
+  (when (null *database*)
+    (initialize-database))
+  (setf (gethash (object-uuid object)
+		 *database*)
+	object))
+
+(defun find-object-by-uuid (uuid &optional noerror)
+  (or (gethash uuid *database*)
+      (unless noerror
+	(error "Cannot find object for uuid ~S" uuid))))
+
+;;; Finding any object by proto-name or UUID
+
+(defun find-object (thing) 
+  (when (not (null thing))
+    (etypecase thing
+      (symbol (symbol-value thing))
+      (string (or (find-object-by-uuid thing :noerror)
+		  (find-prototype thing :noerror)))
+      (object thing))))
+
 ;;; Emacs Lisp compatibilty macro 
 
 (defmacro while (test &body body)
@@ -98,12 +154,29 @@ This program includes the free DejaVu fonts family. See the file
 		 (setf (gethash k a) v))
 	     b)))
 	       
-(defun make-special-variable-name (S &optional (package :ioforms))
-  "Make the symbol S into a special variable name. This is used to
-make the names of the objects made with `define-prototype'."
-  (let ((name (concatenate 'string "=" (symbol-name S) "=")))
-    (intern name package)))
-    
+;; (defun make-special-variable-name (S &optional package) 
+;;   "Make the symbol S into a special variable name. This is used to
+;; make the names of the objects made with `define-prototype'."
+;;   (error "The function MAKE-SPECIAL-VARIABLE-NAME is obsolete.")
+;;   (let ((name (concatenate 'string "=" (symbol-name S) "=")))
+;;     (intern name (or package :ioforms))))
+
+(defun make-prototype-id (thing &optional package) 
+  (if (null thing)
+      (error "Must pass a string or symbol as a prototype name.")
+      (apply #'concatenate 'string 
+	     (etypecase thing
+	       (string (list (package-name (or package *package*))
+			     ":" thing))
+	       (symbol 
+		(let ((sp (symbol-package thing)))
+		  (let ((pak2 
+			 (if (or (eq sp (find-package :cl))
+				 (eq sp (find-package :common-lisp-user)))
+			     :ioforms sp)))
+		    (list (package-name pak2)
+			  ":" (symbol-name thing)))))))))
+
 ;;; Object data structure
 
 ;; Each object's "bookkeeping data" is stored in a structure. The
@@ -125,6 +198,8 @@ make the names of the objects made with `define-prototype'."
   ;; object. Named objects are "prototypes" from which other objects
   ;; may be created or "cloned".
   name
+  ;; Here's the uuid string.
+  uuid
   ;; The last few methods called are cached in this alist.
   cache)
 
@@ -181,41 +256,44 @@ method call that references a non-existent field will signal a
   
 (defsetf fref set-fref)
 
-(defun field-value (field object &optional noerror)
-  "Return the value of FIELD in OBJECT.
-If the FIELD has no value in OBJECT, then the object's parent is also
+(defun field-value (field thing &optional noerror)
+  "Return the value of FIELD in the object THING.
+If the FIELD has no value in THING, then the object's parent is also
 checked, and so on. If a value is found during these checks, it is
 returned. If a value cannot be found, an error of type `no-such-field'
 is signaled, unless NOERROR is non-nil; in that case,
 `*lookup-failure*' is returned. See also `has-field'."
   (declare (optimize (speed 3)))
-  (let (pointer result found)
-    (setf pointer object)
+  (let ((pointer (find-object thing))
+	result found)
     ;; search the chain of objects for a field value.
     (loop while (and pointer (not found)) do
 	 (setf result (fref (object-fields pointer) field))
 	 (if (eq *lookup-failure* result)
 	     ;; it's not here. search the parent, if any.
-	     (setf pointer (object-parent pointer))
+	     (setf pointer (find-object (object-parent pointer)))
 	     ;; we found a value in this object.
 	     (setf found t)))
-    (if found 
-	result
+    (if found result
 	(if noerror 
 	    *lookup-failure*   
-	    (error 'no-such-field :field-name field :object object)))))
+	    (error 'no-such-field :field-name field :object thing)))))
 
-(defun has-local-value (field object)
-  (not (eq *lookup-failure* (fref (object-fields object) field))))
+(defun has-local-value (field thing)
+  (let ((object (find-object thing)))
+    (not (eq *lookup-failure* (fref (object-fields object) field)))))
 
-(defun set-field-value (field object value)
+(defun set-field-value (field thing value)
   "Set OBJECT's FIELD to VALUE.
 The new value overrides any inherited value."
   (prog1 value
-    (multiple-value-bind (value fields)
-	(set-fref (object-fields object) field value)
-      (when (listp fields)
-	(setf (object-fields object) fields)))))
+    (let ((object (find-object thing)))
+      (multiple-value-bind (value fields)
+	  (set-fref (object-fields object) field value)
+	    ;; don't lose new list heads
+	(prog1 value 
+	  (when (listp fields)
+	    (setf (object-fields object) fields)))))))
   
 (defsetf field-value set-field-value)
 
@@ -384,29 +462,30 @@ upon binding."
 ;; wish to run the parent's initializer as the first statement in the
 ;; child's.
 
-(defun send (method object &rest args)
+(defun send (method thing &rest args)
   "Invoke the method identified by the keyword METHOD on the OBJECT with ARGS.
 If the method is not found, attempt to forward the message."
   ;; See also `send-queue' and `send-parent'
-  (when (not (object-p object))
-    (error "Cannot send message to non-object: ~A" object))
-  ;; check the cache
-  (let ((func (cache-lookup object method)))
-    (if func
-	;; cache hit. finish up.
-	(apply func object args)
-	;; cache miss. look for a value.
-	(progn (setf func (field-value method object :noerror))
-	       (if (not (eq *lookup-failure* func))
-		   ;; store in cache and then call.
-		   (progn 
-		     (cache-method object method func)
-		     (apply func object args))
-		   ;; no such method. try forwarding
-		   (if (has-field :forward object)
-		       (apply (field-value :forward object)
-			      object method args)
-		       (error (format nil "Could not invoke method ~S" method))))))))
+  (let ((object (find-object thing)))
+    (when (not (object-p object))
+      (error "Cannot send message to non-object: ~A" object))
+    ;; check the cache
+    (let ((func (cache-lookup object method)))
+      (if func
+	  ;; cache hit. finish up.
+	  (apply func object args)
+	  ;; cache miss. look for a value.
+	  (progn (setf func (field-value method object :noerror))
+		 (if (not (eq *lookup-failure* func))
+		     ;; store in cache and then call.
+		     (progn 
+		       (cache-method object method func)
+		       (apply func object args))
+		     ;; no such method. try forwarding
+		     (if (has-field :forward object)
+			 (apply (field-value :forward object)
+				object method args)
+			 (error (format nil "Could not invoke method ~S" method)))))))))
 
 
 (define-condition null-parent (error)
@@ -418,58 +497,49 @@ If the method is not found, attempt to forward the message."
 		     (object condition)))))
 
 (defun find-nth-named-parent (object method-key n)
-    (assert (plusp n))
-    (let ((pointer object)
-	  (x n))
-      (labels ((find-parent (p)
-		 (let ((parent (object-parent p)))
-		   (etypecase parent
-		     (object parent)
-		     (symbol (symbol-value parent)))))
-	       (next-parent ()
-		 (setf pointer (find-parent pointer))))
-	(loop while (and pointer
-			 (not (zerop x)))
-	   do (progn 
-		(if (object-name pointer)
-		    (progn (decf x)
-			   (unless (zerop x)
-			     ;; don't obliterate the pointer.
-			     (next-parent)))
-		    (next-parent))))
-	;; what happened?
-	(if (zerop x)
-	    ;; we found it.
-	    pointer
-	    ;; no nth method found.
-	    (error "Cannot find parent method for n=~A" n)))))
-    
+  (declare (ignore method-key))
+  (assert (plusp n))
+  (let ((pointer object)
+	(x n))
+    (labels ((find-parent (p)
+	       (find-object (object-parent p)))
+	     (next-parent ()
+	       (setf pointer (find-parent pointer))))
+      (loop while (and pointer
+		       (not (zerop x)))
+	    do (progn 
+		 (if (object-name pointer)
+		     (progn (decf x)
+			    (unless (zerop x)
+			      ;; don't obliterate the pointer.
+			      (next-parent)))
+		     (next-parent))))
+      ;; what happened?
+      (if (zerop x)
+	  ;; we found it.
+	  pointer
+	  ;; no nth method found.
+	  (error "Cannot find parent method for n=~A" n)))))
+
 (defun find-parent (ob)
   (if (object-name ob)
       (object-parent ob)
       (object-parent (object-parent ob))))
 
-(defvar *send-parent-depth* 2)
-
-(defun initialize-prototypes ()
+(defun initialize-genesis ()
   (format t "~A" *copyright-text*)
   ;; (initialize-documentation-tables)
   (setf *send-parent-depth* 2)) ;;FIXME
 
-(defvar *send-parent-key* nil)
+(defvar *next-parent*)
 
-(defun send-parent (method-key object &rest args)
-  "Invoke the parent's version of a method on OBJECT with ARGS."
-  (let* ((depth (if (not (eq method-key *send-parent-key*))
-		    2 
-		    *send-parent-depth*))
-	 (method-source (find-nth-named-parent object method-key 
-					      depth)))
-    (if method-source
-	(let ((*send-parent-depth* (1+ *send-parent-depth*))
-	      (*send-parent-key* method-key))
-	  (apply (field-value method-key method-source) object args))
-	(error 'null-parent :method-key method-key :object object))))
+;; (defun send-parent (method object &rest args)
+;;   (let ((send-parent
+;;       (error 'null-parent :method-key method :object object))))
+
+
+;; 	  (apply (field-value method-key method-source) object args))
+
 
 ;;; Message queueing
 
@@ -594,11 +664,9 @@ message queue resulting from the evaluation of EXPR."
 (defun field-reference-p (form)
   "Return non-nil if FORM is a symbol like ^foo."
   (if (symbolp form)
-      (let* ((name (symbol-name form))
-	     (len (length name)))
+      (let* ((name (symbol-name form)))
 	(string= (subseq name 0 1)
 		 *field-reference-prefix*))))
-	     ;; (string= ">" (subseq name (- len 1) len))))))
 
 (defun transform-field-reference (ref)
   "Change the symbol REF from ^foo to (field-value :foo self)."
@@ -646,7 +714,7 @@ was invoked."
 			       (when declaration
 				 ;; paste, skipping the declaration keyword
 				 (rest declaration))))
-	 (prototype-special-name (make-special-variable-name prototype-name))
+	 (prototype-id (make-prototype-id prototype-name))
 	 (field-name (make-keyword method-name))
 	 (method-symbol-name (symbol-name method-name))
 	 (method-symbol method-name) ;; fixme, unclear naming
@@ -670,56 +738,56 @@ was invoked."
 						  "PARENT/"
 						  method-symbol-name))))
     (let ((name (gensym)))
-      `(progn 
-	 (if (not (boundp ',prototype-special-name))
-	     (error (format nil "Cannot define method ~A for nonexistent prototype ~A"
-			    ',method-name ',prototype-name)))
-	 (let ((prototype (symbol-value ',prototype-special-name)))
-	   ;; define the method's Lisp function
-	   (defun ,defun-symbol (self ,@arglist)
-	     ,@(if documentation (list documentation))
-	     ,declaration2
-	     ,@(if declaration 
-		   (rest body2)
-		     body2))
-	   ;; store the method's function in the prototype's field
-	   (setf (field-value ,field-name prototype) ',defun-symbol)
-	   ;; add new method-descriptor for this method to the prototype
-	   (setf (field-option-value ,field-name prototype :documentation) ,documentation)
-	   (setf (field-option-value ,field-name prototype :arguments) ',arglist)
-	   ;; update documentation cache
-	   (when ,documentation (setf (method-documentation ',method-name) ,documentation))
-	   (setf (method-arglist ',method-name) ',arglist)
-	   (export ',defun-symbol)
-	   (let ((,name ,(make-keyword method-name)))
-	     (unless (fboundp ',method-symbol)
-	       (defun ,method-symbol (self &rest args)
-		 ,@(when documentation (list documentation))
-		 (apply #'send ,name self args))
-	       (export ',method-symbol)
-	       ;; for (/foo bar baz...)
-	       (defun ,slash-defun-symbol (self &rest args)
-		 ,@(when documentation (list documentation))
-		 (apply #'send ,name self args))
-	       (export ',slash-defun-symbol)
-	       ;; and for message queueing
-	       (defun ,queue-defun-symbol (self &rest args)
-		 ,@(if documentation (list documentation))
-		 (apply #'send-queue ,name self args))
-	       (export ',queue-defun-symbol)
-	       (defun ,queue-defun-symbol-noslash (self &rest args)
-		 ,@(if documentation (list documentation))
-		 (apply #'send-queue ,name self args))
-	       (export ',queue-defun-symbol-noslash)
-	       ;; and for parent calls.
-	       (defun ,parent-defun-symbol (self &rest args)
-		 ,@(if documentation (list documentation))
-		 (apply #'send-parent ,name self args))
-	       (export ',parent-defun-symbol)
-	       (defun ,parent-defun-symbol-noslash (self &rest args)
-		 ,@(if documentation (list documentation))
-		 (apply #'send-parent ,name self args))
-	       (export ',parent-defun-symbol-noslash))))))))
+      `(let ((prototype (find-prototype ,prototype-id)))
+	 ;; make sure it exists
+	 (when (null prototype)
+	   (error (format nil "Cannot define method ~A for nonexistent prototype ~A"
+			  ',method-name ,prototype-id)))
+	 ;; define the method's Lisp function
+	 (defun ,defun-symbol (self ,@arglist)
+	   ,@(if documentation (list documentation))
+	   ,declaration2
+	   ,@(if declaration 
+		 (rest body2)
+		 body2))
+	 ;; store the method's function in the prototype's field
+	 (setf (field-value ,field-name prototype) ',defun-symbol)
+	 ;; add new method-descriptor for this method to the prototype
+	 (setf (field-option-value ,field-name prototype :documentation) ,documentation)
+	 (setf (field-option-value ,field-name prototype :arguments) ',arglist)
+	 ;; update documentation cache
+	 (when ,documentation (setf (method-documentation ',method-name) ,documentation))
+	 (setf (method-arglist ',method-name) ',arglist)
+	 (export ',defun-symbol)
+	 (let ((,name ,(make-keyword method-name)))
+	   (unless (fboundp ',method-symbol)
+	     (defun ,method-symbol (self &rest args)
+	       ,@(when documentation (list documentation))
+	       (apply #'send ,name self args))
+	     (export ',method-symbol)
+	     ;; for (/foo bar baz...)
+	     (defun ,slash-defun-symbol (self &rest args)
+	       ,@(when documentation (list documentation))
+	       (apply #'send ,name self args))
+	     (export ',slash-defun-symbol)
+	     ;; and for message queueing
+	     (defun ,queue-defun-symbol (self &rest args)
+	       ,@(if documentation (list documentation))
+	       (apply #'send-queue ,name self args))
+	     (export ',queue-defun-symbol)
+	     (defun ,queue-defun-symbol-noslash (self &rest args)
+	       ,@(if documentation (list documentation))
+	       (apply #'send-queue ,name self args))
+	     (export ',queue-defun-symbol-noslash)
+	     ;; and for parent calls.
+	     (defun ,parent-defun-symbol (self &rest args)
+	       ,@(if documentation (list documentation))
+	       (apply #'send-parent ,name self args))
+	     (export ',parent-defun-symbol)
+	     (defun ,parent-defun-symbol-noslash (self &rest args)
+	       ,@(if documentation (list documentation))
+	       (apply #'send-parent ,name self args))
+	     (export ',parent-defun-symbol-noslash)))))))
 
 ;;; Defining prototypes
 
@@ -794,6 +862,8 @@ slot value is inherited."
 	      descriptors)))
     (nreverse descriptors)))
 	
+; (define-prototype hello () a b c)
+
 (defmacro define-prototype (name
 			    (&key parent 
 				  documentation
@@ -841,36 +911,43 @@ OPTIONS is a property list of field options. Valid keys are:
 			      declarations))
 	 (descriptors (mapcar #'transform-declaration 
 			      pre-descriptors))
-	 (proto-symbol (make-special-variable-name name))
+	 (prototype-id (make-prototype-id name))
+
 	 (field-initializer-body (delete nil (mapcar #'make-field-initializer 
-						     descriptors))))
-    `(progn
+						     descriptors)))
+	 (parent-sym (gensym)))
        ;; Need this at top-level for compiler to know about the special var
-       (defparameter ,proto-symbol nil)
-       (let* ((fields (compose-blank-fields))
-	      ;;(fields (make-hash-table :test 'eq))
-	      (blanks (compose-blank-fields ',descriptors))
-	      (prototype (make-object :fields fields
-				      :name ',proto-symbol
-				      :parent ,parent))
-	      (parent-descriptors (field-value :field-descriptors 
-					       ,parent
-					       :noerror))
-	      (descriptors2 (append ',descriptors (when (listp parent-descriptors)
+    `(let* ((,parent-sym ,(when parent (make-prototype-id parent)))
+	    (uuid (make-uuid))
+	    (fields (compose-blank-fields))
+	    (blanks (compose-blank-fields ',descriptors))
+	    (parent-descriptors (when nil ;; XXXXXX ,parent-sym
+				    (field-value :field-descriptors 
+						 ,parent-sym
+						 :noerror)))
+	    (descriptors2 (append ',descriptors (when (listp parent-descriptors)
 						    parent-descriptors))))
+       (setf (fref fields :field-descriptors) descriptors2)
+       (setf (fref fields :documentation) ,documentation)
+       (setf (fref fields :initialize-fields) (function (lambda (self) 
+						,@field-initializer-body)))
+       (let ((prototype (make-object :fields fields
+				     :name ,prototype-id
+				     :uuid uuid
+				     :parent ,parent-sym)))
 	 (initialize-method-cache prototype)
-	 (setf (fref fields :field-descriptors) descriptors2)
-	 (setf (fref fields :documentation) ,documentation)
-	 (setf (fref fields :initialize-fields) (function (lambda (self) 
-						     ,@field-initializer-body)))
 	 (merge-hashes fields blanks)
-	 (defparameter ,proto-symbol prototype)
+	 ;; set the default initforms
 	 (send :initialize-fields prototype)
 	 ;; the prototype's parent may have an initialize method.
 	 ;; if so, we need to initialize the present prototype.
-	 (when (has-field :initialize prototype)   
+	 (when (has-field :initialize prototype)
 	   (send :initialize prototype))
-	 prototype))))
+	 ;; now add it to the dictionaries
+	 (add-prototype prototype)
+	 (add-object-to-database prototype)
+	 ;; return the uuid and object
+	 (values uuid prototype)))))
 
 ;;; Printing objects
 
@@ -884,7 +961,7 @@ OPTIONS is a property list of field options. Valid keys are:
 ;;; Cloning objects
 
 (defmacro new (prototype-name &rest initargs)
-  `(clone ',(make-special-variable-name prototype-name)
+  `(clone ,(make-prototype-id prototype-name)
 	  ,@initargs))
 
 (defun clone (prototype &rest initargs)
@@ -892,15 +969,16 @@ OPTIONS is a property list of field options. Valid keys are:
 initializer. The new object is created with fields for which INITFORMS
 were specified (if any; see `define-prototype'); the INITFORMS are
 evaluated, then any applicable initializer is triggered."
-  (let ((new-object (make-object :parent (etypecase prototype 
-					   (object prototype)
-					   (symbol (symbol-value prototype)))
-				 :fields (compose-blank-fields nil :list))))
-    (initialize-method-cache new-object)
-    (send :initialize-fields new-object)
-    (if (has-field :initialize new-object)
-	(apply #'send :initialize new-object initargs))
-    new-object))
+  (let ((uuid (make-uuid)))
+    (let ((new-object (make-object :parent (find-object prototype)
+				   :uuid uuid
+				   :fields (compose-blank-fields nil :list))))
+    (prog1 uuid
+      (initialize-method-cache new-object)
+      (send :initialize-fields new-object)
+      (if (has-field :initialize new-object)
+	  (apply #'send :initialize new-object initargs))
+      (add-object-to-database new-object)))))
 
 ;;; Serialization support
 
@@ -985,8 +1063,8 @@ objects after reconstruction, wherever present."
 	     (send :after-deserialize object))))))
     ;; handle hashes
     ((and (listp data) (eq +hash-type-key+ (first data)))
-     (destructuring-bind (type-key test &rest plist)
-	 data
+     (destructuring-bind (test &rest plist)
+	 (rest data)
        (let ((hash (make-hash-table :test test)))
 	 (loop while plist do
 	   (let* ((key (pop plist))
@@ -1012,13 +1090,20 @@ objects after reconstruction, wherever present."
 
 ;;; Pretty printing objects
 
-(defmethod print-object ((foo ioforms:object) stream) 
-  (format stream "#<IOB ~A " (get-some-object-name foo))
-  (let ((fields (object-fields foo)))
-    (if (listp fields)
-	(format stream "~S" fields)
-	(format stream "... >"))
-    (format stream " >")))
+(defun get-some-object-name (ob)
+  (assert ob)
+  (let ((str (symbol-name (object-name (object-parent ob)))))
+    (string-capitalize (subseq str 1 (search "=" str :from-end t)))))
+
+;; (defmethod print-object ((foo ioforms:object) stream) 
+;;   (format stream "#<IOB ~A ~A " 
+;; 	  (object-address-string foo)
+;; 	  (get-some-object-name foo))
+;;   (let ((fields (object-fields foo)))
+;;     (if (listp fields)
+;; 	(format stream "~S" fields)
+;; 	(format stream "... >"))
+;;     (format stream " >")))
 
 (defun ioforms-trace-all ()
   (do-external-symbols (sym (find-package :ioforms))

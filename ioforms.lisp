@@ -96,9 +96,9 @@
 	   make-field-initializer clone make-field-initializer-body
 	   make-key-modifier-symbol make-key-string normalize-event
 	   make-keyword make-object queue-head queue-max queue-count
-	   *sender* make-special-variable-name field-reference-p
-	   null-parent *message-send-symbol-suffix* *x11-color-data*
-	   object-name object-parent send send-super send-queue self
+	   *sender* field-reference-p null-parent
+	   *message-send-symbol-suffix* *x11-color-data* object-name
+	   object-parent send send-super send-queue self
 	   opposite-direction object-address-string object
 	   step-in-direction direction-to =cell= plasma-rect
 	   subdivide-rect render-plasma add-hook run-hook queue-tail
@@ -164,9 +164,9 @@
 	   =do= convert-internal-sample-to-cffi get-ticks
 	   block-variable with-block-variables set-block-variable
 	   with-blocks with-mission-locals *project* quit reset
-	   seek-music make-keyword make-special-variable-name object
-	   field-value make-queue set-field-value set-field-options
-	   field-options field-documentation set-field-option-value
+	   seek-music make-keyword object field-value make-queue
+	   set-field-value set-field-options field-options
+	   field-documentation set-field-option-value
 	   field-option-value *lookup-failure* no-such-field has-field
 	   has-method send send-queue send-parent serialize
 	   deserialize initialize-method-cache *send-parent-depth*
@@ -184,10 +184,10 @@
 	   self transform-declaration-field-descriptor is-a
 	   compose-blank-fields make-field-initializer initialize
 	   initialize-prototypes initialize-ioforms =menu= =menubar=
-	   object-address-string draw-string draw-string-blended make-menu
-	   find-text-image make-text-image clear-text-image-cache
-	   =block= *token-types* *block-categories* *block-colors*
-	   input 
-	   *block-text-colors* defblock =beep= =program=))
+	   object-address-string draw-string draw-string-blended
+	   make-menu find-text-image make-text-image
+	   clear-text-image-cache =block= *token-types*
+	   *block-categories* *block-colors* input *block-text-colors*
+	   defblock =beep= =program=))
 
 ;;; ioforms.lisp ends here
