@@ -121,7 +121,7 @@ This program includes the free DejaVu fonts family. See the file
 
 ;;; Finding any object by proto-name or UUID
 
-(defun find-object (thing) 
+(defun find-object (thing &optional noerror) 
   (when (not (null thing))
     (etypecase thing
       (symbol (symbol-value thing))
@@ -162,20 +162,24 @@ This program includes the free DejaVu fonts family. See the file
 ;;     (intern name (or package :ioforms))))
 
 (defun make-prototype-id (thing &optional package) 
-  (if (null thing)
-      (error "Must pass a string or symbol as a prototype name.")
-      (apply #'concatenate 'string 
-	     (etypecase thing
-	       (string (list (package-name (or package *package*))
-			     ":" thing))
-	       (symbol 
-		(let ((sp (symbol-package thing)))
-		  (let ((pak2 
-			 (if (or (eq sp (find-package :cl))
-				 (eq sp (find-package :common-lisp-user)))
-			     :ioforms sp)))
-		    (list (package-name pak2)
-			  ":" (symbol-name thing)))))))))
+  (let ((delimiter ":"))
+    (if (null thing)
+	(error "Must pass a string or symbol as a prototype name.")
+	(apply #'concatenate 'string 
+	       (etypecase thing
+		 (string 
+		  (if (search delimiter thing)
+		      (list thing)
+		      (list (package-name (or package *package*))
+			    delimiter thing)))
+		 (symbol 
+		  (let ((sp (symbol-package thing)))
+		    (let ((pak2 
+			   (if (or (eq sp (find-package :cl))
+				   (eq sp (find-package :common-lisp-user)))
+			       :ioforms sp)))
+		      (list (package-name pak2)
+			    delimiter (symbol-name thing))))))))))
 
 ;;; Object data structure
 
@@ -521,25 +525,26 @@ If the method is not found, attempt to forward the message."
 	  ;; no nth method found.
 	  (error "Cannot find parent method for n=~A" n)))))
 
-(defun find-parent (ob)
-  (if (object-name ob)
-      (object-parent ob)
-      (object-parent (object-parent ob))))
-
 (defun initialize-genesis ()
-  (format t "~A" *copyright-text*)
-  ;; (initialize-documentation-tables)
-  (setf *send-parent-depth* 2)) ;;FIXME
+  (format t "~A" *copyright-text*))
 
-(defvar *next-parent*)
+(defvar *next-parent* nil)
 
-;; (defun send-parent (method object &rest args)
-;;   (let ((send-parent
-;;       (error 'null-parent :method-key method :object object))))
+(defun find-parent (object)
+  (find-object (object-parent object)))
 
-
-;; 	  (apply (field-value method-key method-source) object args))
-
+(defun send-parent (method object &rest args)
+  (let ((pointer (or *next-parent* (find-parent object))))
+    (let ((source 
+	   (block searching
+	     (loop while (and pointer (not (eq pointer :end)))
+		   do (when (has-local-value method pointer)
+			(return-from searching pointer))
+		      (setf pointer (find-parent pointer))))))
+      (when source
+	(let ((implementation (field-value method source))
+	      (*next-parent* (or (find-parent source) :end)))
+	  (apply implementation object args))))))
 
 ;;; Message queueing
 

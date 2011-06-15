@@ -330,7 +330,7 @@ cells."
     (setf clock (seconds->frames seconds))
     (setf text string)
     (multiple-value-bind (width height) 
-	(font-text-extents string *font*)
+	(font-text-extents string *block-font*)
       (setf ^width width)
       (setf ^height height))))
 
@@ -338,7 +338,7 @@ cells."
   (with-fields (x y clock text) self
     (decf clock)
     (if (plusp clock)
-	(ioforms:draw-string text x y :font *font* :color "black")
+	(ioforms:draw-string text x y :font *block-font* :color "black")
 	(remove-sprite *world* self))))
 
 

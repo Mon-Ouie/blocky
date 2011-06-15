@@ -114,9 +114,9 @@
 
 (define-method create-project system ())
 
-(define-method open-existing-project system ()
+(define-method open-existing-project system ())
   ;; TODO how to get arguments?
-  (open-project project))
+;  (open-project project))
 
 (define-method save-changes system ()
   (save-project))

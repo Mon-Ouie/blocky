@@ -92,7 +92,7 @@
 	   find-resource-object *colors* *world* make-directory-maybe
 	   load-user-init-file *project-directories* resource-to-plist
 	   *osx* *linux* make-resource make-object-resource make-event
-	   =block= *blocks* bind-event-to-prompt-insertion
+	   *blocks* bind-event-to-prompt-insertion
 	   make-field-initializer clone make-field-initializer-body
 	   make-key-modifier-symbol make-key-string normalize-event
 	   make-keyword make-object queue-head queue-max queue-count
@@ -143,7 +143,7 @@
 	   *project* *project-path* *window-title* *window-position*
 	   restartably *default-shell-width* *default-shell-height*
 	   =split= =shell= =system= *system* set-timer-interval
-	   =gcell= defgcell =block= *message-logging* overlay
+	   =gcell= defgcell *message-logging* overlay
 	   initialize-console poll-joystick-axis poll-joystick-button
 	   reset-joysticks *joystick-device-identifiers*
 	   set-screen-width =universe= *universe* *play-args*
@@ -159,12 +159,12 @@
 	   get-sample-buffer register-sample-generator =voice=
 	   register-voice unregister-voice register-voice-mixer
 	   mix-voices convert-cffi-sample-to-internal *block* *script*
-	   =script= =editor= =block= =move= =move-to= =play-music=
-	   =when= =play-sound= =unless= =if= =start= =stop= =+= =if=
-	   =do= convert-internal-sample-to-cffi get-ticks
-	   block-variable with-block-variables set-block-variable
-	   with-blocks with-mission-locals *project* quit reset
-	   seek-music make-keyword object field-value make-queue
+	   =script= =editor= =move= =move-to= =play-music= =when=
+	   =play-sound= =unless= =if= =start= =stop= =+= =if= =do=
+	   convert-internal-sample-to-cffi get-ticks block-variable
+	   with-block-variables set-block-variable with-blocks
+	   with-mission-locals *project* quit reset seek-music
+	   make-keyword object field-value make-queue find-parent
 	   set-field-value set-field-options field-options
 	   field-documentation set-field-option-value
 	   field-option-value *lookup-failure* no-such-field has-field
@@ -186,8 +186,8 @@
 	   initialize-prototypes initialize-ioforms =menu= =menubar=
 	   object-address-string draw-string draw-string-blended
 	   make-menu find-text-image make-text-image
-	   clear-text-image-cache =block= *token-types*
-	   *block-categories* *block-colors* input *block-text-colors*
-	   defblock =beep= =program=))
+	   clear-text-image-cache *token-types* *block-categories*
+	   *block-colors* input *block-text-colors* defblock =beep=
+	   =program=))
 
 ;;; ioforms.lisp ends here

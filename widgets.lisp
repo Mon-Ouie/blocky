@@ -232,7 +232,7 @@ auto-updated displays."
 (defvar *numeric-characters* "0123456789")
 
 (define-prototype prompt
-    (:parent ioforms:=block= :documentation 
+    (:parent "IOFORMS:BLOCK" :documentation 
 "The command prompt block is a text input area with Emacs-like
 keybindings. It is used to send messages to objects. (For ease of
 use, prompt commands may also be bound to single keystrokes.)
@@ -607,7 +607,7 @@ The modes can be toggled with CONTROL-X.
 
 (defparameter *textbox-minimum-width* 10) 
 
-(define-prototype textbox (:parent =block=)
+(define-prototype textbox (:parent "IOFORMS:BLOCK")
   (font :initform "default-font")
   (buffer :initform nil)
   (read-only :initform nil)
@@ -889,7 +889,7 @@ text INSERTION to be inserted at point."
 
 ;;; The pager switches between different visible groups of blocks
 
-(define-prototype pager (:parent =block=)
+(define-prototype pager (:parent "IOFORMS:BLOCK")
   (pages :initform nil)
   (current-page :initform nil
 		:documentation "Keyword name of current page.")
@@ -990,7 +990,7 @@ text INSERTION to be inserted at point."
 
 ;;; Splitscreen view on 2 blocks with focus border
 
-(define-prototype split (:parent =block=)
+(define-prototype split (:parent "IOFORMS:BLOCK")
   (active-color :initform "red")
   (inactive-color :initform "blue")
   (focus :initform 0)
@@ -1070,7 +1070,7 @@ text INSERTION to be inserted at point."
 (define-method click menu ()
   (with-fields (expanded action target) self
     (if (keywordp action)
-        (send action (or target *system*))
+        (send action (or target (symbol-value '*system*)))
 	(progn 
 	  (setf expanded (if expanded nil t))
 	  (report-layout-change *script*)))))
@@ -1160,7 +1160,7 @@ text INSERTION to be inserted at point."
 	     (if (listp item)
 		 (if (listp (first item))
 		     (mapcar #'expand item)
-		     (apply #'clone =menu= 
+		     (apply #'clone "IOFORMS:MENU"
 			    :target target
 			    (mapcar #'expand item)))
 		 item)))

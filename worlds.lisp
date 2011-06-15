@@ -112,6 +112,8 @@ At the moment, only 0=off and 1=on are supported.")
   (coerce (grid-location self row column)
 	  'list))
   
+(defparameter *default-grid-depth* 4)
+
 (define-method create-grid world (&key grid-width grid-height)
   "Initialize all the arrays for a world of GRID-WIDTH by GRID-HEIGHT cells."
   (let ((dims (list grid-height grid-width)))
@@ -121,7 +123,7 @@ At the moment, only 0=off and 1=on are supported.")
       (dotimes (i grid-height)
 	(dotimes (j grid-width)
 	  (setf (aref grid i j)
-		(make-array *default-world-z-size* 
+		(make-array *default-grid-depth* 
 			    :adjustable t
 			    :fill-pointer 0))))
       (setf ^grid grid
@@ -189,7 +191,7 @@ replacing them with the single cell (or vector of cells) DATA."
     (setf (aref ^grid row column)
 	  (etypecase data
 	    (vector data)
-	    (object (let ((cells (make-array *default-world-z-size* 
+	    (object (let ((cells (make-array *default-grid-depth*
 						  :adjustable t
 						  :fill-pointer 0)))
 			   (prog1 cells
@@ -287,37 +289,37 @@ The cells' :destroy method is invoked."
   (concatenate 'string (get-some-object-name world) "-" (format nil "~S" (genseq))))
 
 (defun create-blank-world (&key grid-height grid-width name)
-  (let ((world (clone =world= :grid-height grid-height :grid-width grid-width)))
+  (let ((world (clone "IOFORMS:WORLD" :grid-height grid-height :grid-width grid-width)))
     (prog1 world
       (setf (field-value :name world)
 	    (or name (generate-world-name world))))))
 
 (defun create-blank-object (arg1 arg2))
 
-(defun find-object (object)
-  (etypecase object
-    (object 
-       ;; check for name collision
-       (let* ((old-name (or (field-value :name object)
-			    (generate-object-name object)))
-	      (new-name (if (find-resource old-name :noerror)
-			    (generate-object-name object)
-			    old-name)))
-	 (message "Indexing new object ~S as ~S" old-name new-name)
-	 (prog1 object 
-	   (make-object-resource new-name object)
-	   (setf (field-value :name object) new-name))))
-    (list 
-       ;; it's an address
-       (destructuring-bind (prototype-name &rest parameters) object
-	 (let ((object (clone (symbol-value prototype-name))))
-	   (make-with-parameters object parameters)
-	   (find-object object))))
-    (string (or (find-resource-object object :noerror)
-		(progn (make-object-resource object (create-blank-object :name object))
-		       (let ((object (find-resource-object object)))
-			 (prog1 object
-			   (setf (field-value :name object) object))))))))
+;; (defun find-object (object)
+;;   (etypecase object
+;;     (object 
+;;        ;; check for name collision
+;;        (let* ((old-name (or (field-value :name object)
+;; 			    (generate-object-name object)))
+;; 	      (new-name (if (find-resource old-name :noerror)
+;; 			    (generate-object-name object)
+;; 			    old-name)))
+;; 	 (message "Indexing new object ~S as ~S" old-name new-name)
+;; 	 (prog1 object 
+;; 	   (make-object-resource new-name object)
+;; 	   (setf (field-value :name object) new-name))))
+;;     (list 
+;;        ;; it's an address
+;;        (destructuring-bind (prototype-name &rest parameters) object
+;; 	 (let ((object (clone (symbol-value prototype-name))))
+;; 	   (make-with-parameters object parameters)
+;; 	   (find-object object))))
+;;     (string (or (find-resource-object object :noerror)
+;; 		(progn (make-object-resource object (create-blank-object :name object))
+;; 		       (let ((object (find-resource-object object)))
+;; 			 (prog1 object
+;; 			   (setf (field-value :name object) object))))))))
 
 (defparameter *default-world-axis-size* 10)
 (defparameter *default-world-z-size* 4)
@@ -339,8 +341,6 @@ The cells' :destroy method is invoked."
 ;; turtle commands, or generate them programmatically in other ways.
 ;; See also logic.lisp.
 
-(defvar *default-z-depth* 16)
-
 (define-method create-grid world (&key grid-width grid-height)
   "Initialize all the arrays for a world of GRID-WIDTH by GRID-HEIGHT cells."
   (let ((dims (list grid-height grid-width)))
@@ -352,11 +352,11 @@ The cells' :destroy method is invoked."
 	(dotimes (j grid-width)
 	  ;; now put a vector in each square to represent the z-axis
 	  (setf (aref grid i j)
-		(make-array *default-z-depth* 
+		(make-array *default-grid-depth* 
 			    :adjustable t
 			    :fill-pointer 0))
 	  (setf (aref sprite-grid i j)
-		(make-array *default-z-depth*
+		(make-array *default-grid-depth*
 			    :adjustable t
 			    :fill-pointer 0))))
       (setf ^grid grid
@@ -558,14 +558,6 @@ placement."
   
 (define-method get-player world ()
   ^player)
-
-(define-method loadout-all world ()
-  (with-field-values (grid-height grid-width grid) self
-    (dotimes (i grid-height)
-      (dotimes (j grid-width) 
-	(do-cells (cell (aref grid i j))
-	  (when (has-method :loadout cell)
-	    (loadout cell)))))))
 
 (define-method player-row world ()
   "Return the grid row the player is on."
@@ -933,7 +925,7 @@ by symbol name. This enables them to be used as hash keys."
 represents the z-axis of a euclidean 3-D space."))
 
 (defun make-universe ()
-  (clone =universe=))
+  (new universe))
 
 (define-method make-euclidean universe ()
   (setf ^space (make-array *default-space-size* 
@@ -1080,7 +1072,7 @@ PLAYER as the player."
   (exit *universe* :player (get-player *world*)))
 
 (define-method drop-entry-point world (row column)
-  (replace-grid-location self row column (clone =launchpad=)))
+  (replace-grid-location self row column (new launchpad)))
 
 ;;; Convenience macro for defining worlds:
 
@@ -1166,7 +1158,7 @@ worlds."
     (assert (listp address))
     (when (null universe)
       (setf universe (if (null *universe*)
-			 (clone =universe=)
+			 (new universe)
 			 *universe*)))
     ;; this probably works better if you have already set up a universe.
     (setf *mission* self)

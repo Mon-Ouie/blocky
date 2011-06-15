@@ -61,7 +61,7 @@
 
 (define-method initialize listener ()
   (with-fields (image inputs) self
-    (let ((prompt (clone block-prompt self)))
+    (let ((prompt (new block-prompt self)))
       (parent/initialize self)
       (set-output prompt prompt)
       (setf inputs (list prompt))
@@ -90,7 +90,7 @@
 	 :documentation "Block being hovered over, if any.")
   (highlight :initform nil
 	     :documentation "Block being highlighted, if any.")
-  (ghost :initform (clone block))
+  (ghost :initform (new block))
   (buffer :initform nil)
   (focused-block :initform nil)
   (click-start :initform nil

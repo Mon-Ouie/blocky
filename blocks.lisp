@@ -99,7 +99,7 @@ alist entries give the names and input types of the inputs here.")
 (defmacro defblock (name &body args)
   "Define a new block prototype named =NAME=.
 ARGS are field specifiers, as with `define-prototype'."
-  `(define-prototype ,name (:parent =block=)
+  `(define-prototype ,name (:parent "IOFORMS:BLOCK")
     (operation :initform ,(make-keyword name))
     ,@(if (keywordp (first args))
 	  (plist-to-descriptors args)
