@@ -1183,7 +1183,7 @@ worlds."
 		 `(setf (gethash ,(make-keyword var-name) ,hash) (make-goal ,@goal-props)))))
       `(let ((,hash (make-hash-table)))
 	 (progn ,@(mapcar #'set-goal goals))
-	 (define-prototype ,name (:parent ioforms:=mission=)
+	 (define-prototype ,name (:parent "IOFORMS:MISSION")
 	   (name :initform ,(make-keyword name))
 	   (description :initform ,description)
 	   (address :initform ,address)

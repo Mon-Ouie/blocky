@@ -33,47 +33,38 @@
 (defpackage :ioforms
     (:documentation "Visual Common Lisp.")
   (:use :common-lisp) 
-  (:export *default-frame-width* *default-frame-height* =null=
-	   null-block =viewport= *frequency* *output-chunksize*
-	   *output-channels* halt-sample *dt* defproject run start
-	   *update-function* =equipment= *default-world-axis-size*
-	   defsprite *target* *blocks* *script* *default-world-z-size*
-	   =browser= install-blocks =balloon= seconds->frames =form=
-	   keyboard-held-p keyboard-pressed-p
+  (:export *default-frame-width* *default-frame-height* null-block
+	   *frequency* *output-chunksize* *output-channels*
+	   halt-sample *dt* defproject run start *update-function*
+	   *default-world-axis-size* defsprite *target* *blocks*
+	   *script* *default-world-z-size* install-blocks
+	   seconds->frames keyboard-held-p keyboard-pressed-p
 	   *use-nominal-screen-size* keyboard-released-p
 	   keyboard-time-in-current-state
 	   keyboard-time-in-previous-state *updates* keyboard-down-p
 	   keyboard-keys-down keyboard-modifier-down-p
-	   keyboard-modifiers draw-filled-circle draw-aa-circle =my=
-	   =say= =animate= =hide= =show= =set-variable= =variable=
-	   =visible?= =joystick-button= get-keys
-	   *project-package-name* project-package-name =set=
-	   make-block =integer= =string= =float= =symbol=
-	   *form-command-handler-function* =data-cell= =var-cell=
-	   =option-cell= =toggle-cell= =event-cell= =buffer-cell=
-	   =comment-cell= add-block remove-block =button-cell=
-	   =image-cell= *initialization-hook* initialize-engine =fire=
-	   =see-player= hit-blocks =player-direction= =closer-than=
-	   =block-prompt= =listener= =list= split-string-on-lines
-	   message *prompt-sweden-keybindings*
-	   *prompt-qwerty-keybindings* *screen-width*
-	   transform-method-body roll-under make-stat =formatter=
+	   keyboard-modifiers draw-filled-circle draw-aa-circle
+	   get-keys *project-package-name* project-package-name
+	   make-block *form-command-handler-function* add-block
+	   remove-block *initialization-hook* initialize-engine
+	   hit-blocks split-string-on-lines message
+	   *prompt-sweden-keybindings* *prompt-qwerty-keybindings*
+	   *screen-width* transform-method-body roll-under make-stat
 	   make-universe initialize-colors *standard-categories*
 	   *left-turn* bind-event *right-turn* *default-action-points*
-	   left-turn right-turn =world= roll bind-event-to-method
-	   *colors* enable-key-repeat disable-key-repeat get-color
-	   =prompt= =menu-item= =direction-chooser= define-method
-	   *default-font* field-value set-field-value object-fields
-	   dispatch-event run-project *user-init-file-name* distance
-	   icon-resource icon-image *compass-directions*
-	   *compass-opposites* find-resource-property
-	   compose-blank-fields font-width font-height *browser*
-	   browser set-browser find-object *windows*
-	   transform-field-reference defblock *screen-height*
-	   =inventory= formatted-line-width *last-event*
+	   left-turn right-turn roll bind-event-to-method *colors*
+	   enable-key-repeat disable-key-repeat get-color
+	   define-method *default-font* field-value set-field-value
+	   object-fields dispatch-event run-project
+	   *user-init-file-name* distance icon-resource icon-image
+	   *compass-directions* *compass-opposites*
+	   find-resource-property compose-blank-fields font-width
+	   font-height *browser* browser set-browser find-object
+	   *windows* transform-field-reference defblock
+	   *screen-height* formatted-line-width *last-event*
 	   formatted-line-height formatted-string-height
 	   formatted-string-width get-color create-image draw-image
-	   ioforms edit =frame= define-prototype has-field *target*
+	   ioforms edit define-prototype has-field *target*
 	   with-target defcell defworld *choose-direction-menu*
 	   set-field-options field-option-value index-resource
 	   find-project-path index-project load-image-resource
@@ -100,8 +91,8 @@
 	   *message-send-symbol-suffix* *x11-color-data* object-name
 	   object-parent send send-super send-queue self
 	   opposite-direction object-address-string object
-	   step-in-direction direction-to =cell= plasma-rect
-	   subdivide-rect render-plasma add-hook run-hook queue-tail
+	   step-in-direction direction-to plasma-rect subdivide-rect
+	   render-plasma add-hook run-hook queue-tail
 	   make-resource-link save-resource save-project
 	   *defined-resources* save-everything *export-formats*
 	   export-archive defresource export-application
@@ -115,7 +106,7 @@
 	   make-formatted-string draw-string-shaded set-blending-mode
 	   render-formatted-string render-formatted-line resource
 	   font-text-extents write-sexp-to-file with-message-sender
-	   *message-sender* =textbox= read-sexp-from-file with-fields
+	   *message-sender* read-sexp-from-file with-fields
 	   with-field-values write-iof *grammar* one-of left-hand-side
 	   right-hand-side expansions generate send-event-to-blocks
 	   play-music halt-music seek-music *joystick-mapping* play
@@ -123,44 +114,40 @@
 	   *ps3-joystick-mapping* *joystick-button-symbols*
 	   draw-resource-image *event-handler-function* *use-sound*
 	   trace-rectangle trace-row trace-column trace-octagon
-	   trace-line midpoint =asterisk= send-event =gray-asterisk=
-	   self *project-blocks* defsprite =sprite=
-	   get-some-object-name transform-declaration-field-descriptor
-	   show-blocks no-such-field =narrator=
-	   find-projects-in-directory goal =mission= =gateway=
-	   =launchpad= =environment= directory-is-project-p
-	   find-all-projects *project* transform-tree
-	   *after-startup-hook* stat-value draw-line
+	   trace-line midpoint send-event self *project-blocks*
+	   defsprite get-some-object-name
+	   transform-declaration-field-descriptor show-blocks
+	   no-such-field find-projects-in-directory goal
+	   directory-is-project-p find-all-projects *project*
+	   transform-tree *after-startup-hook* stat-value draw-line
 	   *default-message-verbosities* *message-verbosities*
 	   add-overlay set-message-verbosities operation-symbol
 	   message-symbol play-sample set-music-volume
-	   add-message-verbosities with-message-queue =minimap=
-	   draw-pixel *user-keyboard-layout* *fullscreen* draw-circle
-	   =emote= set-field-option-value =blockr= =blockr-prompt=
-	   open-project =sprite-special= field-options world
-	   set-frame-rate *frame-rate* =stack= *workbook*
+	   add-message-verbosities with-message-queue draw-pixel
+	   *user-keyboard-layout* *fullscreen* draw-circle
+	   set-field-option-value open-project field-options world
+	   set-frame-rate *frame-rate* *workbook*
 	   set-resource-modified-p *iof-file-extension* load-project
 	   *project* *project-path* *window-title* *window-position*
 	   restartably *default-shell-width* *default-shell-height*
-	   =split= =shell= =system= *system* set-timer-interval
-	   =gcell= defgcell *message-logging* overlay
-	   initialize-console poll-joystick-axis poll-joystick-button
-	   reset-joysticks *joystick-device-identifiers*
-	   set-screen-width =universe= *universe* *play-args*
-	   set-screen-height genseq *zoom-factor* zoom-image
-	   is-zoomed-resource *timer-interval* save-objects
+	   *system* set-timer-interval defgcell *message-logging*
+	   overlay initialize-console poll-joystick-axis
+	   poll-joystick-button reset-joysticks
+	   *joystick-device-identifiers* set-screen-width *universe*
+	   *play-args* set-screen-height genseq *zoom-factor*
+	   zoom-image is-zoomed-resource *timer-interval* save-objects
 	   enable-timer disable-timer while defmission send-to-blocks
 	   enable-held-keys disable-held-keys do-cells draw-box
 	   *resizable* achieve *resize-hook* draw-rectangle *quitting*
 	   *after-open-project-hook* *mission* mission-variable
-	   set-mission-variable with-mission-locals =mission=
-	   *background-color* set-sample-callback set-music-callback
-	   cffi-chunk-buffer =command-cell= convert-cffi-sample
-	   get-sample-buffer register-sample-generator =voice=
-	   register-voice unregister-voice register-voice-mixer
-	   mix-voices convert-cffi-sample-to-internal *block* *script*
-	   =script= =editor= =move= =move-to= =play-music= =when=
-	   =play-sound= =unless= =if= =start= =stop= =+= =if= =do=
+	   set-mission-variable with-mission-locals *background-color*
+	   set-sample-callback set-music-callback cffi-chunk-buffer
+	   convert-cffi-sample get-sample-buffer
+	   register-sample-generator register-voice unregister-voice
+	   register-voice-mixer mix-voices
+	   convert-cffi-sample-to-internal *block* *script*
+	        
+	          
 	   convert-internal-sample-to-cffi get-ticks block-variable
 	   with-block-variables set-block-variable with-blocks
 	   with-mission-locals *project* quit reset seek-music
@@ -183,11 +170,10 @@
 	   object-fields define-method define-prototype new object-p
 	   self transform-declaration-field-descriptor is-a
 	   compose-blank-fields make-field-initializer initialize
-	   initialize-prototypes initialize-ioforms =menu= =menubar=
+	   initialize-prototypes initialize-ioforms
 	   object-address-string draw-string draw-string-blended
 	   make-menu find-text-image make-text-image
 	   clear-text-image-cache *token-types* *block-categories*
-	   *block-colors* input *block-text-colors* defblock =beep=
-	   =program=))
+	   *block-colors* input *block-text-colors* defblock ))
 
 ;;; ioforms.lisp ends here

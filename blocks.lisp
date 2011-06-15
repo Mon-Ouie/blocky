@@ -164,7 +164,7 @@ ARGS are field specifiers, as with `define-prototype'."
   "Prepare an empty block, or if BLOCKS is non-empty, a block
 initialized with BLOCKS as inputs."
   (with-fields (inputs schema results input-widths) self
-    (message "BEFORE inputs:~S blocks:~S" (length inputs) (length blocks))
+;    (message "BEFORE inputs:~S blocks:~S" (length inputs) (length blocks))
     (let ((arity (if (plusp (length blocks))
 		     (length blocks)
 		     (length schema))))
@@ -1006,7 +1006,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (when *script* 
       (send :report-layout-change *script*))))
 
-(define-prototype script (:parent =list=)
+(define-prototype script (:parent "IOFORMS:LIST")
   (menu :initform nil)
   (inputs :iniform '(nil))
   (target :initform nil)

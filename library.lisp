@@ -59,7 +59,7 @@
 
 ;;; Sending to an ID
 
-(define-prototype send (:parent =list=)
+(define-prototype send (:parent "IOFORMS:LIST")
   (category :initform :message)
   (schema :initform  '((:target :block)
 		       (:body :list))))

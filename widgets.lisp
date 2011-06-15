@@ -1037,7 +1037,7 @@ text INSERTION to be inserted at point."
 
 ;;; Menus
 
-(define-prototype menu (:parent =list=)
+(define-prototype menu (:parent "IOFORMS:LIST")
   (category :initform :menu)
   (top-level :initform nil)
   action target (expanded :initform nil) (visible :initform t))
@@ -1056,12 +1056,7 @@ text INSERTION to be inserted at point."
   (when inputs
     (dolist (each inputs)
       (pin each)
-      (set-parent each self)))
-  (message "MENU ~S" 
-	   (mapcar #'(lambda (x)
-		       (with-fields (target) x
-			 (when x (get-some-object-name x))))
-		   inputs)))
+      (set-parent each self))))
 
 (define-method accept menu (&rest args) nil)
 

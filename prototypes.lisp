@@ -129,6 +129,27 @@ This program includes the free DejaVu fonts family. See the file
 		  (find-prototype thing :noerror)))
       (object thing))))
 
+;; (defmethod print-object ((foo ioforms:object) stream) 
+(defun print-iob (ob)
+  (let ((object (find-object ob)))
+    (apply #'concatenate 'string
+	   (list (format nil "#<IOB ~A ~A " 
+			 (object-address-string object)
+			 (get-some-object-name object))
+		 " FIELDS: "
+		 ;; (let ((fields (object-fields object)))
+		 ;;   (if (listp fields)
+		 ;;       (labels ((separate (item)
+		 ;; 		  (format nil " ~S " (print-iob item)))
+		 ;; 		(iob (val)
+		 ;; 		  (if (object-p val)
+		 ;; 		      (print-iob val)
+		 ;; 		      (format nil "~S" val))))
+		 ;; 	 (let ((prints (mapcar #'iob fields)))
+		 ;; 	   (apply #'concatenate 'string 
+		 ;; 		  (mapcar #'separate prints))))))
+		 " DONE. "))))
+
 ;;; Emacs Lisp compatibilty macro 
 
 (defmacro while (test &body body)
@@ -536,17 +557,28 @@ If the method is not found, attempt to forward the message."
   (find-object (object-parent object)))
 
 (defun send-parent (method object &rest args)
+  ;; (message "BEFORE next-parent ~S" (list :method method 
+  ;; 					:object (print-iob object)
+  ;; 					:args args))
   (let ((pointer (or *next-parent* (find-parent object))))
     (let ((source 
 	   (block searching
 	     (loop while (and pointer (not (eq pointer :end)))
 		   do (when (has-local-value method pointer)
 			(return-from searching pointer))
-		      (setf pointer (find-parent pointer))))))
+		      (setf pointer (find-parent pointer)))
+	     nil)))
       (when source
 	(let ((implementation (field-value method source))
 	      (*next-parent* (or (find-parent source) :end)))
-	  (apply implementation object args))))))
+	  ;; (message "DURING next-parent ~S" (list :source (print-iob source)
+	  ;; 					:next *next-parent* 
+	  ;; 					:imp implementation))
+	  (prog1 (apply implementation object args)))))))
+	    ;; (message "AFTER next-parent ~S" (list :method method 
+	    ;; 					:object (print-iob object)
+	    ;; 					:args args))))))))
+
 
 ;;; Message queueing
 
@@ -1098,20 +1130,11 @@ objects after reconstruction, wherever present."
 ;;; Pretty printing objects
 
 (defun get-some-object-name (ob)
-  (assert ob)
-  (let ((str (symbol-name (object-name (object-parent ob)))))
-    (string-capitalize (subseq str 1 (search "=" str :from-end t)))))
-
-;; (defmethod print-object ((foo ioforms:object) stream) 
-;;   (format stream "#<IOB ~A ~A " 
-;; 	  (object-address-string foo)
-;; 	  (get-some-object-name foo))
-;;   (let ((fields (object-fields foo)))
-;;     (if (listp fields)
-;; 	(format stream "~S" fields)
-;; 	(format stream "... >"))
-;;     (format stream " >")))
-
+  (if (null ob)
+      "NULL!!"
+      (let ((object (find-object ob)))
+	(if object (object-parent object) "Unknown"))))
+    
 (defun ioforms-trace-all ()
   (do-external-symbols (sym (find-package :ioforms))
     (when (fboundp sym)

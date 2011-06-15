@@ -2033,30 +2033,4 @@ of the music."
   (initialize-database)
   (open-project "standard"))
 
-;; (defun ioforms (&rest args)
-;;   (setf *after-open-project-hook* nil
-;; 	*after-startup-hook* nil
-;; 	*resize-hook* nil
-;; 	*event-handler-function* #'send-to-blocks)
-;;   (if (null args)
-;;       (run nil)
-;;       (apply #'run args)))
-      
-;; (defmacro defproject (module-name 
-;; 		   (&key title description
-;; 			 (prompt-prototype =prompt=)
-;; 			 update update-function
-;; 			 held-keys 
-;; 			 splash-image splash-function splash-music
-;; 			 screen-width screen-height
-;; 			 keybindings pages
-;; 			 &allow-other-keys)
-;;  		   &body startup-forms)
-;;   `(progn
-;;      (ioforms:set-screen-height ,screen-height)
-;;      (ioforms:set-screen-width ,screen-width)
-;;      (setf ioforms:*update-function* ,update-function)
-;;      (setf ioforms:*dt* ,update)
-;;      ,@startup-forms))
-
 ;;; console.lisp ends here
