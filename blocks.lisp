@@ -987,7 +987,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 
 (define-method initialize list (&rest blocks)
   (with-fields (inputs) self
-    (parent/initialize self)
+    (next/initialize self)
     (setf inputs blocks)))
 
 ;;; Composing blocks into larger programs, recursively.

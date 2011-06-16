@@ -165,7 +165,7 @@ line."
   (delete-line self (fill-pointer ^lines)))
 
 (define-method initialize formatter ()
-  (parent/initialize self)
+  (next/initialize self)
   (reset-lines self)
   (newline self))
 
@@ -426,7 +426,7 @@ The modes can be toggled with CONTROL-X.
   (apply #'message args))
 
 (define-method initialize prompt ()
-  (parent/initialize self)
+  (next/initialize self)
   (install-keybindings self))
 
 (define-method forward-char prompt ()
@@ -747,7 +747,7 @@ text INSERTION to be inserted at point."
   (bind-key-to-textbox-insertion self "QUOTE" '(:shift) "\""))
 
 (define-method initialize textbox ()
-  (send-parent self :initialize self)
+  (send-next self :initialize self)
   (install-keybindings self))
 
 (define-method forward-char textbox ()
@@ -907,7 +907,7 @@ text INSERTION to be inserted at point."
   (properties :initform (make-hash-table :test 'eq)))
   
 (define-method initialize pager ()
-  (send-parent self :initialize self)
+  (send-next self :initialize self)
   (auto-position self)
   (labels ((s1 () (select self 1))
 	   (s2 () (select self 2))
@@ -1045,7 +1045,7 @@ text INSERTION to be inserted at point."
 (define-method initialize menu 
     (&key action target top-level inputs 
 	  schema expanded (label "blank menu item..."))
-  (parent/initialize self)
+  (next/initialize self)
   (setf ^action action
 	^expanded expanded
 	^target target
@@ -1166,7 +1166,7 @@ text INSERTION to be inserted at point."
 (defblock menubar :category :menu)
 
 (define-method initialize menubar (menus)
-  (parent/initialize self)
+  (next/initialize self)
   (with-fields (inputs) self
     (setf inputs menus)
     (dolist (each menus)

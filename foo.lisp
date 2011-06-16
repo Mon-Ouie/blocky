@@ -1,44 +1,75 @@
 (in-package :ioforms)
 
-(define-prototype bloop () a b c)
+(define-prototype aaa () a b c)
+(define-method foo aaa ()
+  (list :foo :aaa))
+;; define foo, bar, baz
+(define-method bar aaa ()
+  (list :bar :aaa))
+(define-method baz aaa ()
+  (list :baz :aaa))
+(define-method quux aaa ()
+  (list :quux :aaa))
 
-(define-method doof bloop ()
-  (list :doof :bloop))
-
-(define-method initialize bloop ()
-  (list :init))
-
-(define-prototype clap (:parent bloop)
+(define-prototype bbb (:parent aaa)
   d e f)
+;; do not define "bar"
+(define-method foo bbb ()
+  (append (list :foo :bbb)
+	  (next/foo self)))
+(define-method quux bbb ()
+  (list :quux :bbb))
 
-(define-method doof clap ()
-  (append (list :doof :clap)
-	  (next/doof self)))
+(define-prototype ccc (:parent bbb)
+  h i j)
+;; do not define "foo"
+(define-method bar ccc ()
+  (append (list :bar :ccc)
+	  (next/bar self)))
+(define-method quux ccc ()
+  (list :quux :ccc))
 
-(define-method initialize clap ()
-  (append (list :init)
-	  (next/clap self)))
-	  
-(defparameter *bloop* (new bloop))
+(defparameter *aaa* (new aaa))
+(defparameter *bbb* (new bbb))
+(defparameter *ccc* (new ccc))
 
-(defparameter *clap* (new clap))
+;; foo: *ccc* -> IOFORMS:CCC -> IOFORMS:BBB* -> IOFORMS:AAA* 
+;; baz: *ccc* -> IOFORMS:CCC -> IOFORMS:BBB -> IOFORMS:AAA*
 
-(doof *bloop*)
-(doof *clap*)
-(definer :initialize *clap*)
+;; qux: *ccc* -> IOFORMS:CCC* -> IOFORMS:BBB* -> IOFORMS:AAA*
+;; bar: *ccc* -> IOFORMS:CCC* -> IOFORMS:BBB -> IOFORMS:AAA*
 
-(definer :initialize *clap*) ;; can be nil! !!!!
+(foo *aaa*)
+(foo *bbb*)
+(foo *ccc*)
 
-(definer :doof *clap*)
-(definition :doof *clap*)
-(find-parent (definer :doof *clap*))
-(next-definer :doof *clap*)
-(next-definition :doof *clap*)
+(bar *aaa*)
+(bar *bbb*)
+(bar *ccc*)
 
-(definer :doof *clap*)
+(baz *aaa*)
+(baz *bbb*)
+(baz *ccc*)
 
+(quux *aaa*)
+(quux *bbb*)
+(quux *ccc*)
 
-(definer 
+(definer :foo *bbb*)
 
-(find-parent (find-parent "IOFORMS:CLAP"))
+(next-definer :foo *aaa*)
+(next-definer :foo *bbb*)
+(next-definer :foo *ccc*)
+
+(next-definer :bar *aaa*)
+(next-definer :bar *bbb*)
+(next-definer :bar *ccc*)
+
+(next-definer :baz *aaa*)
+(next-definer :baz *bbb*)
+(next-definer :baz *ccc*)
+
+(next-definer :quux *aaa*)
+(next-definer :quux *bbb*)
+(next-definer :quux *ccc*)
 

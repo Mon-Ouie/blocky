@@ -32,7 +32,7 @@
   (rows :initform 10))
 
 (define-method initialize block-prompt (output)
-  (parent/initialize self)
+  (next/initialize self)
   (setf ^output output))
 
 (define-method set-output block-prompt (output)
@@ -62,7 +62,7 @@
 (define-method initialize listener ()
   (with-fields (image inputs) self
     (let ((prompt (new block-prompt self)))
-      (parent/initialize self)
+      (next/initialize self)
       (set-output prompt prompt)
       (setf inputs (list prompt))
       (pin prompt)
@@ -109,7 +109,7 @@
   (update ^script))
 
 (define-method initialize shell ()
-  (parent/initialize self))
+  (next/initialize self))
 
 (define-method script-blocks shell ()
   (field-value :inputs ^script))

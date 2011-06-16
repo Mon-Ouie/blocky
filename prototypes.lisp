@@ -121,7 +121,7 @@ This program includes the free DejaVu fonts family. See the file
 
 ;;; Finding any object by proto-name or UUID
 
-(defun find-object (thing &optional noerror) 
+(defun find-object (thing) 
   (when (not (null thing))
     (etypecase thing
       (symbol (symbol-value thing))
@@ -492,7 +492,7 @@ upon binding."
 (defun send (method thing &rest args)
   "Invoke the method identified by the keyword METHOD on the OBJECT with ARGS.
 If the method is not found, attempt to forward the message."
-  ;; See also `send-queue' and `send-parent'
+  ;; See also `send-queue' and `send-next'
   (let ((object (find-object thing)))
     (when (not (object-p object))
       (error "Cannot send message to non-object: ~A" object))
@@ -551,33 +551,64 @@ If the method is not found, attempt to forward the message."
 (defun initialize-genesis ()
   (format t "~A" *copyright-text*))
 
-(defvar *next-parent* nil)
-
 (defun find-parent (object)
-  (find-object (object-parent object)))
+  (object-parent (find-object object)))
 
-(defun send-parent (method object &rest args)
-  ;; (message "BEFORE next-parent ~S" (list :method method 
-  ;; 					:object (print-iob object)
-  ;; 					:args args))
-  (let ((pointer (or *next-parent* (find-parent object))))
-    (let ((source 
-	   (block searching
-	     (loop while (and pointer (not (eq pointer :end)))
-		   do (when (has-local-value method pointer)
-			(return-from searching pointer))
-		      (setf pointer (find-parent pointer)))
-	     nil)))
-      (when source
-	(let ((implementation (field-value method source))
-	      (*next-parent* (or (find-parent source) :end)))
-	  ;; (message "DURING next-parent ~S" (list :source (print-iob source)
-	  ;; 					:next *next-parent* 
-	  ;; 					:imp implementation))
-	  (prog1 (apply implementation object args)))))))
-	    ;; (message "AFTER next-parent ~S" (list :method method 
-	    ;; 					:object (print-iob object)
-	    ;; 					:args args))))))))
+(defun definition (method object)
+  (block finding
+    (loop while object do 
+      (when (has-local-value method object)
+	(return-from finding 
+	  (values (field-value method object) object)))
+      (setf object (find-parent object)))))
+
+(defun definer (method object)
+  (multiple-value-bind (definition definer)
+      (definition method object)
+    (declare (ignore definition))
+    definer))
+
+(defun next-definer (method object)
+  (if (has-local-value method object)
+      (definer method (find-parent object))
+      (next-definer method (find-parent object))))
+
+  ;; (let ((first-definer (definer method object)))
+  ;;   (if (not (eq self first-definer))
+  ;; 	(definer method (find-parent first-definer))))
+
+(defun next-search-start (method object)
+  (find-parent (next-definer method object)))
+
+(defun next-definition (method object)
+  (field-value method (next-definer method object)))
+
+(defvar *next-search-start* nil)
+
+(defun send-next (method object &rest arguments)
+  "Invoke next version of METHOD on OBJECT, passing ARGUMENTS.  We do
+this by finding the current implementation (via slot lookup), then
+finding the next implementation after that."
+  ;; compare methods?
+  (let ((*next-search-start* (next-search-start method object))) ;; parent of this?
+    (apply (next-definition method object) object arguments)))
+	   
+;; (defun send-next (method object &rest args)
+;;   "Invoke next version of METHOD on OBJECT with ARGS.  We do this by
+;; finding the current implementation (via slot lookup), then finding the
+;; next implementation after that."
+;;   (let ((pointer (or *next-parent* (find-parent object))))
+;;     (let ((source 
+;; 	   (block searching
+;; 	     (loop while (and pointer (not (eq pointer :end)))
+;; 		   do (when (has-local-value method pointer)
+;; 			(return-from searching pointer))
+;; 		      (setf pointer (find-parent pointer)))
+;; 	     nil)))
+;;       (when source
+;; 	(let ((implementation (field-value method source))
+;; 	      (*next-parent* (or (find-parent source) :end)))
+;; 	  (prog1 (apply implementation object args)))))))
 
 
 ;;; Message queueing
@@ -768,13 +799,13 @@ was invoked."
 						  "/QUEUE/"
 						  method-symbol-name)))
 	 (parent-defun-symbol (intern (concatenate 'string
-						  "/PARENT/"
+						  "/NEXT/"
 						  method-symbol-name)))
 	 (queue-defun-symbol-noslash (intern (concatenate 'string
 						  "QUEUE/"
 						  method-symbol-name)))
 	 (parent-defun-symbol-noslash (intern (concatenate 'string
-						  "PARENT/"
+						  "NEXT/"
 						  method-symbol-name))))
     (let ((name (gensym)))
       `(let ((prototype (find-prototype ,prototype-id)))
@@ -821,11 +852,11 @@ was invoked."
 	     ;; and for parent calls.
 	     (defun ,parent-defun-symbol (self &rest args)
 	       ,@(if documentation (list documentation))
-	       (apply #'send-parent ,name self args))
+	       (apply #'send-next ,name self args))
 	     (export ',parent-defun-symbol)
 	     (defun ,parent-defun-symbol-noslash (self &rest args)
 	       ,@(if documentation (list documentation))
-	       (apply #'send-parent ,name self args))
+	       (apply #'send-next ,name self args))
 	     (export ',parent-defun-symbol-noslash)))))))
 
 ;;; Defining prototypes
@@ -1115,11 +1146,11 @@ objects after reconstruction, wherever present."
     ;; passthru
     (t data)))
 
-(defun /parent/initialize (object &rest args)
-  (apply #'send-parent :initialize object args))
+(defun /next/initialize (object &rest args)
+  (apply #'send-next :initialize object args))
 
-(defun parent/initialize (object &rest args)
-  (apply #'send-parent :initialize object args))
+(defun next/initialize (object &rest args)
+  (apply #'send-next :initialize object args))
 
 (defun /queue/initialize (object &rest args)
   (apply #'send-queue :initialize object args))

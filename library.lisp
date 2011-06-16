@@ -26,7 +26,7 @@
 
 (define-method initialize sprite-id (thing)
   (with-fields (sprite-uuid) self
-    (parent/initialize self)
+    (next/initialize self)
     (setf sprite-uuid (etypecase thing
 			(string thing)
 			(object (field-value :uuid thing))))))
