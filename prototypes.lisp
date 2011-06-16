@@ -129,27 +129,6 @@ This program includes the free DejaVu fonts family. See the file
 		  (find-prototype thing :noerror)))
       (object thing))))
 
-;; (defmethod print-object ((foo ioforms:object) stream) 
-(defun print-iob (ob)
-  (let ((object (find-object ob)))
-    (apply #'concatenate 'string
-	   (list (format nil "#<IOB ~A ~A " 
-			 (object-address-string object)
-			 (get-some-object-name object))
-		 " FIELDS: "
-		 ;; (let ((fields (object-fields object)))
-		 ;;   (if (listp fields)
-		 ;;       (labels ((separate (item)
-		 ;; 		  (format nil " ~S " (print-iob item)))
-		 ;; 		(iob (val)
-		 ;; 		  (if (object-p val)
-		 ;; 		      (print-iob val)
-		 ;; 		      (format nil "~S" val))))
-		 ;; 	 (let ((prints (mapcar #'iob fields)))
-		 ;; 	   (apply #'concatenate 'string 
-		 ;; 		  (mapcar #'separate prints))))))
-		 " DONE. "))))
-
 ;;; Emacs Lisp compatibilty macro 
 
 (defmacro while (test &body body)
@@ -514,7 +493,6 @@ If the method is not found, attempt to forward the message."
 				object method args)
 			 (error (format nil "Could not invoke method ~S" method)))))))))
 
-
 (define-condition null-parent (error)
   ((method-key :initarg :message :accessor method-key)
    (object :initarg :object :accessor object))
@@ -522,31 +500,6 @@ If the method is not found, attempt to forward the message."
 	     (format stream "Cannot find parent method ~S for object ~S." 
 		     (method-key condition)
 		     (object condition)))))
-
-(defun find-nth-named-parent (object method-key n)
-  (declare (ignore method-key))
-  (assert (plusp n))
-  (let ((pointer object)
-	(x n))
-    (labels ((find-parent (p)
-	       (find-object (object-parent p)))
-	     (next-parent ()
-	       (setf pointer (find-parent pointer))))
-      (loop while (and pointer
-		       (not (zerop x)))
-	    do (progn 
-		 (if (object-name pointer)
-		     (progn (decf x)
-			    (unless (zerop x)
-			      ;; don't obliterate the pointer.
-			      (next-parent)))
-		     (next-parent))))
-      ;; what happened?
-      (if (zerop x)
-	  ;; we found it.
-	  pointer
-	  ;; no nth method found.
-	  (error "Cannot find parent method for n=~A" n)))))
 
 (defun initialize-genesis ()
   (format t "~A" *copyright-text*))
@@ -573,15 +526,6 @@ If the method is not found, attempt to forward the message."
       (definer method (find-parent object))
       (next-definer method (find-parent object))))
 
-  ;; (let ((first-definer (definer method object)))
-  ;;   (if (not (eq self first-definer))
-  ;; 	(definer method (find-parent first-definer))))
-
-;; (defun next-search-start (method object)
-;;   (if (has-local-value method object)
-;;       (
-;;   (find-parent (next-definer method object)))
-
 (defun next-definition (method object)
   (field-value method (next-definer method object)))
 
@@ -596,23 +540,6 @@ finding the next implementation after that."
     (let ((*next-search-start* (next-definer method start)))
       (apply (next-definition method start)
 	     object arguments))))
-	   ;; (defun send-next (method object &rest args)
-;;   "Invoke next version of METHOD on OBJECT with ARGS.  We do this by
-;; finding the current implementation (via slot lookup), then finding the
-;; next implementation after that."
-;;   (let ((pointer (or *next-parent* (find-parent object))))
-;;     (let ((source 
-;; 	   (block searching
-;; 	     (loop while (and pointer (not (eq pointer :end)))
-;; 		   do (when (has-local-value method pointer)
-;; 			(return-from searching pointer))
-;; 		      (setf pointer (find-parent pointer)))
-;; 	     nil)))
-;;       (when source
-;; 	(let ((implementation (field-value method source))
-;; 	      (*next-parent* (or (find-parent source) :end)))
-;; 	  (prog1 (apply implementation object args)))))))
-
 
 ;;; Message queueing
 
@@ -935,8 +862,6 @@ slot value is inherited."
 	      descriptors)))
     (nreverse descriptors)))
 	
-; (define-prototype hello () a b c)
-
 (defmacro define-prototype (name
 			    (&key parent 
 				  documentation
@@ -1021,15 +946,6 @@ OPTIONS is a property list of field options. Valid keys are:
 	 (add-object-to-database prototype)
 	 ;; return the uuid and object
 	 (values uuid prototype)))))
-
-;;; Printing objects
-
-(defun object-address-string (ob)
-  (let ((string (with-output-to-string (s)
-		  (print-unreadable-object (ob s :identity t)))))
-    (subseq string
-	    (1+ (search "{" string))
-	    (search "}" string))))
 
 ;;; Cloning objects
 
@@ -1161,13 +1077,43 @@ objects after reconstruction, wherever present."
 (defun queue/initialize (object &rest args)
   (apply #'send-queue :initialize object args))
 
-;;; Pretty printing objects
+;;; Printing objects
 
 (defun get-some-object-name (ob)
   (if (null ob)
       "NULL!!"
       (let ((object (find-object ob)))
 	(if object (object-parent object) "Unknown"))))
+
+(defun object-address-string (ob)
+  (let ((string (with-output-to-string (s)
+		  (print-unreadable-object (ob s :identity t)))))
+    (subseq string
+	    (1+ (search "{" string))
+	    (search "}" string))))
+
+;; (defmethod print-object ((foo ioforms:object) stream) 
+(defun print-iob (ob)
+  (let ((object (find-object ob)))
+    (apply #'concatenate 'string
+	   (list (format nil "#<IOB ~A ~A " 
+			 (object-address-string object)
+			 (get-some-object-name object))
+		 " FIELDS: "
+		 ;; (let ((fields (object-fields object)))
+		 ;;   (if (listp fields)
+		 ;;       (labels ((separate (item)
+		 ;; 		  (format nil " ~S " (print-iob item)))
+		 ;; 		(iob (val)
+		 ;; 		  (if (object-p val)
+		 ;; 		      (print-iob val)
+		 ;; 		      (format nil "~S" val))))
+		 ;; 	 (let ((prints (mapcar #'iob fields)))
+		 ;; 	   (apply #'concatenate 'string 
+		 ;; 		  (mapcar #'separate prints))))))
+		 " DONE. "))))
+
+;;; Brute force debugging
     
 (defun ioforms-trace-all ()
   (do-external-symbols (sym (find-package :ioforms))

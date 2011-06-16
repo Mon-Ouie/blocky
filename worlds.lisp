@@ -1063,7 +1063,7 @@ PLAYER as the player."
       ;; it's a mission name
       (symbol (begin (symbol-value destination) (get-player *world*))))))
 	 
-(define-prototype launchpad (:parent =gateway=)
+(define-prototype launchpad (:parent "IOFORMS:GATEWAY")
   (tile :initform "launchpad")
   (categories :initform '(:gateway :player-entry-point))
   (description :initform "Press RETURN here to exit this area."))
@@ -1080,7 +1080,7 @@ PLAYER as the player."
   "Define a world named NAME, with the fields ARGS as in a normal
 prototype declaration. This is a convenience macro for defining new
 worlds."
-  `(define-prototype ,name (:parent =world=)
+  `(define-prototype ,name (:parent "IOFORMS:WORLD")
      ,@args))
 
 ;;; Missions and Goals

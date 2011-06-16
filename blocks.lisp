@@ -244,31 +244,7 @@ the return value of the function (if any)."
       (dolist (entry default-events)
 	(apply #'bind-event self entry)))))
 
-;; (define-method initialize block (&rest args)
-;;   (declare (ignore args))
-;;   (bind-any-default-events self))
-
 ;;; Creating blocks from S-expressions
-
-(defvar *make-block-package* nil)
-
-(defun make-block-package ()
-  (project-package-name))
-
-(defun print-block (B)
-  (let (fields)
-    (flet ((add-field (field value)
-	     (push (list field value) fields)))
-      (typecase B
-	(ioforms:object 
-	 (let ((f2 (object-fields B)))
-	   (etypecase f2
-	     (hash-table (maphash #'add-field f2))
-	     (list (setf fields f2)))
-	   (cons (get-some-object-name B) fields)))
-	;; 
-	(list (mapcar #'print-block B))
-	(otherwise B)))))
 
 (defun data-entry-prototype (sexp)
   (etypecase sexp
@@ -289,79 +265,52 @@ the return value of the function (if any)."
 (defun data-block (datum)
   (let ((entry (clone (data-entry-prototype datum))))
     (prog1 entry
-      (set-data entry datum))))
+      (setf (field-value :data entry) datum))))
 
-(defun make-block (value)
+(defvar *make-block-package* nil)
+
+(defun make-block-package ()
+  (project-package-name))
+
+(defun make-block (sexp)
+    "Expand VALUE specifying a block diagram into real blocks.
+SEXP is of the form:
+
+  (BLOCK-NAME ARG1 ARG2 ... ARGN)
+
+Where BLOCK-NAME is the name of a prototype defined with `defblock'
+and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   ;; use labels because we need to call make-block from inside
   (labels ((action-block (spec)
 	     (destructuring-bind (operation &rest arguments) spec
 	        (apply #'clone 
-		       (find-prototype (make-non-keyword operation))
+		       (find-prototype (make-prototype-id operation
+							  (make-block-package)))
 		       (mapcar #'make-block arguments))))
 	   (list-block (items)
 	     (apply #'clone "IOFORMS:LIST" (mapcar #'make-block items))))
-    (cond ((is-action-spec value)
-	   (action-block value))
-	  ((is-list-spec value)
-	   (list-block value))
-	  ((not (null value)) (data-block value)))))
+    (cond ((is-action-spec sexp)
+	   (action-block sexp))
+	  ((is-list-spec sexp)
+	   (list-block sexp))
+	  ((not (null sexp)) (data-block sexp)))))
+
+(defun is-bad-connection (sink source)
+  ;; make sure source is not actually sink's parent somewhere
+  (block checking
+    (prog1 nil
+      (let ((pointer sink))
+	(loop while pointer do
+	  (if (eq (find-object pointer)
+		  (find-object source))
+	      (return-from checking t)
+	      (setf pointer (find-parent pointer))))))))
 
 (defun connect-parent-links (block)
   (dolist (child (field-value :inputs block))
     (when child
       (set-parent child block)
       (connect-parent-links child))))
-      
-;; (defun make-block (sexp)
-;;     "Expand SEXP specifying a block diagram into real blocks.
-;; SEXP is of the form:
-
-;;   (BLOCK-NAME ARG1 ARG2 ... ARGN)
-
-;; Where BLOCK-NAME is the name of a prototype defined with `defblock'
-;; and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
-;;     (when (not (null sexp))
-;;       (if (listp sexp)
-;; 	  ;; it's a list, handle either as new action block or new
-;; 	  ;; plain list of blocks.
-;; 	  (if (symbolp (first sexp))
-;; 	      ;; ;; handle unbound symbols by making a symbol block
-;; 	      ;; (if (not (boundp (make-special-variable-name (first sexp))))
-;; 	      ;;     (let ((entry (clone =symbol=)))
-;; 	      ;; 	    (prog1 entry (set-data entry (first sexp))))
-;; 		  ;; handle bound symbols by making an action block 
-;; 	      (destructuring-bind (operation &rest args) sexp
-;; 		(let ((block (funcall #'clone
-;; 				      (symbol-value
-;; 				       (make-special-variable-name
-;; 					operation
-;; 					(make-block-package))))))
-;; 		  (prog1 block
-;; 		    (when args
-;; 		      (with-fields (inputs) block
-;; 			(setf inputs
-;; 			      (mapcar #'make-block args))
-;; 			(message "CREATED ACTION BLOCK: ~S" (list :ARGS1 args :INPUTS1 inputs))
-;; 			(dolist (input inputs)
-;; 			  (set-parent input block)))))))
-;; 	      ;; make a list of blocks
-;; 	      (clone =list= 
-;; 		    (mapcar #'make-block sexp)))
-;; 	  ;; we've got a piece of non-list data.
-;; 	  (let ((prototype
-;; 		 (symbol-value
-;; 		  (etypecase sexp
-;; 		    ;; see also `defentry' below.
-;; 		    (integer '=integer=)
-;; 		    (float '=float=)
-;; 		    (string '=string=)
-;; 		    (symbol '=symbol=)))))
-;; 	    (let ((entry (clone prototype)))
-;; 	      (prog1 entry
-;; 		(set-data entry sexp)))))))
-  
-  ;; (assert expression)
-  ;; `(make-block-ext ',expression))
 
 (defparameter *block-categories*
   '(:system :motion :event :message :looks :sound :structure :data
@@ -402,6 +351,7 @@ areas.")
 (define-method set-parent block (new-parent)
   "Store a link to an enclosing PARENT block, if any."
   (with-fields (parent) self
+    (assert (not (is-bad-connection new-parent self)))
     (setf parent new-parent)))
 	       
 (define-method get-parent block ()
@@ -427,8 +377,8 @@ areas.")
 (define-method plug block (thing n)
   "Connect the block INPUT as the value of the Nth input."
 ;  (setf (nth n ^inputs) thing)
-  (setf (input self n) thing)
-  (set-parent thing self))
+  (set-parent thing self)
+  (setf (input self n) thing))
 
 (define-method unplug block (input)
   "Disconnect the block INPUT from this block."
@@ -496,12 +446,12 @@ current block. Used for taking a census."
     (+ 1 (length inputs))))
 
 (defparameter *display-widgets*
-   '(:integer =integer=
-     :float =float=
-     :string =textbox=
-     :symbol =option=)
+   '(:integer "IOFORMS:INTEGER"
+     :float "IOFORMS:FLOAT"
+     :string "IOFORMS:TEXTBOX"
+     :symbol "IOFORMS:OPTION")
   "A property list mapping some input type keywords to
-corresponding IOFORMS:=WIDGET= prototypes used for editing that kind
+corresponding IOFORMS:WIDGET prototypes used for editing that kind
 of value.")
 
 (defparameter *background-color* "white"
@@ -856,7 +806,24 @@ MOUSE-Y identify a point inside the block (or input block.)"
       (prog1 t
 	(let ((position (input-position parent self)))
 	  (assert (integerp position))
+	  (assert (not (is-bad-connection parent other-block)))
 	  (plug parent other-block position))))))
+
+;;; Printing a block
+
+(defun print-block (B)
+  (let (fields)
+    (flet ((add-field (field value)
+	     (push (list field value) fields)))
+      (typecase B
+	(ioforms:object 
+	 (let ((f2 (object-fields B)))
+	   (etypecase f2
+	     (hash-table (maphash #'add-field f2))
+	     (list (setf fields f2)))
+	   (cons (get-some-object-name B) fields)))
+	(list (mapcar #'print-block B))
+	(otherwise B)))))
 
 ;;; Data entry blocks
 
@@ -889,7 +856,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (setf width (+ (* 4 *dash*) (expression-width data)))))
 
 (defmacro defentry (name data)
-  `(define-prototype ,name (:parent =entry=)
+  `(define-prototype ,name (:parent "IOFORMS:ENTRY")
      (operation :initform ,(make-keyword name))
      (data :initform ,data)))
 
