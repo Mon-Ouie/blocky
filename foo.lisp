@@ -73,3 +73,19 @@
 (next-definer :quux *bbb*)
 (next-definer :quux *ccc*)
 
+(next-definition :foo *aaa*)
+(next-definition :foo *bbb*)
+(next-definition :foo *ccc*)
+
+(next-definition :bar *aaa*)
+(next-definition :bar *bbb*)
+(next-definition :bar *ccc*)
+
+(next-definition :baz *aaa*)
+(next-definition :baz *bbb*)
+(next-definition :baz *ccc*)
+
+(next-definition :quux *aaa*)
+(next-definition :quux *bbb*)
+(next-definition :quux *ccc*)
+

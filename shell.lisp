@@ -115,7 +115,6 @@
   (field-value :inputs ^script))
 
 (define-method open-script shell (script) 
-  (assert (ioforms:object-p script))
   (setf ^script script))
   
 (define-method add shell (new-block &optional x y)

@@ -577,8 +577,10 @@ If the method is not found, attempt to forward the message."
   ;;   (if (not (eq self first-definer))
   ;; 	(definer method (find-parent first-definer))))
 
-(defun next-search-start (method object)
-  (find-parent (next-definer method object)))
+;; (defun next-search-start (method object)
+;;   (if (has-local-value method object)
+;;       (
+;;   (find-parent (next-definer method object)))
 
 (defun next-definition (method object)
   (field-value method (next-definer method object)))
@@ -590,10 +592,11 @@ If the method is not found, attempt to forward the message."
 this by finding the current implementation (via slot lookup), then
 finding the next implementation after that."
   ;; compare methods?
-  (let ((*next-search-start* (next-search-start method object))) ;; parent of this?
-    (apply (next-definition method object) object arguments)))
-	   
-;; (defun send-next (method object &rest args)
+  (let ((start (or *next-search-start* object)))
+    (let ((*next-search-start* (next-definer method start)))
+      (apply (next-definition method start)
+	     object arguments))))
+	   ;; (defun send-next (method object &rest args)
 ;;   "Invoke next version of METHOD on OBJECT with ARGS.  We do this by
 ;; finding the current implementation (via slot lookup), then finding the
 ;; next implementation after that."

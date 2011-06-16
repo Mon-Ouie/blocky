@@ -1,6 +1,4 @@
 ** TODO FOO.LISP introduce automatic *this-method* binding to prevent calling self?
-** TODO change (/parent/initialize to /next/initialize
-** TODO allow string resource name / uuid message sends and field lookups
 ** TODO fix wrong parent links
 ** TODO defblock emacs
 ** TODO make thing to search for duplicate method defs
