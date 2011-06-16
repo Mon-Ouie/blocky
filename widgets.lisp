@@ -1173,6 +1173,17 @@ text INSERTION to be inserted at point."
       (setf (field-value :top-level each) t)
       (pin each))))
 
+(define-method hit menubar (mouse-x mouse-y)
+  (with-fields (x y width height inputs) self
+    (flet ((test (child)
+	     (hit child mouse-x mouse-y)))
+      (or (some #' test inputs)
+	  (when (within-extents mouse-x mouse-y 
+				x y 
+				(+ x width)
+				(+ y (dash 2 1 (font-height *block-font*))))
+	    self)))))
+
 (define-method draw-border menubar () nil)
 
 (define-method layout menubar ()

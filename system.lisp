@@ -127,7 +127,7 @@
 (define-method ticks system ()
   (get-ticks))
 
-(define-method shutdown system ()
+(define-method quit-ioforms system ()
   ;; TODO destroy textures
   (ioforms:quit t))
 

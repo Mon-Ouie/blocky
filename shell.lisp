@@ -143,23 +143,6 @@
 	(with-script script
 	  (handle-event (first selection) event))))))
 
-(define-method begin-drag shell (mouse-x mouse-y block)
-  (with-fields (drag inputs script drag-start ghost drag-offset) self
-    (setf drag block)
-    (when (is-member script block)
-      (delete-input script block))
-    (let ((dx (field-value :x block))
-	  (dy (field-value :y block))
-	  (dw (field-value :width block))
-	  (dh (field-value :height block)))
-      (with-fields (x y width height) ghost
-	(let ((x-offset (- mouse-x dx))
-	      (y-offset (- mouse-y dy)))
-	  (when (null drag-start)
-	    (setf x dx y dy width dw height dh)
-	    (setf drag-start (cons dx dy))
-	    (setf drag-offset (cons x-offset y-offset))))))))
-
 (define-method hit shell (x y)
   self)
 
@@ -202,6 +185,23 @@
 	  (draw-highlight highlight))))))
 
 (defparameter *minimum-drag-distance* 7)
+
+(define-method begin-drag shell (mouse-x mouse-y block)
+  (with-fields (drag inputs script drag-start ghost drag-offset) self
+    (setf drag block)
+    (when (is-member script block)
+      (delete-input script block))
+    (let ((dx (field-value :x block))
+	  (dy (field-value :y block))
+	  (dw (field-value :width block))
+	  (dh (field-value :height block)))
+      (with-fields (x y width height) ghost
+	(let ((x-offset (- mouse-x dx))
+	      (y-offset (- mouse-y dy)))
+	  (when (null drag-start)
+	    (setf x dx y dy width dw height dh)
+	    (setf drag-start (cons dx dy))
+	    (setf drag-offset (cons x-offset y-offset))))))))
 
 (define-method drag-maybe shell (x y)
   ;; require some actual mouse movement to initiate a drag

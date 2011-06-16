@@ -1,12 +1,10 @@
-** TODO FOO.LISP introduce automatic *this-method* binding to prevent calling self?
 ** TODO fix wrong parent links
-** TODO defblock emacs
-** TODO make thing to search for duplicate method defs
-** TODO hilbert curve turtle example 
 ** TODO fix not being able to pull out sublists
-** TODO Fix (ioforms::make-block-ext '(a b c)) => ; Evaluation aborted on #<UNBOUND-VARIABLE =A= {BC77691}>.
+** TODO [#C] make thing to search for duplicate method defs
+** TODO [#B] hilbert curve turtle example 
 ** TODO [#A] fix context menus not using correct target
 ** TODO [#A] get math and basic blocks working
+** TODO [#C] defblock emacs
 ** TODO [#A] make easy dialog box block maker
 ** TODO [#B] editing of numbers/data entry values in-place
 ** TODO [#A] transcribe BYOB blocks library listing
