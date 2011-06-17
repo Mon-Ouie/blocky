@@ -132,6 +132,10 @@ This program includes the free DejaVu fonts family. See the file
 (defun find-parent (object)
   (object-parent (find-object object)))
 
+(defun object-eq (a b)
+  (eq (find-object a)
+      (find-object b)))
+
 ;;; Emacs Lisp compatibilty macro 
 
 (defmacro while (test &body body)
@@ -741,7 +745,7 @@ was invoked."
 						  "NEXT/"
 						  method-symbol-name))))
     (let ((name (gensym)))
-      `(let ((prototype (find-prototype ,prototype-id)))
+      `(let ((prototype (find-prototype ,prototype-id :noerror)))
 	 ;; make sure it exists
 	 (when (null prototype)
 	   (error (format nil "Cannot define method ~A for nonexistent prototype ~A"

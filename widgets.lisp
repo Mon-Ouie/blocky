@@ -215,7 +215,7 @@ auto-updated displays."
 	   
 ;;; Command prompt block
 
-(defparameter *prompt-blink-time* 24)
+(defparameter *prompt-blink-time* 20)
 (defparameter *prompt-cursor-color* "magenta")
 (defparameter *prompt-cursor-blink-color* "red")
 
@@ -225,7 +225,7 @@ auto-updated displays."
 (defparameter *default-prompt-margin* 4)
 
 (defparameter *default-prompt-history-size* 100)
-(defparameter *default-cursor-width* 8)
+(defparameter *default-cursor-width* 6)
 
 (defvar *lowercase-alpha-characters* "abcdefghijklmnopqrstuvwxyz")
 (defvar *uppercase-alpha-characters* "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -531,17 +531,17 @@ The modes can be toggled with CONTROL-X.
 (define-method move-beginning-of-line prompt ()
   (setf ^point 0))
 
+(define-method update prompt ()
+  ;; keep the cursor blinking
+  (with-fields (clock) self
+    (decf clock)
+    (when (> (- 0 *prompt-blink-time*) clock)
+      (setf clock *prompt-blink-time*))))
+    
 (define-method draw prompt ()
   (with-fields (x y width height clock mode point parent line) self
     (draw-background self)
-    ;; keep the cursor blinking
-    (decf clock)
-    (when (> (- 0 *prompt-blink-time*) clock)
-      (setf clock *prompt-blink-time*))
-    
     (let* ((font-height (font-height *block-font*))
-	   (prompt-height (+ (* 2 *default-prompt-margin*)
-			     font-height))
 	   (strings-y *default-prompt-margin*)
 	   (prompt-string (ecase mode
 			    (:direct *direct-prompt-string*)
@@ -1040,6 +1040,7 @@ text INSERTION to be inserted at point."
 (define-prototype menu (:parent "IOFORMS:LIST")
   (category :initform :menu)
   (top-level :initform nil)
+  (temporary :initform t)
   action target (expanded :initform nil) (visible :initform t))
 
 (define-method initialize menu 
@@ -1163,7 +1164,7 @@ text INSERTION to be inserted at point."
 
 ;;; A global menu bar
 
-(defblock menubar :category :menu)
+(defblock menubar :category :menu :temporary t)
 
 (define-method initialize menubar (menus)
   (next/initialize self)

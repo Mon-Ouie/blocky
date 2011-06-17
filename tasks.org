@@ -1,7 +1,7 @@
-** TODO review blocks.lisp for object-reference test issues
-** TODO [#A] Fix mouse-up-->set-parent(x,x) same
-** TODO [#A] fix wrong drag parent links
+** TODO [#A] fix can't select sublist 
 ** TODO [#A] fix not being able to pull out sublists
+** DONE [#A] fix double speed update when selected after drag
+   CLOSED: [2011-06-17 Fri 09:42]
 ** TODO [#A] fix argument blocks not being created (AGAIN)
 ** TODO [#A] transcribe BYOB blocks library listing
 ** TODO [#A] fix context menus not using correct target

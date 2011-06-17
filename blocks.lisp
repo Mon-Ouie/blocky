@@ -10,7 +10,7 @@
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
 
-;; This program is distributed in the hope that it will be useful,
+;; This program is distributed in the hopes that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
@@ -78,6 +78,7 @@ alist entries give the names and input types of the inputs here.")
   (results :initform nil :documentation
 "Computed result values from the input blocks.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
+  (temporary :initform nil)
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
@@ -107,8 +108,8 @@ ARGS are field specifiers, as with `define-prototype'."
 
 (define-method update block ()
   "Update the simulation one step forward in time.
-Does nothing by default."
-  nil)
+By default, just update each child block."
+  (mapc #'update ^inputs))
 
 (define-method change-image block (image)
   (setf ^image image))
@@ -125,21 +126,45 @@ Does nothing by default."
 (define-method count-inputs block ()
   (length ^inputs))
 
-(defun input-position (self thing)
-  (assert thing)
+(define-method is-temporary block ()
+  ^temporary)
+
+(define-method count-toplevel-blocks block ()
+  (with-field-values (inputs) self
+    (- (length inputs)
+       (count-if #'is-temporary inputs))))
+
+(define-method toplevel-blocks block ()
+  (with-field-values (inputs) self
+    (remove-if #'is-temporary inputs)))
+  
+(define-method contains block (block)
+  (with-fields (inputs) self
+    (find block inputs :test 'eq :key #'find-object)))
+
+(define-method delete-input block (block)
+  (with-fields (inputs) self
+    (assert (contains self block))
+    (setf inputs (delete (find-object block)
+			 inputs
+			 :key #'find-object
+			 :test 'eq))))
+
+(defun input-position (self input)
+  (assert (not (null input)))
   (with-fields (schema inputs) self
-    (etypecase thing
-      (ioforms:object (position thing inputs :key #'find-object :test 'eq))
-      (string (position (find-object thing) inputs :key #'find-object :test 'eq))
+    (etypecase input
+      (ioforms:object (position input inputs :key #'find-object :test 'eq))
+      (string (position (find-object input) inputs :key #'find-object :test 'eq))
       (integer
-       (if (< thing (length inputs))
-	   thing
-	   (error "No such input index ~S" thing)))
+       (if (< input (length inputs))
+	   input
+	   (error "No such input index ~S" input)))
       (keyword 
-       (let ((index (position thing schema :key #'first)))
+       (let ((index (position input schema :key #'first)))
 	 (if (numberp index)
 	     index
-	     (error "No such input named ~S" thing)))))))
+	     (error "No such input named ~S" input)))))))
 
 (defun input (self name)
   (with-fields (inputs) self
@@ -188,17 +213,8 @@ initialized with BLOCKS as inputs."
 	  (setf inputs blocks)
 	  (dolist (child blocks)
 	    (set-parent child self))))
-	  ;; (dolist (block blocks)
-	  ;;   (set-parent block self))))
-      ;; (flet ((has-parent (b)
-      ;; 	       (and (object-p b)
-      ;; 		    (has-local-value :parent b))))
-      ;; 	(when inputs (message "INITIALIZED BLOCK WITH ~S INPUTS ~S" 
-      ;; 			      (length inputs) (mapcar #'has-parent inputs)))
       (bind-any-default-events self)
       (add-object-to-database self))))
-      ;; (when inputs (message "INITIALIZED BLOCK 2 WITH ~S INPUTS ~S" 
-      ;; 			    (length inputs) (mapcar #'has-parent inputs))))))
 
 ;;; Defining keyboard/mouse/joystick events for blocks
 
@@ -276,6 +292,12 @@ the return value of the function (if any)."
     (and (not (null spec))
 	 (listp spec)))
 
+(defun is-null-block-spec (spec)
+  (and (not (null spec))
+       (listp spec)
+       (= 1 (length spec))
+       (null (first spec))))
+
 (defun data-block (datum)
   (let ((entry (clone (data-entry-prototype datum))))
     (prog1 entry
@@ -307,7 +329,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 		 (apply #'clone prototype arg-blocks))))
 	   (list-block (items)
 	     (apply #'clone "IOFORMS:LIST" (mapcar #'make-block items))))
-    (cond ((is-action-spec sexp)
+    (cond ((is-null-block-spec sexp)
+	   (null-block))
+	  ((is-action-spec sexp)
 	   (action-block sexp))
 	  ((is-list-spec sexp)
 	   (list-block sexp))
@@ -395,9 +419,10 @@ areas.")
 
 (define-method unplug block (input)
   "Disconnect the block INPUT from this block."
-    (plug self (null-block) 
+  (prog1 input
+    (plug self (null-block)
 	  (input-position self input))
-    (set-parent input nil))
+    (set-parent input nil)))
 
 (define-method unplug-from-parent block ()
   (with-fields (parent) self
@@ -901,17 +926,17 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (if inputs
 	;; we've got inputs. add it to the list (prepending or not)
 	(prog1 t
+	  (assert (is-valid-connection self input))
+	  ;; set parent if necessary 
+	  (when (get-parent input)
+	    (unplug-from-parent input))
+	  (set-parent input self)
 	  (setf inputs 
 		(if prepend
 		    (nconc (list input) inputs)
-		    (nconc inputs (list input))))
-	  ;; finally, set parent if necessary 
-	  (when (get-parent input)
-	    (unplug-from-parent input))
-	  (set-parent input self))
+		    (nconc inputs (list input)))))
     	;; no inputs yet. make a single-element inputs list
 	(prog1 t (setf inputs (list input))))))
-
 
 (define-method take-first list ()
   (with-fields (inputs) self
@@ -920,13 +945,12 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	(unplug self block)))))
 
 (define-method length list ()
-  (with-fields (inputs) self
-    (length inputs)))
+  (length ^inputs))
 
-(define-method unplug list (input)
-  (with-fields (inputs) self
-    (setf inputs (delete input inputs))
-    (set-parent input nil)))
+;; (define-method unplug list (input)
+;;   (with-fields (inputs) self
+;;     (delete-input input self)
+;;     (set-parent input nil)))
 
 (define-method header-height list () 0)
 
@@ -1006,23 +1030,11 @@ MOUSE-Y identify a point inside the block (or input block.)"
 (define-method report-layout-change script ()
   (setf ^needs-layout t))
 
-(define-method contains script (block)
-  (with-fields (inputs) self
-    (find block inputs :test 'eq :key #'find-object)))
-
 (define-method bring-to-front script (block)
-  (with-fields (inputs) self
+  (with-fields (inputs script) self
     (assert (contains script block))
     (delete-input self block)
-    (setf inputs (nconc inputs (list block)))))
-
-(define-method delete-input script (block)
-  (with-fields (inputs) self
-    (assert (contains self block))
-    (setf inputs (delete (find-object block)
-			 inputs
-			 :key #'find-object
-			 :test 'eq))))
+    (append-input self block)))
 
 (define-method update script ()
   (with-script self 
@@ -1037,7 +1049,14 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	(layout each))
       (setf needs-layout nil))))
 
+(define-method unplug script (input)
+  "Disconnect the block INPUT from this block."
+  (prog1 input
+    (delete-input self input)
+    (set-parent input nil)))
+
 (define-method initialize script (&key blocks variables target menu)
+  ;; (next/initialize self blocks)
   (setf ^inputs blocks)
   (when variables (setf ^variables variables))
   (when target (setf ^target target))
@@ -1048,22 +1067,26 @@ MOUSE-Y identify a point inside the block (or input block.)"
 (define-method set-target script (target)
   (setf ^target target))
 
-(define-method append-block script (block)
+(define-method append-input script (block)
   (with-fields (inputs) self
     (assert (not (contains self block)))
-    (set-parent block nil)
+    (set-parent block self)
     (setf inputs (nconc inputs (list block)))))
 
 (define-method add script (block &optional x y)
   (with-fields (inputs) self
     (assert (not (contains self block)))
-    (append-block self block)
+    (append-input self block)
     (when (and (integerp x)
 	       (integerp y))
       (move-to block x y))
     (report-layout-change self)))
 
-
+(define-method run script ())
+  ;; (with-fields (inputs target) self
+  ;;   (with-target target
+  ;;     (dolist (block inputs)
+  ;; 	(run block)))))
 
 ;; (define-method header-height script ()
 ;;   (with-fields (x y inputs) self
@@ -1081,12 +1104,6 @@ MOUSE-Y identify a point inside the block (or input block.)"
 ;; 	(text (+ x *dash* 1)
 ;; 	      (+ y *dash* 1)
 ;; 	      "script")))))
-
-(define-method run script ())
-  ;; (with-fields (inputs target) self
-  ;;   (with-target target
-  ;;     (dolist (block inputs)
-  ;; 	(run block)))))
 
 ;; (define-method set script (var value)
 ;;   (setf (gethash var ^variables) value))

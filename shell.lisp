@@ -65,8 +65,8 @@
       (next/initialize self)
       (set-output prompt prompt)
       (setf inputs (list prompt))
-      (pin prompt)
-      (set-parent prompt self))))
+      (set-parent prompt self)
+      (pin prompt))))
 
 (define-method run listener ()
   (with-fields (inputs) self
@@ -102,7 +102,6 @@
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
-
 (define-method layout shell ())
 
 (define-method update shell ()
@@ -121,29 +120,44 @@
   (with-fields (script) self
     (add script new-block x y)))
 
-(define-method delete-input shell (child)
-  (delete ^script child))
+;; (define-method delete-input shell (child)
+;;   (delete ^script child))
 
-(define-method select shell (new-block &optional only)
-  (with-fields (selection inputs) self
+(define-method select shell (block &optional only)
+  (with-fields (selection) self
     (if only
-	(setf selection (list new-block))
-	(pushnew new-block selection))))
+	(setf selection (list block))
+	(pushnew block selection 
+		 :test 'eq :key #'find-parent))))
 
 (define-method select-if shell (predicate)
   (with-fields (selection inputs) self
-    (setf selection (remove-if predicate inputs))))
+    (setf selection 
+	  (remove-if predicate inputs
+		     :key #'find-parent))))
 
-(define-method unselect shell (the-block)
+(define-method unselect shell (block)
   (with-fields (selection) self
-    (setf selection (delete the-block selection))))
+    (setf selection (delete block selection 
+			    :test 'eq :key #'find-parent))))
 
 (define-method handle-event shell (event)
-  (with-fields (selection script) self
-    (when (= 1 (length selection))
-      (when (first selection)
-	(with-script script
-	  (handle-event (first selection) event))))))
+  (with-field-values (selection script) self
+    (with-field-values (inputs) script
+    (message "SELECTED ~S BLOCKS w ~S @TOPLEVEL"
+	     (length selection)
+	     (count-toplevel-blocks script))
+       (let ((block
+		(cond 
+		  ;; only one block selected. use that.
+		  ((= 1 (length selection))
+		   (first selection))
+		  ;; nothing selected, only 1 top-level block.
+		  ((= 1 (count-toplevel-blocks script))
+		   (first (toplevel-blocks script))))))
+	  (when block 
+	    (with-script script
+	      (handle-event block event)))))))
 
 (define-method hit shell (x y)
   self)
@@ -191,8 +205,6 @@
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag inputs script drag-start ghost drag-offset) self
     (setf drag block)
-    (when (contains script block)
-      (delete-input script block))
     (let ((dx (field-value :x block))
 	  (dy (field-value :y block))
 	  (dw (field-value :width block))
@@ -251,19 +263,20 @@
 
 (define-method mouse-up shell (x y &optional button)
   (with-fields 
-      (inputs drag-offset drag-start hover script selection drag
+      (drag-offset drag-start hover script selection drag
 	      click-start focused-block modified) self
     (if drag
 	;; we're dragging
 	(let ((drag-parent (get-parent drag)))
-	  (when drag-parent
+	  (when (and (not (null drag))
+		     (not (object-eq script drag-parent)))
 	    (unplug-from-parent drag))
 	  ;; where are we dropping?
 	  (if (null hover)
 	      ;; dropping on background
 	      (add self drag)
 	      ;; dropping on another block
-	      (unless (accept hover drag)
+	      (when (not (accept hover drag))
 		;; hovered block did not accept drag. 
 		;; just drop the block
 		(add self drag)))
