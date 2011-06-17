@@ -1,19 +1,18 @@
-** TODO fix wrong parent links
-** TODO fix not being able to pull out sublists
-** TODO [#C] make thing to search for duplicate method defs
-** TODO [#B] hilbert curve turtle example 
+** TODO [#A] fix wrong drag parent links
+** TODO [#A] fix not being able to pull out sublists
+** TODO [#A] fix argument blocks not being created (AGAIN)
+** TODO [#A] transcribe BYOB blocks library listing
 ** TODO [#A] fix context menus not using correct target
 ** TODO [#A] get math and basic blocks working
-** TODO [#C] defblock emacs
 ** TODO [#A] make easy dialog box block maker
-** TODO [#B] editing of numbers/data entry values in-place
-** TODO [#A] transcribe BYOB blocks library listing
 ** TODO [#A] make a sprite reference (i.e. uuid)
 ** TODO [#A] implement "send" block using reference 
 ** TODO [#A] Create DEFBLOCK block
 ** TODO [#A] DEMO VIDEO some working menu items with "send" block
 ** TODO [#A] bring menubar and its menus to front when opening menu
 ** TODO [#A] comment block for output messages in listener etc, trap errors
+** TODO [#B] hilbert curve turtle example 
+** TODO [#B] editing of numbers/data entry values in-place
 ** TODO [#B] Revise widgets.lisp for OpenGL
 ** TODO [#B] button to add arguments to + etc
 ** TODO [#B] close all submenus when closing a menu
@@ -28,6 +27,8 @@
 ** TODO [#B] show target name in menu
 ** TODO [#B] system menus should close when you click on the background or on other widget
 ** TODO [#B] tab to switch focus between all top-level blocks
+** TODO [#C] make thing to search for duplicate method defs
+** TODO [#C] defblock emacs
 ** TODO [#C] ALPHA issues for PNG images
 ** TODO [#C] allow string-valued method fields. resource id's of method block, uuid?
 ** TODO [#C] automatically generate blocky friend faces with given body/face shapes
