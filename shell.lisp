@@ -120,9 +120,6 @@
   (with-fields (script) self
     (add script new-block x y)))
 
-;; (define-method delete-input shell (child)
-;;   (delete ^script child))
-
 (define-method select shell (block &optional only)
   (with-fields (selection) self
     (if only
@@ -204,7 +201,11 @@
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag inputs script drag-start ghost drag-offset) self
+    ;; save the block
     (setf drag block)
+    ;; remove from script if it's a top-level block.
+    (when (object-eq script (get-parent block))
+      (delete-input script block))
     (let ((dx (field-value :x block))
 	  (dy (field-value :y block))
 	  (dw (field-value :width block))
