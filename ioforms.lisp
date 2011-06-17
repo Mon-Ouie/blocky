@@ -87,7 +87,7 @@
 	   make-field-initializer clone make-field-initializer-body
 	   make-key-modifier-symbol make-key-string normalize-event
 	   make-keyword make-object queue-head queue-max queue-count
-	   *sender* field-reference-p null-parent
+	   *sender* field-reference-p null-next
 	   *message-send-symbol-suffix* *x11-color-data* object-name
 	   object-parent send send-super send-queue self
 	   opposite-direction object-address-string object

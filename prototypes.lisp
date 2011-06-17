@@ -42,7 +42,7 @@
 
 (in-package :ioforms)
 
-(defvar *copyright-text*
+(defvar *copyright-notice*
 "Welcome to IOFORMS.
 Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 by David T O'Toole
 <dto@gnu.org> <dto1138@gmail.com>
@@ -129,6 +129,9 @@ This program includes the free DejaVu fonts family. See the file
 		  (find-prototype thing :noerror)))
       (object thing))))
 
+(defun find-parent (object)
+  (object-parent (find-object object)))
+
 ;;; Emacs Lisp compatibilty macro 
 
 (defmacro while (test &body body)
@@ -208,6 +211,9 @@ This program includes the free DejaVu fonts family. See the file
   uuid
   ;; The last few methods called are cached in this alist.
   cache)
+
+(defun find-uuid (object)
+  (object-uuid (find-object object)))
 
 ;;; Fields
 
@@ -478,12 +484,12 @@ If the method is not found, attempt to forward the message."
     ;; check the cache
     (let ((func (cache-lookup object method)))
       (if func
-	  ;; cache hit. finish up.
+	  ;; cache hit. invoke the method and finish up.
 	  (apply func object args)
 	  ;; cache miss. look for a value.
 	  (progn (setf func (field-value method object :noerror))
 		 (if (not (eq *lookup-failure* func))
-		     ;; store in cache and then call.
+		     ;; store in cache and then invoke the method
 		     (progn 
 		       (cache-method object method func)
 		       (apply func object args))
@@ -493,19 +499,16 @@ If the method is not found, attempt to forward the message."
 				object method args)
 			 (error (format nil "Could not invoke method ~S" method)))))))))
 
-(define-condition null-parent (error)
+(define-condition null-next (error)
   ((method-key :initarg :message :accessor method-key)
    (object :initarg :object :accessor object))
   (:report (lambda (condition stream)
-	     (format stream "Cannot find parent method ~S for object ~S." 
+	     (format stream "Cannot find next method ~S for object ~S." 
 		     (method-key condition)
 		     (object condition)))))
 
-(defun initialize-genesis ()
-  (format t "~A" *copyright-text*))
-
-(defun find-parent (object)
-  (object-parent (find-object object)))
+(defun print-copyright-notice ()
+  (format t "~A" *copyright-notice*))
 
 (defun definition (method object)
   (block finding
@@ -536,7 +539,7 @@ If the method is not found, attempt to forward the message."
 this by finding the current implementation (via slot lookup), then
 finding the next implementation after that."
   ;; compare methods?
-  (let ((start (or *next-search-start* object)))
+  (let ((start (or *next-search-start* (find-object object))))
     (let ((*next-search-start* (next-definer method start)))
       (apply (next-definition method start)
 	     object arguments))))

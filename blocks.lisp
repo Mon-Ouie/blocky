@@ -105,10 +105,9 @@ ARGS are field specifiers, as with `define-prototype'."
 	  (plist-to-descriptors args)
 	  args)))
 
-;; (defblock wap boing boop)
-
 (define-method update block ()
-  "Update the simulation one step forward in time."
+  "Update the simulation one step forward in time.
+Does nothing by default."
   nil)
 
 (define-method change-image block (image)
@@ -130,7 +129,8 @@ ARGS are field specifiers, as with `define-prototype'."
   (assert thing)
   (with-fields (schema inputs) self
     (etypecase thing
-      (ioforms:object (position thing inputs :test 'eq))
+      (ioforms:object (position thing inputs :key #'find-object :test 'eq))
+      (string (position (find-object thing) inputs :key #'find-object :test 'eq))
       (integer
        (if (< thing (length inputs))
 	   thing
@@ -139,19 +139,20 @@ ARGS are field specifiers, as with `define-prototype'."
        (let ((index (position thing schema :key #'first)))
 	 (if (numberp index)
 	     index
-	     (error "No such input ~S" thing)))))))
+	     (error "No such input named ~S" thing)))))))
 
 (defun input (self name)
   (with-fields (inputs) self
+    (assert (not (null inputs)))
     (nth (input-position self name) inputs)))
 
 (defun (setf input) (self name value)
   (with-fields (inputs) self
     (assert (not (object-p name)))
     (assert (not (null inputs)))
-    (message "SETF INPUT ~S" (list :name name :inputs inputs))
     (setf (nth (input-position self name) inputs)
-  	  value)))
+	  ;; store the real link
+  	  (find-object value))))
 
 (defun named-input-type (self name)
   (with-fields (schema) self
@@ -159,6 +160,17 @@ ARGS are field specifiers, as with `define-prototype'."
       (if (numberp index)
 	  (cdr (assoc name schema))
 	  (error "No such input ~S" name)))))
+
+(define-method set-parent block (parent)
+  "Store a UUID link to the enclosing block PARENT.
+If PARENT is nil, then the existing parent link is cleared."
+    (assert (is-valid-connection parent self))
+    (setf ^parent (when parent 
+		    ;; always store uuid to prevent circularity
+		    (find-uuid parent))))
+	       
+(define-method get-parent block ()
+  ^parent)
 
 (define-method initialize block (&rest blocks)
   "Prepare an empty block, or if BLOCKS is non-empty, a block
@@ -173,7 +185,9 @@ initialized with BLOCKS as inputs."
 	(setf results (make-list arity))
 	(setf input-widths (make-list arity))
 	(when blocks
-	  (setf inputs blocks)))
+	  (setf inputs blocks)
+	  (dolist (child blocks)
+	    (set-parent child self))))
 	  ;; (dolist (block blocks)
 	  ;;   (set-parent block self))))
       ;; (flet ((has-parent (b)
@@ -283,10 +297,14 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   ;; use labels because we need to call make-block from inside
   (labels ((action-block (spec)
 	     (destructuring-bind (operation &rest arguments) spec
-	        (apply #'clone 
-		       (find-prototype (make-prototype-id operation
-							  (make-block-package)))
-		       (mapcar #'make-block arguments))))
+	       (let ((prototype 		       
+		      (find-prototype 
+		       (make-prototype-id operation
+					  (make-block-package))))
+		     (arg-blocks (mapcar #'make-block arguments)))
+		 (message "arg-blocks ~S" (list (length arg-blocks)
+						(mapcar #'find-uuid arg-blocks)))
+		 (apply #'clone prototype arg-blocks))))
 	   (list-block (items)
 	     (apply #'clone "IOFORMS:LIST" (mapcar #'make-block items))))
     (cond ((is-action-spec sexp)
@@ -305,6 +323,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 		  (find-object source))
 	      (return-from checking t)
 	      (setf pointer (find-parent pointer))))))))
+
+(defun is-valid-connection (sink source)
+  (not (is-bad-connection sink source)))
 
 (defun connect-parent-links (block)
   (dolist (child (field-value :inputs block))
@@ -326,13 +347,15 @@ areas.")
   "Move the block to a new (X Y) location."
   (setf ^x x)
   (setf ^y y)
-  (when z (setf ^z z)))
+  (when z 
+    (setf ^z z)))
 
 (define-method move-toward block (direction &optional (steps 1))
-  (multiple-value-bind (y x)
-      (step-in-direction ^y ^x direction steps)
-    (setf ^y y 
-	  ^x x)))
+  (with-field-values (y x) self
+    (multiple-value-bind (y0 x0)
+	(step-in-direction y x direction steps)
+      (setf x x0)
+      (setf y y0))))
 
 (define-method show block ()
   (setf ^visible t))
@@ -340,22 +363,13 @@ areas.")
 (define-method hide block ()
   (setf ^visible nil))
 
-(define-method toggle-visible block ()
+(define-method toggle-visibility block ()
   (if ^visible
       (hide self)
       (show self)))
 
 (define-method is-visible block ()
   ^visible)
-
-(define-method set-parent block (new-parent)
-  "Store a link to an enclosing PARENT block, if any."
-  (with-fields (parent) self
-    (assert (not (is-bad-connection new-parent self)))
-    (setf parent new-parent)))
-	       
-(define-method get-parent block ()
-  ^parent)
 
 (define-method get-image block ()
   ^image)
@@ -375,23 +389,24 @@ areas.")
       (input-position parent self))))
 
 (define-method plug block (thing n)
-  "Connect the block INPUT as the value of the Nth input."
-;  (setf (nth n ^inputs) thing)
+  "Connect the block THING as the value of the Nth input."
   (set-parent thing self)
   (setf (input self n) thing))
 
 (define-method unplug block (input)
   "Disconnect the block INPUT from this block."
-  (let ((pos (position input ^inputs)))
-    (plug self (null-block) pos)
-    (set-parent input nil)))
+    (plug self (null-block) 
+	  (input-position self input))
+    (set-parent input nil))
 
 (define-method unplug-from-parent block ()
   (with-fields (parent) self
     (when parent
       (unplug parent self))))
 
-(define-method context-menu block ())
+(define-method context-menu block ()
+  "Return a context menu for this block, if any."
+  nil)
 
 (define-method execute-inputs block ()
   "Execute all blocks in ^INPUTS from left-to-right. Results are
@@ -409,14 +424,15 @@ inputs all the time."
 The *target* is a special variable bound in the execution
 environment. Its value will be the IOFORMS object to send messages to.
 The ^RESULTS field will be a list of results obtained by
-executing/evaluating the blocks in ^INPUTS (see also
-`BLOCK/EXECUTE-INPUTS'.) The default behavior of `EXECUTE' is to
-send the ^OPERATION field's value as a message to the target, with
-the inputs to the target's method being the current computed
-^RESULTS, and return the result of the method call. This default
-action is sufficient for many blocks whose main purpose is to send a
-single message; other blocks can redefine this /EXECUTE method to do
-something else. See also `defblock' and `send'."
+executing/evaluating the blocks in ^INPUTS (but this behavior can be
+overridden; see also `BLOCK/EXECUTE-INPUTS' and `BLOCK/RUN'). The
+default behavior of `EXECUTE' is to send the ^OPERATION field's value
+as a message to the target, with the inputs to the target's method
+being the current computed ^RESULTS, and return the result of the
+method call. This default action is sufficient for many blocks whose
+main purpose is to send a single message; other blocks can redefine
+this `EXECUTE' method to do something else. See also `defblock' and
+`send'."
   (with-fields (operation results) self
     (labels ((clean (item)
 	       (if (symbolp item)
@@ -428,22 +444,29 @@ something else. See also `defblock' and `send'."
 
 (define-method run block ()
   "Run input blocks to produce results, then run this block with
-those results as input."
+those results as input. If you need argument blocks unevaluated, 
+override this RUN method to evaluate just the ones you want."
   (execute-inputs self)
   (execute self))
 
 (define-method describe block ()
-  "Show name and comprehensive help for this block.")
+  "Show name and comprehensive help for this block."
+  nil)
 
-(define-method after-deserialize block ()
-  "Make sure the block is ready after loading."
-  (initialize self))
+;; (define-method after-deserialize block ()
+;;   "Make sure the block is ready after loading."
+;;   (initialize self))
 
-(define-method count block ()
+(defun count-tree (tree)
   "Return the number of blocks enclosed in this block, including the
 current block. Used for taking a census."
-  (with-fields (inputs) self
-    (+ 1 (length inputs))))
+  (cond ((null tree) 0)
+	;; without inputs, just count the root
+	((null (field-value :inputs tree)) 1)
+	;; otherwise, sum up the counts of the children (if any)
+	(t (apply #'+ 1 
+		  (mapcar #'count-tree 
+			  (field-value :inputs tree))))))
 
 (defparameter *display-widgets*
    '(:integer "IOFORMS:INTEGER"
@@ -568,33 +591,31 @@ of block."
 The primitives are CIRCLE, DISC, LINE, BOX, and TEXT. These are used
 in subsequent functions as the basis of drawing nested diagrams of
 blocks."
-    `(let* ((foreground (find-color self :foreground))
-	    (background (find-color self :background))
-	    (highlight (find-color self :highlight))
-	    (selection *selection-color*)
-	    (shadow (find-color self :shadow))
-	    (dash *dash*)
-	    (radius (+ 6 *dash*))
-	    (diameter (* 2 radius)))
-       (labels ((circle (x y &optional color)
-		  (draw-circle x y radius
-			       :color (or color background)
-			       :blend :alpha))
-		(disc (x y &optional color)
-		  (draw-solid-circle x y radius
-				     :color (or color background)
-				     :blend :alpha))
-		(line (x0 y0 x1 y1 &optional color)
-		  (draw-line x0 y0 x1 y1
-			     :color (or color background)))
-		(box (x y r b &optional color)
-		  (draw-box x y (- r x) (- b y)
-			    :color (or color background)))
-		(text (x y string)
-		  (draw-string string x y
-			       :color foreground
-			       :font *block-font*)))
-	   ,@body)))
+  `(let* ((foreground (find-color self :foreground))
+	  (background (find-color self :background))
+	  (highlight (find-color self :highlight))
+	  (shadow (find-color self :shadow))
+	  (radius (+ 6 *dash*))
+	  (diameter (* 2 radius)))
+     (labels ((circle (x y &optional color)
+		(draw-circle x y radius
+			     :color (or color background)
+			     :blend :alpha))
+	      (disc (x y &optional color)
+		(draw-solid-circle x y radius
+				   :color (or color background)
+				   :blend :alpha))
+	      (line (x0 y0 x1 y1 &optional color)
+		(draw-line x0 y0 x1 y1
+			   :color (or color background)))
+	      (box (x y r b &optional color)
+		(draw-box x y (- r x) (- b y)
+			  :color (or color background)))
+	      (text (x y string)
+		(draw-string string x y
+			     :color foreground
+			     :font *block-font*)))
+       ,@body)))
 
 (define-method draw-patch block (x0 y0 x1 y1
 				    &key depressed dark socket color)
@@ -699,7 +720,7 @@ override all colors."
 
 (define-method layout block ()
   (with-fields (input-widths height width) self
-    (with-field-values (x y operation schema inputs) self
+    (with-field-values (x y schema inputs) self
       (let* ((font *block-font*)
 	     (dash *dash*)
 	     (left (+ x (handle-width self)))
@@ -710,6 +731,7 @@ override all colors."
 		   (setf max-height (max max-height (field-value :height input)))
 		   (field-value :width input))
 		 (layout-input (block category)
+		   (declare (ignore category)) ;; for now
 		   (let ((measurement
 			  (+ dash (move-input block))))
 		     (prog1 measurement
@@ -730,20 +752,15 @@ override all colors."
 			 (+ x0 *socket-width*)
 			 (+ y0 (- height dash))))
 	  (progn
-	    (text x0 (+ y0 dash 1)
+	    (with-block-drawing 
+	      (text x0 (+ y0 dash 1)
 		  (print-expression segment))
-		(setf width (expression-width segment))))
+	      (setf width (expression-width segment)))))
       width)))
 
 (define-method after-deserialize block ()
   "Make sure the block is ready after loading."
   (initialize self))
-
-(define-method count block ()
-  "Return the number of blocks enclosed in this block, including the
-current block."
-  (with-fields (inputs) self
-    (+ 1 (length inputs))))
 
 (define-method draw-contents block ()
   (with-fields (operation inputs) self
@@ -806,7 +823,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
       (prog1 t
 	(let ((position (input-position parent self)))
 	  (assert (integerp position))
-	  (assert (not (is-bad-connection parent other-block)))
+	  (assert (is-valid-connection parent other-block))
 	  (plug parent other-block position))))))
 
 ;;; Printing a block
@@ -882,13 +899,19 @@ MOUSE-Y identify a point inside the block (or input block.)"
 (define-method accept list (input &optional prepend)
   (with-fields (inputs) self
     (if inputs
-	(if prepend
-	    (setf inputs (nconc (list input) inputs))
-	    (setf inputs (nconc inputs (list input))))
-	(setf inputs (list input)))
-    (when (get-parent input)
-      (unplug-from-parent input))
-    (set-parent input self)))
+	;; we've got inputs. add it to the list (prepending or not)
+	(prog1 t
+	  (setf inputs 
+		(if prepend
+		    (nconc (list input) inputs)
+		    (nconc inputs (list input))))
+	  ;; finally, set parent if necessary 
+	  (when (get-parent input)
+	    (unplug-from-parent input))
+	  (set-parent input self))
+    	;; no inputs yet. make a single-element inputs list
+	(prog1 t (setf inputs (list input))))))
+
 
 (define-method take-first list ()
   (with-fields (inputs) self
@@ -983,6 +1006,24 @@ MOUSE-Y identify a point inside the block (or input block.)"
 (define-method report-layout-change script ()
   (setf ^needs-layout t))
 
+(define-method contains script (block)
+  (with-fields (inputs) self
+    (find block inputs :test 'eq :key #'find-object)))
+
+(define-method bring-to-front script (block)
+  (with-fields (inputs) self
+    (assert (contains script block))
+    (delete-input self block)
+    (setf inputs (nconc inputs (list block)))))
+
+(define-method delete-input script (block)
+  (with-fields (inputs) self
+    (assert (contains self block))
+    (setf inputs (delete (find-object block)
+			 inputs
+			 :key #'find-object
+			 :test 'eq))))
+
 (define-method update script ()
   (with-script self 
     (dolist (each ^inputs)
@@ -1007,19 +1048,22 @@ MOUSE-Y identify a point inside the block (or input block.)"
 (define-method set-target script (target)
   (setf ^target target))
 
-(define-method is-member script (block)
+(define-method append-block script (block)
   (with-fields (inputs) self
-    (find block inputs)))
+    (assert (not (contains self block)))
+    (set-parent block nil)
+    (setf inputs (nconc inputs (list block)))))
 
 (define-method add script (block &optional x y)
   (with-fields (inputs) self
-    (assert (not (find block inputs)))
-    (setf inputs (nconc inputs (list block)))
-    (setf (field-value :parent block) nil) ;; TODO self?
+    (assert (not (contains self block)))
+    (append-block self block)
     (when (and (integerp x)
 	       (integerp y))
       (move-to block x y))
     (report-layout-change self)))
+
+
 
 ;; (define-method header-height script ()
 ;;   (with-fields (x y inputs) self
@@ -1043,17 +1087,6 @@ MOUSE-Y identify a point inside the block (or input block.)"
   ;;   (with-target target
   ;;     (dolist (block inputs)
   ;; 	(run block)))))
-
-(define-method bring-to-front script (block)
-  (with-fields (inputs) self
-    (when (find block inputs)
-      (setf inputs (delete block inputs))
-      (setf inputs (nconc inputs (list block))))))
-
-(define-method delete-input script (block)
-  (with-fields (inputs) self
-    (assert (find block inputs))
-    (setf inputs (delete block inputs))))
 
 ;; (define-method set script (var value)
 ;;   (setf (gethash var ^variables) value))

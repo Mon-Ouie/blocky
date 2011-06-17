@@ -2000,7 +2000,7 @@ of the music."
 (defun play (&optional project)
   #+linux (do-cffi-loading)
   (message "Starting IOFORMS...")
-  (initialize-genesis)
+  (print-copyright-notice)
   (initialize-ioforms)
   (let ((proj (or project *project*)))
     (when (null proj)

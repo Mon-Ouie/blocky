@@ -48,7 +48,7 @@
 		  (if (symbolp (first sexp))
 		      (make-block sexp)
 		      (make-block (first sexp)))))
-	  (connect-parent-links block)
+;	  (connect-parent-links block)
 	  (accept container block))))))
 	;; (when (> (count-inputs container) rows)
 	;;   (pop container))))))
@@ -124,9 +124,11 @@
 (define-method delete-input shell (child)
   (delete ^script child))
 
-(define-method select shell (new-block)
+(define-method select shell (new-block &optional only)
   (with-fields (selection inputs) self
-    (pushnew new-block selection)))
+    (if only
+	(setf selection (list new-block))
+	(pushnew new-block selection))))
 
 (define-method select-if shell (predicate)
   (with-fields (selection inputs) self
@@ -166,7 +168,7 @@
       (with-script script 
 	(dolist (block blocks)
 	  ;; draw border around any selected blocks
-	  (when (find block selection)
+	  (when (find block selection :test 'eq :key #'find-object)
 	    (draw-border block))
 	  ;; draw the block itself
 	  (draw block))
@@ -189,7 +191,7 @@
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag inputs script drag-start ghost drag-offset) self
     (setf drag block)
-    (when (is-member script block)
+    (when (contains script block)
       (delete-input script block))
     (let ((dx (field-value :x block))
 	  (dy (field-value :y block))
@@ -236,8 +238,10 @@
 	(destructuring-bind (ox . oy) drag-offset
 	  (let ((target-x (- mouse-x ox))
 		(target-y (- mouse-y oy)))
-	    (setf hover (hit-script self target-x target-y))
-	    (move-to drag target-x target-y)))
+	    (let ((candidate (hit-script self target-x target-y)))
+	      ;; obviously we dont want to plug a block into itself.
+	      (setf hover (if (eq drag candidate) nil candidate))
+	      (move-to drag target-x target-y))))
 	(progn
 	  (setf highlight (hit-script self mouse-x mouse-y))
 	  (when (null highlight)
@@ -254,16 +258,18 @@
 	(let ((drag-parent (get-parent drag)))
 	  (when drag-parent
 	    (unplug-from-parent drag))
-	  (let ((sink hover))
-	    (if sink
-		;; dropping on another block
-		(unless (accept sink drag)
-		  (add self drag))
-		;; dropping on background
+	  ;; where are we dropping?
+	  (if (null hover)
+	      ;; dropping on background
+	      (add self drag)
+	      ;; dropping on another block
+	      (unless (accept hover drag)
+		;; hovered block did not accept drag. 
+		;; just drop the block
 		(add self drag)))
-	  (setf selection nil)
+	  ;; select the dropped block
 	  (select self drag))
-	;; we're not dragging.
+	;; ok, we're not dragging.
 	(progn
 	  (setf selection nil)
 	  (when focused-block

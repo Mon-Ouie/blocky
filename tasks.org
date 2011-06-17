@@ -1,3 +1,5 @@
+** TODO review blocks.lisp for object-reference test issues
+** TODO [#A] Fix mouse-up-->set-parent(x,x) same
 ** TODO [#A] fix wrong drag parent links
 ** TODO [#A] fix not being able to pull out sublists
 ** TODO [#A] fix argument blocks not being created (AGAIN)
