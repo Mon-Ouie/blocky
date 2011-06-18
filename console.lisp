@@ -1534,11 +1534,11 @@ found."
 ;; (define-prototype voice () output)
 
 ;; (define-method initialize voice (&optional (size *output-chunksize*))
-;;   (setf ^output (make-array size :element-type 'float :initial-element 0.0))
+;;   (setf %output (make-array size :element-type 'float :initial-element 0.0))
 ;;   (register-voice self))
 
 ;; (define-method get-output voice ()
-;;   ^output)
+;;   %output)
 
 ;; ;;(define-method play voice (&rest parameters))
 ;; (define-method halt voice ())

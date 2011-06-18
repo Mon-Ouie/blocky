@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
-;; Author: David O'Toole ^dto@gnu.org
+;; Author: David O'Toole %dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see ^http://www.gnu.org/licenses/
+;; along with this program.  If not, see %http://www.gnu.org/licenses/
 
 (in-package :ioforms)
 
@@ -46,7 +46,7 @@
   (automapped :initform nil :documentation "Show all previously lit squares.")
   (light-grid 
    :documentation 
-   "A 2d array of integers giving the light level at that point in ^grid.
+   "A 2d array of integers giving the light level at that point in %grid.
 At the moment, only 0=off and 1=on are supported.")
   (ambient-light :initform :total :documentation 
 		 "Radius of ambient visibility. :total means that lighting is turned off.")
@@ -64,10 +64,10 @@ At the moment, only 0=off and 1=on are supported.")
   '(:stack :sprite-grid :collisions :grid :player)))
 
 (define-method initialize world (&key grid-size grid-height grid-width name)
-  (setf ^grid-size (or grid-size *default-grid-size*))
-  (setf ^grid-height (or grid-height (truncate (/ *screen-height* ^grid-size))))
-  (setf ^grid-width (or grid-width (truncate (/ *screen-width* ^grid-size))))
-  (setf ^variables (make-hash-table :test 'equal))
+  (setf %grid-size (or grid-size *default-grid-size*))
+  (setf %grid-height (or grid-height (truncate (/ *screen-height* %grid-size))))
+  (setf %grid-width (or grid-width (truncate (/ *screen-width* %grid-size))))
+  (setf %variables (make-hash-table :test 'equal))
   (create-default-grid self))
   
 (define-method handle-event world (event)
@@ -83,10 +83,10 @@ At the moment, only 0=off and 1=on are supported.")
   (apply #'send self :make self parameters))
 
 (define-method setvar world (var value)
-  (setf (gethash var ^variables) value))
+  (setf (gethash var %variables) value))
 
 (define-method getvar world (var)
-  (gethash var ^variables))
+  (gethash var %variables))
 
 (defun world-variable (var-name)
   (getvar *world* var-name))
@@ -105,8 +105,8 @@ At the moment, only 0=off and 1=on are supported.")
 
 (define-method grid-location world (row column)
   "Return the vector of cells at ROW, COLUMN in the world SELF."
-  (when (array-in-bounds-p ^grid row column)
-    (aref ^grid row column)))
+  (when (array-in-bounds-p %grid row column)
+    (aref %grid row column)))
 
 (define-method grid-location-list world (row column)
   (coerce (grid-location self row column)
@@ -126,16 +126,16 @@ At the moment, only 0=off and 1=on are supported.")
 		(make-array *default-grid-depth* 
 			    :adjustable t
 			    :fill-pointer 0))))
-      (setf ^grid grid
-	    ^grid-height grid-height
-	    ^grid-width grid-width))))
+      (setf %grid grid
+	    %grid-height grid-height
+	    %grid-width grid-width))))
 
 (define-method create-default-grid world ()
   "If grid-height and grid-width have been set in a world's definition,
 initialize the arrays for a world of the size specified there."
-  (if (and (integerp ^grid-width)
-	   (integerp ^grid-height))
-      (create-grid self :grid-width ^grid-width :grid-height ^grid-height)
+  (if (and (integerp %grid-width)
+	   (integerp %grid-height))
+      (create-grid self :grid-width %grid-width :grid-height %grid-height)
       (error "Cannot create default grid without grid-height and grid-width set.")))
 
 (define-method category-at-p world (row column category)
@@ -145,7 +145,7 @@ CATEGORY may be a list of keyword symbols or one keyword symbol."
   (let ((catlist (etypecase category
 		   (keyword (list category))
 		   (list category)))
-	(grid ^grid))
+	(grid %grid))
     (declare (type (simple-array vector (* *)) grid))
     (and (array-in-bounds-p grid row column)
 	 (some #'(lambda (cell)
@@ -156,10 +156,10 @@ CATEGORY may be a list of keyword symbols or one keyword symbol."
 
 (define-method in-bounds-p world (row column)
   "Return non-nil if ROW and COLUMN are valid coordinates."
-  (array-in-bounds-p ^grid row column))
+  (array-in-bounds-p %grid row column))
 
 (define-method nth-cell world (n row column)
-  (aref (aref ^grid row column) n))
+  (aref (aref %grid row column) n))
 
 (define-method top-cell world (row column)
   (let ((cells (grid-location self row column)))
@@ -167,7 +167,7 @@ CATEGORY may be a list of keyword symbols or one keyword symbol."
       (aref cells (- (fill-pointer cells) 1)))))
 
 (define-method drop-cell world (cell row column)
-  (vector-push-extend cell (aref ^grid row column))
+  (vector-push-extend cell (aref %grid row column))
   (setf (field-value :row cell) row)
   (setf (field-value :column cell) column))
 
@@ -185,10 +185,10 @@ CATEGORY may be a list of keyword symbols or one keyword symbol."
 (define-method replace-cells-at world (row column data)
   "Destroy the cells at ROW, COLUMN, invoking DESTROY on each,
 replacing them with the single cell (or vector of cells) DATA."
-  (when (array-in-bounds-p ^grid row column)
-    (do-cells (cell (aref ^grid row column))
+  (when (array-in-bounds-p %grid row column)
+    (do-cells (cell (aref %grid row column))
       (destroy cell))
-    (setf (aref ^grid row column)
+    (setf (aref %grid row column)
 	  (etypecase data
 	    (vector data)
 	    (object (let ((cells (make-array *default-grid-depth*
@@ -196,14 +196,14 @@ replacing them with the single cell (or vector of cells) DATA."
 						  :fill-pointer 0)))
 			   (prog1 cells
 			     (vector-push-extend data cells))))))
-    (do-cells (cell (aref ^grid row column))
+    (do-cells (cell (aref %grid row column))
       (set-location cell row column))))
 
 (define-method delete-cell world (cell row column)
   "Delete CELL from the grid at ROW, COLUMN."
   (ecase (field-value :type cell)
     (:cell
-       (let* ((grid ^grid)
+       (let* ((grid %grid)
 	      (square (aref grid row column))
 	      (start (position cell square :test #'eq)))
 	 ;; (declare (type (simple-array vector (* *)) grid) 
@@ -224,7 +224,7 @@ replacing them with the single cell (or vector of cells) DATA."
 (define-method delete-category-at world (row column category)
   "Delete all cells in CATEGORY at ROW, COLUMN in the grid.
 The cells' :destroy method is invoked."
-  (let* ((grid ^grid))
+  (let* ((grid %grid))
     ;; (declare (type (simple-array vector (* *)) grid)
     ;; 	     (optimize (speed 3)))
     (when (array-in-bounds-p grid row column)
@@ -235,7 +235,7 @@ The cells' :destroy method is invoked."
  
 (define-method before-serialize world ()
   (with-field-values (grid-width grid-height) self
-    (let ((grid ^grid)
+    (let ((grid %grid)
 	  (sgrid (make-array (list grid-height grid-width) :initial-element nil :adjustable nil)))
       (dotimes (i grid-height)
 	(dotimes (j grid-width)
@@ -244,7 +244,7 @@ The cells' :destroy method is invoked."
 			 (push (serialize cell) 
 			       (aref sgrid i j))))
 	       (aref grid i j))))
-      (setf ^serialized-grid sgrid))))
+      (setf %serialized-grid sgrid))))
     
 (define-method after-deserialize world ()
     (create-default-grid self)
@@ -256,7 +256,7 @@ The cells' :destroy method is invoked."
 			 (vector-push-extend (deserialize cell)
 					     (aref grid i j))))
 	       (reverse (aref serialized-grid i j)))))
-      (setf ^serialized-grid nil)))
+      (setf %serialized-grid nil)))
 
 (define-method paste-region world (other-world dest-row dest-column source-row source-column source-grid-height source-grid-width 
 					       &optional deepcopy)
@@ -325,14 +325,14 @@ The cells' :destroy method is invoked."
 (defparameter *default-world-z-size* 4)
 
 ;; (define-method initialize world (&key grid-height grid-width)
-;;   (when grid-height (setf ^grid-height grid-height))
-;;   (when grid-width (setf ^grid-width grid-width))
-;;   (setf ^variables (make-hash-table :test 'equal))
+;;   (when grid-height (setf %grid-height grid-height))
+;;   (when grid-width (setf %grid-width grid-width))
+;;   (setf %variables (make-hash-table :test 'equal))
 ;;   (create-default-grid self))
 
 (define-method in-category world (category)
   "Returns non-nil when the cell SELF is in the category CATEGORY."
-  (member category ^categories))
+  (member category %categories))
     
 ;;; LOGO-like level generation capabilities 
 
@@ -359,21 +359,21 @@ The cells' :destroy method is invoked."
 		(make-array *default-grid-depth*
 			    :adjustable t
 			    :fill-pointer 0))))
-      (setf ^grid grid
-	    ^sprite-grid sprite-grid
-	    ^grid-height grid-height
-	    ^grid-width grid-width))))
+      (setf %grid grid
+	    %sprite-grid sprite-grid
+	    %grid-height grid-height
+	    %grid-width grid-width))))
 
 (define-method generate world (&rest parameters)
   "Generate a world, reading generation parameters from the plist
-PARAMETERS and interpreting the world's grammar field ^GRAMMAR."
+PARAMETERS and interpreting the world's grammar field %GRAMMAR."
   (declare (ignore parameters))
   (with-fields (grammar stack) self
 ;    (setf ioforms:*grammar* grammar)
     (let ((program (generate 'world)))
       (or program (message "WARNING: Nothing was generated from this grammar."))
       (message (prin1-to-string program))
-      (unless ^grid
+      (unless %grid
 	(create-default-grid self))
       (dolist (op program)
 	(typecase op
@@ -387,25 +387,25 @@ PARAMETERS and interpreting the world's grammar field ^GRAMMAR."
 	  (number (push op stack)))))))
 
 (define-method is-generated world ()
-  (if ^grid t nil))
+  (if %grid t nil))
 
 (define-method generate-with world (parameters)
   (apply #'send self :generate self parameters))
 
 (define-method origin world ()
   "Move the turtle to its default location (0,0) and orientation (east)."
-  (setf ^row 0 ^column 0 ^direction :east))
+  (setf %row 0 %column 0 %direction :east))
 
 (define-method color world ()
   "Set the color to =FOO= where FOO is the prototype symbol on top of
 the stack."
-  (let ((prototype (pop ^stack)))
+  (let ((prototype (pop %stack)))
     (if (object-p prototype)
-	(setf ^paint prototype)
+	(setf %paint prototype)
 	(error "Must pass a =FOO= prototype symbol as a COLOR."))))
 
 (define-method push-color world ()
-  "Push the symbol name of the current ^paint object onto the stack."
+  "Push the symbol name of the current %paint object onto the stack."
   (with-fields (paint stack) self
       (if (object-p paint)
 	  (prog1 (message "PUSHING PAINT ~S" (object-name paint))
@@ -413,7 +413,7 @@ the stack."
 	  (error "No paint to save on stack during PUSH-COLOR."))))
 
 (define-method drop world ()
-  "Clone the current ^paint object and drop it at the current turtle
+  "Clone the current %paint object and drop it at the current turtle
 location."
   (with-field-values (paint row column) self
     (if (object-p paint)
@@ -422,12 +422,12 @@ location."
 
 (define-method jump world ()
   "Jump N squares forward where N is the integer on the top of the stack."
-  (let ((distance (pop ^stack)))
+  (let ((distance (pop %stack)))
     (if (integerp distance)
 	(multiple-value-bind (row column) 
-	    (step-in-direction ^row ^column ^direction distance)
-	  (setf ^row row ^column column)
-	  (when (not (array-in-bounds-p ^grid row column))
+	    (step-in-direction %row %column %direction distance)
+	  (setf %row row %column column)
+	  (when (not (array-in-bounds-p %grid row column))
 	    (message "Turtle left drawing area during MOVE.")))
 	(error "Must pass an integer as distance for MOVE."))))
       
@@ -440,24 +440,24 @@ location."
 ;; 	(let ((distance (pop stack)))
 ;; 	  (if (integerp distance)
 ;; 	      (dotimes (n distance)
-;; 		(drop-cell self (clone paint) ^row ^column)
+;; 		(drop-cell self (clone paint) %row %column)
 ;; 		(multiple-value-bind (row column) 
-;; 		    (step-in-direction ^row ^column ^direction)
-;; 		  (setf ^row row ^column column)
-;; 		  (when (array-in-bounds-p ^grid row column)
+;; 		    (step-in-direction %row %column %direction)
+;; 		  (setf %row row %column column)
+;; 		  (when (array-in-bounds-p %grid row column)
 ;; 		      (message "Turtle left drawing area during DRAW."))))
 ;; 	      (error "Must pass an integer as distance for DRAW."))))))
 
 (define-method pushloc world ()
   "Push the current row,col location (and direction) onto the stack."
-  (push (list ^row ^column ^direction) ^stack))
+  (push (list %row %column %direction) %stack))
 
 (define-method poploc world ()
   "Jump to the location on the top of the stack, and pop the stack."
-  (let ((loc (pop ^stack)))
+  (let ((loc (pop %stack)))
     (if (and (listp loc) (= 3 (length loc)))
 	(destructuring-bind (r c dir) loc
-	  (setf ^row r ^column c ^direction dir))
+	  (setf %row r %column c %direction dir))
 	(error "Invalid location argument for POPLOC. Must be a list of two integers plus a keyword."))))
 
 (define-method right world ()
@@ -482,10 +482,10 @@ location."
   nil)
 
 (define-method set-narrator world (narrator)
-  (setf ^narrator narrator))
+  (setf %narrator narrator))
 
 (define-method set-browser world (browser)
-  (setf ^browser browser))
+  (setf %browser browser))
 
 (define-method random-place world (&optional &key avoiding distance)
   (with-field-values (grid-width grid-height) self
@@ -514,8 +514,8 @@ placement."
   (move-to sprite x y))
 
 (define-method drop-cell world (cell row column &rest ignore)
-  (let ((grid ^grid)
-	(grid-size ^grid-size))
+  (let ((grid %grid)
+	(grid-size %grid-size))
     ;; (declare (optimize (speed 3)) 
     ;; 	     (type (simple-array vector (* *)) grid)
     ;; 	     (fixnum grid-size row column))
@@ -545,7 +545,7 @@ placement."
 	      (when (category-at-p self i j :player-entry-point)
 		(return-from seeking (values i j)))))
 	  (return-from seeking (values 0 0)))
-      (setf ^player player)
+      (setf %player player)
       (ecase (field-value :type player)
 	(:cell (drop-cell self player dest-row dest-column :no-stepping t))
 	(:sprite (drop-sprite self player 
@@ -553,11 +553,11 @@ placement."
 			      (* dest-row grid-size)))))))
 			      
 (define-method drop-player-at-last-location world (player)
-  (setf ^player player)
-  (drop-cell self player ^player-exit-row ^player-exit-column))
+  (setf %player player)
+  (drop-cell self player %player-exit-row %player-exit-column))
   
 (define-method get-player world ()
-  ^player)
+  %player)
 
 (define-method player-row world ()
   "Return the grid row the player is on."
@@ -575,20 +575,20 @@ placement."
 
 (define-method exit world ()
   "Leave the current world."
-  (setf ^exited t) ;; see also `forward' method
+  (setf %exited t) ;; see also `forward' method
   ;; record current location so we can exit back to it
-  (setf ^player-exit-row (field-value :row ^player))
-  (setf ^player-exit-column (field-value :column ^player))
-  (exit ^player)
-  (delete-cell self ^player ^player-exit-row ^player-exit-column))
+  (setf %player-exit-row (field-value :row %player))
+  (setf %player-exit-column (field-value :column %player))
+  (exit %player)
+  (delete-cell self %player %player-exit-row %player-exit-column))
   
 (define-method obstacle-at-p world (row column)
   "Returns non-nil if there is any obstacle in the grid at ROW, COLUMN."
-  (or (not (array-in-bounds-p ^grid row column))
+  (or (not (array-in-bounds-p %grid row column))
       (some #'(lambda (cell)
 		(when (in-category cell :obstacle)
 		  cell))
-	    (aref ^grid row column))))
+	    (aref %grid row column))))
 
 (define-method enemy-at-p world (row column)
   (category-at-p self row column :enemy))
@@ -619,14 +619,14 @@ DIRECTION from ROW, COLUMN. CATEGORY may be a list as well."
 (define-method set-player world (player)
   "Set PLAYER as the player object to which the World will forward
 most user command messages. (See also the method `forward'.)"
-  (setf ^player player))
+  (setf %player player))
 
 (define-method resolve-receiver world (receiver)
   (case receiver
     (:world self)
-    (:browser ^browser)
-    (:narrator ^narrator)
-    (:player ^player)))
+    (:browser %browser)
+    (:narrator %narrator)
+    (:player %player)))
 
 (define-method draw world ()
   (with-field-values (sprites grid grid-height grid-width background) self
@@ -643,7 +643,7 @@ most user command messages. (See also the method `forward'.)"
       (draw sprite))))
 
 (define-method send-collision-events world ()
-  (loop for c across ^collisions
+  (loop for c across %collisions
 	do (destructuring-bind (a b) c
 	     (collide a b))))
  
@@ -665,7 +665,7 @@ most user command messages. (See also the method `forward'.)"
       (update sprite))
     ;; do collisions
     (colliding-sprites self)
-    (when ^collisions
+    (when %collisions
       (clear-sprite-grid self)
       (send-collision-events self))))
 
@@ -675,9 +675,9 @@ most user command messages. (See also the method `forward'.)"
   "When lighting is activated, calculate lit squares using light
 sources and ray casting."
   (let* ((light-radius (field-value :light-radius cell))
-	 (ambient ^ambient-light)
-	 (light-grid ^light-grid)
-	 (grid ^grid)
+	 (ambient %ambient-light)
+	 (light-grid %light-grid)
+	 (grid %grid)
 	 (source-row (field-value :row cell))
 	 (source-column (field-value :column cell))
 	 (total (+ light-radius 
@@ -755,11 +755,11 @@ sources and ray casting."
 	(light-octagon source-row source-column (- total 2))))))
 
 (define-method clear-light-grid world ()
-  (unless ^automapped
-    (let ((light-grid ^light-grid))
+  (unless %automapped
+    (let ((light-grid %light-grid))
       (when (arrayp light-grid)
-	(dotimes (i ^grid-height)
-	  (dotimes (j ^grid-width)	
+	(dotimes (i %grid-height)
+	  (dotimes (j %grid-width)	
 	    (setf (aref light-grid i j) 0)))))))
 
 (define-method begin-ambient-loop world ()
@@ -772,7 +772,7 @@ sources and ray casting."
 (define-method line-of-sight world (r1 c1 r2 c2 &optional (category :obstacle))
   "Return non-nil when there is a direct Bresenham's line of sight
 along grid squares between R1,C1 and R2,C2."
-  (let ((grid ^grid))
+  (let ((grid %grid))
     (when (and (array-in-bounds-p grid r1 c1) 
 	       (array-in-bounds-p grid r2 c2))
       (let ((line (make-array 100 :initial-element nil :adjustable t :fill-pointer 0))
@@ -808,18 +808,18 @@ along grid squares between R1,C1 and R2,C2."
 ;;; The sprite layer. 
 
 (define-method add-sprite world (sprite)
-  (pushnew sprite ^sprites :test 'eq)
+  (pushnew sprite %sprites :test 'eq)
   (with-field-values (x y) sprite
     (when (or (null x) (null y))
       (move-to sprite 0 0))))
 
 (define-method remove-sprite world (sprite)
-  (setf ^sprites (delete sprite ^sprites)))
+  (setf %sprites (delete sprite %sprites)))
 
 (define-method clear-sprite-grid world ()
-  (let ((grid ^sprite-grid))
-    (dotimes (i ^grid-height)
-      (dotimes (j ^grid-width)
+  (let ((grid %sprite-grid))
+    (dotimes (i %grid-height)
+      (dotimes (j %grid-width)
 	(setf (fill-pointer (aref grid i j)) 0)))))
 
 ;;; Collision detection
@@ -841,7 +841,7 @@ along grid squares between R1,C1 and R2,C2."
       ;; use the sprite-grid to store data for collisions between
       ;; sprites (the grid itself serves to partition the space and
       ;; reduce redundant comparisons.)
-      (dolist (sprite (or sprites ^sprites))
+      (dolist (sprite (or sprites %sprites))
 	;; figure out which grid squares we really need to scan
 	(multiple-value-bind (x y width height)
 	    (bounding-box sprite)
@@ -928,53 +928,53 @@ represents the z-axis of a euclidean 3-D space."))
   (new universe))
 
 (define-method make-euclidean universe ()
-  (setf ^space (make-array *default-space-size* 
+  (setf %space (make-array *default-space-size* 
 			    :adjustable t
 			    :fill-pointer 0)))
 
 (define-method get-space-at universe (index)
-  (aref ^space index))
+  (aref %space index))
 
 (define-method set-space-at universe (index world)
-  (setf (aref ^space index) world))
+  (setf (aref %space index) world))
 
 (define-method get-next-space universe (index)
   (incf index)
   (when (and (<= 0 index)
-	     (< index (fill-pointer ^space)))
-    (aref ^space index)))
+	     (< index (fill-pointer %space)))
+    (aref %space index)))
 
 (define-method get-previous-space universe (index)
   (decf index)
   (when (and (<= 0 index)
-	     (< index (fill-pointer ^space)))
-    (aref ^space index)))
+	     (< index (fill-pointer %space)))
+    (aref %space index)))
 
 (define-method add-world universe (address world)
-  (setf (gethash (normalize-address address) ^worlds) world))
+  (setf (gethash (normalize-address address) %worlds) world))
  
 (define-method remove-world universe (address)
-  (remhash (normalize-address address) ^worlds))
+  (remhash (normalize-address address) %worlds))
 
 (define-method get-world universe (address)
-  (gethash (normalize-address address) ^worlds))
+  (gethash (normalize-address address) %worlds))
 
 (define-method get-player universe ()
-  ^player)
+  %player)
 
 (define-method set-player universe (player)
-  (setf ^player player))
+  (setf %player player))
 
 (define-method get-current-world universe ()
-  (car ^stack))
+  (car %stack))
 
 (define-method get-current-address universe ()
-  ^current-address)
+  %current-address)
 
 (define-method destroy universe ()
-  (setf ^worlds (make-hash-table :test 'equal))
-  (setf ^stack nil)
-  (setf ^current-address nil))
+  (setf %worlds (make-hash-table :test 'equal))
+  (setf %stack nil)
+  (setf %current-address nil))
 
 (define-method generate-world universe (address)
   (destructuring-bind (prototype &rest parameters) address
@@ -995,16 +995,16 @@ represents the z-axis of a euclidean 3-D space."))
 	candidate)))
 
 (define-method configure universe (&key address player prompt narrator)
-  (when address (setf ^current-address address))
-  (when player (setf ^player player))
-  (when prompt (setf ^prompt prompt))
-  (when narrator (setf ^narrator narrator)))
+  (when address (setf %current-address address))
+  (when player (setf %player player))
+  (when prompt (setf %prompt prompt))
+  (when narrator (setf %narrator narrator)))
 
 (define-method update universe ()
-  (when ^world (update ^world)))
+  (when %world (update %world)))
 
 (define-method draw universe ()
-  (when ^world (draw ^world)))
+  (when %world (draw %world)))
 
 (define-method handle-event universe (event)
   (with-fields (world) self
@@ -1016,16 +1016,16 @@ represents the z-axis of a euclidean 3-D space."))
 PLAYER as the player."
   (setf *universe* self)
   (when world 
-    (setf ^world world)
+    (setf %world world)
     (setf *world* world))
-  (when player (setf ^player player))
-  (set-player world ^player)
-  (add-sprite world ^player)
+  (when player (setf %player player))
+  (set-player world %player)
+  (add-sprite world %player)
   (install-blocks self))
 
 (define-method exit universe (&key player)
   "Return the player to the previous world on the stack."
-  (when player (setf ^player player))
+  (when player (setf %player player))
   (with-fields (stack) self
     ;; exit and discard current world
     (exit (pop stack))
@@ -1035,11 +1035,11 @@ PLAYER as the player."
 	  (progn (setf *world* world)
 		 (setf *universe* self)
 		 ;; resume at previous play coordinates
-		 (drop-player-at-last-location world ^player)
+		 (drop-player-at-last-location world %player)
 ;		 (start world)
-		 (set-receiver ^prompt world)
-		 (set-narrator world ^narrator)
-		 (set-player world ^player))
+		 (set-receiver %prompt world)
+		 (set-narrator world %narrator)
+		 (set-player world %player))
 	  (error "No world.")))))
 
 ;;; Gateways and launchpads connect worlds together
@@ -1051,9 +1051,9 @@ PLAYER as the player."
   (destination :initform nil))
 
 (define-method initialize gateway (&key destination tile name)
-  (when tile (setf ^tile tile))
-  (when name (setf ^name name))
-  (when destination (setf ^destination destination)))
+  (when tile (setf %tile tile))
+  (when name (setf %name name))
+  (when destination (setf %destination destination)))
 
 (define-method activate gateway ()
   (with-fields (destination) self
@@ -1121,10 +1121,10 @@ worlds."
   variables)
 
 (define-method set-variable mission (var value)
-  (setf (gethash var ^variables) value))
+  (setf (gethash var %variables) value))
 
 (define-method get-variable mission (var)
-  (gethash var ^variables))
+  (gethash var %variables))
 
 (defun mission-variable-value (var-name)
   (get-variable *mission* var-name))

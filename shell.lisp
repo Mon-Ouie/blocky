@@ -33,10 +33,10 @@
 
 (define-method initialize block-prompt (output)
   (next/initialize self)
-  (setf ^output output))
+  (setf %output output))
 
 (define-method set-output block-prompt (output)
-  (setf ^output output))
+  (setf %output output))
 
 (define-method do-sexp block-prompt (sexp)
   (with-fields (output rows) self
@@ -105,16 +105,16 @@
 (define-method layout shell ())
 
 (define-method update shell ()
-  (update ^script))
+  (update %script))
 
 (define-method initialize shell ()
   (next/initialize self))
 
 (define-method script-blocks shell ()
-  (field-value :inputs ^script))
+  (field-value :inputs %script))
 
 (define-method open-script shell (script) 
-  (setf ^script script))
+  (setf %script script))
   
 (define-method add shell (new-block &optional x y)
   (with-fields (script) self
@@ -141,9 +141,6 @@
 (define-method handle-event shell (event)
   (with-field-values (selection script) self
     (with-field-values (inputs) script
-    (message "SELECTED ~S BLOCKS w ~S @TOPLEVEL"
-	     (length selection)
-	     (count-toplevel-blocks script))
        (let ((block
 		(cond 
 		  ;; only one block selected. use that.
@@ -157,17 +154,35 @@
 	      (handle-event block event)))))))
 
 (define-method hit shell (x y)
+  ;; return self no matter where mouse is, so that we get to process
+  ;; all the events.
   self)
 
+;; (define-method hit-script shell (x y) 
+;; "Recursively search the blocks in this script for a block intersecting
+;; the point X,Y. We have to search the top-level blocks starting at the
+;; end of `%INPUTS' and going backward, because the blocks are drawn in
+;; list order (i.e. the topmost blocks for mousing-over are at the end of
+;; the list.) The return value is the block found, or nil if none is
+;; found."
+;;   (with-fields (script) self
+;;     (with-fields (inputs) script
+;;       (with-script script 
+;; 	(flet ((try (block)
+;; 		 (when block (hit block x y))))
+;; 	  (try (find-if #'try inputs :from-end t)))))))
+
 (define-method hit-script shell (x y)
-  (labels ((try (b)
-	     (hit b x y)))
-    (let ((parent 
-	   (find-if #'try 
-		    (script-blocks self)
-		    :from-end t)))
-      (when parent
-	(try parent)))))
+  (with-script %script 
+    (labels ((try (b)
+	       (when b
+		 (hit b x y))))
+      (let ((parent 
+	     (find-if #'try 
+		      (script-blocks self)
+		      :from-end t)))
+	(when parent
+	  (try parent))))))
 
 (define-method draw shell ()
   (with-fields (script buffer drag-start selection inputs drag
@@ -211,6 +226,10 @@
 	  (dw (field-value :width block))
 	  (dh (field-value :height block)))
       (with-fields (x y width height) ghost
+	;; remember the relative mouse coordinates from the time the
+	;; user began dragging, so that the block being dragged is not
+	;; simply anchored with its top left corner located exactly at
+	;; the mouse pointer.
 	(let ((x-offset (- mouse-x dx))
 	      (y-offset (- mouse-y dy)))
 	  (when (null drag-start)
@@ -238,9 +257,9 @@
 		(setf click-start (cons x y))))
 	  (3 (let ((menu (context-menu block)))
 	       (when menu 
-		 (with-script ^script
+		 (with-script %script
 		   (add *script* menu x y))))))
-	(setf ^focused-block nil))))
+	(setf %focused-block nil))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
   (with-fields (inputs hover highlight script click-start drag-offset

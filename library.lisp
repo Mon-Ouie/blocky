@@ -35,7 +35,7 @@
   (dash 1 (font-height *block-font*)))
 
 (define-method get-sprite sprite-id ()
-  (get-object-by-uuid ^sprite-uuid))
+  (get-object-by-uuid %sprite-uuid))
 
 (define-method layout sprite-id ()
   (with-fields (height width) self
@@ -116,7 +116,7 @@
   (inputs :initform '("fanfare")))
 
 (define-method execute play-music ()
-  (play-music *target* (first ^results) :loop t))
+  (play-music *target* (first %results) :loop t))
 
 (defblock play-sound 
   (type :initform :sound)

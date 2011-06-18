@@ -1,7 +1,7 @@
 ;;; prototypes.lisp --- an alternative object system for Common Lisp
 
 ;; Copyright (C) 2007, 2008, 2009, 2010, 2011  David O'Toole
-;; Author: David O'Toole ^dto@gnu.org
+;; Author: David O'Toole %dto@gnu.org
 ;; Keywords: oop
 ;; Version: 1.8
 ;;
@@ -133,8 +133,9 @@ This program includes the free DejaVu fonts family. See the file
   (object-parent (find-object object)))
 
 (defun object-eq (a b)
-  (eq (find-object a)
-      (find-object b)))
+  (when (and a b)
+    (eq (find-object a)
+	(find-object b))))
 
 ;;; Emacs Lisp compatibilty macro 
 
@@ -627,7 +628,7 @@ message queue resulting from the evaluation of EXPR."
 ;; Within method bodies, you can access the fields of `self' with the
 ;; shorthand
 ;;
-;;   ^foo
+;;   %foo
 ;;
 ;; instead of writing
 ;;
@@ -635,13 +636,13 @@ message queue resulting from the evaluation of EXPR."
 ;;
 ;; For example:
 ;;
-;;   (princ ^name)
-;;   (setf ^width 10)
+;;   (princ %name)
+;;   (setf %width 10)
 ;; 
 ;; Because `self' is not bound outside of method bodies, we use a
 ;; code-walker to implement the syntax described above. 
 
-(defvar *field-reference-prefix* "^")
+(defvar *field-reference-prefix* "%")
 
 (defun transform-tree (tester transformer tree)
   (cond ((consp tree)
@@ -666,17 +667,17 @@ message queue resulting from the evaluation of EXPR."
 ;; Now we turn to the syntax itself and the required tree
 ;; transformations.
 
-;;; field references of the form ^foo
+;;; field references of the form %foo
 
 (defun field-reference-p (form)
-  "Return non-nil if FORM is a symbol like ^foo."
+  "Return non-nil if FORM is a symbol like %foo."
   (if (symbolp form)
       (let* ((name (symbol-name form)))
 	(string= (subseq name 0 1)
 		 *field-reference-prefix*))))
 
 (defun transform-field-reference (ref)
-  "Change the symbol REF from ^foo to (field-value :foo self)."
+  "Change the symbol REF from %foo to (field-value :foo self)."
   (let ((name (symbol-name ref)))
     (list 'field-value 
 	  (make-keyword (subseq name 1))
@@ -823,7 +824,7 @@ The returned entry will be of the form:
 
 and will be suitable for use with the functions that operate on field
 descriptors, and for inclusion in the association list
-^field-descriptors.
+%field-descriptors.
 
 See also `define-prototype'.
 "
@@ -939,7 +940,7 @@ OPTIONS is a property list of field options. Valid keys are:
        (let ((prototype (make-object :fields fields
 				     :name ,prototype-id
 				     :uuid uuid
-				     :parent ,parent-sym)))
+				     :parent (find-object ,parent-sym))))
 	 (initialize-method-cache prototype)
 	 (merge-hashes fields blanks)
 	 ;; set the default initforms
@@ -989,7 +990,7 @@ evaluated, then any applicable initializer is triggered."
 ;; serialized may use this hook to pre-process its
 ;; fields. :AFTER-DESERIALIZE is likewise invoked (if present) after
 ;; reading the object from disk, and is used to recover from
-;; deserialization. The reserved field ^EXCLUDED-FIELDS is a list of
+;; deserialization. The reserved field %EXCLUDED-FIELDS is a list of
 ;; field names (keyword symbols) which are not serialized; typically
 ;; these will be properly re-initialized by the :AFTER-DESERIALIZE
 ;; method.
@@ -1000,7 +1001,7 @@ evaluated, then any applicable initializer is triggered."
 (defun serialize (object)
   "Convert a Lisp object a print-ready S-expression.
 Invokes :BEFORE-SERIALIZE on IOFORMS objects whenever present. Any fields
-named in the list ^EXCLUDED-FIELDS of said object will be ignored."
+named in the list %EXCLUDED-FIELDS of said object will be ignored."
   ;; use labels here so we can call #'serialize
   (labels ((hash-to-list (hash)
 	     (let (plist)

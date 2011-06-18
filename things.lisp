@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
-;; Author: David O'Toole ^dto@gnu.org
+;; Author: David O'Toole %dto@gnu.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
+;; along with this program.  If not, see %http://www.gnu.org/licenses/.
 
 ;;; Code:
 
@@ -36,7 +36,7 @@
   "Return non-nil if this cell is in the specified CATEGORY.
 
 Cells may be placed into categories that influence their processing by
-the engine. The field `^categories' is a set of keyword symbols; if a
+the engine. The field `%categories' is a set of keyword symbols; if a
 symbol `:foo' is in the list, then the cell is in the category `:foo'.
 
 Although a game built on IOFORMS can define whatever categories are
@@ -48,29 +48,29 @@ interpretation:
  -    :light-source --- This object casts light. 
  -    :opaque --- Blocks line-of-sight, casts shadows. 
 "
-  (member category ^categories))
+  (member category %categories))
 
 (define-method add-category cell (category)
   "Add this cell to the specified CATEGORY."
-  (pushnew category ^categories))
+  (pushnew category %categories))
 
 (define-method delete-category cell (category)
   "Remove this cell from the specified CATEGORY."
-  (setf ^categories (remove category ^categories)))
+  (setf %categories (remove category %categories)))
 
 ;;; Locating the cell in grid space
 
 (define-method is-grid-located cell ()
   "Returns non-nil if this cell is located somewhere on the grid."
-  (and (integerp ^row) (integerp ^column)))
+  (and (integerp %row) (integerp %column)))
 
 (define-method grid-coordinates cell ()
-  (values ^row ^column))
+  (values %row %column))
 
 (define-method xy-coordinates cell ()
   (let ((size (field-value :grid-size *world*)))
-    (values (* ^column size)
-	    (* ^row size))))
+    (values (* %column size)
+	    (* %row size))))
 
 (define-method coordinates cell ()
   (multiple-value-bind (x y) (xy-coordinates self)
@@ -79,7 +79,7 @@ interpretation:
 (define-method draw cell ()
   (with-fields (image) self
     (when image
-      (set-blending-mode ^blend)
+      (set-blending-mode %blend)
       (multiple-value-bind (x y)
 	  (xy-coordinates self)
 	(draw-image image x y)))))
@@ -115,12 +115,12 @@ cells."
 
 (define-method die cell ()
   (destroy self)
-  (delete-cell *world* self ^row ^column))
+  (delete-cell *world* self %row %column))
 
 ;;; Cell movement
 
 (define-method move-to-grid cell (r c)
-  (delete-cell *world* self ^row ^column)
+  (delete-cell *world* self %row %column)
   (drop-cell *world* self r c))
 
 (define-method move-to cell (x y &optional z)
@@ -137,7 +137,7 @@ cells."
 ;; is in the way. Returns non-nil if a move occurred."
 ;;   (let ((world *world*))
 ;;     (multiple-value-bind (r c) 
-;; 	(step-in-direction ^row ^column direction distance)
+;; 	(step-in-direction %row %column direction distance)
 ;;       (cond ((null (grid-location world r c)) ;; are we at the edge?
 ;; 	     ;; return nil because we didn't move
 ;; 	     (prog1 nil
@@ -194,7 +194,7 @@ cells."
 ;;   (next/initialize self))
  
 (define-method draw sprite ()
-  (set-blending-mode ^blend)
+  (set-blending-mode %blend)
   (with-fields (image x y height) self
     (when image
       (when (null height)
@@ -203,7 +203,7 @@ cells."
 
 (define-method set-image sprite (image)
   (assert (stringp image))
-  (setf ^image image)
+  (setf %image image)
   (update-image-dimensions self))
 
 (define-method die sprite ()
@@ -229,14 +229,14 @@ cells."
 ;;; Sprite locations
 
 (define-method grid-coordinates sprite ()
-  (values (truncate (/ ^y (field-value :tile-size *world*)))
-	  (truncate (/ ^x (field-value :tile-size *world*)))))
+  (values (truncate (/ %y (field-value :tile-size *world*)))
+	  (truncate (/ %x (field-value :tile-size *world*)))))
 
 (define-method xy-coordinates sprite ()
-  (values ^x ^y))
+  (values %x %y))
 
 (define-method coordinates sprite ()
-  (values ^x ^y ^z))
+  (values %x %y %z))
 
 ;;; Layout
 
@@ -253,10 +253,10 @@ cells."
 
 (define-method move-to sprite (x y &optional z)
   (assert (and (numberp x) (numberp y)))
-  (setf ^x x ^y y)
+  (setf %x x %y y)
   (when (numberp z)
     (assert (numberp z))
-    (setf ^z z)))
+    (setf %z z)))
 
 (define-method move-to-grid sprite (row column)
   (with-field-values (grid-size) *world*
@@ -286,9 +286,9 @@ cells."
 	  (< o-right x)))))
 
 (define-method bounding-box sprite ()
-  (when (null ^height)
+  (when (null %height)
     (update-image-dimensions self))
-  (values ^x ^y ^width ^height))
+  (values %x %y %width %height))
 
 (define-method colliding-with-rectangle sprite (o-top o-left o-width o-height)
   ;; you must pass arguments in Y X order since this is TOP then LEFT
@@ -331,8 +331,8 @@ cells."
     (setf text string)
     (multiple-value-bind (width height) 
 	(font-text-extents string *block-font*)
-      (setf ^width width)
-      (setf ^height height))))
+      (setf %width width)
+      (setf %height height))))
 
 (define-method draw balloon ()
   (with-fields (x y clock text) self

@@ -71,7 +71,7 @@
 (define-prototype block ()
   ;; general information
   (inputs :initform nil :documentation 
-"List of input blocks. If ^SCHEMA is also present, its corresponding
+"List of input blocks. If %SCHEMA is also present, its corresponding
 alist entries give the names and input types of the inputs here.")
   (schema :initform nil :documentation 
 "Association list whose nth entry is the (:NAME . :TYPE) of the nth input.")
@@ -109,25 +109,25 @@ ARGS are field specifiers, as with `define-prototype'."
 (define-method update block ()
   "Update the simulation one step forward in time.
 By default, just update each child block."
-  (mapc #'update ^inputs))
+  (mapc #'update %inputs))
 
 (define-method change-image block (image)
-  (setf ^image image))
+  (setf %image image))
 
 (define-method pin block ()
-  (setf ^pinned t))
+  (setf %pinned t))
 
 (define-method unpin block ()
-  (setf ^pinned nil))
+  (setf %pinned nil))
 
 (define-method is-pinned block ()
-  ^pinned)
+  %pinned)
 
 (define-method count-inputs block ()
-  (length ^inputs))
+  (length %inputs))
 
 (define-method is-temporary block ()
-  ^temporary)
+  %temporary)
 
 (define-method count-toplevel-blocks block ()
   (with-field-values (inputs) self
@@ -190,12 +190,12 @@ By default, just update each child block."
   "Store a UUID link to the enclosing block PARENT.
 If PARENT is nil, then the existing parent link is cleared."
     (assert (is-valid-connection parent self))
-    (setf ^parent (when parent 
+    (setf %parent (when parent 
 		    ;; always store uuid to prevent circularity
 		    (find-uuid parent))))
 	       
 (define-method get-parent block ()
-  ^parent)
+  %parent)
 
 (define-method initialize block (&rest blocks)
   "Prepare an empty block, or if BLOCKS is non-empty, a block
@@ -223,7 +223,7 @@ initialized with BLOCKS as inputs."
 (define-method initialize-events-table-maybe block (&optional force)
   (when (or force 
 	    (null (has-local-value :events self)))
-    (setf ^events (make-hash-table :test 'equal))))
+    (setf %events (make-hash-table :test 'equal))))
 
 (define-method bind-event-to-function block (event-name modifiers func)
   "Bind the described event to invoke FUNC.
@@ -231,13 +231,13 @@ EVENT-NAME is a string giving the key name; MODIFIERS is a list of
 keywords like :control, :alt, and so on."
   (initialize-events-table-maybe self)
   (let ((event (normalize-event (cons event-name modifiers))))
-    (setf (gethash event ^events)
+    (setf (gethash event %events)
 	  func)))
 
 (define-method unbind-event block (event-name modifiers)
   "Remove the described event binding."
   (remhash (normalize-event (cons event-name modifiers))
-	   ^events))
+	   %events))
 
 (define-method handle-event block (event)
   "Look up and invoke the function (if any) bound to EVENT. Return t
@@ -369,10 +369,10 @@ areas.")
 
 (define-method move-to block (x y &optional z)
   "Move the block to a new (X Y) location."
-  (setf ^x x)
-  (setf ^y y)
+  (setf %x x)
+  (setf %y y)
   (when z 
-    (setf ^z z)))
+    (setf %z z)))
 
 (define-method move-toward block (direction &optional (steps 1))
   (with-field-values (y x) self
@@ -382,21 +382,21 @@ areas.")
       (setf y y0))))
 
 (define-method show block ()
-  (setf ^visible t))
+  (setf %visible t))
 
 (define-method hide block ()
-  (setf ^visible nil))
+  (setf %visible nil))
 
 (define-method toggle-visibility block ()
-  (if ^visible
+  (if %visible
       (hide self)
       (show self)))
 
 (define-method is-visible block ()
-  ^visible)
+  %visible)
 
 (define-method get-image block ()
-  ^image)
+  %image)
 
 (define-method mouse-move block (x y)
   (declare (ignore x y)))
@@ -434,8 +434,8 @@ areas.")
   nil)
 
 (define-method execute-inputs block ()
-  "Execute all blocks in ^INPUTS from left-to-right. Results are
-placed in corresponding positions of ^RESULTS. Override this method
+  "Execute all blocks in %INPUTS from left-to-right. Results are
+placed in corresponding positions of %RESULTS. Override this method
 when defining new blocks if you don't want to evaluate all the
 inputs all the time."
   (with-fields (inputs results) self
@@ -448,12 +448,12 @@ inputs all the time."
   "Carry out the block's action by sending messages to the object `*target*'.
 The *target* is a special variable bound in the execution
 environment. Its value will be the IOFORMS object to send messages to.
-The ^RESULTS field will be a list of results obtained by
-executing/evaluating the blocks in ^INPUTS (but this behavior can be
+The %RESULTS field will be a list of results obtained by
+executing/evaluating the blocks in %INPUTS (but this behavior can be
 overridden; see also `BLOCK/EXECUTE-INPUTS' and `BLOCK/RUN'). The
-default behavior of `EXECUTE' is to send the ^OPERATION field's value
+default behavior of `EXECUTE' is to send the %OPERATION field's value
 as a message to the target, with the inputs to the target's method
-being the current computed ^RESULTS, and return the result of the
+being the current computed %RESULTS, and return the result of the
 method call. This default action is sufficient for many blocks whose
 main purpose is to send a single message; other blocks can redefine
 this `EXECUTE' method to do something else. See also `defblock' and
@@ -607,7 +607,7 @@ of block."
 		  (:highlight *block-highlight-colors*)
 		  (:shadow *block-shadow-colors*)
 		  (:foreground *block-foreground-colors*))))
-    (getf colors ^category)))
+    (getf colors %category)))
 
 (defparameter *selection-color* "red")
 
@@ -726,7 +726,9 @@ override all colors."
 
 (define-method handle-width block ()
   (+ (* 2 *dash*)
-     (expression-width ^operation)))
+     (expression-width %operation)))
+
+(define-method header-height block () 0)
 
 (defparameter *socket-width* (* 18 *dash*))
 
@@ -874,10 +876,10 @@ MOUSE-Y identify a point inside the block (or input block.)"
   (data :initform nil))
 
 (define-method execute entry ()
-  ^data)
+  %data)
 
 (define-method set-data entry (data)
-  (setf ^data data))
+  (setf %data data))
 
 (define-method draw entry ()
   (with-block-drawing
@@ -919,7 +921,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 (defun null-block () (clone "IOFORMS:LIST"))
 
 (define-method execute list ()
-  ^results)
+  %results)
 
 (define-method accept list (input &optional prepend)
   (with-fields (inputs) self
@@ -945,7 +947,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	(unplug self block)))))
 
 (define-method length list ()
-  (length ^inputs))
+  (length %inputs))
 
 ;; (define-method unplug list (input)
 ;;   (with-fields (inputs) self
@@ -1013,10 +1015,10 @@ MOUSE-Y identify a point inside the block (or input block.)"
      ,@body))
 
 (define-method resize block (&key height width)
-  (when (or (not (= height ^height))
-	    (not (= width ^width)))
-    (setf ^height height)
-    (setf ^width width)
+  (when (or (not (= height %height))
+	    (not (= width %width)))
+    (setf %height height)
+    (setf %width width)
     (when *script* 
       (send :report-layout-change *script*))))
 
@@ -1028,7 +1030,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
   (variables :initform (make-hash-table :test 'eq)))
 
 (define-method report-layout-change script ()
-  (setf ^needs-layout t))
+  (setf %needs-layout t))
 
 (define-method bring-to-front script (block)
   (with-fields (inputs script) self
@@ -1038,7 +1040,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 
 (define-method update script ()
   (with-script self 
-    (dolist (each ^inputs)
+    (dolist (each %inputs)
       (update each))
     (update-layout self)))
 
@@ -1057,15 +1059,15 @@ MOUSE-Y identify a point inside the block (or input block.)"
 
 (define-method initialize script (&key blocks variables target menu)
   ;; (next/initialize self blocks)
-  (setf ^inputs blocks)
-  (when variables (setf ^variables variables))
-  (when target (setf ^target target))
+  (setf %inputs blocks)
+  (when variables (setf %variables variables))
+  (when target (setf %target target))
   (when menu 
-    (setf ^menu (new menubar (make-menu (symbol-value '*system-menu*))))
-    (add self ^menu)))
+    (setf %menu (new menubar (make-menu (symbol-value '*system-menu*))))
+    (add self %menu)))
 
 (define-method set-target script (target)
-  (setf ^target target))
+  (setf %target target))
 
 (define-method append-input script (block)
   (with-fields (inputs) self
@@ -1106,10 +1108,10 @@ MOUSE-Y identify a point inside the block (or input block.)"
 ;; 	      "script")))))
 
 ;; (define-method set script (var value)
-;;   (setf (gethash var ^variables) value))
+;;   (setf (gethash var %variables) value))
 
 ;; (define-method get script (var)
-;;   (gethash var ^variables))
+;;   (gethash var %variables))
 
 ;; (defun block-variable (var-name)
 ;;   (get *block* var-name))

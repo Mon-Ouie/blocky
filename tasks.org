@@ -1,8 +1,7 @@
-** TODO *scratch* buffer would be a funny joke
+** TODO [#B] *scratch* buffer would be a funny joke
 ** TODO [#A] fix can't select sublist 
 ** TODO [#A] fix not being able to pull out sublists
-** DONE [#A] fix double speed update when selected after drag
-   CLOSED: [2011-06-17 Fri 09:42]
+   CLOSED: [2011-06-17 Fri 23:38]
 ** TODO [#A] fix argument blocks not being created (AGAIN)
 ** TODO [#A] transcribe BYOB blocks library listing
 ** TODO [#A] fix context menus not using correct target
