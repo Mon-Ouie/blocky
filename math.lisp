@@ -45,7 +45,7 @@ So 2d6+2 would be (roll 2 6 2)."
 
 (defun distance (x1 y1 x2 y2) 
  "Compute the distance between the points X1,Y1 and X2,Y2."
-  (declare (integer x1 y1 x2 y2) (optimize (safety 0) (speed 3)))
+;  (declare (integer x1 y1 x2 y2) (optimize (safety 0) (speed 3)))
   (let ((delta-x (- x2 x1))
 	(delta-y (- y2 y1)))
     (sqrt (+ (* delta-x delta-x) (* delta-y delta-y)))))

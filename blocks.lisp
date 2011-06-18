@@ -730,6 +730,8 @@ override all colors."
 
 (define-method header-height block () 0)
 
+(define-method header-width block () %width)
+
 (defparameter *socket-width* (* 18 *dash*))
 
 (defun print-expression (expression)

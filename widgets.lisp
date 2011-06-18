@@ -1149,22 +1149,30 @@ text INSERTION to be inserted at point."
       (draw each)))))
 
 (define-method hit menu (mouse-x mouse-y)
-  (with-field-values (x y expanded width height parent) self
+  (with-field-values (x y expanded inputs width height) self
     (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
-      (let ((hh (header-height self))
-	    (hw (header-width self)))
-	(message "HIT MENU")
-	(if (< y mouse-y (+ y hh))
-	    ;; we're even with the header text for this menu.
-	    ;; are we touching it?
-	    (if (< x mouse-x (+ x hw))
-		;; mouse is over menu tutle. return self to get event
-		self
-		;; we're in the corner (possibly over top of the text
-		;; of the next menu item's title in the menu bar). 
-		;; so, we close this menu.
-		(prog1 nil (unexpand self)))
-	    (hit-blocks x y %inputs))))))
+      (flet ((try (item)
+	       (hit item mouse-x mouse-y)))
+	(if (not expanded)
+	    self
+	    (or (some #'try inputs)
+		self))))))
+	    
+;;       (let ((hh (header-height self))
+;; 	    (hw (header-width self)))
+;; ;;	(message "HIT MENU")
+;; 	(if (< y mouse-y (+ y hh))
+;; 	    ;; we're even with the header text for this menu.
+;; 	    ;; are we touching it?
+;; 	    (if (< x mouse-x (+ x hw))
+;; 		;; mouse is over menu title. return self to get event
+;; 		;; we're in the corner (possibly over top of the text
+;; 		;; of the next menu item's title in the menu bar). 
+;; 		;; so, we close this menu.
+;; 		(prog1 nil (unexpand self)))
+;; 	    (labels ((try (it)
+;; 		       (hit it mouse-x mouse-y)))
+;; 	      (some #'try inputs)))))))
 
 (define-method draw-hover menu ()
   nil)
@@ -1201,6 +1209,14 @@ text INSERTION to be inserted at point."
 		 item)))
     (xform items)))
 
+(define-method point-through menu (mouse-x mouse-y)
+  (with-field-values (x y width) self
+    (within-extents mouse-x mouse-y
+		    (+ x (header-width self)) 
+		    y
+		    (+ x width)
+		    (+ y (header-height self)))))
+
 ;;; A global menu bar
 
 (defblock menubar :category :menu :temporary t)
@@ -1218,18 +1234,20 @@ text INSERTION to be inserted at point."
     (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
       ;; are any of the menus open?
       (let ((opened-menu (find-if #'is-expanded inputs)))
-	(message "OPENED MENU: ~S" opened-menu)
 	(labels ((test (m)
 		   (when m (hit m mouse-x mouse-y))))
 	  (let ((moused-menu (find-if #'test inputs)))
-	    (message "MOUSED MENU: ~S" moused-menu)
 	    (if (and ;; moused-menu opened-menu
 		     (object-eq moused-menu opened-menu))
-		;; we're over the opened menu. hit it.
-		(prog1 (test opened-menu) (message "HIT OPENED MENU"))
-		;; we're somewhere else. just test the submenus.
+		;; we're over the opened menu, let's check if 
+		;; the user has moused onto the other parts of the menubar
+		(if (point-through opened-menu mouse-x mouse-y)
+		    (unexpand opened-menu)
+		    ;; nope, just hit the submenu items.
+		    (test opened-menu))
+		;; we're somewhere else. just test the main menus in
+		;; the menubar.
 		(let ((candidate (find-if #'test inputs)))
-		  (message "PRE-CAND ~S" candidate)
 		  (if (null candidate)
 		      ;; the user moused away. close the menus.
 		      self
@@ -1238,11 +1256,10 @@ text INSERTION to be inserted at point."
 			  ;; there already was a menu open.
 			  ;; close this one and open the new one.
 			  (prog1 candidate
-			    (message "CANDIDATE")
 			    (unexpand opened-menu)
 			    (expand candidate))
 			  ;; no menu was open---just hit the menu headers
-			  (progn (message "BLORT") (some #'test inputs))))))))))))
+			  (some #'test inputs)))))))))))
 			  		    	  
 (define-method draw-border menubar () nil)
 
