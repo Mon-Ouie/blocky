@@ -1155,9 +1155,8 @@ text INSERTION to be inserted at point."
 	       (hit item mouse-x mouse-y)))
 	(if (not expanded)
 	    self
-	    (or (some #'try inputs)
-		self))))))
-	    
+	    (some #'try inputs))))))
+		
 ;;       (let ((hh (header-height self))
 ;; 	    (hw (header-width self)))
 ;; ;;	(message "HIT MENU")
@@ -1234,20 +1233,28 @@ text INSERTION to be inserted at point."
     (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
       ;; are any of the menus open?
       (let ((opened-menu (find-if #'is-expanded inputs)))
-	(labels ((test (m)
+	(labels ((try (m)
 		   (when m (hit m mouse-x mouse-y))))
-	  (let ((moused-menu (find-if #'test inputs)))
+	  (let ((moused-menu (find-if #'try inputs)))
 	    (if (and ;; moused-menu opened-menu
 		     (object-eq moused-menu opened-menu))
 		;; we're over the opened menu, let's check if 
 		;; the user has moused onto the other parts of the menubar
-		(if (point-through opened-menu mouse-x mouse-y)
-		    (unexpand opened-menu)
-		    ;; nope, just hit the submenu items.
-		    (test opened-menu))
-		;; we're somewhere else. just test the main menus in
+	        (flet ((try-other (menu)
+			 (when (not (object-eq menu opened-menu))
+			   (try menu))))
+		  (let ((other (some #'try-other inputs)))
+		    ;; are we touching one of the other menubar items?
+		    (if (null other)
+			;; nope, just hit the opened submenu items.
+			(try opened-menu)
+			;; yes, switch menus.
+			(prog1 other
+			  (unexpand opened-menu)
+			  (expand other)))))
+		;; we're somewhere else. just try the main menus in
 		;; the menubar.
-		(let ((candidate (find-if #'test inputs)))
+		(let ((candidate (find-if #'try inputs)))
 		  (if (null candidate)
 		      ;; the user moused away. close the menus.
 		      self
@@ -1259,7 +1266,7 @@ text INSERTION to be inserted at point."
 			    (unexpand opened-menu)
 			    (expand candidate))
 			  ;; no menu was open---just hit the menu headers
-			  (some #'test inputs)))))))))))
+			  (some #'try inputs)))))))))))
 			  		    	  
 (define-method draw-border menubar () nil)
 

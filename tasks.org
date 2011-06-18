@@ -1,7 +1,6 @@
 ** TODO commit
 ** TODO properly check other menu widgets in menubar hit before menu...
-** DONE click again on header to close menu.
-   CLOSED: [2011-06-18 Sat 19:24]
+** TODO click again on header to close menu.
 ** TODO [#A] turtle graphics quickie examples
 ** TODO [#B] *scratch* buffer would be a funny joke
 ** TODO [#A] fix can't select sublist 
