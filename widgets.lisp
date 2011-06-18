@@ -1149,15 +1149,16 @@ text INSERTION to be inserted at point."
       (draw each)))))
 
 (define-method hit menu (mouse-x mouse-y)
-  (with-field-values (x y width height) self
+  (with-field-values (x y expanded width height parent) self
     (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
       (let ((hh (header-height self))
 	    (hw (header-width self)))
+	(message "HIT MENU")
 	(if (< y mouse-y (+ y hh))
 	    ;; we're even with the header text for this menu.
 	    ;; are we touching it?
 	    (if (< x mouse-x (+ x hw))
-		;; return self to get event
+		;; mouse is over menu tutle. return self to get event
 		self
 		;; we're in the corner (possibly over top of the text
 		;; of the next menu item's title in the menu bar). 
@@ -1217,27 +1218,31 @@ text INSERTION to be inserted at point."
     (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
       ;; are any of the menus open?
       (let ((opened-menu (find-if #'is-expanded inputs)))
+	(message "OPENED MENU: ~S" opened-menu)
 	(labels ((test (m)
 		   (when m (hit m mouse-x mouse-y))))
 	  (let ((moused-menu (find-if #'test inputs)))
-	    (if (and moused-menu opened-menu
+	    (message "MOUSED MENU: ~S" moused-menu)
+	    (if (and ;; moused-menu opened-menu
 		     (object-eq moused-menu opened-menu))
 		;; we're over the opened menu. hit it.
-		(test opened-menu)
+		(prog1 (test opened-menu) (message "HIT OPENED MENU"))
 		;; we're somewhere else. just test the submenus.
 		(let ((candidate (find-if #'test inputs)))
+		  (message "PRE-CAND ~S" candidate)
 		  (if (null candidate)
 		      ;; the user moused away. close the menus.
-		      (prog1 nil (close-menus self))
+		      self
 		      ;; we hit one of the other menus.
 		      (if opened-menu
 			  ;; there already was a menu open.
 			  ;; close this one and open the new one.
-			  (prog1 self 
+			  (prog1 candidate
+			    (message "CANDIDATE")
 			    (unexpand opened-menu)
 			    (expand candidate))
 			  ;; no menu was open---just hit the menu headers
-			  (some #'test inputs)))))))))))
+			  (progn (message "BLORT") (some #'test inputs))))))))))))
 			  		    	  
 (define-method draw-border menubar () nil)
 

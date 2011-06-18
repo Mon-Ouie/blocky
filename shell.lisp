@@ -204,6 +204,8 @@
 		   (when (field-value :parent drag)
 		     (draw-ghost ghost))
 		   (draw drag)
+		   ;; also draw any hover-over highlights 
+		   ;; on objects you might drop stuff onto
 		   (when hover 
 		     (draw-hover hover)))
 	    (when focused-block
