@@ -28,8 +28,7 @@
 
 (define-prototype block-prompt (:parent prompt)
   (operation :initform :prompt)
-  output 
-  (rows :initform 10))
+  output)
 
 (define-method initialize block-prompt (output)
   (next/initialize self)
@@ -39,7 +38,7 @@
   (setf %output output))
 
 (define-method do-sexp block-prompt (sexp)
-  (with-fields (output rows) self
+  (with-fields (output) self
     (assert output)
     (let ((*make-block-package* (find-package :ioforms))
 	  (container (get-parent output)))
@@ -48,10 +47,7 @@
 		  (if (symbolp (first sexp))
 		      (make-block sexp)
 		      (make-block (first sexp)))))
-;	  (connect-parent-links block)
 	  (accept container block))))))
-	;; (when (> (count-inputs container) rows)
-	;;   (pop container))))))
 
 (define-prototype listener (:parent list)
   (type :initform :system)
@@ -70,13 +66,49 @@
 
 (define-method run listener ()
   (with-fields (inputs) self
-    (destructuring-bind (prompt) inputs
-      (run prompt))))
+    (run (first inputs))))
 
 ;; forward keypresses to prompt for convenience
 (define-method handle-event listener (event)
   (with-fields (inputs) self
     (handle-event (first inputs) event)))
+
+(define-prototype terminal (:parent "IOFORMS:LISTENER")
+  (scrollback-length :initform 100)
+  (display-lines :initform 4))
+  
+(define-method layout terminal ()
+  (with-fields (x y height width parent) self
+    (setf x (field-value :x parent))
+    (let ((y0 (- (field-value :height parent) (dash 1))))
+	(setf height (font-height *block-font*))
+	(setf width (dash 8))
+	(dolist (element inputs)
+	  (layout element)
+	  (decf y0 (field-value :height element))
+	  (move-to element (+ x (dash 1)) y0)
+	  (incf height (+ (dash 1) (field-value :height element)))
+	  (setf width (max width (field-value :width element))))
+	(incf width (dash 10)))))
+
+(define-method accept terminal (input &optional prepend)
+  (declare (ignore prepend))
+  (with-fields (inputs scrollback-length) self
+    (assert (not (null inputs))) ;; we always have a prompt
+    (prog1 t
+      (assert (is-valid-connection self input))
+      (let ((len (length inputs)))
+	(when (> len scrollback-length)
+	  ;; drop last item in scrollback
+	  (setf inputs (subseq inputs 0 (1- len))))
+	;; set parent if necessary 
+	(when (get-parent input)
+	  (unplug-from-parent input))
+	  (set-parent input self)
+	  (setf inputs 
+		(nconc (first inputs)
+		       (list input)
+		       (nthcdr 2 inputs)))))))
 
 ;;; Interactive editor shell
 

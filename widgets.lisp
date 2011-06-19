@@ -1155,7 +1155,11 @@ text INSERTION to be inserted at point."
 	       (hit item mouse-x mouse-y)))
 	(if (not expanded)
 	    self
-	    (some #'try inputs))))))
+	    ;; we're expanded. is the mouse to the left of this
+	    ;; menu's header tab thingy?
+	    (when (and (< mouse-x (+ x (header-width self)))
+		       (< (header-height self) mouse-y))
+	      (some #'try inputs)))))))
 		
 ;;       (let ((hh (header-height self))
 ;; 	    (hw (header-width self)))
