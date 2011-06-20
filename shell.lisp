@@ -28,6 +28,7 @@
   (selection :initform ()
   	     :documentation "Subset of selected blocks.")
   (script :initform nil)
+  menu terminal
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
   (hover :initform nil
@@ -59,11 +60,13 @@
   (update %script))
 
 (define-method initialize shell (script)
-  (next/initialize self)
   (setf %script (find-object script))
   (assert %script)
-  (add %script (new menubar (make-menu (symbol-value '*system-menu*))))
-  (add %script (new terminal)))
+  (setf %menubar (new menubar (make-menu (symbol-value '*system-menu*))))
+  (add %script %menubar)
+  (setf %terminal (new terminal))
+  (add %script %terminal)
+  (register-uuid self))
 
 (define-method script-blocks shell ()
   (field-value :inputs %script))
@@ -219,8 +222,8 @@
 	(setf %focused-block nil))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
-  (with-fields (inputs hover highlight script click-start drag-offset
-  drag-start drag) self
+  (with-fields (inputs hover highlight click-start drag-offset
+		       drag-start drag) self
     (setf hover nil)
     (drag-maybe self mouse-x mouse-y)
     (if drag
@@ -234,9 +237,8 @@
 	(progn
 	  (setf highlight (hit-script self mouse-x mouse-y))
 	  (when (null highlight)
-	    (let ((menu (field-value :menu script)))
-	      (when menu
-		(with-script script (close-menus menu)))))))))
+	    (when %menu
+	      (with-script %script (close-menus %menu))))))))
 
 (define-method mouse-up shell (x y &optional button)
   (with-fields 

@@ -36,7 +36,7 @@
 ;; enabling much more powerful blocks to be defined in terms of
 ;; simpler ones.
 
-;; With my project Blocky I am making Lisp-based visual programming
+;; With my project Blocky I am making a Lisp-based visual programming
 ;; language very similar to BYOB, but with a pervasive Lisp flavor. In
 ;; addition there are some improvements, such as native OpenGL support
 ;; throughout, and of course the advantage of compiling your block
@@ -197,6 +197,9 @@ If PARENT is nil, then the existing parent link is cleared."
 (define-method get-parent block ()
   %parent)
 
+(define-method register-uuid block ()
+  (add-object-to-database self))
+
 (define-method initialize block (&rest blocks)
   "Prepare an empty block, or if BLOCKS is non-empty, a block
 initialized with BLOCKS as inputs."
@@ -214,7 +217,7 @@ initialized with BLOCKS as inputs."
 	  (dolist (child blocks)
 	    (set-parent child self))))
       (bind-any-default-events self)
-      (add-object-to-database self))))
+      (register-uuid self))))
 
 ;;; Defining keyboard/mouse/joystick events for blocks
 
@@ -1016,6 +1019,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
   `(let ((*script* ,script))
      ,@body))
 
+;; Notice that this resize method resizes a BLOCK, not a script.
 (define-method resize block (&key height width)
   (when (or (not (= height %height))
 	    (not (= width %width)))
@@ -1028,9 +1032,8 @@ MOUSE-Y identify a point inside the block (or input block.)"
   (when *script*
     (send :report-layout-change *script*)))
 
-(define-prototype script (:parent "IOFORMS:LIST")
+(defblock script
   (menu :initform nil)
-  (inputs :iniform '(nil))
   (target :initform nil)
   (needs-layout :initform t)
   (variables :initform (make-hash-table :test 'eq)))
@@ -1063,9 +1066,8 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (delete-input self input)
     (set-parent input nil)))
 
-(define-method initialize script (&key blocks variables target menu)
-  ;; (next/initialize self blocks)
-  (setf %inputs blocks)
+(define-method initialize script (&key blocks variables target)
+  (setf %blocks blocks)
   (when variables (setf %variables variables))
   (when target (setf %target target)))
 

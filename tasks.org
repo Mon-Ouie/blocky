@@ -1,4 +1,7 @@
 ** TODO [#A] global listener at bottom, M-x to bring up/focus
+** TODO send unfocused input to terminal
+** TODO escape key hide/show terminal
+** TODO notifications!
 ** TODO [#A] Fix menu behavior: properly check other menu widgets in menubar hit before menu
 ** TODO [#A] fix argument blocks not being created (AGAIN)
 ** TODO [#A] transcribe BYOB blocks library listing

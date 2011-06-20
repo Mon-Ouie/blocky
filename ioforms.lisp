@@ -146,8 +146,6 @@
 	   register-sample-generator register-voice unregister-voice
 	   register-voice-mixer mix-voices
 	   convert-cffi-sample-to-internal *block* *script*
-	        
-	          
 	   convert-internal-sample-to-cffi get-ticks block-variable
 	   with-block-variables set-block-variable with-blocks
 	   with-mission-locals *project* quit reset seek-music

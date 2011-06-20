@@ -39,6 +39,8 @@
 
 (in-package :ioforms) 
 
+(defvar *pending-autoload-resources* '())
+
 (defun random-choose (set)
   (nth (random (length set)) set))
 
@@ -46,6 +48,15 @@
   `(restart-case
       (progn ,@body)
     (continue () :report "Continue"  )))
+
+;;; Frame rate 
+
+(defvar *frame-rate* 30 "The intended frame rate of the game.")
+
+(defun set-frame-rate (&optional (rate *frame-rate*))
+  "Set the frame rate for the game."
+  (message "Setting frame rate to ~S" rate)
+  (setf (sdl:frame-rate) rate))
 
 ;;; Keyboard state
 
@@ -106,22 +117,6 @@
 	       (let ((entry2 (find (second entry) *key-modifiers* :key #'second)))
 		 (first entry2)))))
     (mapcar #'translate (sdl:mods-down-p))))
-
-;;; Processing once per update
-
-(defvar *keys* nil "List of keywords of currently pressed keys.")
-
-(defvar *mods* nil "List of keywords of currently pressed modifiers.")
-
-(defvar *keyboard-update-number* 0)
-
-(defun get-keys ()
-  (if (= *keyboard-update-number* *updates*)
-      (setf *keys* (keyboard-keys-down)
-	    *mods* (keyboard-modifiers)
-	    *keyboard-update-number* *updates*)
-      (setf *keys* nil *mods* nil))
-  (values *keys* *mods*))
 
 ;;; Logging messages to the standard output
 
@@ -322,9 +317,12 @@ Please set the variable ioforms:*event-handler-function*")
 	  (sort (remove-duplicates (delete nil (rest event)))
 		#'string< :key #'symbol-name))))
 
-;;; Translating SDL key events into IOFORMS event lists
+;;; Translating SDL input events into IOFORMS event lists
 
 ;; see also keys.lisp
+
+(defvar *joystick-button-symbols*
+  '(:a :b :x :y :left :right :up :down :select :start))
 
 (defparameter *other-modifier-symbols* '(:button-down :button-up :axis))
 
@@ -390,9 +388,6 @@ as hash keys."
 			nil))))))
 
 ;;; Joystick support (gamepad probably required)
-
-(defvar *joystick-button-symbols*
-  '(:a :b :x :y :left :right :up :down :select :start))
 
 (defparameter *generic-joystick-mapping*
   '((0 . :button-0)
@@ -550,19 +545,30 @@ at the time the cell method is run.")
 
 (defvar *update-function* #'update-blocks)
 
+(defvar *updates*)
+
 (defun do-update (&rest args) 
   (incf *updates*)
   (when (functionp *update-function*)
     (apply *update-function* args)))
 
-(defvar *frame-rate* 30 "The intended frame rate of the game.")
-
-(defun set-frame-rate (&optional (rate *frame-rate*))
-  "Set the frame rate for the game."
-  (message "Setting frame rate to ~S" rate)
-  (setf (sdl:frame-rate) rate))
-
 (defparameter *updates* 0)
+
+;;; Processing once per update
+
+(defvar *keys* nil "List of keywords of currently pressed keys.")
+
+(defvar *mods* nil "List of keywords of currently pressed modifiers.")
+
+(defvar *keyboard-update-number* 0)
+
+(defun get-keys ()
+  (if (= *keyboard-update-number* *updates*)
+      (setf *keys* (keyboard-keys-down)
+	    *mods* (keyboard-modifiers)
+	    *keyboard-update-number* *updates*)
+      (setf *keys* nil *mods* nil))
+  (values *keys* *mods*))
 
 ;;; Screen dimensions
 
@@ -1059,8 +1065,6 @@ object save directory. See also `save-object-resource')."
 (defun find-all-projects ()
   (mapcar #'file-namestring
 	  (mapcan #'find-projects-in-directory *project-directories*)))
-
-(defvar *pending-autoload-resources* '())
 
 (defun index-iof (project-name iof-file)
   "Add all the resources from the iof IOF-FILE to the resource
