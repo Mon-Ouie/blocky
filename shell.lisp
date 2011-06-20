@@ -16,99 +16,11 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-;;; Commentary:
+;; along with this program.  If not, see  <http://www.gnu.org/licenses/>.
 
 ;;; Code:
 
 (in-package :ioforms)
-
-;;; Lisp listener
-
-(define-prototype block-prompt (:parent prompt)
-  (operation :initform :prompt)
-  output)
-
-(define-method initialize block-prompt (output)
-  (next/initialize self)
-  (setf %output output))
-
-(define-method set-output block-prompt (output)
-  (setf %output output))
-
-(define-method do-sexp block-prompt (sexp)
-  (with-fields (output) self
-    (assert output)
-    (let ((*make-block-package* (find-package :ioforms))
-	  (container (get-parent output)))
-      (when container
-	(let ((block 
-		  (if (symbolp (first sexp))
-		      (make-block sexp)
-		      (make-block (first sexp)))))
-	  (accept container block))))))
-
-(define-prototype listener (:parent list)
-  (type :initform :system)
-  (schema :initform '((:prompt . :block))))
-
-(defparameter *minimum-listener-width* 200)
-
-(define-method initialize listener ()
-  (with-fields (image inputs) self
-    (let ((prompt (new block-prompt self)))
-      (next/initialize self)
-      (set-output prompt prompt)
-      (setf inputs (list prompt))
-      (set-parent prompt self)
-      (pin prompt))))
-
-(define-method run listener ()
-  (with-fields (inputs) self
-    (run (first inputs))))
-
-;; forward keypresses to prompt for convenience
-(define-method handle-event listener (event)
-  (with-fields (inputs) self
-    (handle-event (first inputs) event)))
-
-(define-prototype terminal (:parent "IOFORMS:LISTENER")
-  (scrollback-length :initform 100)
-  (display-lines :initform 4))
-  
-(define-method layout terminal ()
-  (with-fields (x y height width parent) self
-    (setf x (field-value :x parent))
-    (let ((y0 (- (field-value :height parent) (dash 1))))
-	(setf height (font-height *block-font*))
-	(setf width (dash 8))
-	(dolist (element inputs)
-	  (layout element)
-	  (decf y0 (field-value :height element))
-	  (move-to element (+ x (dash 1)) y0)
-	  (incf height (+ (dash 1) (field-value :height element)))
-	  (setf width (max width (field-value :width element))))
-	(incf width (dash 10)))))
-
-(define-method accept terminal (input &optional prepend)
-  (declare (ignore prepend))
-  (with-fields (inputs scrollback-length) self
-    (assert (not (null inputs))) ;; we always have a prompt
-    (prog1 t
-      (assert (is-valid-connection self input))
-      (let ((len (length inputs)))
-	(when (> len scrollback-length)
-	  ;; drop last item in scrollback
-	  (setf inputs (subseq inputs 0 (1- len))))
-	;; set parent if necessary 
-	(when (get-parent input)
-	  (unplug-from-parent input))
-	  (set-parent input self)
-	  (setf inputs 
-		(nconc (first inputs)
-		       (list input)
-		       (nthcdr 2 inputs)))))))
 
 ;;; Interactive editor shell
 
@@ -134,13 +46,24 @@
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
-(define-method layout shell ())
+(define-method layout shell ()
+  (setf %x 0 %y 0 
+	%width *screen-width* 
+	%height *screen-height*)
+  (with-fields (x y width height) %script
+    (setf x %x y %y
+	  width %width
+	  height %height)))
 
 (define-method update shell ()
   (update %script))
 
-(define-method initialize shell ()
-  (next/initialize self))
+(define-method initialize shell (script)
+  (next/initialize self)
+  (setf %script (find-object script))
+  (assert %script)
+  (add %script (new menubar (make-menu (symbol-value '*system-menu*))))
+  (add %script (new terminal)))
 
 (define-method script-blocks shell ()
   (field-value :inputs %script))
@@ -149,8 +72,7 @@
   (setf %script script))
   
 (define-method add shell (new-block &optional x y)
-  (with-fields (script) self
-    (add script new-block x y)))
+  (add %script new-block x y))
 
 (define-method select shell (block &optional only)
   (with-fields (selection) self
@@ -160,9 +82,9 @@
 		 :test 'eq :key #'find-parent))))
 
 (define-method select-if shell (predicate)
-  (with-fields (selection inputs) self
+  (with-fields (selection script) self
     (setf selection 
-	  (remove-if predicate inputs
+	  (remove-if predicate (field-value :inputs script)
 		     :key #'find-parent))))
 
 (define-method unselect shell (block)
@@ -172,7 +94,6 @@
 
 (define-method handle-event shell (event)
   (with-field-values (selection script) self
-    (with-field-values (inputs) script
        (let ((block
 		(cond 
 		  ;; only one block selected. use that.
@@ -183,11 +104,12 @@
 		   (first (toplevel-blocks script))))))
 	  (when block 
 	    (with-script script
-	      (handle-event block event)))))))
+	      (handle-event block event))))))
 
 (define-method hit shell (x y)
   ;; return self no matter where mouse is, so that we get to process
   ;; all the events.
+  (declare (ignore x y))
   self)
 
 ;; (define-method hit-script shell (x y) 
@@ -217,6 +139,7 @@
 	  (try parent))))))
 
 (define-method draw shell ()
+  (layout self)
   (with-fields (script buffer drag-start selection inputs drag
 		       focused-block highlight
 		       modified hover ghost prompt)

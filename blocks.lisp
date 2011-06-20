@@ -1024,6 +1024,10 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (when *script* 
       (send :report-layout-change *script*))))
 
+(define-method signal-layout-needed block ()
+  (when *script*
+    (send :report-layout-change *script*)))
+
 (define-prototype script (:parent "IOFORMS:LIST")
   (menu :initform nil)
   (inputs :iniform '(nil))
@@ -1063,10 +1067,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
   ;; (next/initialize self blocks)
   (setf %inputs blocks)
   (when variables (setf %variables variables))
-  (when target (setf %target target))
-  (when menu 
-    (setf %menu (new menubar (make-menu (symbol-value '*system-menu*))))
-    (add self %menu)))
+  (when target (setf %target target)))
 
 (define-method set-target script (target)
   (setf %target target))

@@ -103,7 +103,8 @@ This program includes the free DejaVu fonts family. See the file
 (defvar *database* nil)
 
 (defun initialize-database ()
-  (setf *database* (make-hash-table :test 'equal)))
+  (setf *database* 
+	(make-hash-table :test 'equal :size 8192)))
 
 (initialize-database)
 
@@ -485,7 +486,7 @@ If the method is not found, attempt to forward the message."
   ;; See also `send-queue' and `send-next'
   (let ((object (find-object thing)))
     (when (not (object-p object))
-      (error "Cannot send message to non-object: ~A" object))
+      (error "Cannot send message to non-object: ~A. Did you forget the `self' argument?" object))
     ;; check the cache
     (let ((func (cache-lookup object method)))
       (if func
@@ -710,6 +711,8 @@ The forms in METHOD-BODY are executed when the method is invoked.
 The hidden argument `self' may be referred to as needed within
 the method body; it is bound to the object upon which the method
 was invoked."
+  (when (listp prototype-name)
+    (error "Must specify a prototype name, found argument list instead. Did you forget?"))
   ;; build the components of the defun
   (let* ((documentation (if (stringp (first method-body))
 			    (first method-body)))

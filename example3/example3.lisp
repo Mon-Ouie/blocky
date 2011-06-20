@@ -27,7 +27,7 @@
 
 (setf *screen-width* 640)
 (setf *screen-height* 480)
-(setf *window-title* "blocky.io")
+(setf *window-title* "blocky")
 (enable-key-repeat 9 3)
 
 (defparameter *font* "sans-bold-12")
@@ -66,10 +66,7 @@
   :image "friend")
 
 (defun example3 ()
-  (let ((script (new script :menu t))
-	(shell (new shell)))
-    (new system)
-    (open-script shell script)
-    (add-block shell)))
+  (new system)
+  (add-block (new shell (new script))))
 
 ;;; example3.lisp ends here
