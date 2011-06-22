@@ -324,8 +324,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	     (destructuring-bind (operation &rest arguments) spec
 	       (let ((prototype 		       
 		      (find-prototype 
-		       (make-prototype-id operation
-					  (make-block-package))))
+		       (make-prototype-id operation 
+					  (or (make-block-package)
+					      (find-package "IOFORMS")))))
 		     (arg-blocks (mapcar #'make-block arguments)))
 		 (message "arg-blocks ~S" (list (length arg-blocks)
 						(mapcar #'find-uuid arg-blocks)))
@@ -501,9 +502,8 @@ current block. Used for taking a census."
      :float "IOFORMS:FLOAT"
      :string "IOFORMS:TEXTBOX"
      :symbol "IOFORMS:OPTION")
-  "A property list mapping some input type keywords to
-corresponding IOFORMS:WIDGET prototypes used for editing that kind
-of value.")
+  "A property list mapping some input type keywords to corresponding
+widget prototypes used for editing that kind of value.")
 
 (defparameter *background-color* "white"
   "The default background color of the IOFORMS user interface.")

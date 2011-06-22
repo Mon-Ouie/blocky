@@ -285,7 +285,7 @@ extended argument list ARGLIST."
 (defun make-prototype-id (thing &optional package) 
   (let ((delimiter ":"))
     (if (null thing)
-	(error "Must pass a string or symbol as a prototype name.")
+	(error "Cannot make a prototype ID for nil.")
 	(apply #'concatenate 'string 
 	       (etypecase thing
 		 (ioforms:object (object-name thing))

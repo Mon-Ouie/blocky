@@ -76,7 +76,9 @@
 (defun example4 ()
   (new system)
   (let ((script (new script)))
-    (add-block script (new turtle) (/ 2 *screen-width*) (/ 2 *screen-height*))
+    (add-block script (new turtle) 
+	       (/ *screen-width* 2)
+	       (/ *screen-height* 2))
     (start (new shell script))))
 
 ;;; example4.lisp ends here
