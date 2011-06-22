@@ -73,6 +73,126 @@ This program includes the free DejaVu fonts family. See the file
 ./standard/DEJAVU-FONTS-LICENSE for more information.
 ")
 
+;;; Extended argument lists
+
+(defun is-extended-arglist (lambda-list)
+  "An extended argument list is like an ordinary CL argument list,
+but with each argument's entry replaced by a triple:
+
+  (ARGUMENT-NAME DATA-TYPE &rest OPTIONS)
+
+These triples may be arranged in the extended argument list just as
+in a `destructuring-bind', i.e. `&optional', `&key', and all the
+other destructuring features:
+
+ ((POSITIONAL-ARG1 TYPE OPTIONS) (POSITIONAL-ARG2 TYPE OPTIONS)
+  &KEY (KEYWORD-ARG1 TYPE OPTIONS) (KEYWORD-ARG2 TYPE OPTIONS))
+
+ARG is the argument name (a symbol). DATA-TYPE is a keyword.  See the
+documentation for `entry-option' for more information on the OPTIONS
+field."
+  (and (not (null lambda-list))
+       (listp (first lambda-list))
+       (not (null (first lambda-list)))))
+
+(defun entry-name (entry)
+  (first entry))
+
+(defun entry-type (entry)
+  (second entry))
+
+(defun entry-options (entry)
+  (nthcdr 2 entry))
+
+(defun entry-option (entry option)
+  "Find the value (if any) of the option named OPTION within the
+  extended argument list entry ENTRY. The following keywords are
+  valid for OPTION:
+
+  :DEFAULT   The default value for the argument. With no default,
+             the presentation history is consulted for a value.
+
+  :DOCUMENTATION     The documentation string.
+
+  :DISPLAY-NAME   User-visible name of the argument. If left unset, the
+                  default is `Foo Bar Baz' for the command
+                  `foo-bar-baz'.
+
+  :WHEN           Only read the value if this predicate-form returns 
+                  non-nil when invoked on the value.
+
+  Not yet supported:
+
+  :PROMPT    A string (or a form evaluating to a string) used as the
+             prompt for this argument.
+
+  :PROMPT-MODE   :raw means that prompt is just printed.
+                 :normal (the default) specifies standard reformatting:
+               
+                       Command Name (type1) :  <---- bright red input star
+                               (type2 [default: foo) ...
+                               (keywords) :Keyword Name (type3)
+
+
+  :DEFAULT-TYPE   The presentation type of the argument value. Use
+                  this with :default when the default value could
+                  be interpreted more than one way.
+
+  :PROVIDE-DEFAULT  When non-nil, the above options relating to
+                    defaults are activated.
+
+  :DISPLAY-DEFAULT   When non-nil, the default is printed in the
+                     prompt. Default is t.
+  :CONFIRM ..."
+  (assert (keywordp option))
+  (getf (entry-options entry) option))
+
+(defun make-lambda-list-entry (entry)
+  "Make an ordinary lambda list item corresponding to ENTRY, an
+element of an extended argument list."
+  (assert (not (null entry)))
+  (etypecase entry
+    (symbol entry) ;; pass through &optional and &key etc
+    (list (let ((name (entry-name entry)) 
+		(default (entry-option entry :default)))
+	    (if (null default)
+		name
+		(list name default))))))
+
+(defun make-lambda-list (arglist)
+  "Return an ordinary function lambda list corresponding to the
+extended argument list ARGLIST."
+  (mapcar #'make-lambda-list-entry arglist))
+
+;;; Method dictionary 
+
+(defvar *methods* nil)
+
+(defun initialize-methods ()
+  (setf *methods* (make-hash-table :test 'equal)))
+
+(initialize-methods)
+
+(defun make-method-id (prototype method)
+  (let ((name (object-name (find-object prototype))))
+    (assert (stringp name))
+    (concatenate 'string name
+		 "::" (symbol-name method))))
+
+(defun add-method-to-dictionary (prototype method arglist)
+  (when (null *methods*)
+    (initialize-methods))
+  (let ((id (make-method-id prototype method)))
+    (setf (gethash id *methods*) arglist)
+    (values id arglist)))
+	  	  
+(defun find-method-in-dictionary (name method &optional noerror)
+  (assert (hash-table-p *methods*))
+  (let ((id (make-method-id name method)))
+    (or (gethash id *methods*)
+	(unless noerror
+	  (error "Cannot find method ID: ~S" id)))))
+      
 ;;; Prototype dictionary
 
 (defvar *prototypes* nil)
@@ -169,6 +289,7 @@ This program includes the free DejaVu fonts family. See the file
 	(error "Must pass a string or symbol as a prototype name.")
 	(apply #'concatenate 'string 
 	       (etypecase thing
+		 (ioforms:object (object-name thing))
 		 (string 
 		  (if (search delimiter thing)
 		      (list thing)
@@ -209,7 +330,7 @@ This program includes the free DejaVu fonts family. See the file
   ;; to this "parent" object so that `field-value' can obtain the
   ;; inherited field values.
   parent
-  ;; Objects may have names. A name is a symbol that identifies the
+  ;; Objects may have names. A name is a string that identifies the
   ;; object. Named objects are "prototypes" from which other objects
   ;; may be created or "cloned".
   name
@@ -281,7 +402,8 @@ checked, and so on. If a value is found during these checks, it is
 returned. If a value cannot be found, an error of type `no-such-field'
 is signaled, unless NOERROR is non-nil; in that case,
 `*lookup-failure*' is returned. See also `has-field'."
-  (declare (optimize (speed 3)))
+  (declare (optimize (speed 3))
+	   (inline fref set-fref object-fields object-parent find-object))
   (let ((pointer (find-object thing))
 	result found)
     ;; search the chain of objects for a field value.
@@ -304,6 +426,7 @@ is signaled, unless NOERROR is non-nil; in that case,
 (defun set-field-value (field thing value)
   "Set OBJECT's FIELD to VALUE.
 The new value overrides any inherited value."
+  (declare (inline set-fref object-fields find-object))
   (prog1 value
     (let ((object (find-object thing)))
       (multiple-value-bind (value fields)
@@ -346,41 +469,6 @@ that each reference (get or set) is a slot access on the object."
 in EXPRESSION, in evaluating BODY. Each slot is accessed only once,
 upon binding."
   (with-fields-ex fields expression 'let body))
-
-;;; Field options
-
-;; Every prototype has a set of field options. Field options record
-;; metadata regarding fields; for example, `define-method' stores the
-;; argument list and documentation string for the method in the
-;; prototype's field options property list.
-
-(defun field-options (field object)
-  "Obtain the options property list for FIELD in OBJECT."
-  (second (assoc field (field-value :field-descriptors object))))
-
-(defun set-field-options (field object options)
-  "Set the options property list to OPTIONS for FIELD in OBJECT." 
-  (setf (field-value :field-descriptors object)
-	(remove-duplicates (acons field options
-				  (field-value :field-descriptors object))
-			   :key #'car :from-end t)))
-
-(defsetf field-options set-field-options)
-
-(defun field-option-value (field object option)
-  "Return the value of the OPTION for FIELD in OBJECT."
-  (getf (field-options field object) option))
-
-(defun set-field-option-value (field object option value)
-  "Set the value of the OPTION for FIELD in OBJECT to VALUE."
-  (symbol-macrolet ((options (second (assoc field (field-value :field-descriptors object)))))
-    (when options
-      (setf (getf options option) value))))
-  
-(defsetf field-option-value set-field-option-value)
-
-(defun field-documentation (field object)
-  (field-option-value field object :documentation))
 
 ;;; Basic SLIME auto documentation support
 
@@ -747,7 +835,10 @@ was invoked."
 						  method-symbol-name)))
 	 (parent-defun-symbol-noslash (intern (concatenate 'string
 						  "NEXT/"
-						  method-symbol-name))))
+						  method-symbol-name)))
+	 (method-lambda-list (if (is-extended-arglist arglist)
+				 (make-lambda-list arglist)
+				 arglist)))
     (let ((name (gensym)))
       `(let ((prototype (find-prototype ,prototype-id :noerror)))
 	 ;; make sure it exists
@@ -755,7 +846,7 @@ was invoked."
 	   (error (format nil "Cannot define method ~A for nonexistent prototype ~A"
 			  ',method-name ,prototype-id)))
 	 ;; define the method's Lisp function
-	 (defun ,defun-symbol (self ,@arglist)
+	 (defun ,defun-symbol (self ,@method-lambda-list)
 	   ,@(if documentation (list documentation))
 	   ,declaration2
 	   ,@(if declaration 
@@ -763,12 +854,12 @@ was invoked."
 		 body2))
 	 ;; store the method's function in the prototype's field
 	 (setf (field-value ,field-name prototype) ',defun-symbol)
-	 ;; add new method-descriptor for this method to the prototype
-	 (setf (field-option-value ,field-name prototype :documentation) ,documentation)
-	 (setf (field-option-value ,field-name prototype :arguments) ',arglist)
-	 ;; update documentation cache
-	 (when ,documentation (setf (method-documentation ',method-name) ,documentation))
-	 (setf (method-arglist ',method-name) ',arglist)
+	 ;; add this method to the method dictionary
+	 (add-method-to-dictionary 
+	  prototype 
+	  ,(make-keyword method-name)
+	  ',arglist)
+	 ;; define the other functions
 	 (export ',defun-symbol)
 	 (let ((,name ,(make-keyword method-name)))
 	   (unless (fboundp ',method-symbol)
@@ -783,16 +874,16 @@ was invoked."
 	     (export ',slash-defun-symbol)
 	     ;; and for message queueing
 	     (defun ,queue-defun-symbol (self &rest args)
-	       ,@(if documentation (list documentation))
+	       ,@(when documentation (list documentation))
 	       (apply #'send-queue ,name self args))
 	     (export ',queue-defun-symbol)
 	     (defun ,queue-defun-symbol-noslash (self &rest args)
-	       ,@(if documentation (list documentation))
+	       ,@(when documentation (list documentation))
 	       (apply #'send-queue ,name self args))
 	     (export ',queue-defun-symbol-noslash)
-	     ;; and for parent calls.
+	     ;; and for next-method calls.
 	     (defun ,parent-defun-symbol (self &rest args)
-	       ,@(if documentation (list documentation))
+	       ,@(when documentation (list documentation))
 	       (apply #'send-next ,name self args))
 	     (export ',parent-defun-symbol)
 	     (defun ,parent-defun-symbol-noslash (self &rest args)

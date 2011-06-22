@@ -36,7 +36,7 @@
 	       (:file "system" :depends-on ("blocks"))
 	       (:file "things" :depends-on ("blocks"))
 	       (:file "worlds" :depends-on ("things"))
-	       (:file "shell" :depends-on ("menus" "terminal"))
+	       (:file "shell" :depends-on ("menus" "terminal" "system"))
 	       (:file "library" :depends-on ("worlds" "shell"))))
 ;;	       (:file "path")
 	       

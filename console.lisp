@@ -202,7 +202,7 @@ Do not set this variable directly from a project; instead, call
 (defun hit-blocks (x y &optional (blocks *blocks*))
   (when blocks
     (labels ((try (b)
-	       (hit b x y)))
+	       (send :hit b x y)))
       (let ((parent (find-if #'try blocks :from-end t)))
 	(when parent
 	  (try parent))))))
@@ -210,7 +210,7 @@ Do not set this variable directly from a project; instead, call
 (defun draw-blocks ()
   "Draw the active blocks to the screen."
   (dolist (block *blocks*)
-    (draw block)))
+    (send :draw block)))
 
 (defun install-blocks (&rest blocks)
   "User-level function for setting the active block set. Note that
@@ -219,11 +219,11 @@ and the like."
   (setf *blocks* blocks))
 
 (defun add-block (block)
-  (unless (find block *blocks*)
+  (unless (find block *blocks* :test 'eq :key #'find-object)
     (setf *blocks* (adjoin block *blocks*))))
 
 (defun remove-block (block)
-  (setf *blocks* (delete block *blocks* :test #'eq)))
+  (setf *blocks* (delete block *blocks* :test #'eq :key #'find-object)))
 
 ;;; "Classic" key repeat
 
@@ -278,7 +278,8 @@ for backward-compatibility."
 	     *key-table*)))
 
 (defun break-events (event)
-  (labels ((break-it (event2 ignore)
+  (labels ((break-it (event2 rest)
+	     (declare (ignore rest))
 	     (when (intersection event event2 :test 'equal)
 	       (message "Breaking ~S due to match with ~S." event2 event)
 	       (remhash event2 *key-table*))))
@@ -435,6 +436,7 @@ as hash keys."
 (defun update-joystick-axis (axis value)
   (let ((state (if (< (abs value) *joystick-dead-zone*)
 		   :button-up :button-down)))
+    (declare (ignore state))
     (setf (aref *joystick-axis-values* axis) value)))
 
 (defun poll-joystick-axis (axis)
@@ -483,10 +485,10 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 					   (1 t)
 					   (0 nil)))
   (let ((sym (translate-joystick-button button)))
-    (labels ((pressed (sym) 
-	       (let ((b (symbol-to-button sym)))
-		 (when (integerp b)
-		   (aref *joystick-buttons* b)))))
+    (labels ((pressed (button-name) 
+	       (let ((index (symbol-to-button button-name)))
+		 (when (integerp index)
+		   (aref *joystick-buttons* index)))))
       (setf *joystick-position* 
 	    (or (cond ((and (pressed :up) (pressed :right))
 		       :northeast)
@@ -523,14 +525,6 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 	     (when (and state sym)
 	       (send-event (make-event :joystick sym)))
 	     (incf button))))
-
-;;; The active world
-
-(defvar *world* nil 
-"The current world object. Only one may be active at a time. See also
-worlds.lisp. Cells are free to send messages to `*world*' at
-any time, because it is always bound to the world containing the cell
-at the time the cell method is run.")
 
 ;;; Timing
 
@@ -674,15 +668,15 @@ display."
       (:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
 			   (let ((block (hit-blocks x y *blocks*)))
 			     (when block
-			       (mouse-move block x y))))
+			       (send :mouse-move block x y))))
       (:mouse-button-down-event (:button button :state state :x x :y y)
 				(let ((block (hit-blocks x y *blocks*)))
 				  (when block
-				    (mouse-down block x y button))))
+				    (send :mouse-down block x y button))))
       (:mouse-button-up-event (:button button :state state :x x :y y)
 			      (let ((block (hit-blocks x y *blocks*)))
 				(when block
-				  (mouse-up block x y button))))
+				  (send :mouse-up block x y button))))
       (:joy-button-down-event (:which which :button button :state state)
 			      (when (assoc button *joystick-mapping*)
 				(update-joystick button state)
@@ -735,8 +729,6 @@ display."
 	       (draw-blocks)
 	       (gl:flush)
 	       (sdl:update-display))))))
-
-
 
 ;;; The IOFORMS.INI user configuration file
 
@@ -820,7 +812,7 @@ This prepares it for printing as part of a IOF file."
 ;; First we need routines to read and write raw s-expressions to and
 ;; from text files.
 
-(defconstant *keyword-package* (find-package :keyword))
+(defvar *keyword-package* (find-package :keyword))
 
 (defun write-sexp-to-file (filename sexp)
   (message "Writing data to file ~S" filename)
@@ -1326,11 +1318,11 @@ control the size of the individual frames or subimages."
     (let ((canvas (create-image width height)))
       (prog1 canvas
 	(when background
-	  (draw-box 0 0 width height 
+	  (draw-box 0 0 width height))))))
 		    ;; TODO support arbitrary rgb and other drawing commands
-		    :stroke-color background
-		    :color background
-		    :destination canvas))))))
+		    ;; :stroke-color background
+		    ;; :color background
+		    ;; :destination canvas))))))
 
 (defun load-color-resource (resource)
   (destructuring-bind (red green blue)
@@ -2020,7 +2012,6 @@ of the music."
   (sdl:init-sdl :video t :audio t :joystick t)
   (setf *project-package-name* nil
         *project-directories* (default-project-directories)
-	*world* nil
 	*blocks* nil
 	*window-title* "ioforms"
 	*updates* 0

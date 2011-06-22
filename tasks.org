@@ -1,25 +1,30 @@
+** TODO Extended argument lists as in Genera
+** TODO change field-descriptors to use a database for saving lambda list/docs (not slots)
+** TODO [#A] one block type should be able to send any message, constructing UI via method metadata.
 ** TODO [#A] global listener at bottom, M-x to bring up/focus
-** TODO send unfocused input to terminal
-** TODO escape key hide/show terminal
-** TODO notifications!
+** TODO [#A] turtle graphics quickie examples
+** TODO [#B] reasonable emacs configuration for ioforms dev (imenu etc)
+** TODO [#A] DEMO VIDEO some working menu items with "send" block
 ** TODO [#A] Fix menu behavior: properly check other menu widgets in menubar hit before menu
 ** TODO [#A] fix argument blocks not being created (AGAIN)
-** TODO [#A] transcribe BYOB blocks library listing
 ** TODO [#A] fix context menus not using correct target
 ** TODO [#A] get math and basic blocks working
 ** TODO [#A] make easy dialog box block maker
-** TODO [#A] turtle graphics quickie examples
-** TODO [#B] click again on header to close menu.
-** TODO [#B] *scratch* buffer would be a funny joke
 ** TODO [#A] fix can't select sublist 
 ** TODO [#A] fix not being able to pull out sublists
    CLOSED: [2011-06-17 Fri 23:38]
 ** TODO [#A] make a sprite reference (i.e. uuid)
 ** TODO [#A] implement "send" block using reference 
 ** TODO [#A] Create DEFBLOCK block
-** TODO [#A] DEMO VIDEO some working menu items with "send" block
 ** TODO [#A] bring menubar and its menus to front when opening menu
 ** TODO [#A] comment block for output messages in listener etc, trap errors
+** TODO [#B] minibuffer messages
+** TODO [#B] send unfocused input to terminal
+** TODO [#B] escape key hide/show terminals/menus
+** TODO [#B] notifications!
+** TODO [#B] transcribe BYOB blocks library listing
+** TODO [#B] click again on header to close menu.
+** TODO [#B] *scratch* buffer would be a funny joke
 ** TODO [#B] hilbert curve turtle example 
 ** TODO [#B] editing of numbers/data entry values in-place
 ** TODO [#B] Revise widgets.lisp for OpenGL

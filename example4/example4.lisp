@@ -27,12 +27,12 @@
 
 (setf *screen-width* 640)
 (setf *screen-height* 480)
-(setf *window-title* "turtle example")
+(setf *window-title* "turtle graphics")
 (enable-key-repeat 9 3)
 
 (defparameter *font* "sans-bold-12")
 
-;;; Turtle
+;;; Defining a turtle
 
 (defresource (:name "turtle" :type :image :file "turtle.png"))
 
@@ -61,9 +61,15 @@
 (define-method turn-right turtle (&optional (degrees 90.0))
   (decf %heading (radian-angle degrees)))
 
-(define-method forward turtle (distance)
-  (with-fields (x y heading) self
-    (incf x (* distance (cos heading)))
-    (incf y (* distance (sin heading)))))
+(define-method forward turtle (&optional (distance 40))
+  (with-fields (x y heading pen-down color) self
+    (let ((x0 x)
+	  (y0 y))
+      (incf x (* distance (cos heading)))
+      (incf y (* distance (sin heading)))
+      (when pen-down
+	(draw-line x0 y0 x y :color color)))))
+
+
 
 ;;; example4.lisp ends here
