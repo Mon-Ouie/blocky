@@ -12,7 +12,7 @@
   :maintainer "David T O'Toole <dto1138@gmail.com>"
   :author "David T O'Toole <dto1138@gmail.com>"
   :license "General Public License (GPL) Version 3"
-  :description "IOFORMS is a visual game creation tool."
+  :description "IOFORMS is a visual programming language for Common Lisp."
   :serial t
   :depends-on (:lispbuilder-sdl 
 	       :lispbuilder-sdl-image 
