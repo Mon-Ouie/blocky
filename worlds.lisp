@@ -1011,7 +1011,7 @@ represents the z-axis of a euclidean 3-D space."))
     (when world
       (handle-event world event))))
 
-(define-method create universe (&key address player world)
+(define-method initialize universe (&key address player world)
   "Prepare a universe for play at the world identified by ADDRESS with
 PLAYER as the player."
   (setf *universe* self)

@@ -1,6 +1,6 @@
 ** TODO Extended argument lists as in Genera
-** TODO change field-descriptors to use a database for saving lambda list/docs (not slots)
-** TODO [#A] one block type should be able to send any message, constructing UI via method metadata.
+** TODO Simple data entry blocks based on prompt (add capability to base?)
+** TODO Generic block type should be able to send any message, with typed arg block widgets for entering the values
 ** TODO [#A] global listener at bottom, M-x to bring up/focus
 ** TODO [#A] turtle graphics quickie examples
 ** TODO [#B] reasonable emacs configuration for ioforms dev (imenu etc)

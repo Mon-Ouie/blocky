@@ -90,7 +90,11 @@ other destructuring features:
 
 ARG is the argument name (a symbol). DATA-TYPE is a keyword.  See the
 documentation for `entry-option' for more information on the OPTIONS
-field."
+field.
+
+NOTE: &key and &optional are not yet implemented for extended
+arglists.
+"
   (and (not (null lambda-list))
        (listp (first lambda-list))
        (not (null (first lambda-list)))))
