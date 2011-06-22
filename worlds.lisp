@@ -20,13 +20,6 @@
 
 (in-package :ioforms)
 
-
-(defvar *world* nil
-"The current world object. Only one may be active at a time. See also
-worlds.lisp. Sprites and cells are free to send messages to `*world*'
-at any time, because `*world*' is always bound to the world containing
-the object when the method is run.")
-
 (defparameter *default-grid-size* 16)
 
 (defblock world
@@ -1018,7 +1011,7 @@ represents the z-axis of a euclidean 3-D space."))
     (when world
       (handle-event world event))))
 
-(define-method start universe (&key address player world)
+(define-method create universe (&key address player world)
   "Prepare a universe for play at the world identified by ADDRESS with
 PLAYER as the player."
   (setf *universe* self)

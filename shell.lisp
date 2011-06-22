@@ -63,9 +63,9 @@
   (setf %script (find-object script))
   (assert %script)
   (setf %menubar (new menubar (make-menu (symbol-value '*system-menu*))))
-  (add %script %menubar)
+  (add-block %script %menubar)
   (setf %terminal (new terminal))
-  (add %script %terminal)
+  (add-block %script %terminal)
   (register-uuid self))
 
 (define-method script-blocks shell ()
@@ -74,8 +74,8 @@
 (define-method open-script shell (script) 
   (setf %script script))
   
-(define-method add shell (new-block &optional x y)
-  (add %script new-block x y))
+(define-method add-block shell (new-block &optional x y)
+  (add-block %script new-block x y))
 
 (define-method select shell (block &optional only)
   (with-fields (selection) self
@@ -218,7 +218,7 @@
 	  (3 (let ((menu (context-menu block)))
 	       (when menu 
 		 (with-script %script
-		   (add *script* menu x y))))))
+		   (add-block *script* menu x y))))))
 	(setf %focused-block nil))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
@@ -253,12 +253,12 @@
 	  ;; where are we dropping?
 	  (if (null hover)
 	      ;; dropping on background
-	      (add self drag)
+	      (add-block self drag)
 	      ;; dropping on another block
 	      (when (not (accept hover drag))
 		;; hovered block did not accept drag. 
 		;; just drop the block
-		(add self drag)))
+		(add-block self drag)))
 	  ;; select the dropped block
 	  (select self drag))
 	;; ok, we're not dragging.

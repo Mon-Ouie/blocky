@@ -77,9 +77,9 @@
 ;; a new player inside it.
 
 (defun example1 ()
-  (start (new universe)
-	 :world (new hello)
-	 :player (new blocky)))
+  (create (new universe)
+	  :world (new hello)
+	  :player (new blocky)))
 
 ;; Check out the other included example projects for more fun.
 

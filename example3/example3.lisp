@@ -67,6 +67,6 @@
 
 (defun example3 ()
   (new system)
-  (add-block (new shell (new script))))
+  (start (new shell (new script))))
 
 ;;; example3.lisp ends here

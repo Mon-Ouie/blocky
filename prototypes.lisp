@@ -150,19 +150,18 @@ field."
 (defun make-lambda-list-entry (entry)
   "Make an ordinary lambda list item corresponding to ENTRY, an
 element of an extended argument list."
-  (assert (not (null entry)))
-  (etypecase entry
-    (symbol entry) ;; pass through &optional and &key etc
-    (list (let ((name (entry-name entry)) 
-		(default (entry-option entry :default)))
-	    (if (null default)
-		name
-		(list name default))))))
+  (assert (and (not (null entry))
+	       (listp entry)))
+  (let ((name (entry-name entry)) 
+	(default (entry-option entry :default)))
+    (if (null default)
+	name
+	(list name default))))
 
 (defun make-lambda-list (arglist)
   "Return an ordinary function lambda list corresponding to the
 extended argument list ARGLIST."
-  (mapcar #'make-lambda-list-entry arglist))
+  (cons '&optional (mapcar #'make-lambda-list-entry arglist)))
 
 ;;; Method dictionary 
 

@@ -52,16 +52,19 @@
 (define-method pen-up turtle ()
   (setf %pen-down nil))
 
-(define-method set-color turtle (&optional (color "black"))
+(define-method set-color turtle ((color string :default "black" 
+					       :display-name "Pen color"
+					       :documentation "test"))
   (setf %color color))
 
-(define-method turn-left turtle (&optional (degrees 90.0))
+(define-method turn-left turtle ((degrees number :default 90.0))
   (incf %heading (radian-angle degrees)))
 
-(define-method turn-right turtle (&optional (degrees 90.0))
+(define-method turn-right turtle ((degrees number :default 90.0))
   (decf %heading (radian-angle degrees)))
 
-(define-method forward turtle (&optional (distance 40))
+(define-method go-forward turtle ((distance number :default 40 
+						:display-name "Distance to travel"))
   (with-fields (x y heading pen-down color) self
     (let ((x0 x)
 	  (y0 y))
@@ -70,6 +73,10 @@
       (when pen-down
 	(draw-line x0 y0 x y :color color)))))
 
-
+(defun example4 ()
+  (new system)
+  (let ((script (new script)))
+    (add-block script (new turtle) (/ 2 *screen-width*) (/ 2 *screen-height*))
+    (start (new shell script))))
 
 ;;; example4.lisp ends here

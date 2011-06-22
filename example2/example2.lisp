@@ -108,11 +108,11 @@
 (defresource (:name "rappy" :type :music :file "rappy.ogg"))
 
 (defun example2 ()
-  (start (new universe)
-	:world (new dream)
-	:player (new blocky))
-  (add-sprite *world* (new blue-dot))
-  (play-music "rappy")) 
-	
-      
+  (let ((dream (new dream)))
+    (create (new universe)
+	    :world dream
+	    :player (new blocky))
+    (add-sprite dream (new blue-dot))
+    (play-music "rappy")))
+	      
 ;;; example2.lisp ends here

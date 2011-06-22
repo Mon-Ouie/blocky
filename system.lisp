@@ -110,7 +110,7 @@
   (setf *system* self))
 
 (define-method create-prompt system ()
-  (add *script* (new listener) 100 100))
+  (add-block *script* (new listener) 100 100))
 
 (define-method create-project system ())
 

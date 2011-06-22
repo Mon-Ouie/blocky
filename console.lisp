@@ -49,6 +49,12 @@
       (progn ,@body)
     (continue () :report "Continue"  )))
 
+(defvar *world* nil
+"The current world object. Only one may be active at a time. See also
+worlds.lisp. Sprites and cells are free to send messages to `*world*'
+at any time, because `*world*' is always bound to the world containing
+the object when the method is run.")
+
 ;;; Frame rate 
 
 (defvar *frame-rate* 30 "The intended frame rate of the game.")
@@ -218,11 +224,11 @@ IOFORMS may override the current block set at any time for system menus
 and the like."
   (setf *blocks* blocks))
 
-(defun add-block (block)
+(defun start (block)
   (unless (find block *blocks* :test 'eq :key #'find-object)
     (setf *blocks* (adjoin block *blocks*))))
 
-(defun remove-block (block)
+(defun stop (block)
   (setf *blocks* (delete block *blocks* :test #'eq :key #'find-object)))
 
 ;;; "Classic" key repeat

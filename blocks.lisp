@@ -1080,7 +1080,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (set-parent block self)
     (setf inputs (nconc inputs (list block)))))
 
-(define-method add script (block &optional x y)
+(define-method add-block script (block &optional x y)
   (with-fields (inputs) self
     (assert (not (contains self block)))
     (append-input self block)

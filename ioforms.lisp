@@ -35,7 +35,7 @@
   (:use :common-lisp) 
   (:export *default-frame-width* *default-frame-height* null-block
 	   *frequency* *output-chunksize* *output-channels*
-	   halt-sample *dt* defproject run start *update-function*
+	   halt-sample *dt* defproject run start stop *update-function*
 	   *default-world-axis-size* defsprite *target* *blocks*
 	   *script* *default-world-z-size* install-blocks
 	   seconds->frames keyboard-held-p keyboard-pressed-p
@@ -144,7 +144,7 @@
 	   set-sample-callback set-music-callback cffi-chunk-buffer
 	   convert-cffi-sample get-sample-buffer
 	   register-sample-generator register-voice unregister-voice
-	   register-voice-mixer mix-voices
+	   register-voice-mixer mix-voices st
 	   convert-cffi-sample-to-internal *block* *script*
 	   convert-internal-sample-to-cffi get-ticks block-variable
 	   with-block-variables set-block-variable with-blocks

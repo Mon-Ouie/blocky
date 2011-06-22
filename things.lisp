@@ -106,7 +106,7 @@ interpretation:
   "Define a cell named NAME, with the fields ARGS as in a normal
 prototype declaration. This is a convenience macro for defining new
 cells."
-  `(define-prototype ,name (:parent =cell=)
+  `(define-prototype ,name (:parent "IOFORMS:CELL")
      ,@args))
 
 ;;; Cell death
@@ -175,7 +175,7 @@ cells."
 ;; Convenience macro for defining sprites
 
 (defmacro defsprite (name &body args)
-  `(define-prototype ,name (:parent =sprite=)
+  `(define-prototype ,name (:parent "IOFORMS:SPRITE")
      ,@args))
 
 (defun is-sprite (ob)
@@ -217,7 +217,7 @@ cells."
 
 (define-method create-reference sprite ()
   (with-fields (x y) self
-      (add *script* (new sprite-id self) x y)))
+      (add-block *script* (new sprite-id self) x y)))
 
 (define-method context-menu sprite ()
   (let ((label (format nil "Sprite menu for ~A" 
