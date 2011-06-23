@@ -16,7 +16,7 @@
 ;; do not define "bar"
 (define-method foo bbb ()
   (append (list :foo :bbb)
-	  (next/foo self)))
+	  (next%foo self)))
 (define-method quux bbb ()
   (list :quux :bbb))
 
@@ -25,7 +25,7 @@
 ;; do not define "foo"
 (define-method bar ccc ()
   (append (list :bar :ccc)
-	  (next/bar self)))
+	  (next%bar self)))
 (define-method quux ccc ()
   (list :quux :ccc))
 

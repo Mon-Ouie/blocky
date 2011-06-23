@@ -88,9 +88,10 @@ other destructuring features:
  ((POSITIONAL-ARG1 TYPE OPTIONS) (POSITIONAL-ARG2 TYPE OPTIONS)
   &KEY (KEYWORD-ARG1 TYPE OPTIONS) (KEYWORD-ARG2 TYPE OPTIONS))
 
-ARG is the argument name (a symbol). DATA-TYPE is a keyword.  See the
-documentation for `entry-option' for more information on the OPTIONS
-field.
+ARG is the argument name (a symbol). DATA-TYPE is a Common Lisp
+identifier such as `integer' or `(or integer symbol)' or the like.
+See the documentation for the function `entry-option' for more
+information on the OPTIONS field.
 
 NOTE: &key and &optional are not yet implemented for extended
 arglists.
@@ -99,18 +100,18 @@ arglists.
        (listp (first lambda-list))
        (not (null (first lambda-list)))))
 
-(defun entry-name (entry)
-  (first entry))
+(defun schema-name (schema)
+  (first schema))
 
-(defun entry-type (entry)
-  (second entry))
+(defun schema-type (schema)
+  (second schema))
 
-(defun entry-options (entry)
-  (nthcdr 2 entry))
+(defun schema-options (schema)
+  (nthcdr 2 schema))
 
-(defun entry-option (entry option)
+(defun schema-option (schema option)
   "Find the value (if any) of the option named OPTION within the
-  extended argument list entry ENTRY. The following keywords are
+  extended argument list schema SCHEMA. The following keywords are
   valid for OPTION:
 
   :DEFAULT   The default value for the argument. With no default,
@@ -149,15 +150,15 @@ arglists.
                      prompt. Default is t.
   :CONFIRM ..."
   (assert (keywordp option))
-  (getf (entry-options entry) option))
+  (getf (schema-options schema) option))
 
 (defun make-lambda-list-entry (entry)
-  "Make an ordinary lambda list item corresponding to ENTRY, an
+  "Make an ordinary lambda list item corresponding to , an
 element of an extended argument list."
   (assert (and (not (null entry))
 	       (listp entry)))
-  (let ((name (entry-name entry)) 
-	(default (entry-option entry :default)))
+  (let ((name (schema-name entry)) 
+	(default (schema-option entry :default)))
     (if (null default)
 	name
 	(list name default))))
@@ -186,6 +187,7 @@ extended argument list ARGLIST."
   (when (null *methods*)
     (initialize-methods))
   (let ((id (make-method-id prototype method)))
+    (assert (stringp id))
     (setf (gethash id *methods*) arglist)
     (values id arglist)))
 	  	  
@@ -196,6 +198,31 @@ extended argument list ARGLIST."
 	(unless noerror
 	  (error "Cannot find method ID: ~S" id)))))
       
+(defun method-schema (prototype method)
+  (assert (hash-table-p *methods*))
+  (let ((id (make-method-id prototype method)))
+    (assert (stringp id))
+    (let ((schema (gethash id *methods*)))
+      (prog1 schema (assert (listp schema))))))
+
+(defun method-argument-entry (prototype method index)
+  (assert (integerp index))
+  (let ((schema (method-schema prototype method)))
+    (assert (< index (length schema)))
+    (nth index schema)))
+    
+(defun method-argument-count (prototype method)
+  (length (method-schema prototype method)))
+
+(defun method-argument-type (prototype method index)
+  (schema-type (method-argument-entry prototype method index)))
+
+(defun method-argument-name (prototype method index)
+  (schema-name (method-argument-entry prototype method index)))
+
+(defun method-argument-options (prototype method index)
+  (schema-options (method-argument-entry prototype method index)))
+
 ;;; Prototype dictionary
 
 (defvar *prototypes* nil)
@@ -824,20 +851,11 @@ was invoked."
 					    (symbol-name prototype-name) 
 					    "/"
 					    method-symbol-name)))
-	 (slash-defun-symbol (intern (concatenate 'string
-						  "/"
-						  method-symbol-name)))
 	 (queue-defun-symbol (intern (concatenate 'string
-						  "/QUEUE/"
+						  "QUEUE%"
 						  method-symbol-name)))
-	 (parent-defun-symbol (intern (concatenate 'string
-						  "/NEXT/"
-						  method-symbol-name)))
-	 (queue-defun-symbol-noslash (intern (concatenate 'string
-						  "QUEUE/"
-						  method-symbol-name)))
-	 (parent-defun-symbol-noslash (intern (concatenate 'string
-						  "NEXT/"
+	 (next-defun-symbol (intern (concatenate 'string
+						  "NEXT%"
 						  method-symbol-name)))
 	 (method-lambda-list (if (is-extended-arglist arglist)
 				 (make-lambda-list arglist)
@@ -870,29 +888,16 @@ was invoked."
 	       ,@(when documentation (list documentation))
 	       (apply #'send ,name self args))
 	     (export ',method-symbol)
-	     ;; for (/foo bar baz...)
-	     (defun ,slash-defun-symbol (self &rest args)
-	       ,@(when documentation (list documentation))
-	       (apply #'send ,name self args))
-	     (export ',slash-defun-symbol)
 	     ;; and for message queueing
 	     (defun ,queue-defun-symbol (self &rest args)
 	       ,@(when documentation (list documentation))
 	       (apply #'send-queue ,name self args))
 	     (export ',queue-defun-symbol)
-	     (defun ,queue-defun-symbol-noslash (self &rest args)
-	       ,@(when documentation (list documentation))
-	       (apply #'send-queue ,name self args))
-	     (export ',queue-defun-symbol-noslash)
 	     ;; and for next-method calls.
-	     (defun ,parent-defun-symbol (self &rest args)
+	     (defun ,next-defun-symbol (self &rest args)
 	       ,@(when documentation (list documentation))
 	       (apply #'send-next ,name self args))
-	     (export ',parent-defun-symbol)
-	     (defun ,parent-defun-symbol-noslash (self &rest args)
-	       ,@(if documentation (list documentation))
-	       (apply #'send-next ,name self args))
-	     (export ',parent-defun-symbol-noslash)))))))
+	     (export ',next-defun-symbol)))))))
 
 ;;; Defining prototypes
 
@@ -1170,16 +1175,10 @@ objects after reconstruction, wherever present."
     ;; passthru
     (t data)))
 
-(defun /next/initialize (object &rest args)
+(defun next%initialize (object &rest args)
   (apply #'send-next :initialize object args))
 
-(defun next/initialize (object &rest args)
-  (apply #'send-next :initialize object args))
-
-(defun /queue/initialize (object &rest args)
-  (apply #'send-queue :initialize object args))
-
-(defun queue/initialize (object &rest args)
+(defun queue%initialize (object &rest args)
   (apply #'send-queue :initialize object args))
 
 ;;; Printing objects

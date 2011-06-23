@@ -191,7 +191,7 @@ cells."
       (setf height (image-height image)))))
 
 ;; (define-method initialize sprite ()
-;;   (next/initialize self))
+;;   (next%initialize self))
  
 (define-method draw sprite ()
   (set-blending-mode %blend)

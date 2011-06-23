@@ -31,7 +31,7 @@
 (define-method initialize menu 
     (&key action target top-level inputs 
 	  schema expanded (label "blank menu item..."))
-  (next/initialize self)
+  (next%initialize self)
   (setf %action action
 	%expanded expanded
 	%target target
@@ -211,7 +211,7 @@
 (defblock menubar :category :menu :temporary t)
 
 (define-method initialize menubar (&optional menus)
-  (apply #'next/initialize self 
+  (apply #'next%initialize self 
 	 (mapcar #'find-object menus))
   (with-fields (inputs) self
     (dolist (each inputs)

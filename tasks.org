@@ -1,11 +1,18 @@
-** TODO Extended argument lists as in Genera
-** TODO Simple data entry blocks based on prompt (add capability to base?)
-** TODO Generic block type should be able to send any message, with typed arg block widgets for entering the values
-** TODO [#A] global listener at bottom, M-x to bring up/focus
-** TODO [#A] turtle graphics quickie examples
-** TODO [#B] reasonable emacs configuration for ioforms dev (imenu etc)
-** TODO [#A] DEMO VIDEO some working menu items with "send" block
-** TODO [#A] Fix menu behavior: properly check other menu widgets in menubar hit before menu
+** TODO Fix wrong package name:  0: (IOFORMS::FIND-PROTOTYPE "IOFORMS:TURTLE" NIL) 1: (IOFORMS:MAKE-BLOCK (TURTLE))
+  2: (IOFORMS:BLOCK-PROMPT/DO-SEXP ..)
+  3: (IOFORMS:PROMPT/ENTER ..)
+
+** TODO Simple data entry block based on prompt. Can be configured for any type.
+*** TODO draw-focused method should paint the cursor blink , so it only blinks in active box
+*** TODO execute should do nothing by default; fix make-block to not use %operation
+*** TODO test input boxes
+*** TODO test input computation and make sure %results has enough room
+*** TODO Generic block type should be able to send any message, with typed arg block wid
+gets for entering the values
+** TODO Fix menus not closing
+** TODO Turtle graphics video demo
+** TODO [#B] comment block for output messages in listener etc, trap errors
+** TODO [#B] Fix menu behavior: properly check other menu widgets in menubar hit before menu
 ** TODO [#A] fix argument blocks not being created (AGAIN)
 ** TODO [#A] fix context menus not using correct target
 ** TODO [#A] get math and basic blocks working
@@ -13,11 +20,14 @@
 ** TODO [#A] fix can't select sublist 
 ** TODO [#A] fix not being able to pull out sublists
    CLOSED: [2011-06-17 Fri 23:38]
+** TODO [#B] list-scroll-decorator
+** TODO [#B] improve appearance of menus and terminal
+** TODO [#B] reasonable emacs configuration for ioforms dev (imenu etc)
+** TODO [#C] general svg image support
 ** TODO [#A] make a sprite reference (i.e. uuid)
 ** TODO [#A] implement "send" block using reference 
 ** TODO [#A] Create DEFBLOCK block
 ** TODO [#A] bring menubar and its menus to front when opening menu
-** TODO [#A] comment block for output messages in listener etc, trap errors
 ** TODO [#B] minibuffer messages
 ** TODO [#B] send unfocused input to terminal
 ** TODO [#B] escape key hide/show terminals/menus

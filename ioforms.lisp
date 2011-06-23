@@ -99,8 +99,8 @@
 	   export-project make-queue queue unqueue queue-message
 	   queued-messages-p unqueue-message send-queue field-value
 	   random-direction random-choose *resources*
-	   load-font-resource save-object-resource /next/initialize
-	   next/initialize /queue/initialize queue/initialize
+	   load-font-resource save-object-resource next%initialize
+	   next%initialize /queue/initialize queue/initialize
 	   draw-string-solid read-iof initialize-resource-table
 	   percent-of-time render-formatted-paragraph
 	   make-formatted-string draw-string-shaded set-blending-mode

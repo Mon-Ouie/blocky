@@ -25,6 +25,7 @@
 (defparameter *prompt-blink-time* 20)
 (defparameter *prompt-cursor-color* "magenta")
 (defparameter *prompt-cursor-blink-color* "red")
+(defparameter *cursor-inactive-color* "gray50")
 
 (defparameter *direct-prompt-string* "> ")
 (defparameter *forward-prompt-string* "Press CONTROL-X to enter the prompt.")
@@ -33,10 +34,6 @@
 
 (defparameter *default-prompt-history-size* 100)
 (defparameter *default-cursor-width* 6)
-
-(defvar *lowercase-alpha-characters* "abcdefghijklmnopqrstuvwxyz")
-(defvar *uppercase-alpha-characters* "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-(defvar *numeric-characters* "0123456789")
 
 (define-prototype prompt
     (:parent "IOFORMS:BLOCK" :documentation 
@@ -97,6 +94,7 @@ The modes can be toggled with CONTROL-X.
   (receiver :documentation "The object to send command messages to when in :forward mode.")
   (point :initform 0 :documentation "Integer index of cursor within prompt line.")
   (line :initform "" :documentation "Currently edited command line.")
+  (background :initform t)
   (category :initform :data)
   (history :initform (make-queue :max *default-prompt-history-size*)
 	   :documentation "A queue of strings containing the command history.")
@@ -133,31 +131,6 @@ The modes can be toggled with CONTROL-X.
   (bind-event-to-function self key mods 
 			  #'(lambda ()
 			      (insert self text))))
-
-(define-method install-keybindings prompt ()
-  ;; install varying keybindings
-  (with-fields (keybindings) self
-    (setf keybindings (make-hash-table :test 'equal))
-    (dolist (binding (ecase *user-keyboard-layout*
-    		       (:qwerty *prompt-qwerty-keybindings*)
-    		       (:sweden *prompt-sweden-keybindings*)))
-      (destructuring-bind (key mods result) binding
-	(etypecase result
-	  (keyword (bind-event-to-method self key mods result))
-	  (string (bind-event-to-prompt-insertion self key mods result)))))
-    ;; install keybindings for self-inserting characters
-    (map nil #'(lambda (char)
-  		 (bind-event-to-prompt-insertion self (string char) nil
-  					       (string-downcase char)))
-  	 *lowercase-alpha-characters*)
-    (map nil #'(lambda (char)
-  		 (bind-event-to-prompt-insertion 
-		  self (string char) '(:shift) (string char)))
-  	 *uppercase-alpha-characters*)
-    (map nil #'(lambda (char)
-  		 (bind-event-to-prompt-insertion self (string char) 
-						 nil (string char)))
-  	 *numeric-characters*)))
 
 (defparameter *prompt-qwerty-keybindings*
   '(("A" (:control) :move-beginning-of-line)
@@ -230,11 +203,36 @@ The modes can be toggled with CONTROL-X.
     ("QUOTE" NIL "'") 
     ("2" (:SHIFT) "\"")))
 
+(define-method install-keybindings prompt ()
+  ;; install keys that will vary by locale
+  (with-fields (keybindings) self
+    (setf keybindings (make-hash-table :test 'equal))
+    (dolist (binding (ecase *user-keyboard-layout*
+    		       (:qwerty *prompt-qwerty-keybindings*)
+    		       (:sweden *prompt-sweden-keybindings*)))
+      (destructuring-bind (key mods result) binding
+	(etypecase result
+	  (keyword (bind-event-to-method self key mods result))
+	  (string (bind-event-to-prompt-insertion self key mods result)))))
+    ;; install keybindings for self-inserting characters
+    (map nil #'(lambda (char)
+  		 (bind-event-to-prompt-insertion self (string char) nil
+  					       (string-downcase char)))
+  	 *lowercase-alpha-characters*)
+    (map nil #'(lambda (char)
+  		 (bind-event-to-prompt-insertion 
+		  self (string char) '(:shift) (string char)))
+  	 *uppercase-alpha-characters*)
+    (map nil #'(lambda (char)
+  		 (bind-event-to-prompt-insertion self (string char) 
+						 nil (string char)))
+  	 *numeric-characters*)))
+
 (define-method say prompt (&rest args)
   (apply #'message args))
 
 (define-method initialize prompt ()
-  (next/initialize self)
+  (next%initialize self)
   (install-keybindings self))
 
 (define-method forward-char prompt ()
@@ -339,34 +337,15 @@ The modes can be toggled with CONTROL-X.
 (define-method move-beginning-of-line prompt ()
   (setf %point 0))
 
-(define-method update prompt ()
-  ;; keep the cursor blinking
-  (with-fields (clock) self
-    (decf clock)
-    (when (> (- 0 *prompt-blink-time*) clock)
-      (setf clock *prompt-blink-time*))))
-    
-(define-method draw prompt ()
-  (with-fields (x y width height clock mode point parent line) self
-;    (draw-background self)
-    (let* ((font-height (font-height *block-font*))
-	   (strings-y *default-prompt-margin*)
-	   (prompt-string (ecase mode
-			    (:direct *direct-prompt-string*)
-			    (:forward *forward-prompt-string*))))
-    ;; draw cursor
-    (when (eq :direct mode)
-      (let ((color (if (minusp clock)
-		       *prompt-cursor-color*
-		       *prompt-cursor-blink-color*)))
-	(when (> point (length line))
-	  (setf point (1- (length line))))
-	(draw-box (+ x (font-text-extents (if (<= point (length line))
-					    (subseq line 0 point)
-					    " ")
-					*block-font*)
-		     (font-text-extents prompt-string *block-font*))
-		  (+ y strings-y)
+(define-method draw-cursor prompt (&optional (color "magenta"))
+  (with-fields (x y width height clock mode point parent background
+		  line) self
+    (draw-box (+ x (font-text-extents (if (<= point (length line))
+					  (subseq line 0 point)
+					  " ")
+				      *block-font*)
+		 (font-text-extents *direct-prompt-string* *block-font*))
+	      (+ y *default-prompt-margin*)
 		  (font-text-extents 
 		   (string (if (< point (length line))
 			       (aref line 
@@ -375,25 +354,50 @@ The modes can be toggled with CONTROL-X.
 					  point))
 			       #\Space))
 		   *block-font*)
-		  font-height
-		  :color color))
+		  (font-height *block-font*)
+		  :color color)))
+
+(define-method draw-focus prompt () 
+  ;; keep the cursor blinking
+  (with-fields (clock) self
+    (decf clock)
+    (when (> (- 0 *prompt-blink-time*) clock)
+      (setf clock *prompt-blink-time*)))
+  (draw-cursor self ))
+
+(define-method draw prompt ()
+  (with-fields (x y width height clock mode point parent background
+		  line) self
+    ;; possibly draw a background
+    (cond ((stringp background)
+	   (draw-background self background))
+	  ((eq t background)
+	   (draw-background self)))
+    (let* ((font-height (font-height *block-font*))
+	   (strings-y *default-prompt-margin*)
+	   (prompt-string (ecase mode
+			    (:direct *direct-prompt-string*)
+			    (:forward *forward-prompt-string*))))
+      ;; draw cursor (may be overdrawn with blink when selected
+      ;; (when (> point (length line))
+      ;;   (setf point (1- (length line))))
+      (draw-cursor self *cursor-inactive-color*)
       ;; draw prompt string
       (draw-string prompt-string
 		   (+ x *default-prompt-margin*)
 		   (+ y strings-y)
 		   :color %text-color
-		   :font *block-font*))
-    (update-layout-maybe self)
-    ;; draw current command line text
-    (when (null line) (setf line ""))
-    (unless (zerop (length line))
-      (draw-string line
-		   (+ x
-		      (font-text-extents prompt-string *block-font*))
-		   (+ y strings-y)
-		   :color "white"
-		   :font *block-font*)))))
-
+		   :font *block-font*)
+      (update-layout-maybe self)
+      ;; draw current command line text
+      (when (null line) (setf line ""))
+      (unless (zerop (length line))
+	(draw-string line
+		     (+ x
+			(font-text-extents prompt-string *block-font*))
+		     (+ y strings-y)
+		     :color "white"
+		     :font *block-font*)))))
 
 (define-method layout prompt ())
 
@@ -407,14 +411,75 @@ The modes can be toggled with CONTROL-X.
 	    :height 
 	    (+ (* 2 *default-prompt-margin*) (font-height *block-font*)))))
 
-;;; Lisp listener
+;;; Value entry blocks for common types
+
+(define-prototype entry (:parent "IOFORMS:PROMPT")
+  (category :initform :value)
+  (type-specifier :initform nil)
+  (value :initform nil))
+
+(define-method execute entry ()
+  %value)
+
+(define-method set-value entry (value)
+  (setf %value value))
+
+(define-method get-value entry ()
+  %value)
+
+(define-method execute entry ()
+  %value)
+
+(define-method draw entry ()
+  (with-block-drawing
+    (with-fields (x y value parent) self
+;      (when (null parent) (draw-background self))
+      (draw-background self)
+      (draw-contents self))))
+
+(define-method do-sexp entry (sexp)
+  (assert (and (listp sexp) (= 1 (length sexp))))
+  ;; validate sexp with #'typep
+  (let ((datum (first sexp)))
+    (if (typep datum %type-specifier)
+	(setf %value datum)
+	(message "Warning: value entered does not match %TYPE-SPECIFIER."))))
+	    
+(define-method draw-contents entry ()
+  (with-block-drawing
+    (with-fields (value x y) self
+      (text (+ x (* 2 *dash*))
+	    (+ y *dash* 1)
+	    (print-expression value)))))
+
+(define-method layout entry ()
+  (with-fields (height width value) self
+    (setf height (+ (* 2 *dash*) (font-height *block-font*)))
+    (setf width (+ (* 4 *dash*) (expression-width value)))))
+
+(defmacro defentry (name type-specifier value)
+  `(define-prototype ,name (:parent "IOFORMS:ENTRY")
+     (type-specifier :initform ',type-specifier)
+     (value :initform ,value)))
+
+(defentry integer integer 0)
+(defentry string string "")
+(defentry number number 0)
+(defentry float float 0.0)
+(defentry symbol symbol nil)
+(defentry positive-integer (integer 1 *) 1)
+(defentry non-negative-integer (integer 0 *) 0)
+(defentry sexp t nil)
+
+;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
 
 (define-prototype block-prompt (:parent prompt)
   (operation :initform :prompt)
+  (background :initform nil)
   output)
 
 (define-method initialize block-prompt (output)
-  (next/initialize self)
+  (next%initialize self)
   (setf %output output))
 
 (define-method set-output block-prompt (output)
@@ -441,7 +506,7 @@ The modes can be toggled with CONTROL-X.
 (define-method initialize listener ()
   (with-fields (image inputs) self
     (let ((prompt (new block-prompt self)))
-      (next/initialize self)
+      (next%initialize self)
       (set-output prompt prompt)
       (setf inputs (list prompt))
       (set-parent prompt self)
@@ -465,7 +530,7 @@ The modes can be toggled with CONTROL-X.
   (with-fields (x y height width parent inputs) self
     (setf x (field-value :x parent))
     (setf width (field-value :width parent))
-    ;; start near bottom of 
+    ;; start near bottom of screen
     (let ((y0 (- (field-value :height parent) (dash 1))))
 	(setf height (font-height *block-font*))
 	(dolist (element inputs)
@@ -500,7 +565,6 @@ The modes can be toggled with CONTROL-X.
   (with-fields (inputs x y height width) self
     (draw-box x y width height :color (find-color self))
     (draw-line 0 y *screen-width* y :color (find-color self :shadow))
-    (draw-background self)
     (if (null inputs)
 	(draw-label-string self *null-display-string*)
 	(dolist (each inputs)

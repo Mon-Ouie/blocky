@@ -325,6 +325,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	       (let ((prototype 		       
 		      (find-prototype 
 		       (make-prototype-id operation 
+					  ;; wait, is this wrong? wrong prototype?
 					  (or (make-block-package)
 					      (find-package "IOFORMS")))))
 		     (arg-blocks (mapcar #'make-block arguments)))
@@ -449,34 +450,40 @@ inputs all the time."
 	      (run (nth n inputs)))))))
 
 (define-method execute block ()
-  "Carry out the block's action by sending messages to the object `*target*'.
-The *target* is a special variable bound in the execution
-environment. Its value will be the IOFORMS object to send messages to.
-The %RESULTS field will be a list of results obtained by
-executing/evaluating the blocks in %INPUTS (but this behavior can be
-overridden; see also `BLOCK/EXECUTE-INPUTS' and `BLOCK/RUN'). The
-default behavior of `EXECUTE' is to send the %OPERATION field's value
-as a message to the target, with the inputs to the target's method
-being the current computed %RESULTS, and return the result of the
-method call. This default action is sufficient for many blocks whose
-main purpose is to send a single message; other blocks can redefine
-this `EXECUTE' method to do something else. See also `defblock' and
-`send'."
-  (with-fields (operation results) self
-    (labels ((clean (item)
-	       (if (symbolp item)
-		   (make-keyword item)
-		   item)))
-      (when *target*
-	(apply #'ioforms:send nil operation *target*
-	       (mapcar #'clean results))))))
+  "Carry out whatever action this block implements. The %RESULTS field
+will be a list of results obtained by executing/evaluating the
+corresponding blocks in %INPUTS (but this behavior can be overridden;
+see also `BLOCK/EXECUTE-INPUTS' and `BLOCK/RUN').  The default is to
+do nothing."
+  nil)
 
 (define-method run block ()
   "Run input blocks to produce results, then run this block with
 those results as input. If you need argument blocks unevaluated, 
-override this RUN method to evaluate just the ones you want."
+override this RUN method and evaluate just the ones you want."
   (execute-inputs self)
   (execute self))
+
+;;; recompilation: compiling block diagrams into equivalent sexps
+
+(define-method recompile-body block ()
+  nil)
+
+(define-method recompile-inputs block ()
+  (mapc #'recompile %inputs))
+
+(define-method recompile block ()
+  (recompile-inputs self)
+  (recompile-body self))
+  
+  ;; (with-fields (operation results) self
+  ;;   (labels ((clean (item)
+  ;; 	       (if (symbolp item)
+  ;; 		   (make-keyword item)
+  ;; 		   item)))
+  ;;     (when *target*
+  ;; 	(apply #'ioforms:send nil operation *target*
+  ;; 	       (mapcar #'clean results))))))
 
 (define-method describe block ()
   "Show name and comprehensive help for this block."
@@ -503,7 +510,8 @@ current block. Used for taking a census."
      :string "IOFORMS:TEXTBOX"
      :symbol "IOFORMS:OPTION")
   "A property list mapping some input type keywords to corresponding
-widget prototypes used for editing that kind of value.")
+widget prototypes used for editing that kind of value. The actual
+prototypes mentioned are defined in terminal.lisp, which see.")
 
 (defparameter *background-color* "white"
   "The default background color of the IOFORMS user interface.")
@@ -824,6 +832,8 @@ override all colors."
 (defparameter *highlight-background-color* "gray80")
 (defparameter *highlight-foreground-color* "gray20")
 
+(define-method draw-focus block () nil)
+
 (define-method draw-highlight block () nil)
   ;; (with-fields (x y width height) self
   ;;   (draw-patch self x y (+ x *dash* width) (+ y *dash* height)
@@ -873,46 +883,6 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	   (cons (get-some-object-name B) fields)))
 	(list (mapcar #'print-block B))
 	(otherwise B)))))
-
-;;; Data entry blocks
-
-(defblock entry
-  (category :initform :data)
-  (data :initform nil))
-
-(define-method execute entry ()
-  %data)
-
-(define-method set-data entry (data)
-  (setf %data data))
-
-(define-method draw entry ()
-  (with-block-drawing
-    (with-fields (x y data parent) self
-      (when (null parent) (draw-background self))
-      (draw-contents self))))
-
-(define-method draw-contents entry ()
-  (with-block-drawing
-    (with-fields (data x y) self
-      (text (+ x (* 2 *dash*))
-	    (+ y *dash* 1)
-	    (print-expression data)))))
-
-(define-method layout entry ()
-  (with-fields (height width data) self
-    (setf height (+ (* 2 *dash*) (font-height *block-font*)))
-    (setf width (+ (* 4 *dash*) (expression-width data)))))
-
-(defmacro defentry (name data)
-  `(define-prototype ,name (:parent "IOFORMS:ENTRY")
-     (operation :initform ,(make-keyword name))
-     (data :initform ,data)))
-
-(defentry integer 0)
-(defentry string "")
-(defentry float 0.0)
-(defentry symbol nil)
 
 ;;; Vertically stacked list of blocks
 
@@ -1008,7 +978,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 
 (define-method initialize list (&rest blocks)
   (with-fields (inputs) self
-    (next/initialize self)
+    (next%initialize self)
     (setf inputs blocks)))
 
 ;;; Composing blocks into larger programs, recursively.

@@ -1,4 +1,4 @@
-;;; shell.lisp --- interactive ioforms visual programming shell
+;;; shell.lisp --- interactive visual programming shell
 
 ;; Copyright (C) 2011 David O'Toole
 
@@ -168,7 +168,8 @@
 		     (draw-hover hover)))
 	    (when focused-block
 	      (draw-border focused-block)
-	      (draw focused-block)))
+	      (draw focused-block)
+	      (draw-focus focused-block)))
 	(when highlight
 	  (draw-highlight highlight))))))
 
