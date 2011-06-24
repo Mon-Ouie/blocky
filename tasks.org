@@ -1,13 +1,15 @@
+*** TODO test input boxes
+*** TODO entry support before-label and after-label options/props
+*** TODO test input computation and make sure %results has enough room
+*** TODO auto define (%field object) functions? mappable
+*** TODO Generic block type should be able to send any message, with typed arg block wid
 ** TODO Fix wrong package name:  0: (IOFORMS::FIND-PROTOTYPE "IOFORMS:TURTLE" NIL) 1: (IOFORMS:MAKE-BLOCK (TURTLE))
   2: (IOFORMS:BLOCK-PROMPT/DO-SEXP ..)
   3: (IOFORMS:PROMPT/ENTER ..)
-
 ** TODO Simple data entry block based on prompt. Can be configured for any type.
 *** TODO draw-focused method should paint the cursor blink , so it only blinks in active box
+*** TODO cursor should negate underlying letter, not overpaint
 *** TODO execute should do nothing by default; fix make-block to not use %operation
-*** TODO test input boxes
-*** TODO test input computation and make sure %results has enough room
-*** TODO Generic block type should be able to send any message, with typed arg block wid
 gets for entering the values
 ** TODO Fix menus not closing
 ** TODO Turtle graphics video demo

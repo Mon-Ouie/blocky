@@ -62,6 +62,12 @@
 
 (in-package :ioforms)
 
+(defparameter *block-categories*
+  '(:system :motion :event :message :looks :sound :structure :data
+    :menu :hover :control :comment :sensing :operators :variables)
+  "List of keywords used to group blocks into different functionality
+areas.")
+
 (defvar *target* nil)
 
 (defmacro with-target (target &body body)
@@ -71,10 +77,7 @@
 (define-prototype block ()
   ;; general information
   (inputs :initform nil :documentation 
-"List of input blocks. If %SCHEMA is also present, its corresponding
-alist entries give the names and input types of the inputs here.")
-  (schema :initform nil :documentation 
-"Association list whose nth entry is the (:NAME . :TYPE) of the nth input.")
+"List of input (or `child') blocks.")
   (results :initform nil :documentation
 "Computed result values from the input blocks.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
@@ -200,24 +203,21 @@ If PARENT is nil, then the existing parent link is cleared."
 (define-method register-uuid block ()
   (add-object-to-database self))
 
+(define-method update-result-lists block ()
+  (let ((len (length %inputs)))
+    (setf %input-widths (make-list len :initial-element 0))
+    (setf %results (make-list len))))
+		   
 (define-method initialize block (&rest blocks)
   "Prepare an empty block, or if BLOCKS is non-empty, a block
 initialized with BLOCKS as inputs."
-  (with-fields (inputs schema results input-widths) self
-;    (message "BEFORE inputs:~S blocks:~S" (length inputs) (length blocks))
-    (let ((arity (if (plusp (length blocks))
-		     (length blocks)
-		     (length schema))))
-      (when (plusp arity)
-	(setf inputs (make-list arity))
-	(setf results (make-list arity))
-	(setf input-widths (make-list arity))
-	(when blocks
-	  (setf inputs blocks)
-	  (dolist (child blocks)
-	    (set-parent child self))))
-      (bind-any-default-events self)
-      (register-uuid self))))
+  (when blocks
+    (setf %inputs blocks)
+    (dolist (child blocks)
+      (set-parent child self)))
+  (update-result-lists self)
+  (bind-any-default-events self)
+  (register-uuid self))
 
 ;;; Defining keyboard/mouse/joystick events for blocks
 
@@ -278,15 +278,7 @@ the return value of the function (if any)."
 	(apply #'bind-event self entry)))))
 
 ;;; Creating blocks from S-expressions
-
-(defun data-entry-prototype (sexp)
-  (etypecase sexp
-    ;; see also `defentry' below.
-    (integer "IOFORMS:INTEGER")
-    (float "IOFORMS:FLOAT")
-    (string "IOFORMS:STRING")
-    (symbol "IOFORMS:SYMBOL")))
-  
+ 
 (defun is-action-spec (spec)
   (and (listp spec)
        (symbolp (first spec))))
@@ -301,11 +293,20 @@ the return value of the function (if any)."
        (= 1 (length spec))
        (null (first spec))))
 
+(defparameter *builtin-entry-types* 
+  '(integer float string symbol number))
+ 
 (defun data-block (datum)
-  (let ((entry (clone (data-entry-prototype datum))))
-    (prog1 entry
-      (setf (field-value :data entry) datum))))
+  (let* ((data-type (type-of datum))
+	 (head-type (if (listp data-type)
+			(first data-type)
+			data-type))
+	 (type-specifier (if (member head-type *builtin-entry-types*)
+			     head-type data-type)))
+	(new entry :value datum 
+		   :type-specifier type-specifier)))
 
+		    
 (defvar *make-block-package* nil)
 
 (defun make-block-package ()
@@ -342,6 +343,33 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	   (list-block sexp))
 	  ((not (null sexp)) (data-block sexp)))))
 
+;;; Hooks for data entry widgets
+
+(defblock send prototype method schema label)
+
+(define-method execute send ()
+  (apply #'send %method *target* (mapcar #'execute %inputs)))
+
+(define-method initialize send (&key prototype method label)
+  (next%initialize self)
+  (let ((schema (method-schema prototype method))
+	(inputs nil))
+      (dolist (entry schema)
+	  (push (new entry
+		       :value (schema-option entry :default)
+		       :type-specifier (schema-type entry)
+		       :options (schema-options entry)
+		       :name (schema-name entry))
+		inputs))
+    (setf %inputs (nreverse inputs)
+	  %schema schema
+	  %category (field-value :category prototype)
+	  %prototype prototype
+	  %method method
+	  %label label)))
+  
+;;; Verifying the tree structure of the blocks    
+
 (defun is-bad-connection (sink source)
   ;; make sure source is not actually sink's parent somewhere
   (block checking
@@ -362,15 +390,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
       (set-parent child block)
       (connect-parent-links child))))
 
-(defparameter *block-categories*
-  '(:system :motion :event :message :looks :sound :structure :data
-    :menu :hover :control :comment :sensing :operators :variables)
-  "List of keywords used to group blocks into different functionality
-areas.")
-
-(defparameter *input-types*
-  '(:block :anything :integer :float :number :string :symbol)
-  "List of keywords identifying the type of a particular input.")
+;;; Block movement
 
 (define-method move-to block (x y &optional z)
   "Move the block to a new (X Y) location."
@@ -647,9 +667,9 @@ blocks."
 	      (box (x y r b &optional color)
 		(draw-box x y (- r x) (- b y)
 			  :color (or color background)))
-	      (text (x y string)
+	      (text (x y string &optional color2)
 		(draw-string string x y
-			     :color foreground
+			     :color (or color2 foreground)
 			     :font *block-font*)))
        ,@body)))
 
@@ -673,7 +693,7 @@ override all colors."
       (circle (- x1 radius ) (- y1 radius ) chisel) ;; chisel
       ;; y1 left
       (disc (+ x0 radius ) (- y1 radius ) fill)
-      (circle (+ x0 radius ) (- y1 radius ))
+      (circle (+ x0 radius ) (- y1 radius) chisel)
       ;; top left
       (disc (+ x0 radius ) (+ y0 radius) fill)
       (circle (+ x0 radius ) (+ y0 radius) bevel) ;;bevel
@@ -808,7 +828,7 @@ override all colors."
     (dolist (each inputs)
       (draw each))))
 
-(define-method draw-label-string block (string)
+(define-method draw-label-string block (string &optional color)
   (with-block-drawing 
     (with-field-values
 	(x y operation inputs)
@@ -816,7 +836,7 @@ override all colors."
       (let* ((dash *dash*)
 	     (left (+ x (* 2 dash)))
 	     (y0 (+ y dash 1)))
-	(text left y0 string)))))
+	(text left y0 string color)))))
 
 (define-method draw-label block (expression)
   (draw-label-string self (print-expression expression)))

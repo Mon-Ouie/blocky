@@ -119,7 +119,7 @@ arglists.
 
   :DOCUMENTATION     The documentation string.
 
-  :DISPLAY-NAME   User-visible name of the argument. If left unset, the
+  :LABEL   User-visible name of the argument. If left unset, the
                   default is `Foo Bar Baz' for the command
                   `foo-bar-baz'.
 
@@ -1052,7 +1052,7 @@ OPTIONS is a property list of field options. Valid keys are:
 	 (when (has-field :initialize prototype)
 	   (send :initialize prototype))
 	 ;; now add it to the dictionaries
-	 (add-prototype prototype)
+ 	 (add-prototype prototype)
 	 (add-object-to-database prototype)
 	 ;; return the uuid and object
 	 (values uuid prototype)))))
@@ -1187,6 +1187,7 @@ objects after reconstruction, wherever present."
   (if (null ob)
       "NULL!!"
       (let ((object (find-object ob)))
+	;; should always get a string!
 	(if object (object-parent object) "Unknown"))))
 
 (defun object-address-string (ob)

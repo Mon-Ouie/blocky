@@ -152,8 +152,8 @@
       (with-script script 
 	(dolist (block blocks)
 	  ;; draw border around any selected blocks
-	  (when (find block selection :test 'eq :key #'find-object)
-	    (draw-border block))
+	  ;; (when (find block selection :test 'eq :key #'find-object)
+	  ;;   (draw-border block))
 	  ;; draw the block itself
 	  (draw block))
 	;; during dragging we draw the dragged block.
@@ -261,7 +261,9 @@
 		;; just drop the block
 		(add-block self drag)))
 	  ;; select the dropped block
-	  (select self drag))
+	  (select self drag)
+	  (setf focused-block drag))
+;	  (setf hover nil))
 	;; ok, we're not dragging.
 	(progn
 	  (setf selection nil)

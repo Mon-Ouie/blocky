@@ -22,7 +22,7 @@
 
 ;;; Command prompt block
 
-(defparameter *prompt-blink-time* 20)
+(defparameter *prompt-blink-time* 15)
 (defparameter *prompt-cursor-color* "magenta")
 (defparameter *prompt-cursor-blink-color* "red")
 (defparameter *cursor-inactive-color* "gray50")
@@ -85,8 +85,7 @@ the next block in the frame (the customized prompt.) To 'escape'
 this and enter commands, hit ESCAPE (and again to return to forward
 mode.)
 
-The modes can be toggled with CONTROL-X.
-")
+The modes can be toggled with CONTROL-X.")
   (mode :documentation "Either :direct or :forward." :initform :direct)
   (clock :initform *prompt-blink-time*)
   (text-color :initform "gray20")
@@ -95,6 +94,7 @@ The modes can be toggled with CONTROL-X.
   (point :initform 0 :documentation "Integer index of cursor within prompt line.")
   (line :initform "" :documentation "Currently edited command line.")
   (background :initform t)
+  (prompt-string :initform nil)
   (category :initform :data)
   (history :initform (make-queue :max *default-prompt-history-size*)
 	   :documentation "A queue of strings containing the command history.")
@@ -362,27 +362,31 @@ The modes can be toggled with CONTROL-X.
   (with-fields (clock) self
     (decf clock)
     (when (> (- 0 *prompt-blink-time*) clock)
-      (setf clock *prompt-blink-time*)))
-  (draw-cursor self ))
+      (setf clock *prompt-blink-time*))
+    (draw-cursor self (if (minusp clock)
+			  *prompt-cursor-color*
+			  *prompt-cursor-blink-color*))))
 
 (define-method draw prompt ()
   (with-fields (x y width height clock mode point parent background
 		  line) self
     ;; possibly draw a background
-    (cond ((stringp background)
-	   (draw-background self background))
-	  ((eq t background)
-	   (draw-background self)))
+    ;; (cond ((stringp background)
+    ;; 	   (draw-background self background))
+    ;; 	  ((eq t background)
+    ;; 	   (draw-background self)))
     (let* ((font-height (font-height *block-font*))
 	   (strings-y *default-prompt-margin*)
-	   (prompt-string (ecase mode
-			    (:direct *direct-prompt-string*)
-			    (:forward *forward-prompt-string*))))
+	   (prompt-string (or %prompt-string 
+			      (ecase mode
+				(:direct *direct-prompt-string*)
+				(:forward *forward-prompt-string*)))))
       ;; draw cursor (may be overdrawn with blink when selected
       ;; (when (> point (length line))
       ;;   (setf point (1- (length line))))
       (draw-cursor self *cursor-inactive-color*)
       ;; draw prompt string
+      (assert (stringp %text-color))
       (draw-string prompt-string
 		   (+ x *default-prompt-margin*)
 		   (+ y strings-y)
@@ -415,9 +419,23 @@ The modes can be toggled with CONTROL-X.
 
 (define-prototype entry (:parent "IOFORMS:PROMPT")
   (category :initform :value)
-  (type-specifier :initform nil)
-  (value :initform nil))
+  (label-color :initform "white")
+  options label name type-specifier value)
 
+(defun pretty-symbol-string (symbol)
+  (string-downcase 
+   (substitute #\Space #\- (symbol-name symbol))))
+
+(define-method initialize entry (&key value type-specifier options name)
+  (assert (and value type-specifier))
+  (setf %type-specifier type-specifier
+	%options options
+	%name name
+	%value value)
+  (setf %label (getf options :label))
+  (when (null %label)
+    (setf %pretty-label (pretty-symbol-string name))))
+  
 (define-method execute entry ()
   %value)
 
@@ -427,15 +445,34 @@ The modes can be toggled with CONTROL-X.
 (define-method get-value entry ()
   %value)
 
-(define-method execute entry ()
+(define-method recompile entry ()
   %value)
 
+(define-method draw-hover entry ())
+
+(define-method label-string entry ()
+  (or (getf %options :label)
+      %pretty-label))
+
 (define-method draw entry ()
-  (with-block-drawing
-    (with-fields (x y value parent) self
-;      (when (null parent) (draw-background self))
-      (draw-background self)
-      (draw-contents self))))
+  (with-fields (x y options text-color width height line) self
+    ;; draw prompt string
+    (assert (stringp text-color))
+    (let ((label (label-string self)))
+      (draw-string label
+		   (dash 1 x)
+		   (+ y (dash 1))
+		   :color %label-color
+		   :font *block-font*)
+      ;; draw current command line text
+      (when (null line) (setf line ""))
+      (unless (zerop (length line))
+	(draw-string line
+		     (+ (dash 2 x)
+			(font-text-extents label *block-font*))
+		     (+ y (dash 1))
+		     :color %text-color
+		     :font *block-font*)))))
 
 (define-method do-sexp entry (sexp)
   (assert (and (listp sexp) (= 1 (length sexp))))
@@ -455,21 +492,23 @@ The modes can be toggled with CONTROL-X.
 (define-method layout entry ()
   (with-fields (height width value) self
     (setf height (+ (* 2 *dash*) (font-height *block-font*)))
-    (setf width (+ (* 4 *dash*) (expression-width value)))))
+    (setf width (+ (* 4 *dash*)
+		   (font-text-extents (label-string self) *block-font*)))))
 
-(defmacro defentry (name type-specifier value)
-  `(define-prototype ,name (:parent "IOFORMS:ENTRY")
-     (type-specifier :initform ',type-specifier)
-     (value :initform ,value)))
+;; (defmacro defentry (name type-specifier value)
+;;   `(define-prototype ,name (:parent "IOFORMS:ENTRY")
+;;      (type-specifier :initform ',type-specifier)
+;;      (value :initform ,value)))
 
-(defentry integer integer 0)
-(defentry string string "")
-(defentry number number 0)
-(defentry float float 0.0)
-(defentry symbol symbol nil)
-(defentry positive-integer (integer 1 *) 1)
-(defentry non-negative-integer (integer 0 *) 0)
-(defentry sexp t nil)
+;; (defentry integer integer 0)
+;; (defentry string string "")
+;; (defentry number number 0)
+;; (defentry non-negative-number (number 0 *))
+;; (defentry float float 0.0)
+;; (defentry symbol symbol nil)
+;; (defentry positive-integer (integer 1 *) 1)
+;; (defentry non-negative-integer (integer 0 *) 0)
+;; (defentry sexp t nil)
 
 ;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
 

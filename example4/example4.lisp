@@ -25,8 +25,8 @@
   
 (in-package :example4)
 
-(setf *screen-width* 640)
-(setf *screen-height* 480)
+(setf *screen-width* 800)
+(setf *screen-height* 600)
 (setf *window-title* "turtle graphics")
 (enable-key-repeat 9 3)
 
@@ -39,46 +39,95 @@
 (defsprite turtle
   :image "turtle"
   :heading 0.0 ;; in radians
+  :lines nil
+  :states nil
   :color "black"
-  :pen-down nil)
+  :drawing t)
 
 (defun radian-angle (degrees)
   "Convert DEGREES to radians."
   (* degrees (float (/ pi 180))))
 
 (define-method pen-down turtle ()
-  (setf %pen-down t))
+  (setf %drawing t))
 
 (define-method pen-up turtle ()
-  (setf %pen-down nil))
+  (setf %drawing nil))
 
-(define-method set-color turtle ((color string :default "black" 
-					       :display-name "Pen color"
-					       :documentation "test"))
+(define-method set-color turtle 
+  ((color string :default "black" 
+		 :label "Pen color"
+		 :documentation "test"))
   (setf %color color))
 
-(define-method turn-left turtle ((degrees number :default 90.0))
+(define-method turn-left turtle ((degrees number :default 90.0 :label "degrees"))
   (incf %heading (radian-angle degrees)))
 
 (define-method turn-right turtle ((degrees number :default 90.0))
   (decf %heading (radian-angle degrees)))
 
+(define-method add-line turtle (x0 y0 x y &key color)
+  (push (list x0 y0 x y :color color) 
+	%lines))
+
+(define-method clear-lines turtle (x0 y0 x y &key color)
+  (setf %lines nil))
+
 (define-method go-forward turtle ((distance number :default 40 
-						:display-name "Distance to travel"))
-  (with-fields (x y heading pen-down color) self
+						   :label "Distance to travel"))
+  (with-fields (x y heading drawing color) self
     (let ((x0 x)
 	  (y0 y))
       (incf x (* distance (cos heading)))
       (incf y (* distance (sin heading)))
-      (when pen-down
-	(draw-line x0 y0 x y :color color)))))
+      (when drawing
+	(add-line self x0 y0 x y :color color)))))
+
+(define-method save-state turtle ()
+  (push (list %x %y %heading %color) 
+	%states))
+
+(define-method restore-state turtle ()
+  (destructuring-bind (x y heading color) 
+      (pop %states)
+    (setf %x x %y y %color color
+	  %heading heading)))
+
+(define-method draw turtle ()
+  (next%draw self)
+  (dolist (line %lines)
+    (apply #'draw-line line)))
 
 (defun example4 ()
   (new system)
-  (let ((script (new script)))
-    (add-block script (new turtle) 
+  (let ((script (new script))
+	(turtle (new turtle)))
+    (add-block script turtle
 	       (/ *screen-width* 2)
 	       (/ *screen-height* 2))
-    (start (new shell script))))
+    (dotimes (ring 4)
+      (dotimes (petal 40)
+	(turn-left turtle 3)
+	(save-state turtle)
+	(pen-up turtle)
+	(go-forward turtle (+ 70 (* ring 60)))
+	(dotimes (n 20) 
+	  (pen-down turtle)
+	  (set-color turtle "light salmon")
+	  (go-forward turtle (* 0.6 n))
+	  (turn-left turtle 70)
+	  (go-forward turtle (* 0.8 n))
+	  (set-color turtle "indian red")
+	  (turn-right turtle 50)
+	  (go-forward turtle (* 1.2 n))
+	  (set-color turtle "orange")
+	  (turn-left turtle 12)
+	  (go-forward turtle (* 1.6 n))
+	  (turn-right turtle 10))
+	(restore-state turtle)))
+      (add-block script (new entry :value 0 :type-specifier 'integer) 40 40) 
+      (start (new shell script))))
+
+
 
 ;;; example4.lisp ends here
