@@ -167,7 +167,7 @@
 		   (when hover 
 		     (draw-hover hover)))
 	    (when focused-block
-	      (draw-border focused-block)
+	      ;(draw-border focused-block)
 	      (draw focused-block)
 	      (draw-focus focused-block)))
 	(when highlight
@@ -271,7 +271,7 @@
 	    (select self focused-block)
 	    (with-script script 
 	      (click focused-block))
-	    (setf focused-block nil)
+;	    (setf focused-block nil)
 	    (setf click-start nil))))
     (setf drag-start nil
 	  drag-offset nil

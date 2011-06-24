@@ -1,5 +1,8 @@
+*** TODO review / prioritize tasks
+*** TODO add all missing keyboard characters
 *** TODO [#A] test input boxes
 *** TODO [#A] Generic block type should be able to send any message, with typed arg block wid
+*** TODO [#A] dialog boxes for project save/load!
 *** TODO [#A] test input computation and make sure %results has enough room
 *** TODO [#B] make the visual plists match the keyword arguments of the actual schema-ified methods
 *** TODO [#B] auto define (%field object) functions? mappable

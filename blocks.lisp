@@ -584,7 +584,7 @@ prototypes mentioned are defined in terminal.lisp, which see.")
 (defparameter *socket-color* "gray80"
   "The default background color of block sockets.")
 
-(defparameter *block-font* "sans-condensed-bold-12"
+(defparameter *block-font* "sans-condensed-bold-11"
   "The font used in drawing block labels and input data.")
 
 (defvar *dash* 3

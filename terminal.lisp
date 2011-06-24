@@ -22,9 +22,9 @@
 
 ;;; Command prompt block
 
-(defparameter *prompt-blink-time* 15)
+(defparameter *prompt-blink-time* 8)
 (defparameter *prompt-cursor-color* "magenta")
-(defparameter *prompt-cursor-blink-color* "red")
+(defparameter *prompt-cursor-blink-color* "yellow")
 (defparameter *cursor-inactive-color* "gray50")
 
 (defparameter *direct-prompt-string* "> ")
@@ -33,7 +33,7 @@
 (defparameter *default-prompt-margin* 4)
 
 (defparameter *default-prompt-history-size* 100)
-(defparameter *default-cursor-width* 6)
+(defparameter *default-cursor-width* 2)
 
 (define-prototype prompt
     (:parent "IOFORMS:BLOCK" :documentation 
@@ -337,32 +337,40 @@ The modes can be toggled with CONTROL-X.")
 (define-method move-beginning-of-line prompt ()
   (setf %point 0))
 
-(define-method draw-cursor prompt (&optional (color "magenta"))
+(define-method draw-cursor prompt 
+    (&optional (color "magenta") x-offset y-offset)
   (with-fields (x y width height clock mode point parent background
 		  line) self
-    (draw-box (+ x (font-text-extents (if (<= point (length line))
-					  (subseq line 0 point)
-					  " ")
-				      *block-font*)
-		 (font-text-extents *direct-prompt-string* *block-font*))
-	      (+ y *default-prompt-margin*)
-		  (font-text-extents 
-		   (string (if (< point (length line))
-			       (aref line 
-				     (max (max 0 
-					       (1- (length line)))
-					  point))
-			       #\Space))
-		   *block-font*)
-		  (font-height *block-font*)
-		  :color color)))
+    (draw-box (+ x (or x-offset 0)
+		 (font-text-extents (if (<= point (length line))
+					(subseq line 0 point)
+					" ")
+				    *block-font*)
+		 (if x-offset 0 (font-text-extents *direct-prompt-string* *block-font*)))
+	      (+ y (or y-offset 0) *default-prompt-margin*)
+	      *default-cursor-width*
+	      ;; (font-text-extents 
+	      ;;  (string (if (< point (length line))
+	      ;; 		   (aref line 
+	      ;; 			 (max (max 0 
+	      ;; 				   (1- (length line)))
+	      ;; 			      point))
+	      ;; 		   #\Space))
+	      (* (font-height *block-font*) 0.8)
+	      :color color)))
 
-(define-method draw-focus prompt () 
+(define-method draw-border prompt () nil)
+
+(define-method update-cursor-clock prompt ()
   ;; keep the cursor blinking
   (with-fields (clock) self
     (decf clock)
     (when (> (- 0 *prompt-blink-time*) clock)
-      (setf clock *prompt-blink-time*))
+      (setf clock *prompt-blink-time*))))
+
+(define-method draw-focus prompt () 
+  (with-fields (clock) self
+    (update-cursor-clock self)
     (draw-cursor self (if (minusp clock)
 			  *prompt-cursor-color*
 			  *prompt-cursor-blink-color*))))
@@ -451,8 +459,6 @@ The modes can be toggled with CONTROL-X.")
 (define-method recompile entry ()
   %value)
 
-(define-method draw-hover entry ())
-
 (define-method label-string entry ()
   (or (getf %options :label)
       %pretty-label))
@@ -461,22 +467,16 @@ The modes can be toggled with CONTROL-X.")
 
 (define-method draw entry ()
   (with-fields (x y options text-color width height line) self
-    ;; draw prompt string
+    ;; draw the label string 
     (assert (stringp text-color))
     (let* ((label (label-string self))
 	   (label-width (font-text-extents label *block-font*))
-	   (line-width (font-text-extents line *block-font*))
-	   (font-height (font-height *block-font*))
-	   (underline-y (round (dash 1 y (* font-height 0.85)))))
+	   (line-width (font-text-extents line *block-font*)))
       (draw-string label
 		   (dash 1 x)
 		   (+ y (dash 1))
 		   :color %label-color
 		   :font *block-font*)
-      ;; draw input area underlining
-      (draw-line  (dash 4 x 20 label-width) underline-y
-		  (dash 1 x label-width line-width) underline-y
-		  :color "white")
       ;; draw current input string
       (when (null line) (setf line ""))
       (unless (zerop (length line))
@@ -486,6 +486,27 @@ The modes can be toggled with CONTROL-X.")
 		     :color %text-color
 		     :font *block-font*)))))
 
+(define-method draw-border entry ())
+
+(define-method draw-hover entry ())
+
+(define-method draw-focus entry () 
+  (with-fields (clock x y width) self
+    (let ((label (label-string self)))
+      (update-cursor-clock self)
+      (draw-cursor self (if (minusp clock)
+			    *prompt-cursor-color*
+			    *prompt-cursor-blink-color*)
+		   ;; provide x offset
+		   (dash 2 (font-text-extents label *block-font*)))
+      ;; draw input area underlining
+      (let* ((label-width (font-text-extents label *block-font*))
+	     (font-height (font-height *block-font*))
+	     (underline-y (round (dash 1 y (* font-height 0.96)))))
+	(draw-line  (dash 2 x label-width) underline-y
+		    (dash 1 x width) underline-y
+		    :color "white"))))) 
+		 
 (define-method do-sexp entry (sexp)
   (assert (and (listp sexp) (= 1 (length sexp))))
   ;; validate sexp with #'typep
@@ -506,7 +527,7 @@ The modes can be toggled with CONTROL-X.")
     (setf height (+ (* 2 *dash*) (font-height *block-font*)))
     (setf width (+ (* 4 *dash*)
 		   (font-text-extents (label-string self) *block-font*)
-		   (max *minimum-entry-width*
+		   (max *minimum-entry-line-width*
 			(font-text-extents line *block-font*))))))
 
 ;; (defmacro defentry (name type-specifier value)
