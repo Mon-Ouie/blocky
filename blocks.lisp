@@ -74,6 +74,8 @@ areas.")
   `(let ((*target* ,target))
      ,@body))
 
+(defvar *text-base-y* nil)
+
 (define-prototype block ()
   ;; general information
   (inputs :initform nil :documentation 
@@ -305,7 +307,6 @@ the return value of the function (if any)."
 			     head-type data-type)))
 	(new entry :value datum 
 		   :type-specifier type-specifier)))
-
 		    
 (defvar *make-block-package* nil)
 
@@ -343,31 +344,75 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	   (list-block sexp))
 	  ((not (null sexp)) (data-block sexp)))))
 
-;;; Hooks for data entry widgets
+;;; Generic method invocation block. The bread and butter of doing stuff.
 
 (defblock send prototype method schema label)
 
 (define-method execute send ()
   (apply #'send %method *target* (mapcar #'execute %inputs)))
 
+(defun pretty-symbol-string (thing)
+  (let ((name (etypecase thing
+		(symbol (symbol-name thing))
+		(string thing))))
+    (string-downcase 
+     (substitute #\Space #\- name))))
+
 (define-method initialize send (&key prototype method label)
   (next%initialize self)
-  (let ((schema (method-schema prototype method))
+  (let ((schema (method-schema (find-prototype prototype) method))
 	(inputs nil))
-      (dolist (entry schema)
-	  (push (new entry
-		       :value (schema-option entry :default)
-		       :type-specifier (schema-type entry)
-		       :options (schema-options entry)
-		       :name (schema-name entry))
-		inputs))
-    (setf %inputs (nreverse inputs)
-	  %schema schema
-	  %category (field-value :category prototype)
+    (dolist (entry schema)
+      (message "ENTRY ~S" (list entry :OOOO (type-of (schema-name entry))))
+      (push (new entry
+		 :value (schema-option entry :default)
+		 :type-specifier (schema-type entry)
+		 :options (schema-options entry)
+		 :name (concatenate 'string
+				    ":" ;; mimic the keyword arguments visually
+				    (symbol-name (schema-name entry))))
+	    inputs))
+    (when inputs 
+      (setf %inputs (nreverse inputs)))
+    (setf %schema schema
+	  %category :motion ;; (field-value :category prototype)
 	  %prototype prototype
 	  %method method
-	  %label label)))
-  
+	  %label (or label (pretty-symbol-string method)))))
+
+(define-method draw send ()
+  (with-fields (x y width height label inputs) self
+    (draw-patch self x y (+ x width) (+ y height))
+    (let ((*text-base-y* (+ y (dash 1))))
+      (draw-label-string self label "white")
+      (dolist (each inputs)
+	(draw each)))))
+
+(define-method draw-hover send ()
+  nil)
+
+(define-method layout send ()
+  (with-fields (input-widths height width label) self
+    (with-field-values (x y inputs) self
+      (let* ((font *block-font*)
+	     (dash (dash 1))
+	     (left (+ dash dash x (font-text-extents label font)))
+	     (max-height (font-height font)))
+	(labels ((move-input (input)
+		   (move-to input (+ left dash) y)
+		   (layout input)
+		   (setf max-height (max max-height (field-value :height input)))
+		   (field-value :width input))
+		 (layout-input (input)
+		   (let ((measurement
+			  (+ dash dash (move-input input))))
+		     (prog1 measurement
+		       (incf left measurement)))))
+	  (setf input-widths (mapcar #'layout-input inputs))
+	  (setf width (+ (- left x) (* 4 dash)))
+	  (setf height (+ dash (if (null inputs)
+				   dash 0) max-height)))))))
+
 ;;; Verifying the tree structure of the blocks    
 
 (defun is-bad-connection (sink source)
@@ -668,7 +713,8 @@ blocks."
 		(draw-box x y (- r x) (- b y)
 			  :color (or color background)))
 	      (text (x y string &optional color2)
-		(draw-string string x y
+		(draw-string string x 
+			     (or *text-base-y* y)
 			     :color (or color2 foreground)
 			     :font *block-font*)))
        ,@body)))
@@ -778,27 +824,7 @@ override all colors."
       *socket-width*
       (font-text-extents (print-expression expression) font)))
 
-(define-method layout block ()
-  (with-fields (input-widths height width) self
-    (with-field-values (x y schema inputs) self
-      (let* ((font *block-font*)
-	     (dash *dash*)
-	     (left (+ x (handle-width self)))
-	     (max-height (font-height font)))
-	(labels ((move-input (input)
-		   (move-to input (+ left dash) y)
-		   (layout input)
-		   (setf max-height (max max-height (field-value :height input)))
-		   (field-value :width input))
-		 (layout-input (block category)
-		   (declare (ignore category)) ;; for now
-		   (let ((measurement
-			  (+ dash (move-input block))))
-		     (prog1 measurement
-		       (incf left measurement)))))
-	  (setf input-widths (mapcar #'layout-input inputs schema)))
-	  (setf width (+ (- left x) (* 4 dash)))
-	  (setf height (+ dash dash max-height))))))
+(define-method layout block () nil)
 
 (define-method draw-expression block (x0 y0 segment type)
   (with-fields (height input-widths) self

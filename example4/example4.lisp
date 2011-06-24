@@ -25,10 +25,10 @@
   
 (in-package :example4)
 
-(setf *screen-width* 800)
-(setf *screen-height* 600)
+(setf *screen-width* 640)
+(setf *screen-height* 480)
 (setf *window-title* "turtle graphics")
-(enable-key-repeat 9 3)
+(enable-key-repeat 9 2)
 
 (defparameter *font* "sans-bold-12")
 
@@ -60,7 +60,7 @@
 		 :documentation "test"))
   (setf %color color))
 
-(define-method turn-left turtle ((degrees number :default 90.0 :label "degrees"))
+(define-method turn-left turtle ((degrees number :default 90.0))
   (incf %heading (radian-angle degrees)))
 
 (define-method turn-right turtle ((degrees number :default 90.0))
@@ -70,11 +70,10 @@
   (push (list x0 y0 x y :color color) 
 	%lines))
 
-(define-method clear-lines turtle (x0 y0 x y &key color)
+(define-method clear-lines turtle ()
   (setf %lines nil))
 
-(define-method go-forward turtle ((distance number :default 40 
-						   :label "Distance to travel"))
+(define-method go-forward turtle ((distance number :default 40))
   (with-fields (x y heading drawing color) self
     (let ((x0 x)
 	  (y0 y))
@@ -82,6 +81,12 @@
       (incf y (* distance (sin heading)))
       (when drawing
 	(add-line self x0 y0 x y :color color)))))
+
+(define-method say turtle ((text string :default "hello")
+			   (color string :default "blue")
+			   (style integer :default 1))
+  (message "SAY"))
+				 
 
 (define-method save-state turtle ()
   (push (list %x %y %heading %color) 
@@ -105,28 +110,36 @@
     (add-block script turtle
 	       (/ *screen-width* 2)
 	       (/ *screen-height* 2))
-    (dotimes (ring 4)
-      (dotimes (petal 40)
-	(turn-left turtle 3)
-	(save-state turtle)
-	(pen-up turtle)
-	(go-forward turtle (+ 70 (* ring 60)))
-	(dotimes (n 20) 
-	  (pen-down turtle)
-	  (set-color turtle "light salmon")
-	  (go-forward turtle (* 0.6 n))
-	  (turn-left turtle 70)
-	  (go-forward turtle (* 0.8 n))
-	  (set-color turtle "indian red")
-	  (turn-right turtle 50)
-	  (go-forward turtle (* 1.2 n))
-	  (set-color turtle "orange")
-	  (turn-left turtle 12)
-	  (go-forward turtle (* 1.6 n))
-	  (turn-right turtle 10))
-	(restore-state turtle)))
-      (add-block script (new entry :value 0 :type-specifier 'integer) 40 40) 
-      (start (new shell script))))
+    ;; (dotimes (ring 4)
+    ;;   (dotimes (petal 40)
+    ;; 	(turn-left turtle 3)
+    ;; 	(save-state turtle)
+    ;; 	(pen-up turtle)
+    ;; 	(go-forward turtle (+ 70 (* ring 60)))
+    ;; 	(dotimes (n 20) 
+    ;; 	  (pen-down turtle)
+    ;; 	  (set-color turtle "light salmon")
+    ;; 	  (go-forward turtle (* 0.6 n))
+    ;; 	  (turn-left turtle 70)
+    ;; 	  (go-forward turtle (* 0.8 n))
+    ;; 	  (set-color turtle "indian red")
+    ;; 	  (turn-right turtle 50)
+    ;; 	  (go-forward turtle (* 1.2 n))
+    ;; 	  (set-color turtle "orange")
+    ;; 	  (turn-left turtle 12)
+    ;; 	  (go-forward turtle (* 1.6 n))
+    ;; 	  (turn-right turtle 10))
+    ;; 	(restore-state turtle)))
+;;      (add-block script (new entry :value 0 :type-specifier 'integer) 40 40) 
+    (add-block script (new send :prototype "EXAMPLE4:TURTLE"
+    				:method :pen-down) 100 100)
+    (add-block script (new send :prototype "EXAMPLE4:TURTLE"
+    				:method :pen-up) 100 200)
+    ;; (add-block script (new send :prototype "EXAMPLE4:TURTLE"
+    ;; 				:method :set-color) 100 300)
+    (add-block script (new send :prototype "EXAMPLE4:TURTLE"
+    				:method :say) 100 400)
+    (start (new shell script))))
 
 
 

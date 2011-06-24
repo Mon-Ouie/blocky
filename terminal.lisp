@@ -415,26 +415,29 @@ The modes can be toggled with CONTROL-X.")
 	    :height 
 	    (+ (* 2 *default-prompt-margin*) (font-height *block-font*)))))
 
-;;; Value entry blocks for common types
+;;; General-purpose data entry block.
 
 (define-prototype entry (:parent "IOFORMS:PROMPT")
   (category :initform :value)
+  (text-color :initform "white")
   (label-color :initform "white")
   options label name type-specifier value)
 
-(defun pretty-symbol-string (symbol)
-  (string-downcase 
-   (substitute #\Space #\- (symbol-name symbol))))
-
-(define-method initialize entry (&key value type-specifier options name)
+(define-method initialize entry (&key value type-specifier options name label-color)
+  (next%initialize self)
   (assert (and value type-specifier))
   (setf %type-specifier type-specifier
 	%options options
 	%name name
 	%value value)
   (setf %label (getf options :label))
+  (when label-color (setf %label-color label-color))
   (when (null %label)
     (setf %pretty-label (pretty-symbol-string name))))
+
+(define-method handle-event entry (event)
+  (prog1 (next%handle-event self event)
+    (signal-layout-needed self)))
   
 (define-method execute entry ()
   %value)
@@ -454,22 +457,31 @@ The modes can be toggled with CONTROL-X.")
   (or (getf %options :label)
       %pretty-label))
 
+(defparameter *minimum-entry-line-width* 24)
+
 (define-method draw entry ()
   (with-fields (x y options text-color width height line) self
     ;; draw prompt string
     (assert (stringp text-color))
-    (let ((label (label-string self)))
+    (let* ((label (label-string self))
+	   (label-width (font-text-extents label *block-font*))
+	   (line-width (font-text-extents line *block-font*))
+	   (font-height (font-height *block-font*))
+	   (underline-y (round (dash 1 y (* font-height 0.85)))))
       (draw-string label
 		   (dash 1 x)
 		   (+ y (dash 1))
 		   :color %label-color
 		   :font *block-font*)
-      ;; draw current command line text
+      ;; draw input area underlining
+      (draw-line  (dash 4 x 20 label-width) underline-y
+		  (dash 1 x label-width line-width) underline-y
+		  :color "white")
+      ;; draw current input string
       (when (null line) (setf line ""))
       (unless (zerop (length line))
 	(draw-string line
-		     (+ (dash 2 x)
-			(font-text-extents label *block-font*))
+		     (+ (dash 2 x) label-width)
 		     (+ y (dash 1))
 		     :color %text-color
 		     :font *block-font*)))))
@@ -490,10 +502,12 @@ The modes can be toggled with CONTROL-X.")
 	    (print-expression value)))))
 
 (define-method layout entry ()
-  (with-fields (height width value) self
+  (with-fields (height width value line) self
     (setf height (+ (* 2 *dash*) (font-height *block-font*)))
     (setf width (+ (* 4 *dash*)
-		   (font-text-extents (label-string self) *block-font*)))))
+		   (font-text-extents (label-string self) *block-font*)
+		   (max *minimum-entry-width*
+			(font-text-extents line *block-font*))))))
 
 ;; (defmacro defentry (name type-specifier value)
 ;;   `(define-prototype ,name (:parent "IOFORMS:ENTRY")
@@ -537,8 +551,7 @@ The modes can be toggled with CONTROL-X.")
 	  (accept container block))))))
 
 (define-prototype listener (:parent list)
-  (type :initform :system)
-  (schema :initform '((:prompt . :block))))
+  (type :initform :system))
 
 (defparameter *minimum-listener-width* 200)
 

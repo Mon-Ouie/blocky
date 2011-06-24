@@ -57,118 +57,118 @@
 		    (dash 1 x)
 		    (dash 1 y))))))
 
-;;; Sending to an ID
+;; ;;; Sending to an ID
 
-(define-prototype send (:parent "IOFORMS:LIST")
-  (category :initform :message)
-  (schema :initform  '((:target :block)
-		       (:body :list))))
+;; (define-prototype send (:parent "IOFORMS:LIST")
+;;   (category :initform :message)
+;;   (schema :initform  '((:target :block)
+;; 		       (:body :list))))
 
-(define-method header-height send ()
-  (let ((id (input self :target)))
-    (layout id)
-    (dash 2 (field-value :height id))))
+;; (define-method header-height send ()
+;;   (let ((id (input self :target)))
+;;     (layout id)
+;;     (dash 2 (field-value :height id))))
 
-(define-method layout send () 
-  (with-fields (height width x y) self
-    (layout-as-list self)))
+;; (define-method layout send () 
+;;   (with-fields (height width x y) self
+;;     (layout-as-list self)))
 
-(define-method execute send ()
-  (with-fields (inputs) self
-    (destructuring-bind (id body) inputs
-	(with-target (get-sprite id)
-	  (execute body)))))
+;; (define-method execute send ()
+;;   (with-fields (inputs) self
+;;     (destructuring-bind (id body) inputs
+;; 	(with-target (get-sprite id)
+;; 	  (execute body)))))
 
-(defblock +
-  (type :initform :operators))
+;; (defblock +
+;;   (type :initform :operators))
 
-;; (define-method execute + ()
-;;   (with-fields (results) self
-;;     (when (every #'integerp results)
-;;       (apply #'+ results))))
+;; ;; (define-method execute + ()
+;; ;;   (with-fields (results) self
+;; ;;     (when (every #'integerp results)
+;; ;;       (apply #'+ results))))
 
-(defblock move
-  (type :initform :motion)
-  (schema :initform '((:x . :integer)
-		      (:y . :integer)))
-  (inputs :initform '(:north 10 :pixels)))
-
-;; (defblock move-toward
+;; (defblock move
 ;;   (type :initform :motion)
-;;   (schema :initform '(:symbol :integer :symbol))
+;;   (schema :initform '((:x . :integer)
+;; 		      (:y . :integer)))
 ;;   (inputs :initform '(:north 10 :pixels)))
 
-;;; Other blocks
+;; ;; (defblock move-toward
+;; ;;   (type :initform :motion)
+;; ;;   (schema :initform '(:symbol :integer :symbol))
+;; ;;   (inputs :initform '(:north 10 :pixels)))
 
-(defblock say 
-  (type :initform :message)
-  (schema :initform '((:text . :string)))
-  (inputs :initform '("Hello!")))
+;; ;;; Other blocks
 
-(defblock change-image 
-  (type :initform :looks)
-  (schema :initform '((:image . :string)))
-  (inputs :initform '("(new image)")))
+;; (defblock say 
+;;   (type :initform :message)
+;;   (schema :initform '((:text . :string)))
+;;   (inputs :initform '("Hello!")))
 
-(defblock play-music 
-  (type :initform :sound)
-  (schema :initform '(:string))
-  (inputs :initform '("fanfare")))
+;; (defblock change-image 
+;;   (type :initform :looks)
+;;   (schema :initform '((:image . :string)))
+;;   (inputs :initform '("(new image)")))
 
-(define-method execute play-music ()
-  (play-music *target* (first %results) :loop t))
+;; (defblock play-music 
+;;   (type :initform :sound)
+;;   (schema :initform '(:string))
+;;   (inputs :initform '("fanfare")))
 
-(defblock play-sound 
-  (type :initform :sound)
-  (schema :initform '(:string))
-  (inputs :initform '("boing")))
+;; (define-method execute play-music ()
+;;   (play-music *target* (first %results) :loop t))
 
-
-;; (defblock joystick-button
-;;   (type :initform :sensing)
-;;   (schema :initform '(:integer :symbol))
-;;   (inputs :initform '(1 :down)))
-
-;; (defblock visible?
-;;   (type :initform :variables)
-;;   (schema :initform nil)
-;;   (inputs :initform nil))
-
-;; (defblock set-variable 
-;;   (type :initform :variables)
-;;   (schema :initform '(:symbol :block))
-;;   (inputs :initform '(:n nil)))
+;; (defblock play-sound 
+;;   (type :initform :sound)
+;;   (schema :initform '(:string))
+;;   (inputs :initform '("boing")))
 
 
-;; (defblock when 
-;;   (type :initform :control)
-;;   (schema :initform '(:block :block))
-;;   (inputs :initform '(nil nil)))
+;; ;; (defblock joystick-button
+;; ;;   (type :initform :sensing)
+;; ;;   (schema :initform '(:integer :symbol))
+;; ;;   (inputs :initform '(1 :down)))
 
-;; (defblock unless
-;;   (type :initform :control)
-;;   (schema :initform '(:block :block))
-;;   (inputs :initform '(nil nil)))
+;; ;; (defblock visible?
+;; ;;   (type :initform :variables)
+;; ;;   (schema :initform nil)
+;; ;;   (inputs :initform nil))
 
-;; (defblock fire
-;;   (type :initform :control)
-;;   (schema :initform '(:block))
-;;   (inputs :initform '(:south)))
+;; ;; (defblock set-variable 
+;; ;;   (type :initform :variables)
+;; ;;   (schema :initform '(:symbol :block))
+;; ;;   (inputs :initform '(:n nil)))
 
-;; (defblock see-player
-;;   (type :initform :sensing)
-;;   (schema :initform nil)
-;;   (inputs :initform nil))
 
-;; (defblock player-direction
-;;   (type :initform :sensing)
-;;   (schema :initform nil)
-;;   (inputs :initform nil))
+;; ;; (defblock when 
+;; ;;   (type :initform :control)
+;; ;;   (schema :initform '(:block :block))
+;; ;;   (inputs :initform '(nil nil)))
 
-;; (defblock closer-than
-;;   (type :initform :sensing)
-;;   (schema :initform '(:block :block :block :block))
-;;   (inputs :initform '(10 spaces to player)))
+;; ;; (defblock unless
+;; ;;   (type :initform :control)
+;; ;;   (schema :initform '(:block :block))
+;; ;;   (inputs :initform '(nil nil)))
+
+;; ;; (defblock fire
+;; ;;   (type :initform :control)
+;; ;;   (schema :initform '(:block))
+;; ;;   (inputs :initform '(:south)))
+
+;; ;; (defblock see-player
+;; ;;   (type :initform :sensing)
+;; ;;   (schema :initform nil)
+;; ;;   (inputs :initform nil))
+
+;; ;; (defblock player-direction
+;; ;;   (type :initform :sensing)
+;; ;;   (schema :initform nil)
+;; ;;   (inputs :initform nil))
+
+;; ;; (defblock closer-than
+;; ;;   (type :initform :sensing)
+;; ;;   (schema :initform '(:block :block :block :block))
+;; ;;   (inputs :initform '(10 spaces to player)))
   
 
 ;;; library.lisp ends here

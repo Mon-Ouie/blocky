@@ -1,8 +1,10 @@
-*** TODO test input boxes
-*** TODO entry support before-label and after-label options/props
-*** TODO test input computation and make sure %results has enough room
-*** TODO auto define (%field object) functions? mappable
-*** TODO Generic block type should be able to send any message, with typed arg block wid
+*** TODO [#A] test input boxes
+*** TODO [#A] Generic block type should be able to send any message, with typed arg block wid
+*** TODO [#A] test input computation and make sure %results has enough room
+*** TODO [#B] make the visual plists match the keyword arguments of the actual schema-ified methods
+*** TODO [#B] auto define (%field object) functions? mappable
+*** TODO [#C] tab and shift-tab for input nav
+*** TODO [#C] block colors/backgrounds in a list subprogram could disappear, making it look like text source code?
 ** TODO Fix wrong package name:  0: (IOFORMS::FIND-PROTOTYPE "IOFORMS:TURTLE" NIL) 1: (IOFORMS:MAKE-BLOCK (TURTLE))
   2: (IOFORMS:BLOCK-PROMPT/DO-SEXP ..)
   3: (IOFORMS:PROMPT/ENTER ..)

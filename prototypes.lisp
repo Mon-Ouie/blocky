@@ -181,7 +181,7 @@ extended argument list ARGLIST."
   (let ((name (object-name (find-object prototype))))
     (assert (stringp name))
     (concatenate 'string name
-		 "::" (symbol-name method))))
+		 "%%" (symbol-name method))))
 
 (defun add-method-to-dictionary (prototype method arglist)
   (when (null *methods*)
@@ -202,8 +202,7 @@ extended argument list ARGLIST."
   (assert (hash-table-p *methods*))
   (let ((id (make-method-id prototype method)))
     (assert (stringp id))
-    (let ((schema (gethash id *methods*)))
-      (prog1 schema (assert (listp schema))))))
+    (gethash id *methods*)))
 
 (defun method-argument-entry (prototype method index)
   (assert (integerp index))
@@ -432,8 +431,8 @@ checked, and so on. If a value is found during these checks, it is
 returned. If a value cannot be found, an error of type `no-such-field'
 is signaled, unless NOERROR is non-nil; in that case,
 `*lookup-failure*' is returned. See also `has-field'."
-  (declare (optimize (speed 3))
-	   (inline fref set-fref object-fields object-parent find-object))
+  ;; (declare (optimize (speed 3))
+  ;; 	   (inline fref set-fref object-fields object-parent find-object))
   (let ((pointer (find-object thing))
 	result found)
     ;; search the chain of objects for a field value.
@@ -848,9 +847,9 @@ was invoked."
 	 (method-symbol-name (symbol-name method-name))
 	 (method-symbol method-name) ;; fixme, unclear naming
 	 (defun-symbol (intern (concatenate 'string
-					    (symbol-name prototype-name) 
-					    "/"
-					    method-symbol-name)))
+					    method-symbol-name
+					    "%%"
+					    (symbol-name prototype-name))))
 	 (queue-defun-symbol (intern (concatenate 'string
 						  "QUEUE%"
 						  method-symbol-name)))
@@ -877,7 +876,7 @@ was invoked."
 	 (setf (field-value ,field-name prototype) ',defun-symbol)
 	 ;; add this method to the method dictionary
 	 (add-method-to-dictionary 
-	  prototype 
+	  ,prototype-id
 	  ,(make-keyword method-name)
 	  ',arglist)
 	 ;; define the other functions
