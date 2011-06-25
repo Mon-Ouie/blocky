@@ -103,6 +103,7 @@ two words. This is used as a unit for various layout operations.")
 "Computed result values from the input blocks.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (temporary :initform nil)
+  (methods :initform nil)
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
@@ -370,10 +371,12 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 
-(defblock send prototype method schema label)
+(defblock send prototype method schema target label)
 
 (define-method execute send ()
-  (apply #'send %method *target* (mapcar #'execute %inputs)))
+  (apply #'send %method 
+	 (or %target *target*)
+	 (mapcar #'execute %inputs)))
 
 (define-method click send (x y)
   (declare (ignore x y))
@@ -390,8 +393,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     (string-downcase 
      (substitute #\Space #\- name))))
 
-(define-method initialize send (&key prototype method label)
+(define-method initialize send (&key prototype method label target)
   (next%initialize self)
+  (setf %target target)
   (let ((schema (method-schema (find-prototype prototype) method))
 	(inputs nil))
     (dolist (entry schema)
@@ -531,9 +535,31 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     (when parent
       (unplug parent self))))
 
+(define-method method-menu block (method target)
+  (assert (and (keywordp method) (not (null target))))
+  (let ((method-string (pretty-symbol-string method)))
+    (list :label method-string
+	  :action #'(lambda ()
+		      (add-block *script* 
+				 (new send 
+				      :prototype (find-parent-prototype-name self)
+				      :method method
+				      :target target
+				      :label method-string)
+				 (- *pointer-x* 10) 
+				 (- *pointer-y* 10))))))
+
 (define-method context-menu block ()
-  "Return a context menu for this block, if any."
-  nil)
+  (apply #'make-menu 
+	 (list (list :label (concatenate 'string 
+					 "Methods: "
+					 (get-some-object-name self)
+					 "(" (object-address-string self) ")")
+		     :inputs (mapcar #'(lambda (method)
+					 (method-menu self method self))
+				     %methods)
+		     :pinned nil
+		     :expanded t))))
 
 (define-method execute-inputs block ()
   "Execute all blocks in %INPUTS from left-to-right. Results are
@@ -951,8 +977,9 @@ MOUSE-Y identify a point inside the block (or input block.)"
 
 (defun null-block () (clone "IOFORMS:LIST"))
 
-(define-method execute list ()
-  %results)
+(define-method click list (x y)
+  (dolist (block %inputs)
+    (run block)))
 
 (define-method accept list (input &optional prepend)
   (with-fields (inputs) self

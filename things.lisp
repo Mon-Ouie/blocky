@@ -218,13 +218,6 @@ cells."
 (define-method create-reference sprite ()
   (with-fields (x y) self
       (add-block *script* (new sprite-id self) x y)))
-
-(define-method context-menu sprite ()
-  (let ((label (format nil "Sprite menu for ~A" 
-		       (get-some-object-name self))))
-    (new menu :label label
-	 :expanded t
-	      :inputs (make-menu *sprite-context-menu* self))))
 		    
 ;;; Sprite locations
 

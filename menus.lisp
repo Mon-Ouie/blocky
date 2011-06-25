@@ -29,10 +29,11 @@
   action target (expanded :initform nil) (visible :initform t))
 
 (define-method initialize menu 
-    (&key action target top-level inputs 
+    (&key action target top-level inputs pinned
 	  schema expanded (label "blank menu item..."))
   (next%initialize self)
   (setf %action action
+	%pinned pinned
 	%expanded expanded
 	%target target
 	%schema schema
@@ -67,10 +68,12 @@
 (define-method click menu (x y)
   (declare (ignore x y))
   (with-fields (expanded action target) self
-    (if (keywordp action)
-        (send action (or target (symbol-value '*system*)))
-	;; we're a submenu, not an individual menu command.
-	(toggle-expanded self))))
+    (if (functionp action)
+	(funcall action)
+	(if (keywordp action)
+	    (send action (or target (symbol-value '*system*)))
+	    ;; we're a submenu, not an individual menu command.
+	    (toggle-expanded self)))))
 
 (define-method display-string menu ()	    
   (with-fields (action label top-level) self
@@ -78,7 +81,7 @@
       (if action
 	  (etypecase action
 	    (ioforms:object ellipsis)
-	    (keyword label))
+	    ((or keyword function) label))
 	  (if top-level label ellipsis)))))
 
 (define-method layout-as-string menu (string)
@@ -113,26 +116,32 @@
       %width))
 
 (define-method draw-expanded menu (&optional label)
-  (with-field-values (action x y width height parent inputs) self
+  (with-field-values (action x y width height parent inputs top-level) self
     (let ((display-string (or label *null-display-string*))
 	  (header (header-height self)))
-    ;; draw the top of the menubar a bit differently to prevent 
-    ;; over-drawing other menu bar items.
-    (draw-patch self
-     x
-     (dash 3 y)
-     (dash 2 x (header-width self))
-     (dash 1 y header)
-     :color "gray87")
-    (draw-label-string self display-string)
-    ;; draw the rest of the menu background
-    (draw-patch self
-     x (dash 2 y header)
-     (dash 2 x width)
-     (- (+ y height) (dash 1)))
-    ;; draw submenu items
-    (dolist (each inputs)
-      (draw each)))))
+      (if top-level
+	  ;; draw the top of the menubar a bit differently to prevent 
+	  ;; over-drawing other menu bar items.
+	  (progn (draw-patch self
+			     x
+			     (dash 3 y)
+			     (dash 2 x (header-width self))
+			     (dash 1 y header)
+			     :color "gray87")  	  
+		 (draw-label-string self display-string)
+		 ;; draw the rest of the menu background
+		 (draw-patch self
+			     x (dash 2 y header)
+			     (dash 2 x width)
+			     (- (+ y height) (dash 1))))
+	  (progn (draw-patch self x y (+ x width) (+ y height))
+		 (draw-label-string self display-string)
+		 (draw-line (+ x 1) (dash 2 y header) 
+			    (+ x width -1) (dash 2 y header)
+			    :color (find-color self :highlight))))
+      ;; draw submenu items
+      (dolist (each inputs)
+	(draw each)))))
 
 (define-method hit menu (mouse-x mouse-y)
   (with-field-values (x y expanded inputs width height) self
@@ -143,9 +152,11 @@
 	    self
 	    ;; we're expanded. is the mouse to the left of this
 	    ;; menu's header tab thingy?
-	    (when (and (< mouse-x (+ x (header-width self)))
-		       (< (header-height self) mouse-y))
-	      (some #'try inputs)))))))
+	    (if %top-level
+		(when (and (< mouse-x (+ x (header-width self)))
+			   (< (header-height self) mouse-y))
+		  (some #'try inputs))
+		(or (some #'try inputs) self)))))))
 		
 ;;       (let ((hh (header-height self))
 ;; 	    (hw (header-width self)))

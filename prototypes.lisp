@@ -295,6 +295,11 @@ extended argument list ARGLIST."
 (defun find-parent (object)
   (object-parent (find-object object)))
 
+(defun find-parent-prototype-name (object)
+  (object-name
+   (find-object
+    (object-parent (find-object object)))))
+
 (defun object-eq (a b)
   (when (and a b)
     (eq (find-object a)
@@ -1207,8 +1212,9 @@ objects after reconstruction, wherever present."
   (if (null ob)
       "NULL!!"
       (let ((object (find-object ob)))
-	;; should always get a string!
-	(if object (object-parent object) "Unknown"))))
+	(if (object-p object)
+	    (find-parent-prototype-name object)
+	    "Unknown object"))))
 
 (defun object-address-string (ob)
   (let ((string (with-output-to-string (s)

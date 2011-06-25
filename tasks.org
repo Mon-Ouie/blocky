@@ -1,10 +1,3 @@
-*** TODO review / prioritize tasks
-*** TODO executing list block, music, sounds
-*** TODO type methods at the command line
-*** TODO [#B] start using terminal output for status message output
-*** TODO [#B] fix terminal block creation, method block creation, and text color
-*** TODO [#B] add more information to method+prototype databases
-** TODO Fix menus not closing
 ** TODO Turtle graphics video demo
 **** TODO [#B] allow method options plist (METHODNAME &rest options) in place of METHODNAME
 **** TODO [#B] categorize methods
@@ -18,6 +11,15 @@
 *** TODO [#B] auto define (%field object) functions? mappable
 *** TODO [#C] tab and shift-tab for input nav
 *** TODO [#C] block colors/backgrounds in a list subprogram could disappear, making it look like text source code?
+*** TODO executing list block, music, sounds
+*** TODO dialog boxes are fancy SEND blocks that send to *system*
+*** TODO fix not being able to pull out sprites (or any top item) from list
+*** TODO review / prioritize tasks
+*** TODO type methods at the command line
+*** TODO [#B] start using terminal output for status message output
+*** TODO [#B] fix terminal block creation, method block creation, and text color
+*** TODO [#B] add more information to method+prototype databases
+** TODO Fix menus not closing
 ** TODO Fix wrong package name:  0: (IOFORMS::FIND-PROTOTYPE "IOFORMS:TURTLE" NIL) 1: (IOFORMS:MAKE-BLOCK (TURTLE))
   2: (IOFORMS:BLOCK-PROMPT/DO-SEXP ..)
   3: (IOFORMS:PROMPT/ENTER ..)

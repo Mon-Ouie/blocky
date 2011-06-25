@@ -293,6 +293,9 @@ for backward-compatibility."
 
 ;;; Event handling and blocks
 
+(defvar *pointer-x* 0)
+(defvar *pointer-y* 0)
+
 (defun send-to-blocks (event &optional (blocks *blocks*))
   (labels ((try (block)
 	     (send :handle-event block event)))
@@ -672,6 +675,7 @@ display."
 				       :position *window-position*)
 			   (do-orthographic-projection))
       (:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
+			   (setf *pointer-x* x *pointer-y* y)
 			   (let ((block (hit-blocks x y *blocks*)))
 			     (when block
 			       (send :mouse-move block x y))))

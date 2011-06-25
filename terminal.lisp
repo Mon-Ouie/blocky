@@ -249,12 +249,12 @@ The modes can be toggled with CONTROL-X.")
 			    (subseq %line 0 %point)
 			    string
 			    (subseq %line %point)))
-  (incf %point (length string))
-  ;; if the insertion ends with a period, also execute the command
-  ;; line.
-  (when (string= "." (subseq string (1- (length string))))
-    (setf %line (subseq string 0 (1- (length string))))
-    (execute self)))
+  (incf %point (length string)))
+  ;; ;; if the insertion ends with a period, also execute the command
+  ;; ;; line.
+  ;; (when (string= "." (subseq string (1- (length string))))
+  ;;   (setf %line (subseq string 0 (1- (length string))))
+  ;;   (execute self)))
 
 (define-method backward-delete-char prompt ()
   (when (< 0 %point) 

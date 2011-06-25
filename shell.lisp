@@ -22,6 +22,31 @@
 
 (in-package :ioforms)
 
+;;; Trash can
+
+(defblock trash :category :system)
+
+(define-method run trash ())
+(define-method execute trash ())
+(define-method update trash ())
+(define-method accept trash (item)
+  (push item %inputs))
+
+(defun trash-status-string (count)
+  (format nil "trash (~S items)" count))
+
+(define-method layout trash ()
+  (setf %width (dash 4 (font-text-extents 
+		       (trash-status-string 
+			(length %inputs))
+		       *block-font*)))
+  (setf %height (dash 4 (font-height *block-font*))))
+
+(define-method draw trash ()
+  (draw-background self)
+  (draw-label-string self (trash-status-string (length %inputs))
+		     "yellow"))
+
 ;;; Interactive editor shell
 
 (defblock shell

@@ -27,7 +27,7 @@
 ;;; Probability
 
 (defmacro percent-of-time (percent &body body)
-  `(when (< (random 100) ,percent)
+  `(when (< (random 100.0) ,percent)
      ,@body))
 
 (defun roll (rolls &optional (sides 6) (adds 0))
