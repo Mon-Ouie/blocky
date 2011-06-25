@@ -44,21 +44,6 @@
   :color "black"
   :drawing t)
 
-(DEFINE-PROTOTYPE TURTLE
-    (:PARENT "IOFORMS:SPRITE")
-  :IMAGE
-  "turtle"
-  :HEADING
-  0.0
-  :LINES
-  NIL
-  :STATES
-  NIL
-  :COLOR
-  "black"
-  :DRAWING
-  T)
-
 (defun radian-angle (degrees)
   "Convert DEGREES to radians."
   (* degrees (float (/ pi 180))))
