@@ -567,10 +567,13 @@ placed in corresponding positions of %RESULTS. Override this method
 when defining new blocks if you don't want to evaluate all the
 inputs all the time."
   (with-fields (inputs results) self
-    (dotimes (n (length inputs))
-      (when (nth n inputs)
-	(setf (nth n results)
-	      (run (nth n inputs)))))))
+    (let ((arity (length inputs)))
+      (when (< (length results) arity)
+	(setf results (make-list arity)))
+      (dotimes (n arity)
+	(when (nth n inputs)
+	  (setf (nth n results)
+		(run (nth n inputs))))))))
 
 (define-method execute block ()
   "Carry out whatever action this block implements. The %RESULTS field

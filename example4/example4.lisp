@@ -25,8 +25,8 @@
   
 (in-package :example4)
 
-(setf *screen-width* 640)
-(setf *screen-height* 480)
+(setf *screen-width* 800)
+(setf *screen-height* 600)
 (setf *window-title* "blocky.io")
 (enable-key-repeat 9 2)
 
@@ -102,7 +102,9 @@
 (defresource (:name "turtle-theme" :type :music :file "turtle.xm")) 
 
 (define-method (sing :category :sound) turtle ((song string :default "turtle-theme"))
-  (play-music song))
+  (if (zerop (length song))
+      (halt-music)
+      (play-music song :loop t)))
 
 (define-method (restore-state :category :control) turtle ()
   (destructuring-bind (x y heading color) 
@@ -145,13 +147,13 @@
 (define-method (sit-quietly :category :motion) ladybug ()
   (setf %moving nil))
 
-(defresource (:name "chirp" :type :sample :file "chirp.wav"))
+(defresource (:name "chirp" :type :sample :file "chirp.wav" :properties (:volume 80)))
 
 (define-method (sing :category :sound) ladybug 
     ((song string :default ""))
   (when (> (length song)
 	   0)
-    (play-music song)))
+    (play-music song :loop t)))
 
 (define-method (chirp :category :sound) ladybug ()
   (play-sample "chirp"))

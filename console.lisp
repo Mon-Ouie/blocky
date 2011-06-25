@@ -1694,7 +1694,7 @@ of the music."
 (defun seek-music (position)
   (sdl-mixer:music-position position))
 
-(defun halt-music (fade-milliseconds)
+(defun halt-music (&optional (fade-milliseconds 0))
   "Stop all music playing."
   (when *use-sound*
     (sdl-mixer:halt-music fade-milliseconds)))
