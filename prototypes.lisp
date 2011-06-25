@@ -183,26 +183,39 @@ extended argument list ARGLIST."
     (concatenate 'string name
 		 "%%" (symbol-name method))))
 
-(defun add-method-to-dictionary (prototype method arglist)
+(defun add-method-to-dictionary (prototype method arglist &optional options)
   (when (null *methods*)
     (initialize-methods))
   (let ((id (make-method-id prototype method)))
     (assert (stringp id))
-    (setf (gethash id *methods*) arglist)
+    (setf (gethash id *methods*) (list arglist options))
     (values id arglist)))
 	  	  
 (defun find-method-in-dictionary (name method &optional noerror)
   (assert (hash-table-p *methods*))
   (let ((id (make-method-id name method)))
-    (or (gethash id *methods*)
-	(unless noerror
-	  (error "Cannot find method ID: ~S" id)))))
-      
+    (let ((result (gethash id *methods*)))
+      (if (null result)
+	  (if noerror
+	      (values nil nil)
+	      (error "Cannot find method ID: ~S" id))
+	  (values-list result)))))
+
+(defun method-options (name method &optional noerror)
+  (multiple-value-bind (schema options)
+      (find-method-in-dictionary name method noerror)
+    (declare (ignore schema))
+    options))
+
+(defun method-option (name method option)
+  (getf (method-options name method)
+	option))
+	           
 (defun method-schema (prototype method)
   (assert (hash-table-p *methods*))
   (let ((id (make-method-id prototype method)))
     (assert (stringp id))
-    (gethash id *methods*)))
+    (values-list (gethash id *methods*))))
 
 (defun method-argument-entry (prototype method index)
   (assert (integerp index))
@@ -312,35 +325,37 @@ extended argument list ARGLIST."
 		 (setf (gethash k a) v))
 	     b)))
 	       
-(defun make-prototype-id (thing &optional package) 
+(defun make-prototype-id (thing &optional package create) 
   (let ((delimiter ":"))
     (if (null thing)
 	(error "Cannot make a prototype ID for nil.")
-	(apply #'concatenate 'string 
-	       (etypecase thing
-		 (ioforms:object (object-name thing))
-		 (string 
+	(etypecase thing
+	  (ioforms:object (object-name thing))
+	  (string 
+	   (apply #'concatenate 'string 
 		  (if (search delimiter thing)
 		      (list thing)
 		      (list (package-name (or package *package*))
-			    delimiter thing)))
-		 (symbol 
-		  (let ((project-package (symbol-package thing)))
-		    (let ((pak2 
-			   ;; is there a built-in prototype with this
-			   ;; name, or is it something from CL-USER?
-			   (if (or (eq project-package (find-package :cl))
-				   (eq project-package (find-package :common-lisp-user))
-				   (find-prototype 
-				    (concatenate 'string "IOFORMS:" 
-						 (symbol-name thing))
-				    :noerror))
-			       ;; yes. use IOFORMS' version
- 			       :ioforms 
-			       ;; no. use project package
-			       project-package)))
-		      (list (package-name pak2)
-			    delimiter (symbol-name thing))))))))))
+			    delimiter thing))))
+	  (symbol 
+	   (let ((prefix (if package 
+			     (symbol-name package)
+			     (package-name *package*))))
+	     (let ((name (concatenate 'string prefix delimiter (symbol-name thing))))
+	       (let ((proto (find-prototype name :noerror)))
+		 (if proto name
+		     (if create name
+			 (concatenate 'string "IOFORMS" delimiter (symbol-name thing))))))))))))
+		  
+
+		      ;; 	   ;; is there a built-in prototype with this
+		      ;; 	   ;; name, or is it something from CL-USER?
+		      ;; (list 
+		      ;;  (if (find-prototype project-candidate :noerror)
+		      ;; 	   project-candidate
+		      ;; 	   (concatenate 'string "IOFORMS:" 
+		      ;; 			      (symbol-name thing))))))))))))
+
 
 ;;; Object data structure
 
@@ -813,7 +828,7 @@ message queue resulting from the evaluation of EXPR."
 ;; for adding methods to prototypes.
 
 (defmacro define-method
-    (method-name prototype-name arglist &body method-body)
+    (method-specifier prototype-name arglist &body method-body)
   "Define a new method.
 
 METHOD-NAME is a symbol naming the method.  PROTOTYPE-NAME is the name
@@ -828,78 +843,85 @@ The forms in METHOD-BODY are executed when the method is invoked.
 The hidden argument `self' may be referred to as needed within
 the method body; it is bound to the object upon which the method
 was invoked."
+  (assert method-specifier)
   (when (listp prototype-name)
     (error "Must specify a prototype name, found argument list instead. Did you forget?"))
   ;; build the components of the defun
-  (let* ((documentation (if (stringp (first method-body))
-			    (first method-body)))
-	 (body2 (remove-if #'stringp (transform-method-body method-body)))
-	 ;; handle DECLARE forms when these appear first
-	 (declaration (when (and (listp (first body2))
-				 (eq 'declare (first (first body2))))
-			(first body2)))
-	 (declaration2 (append '(declare (ignorable self))
-			       (when declaration
-				 ;; paste, skipping the declaration keyword
-				 (rest declaration))))
-	 (prototype-id (make-prototype-id prototype-name))
-	 (field-name (make-keyword method-name))
-	 (method-symbol-name (symbol-name method-name))
-	 (method-symbol method-name) ;; fixme, unclear naming
-	 (defun-symbol (intern (concatenate 'string
-					    method-symbol-name
-					    "%%"
-					    (symbol-name prototype-name))))
-	 (queue-defun-symbol (intern (concatenate 'string
-						  "QUEUE%"
-						  method-symbol-name)))
-	 (next-defun-symbol (intern (concatenate 'string
-						  "NEXT%"
-						  method-symbol-name)))
-	 (method-lambda-list (if (is-extended-arglist arglist)
-				 (make-lambda-list arglist)
-				 arglist)))
-    (let ((name (gensym)))
-      `(let ((prototype (find-prototype ,prototype-id :noerror)))
-	 ;; make sure it exists
-	 (when (null prototype)
-	   (error (format nil "Cannot define method ~A for nonexistent prototype ~A"
-			  ',method-name ,prototype-id)))
-	 ;; define the method's Lisp function
-	 (defun ,defun-symbol (self ,@method-lambda-list)
-	   ,@(if documentation (list documentation))
-	   ,declaration2
-	   ,@(if declaration 
-		 (rest body2)
-		 body2))
-	 ;; store the method's function in the prototype's field
-	 (setf (field-value ,field-name prototype) ',defun-symbol)
-	 ;; add this method to the method dictionary
-	 (add-method-to-dictionary 
-	  ,prototype-id
-	  ,(make-keyword method-name)
-	  ',arglist)
-	 ;; define the other functions
-	 (export ',defun-symbol)
-	 (let ((,name ,(make-keyword method-name)))
-	   (unless (fboundp ',method-symbol)
-	     (defun ,method-symbol (self &rest args)
-	       ,@(when documentation (list documentation))
-	       (apply #'send ,name self args))
-	     (export ',method-symbol)
-	     ;; and for message queueing
-	     (defun ,queue-defun-symbol (self &rest args)
-	       ,@(when documentation (list documentation))
-	       (apply #'send-queue ,name self args))
-	     (export ',queue-defun-symbol)
-	     ;; and for next-method calls.
-	     (defun ,next-defun-symbol (self &rest args)
-	       ,@(when documentation (list documentation))
-	       (apply #'send-next ,name self args))
-	     (export ',next-defun-symbol)))))))
-
+  (let ((method-name (etypecase method-specifier
+		       (symbol method-specifier)
+		       (list (first method-specifier))))
+	(options (when (listp method-specifier)
+		   (rest method-specifier))))
+    (let* ((documentation (if (stringp (first method-body))
+			      (first method-body)))
+	   (body2 (remove-if #'stringp (transform-method-body method-body)))
+	   ;; handle DECLARE forms when these appear first
+	   (declaration (when (and (listp (first body2))
+				   (eq 'declare (first (first body2))))
+			  (first body2)))
+	   (declaration2 (append '(declare (ignorable self))
+				 (when declaration
+				   ;; paste, skipping the declaration keyword
+				   (rest declaration))))
+	   (prototype-id (make-prototype-id prototype-name nil :create))
+	   (field-name (make-keyword method-name))
+	   (method-symbol-name (symbol-name method-name))
+	   (method-symbol method-name) ;; fixme, unclear naming
+	   (defun-symbol (intern (concatenate 'string
+					      method-symbol-name
+					      "%%"
+					      (symbol-name prototype-name))))
+	   (queue-defun-symbol (intern (concatenate 'string
+						    "QUEUE%"
+						    method-symbol-name)))
+	   (next-defun-symbol (intern (concatenate 'string
+						   "NEXT%"
+						   method-symbol-name)))
+	   (method-lambda-list (if (is-extended-arglist arglist)
+				   (make-lambda-list arglist)
+				   arglist)))
+      (let ((name (gensym)))
+	`(let ((prototype (find-prototype ,prototype-id :noerror)))
+	   ;; make sure it exists
+	   (when (null prototype)
+	     (error (format nil "Cannot define method ~A for nonexistent prototype ~A"
+			    ',method-name ,prototype-id)))
+	   ;; define the method's Lisp function
+	   (defun ,defun-symbol (self ,@method-lambda-list)
+	     ,@(if documentation (list documentation))
+	     ,declaration2
+	     ,@(if declaration 
+		   (rest body2)
+		   body2))
+	   ;; store the method's function in the prototype's field
+	   (setf (field-value ,field-name prototype) ',defun-symbol)
+	   ;; add this method to the method dictionary
+	   (add-method-to-dictionary 
+	    ,prototype-id
+	    ,(make-keyword method-name)
+	    ',arglist
+	    ',options)
+	   ;; define the other functions
+	   (export ',defun-symbol)
+	   (let ((,name ,(make-keyword method-name)))
+	     (unless (fboundp ',method-symbol)
+	       (defun ,method-symbol (self &rest args)
+		 ,@(when documentation (list documentation))
+		 (apply #'send ,name self args))
+	       (export ',method-symbol)
+	       ;; and for message queueing
+	       (defun ,queue-defun-symbol (self &rest args)
+		 ,@(when documentation (list documentation))
+		 (apply #'send-queue ,name self args))
+	       (export ',queue-defun-symbol)
+	       ;; and for next-method calls.
+	       (defun ,next-defun-symbol (self &rest args)
+		 ,@(when documentation (list documentation))
+		 (apply #'send-next ,name self args))
+	       (export ',next-defun-symbol))))))))
+  
 ;;; Defining prototypes
-
+  
 ;; Objects are created by cloning them from "prototypes". Prototypes
 ;; are named objects that represent prototypical instances of a
 ;; certain kind of object. This section implements `define-prototype',
@@ -1018,8 +1040,7 @@ OPTIONS is a property list of field options. Valid keys are:
 			      declarations))
 	 (descriptors (mapcar #'transform-declaration 
 			      pre-descriptors))
-	 (prototype-id (make-prototype-id name))
-
+	 (prototype-id (make-prototype-id name (project-package-name) t ))
 	 (field-initializer-body (delete nil (mapcar #'make-field-initializer 
 						     descriptors)))
 	 (parent-sym (gensym)))

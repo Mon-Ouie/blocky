@@ -1,9 +1,19 @@
 *** TODO review / prioritize tasks
-*** TODO add all missing keyboard characters
-*** TODO [#A] test input boxes
-*** TODO [#A] Generic block type should be able to send any message, with typed arg block wid
+*** TODO executing list block, music, sounds
+*** TODO type methods at the command line
+*** TODO [#B] start using terminal output for status message output
+*** TODO [#B] fix terminal block creation, method block creation, and text color
+*** TODO [#B] add more information to method+prototype databases
+** TODO Fix menus not closing
+** TODO Turtle graphics video demo
+**** TODO [#B] allow method options plist (METHODNAME &rest options) in place of METHODNAME
+**** TODO [#B] categorize methods
+**** TODO [#B] list all methods with schema for a given prototype, culling parents, removing duplicates
+*** TODO [#B] test input computation and make sure %results has enough room
+*** TODO Uniform read-error handling for entries
+*** TODO [#B] allow schema arguments to not all be shown
+*** TODO [#B] add all missing keyboard characters
 *** TODO [#A] dialog boxes for project save/load!
-*** TODO [#A] test input computation and make sure %results has enough room
 *** TODO [#B] make the visual plists match the keyword arguments of the actual schema-ified methods
 *** TODO [#B] auto define (%field object) functions? mappable
 *** TODO [#C] tab and shift-tab for input nav
@@ -16,8 +26,6 @@
 *** TODO cursor should negate underlying letter, not overpaint
 *** TODO execute should do nothing by default; fix make-block to not use %operation
 gets for entering the values
-** TODO Fix menus not closing
-** TODO Turtle graphics video demo
 ** TODO [#B] comment block for output messages in listener etc, trap errors
 ** TODO [#B] Fix menu behavior: properly check other menu widgets in menubar hit before menu
 ** TODO [#A] fix argument blocks not being created (AGAIN)

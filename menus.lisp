@@ -64,7 +64,8 @@
   (setf %expanded nil)
   (report-layout-change *script*))
 
-(define-method click menu ()
+(define-method click menu (x y)
+  (declare (ignore x y))
   (with-fields (expanded action target) self
     (if (keywordp action)
         (send action (or target (symbol-value '*system*)))

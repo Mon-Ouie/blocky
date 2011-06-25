@@ -68,6 +68,25 @@
   "List of keywords used to group blocks into different functionality
 areas.")
 
+(defparameter *background-color* "white"
+  "The default background color of the IOFORMS user interface.")
+
+(defparameter *socket-color* "gray80"
+  "The default background color of block sockets.")
+
+(defparameter *block-font* "sans-condensed-bold-11"
+  "The font used in drawing block labels and input data.")
+
+(defvar *dash* 3
+  "Size in pseudo-pixels of (roughly) the size of the space between
+two words. This is used as a unit for various layout operations.")
+
+(defun dash (n &rest terms)
+  (apply #'+ (* n *dash*) terms))
+
+(defvar *pseudo-pixel-size* 1.0
+  "Size in pixels of a pseudo-pixel.")
+
 (defvar *target* nil)
 
 (defmacro with-target (target &body body)
@@ -178,11 +197,14 @@ By default, just update each child block."
 
 (defun (setf input) (self name value)
   (with-fields (inputs) self
-    (assert (not (object-p name)))
+;    (assert (not (object-p name)))
     (assert (not (null inputs)))
     (setf (nth (input-position self name) inputs)
 	  ;; store the real link
   	  (find-object value))))
+
+(define-method position-within-parent block ()
+  (input-position %parent self))
 
 (defun named-input-type (self name)
   (with-fields (schema) self
@@ -223,7 +245,8 @@ initialized with BLOCKS as inputs."
 
 ;;; Defining keyboard/mouse/joystick events for blocks
 
-(define-method click block ())
+(define-method click block (mouse-x mouse-y)
+  (declare (ignore mouse-x mouse-y)))
 
 (define-method initialize-events-table-maybe block (&optional force)
   (when (or force 
@@ -252,7 +275,8 @@ the return value of the function (if any)."
     (when events
       (let ((func (gethash event events)))
 	(if func
-	    (values t (funcall func))
+	    (prog1 (values t (funcall func))
+	      (signal-layout-needed self))
 	    (values nil nil))))))
 
 (defun bind-event-to-method (block event-name modifiers method-name)
@@ -323,10 +347,10 @@ Where BLOCK-NAME is the name of a prototype defined with `defblock'
 and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   ;; use labels because we need to call make-block from inside
   (labels ((action-block (spec)
-	     (destructuring-bind (operation &rest arguments) spec
+	     (destructuring-bind (proto &rest arguments) spec
 	       (let ((prototype 		       
 		      (find-prototype 
-		       (make-prototype-id operation 
+		       (make-prototype-id proto 
 					  ;; wait, is this wrong? wrong prototype?
 					  (or (make-block-package)
 					      (find-package "IOFORMS")))))
@@ -351,6 +375,14 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method execute send ()
   (apply #'send %method *target* (mapcar #'execute %inputs)))
 
+(define-method click send (x y)
+  (declare (ignore x y))
+  (execute self))
+
+(define-method accept send (block)
+  ;; make these click-align instead
+  (declare (ignore block)))
+
 (defun pretty-symbol-string (thing)
   (let ((name (etypecase thing
 		(symbol (symbol-name thing))
@@ -363,9 +395,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (let ((schema (method-schema (find-prototype prototype) method))
 	(inputs nil))
     (dolist (entry schema)
-      (message "ENTRY ~S" (list entry :OOOO (type-of (schema-name entry))))
       (push (new entry
 		 :value (schema-option entry :default)
+		 :parent self
 		 :type-specifier (schema-type entry)
 		 :options (schema-options entry)
 		 :name (concatenate 'string
@@ -489,10 +521,10 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 (define-method unplug block (input)
   "Disconnect the block INPUT from this block."
-  (prog1 input
-    (plug self (null-block)
-	  (input-position self input))
-    (set-parent input nil)))
+  (with-fields (inputs) self
+    (prog1 input
+      (setf inputs (delete input inputs :test 'eq :key #'find-object))
+      (set-parent input nil))))
 
 (define-method unplug-from-parent block ()
   (with-fields (parent) self
@@ -569,34 +601,6 @@ current block. Used for taking a census."
 		  (mapcar #'count-tree 
 			  (field-value :inputs tree))))))
 
-(defparameter *display-widgets*
-   '(:integer "IOFORMS:INTEGER"
-     :float "IOFORMS:FLOAT"
-     :string "IOFORMS:TEXTBOX"
-     :symbol "IOFORMS:OPTION")
-  "A property list mapping some input type keywords to corresponding
-widget prototypes used for editing that kind of value. The actual
-prototypes mentioned are defined in terminal.lisp, which see.")
-
-(defparameter *background-color* "white"
-  "The default background color of the IOFORMS user interface.")
-
-(defparameter *socket-color* "gray80"
-  "The default background color of block sockets.")
-
-(defparameter *block-font* "sans-condensed-bold-11"
-  "The font used in drawing block labels and input data.")
-
-(defvar *dash* 3
-  "Size in pseudo-pixels of (roughly) the size of the space between
-two words. This is used as a unit for various layout operations.")
-
-(defun dash (n &rest terms)
-  (apply #'+ (* n *dash*) terms))
-
-(defvar *pseudo-pixel-size* 1.0
-  "Size in pixels of a pseudo-pixel.")
-
 (defparameter *block-colors*
   '(:motion "cornflower blue"
     :system "gray50"
@@ -605,8 +609,8 @@ two words. This is used as a unit for various layout operations.")
     :hover "red"
     :socket "gray60"
     :data "gray50"
-    :structure "gray60"
-    :comment "grey70"
+    :structure "gray80"
+    :comment "khaki"
     :looks "purple"
     :sound "orchid"
     :message "sienna3"
@@ -622,11 +626,11 @@ two words. This is used as a unit for various layout operations.")
     :hover "dark orange"
     :event "gray90"
     :menu "gray80"
-    :comment "grey90"
+    :comment "goldenrod"
     :looks "medium orchid"
     :socket "gray80"
     :data "gray80"
-    :structure "gray80"
+    :structure "gray92"
     :sound "plum"
     :message "sienna2"
     :control "gold"
@@ -636,14 +640,14 @@ two words. This is used as a unit for various layout operations.")
   "X11 color names of highlights on the different block categories.")
 
 (defparameter *block-shadow-colors*
-  '(:motion "steel blue"
+  '(:motion "royal blue"
     :system "gray50"
     :event "gray70"
     :socket "gray90"
     :data "gray55"
     :menu "gray70"
-    :structure "gray45"
-    :comment "grey40"
+    :structure "gray60"
+    :comment "goldenrod"
     :hover "orange red"
     :looks "dark orchid"
     :sound "violet red"
@@ -658,7 +662,7 @@ two words. This is used as a unit for various layout operations.")
   '(:motion "white"
     :system "white"
     :event "gray40"
-    :comment "gray30"
+    :comment "black"
     :socket "gray20"
     :hover "yellow"
     :data "white"
@@ -683,7 +687,8 @@ of block."
 		  (:highlight *block-highlight-colors*)
 		  (:shadow *block-shadow-colors*)
 		  (:foreground *block-foreground-colors*))))
-    (getf colors %category)))
+    (let ((result (getf colors %category)))
+      (or result (prog1 nil (message "WARNING: cannot find color ~S" part))))))
 
 (defparameter *selection-color* "red")
 
@@ -878,6 +883,10 @@ override all colors."
 (defparameter *highlight-background-color* "gray80")
 (defparameter *highlight-foreground-color* "gray20")
 
+(define-method get-focus block () nil)
+
+(define-method lose-focus block () nil)
+
 (define-method draw-focus block () nil)
 
 (define-method draw-highlight block () nil)
@@ -889,10 +898,11 @@ override all colors."
 (defparameter *hover-color* "red")
 
 (define-method draw-hover block ()
-  (with-fields (x y width height) self
+  (with-fields (x y width height inputs) self
     (draw-patch self x y (+ x *dash* width) (+ y *dash* height)
 	      :color *hover-color*)
-    (draw-contents self)))
+    (dolist (input inputs)
+      (draw input))))
 
 (define-method hit block (mouse-x mouse-y)
   "Return this block (or input block) if the coordinates MOUSE-X and
@@ -1075,12 +1085,6 @@ MOUSE-Y identify a point inside the block (or input block.)"
       (dolist (each inputs)
 	(layout each))
       (setf needs-layout nil))))
-
-(define-method unplug script (input)
-  "Disconnect the block INPUT from this block."
-  (prog1 input
-    (delete-input self input)
-    (set-parent input nil)))
 
 (define-method initialize script (&key blocks variables target)
   (setf %blocks blocks)

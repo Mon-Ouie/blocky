@@ -28,7 +28,13 @@
   (selection :initform ()
   	     :documentation "Subset of selected blocks.")
   (script :initform nil)
-  menu terminal
+  (default-events :initform
+		  '(((:tab) :tab)
+		    ((:tab :control) :backtab)
+		    ((:x :alt) :command-line)
+		    ((:g :control) :escape)
+		    ((:escape) :escape)))
+  menubar terminal
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
   (hover :initform nil
@@ -96,18 +102,19 @@
 			    :test 'eq :key #'find-parent))))
 
 (define-method handle-event shell (event)
-  (with-field-values (selection script) self
-       (let ((block
-		(cond 
-		  ;; only one block selected. use that.
-		  ((= 1 (length selection))
-		   (first selection))
-		  ;; nothing selected, only 1 top-level block.
-		  ((= 1 (count-toplevel-blocks script))
-		   (first (toplevel-blocks script))))))
+  (or (next%handle-event self event)
+      (with-field-values (selection script) self
+	(let ((block
+		  (cond 
+		    ;; only one block selected. use that.
+		    ((= 1 (length selection))
+		     (first selection))
+		    ;; nothing selected, only 1 top-level block.
+		    ((= 1 (count-toplevel-blocks script))
+		     (first (toplevel-blocks script))))))
 	  (when block 
 	    (with-script script
-	      (handle-event block event))))))
+	      (handle-event block event)))))))
 
 (define-method hit shell (x y)
   ;; return self no matter where mouse is, so that we get to process
@@ -161,19 +168,42 @@
 	    (progn (layout drag)
 		   (when (field-value :parent drag)
 		     (draw-ghost ghost))
-		   (draw drag)
 		   ;; also draw any hover-over highlights 
 		   ;; on objects you might drop stuff onto
 		   (when hover 
-		     (draw-hover hover)))
+		     (draw-hover hover))
+		   (draw drag))
 	    (when focused-block
-	      ;(draw-border focused-block)
-	      (draw focused-block)
 	      (draw-focus focused-block)))
 	(when highlight
 	  (draw-highlight highlight))))))
 
 (defparameter *minimum-drag-distance* 7)
+
+(define-method command-line shell ()
+  (setf %focused-widget 
+	(get-prompt %terminal)))
+
+(define-method escape shell ()
+  (close-menus %menubar)
+  (setf %focused-widget nil)
+  (setf %selection nil))
+
+(define-method tab shell (&optional backward)
+  (with-fields (focused-block) self
+    (when focused-block
+      (with-fields (parent) focused-block
+	(let ((index (position-within-parent focused-block)))
+	  (when (numberp index)
+	    (setf focused-block 
+		  (with-fields (inputs) parent
+		    (nth (mod (+ index
+				 (if backward -1 1))
+			      (length inputs))
+			 inputs)))))))))
+
+(define-method backtab shell ()
+  (tab self :backward))
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag inputs script drag-start ghost drag-offset) self
@@ -181,7 +211,7 @@
     (setf drag block)
     ;; remove from script if it's a top-level block.
     (when (object-eq script (get-parent block))
-      (delete-input script block))
+      (unplug script block))
     (let ((dx (field-value :x block))
 	  (dy (field-value :y block))
 	  (dw (field-value :width block))
@@ -210,17 +240,21 @@
 	  (begin-drag self x y focused-block))))))
 
 (define-method mouse-down shell (x y &optional button)
-  (let ((block (hit-script self x y)))
-    (if block
-	(case button
-	  (1  (with-fields (click-start focused-block) self
-		(setf focused-block block)
-		(setf click-start (cons x y))))
-	  (3 (let ((menu (context-menu block)))
-	       (when menu 
-		 (with-script %script
-		   (add-block *script* menu x y))))))
-	(setf %focused-block nil))))
+  (with-fields (click-start focused-block) self
+    (when focused-block
+      (lose-focus focused-block))
+    (setf focused-block nil)
+    (let ((block (hit-script self x y)))
+      (if block
+	  (case button
+	    (1  (progn 
+		  (setf focused-block block)
+		  (setf click-start (cons x y))))
+	    (3 (let ((menu (context-menu block)))
+		 (when menu 
+		   (with-script %script
+		     (add-block *script* menu x y))))))
+	  (setf focused-block nil)))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
   (with-fields (inputs hover highlight click-start drag-offset
@@ -238,8 +272,8 @@
 	(progn
 	  (setf highlight (hit-script self mouse-x mouse-y))
 	  (when (null highlight)
-	    (when %menu
-	      (with-script %script (close-menus %menu))))))))
+	    (when %menubar
+	      (with-script %script (close-menus %menubar))))))))
 
 (define-method mouse-up shell (x y &optional button)
   (with-fields 
@@ -265,12 +299,13 @@
 	  (setf focused-block drag))
 ;	  (setf hover nil))
 	;; ok, we're not dragging.
+	;; instead it was a click.
 	(progn
 	  (setf selection nil)
 	  (when focused-block
 	    (select self focused-block)
 	    (with-script script 
-	      (click focused-block))
+	      (click focused-block x y))
 ;	    (setf focused-block nil)
 	    (setf click-start nil))))
     (setf drag-start nil

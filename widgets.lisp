@@ -221,19 +221,20 @@ auto-updated displays."
 
 ;; No fancy formatting, but editable and supports scrolling.
 
-(defparameter *textbox-margin* 4 "Default onscreen margin (in pixels) of a textbox.")
+(defparameter *textbox-margin* (dash 2) "Default onscreen margin (in pixels) of a textbox.")
 
-(defparameter *textbox-minimum-width* 10) 
+(defparameter *textbox-minimum-width* 80) 
 
 (define-prototype textbox (:parent "IOFORMS:BLOCK")
-  (font :initform "default-font")
+  (font :initform *block-font*)
   (buffer :initform nil)
+  (category :initform :comment)
   (read-only :initform nil)
   (bordered :initform nil)
-  (max-displayed-rows :initform nil :documentation "An integer when scrolling is enabled.")
+  (max-displayed-lines :initform nil :documentation "An integer when scrolling is enabled.")
   (max-displayed-columns :initform nil)
   (background-color :initform "gray30")
-  (foreground-color :initform "white")
+  (foreground-color :initform "black")
   (cursor-color :initform "yellow")
   (point-row :initform 0)
   (point-column :initform 0)
@@ -256,19 +257,19 @@ auto-updated displays."
 (defparameter *next-screen-context-lines* 3)
 
 (define-method page-up textbox ()
-  "Scroll up one page, only when %max-displayed-rows is set."
-  (with-field-values (max-displayed-rows) self
-    (when (integerp max-displayed-rows)
+  "Scroll up one page, only when %max-displayed-lines is set."
+  (with-field-values (max-displayed-lines) self
+    (when (integerp max-displayed-lines)
       (setf %point-row (max 0
-			   (- %point-row (- max-displayed-rows
+			   (- %point-row (- max-displayed-lines
 					     *next-screen-context-lines*)))))))
 
 (define-method page-down textbox ()
-  "Scroll down one page, only when %max-displayed-rows is set."
-  (with-field-values (max-displayed-rows) self
-    (when (integerp max-displayed-rows)
-      (setf %point-row (min (- (length %buffer) max-displayed-rows)
-			     (+ %point-row (- max-displayed-rows
+  "Scroll down one page, only when %max-displayed-lines is set."
+  (with-field-values (max-displayed-lines) self
+    (when (integerp max-displayed-lines)
+      (setf %point-row (min (- (length %buffer) max-displayed-lines)
+			     (+ %point-row (- max-displayed-lines
 					     *next-screen-context-lines*)))))))
 
 (define-method auto-center textbox ()
@@ -280,17 +281,15 @@ auto-updated displays."
 	    %y (- center-y (truncate (/ height 2)))))))
 
 (define-method resize-to-scroll textbox (&key width height)
-  "Resize the textbox to WIDTH * HEIGHT and enable scrolling of contents.
-This method allocates a new SDL surface."
+  "Resize the textbox to WIDTH * HEIGHT and enable scrolling of contents."
   (assert (and (numberp width) (numberp height)))
   (resize self :height height :width width)
-  (setf %max-displayed-rows (truncate (/ height (font-height %font)))))
+  (setf %max-displayed-lines (truncate (/ height (font-height %font)))))
 
 (define-method resize-to-fit textbox ()
-  "Automatically resize the textbox to fit the text, and disable scrolling.
-This method allocates a new SDL surface when necessary."
+  "Automatically resize the textbox to fit the text, and disable scrolling."
   ;; disable scrolling
-  (setf %max-displayed-rows nil)
+  (setf %max-displayed-lines nil)
   ;; measure text
   (let* ((buffer %buffer)
 	 (line-height (font-height %font))
@@ -316,56 +315,61 @@ This method allocates a new SDL surface when necessary."
 (define-method move-beginning-of-line textbox ()
   (setf %point-column 0))
 
-(defun bind-key-to-textbox-insertion (textbox key modifiers &optional (insertion key))
+(defun bind-event-to-textbox-insertion (textbox key modifiers &optional (insertion key))
   "For textbox P ensure that the event (KEY MODIFIERS) causes the
 text INSERTION to be inserted at point."
- (define-key textbox (string-upcase key) modifiers
-	      #'(lambda ()
-		  (insert textbox insertion))))
+ (bind-event-to-function 
+  textbox 
+  (string-upcase key)
+  modifiers
+  #'(lambda ()
+      (insert textbox insertion))))
 
 (define-method install-keybindings textbox ()
   ;; install basic keybindings
-  (bind-key-to-method self "A" '(:control) :move-beginning-of-line)
-  (bind-key-to-method self "E" '(:control) :move-end-of-line)
-  (bind-key-to-method self "HOME" nil :move-beginning-of-line)
-  (bind-key-to-method self "END" nil :move-end-of-line)
-  (bind-key-to-method self "N" '(:control) :next-line)
-  (bind-key-to-method self "P" '(:control) :previous-line)
-  (bind-key-to-method self "F" '(:control) :forward-char)
-  (bind-key-to-method self "B" '(:control) :backward-char)
-  (bind-key-to-method self "DOWN" nil :next-line)
-  (bind-key-to-method self "UP" nil :previous-line)
-  (bind-key-to-method self "RIGHT" nil :forward-char)
-  (bind-key-to-method self "LEFT" nil :backward-char)
-  (bind-key-to-method self "K" '(:control) :clear)
-  (bind-key-to-method self "BACKSPACE" nil :backward-delete-char)
-  (bind-key-to-method self "RETURN" nil :newline)
+  (bind-event-to-method self "A" '(:control) :move-beginning-of-line)
+  (bind-event-to-method self "E" '(:control) :move-end-of-line)
+  (bind-event-to-method self "HOME" nil :move-beginning-of-line)
+  (bind-event-to-method self "END" nil :move-end-of-line)
+  (bind-event-to-method self "N" '(:control) :next-line)
+  (bind-event-to-method self "P" '(:control) :previous-line)
+  (bind-event-to-method self "F" '(:control) :forward-char)
+  (bind-event-to-method self "B" '(:control) :backward-char)
+  (bind-event-to-method self "DOWN" nil :next-line)
+  (bind-event-to-method self "UP" nil :previous-line)
+  (bind-event-to-method self "RIGHT" nil :forward-char)
+  (bind-event-to-method self "LEFT" nil :backward-char)
+  (bind-event-to-method self "K" '(:control) :clear)
+  (bind-event-to-method self "BACKSPACE" nil :backward-delete-char)
+  (bind-event-to-method self "RETURN" nil :newline)
   ;; install keybindings for self-inserting characters
   (map nil #'(lambda (char)
-	       (bind-key-to-textbox-insertion self (string char) nil
+	       (bind-event-to-textbox-insertion self (string char) nil
 					     (string-downcase char)))
        *lowercase-alpha-characters*)
   (map nil #'(lambda (char)
-	       (bind-key-to-textbox-insertion self (string char) '(:shift)))
+	       (bind-event-to-textbox-insertion self (string char) '(:shift)))
        *uppercase-alpha-characters*)
   (map nil #'(lambda (char)
-	       (bind-key-to-textbox-insertion self (string char) nil))
+	       (bind-event-to-textbox-insertion self (string char) nil))
        *numeric-characters*)
   ;; other characters
-  (bind-key-to-textbox-insertion self "EQUALS" nil "=")
-  (bind-key-to-textbox-insertion self "MINUS" nil "-")
-  (bind-key-to-textbox-insertion self "EQUALS" '(:control) "+")
-  (bind-key-to-textbox-insertion self "SEMICOLON" nil ";")
-  (bind-key-to-textbox-insertion self "SEMICOLON" '(:shift) ":")
-  (bind-key-to-textbox-insertion self "0" '(:shift) ")")
-  (bind-key-to-textbox-insertion self "9" '(:shift) "(")
-  (bind-key-to-textbox-insertion self "8" '(:shift) "*")
-  (bind-key-to-textbox-insertion self "SPACE" nil " ")
-  (bind-key-to-textbox-insertion self "QUOTE" nil "'")
-  (bind-key-to-textbox-insertion self "QUOTE" '(:shift) "\""))
+  (bind-event-to-textbox-insertion self "EQUALS" nil "=")
+  (bind-event-to-textbox-insertion self "MINUS" nil "-")
+  (bind-event-to-textbox-insertion self "EQUALS" '(:control) "+")
+  (bind-event-to-textbox-insertion self "SEMICOLON" nil ";")
+  (bind-event-to-textbox-insertion self "SEMICOLON" '(:shift) ":")
+  (bind-event-to-textbox-insertion self "0" '(:shift) ")")
+  (bind-event-to-textbox-insertion self "9" '(:shift) "(")
+  (bind-event-to-textbox-insertion self "8" '(:shift) "*")
+  (bind-event-to-textbox-insertion self "SPACE" nil " ")
+  (bind-event-to-textbox-insertion self "QUOTE" nil "'")
+  (bind-event-to-textbox-insertion self "QUOTE" '(:shift) "\""))
 
-(define-method initialize textbox ()
-  (send-next self :initialize self)
+(define-method initialize textbox (&rest buffer)
+  (next%initialize self)
+  (when (and buffer (listp buffer) (every #'stringp buffer))
+    (setf %buffer buffer))
   (install-keybindings self))
 
 (define-method forward-char textbox ()
@@ -464,46 +468,56 @@ text INSERTION to be inserted at point."
 			       remainder)))
 	  (incf point-column)))))
 
-(define-method render textbox ()
-  (when %visible
-    (clear self)
-    (when %auto-fit
-      (resize-to-fit self))
-    (with-fields (buffer x y width height) self
-      (with-field-values (font image point-row) self
-	;; measure text
-	(let* ((line-height (font-height font))
-	       (line-lengths (mapcar #'(lambda (s)
-					 (font-text-extents s font))
-				     buffer)))
+(define-method visible-lines textbox ()
+  (with-fields (buffer max-displayed-lines) self
+    (let ((end (length buffer)))
+      (if %auto-fit 
+	  buffer
+	  (subseq buffer 
+		  %point-row
+		  (if max-displayed-lines
+		      (min end max-displayed-lines)
+		      end))))))
+
+(define-method layout textbox ()
+  (when %auto-fit
+    (resize-to-fit self))
+  (let* ((lines (visible-lines self))
+	 (text-height (* (font-height %font) (length lines))))
+    (setf %height (dash 4 text-height))))
+
+(defparameter *textbox-cursor-width* 2)
+
+(define-method draw textbox ()
+  (with-fields (buffer width height) self
+    (with-field-values (x y font point-row) self
+      ;; measure text
+      (let ((line-height (font-height font)))
 	  ;; draw background
-	  (draw-box 0 0 width height
-		    ;; :stroke-color (if %bordered
-		    ;; 		      %foreground-color
-		    ;; 		      %background-color)
-		    :color %background-color)
+	  (draw-patch self x y 
+		      (+ x width)
+		      (+ y height)
+		      :color (find-color self))
 	  ;; draw text
-	  (let ((x0 (+ 0 *textbox-margin*))
-		(y0 (+ 0 *textbox-margin*))
-		(lines (if %auto-fit 
-			   buffer
-			   (nthcdr %point-row buffer))))
+	  (let* ((x0 (+ x *textbox-margin*))
+		 (y0 (+ y *textbox-margin*))
+		 (lines (visible-lines self))
+		 (text-height (* line-height (length lines))))
 	    (dolist (line lines)
-	      (draw-string-solid line x0 y0 
-				 :font font :color %foreground-color)
-	      (incf y0 line-height)))
-	  ;; draw cursor
-	  ;; TODO fix %point-row to be drawn relative pos in scrolling
-	  (when (null %read-only)
-	    (let* ((current-line (nth %point-row buffer))
-	    	   (cursor-width (font-width font))
-	    	   (x1 (+ 0 *textbox-margin*
-	    		  (font-text-extents (subseq current-line 0 %point-column)
-	    				     font)))
-	    	   (y1 (+ 0 *textbox-margin*
-	    		  (* line-height %point-row))))
-	      (draw-rectangle x1 y1 cursor-width line-height 
-	    		      :color %cursor-color))))))))
+	      (draw-string line x0 y0 
+			   :font font :color %foreground-color)
+	      (incf y0 line-height))
+	    ;; draw cursor
+	    ;; TODO fix %point-row to be drawn relative pos in scrolling
+	    (when (null %read-only)
+	      (let* ((current-line (nth point-row buffer))
+		     (cursor-width *textbox-cursor-width*)
+		     (x1 (+ x *textbox-margin*
+			    (font-text-extents (subseq current-line 0 %point-column)
+					       font)))
+		     (y1 (+ y *textbox-margin* text-height)))
+		(draw-rectangle x1 y1 cursor-width line-height 
+				:color %cursor-color))))))))
 
 ;;; The pager switches between different visible groups of blocks
 
@@ -532,11 +546,11 @@ text INSERTION to be inserted at point."
 	   (s3 () (select self 3))
 	   (s4 () (select self 4))
 	   (s5 () (select self 5)))
-    (define-key self "F1" nil #'s1)
-    (define-key self "F2" nil #'s2)
-    (define-key self "F3" nil #'s3)
-    (define-key self "F4" nil #'s4)
-    (define-key self "F5" nil #'s5)))
+    (bind-event-to-function self "F1" nil #'s1)
+    (bind-event-to-function self "F2" nil #'s2)
+    (bind-event-to-function self "F3" nil #'s3)
+    (bind-event-to-function self "F4" nil #'s4)
+    (bind-event-to-function self "F5" nil #'s5)))
 
 (define-method page-property pager (page-name property-keyword)
   (getf (gethash page-name %properties) property-keyword))

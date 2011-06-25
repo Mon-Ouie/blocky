@@ -33,7 +33,7 @@
 (defparameter *default-prompt-margin* 4)
 
 (defparameter *default-prompt-history-size* 100)
-(defparameter *default-cursor-width* 2)
+(defparameter *default-cursor-width* 1)
 
 (define-prototype prompt
     (:parent "IOFORMS:BLOCK" :documentation 
@@ -94,7 +94,7 @@ The modes can be toggled with CONTROL-X.")
   (point :initform 0 :documentation "Integer index of cursor within prompt line.")
   (line :initform "" :documentation "Currently edited command line.")
   (background :initform t)
-  (prompt-string :initform nil)
+  (prompt-string :initform "> ")
   (category :initform :data)
   (history :initform (make-queue :max *default-prompt-history-size*)
 	   :documentation "A queue of strings containing the command history.")
@@ -143,6 +143,8 @@ The modes can be toggled with CONTROL-X.")
     ("LEFT" nil :backward-char)
     ("K" (:control) :clear-line)
     ("BACKSPACE" nil :backward-delete-char)
+    ("DELETE" nil :delete-char)
+    ("D" (:control) :delete-char)
     ("RETURN" nil :enter)
     ("X" (:control) :exit)
     ("G" (:control) :exit)
@@ -261,6 +263,12 @@ The modes can be toggled with CONTROL-X.")
 			      (subseq %line %point)))
     (decf %point)))
 
+(define-method delete-char prompt ()
+  (when (< 0 %point) 
+    (setf %line (concatenate 'string
+			      (subseq %line 0 %point)
+			      (subseq %line (1+ %point))))))
+
 (define-method print-data prompt (data &optional comment)
   (dolist (line (split-string-on-lines (write-to-string data :circle t :pretty t :escape nil :lines 5)))
     (say self (if comment ";; ~A"
@@ -274,7 +282,7 @@ The modes can be toggled with CONTROL-X.")
       (apply #'send (make-keyword operation) 
 	     receiver (mapcar #'eval arguments)))))
 
-(define-method enter prompt ()
+(define-method enter prompt (&optional no-clear)
   (labels ((print-it (c) 
 	     (print-data self c :comment)))
     (let* ((*read-eval* nil)
@@ -283,7 +291,7 @@ The modes can be toggled with CONTROL-X.")
 		     (read-from-string (concatenate 'string "(" line ")"))
 		   (condition (c)
 		     (print-it c)))))
-      (clear-line self)
+      (unless no-clear (clear-line self))
       (when sexp 
 	(say self "~A" line)
 	(if *prompt-debug-on-error*
@@ -359,6 +367,10 @@ The modes can be toggled with CONTROL-X.")
 	      (* (font-height *block-font*) 0.8)
 	      :color color)))
 
+(define-method label-width prompt () 
+  (+ (dash 3) *default-prompt-margin*
+     (font-text-extents %prompt-string *block-font*)))
+
 (define-method draw-border prompt () nil)
 
 (define-method update-cursor-clock prompt ()
@@ -373,26 +385,22 @@ The modes can be toggled with CONTROL-X.")
     (update-cursor-clock self)
     (draw-cursor self (if (minusp clock)
 			  *prompt-cursor-color*
-			  *prompt-cursor-blink-color*))))
+			  *prompt-cursor-blink-color*)
+		 (dash 4))))
 
 (define-method draw prompt ()
   (with-fields (x y width height clock mode point parent background
-		  line) self
+		  line prompt-string) self
     ;; possibly draw a background
     ;; (cond ((stringp background)
     ;; 	   (draw-background self background))
     ;; 	  ((eq t background)
     ;; 	   (draw-background self)))
-    (let* ((font-height (font-height *block-font*))
-	   (strings-y *default-prompt-margin*)
-	   (prompt-string (or %prompt-string 
-			      (ecase mode
-				(:direct *direct-prompt-string*)
-				(:forward *forward-prompt-string*)))))
+    (let ((strings-y *default-prompt-margin*))
       ;; draw cursor (may be overdrawn with blink when selected
       ;; (when (> point (length line))
       ;;   (setf point (1- (length line))))
-      (draw-cursor self *cursor-inactive-color*)
+      ;; (draw-cursor self *cursor-inactive-color* (dash 3))
       ;; draw prompt string
       (assert (stringp %text-color))
       (draw-string prompt-string
@@ -405,11 +413,29 @@ The modes can be toggled with CONTROL-X.")
       (when (null line) (setf line ""))
       (unless (zerop (length line))
 	(draw-string line
-		     (+ x
+		     (+ x *default-prompt-margin* 
 			(font-text-extents prompt-string *block-font*))
 		     (+ y strings-y)
-		     :color "white"
+		     :color %text-color
 		     :font *block-font*)))))
+
+(define-method click prompt (mouse-x mouse-y)
+  (declare (ignore mouse-y))
+  (with-fields (x y width height clock mode point parent background
+		  line) self
+    ;; find the left edge of the data area
+    (let* ((left (+ x (label-width self) (dash 4)))
+	   (tx (- mouse-x left)))
+      ;; which character was clicked?
+      (let ((click-index 
+	      (block measuring
+		(dotimes (ix (length line))
+		  (when (< tx (font-text-extents 
+			       (subseq line 0 ix)
+			       *block-font*))
+		    (return-from measuring ix))))))
+	(when (numberp click-index)
+	  (setf point click-index))))))
 
 (define-method layout prompt ())
 
@@ -427,26 +453,44 @@ The modes can be toggled with CONTROL-X.")
 
 (define-prototype entry (:parent "IOFORMS:PROMPT")
   (category :initform :value)
+  (pinned :initform t)
   (text-color :initform "white")
   (label-color :initform "white")
   options label name type-specifier value)
 
-(define-method initialize entry (&key value type-specifier options name label-color)
+(define-method initialize entry (&key value type-specifier options name label-color parent)
   (next%initialize self)
   (assert (and value type-specifier))
+  (when parent (setf %parent parent))
   (setf %type-specifier type-specifier
 	%options options
 	%name name
 	%value value)
+  ;; fill in the input box with the value
+  (setf %line (format nil "~S" value))
   (setf %label (getf options :label))
   (when label-color (setf %label-color label-color))
   (when (null %label)
     (setf %pretty-label (pretty-symbol-string name))))
 
-(define-method handle-event entry (event)
-  (prog1 (next%handle-event self event)
-    (signal-layout-needed self)))
-  
+;; (define-method click entry (mouse-x mouse-y)
+;;   (declare (ignore mouse-y))
+;;   (with-fields (x y width height clock mode point parent background
+;; 		  line) self
+;;     ;; find the left edge of the data area
+;;     (let* ((left (+ x (label-width self) (dash 3)))
+;; 	   (tx (- mouse-x left)))
+;;       ;; which character was clicked?
+;;       (let ((click-index 
+;; 	      (block measuring
+;; 		(dotimes (ix (length line))
+;; 		  (when (< tx (font-text-extents 
+;; 			       (subseq line 0 ix)
+;; 			       *block-font*))
+;; 		    (return-from measuring ix))))))
+;; 	(when (numberp click-index)
+;; 	  (setf point click-index))))))
+
 (define-method execute entry ()
   %value)
 
@@ -463,68 +507,94 @@ The modes can be toggled with CONTROL-X.")
   (or (getf %options :label)
       %pretty-label))
 
-(defparameter *minimum-entry-line-width* 24)
+(define-method label-width entry ()
+  (font-text-extents (label-string self) *block-font*))
 
-(define-method draw entry ()
+(defparameter *minimum-entry-line-width* 16)
+
+(define-method draw-entry-label entry ()
+  (let* ((label (label-string self))
+	 (label-width (font-text-extents label *block-font*))
+	 (line-width (font-text-extents %line *block-font*)))
+    (draw-string label
+		 (dash 1 %x)
+		 (+ %y (dash 1))
+		 :color %label-color
+		 :font *block-font*)))
+
+(define-method draw entry (&optional nolabel)
   (with-fields (x y options text-color width height line) self
     ;; draw the label string 
     (assert (stringp text-color))
-    (let* ((label (label-string self))
-	   (label-width (font-text-extents label *block-font*))
-	   (line-width (font-text-extents line *block-font*)))
-      (draw-string label
-		   (dash 1 x)
+    (unless nolabel (draw-entry-label self))
+    ;; draw current input string
+    (when (null line) (setf line ""))
+    (unless (zerop (length line))
+      (draw-string line
+		   (+ (dash 2 x) (label-width self))
 		   (+ y (dash 1))
-		   :color %label-color
-		   :font *block-font*)
-      ;; draw current input string
-      (when (null line) (setf line ""))
-      (unless (zerop (length line))
-	(draw-string line
-		     (+ (dash 2 x) label-width)
-		     (+ y (dash 1))
-		     :color %text-color
-		     :font *block-font*)))))
+		   :color %text-color
+		   :font *block-font*))))
 
 (define-method draw-border entry ())
 
 (define-method draw-hover entry ())
 
 (define-method draw-focus entry () 
-  (with-fields (clock x y width) self
-    (let ((label (label-string self)))
+  (with-fields (clock x y width line parent) self
+    (let* ((label (label-string self))
+	   (label-width (font-text-extents label *block-font*))
+	   (line-width (font-text-extents line *block-font*)))
+      ;; draw shaded area for data entry.
+      ;; makes the cursor show up a bit better too.
+      (draw-box (dash 1.5 x label-width)
+		(dash 1 y)
+		(dash 2 line-width)
+		(+ 1 (font-height *block-font*))
+		:color (when parent
+			 (find-color parent :shadow)))
+      ;; draw cursor.
       (update-cursor-clock self)
       (draw-cursor self (if (minusp clock)
 			    *prompt-cursor-color*
 			    *prompt-cursor-blink-color*)
 		   ;; provide x offset
 		   (dash 2 (font-text-extents label *block-font*)))
+      ;; redraw content (but not label)
+      (draw self :nolabel))))
       ;; draw input area underlining
-      (let* ((label-width (font-text-extents label *block-font*))
-	     (font-height (font-height *block-font*))
-	     (underline-y (round (dash 1 y (* font-height 0.96)))))
-	(draw-line  (dash 2 x label-width) underline-y
-		    (dash 1 x width) underline-y
-		    :color "white"))))) 
+      ;; (let* ((label-width (font-text-extents label *block-font*))
+      ;; 	     (font-height (font-height *block-font*))
+      ;; 	     (underline-y (round (dash 1 y (* font-height 0.96)))))
+      ;; 	(draw-line  (dash 2 x label-width) underline-y
+      ;; 		    (dash 1 x width) underline-y
+      ;; 		    :color "white"))))) 
+
+(define-method lose-focus entry ()
+  (enter self))
 		 
 (define-method do-sexp entry (sexp)
   (assert (and (listp sexp) (= 1 (length sexp))))
-  ;; validate sexp with #'typep
   (let ((datum (first sexp)))
     (if (typep datum %type-specifier)
 	(setf %value datum)
 	(message "Warning: value entered does not match %TYPE-SPECIFIER."))))
+
+(define-method enter entry ()2
+  (next%enter self :no-clear))
+
+(define-method draw-contents entry ())
 	    
-(define-method draw-contents entry ()
-  (with-block-drawing
-    (with-fields (value x y) self
-      (text (+ x (* 2 *dash*))
-	    (+ y *dash* 1)
-	    (print-expression value)))))
+;; (define-method draw-contents entry ()
+;;   (with-block-drawing
+;;     (with-fields (value x y) self
+;;       (text (+ x (* 2 *dash*))
+;; 	    (+ y *dash* 1)
+;; 	    (print-expression value)))))
 
 (define-method layout entry ()
   (with-fields (height width value line) self
-    (setf height (+ (* 2 *dash*) (font-height *block-font*)))
+    (setf height (+ (* 1 *dash*) (font-height *block-font*)))
     (setf width (+ (* 4 *dash*)
 		   (font-text-extents (label-string self) *block-font*)
 		   (max *minimum-entry-line-width*
@@ -562,7 +632,7 @@ The modes can be toggled with CONTROL-X.")
 (define-method do-sexp block-prompt (sexp)
   (with-fields (output) self
     (assert output)
-    (let ((*make-block-package* (find-package :ioforms))
+    (let ((*make-block-package* (find-package (project-package-name)))
 	  (container (get-parent output)))
       (when container
 	(let ((block 
@@ -591,6 +661,11 @@ The modes can be toggled with CONTROL-X.")
 ;; forward keypresses to prompt for convenience
 (define-method handle-event listener (event)
     (handle-event (first %inputs) event))
+
+(define-method get-prompt listener ()
+  (first %inputs))
+
+;;; Bottom-of-the-screen emacs-style command line
 
 (define-prototype terminal (:parent "IOFORMS:LISTENER")
   (scrollback-length :initform 100)
@@ -630,7 +705,7 @@ The modes can be toggled with CONTROL-X.")
 	  (unplug-from-parent input))
 	  (set-parent input self)
 	  (setf inputs 
-		(nconc (first inputs)
+		(nconc (list (first inputs))
 		       (list input)
 		       (nthcdr 2 inputs)))))))
 

@@ -44,6 +44,21 @@
   :color "black"
   :drawing t)
 
+(DEFINE-PROTOTYPE TURTLE
+    (:PARENT "IOFORMS:SPRITE")
+  :IMAGE
+  "turtle"
+  :HEADING
+  0.0
+  :LINES
+  NIL
+  :STATES
+  NIL
+  :COLOR
+  "black"
+  :DRAWING
+  T)
+
 (defun radian-angle (degrees)
   "Convert DEGREES to radians."
   (* degrees (float (/ pi 180))))
@@ -54,17 +69,16 @@
 (define-method pen-up turtle ()
   (setf %drawing nil))
 
-(define-method set-color turtle 
+(define-method pen-ink turtle 
   ((color string :default "black" 
-		 :label "Pen color"
 		 :documentation "test"))
   (setf %color color))
 
-(define-method turn-left turtle ((degrees number :default 90.0))
-  (incf %heading (radian-angle degrees)))
-
-(define-method turn-right turtle ((degrees number :default 90.0))
+(define-method turn-left turtle ((degrees number :default 90))
   (decf %heading (radian-angle degrees)))
+
+(define-method turn-right turtle ((degrees number :default 90))
+  (incf %heading (radian-angle degrees)))
 
 (define-method add-line turtle (x0 y0 x y &key color)
   (push (list x0 y0 x y :color color) 
@@ -74,19 +88,23 @@
   (setf %lines nil))
 
 (define-method go-forward turtle ((distance number :default 40))
-  (with-fields (x y heading drawing color) self
-    (let ((x0 x)
-	  (y0 y))
-      (incf x (* distance (cos heading)))
-      (incf y (* distance (sin heading)))
-      (when drawing
-	(add-line self x0 y0 x y :color color)))))
+  (with-fields (x y heading height width drawing color) self
+    (let ((x0 (+ x (/ width 2)))
+	  (y0 (+ y (/ width 2))))
+      (let ((dx (* distance (cos heading)))
+	    (dy (* distance (sin heading))))
+	(incf x dx)
+	(incf y dy)
+	(when drawing
+	  (add-line self x0 y0 
+		    (+ x0 dx)
+		    (+ y0 dy)
+		    :color color))))))
 
 (define-method say turtle ((text string :default "hello")
 			   (color string :default "blue")
 			   (style integer :default 1))
   (message "SAY"))
-				 
 
 (define-method save-state turtle ()
   (push (list %x %y %heading %color) 
@@ -99,9 +117,10 @@
 	  %heading heading)))
 
 (define-method draw turtle ()
-  (next%draw self)
   (dolist (line %lines)
-    (apply #'draw-line line)))
+    (apply #'draw-line line))
+  (next%draw self))
+
 
 (defun example4 ()
   (new system)
@@ -134,11 +153,18 @@
     (add-block script (new send :prototype "EXAMPLE4:TURTLE"
     				:method :pen-down) 100 100)
     (add-block script (new send :prototype "EXAMPLE4:TURTLE"
-    				:method :pen-up) 100 200)
-    ;; (add-block script (new send :prototype "EXAMPLE4:TURTLE"
-    ;; 				:method :set-color) 100 300)
+    				:method :pen-up) 100 150)
+    (add-block script (new send :prototype "EXAMPLE4:TURTLE"
+    				:method :turn-left) 100 200)
+    (add-block script (new send :prototype "EXAMPLE4:TURTLE"
+    				:method :turn-right) 100 250)
+    (add-block script (new send :prototype "EXAMPLE4:TURTLE"
+    				:method :go-forward) 100 300)
+    (add-block script (new send :prototype "EXAMPLE4:TURTLE"
+    				:method :pen-ink) 100 350)
     (add-block script (new send :prototype "EXAMPLE4:TURTLE"
     				:method :say) 100 400)
+    (setf *target* turtle)
     (start (new shell script))))
 
 
