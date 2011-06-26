@@ -48,7 +48,6 @@
   :methods '(:pen-down :pen-up :turn-left :turn-right 
 	     :go-forward :pen-ink :save-state :restore-state :clear-lines :sing))
 
-
 (define-method click turtle (x y)
   (declare (ignore x y))
   (setf *target* self))

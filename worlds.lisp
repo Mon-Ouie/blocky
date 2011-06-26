@@ -1019,7 +1019,7 @@ PLAYER as the player."
     (setf %world world)
     (setf *world* world))
   (when player (setf %player player))
-  (set-player world %player)
+  (when %player (set-player world %player))
   (add-sprite world %player)
   (install-blocks self))
 

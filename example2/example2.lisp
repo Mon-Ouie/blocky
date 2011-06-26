@@ -53,7 +53,7 @@
 
 (defvar *beeped* nil)
 
-(defresource (:name "beep" :type :sample :file "beep.wav"))
+(defresource (:name "beep" :type :sample :file "beep.wav" :properties (:volume 40)))
 
 (define-method beep blocky ()
   (setf *beeped* t)
@@ -63,7 +63,7 @@
 
 (defresource 
     (:name "blue-dot" :type :image :file "blue-dot.png")
-    (:name "woom" :type :sample :file "woom.wav"))
+    (:name "woom" :type :sample :file "woom.wav" :properties (:volume 40)))
 
 (defsprite blue-dot
   :image "blue-dot"
@@ -108,10 +108,11 @@
 (defresource (:name "rappy" :type :music :file "rappy.ogg"))
 
 (defun example2 ()
+  (new system)
   (let ((dream (new dream)))
-    (create (new universe)
-	    :world dream
-	    :player (new blocky))
+    (start (new universe
+		:world dream
+		:player (new blocky)))
     (add-sprite dream (new blue-dot))
     (play-music "rappy")))
 	      

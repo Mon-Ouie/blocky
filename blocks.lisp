@@ -410,11 +410,13 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	    inputs))
     (when inputs 
       (setf %inputs (nreverse inputs)))
-    (setf %schema schema
-	  %category :motion ;; (field-value :category prototype)
-	  %prototype prototype
-	  %method method
-	  %label (or label (pretty-symbol-string method)))))
+    (let ((category (method-option (find-prototype prototype)
+				   method :category)))
+      (when category (setf %category category))
+      (setf %schema schema
+	    %prototype prototype
+	    %method method
+	    %label (or label (pretty-symbol-string method))))))
 
 (define-method draw send ()
   (with-fields (x y width height label inputs) self

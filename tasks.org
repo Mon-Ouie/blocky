@@ -1,5 +1,4 @@
 ** TODO Turtle graphics video demo
-**** TODO [#B] allow method options plist (METHODNAME &rest options) in place of METHODNAME
 **** TODO [#B] categorize methods
 **** TODO [#B] list all methods with schema for a given prototype, culling parents, removing duplicates
 *** TODO [#B] test input computation and make sure %results has enough room
