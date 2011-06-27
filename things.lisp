@@ -186,21 +186,21 @@ cells."
   (when (eq :cell (field-value :type ob))))
 
 (define-method update-image-dimensions sprite ()
-  (with-fields (image height width) self
+  (with-fields (image height width scale-x scale-y) self
     (when image
-      (setf width (image-width image))
-      (setf height (image-height image)))))
+      (setf width (* scale-x (image-width image)))
+      (setf height (* scale-y (image-height image))))))
 
-;; (define-method initialize sprite ()
-;;   (next%initialize self))
- 
 (define-method draw sprite ()
-  (set-blending-mode %blend)
-  (with-fields (image x y height) self
+  (with-fields (image x y z height opacity blend scale-x scale-y) self
     (when image
       (when (null height)
 	(update-image-dimensions self))
-      (draw-image image x y))))
+      (draw-image image x y :z z 
+			    :opacity opacity 
+			    :blend blend 
+			    :scale-x scale-x
+			    :scale-y scale-y))))
 
 (define-method change-image sprite (image)
   (assert (stringp image))
@@ -373,14 +373,16 @@ cells."
 
 (defsprite balloon 
   :text "..."
+  :font *block-font*
   :clock (seconds->frames 5))
 
-(define-method initialize balloon (string &optional (seconds 5.0))
+(define-method initialize balloon (string &key (seconds 5.0) (font *block-font*))
   (with-fields (text clock) self
     (setf clock (seconds->frames seconds))
     (setf text string)
+    (setf %font font)
     (multiple-value-bind (width height) 
-	(font-text-extents string *block-font*)
+	(font-text-extents string font)
       (setf %width width)
       (setf %height height))))
 
@@ -388,7 +390,7 @@ cells."
   (with-fields (x y clock text) self
     (decf clock)
     (if (plusp clock)
-	(ioforms:draw-string text x y :font *block-font* :color "black")
+	(ioforms:draw-string text x y :font %font :color "black")
 	(remove-sprite *world* self))))
 
 

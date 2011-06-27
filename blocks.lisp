@@ -113,7 +113,10 @@ two words. This is used as a unit for various layout operations.")
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
   (z :initform 0 :documentation "Integer Z coordinate of this block's position.")
+  (scale-x :initform 1)
+  (scale-y :initform 1)
   (blend :initform :alpha)
+  (opacity :initform 1.0)
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
   (depth :initform 32 :documentation "Cached depth of block.")
@@ -904,7 +907,7 @@ override all colors."
   (draw-label-string self (print-expression expression)))
 
 (define-method draw block ()
-  (with-fields (image x y width height blend) self
+  (with-fields (image x y width height blend opacity) self
     (if image 
 	(progn (set-blending-mode blend)
 	       (draw-image image x y))

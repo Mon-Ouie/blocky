@@ -20,16 +20,21 @@
 
 (in-package :ioforms)
 
-(defparameter *default-grid-size* 16)
+(defparameter *default-grid-size* 64)
 
 (defblock world
   (name :initform nil :documentation "Name of the world.")
   (description :initform "Unknown area." :documentation "Brief description of area.")
+  (window-x :initform 0)
+  (window-y :initform 0)
+  (window-scale-x :initform 1)
+  (window-scale-y :initform 1)
   ;; the invisible graph paper underlying our world of sprites
   (grid :documentation "A two-dimensional array of adjustable vectors of cells.")
   (grid-size :initform *default-grid-size* :documentation "Size of a grid tile in GL units; either height or width (they must be equal.)")
   (grid-width :initform nil :documentation "The width of the world map, measured in tiles.")
   (grid-height :initform nil :documentation "The height of the world map, measured in tiles.")
+  ;; 
   ;; a world-local dictionary
   (variables :initform nil :documentation "Hash table mapping values to values, local to the current world.")
   ;; turtle graphics
@@ -41,7 +46,8 @@
   ;; sprite cells
   (sprites :initform nil :documentation "A list of sprites.")
   (sprite-grid :initform nil :documentation "Grid for collecting sprite collision information.")
-  (collisions :initform (make-array 256 :element-type 'list :fill-pointer 0) :documentation "Hash table to prevent redundant collisions.")
+
+  (collisions :initform (make-array 256 :element-type 'list :fill-pointer 0) :documentation "Vector of collisions.")
   ;; lighting 
   (automapped :initform nil :documentation "Show all previously lit squares.")
   (light-grid 
@@ -62,6 +68,18 @@ At the moment, only 0=off and 1=on are supported.")
   (serialized-grid :documentation "When non-nil, a serialized sexp version of the grid.")
   (excluded-fields :initform
   '(:stack :sprite-grid :collisions :grid :player)))
+
+(define-method move-window-to world (x y)
+  (setf %window-x x 
+	%window-y y))
+
+(define-method move-window world (dx dy)
+  (incf %window-x dx)
+  (incf %window-y dy))
+
+(define-method scale-window world (&optional (window-scale-x 1.0) (window-scale-y 1.0))
+  (setf %window-scale-x window-scale-x)
+  (setf %window-scale-y window-scale-y))
 
 (define-method initialize world (&key grid-size grid-height grid-width name)
   (setf %grid-size (or grid-size *default-grid-size*))
@@ -504,14 +522,14 @@ location."
 		       (< n limit)))
       (values r c found))))
 		      
-(define-method drop-sprite world (sprite x y &key no-collisions loadout)
+(define-method drop-sprite world (sprite x y &optional (z 0))
   "Add a sprite to the world. When NO-COLLISIONS is non-nil, then the
 object will not be dropped when there is an obstacle. When LOADOUT is
 non-nil, the :loadout method is invoked on the sprite after
 placement."
 ;  (assert (is-sprite sprite))
   (add-sprite self sprite)
-  (move-to sprite x y))
+  (move-to sprite x y z))
 
 (define-method drop-cell world (cell row column &rest ignore)
   (let ((grid %grid)
@@ -630,7 +648,8 @@ most user command messages. (See also the method `forward'.)"
 
 (define-method draw world ()
   (with-field-values (sprites grid grid-height grid-width background) self
-;    (declare (type (simple-array vector (* *)) grid))
+    (declare (type (simple-array vector (* *)) grid))
+    (do-orthographic-projection %window-x %window-y %window-scale-x %window-scale-y)
     (when background
       (draw-image background 0 0))
     (dotimes (i grid-height)
@@ -808,10 +827,11 @@ along grid squares between R1,C1 and R2,C2."
 ;;; The sprite layer. 
 
 (define-method add-sprite world (sprite)
-  (pushnew sprite %sprites :test 'eq)
-  (with-field-values (x y) sprite
-    (when (or (null x) (null y))
-      (move-to sprite 0 0))))
+;  (pushnew sprite %sprites :test 'eq :key #'find-object)
+  (push sprite %sprites))
+  ;; (with-field-values (x y) sprite
+  ;;   (when (or (null x) (null y))
+  ;;     (move-to sprite 0 0))))
 
 (define-method remove-sprite world (sprite)
   (setf %sprites (delete sprite %sprites)))
@@ -827,16 +847,19 @@ along grid squares between R1,C1 and R2,C2."
 (define-method colliding-sprites world (&optional sprites)
   "Perform collision detection between sprites, and between sprites and the grid."
   ;; first empty the collisions vector (used to detect redundant collisions)
+  (declare (optimize (speed 3)))
   (with-field-values (grid-width grid-height grid-size sprite-grid collisions grid) self
     (setf (fill-pointer collisions) 0)
     (labels ((save-collision-maybe (&rest pair)
 	       (labels ((same-pair (&rest pair0)
-			  (or (and (eq (first pair) (first pair0))
-				   (eq (second pair) (second pair0)))
-			      (and (eq (second pair) (first pair0))
-				   (eq (first pair) (second pair0))))))
+			  (destructuring-bind (a b) pair
+			    (destructuring-bind (a0 b0) pair0
+			      (or (and (object-eq a a0)
+				       (object-eq b b0))
+				  (and (object-eq b a0)
+				       (object-eq a b0)))))))
 		 (unless (find-if #'same-pair collisions)
-		   (vector-push pair collisions)))))
+		   (vector-push-extend pair collisions)))))
       ;; first we test sprites for collisions with cells, and then we
       ;; use the sprite-grid to store data for collisions between
       ;; sprites (the grid itself serves to partition the space and

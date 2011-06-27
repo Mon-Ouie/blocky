@@ -1,3 +1,11 @@
+** TODO some serif text
+** TODO smooth scrolling
+** TODO smoother speed changes w/analog stick
+** TODO health bar
+** TODO hot zone bubbles
+** TODO collectible bubbles
+** TODO bubbles that you need to leave flares inside of
+** TODO rework simple collision detection--- abstract it out and let objects handle it
 ** TODO use turtle to program polygon vertices and shit a la fluxus
 ** TODO general state machine compiler for distributing moves over many frames, smooth rubberbanding etc
 ** TODO Turtle graphics video demo

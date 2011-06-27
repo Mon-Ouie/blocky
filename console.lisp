@@ -612,21 +612,21 @@ window size. Otherwise (the default) one onscreen pixel equals one
 unit of world space, so that more of the world shows if the window
 becomes larger.")
  
-(defun do-orthographic-projection ()
-  "Configure OpenGL so that the screen coordinates go from (0,0) at
- top left to (WIDTH, HEIGHT) at lower right."
+(defun do-orthographic-projection (&optional (x0 0) (y0 0) (scale-x 1.0) (scale-y 1.0))
+  "Configure OpenGL so that the screen coordinates go from (X0,Y0) at
+ top left to ((+ X0 WIDTH) (+ Y0 HEIGHT)) at lower right."
   (gl:matrix-mode :projection)
   (gl:load-identity)
   (gl:viewport 0 0 *screen-width* *screen-height*)
   (if *use-nominal-screen-size*
-    (setf *gl-screen-width* *nominal-screen-width*
-          *gl-screen-height* *nominal-screen-height*)
-    (setf *gl-screen-width* *screen-width*
-          *gl-screen-height* *screen-height*))
-  (message "Orthographic projection left:~A right:~A bottom:~A top:~A"
-	   0 *gl-screen-width* *gl-screen-height* 0)
-  (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 0 1)
-  (gl:matrix-mode :modelview))
+      (setf *gl-screen-width* *nominal-screen-width*
+	    *gl-screen-height* *nominal-screen-height*)
+      (setf *gl-screen-width* *screen-width*
+	    *gl-screen-height* *screen-height*))
+  (let ((x1 (* scale-x (+ x0 *gl-screen-width*)))
+	(y1 (* scale-y (+ y0 *gl-screen-height*))))
+    (gl:ortho x0 x1 y1 y0 0 1)
+    (gl:matrix-mode :modelview)))
 
 (defvar *resizable* nil)
 
@@ -1796,12 +1796,13 @@ of the music."
     (sdl:width img)))
 
 ;; &optional (u1 0) (v1 0) (u2 1) (v2 1))
-(defun draw-textured-rectangle (x y width height texture &key (blend :alpha))
+(defun draw-textured-rectangle (x y z width height texture &key (blend :alpha) (opacity 1.0))
   (if (null blend)
       (gl:disable :blend)
       (progn (gl:enable :texture-2d :blend)	
 	     (set-blending-mode blend)))
   (gl:bind-texture :texture-2d texture)
+  (gl:color 1 1 1 opacity)
   (gl:with-primitive :quads
     (let ((x1 x)
 	  (x2 (+ x width))
@@ -1816,13 +1817,12 @@ of the music."
       (gl:tex-coord 0 0)
       (gl:vertex x y 0))))
 
-(defun draw-image (name x y &optional z)
+(defun draw-image (name x y &key (z 0) (blend :alpha) (opacity 1.0) (scale-x 1) (scale-y 1))
   (let* ((image (find-resource-object name))
-	 (height (sdl:height image))
-	 (width (sdl:width image)))
+	 (height (* scale-y (sdl:height image)))
+	 (width (* scale-x (sdl:width image))))
     (let ((texture (find-texture name)))
-      (gl:color 1 1 1 1)
-      (draw-textured-rectangle x y width height texture))))
+      (draw-textured-rectangle x y z width height texture :blend blend :opacity opacity))))
 
 ;;; Font operations
 
@@ -1902,12 +1902,13 @@ of the music."
     (gl:color red green blue 1)))
 
 (defun draw-string (string x y &key (color "black")
-				    (font *default-font*))
+				    (font *default-font*)
+				    (z 0))
   (let ((texture (find-text-image font string)))
     (multiple-value-bind (width height) 
 	(font-text-extents string font)
       (set-vertex-color color)
-      (draw-textured-rectangle x y width height texture))))
+      (draw-textured-rectangle x y z width height texture))))
 
 ;;; Drawing shapes and other primitives
 
@@ -1948,13 +1949,14 @@ of the music."
 (defun draw-circle (x y radius 
 		    &key (color "white") 
 			 (type :outline)
-			 (blend :alpha))
+			 (blend :alpha)
+			 (z 0))
   (let ((texture (find-texture (getf *circle-textures* type)))
 	(left (- x radius))
 	(top (- y radius))
 	(side (* 2 radius)))
     (set-vertex-color color)
-    (draw-textured-rectangle left top side side texture :blend blend)))
+    (draw-textured-rectangle left top z side side texture :blend blend)))
 
     ;; (draw-textured-rectangle left top side side mask :blend :source)
     ;; (set-vertex-color color)
