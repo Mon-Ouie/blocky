@@ -1046,6 +1046,18 @@ object save directory. See also `save-object-resource')."
 	      (message "No default startup function for: ~S" (string-upcase (symbol-name start-function)))))
 	(message "No package defined."))))
 
+(defun publish-project-as-application (&key (output-file "output.io")
+					    project require)
+  (assert (stringp project))
+  (buildapp::main (list "sbcl"
+			"--asdf-path"
+			(sb-ext:native-namestring
+			 (asdf:system-relative-pathname :ioforms "./"))
+		       "--load-system" "ioforms"
+		       "--eval" (format nil 
+					"(progn (map nil #'ql:quickload (list :lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad :buildapp :uuid)) (ioforms:play \"~A\"))" project)
+		       "--output" (sb-ext:native-namestring (merge-pathnames output-file)))))
+
 (defun directory-is-project-p (dir)
   "Test whether a {PROJECTNAME}.IOF index file exists in a directory."
   (let ((index-filename (concatenate 'string
@@ -2016,7 +2028,10 @@ of the music."
   ;; delete any cached textures and surfaces
   (clear-text-image-cache)
   (delete-all-textures)
-  (delete-all-resources))
+  (delete-all-resources)
+  (sdl-mixer:halt-music)
+  (sdl-mixer:close-audio t))
+
 
 (defun initialize-ioforms ()
   (sdl:init-sdl :video t :audio t :joystick t)
