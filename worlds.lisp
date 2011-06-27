@@ -653,7 +653,7 @@ most user command messages. (See also the method `forward'.)"
   (with-field-values (grid sprites collisions grid-height grid-width player) self
     (declare (type (simple-array vector (* *)) grid))
     ;; first take care of the player 
-    (update player)
+    ;;(update player)
     ;; update the cells
     (dotimes (i grid-height)
       (dotimes (j grid-width)
@@ -842,30 +842,32 @@ along grid squares between R1,C1 and R2,C2."
       ;; sprites (the grid itself serves to partition the space and
       ;; reduce redundant comparisons.)
       (dolist (sprite (or sprites %sprites))
-	;; figure out which grid squares we really need to scan
-	(multiple-value-bind (x y width height)
-	    (bounding-box sprite)
-	  (let* ((left (1- (floor (/ x grid-size))))
-		 (right (1+ (floor (/ (+ x width) grid-size))))
-		 (top (1- (floor (/ y grid-size))))
-		 (bottom (1+ (floor (/ (+ y height) grid-size)))))
-	    ;; find out which scanned squares actually intersect the sprite
-	    (dotimes (i (max 0 (- bottom top)))
-	      (dotimes (j (max 0 (- right left)))
-		(let ((i0 (+ i top))
-		      (j0 (+ j left)))
-		  (when (array-in-bounds-p grid i0 j0)
-		    (when (colliding-with-rectangle sprite 
-						    (* i0 grid-size) 
-						    (* j0 grid-size)
-						    grid-size grid-size)
-		      ;; save this intersection information in the sprite grid
-		      (vector-push-extend sprite (aref sprite-grid i0 j0))
-		      ;; collide the sprite with the cells on this square
-		      (do-cells (cell (aref grid i0 j0))
-			(when (or (in-category cell :target)
-				  (in-category cell :obstacle))
-			  (save-collision-maybe sprite cell)))))))))))
+	;; don't bother if not marked for collision
+	(when (field-value :collision-type sprite)
+	  ;; figure out which grid squares we really need to scan
+	  (multiple-value-bind (x y width height)
+	      (bounding-box sprite)
+	    (let* ((left (1- (floor (/ x grid-size))))
+		   (right (1+ (floor (/ (+ x width) grid-size))))
+		   (top (1- (floor (/ y grid-size))))
+		   (bottom (1+ (floor (/ (+ y height) grid-size)))))
+	      ;; find out which scanned squares actually intersect the sprite
+	      (dotimes (i (max 0 (- bottom top)))
+		(dotimes (j (max 0 (- right left)))
+		  (let ((i0 (+ i top))
+			(j0 (+ j left)))
+		    (when (array-in-bounds-p grid i0 j0)
+		      (when (colliding-with-rectangle sprite 
+						      (* i0 grid-size) 
+						      (* j0 grid-size)
+						      grid-size grid-size)
+			;; save this intersection information in the sprite grid
+			(vector-push-extend sprite (aref sprite-grid i0 j0))
+			;; collide the sprite with the cells on this square
+			(do-cells (cell (aref grid i0 j0))
+			  (when (or (in-category cell :target)
+				    (in-category cell :obstacle))
+			    (save-collision-maybe sprite cell))))))))))))
       ;; now find collisions with other sprites
       ;; we can re-use the sprite-grid data from earlier.
       (let (collision num-sprites ix)
@@ -1019,8 +1021,8 @@ PLAYER as the player."
     (setf %world world)
     (setf *world* world))
   (when player (setf %player player))
-  (when %player (set-player world %player))
-  (add-sprite world %player)
+  (when %player (set-player world %player)
+	(add-sprite world %player))
   (install-blocks self))
 
 (define-method exit universe (&key player)

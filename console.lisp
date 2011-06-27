@@ -329,8 +329,6 @@ Please set the variable ioforms:*event-handler-function*")
 
 ;;; Translating SDL input events into IOFORMS event lists
 
-;; see also keys.lisp
-
 (defvar *joystick-button-symbols*
   '(:a :b :x :y :left :right :up :down :select :start))
 
@@ -534,6 +532,25 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 	     (when (and state sym)
 	       (send-event (make-event :joystick sym)))
 	     (incf button))))
+
+(defparameter *joystick-motion-axes* '(0 1))
+(defparameter *joystick-aiming-axes* '(3 2))
+(defparameter *joystick-axis-size* 32768.0)
+(defparameter *joystick-dead-zone* 6000)
+(defparameter *joystick-motion-speed* 4.0)
+
+(defun axis-as-float (axis)
+  (/ (poll-joystick-axis axis)
+     *joystick-axis-size*))
+
+(defun axis-pressed-p (axis) 
+  (< *joystick-dead-zone* (abs (poll-joystick-axis axis))))
+
+(defparameter *trigger-buttons* 
+  '(:fire :extension :switch-weapons :boost))
+
+(defparameter *face-buttons*
+  '(:x :y))
 
 ;;; Timing
 

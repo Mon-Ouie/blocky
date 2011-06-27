@@ -1,3 +1,5 @@
+** TODO use turtle to program polygon vertices and shit a la fluxus
+** TODO general state machine compiler for distributing moves over many frames, smooth rubberbanding etc
 ** TODO Turtle graphics video demo
 **** TODO [#B] categorize methods
 **** TODO [#B] list all methods with schema for a given prototype, culling parents, removing duplicates

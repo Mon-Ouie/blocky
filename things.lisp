@@ -168,6 +168,7 @@ cells."
 ;;; Sprites
 
 (defcell sprite 
+  (collision-type :initform :aabb)
   (type :initform :sprite)
   (height :initform nil :documentation "The cached width of the bounding box.")
   (width :initform nil :documentation "The cached height of the bounding box."))
@@ -201,7 +202,7 @@ cells."
 	(update-image-dimensions self))
       (draw-image image x y))))
 
-(define-method set-image sprite (image)
+(define-method change-image sprite (image)
   (assert (stringp image))
   (setf %image image)
   (update-image-dimensions self))
@@ -288,14 +289,70 @@ cells."
   (with-fields (x y width height) self
     (point-in-rectangle-p x y width height o-top o-left o-width o-height)))
 
-;; (define-method colliding-with-point 
-
 (define-method colliding-with sprite (thing)
   (multiple-value-bind (x y width height) 
       (bounding-box thing)
     (colliding-with-rectangle self y x width height)))
 
 (define-method collide sprite (thing))
+
+;;; Analog gamepad control
+
+(define-method aim sprite (direction)
+  (setf %direction direction))
+
+(define-method stick-move sprite (&optional multiplier)
+  (destructuring-bind (horizontal vertical) *joystick-motion-axes*
+    (let* ((x (poll-joystick-axis horizontal))
+	   (y (poll-joystick-axis vertical)))
+        (let ((direction 
+		(cond 
+		  ;; diagonal 
+		  ((and (axis-pressed-p horizontal) (axis-pressed-p vertical))
+		   (if (minusp y) 
+		       (if (minusp x)
+			   :northwest
+			   :northeast)
+		       (if (minusp x)
+			   :southwest
+			   :southeast)))
+		  ;; horizontal 
+		  ((axis-pressed-p horizontal)
+		   (if (minusp x) :west :east))
+		  ;; vertical 
+		  ((axis-pressed-p vertical)
+		   (if (minusp y) :north :south)))))
+          (when direction 
+            ;; if the player pushed a direction, move in that direction.
+            (prog1 t 
+	      (if multiplier
+		  (move-to self 
+			   (+ %x (* multiplier (axis-as-float horizontal)))
+			   (+ %y (* multiplier (axis-as-float vertical))))
+		  (move self direction multiplier))
+	      ;; if the player is NOT pressing on the right stick, ALSO aim in this direction.
+	      (destructuring-bind (aim-horz aim-vert) *joystick-aiming-axes*
+		(when (not (or (axis-pressed-p aim-horz)
+			       (axis-pressed-p aim-vert)))
+		  (aim self direction)))))))))
+
+  (define-method stick-aim sprite ()
+    (with-fields (direction) self
+      (destructuring-bind (horizontal vertical) *joystick-aiming-axes*
+        (let ((x (poll-joystick-axis horizontal))
+              (y (poll-joystick-axis vertical)))
+          (cond ((and (axis-pressed-p horizontal) (axis-pressed-p vertical))
+                 (aim self (if (minusp y) 
+                                (if (minusp x)
+                                    :northwest
+                                    :northeast)
+                                (if (minusp x)
+                                    :southwest
+                                    :southeast))))
+                ((axis-pressed-p horizontal)
+                 (aim self (if (minusp x) :west :east)))
+                ((axis-pressed-p vertical)
+                 (aim self (if (minusp y) :north :south))))))))
 
 ;;; Object dropping
 
