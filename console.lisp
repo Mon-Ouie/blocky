@@ -1809,13 +1809,13 @@ of the music."
 	  (y1 y)
 	  (y2 (+ y height)))
       (gl:tex-coord 0 1)
-      (gl:vertex x y2 0)
+      (gl:vertex x y2 0) ;; z
       (gl:tex-coord 1 1)
-      (gl:vertex x2 y2 0)
+      (gl:vertex x2 y2 0) ;; z
       (gl:tex-coord 1 0)
-      (gl:vertex x2 y1 0)
+      (gl:vertex x2 y1 0) ;; z
       (gl:tex-coord 0 0)
-      (gl:vertex x y 0))))
+      (gl:vertex x y 0)))) ;; z
 
 (defun draw-image (name x y &key (z 0) (blend :alpha) (opacity 1.0) (scale-x 1) (scale-y 1))
   (let* ((image (find-resource-object name))
