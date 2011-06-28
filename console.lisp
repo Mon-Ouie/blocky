@@ -612,7 +612,26 @@ window size. Otherwise (the default) one onscreen pixel equals one
 unit of world space, so that more of the world shows if the window
 becomes larger.")
  
-(defun do-orthographic-projection (&optional (x0 0) (y0 0) (scale-x 1.0) (scale-y 1.0))
+(defparameter *z-near* -100)
+(defparameter *z-far* 100)
+
+;; (defun do-orthographic-projection (&optional (x0 0) (y0 0) (scale-x 1.0) (scale-y 1.0))
+;;   "Configure OpenGL so that the screen coordinates go from (X0,Y0) at
+;;  top left to ((+ X0 WIDTH) (+ Y0 HEIGHT)) at lower right."
+;;   (gl:matrix-mode :projection)
+;;   (gl:load-identity)
+;;   (gl:viewport 0 0 *screen-width* *screen-height*)
+;;   (if *use-nominal-screen-size*
+;;       (setf *gl-screen-width* *nominal-screen-width*
+;; 	    *gl-screen-height* *nominal-screen-height*)
+;;       (setf *gl-screen-width* *screen-width*
+;; 	    *gl-screen-height* *screen-height*))
+;;   (let ((x1 (* scale-x (+ x0 *gl-screen-width*)))
+;; 	(y1 (* scale-y (+ y0 *gl-screen-height*))))
+;;     (gl:ortho x0 x1 y1 y0 *z-near* *z-far*)
+;;     (gl:matrix-mode :modelview)))
+
+(defun do-orthographic-projection ()
   "Configure OpenGL so that the screen coordinates go from (X0,Y0) at
  top left to ((+ X0 WIDTH) (+ Y0 HEIGHT)) at lower right."
   (gl:matrix-mode :projection)
@@ -623,10 +642,16 @@ becomes larger.")
 	    *gl-screen-height* *nominal-screen-height*)
       (setf *gl-screen-width* *screen-width*
 	    *gl-screen-height* *screen-height*))
-  (let ((x1 (* scale-x (+ x0 *gl-screen-width*)))
-	(y1 (* scale-y (+ y0 *gl-screen-height*))))
-    (gl:ortho x0 x1 y1 y0 0 1)
-    (gl:matrix-mode :modelview)))
+  (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 *z-near* *z-far*))
+
+(defun do-window (&optional (x0 0) (y0 0) (scale-x 1.0) (scale-y 1.0))
+  ;; now move viewing volume
+  (gl:matrix-mode :modelview)
+  (gl:load-identity)
+  (gl:translate (- 0 x0)
+		(- 0 y0)
+		0)
+  (gl:scale scale-x scale-y 1))
 
 (defvar *resizable* nil)
 
@@ -1809,15 +1834,15 @@ of the music."
 	  (y1 y)
 	  (y2 (+ y height)))
       (gl:tex-coord 0 1)
-      (gl:vertex x y2 0) ;; z
+      (gl:vertex x y2 (- 0 z)) ;; z
       (gl:tex-coord 1 1)
-      (gl:vertex x2 y2 0) ;; z
+      (gl:vertex x2 y2 (- 0 z)) ;; z
       (gl:tex-coord 1 0)
-      (gl:vertex x2 y1 0) ;; z
+      (gl:vertex x2 y1 (- 0 z)) ;; z
       (gl:tex-coord 0 0)
-      (gl:vertex x y 0)))) ;; z
+      (gl:vertex x y (- 0 z))))) ;; z
 
-(defun draw-image (name x y &key (z 0) (blend :alpha) (opacity 1.0) (scale-x 1) (scale-y 1))
+(defun draw-image (name x y &key (z 0.0) (blend :alpha) (opacity 1.0) (scale-x 1) (scale-y 1))
   (let* ((image (find-resource-object name))
 	 (height (* scale-y (sdl:height image)))
 	 (width (* scale-x (sdl:width image))))

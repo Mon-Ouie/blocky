@@ -81,6 +81,11 @@ At the moment, only 0=off and 1=on are supported.")
   (setf %window-scale-x window-scale-x)
   (setf %window-scale-y window-scale-y))
 
+(define-method project world ()
+  (with-fields (window-scale-x window-scale-y window-x window-y) self
+    (do-orthographic-projection)
+    (do-window window-x window-y window-scale-x window-scale-y)))
+
 (define-method initialize world (&key grid-size grid-height grid-width name)
   (setf %grid-size (or grid-size *default-grid-size*))
   (setf %grid-height (or grid-height (truncate (/ *screen-height* %grid-size))))
@@ -647,9 +652,9 @@ most user command messages. (See also the method `forward'.)"
     (:player %player)))
 
 (define-method draw world ()
+  (project self) ;; set up camera
   (with-field-values (sprites grid grid-height grid-width background) self
     (declare (type (simple-array vector (* *)) grid))
-    (do-orthographic-projection %window-x %window-y %window-scale-x %window-scale-y)
     (when background
       (draw-image background 0 0))
     (dotimes (i grid-height)
