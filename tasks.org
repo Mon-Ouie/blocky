@@ -1,5 +1,6 @@
-** TODO some serif text
-** TODO smooth scrolling
+** TODO story dialog buttons like Ultima
+** TODO think about game design / story
+** TODO smooth scrolling to follow player
 ** TODO smoother speed changes w/analog stick
 ** TODO health bar
 ** TODO hot zone bubbles
