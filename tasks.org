@@ -1,3 +1,18 @@
+** TODO XALCYON STORYLINE
+*** TODO i'm going to learn some of this: http://en.wikipedia.org/wiki/Speech_Synthesis_Markup_Language
+*** TODO go for a straight space fantasy, skip the arecibo-message angle
+*** TODO the planet is actually a benevolent female intelligence who announces she is dying by taking on too much mass from the surrounding clouds, which will trigger fusion in her core 
+*** TODO so she calls on certain people to safely store her memories in bubbles
+*** TODO recursive bubble universes , where you explore her memories and retrieve them
+*** TODO female synth voice?
+*** TODO bring in sanctuary monks?
+** TODO report cl-opengl examples crashing on other pc to cl-opengl listxxc
+** TODO navajo white city with text overlay about gas giant xalcyon
+** TODO depth of field mipmapping to color distant objects with atmosphere distance/haze?
+
+** TODO try debian wheezy on pod
+
+** TODO recovering ancient memory bubbles
 ** TODO story dialog buttons like Ultima
 ** TODO think about game design / story
 ** TODO smooth scrolling to follow player
@@ -5,7 +20,10 @@
 ** TODO health bar
 ** TODO hot zone bubbles
 ** TODO collectible bubbles
-** TODO bubbles that you need to leave flares inside of
+** TODO bubbles that you need to leave flares inside of.
+** TODO discover which bubbles resonate with each other
+** TODO drop flares inside those bubbles
+
 ** TODO rework simple collision detection--- abstract it out and let objects handle it
 ** TODO use turtle to program polygon vertices and shit a la fluxus
 ** TODO general state machine compiler for distributing moves over many frames, smooth rubberbanding etc

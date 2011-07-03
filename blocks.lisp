@@ -47,6 +47,10 @@
 ;; block prototype via `define-method'. With the macro `make-block'
 ;; you can convert lisp expressions into working block
 ;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
+;; With the `recompile' function, certain blocks can be optimized away
+;; into a simpler lisp expression that does the same job. For example,
+;; a block that sums its arguments could compile down into a call to
+;; the #'+ function, and so on with things like LOOP and COND.
 
 ;; For more information on the design of Ioforms, see
 ;; http://ioforms.org/design.html
