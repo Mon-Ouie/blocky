@@ -901,13 +901,11 @@ override all colors."
 
 (define-method draw-label-string block (string &optional color)
   (with-block-drawing 
-    (with-field-values
-	(x y operation inputs)
-	self
+    (with-field-values (x y) self
       (let* ((dash *dash*)
 	     (left (+ x (* 2 dash)))
 	     (y0 (+ y dash 1)))
-	(text left y0 string color)))))
+	(error "~S" (text left y0 string color))))))
 
 (define-method draw-label block (expression)
   (draw-label-string self (print-expression expression)))

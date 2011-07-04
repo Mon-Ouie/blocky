@@ -27,8 +27,8 @@
 
 (setf *builder-p* t)
 
-(setf *screen-width* 800)
-(setf *screen-height* 600)
+(setf *screen-width* 640)
+(setf *screen-height* 480)
 (setf *window-title* "blocky.io")
 (setf *resizable* nil)
 (enable-key-repeat 9 2)
@@ -37,13 +37,14 @@
 
 (defresource (:name "splash" :type :image :file "splash.png")) 
 
-(defblock splash 
+(defsprite splash 
   :image "splash" :clock 180)
 
-(define-method initialize splash (&optional (clock 1800))
+(define-method initialize splash (&optional (clock 380))
   (next%initialize self)
-  (setf %x (- *screen-width* (/ %width 2)))
-  (setf %y (- *screen-height* (/ %height 2)))
+  (update-image-dimensions self)
+  (setf %x (- (/ *screen-width* 2) (/ %width 2)))
+  (setf %y (- (/ *screen-height* 2) (/ %height 2)))
   (setf %clock clock))
 
 (define-method update splash ()

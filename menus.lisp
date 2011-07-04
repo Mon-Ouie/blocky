@@ -115,34 +115,6 @@
       (dash 2 (font-text-extents (display-string self) *block-font*))
       %width))
 
-(define-method draw-expanded menu (&optional label)
-  (with-field-values (action x y width height parent inputs top-level) self
-    (let ((display-string (or label *null-display-string*))
-	  (header (header-height self)))
-      (if top-level
-	  ;; draw the top of the menubar a bit differently to prevent 
-	  ;; over-drawing other menu bar items.
-	  (progn (draw-patch self
-			     x
-			     (dash 3 y)
-			     (dash 2 x (header-width self))
-			     (dash 1 y header)
-			     :color "gray87")  	  
-		 (draw-label-string self display-string)
-		 ;; draw the rest of the menu background
-		 (draw-patch self
-			     x (dash 2 y header)
-			     (dash 2 x width)
-			     (- (+ y height) (dash 1))))
-	  (progn (draw-patch self x y (+ x width) (+ y height))
-		 (draw-label-string self display-string)
-		 (draw-line (+ x 1) (dash 2 y header) 
-			    (+ x width -1) (dash 2 y header)
-			    :color (find-color self :highlight))))
-      ;; draw submenu items
-      (dolist (each inputs)
-	(draw each)))))
-
 (define-method hit menu (mouse-x mouse-y)
   (with-field-values (x y expanded inputs width height) self
     (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
@@ -189,6 +161,34 @@
 	  (draw-box x (+ y (dash 1)) width (+ height 1)
 		  :color *highlight-background-color*)
 	  (draw-label-string self (display-string self)))))))
+
+(define-method draw-expanded menu (&optional label)
+  (with-field-values (action x y width height parent inputs top-level) self
+    (let ((display-string (or label *null-display-string*))
+	  (header (header-height self)))
+      (if top-level
+	  ;; draw the top of the menubar a bit differently to prevent 
+	  ;; over-drawing other menu bar items.
+	  (progn (draw-patch self
+			     x
+			     (dash 3 y)
+			     (dash 2 x (header-width self))
+			     (dash 1 y header)
+			     :color "gray87")  	  
+		 (draw-label-string self display-string)
+		 ;; draw the rest of the menu background
+		 (draw-patch self
+			     x (dash 2 y header)
+			     (dash 2 x width)
+			     (- (+ y height) (dash 1))))
+	  (progn (draw-patch self x y (+ x width) (+ y height))
+		 (draw-label-string self display-string)
+		 (draw-line (+ x 1) (dash 2 y header) 
+			    (+ x width -1) (dash 2 y header)
+			    :color (find-color self :highlight))))
+      ;; draw submenu items
+      (dolist (each inputs)
+	(draw each)))))
   
 (define-method draw menu (&optional highlight)
   (with-fields (x y width height label action visible expanded) self
