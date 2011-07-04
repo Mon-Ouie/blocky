@@ -307,7 +307,7 @@
     (if drag
 	;; we're dragging
 	(let ((drag-parent (get-parent drag)))
-	  (when (and (not (null drag))
+	  (when (and (not (null drag-parent))
 		     (not (object-eq script drag-parent)))
 	    (unplug-from-parent drag))
 	  ;; where are we dropping?
@@ -322,7 +322,7 @@
 	  ;; select the dropped block
 	  (select self drag)
 	  (setf focused-block drag))
-;	  (setf hover nil))
+;	  (setf hover nil)
 	;; ok, we're not dragging.
 	;; instead it was a click.
 	(progn

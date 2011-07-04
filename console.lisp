@@ -1984,10 +1984,6 @@ of the music."
 	(side (* 2 radius)))
     (draw-textured-rectangle left top z side side texture :blend blend :vertex-color color)))
 
-    ;; (draw-textured-rectangle left top side side mask :blend :source)
-    ;; (set-vertex-color color)
-    ;; (draw-textured-rectangle left top side side texture :blend :additive2)))
-
 (defun draw-solid-circle (x y radius &key color (blend :alpha))
   (draw-circle x y radius :color color :type :solid))
 

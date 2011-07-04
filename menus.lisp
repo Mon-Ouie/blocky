@@ -162,6 +162,9 @@
 		  :color *highlight-background-color*)
 	  (draw-label-string self (display-string self)))))))
 
+(defparameter *menu-tab-color* "gray60")
+(defparameter *menu-title-color* "white")
+
 (define-method draw-expanded menu (&optional label)
   (with-field-values (action x y width height parent inputs top-level) self
     (let ((display-string (or label *null-display-string*))
@@ -174,13 +177,13 @@
 			     (dash 3 y)
 			     (dash 2 x (header-width self))
 			     (dash 1 y header)
-			     :color "gray87")  	  
-		 (draw-label-string self display-string)
+			     :color *menu-tab-color*)
+		 (draw-label-string self display-string *menu-title-color*)
 		 ;; draw the rest of the menu background
 		 (draw-patch self
 			     x (dash 2 y header)
-			     (dash 2 x width)
-			     (- (+ y height) (dash 1))))
+			     (dash 0 x width)
+			     (- (dash 1 y height) (dash 1))))
 	  (progn (draw-patch self x y (+ x width) (+ y height))
 		 (draw-label-string self display-string)
 		 (draw-line (+ x 1) (dash 2 y header) 

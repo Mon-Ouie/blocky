@@ -1,4 +1,5 @@
 * TODO USABLE ALPHA RELEASE OF IOFORMS
+** TODO [#A] use assertions to diagnose (unplug failure) not being able to pull out sprites (or any top item) from list
 ** TODO display name of current project / Unnamed project as prompt
 ** TODO [#A] more scratch/byob blocks
 ** TODO project settings dialog for configuring *screen-width* and *resizable* etc
@@ -24,7 +25,6 @@
 *** TODO [#A] dialog boxes are fancy SEND blocks that send to *system*
 ** TODO [#B] tab and shift-tab for input nav
 ** TODO [#C] block colors/backgrounds in a list subprogram could disappear, making it look like text source code?
-** TODO [#A] fix not being able to pull out sprites (or any top item) from list
 ** TODO [#A] start using terminal output for status message output
 ** TODO [#C] add more information to method+prototype databases
 ** TODO [#C] cursor should negate underlying letter, not overpaint

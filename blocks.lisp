@@ -80,7 +80,7 @@ areas.")
 (defparameter *socket-color* "gray80"
   "The default background color of block sockets.")
 
-(defparameter *block-font* "sans-condensed-bold-11"
+(defparameter *block-font* "sans-11"
   "The font used in drawing block labels and input data.")
 
 (defvar *dash* 3
@@ -179,8 +179,7 @@ By default, just update each child block."
 (define-method delete-input block (block)
   (with-fields (inputs) self
     (assert (contains self block))
-    (setf inputs (delete (find-object block)
-			 inputs
+    (setf inputs (delete block inputs
 			 :key #'find-object
 			 :test 'eq))))
 
@@ -538,13 +537,16 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   "Disconnect the block INPUT from this block."
   (with-fields (inputs) self
     (prog1 input
-      (setf inputs (delete input inputs :test 'eq :key #'find-object))
-      (set-parent input nil))))
+;      (message "inputs: ~S" (length inputs))
+      (setf inputs (delete input inputs :test 'eq :key #'find-object)))))
+;      (message "inputs2: ~S" (length inputs))
 
 (define-method unplug-from-parent block ()
   (with-fields (parent) self
     (when parent
-      (unplug parent self))))
+      (unplug parent self)
+      (assert (not (contains parent self)))
+      (setf parent nil))))
 
 (define-method method-menu block (method target)
   (assert (and (keywordp method) (not (null target))))
@@ -791,18 +793,18 @@ override all colors."
       ;; top x1
       (disc (- x1 radius ) (+ y0 radius ) fill)
       (circle (- x1 radius ) (+ y0 radius ) chisel) ;; chisel
-      ;; y1
+      ;; y1 (bottom) 
       (box (+ x0 radius) (- y1 diameter)
 	   (- x1 radius 1) y1
 	   fill)
-      (line (+ x0 radius -2) y1
-	    (- x1 radius 1) y1 chisel)
+      (line (+ x0 radius -2) (1- y1)
+	    (- x1 radius 1) (1- y1) chisel)
       ;; top
       (box (+ x0 radius) y0
 	   (- x1 radius) (+ y0 diameter)
 	   fill)
-      (line (+ x0 radius) (+ y0 1)
-	    (- x1 radius -4) (+ y0 1) bevel)
+      (line (+ x0 radius) (+ y0 0)
+	    (- x1 radius -4) (+ y0 0) bevel)
       ;; left
       (box x0 (+ y0 radius)
 	   (+ x0 diameter) (- y1 radius)
@@ -1005,8 +1007,8 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	  (set-parent input self)
 	  (setf inputs 
 		(if prepend
-		    (nconc (list input) inputs)
-		    (nconc inputs (list input)))))
+		    (append (list input) inputs)
+		    (append inputs (list input)))))
     	;; no inputs yet. make a single-element inputs list
 	(prog1 t (setf inputs (list input))))))
 
