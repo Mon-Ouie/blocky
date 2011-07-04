@@ -1,16 +1,73 @@
-** TODO XALCYON STORYLINE
-*** TODO i'm going to learn some of this: http://en.wikipedia.org/wiki/Speech_Synthesis_Markup_Language
-*** TODO go for a straight space fantasy, skip the arecibo-message angle
-*** TODO the planet is actually a benevolent female intelligence who announces she is dying by taking on too much mass from the surrounding clouds, which will trigger fusion in her core 
-*** TODO so she calls on certain people to safely store her memories in bubbles
-*** TODO recursive bubble universes , where you explore her memories and retrieve them
-*** TODO female synth voice?
-*** TODO bring in sanctuary monks?
-** TODO report cl-opengl examples crashing on other pc to cl-opengl listxxc
-** TODO navajo white city with text overlay about gas giant xalcyon
-** TODO depth of field mipmapping to color distant objects with atmosphere distance/haze?
+* TODO USABLE ALPHA RELEASE OF IOFORMS
+** TODO display name of current project / Unnamed project as prompt
+** TODO [#A] more scratch/byob blocks
+** TODO project settings dialog for configuring *screen-width* and *resizable* etc
+*** TODO [#A] transcribe BYOB blocks library listing
+** TODO [#A] rework simple collision detection--- abstract it out and let objects handle it
+** TODO [#C] use turtle to program polygon vertices and shit a la fluxus
+** TODO [#B] general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
+** TODO Turtle graphics video demo
+**** TODO [#B] categorize methods
+**** TODO [#B] list all methods with schema for a given prototype, culling parents, removing duplicates
+** TODO splash screen with basic info
+** TODO tutorial
+** TODO [#A] hook #'message minibuffer messages/notifications (message workspace, or different buffers?) 
+** TODO [#B] make a sprite reference (i.e. uuid)
+** TODO [#A] implement "send" block using reference 
+** TODO [#A] Create DEFBLOCK block
+** TODO [#A] bring menubar and its menus to front when opening menu
+** TODO [#B] Uniform read-error handling for entries
+** TODO [#B] allow schema arguments to not all be shown
+** TODO [#B] add all missing keyboard characters
+** TODO [#A] General purpose easy dialog box maker
+*** TODO [#A] dialog boxes for project save/load!
+*** TODO [#A] dialog boxes are fancy SEND blocks that send to *system*
+** TODO [#B] tab and shift-tab for input nav
+** TODO [#C] block colors/backgrounds in a list subprogram could disappear, making it look like text source code?
+** TODO [#A] fix not being able to pull out sprites (or any top item) from list
+** TODO [#A] start using terminal output for status message output
+** TODO [#C] add more information to method+prototype databases
+** TODO [#C] cursor should negate underlying letter, not overpaint
+** TODO [#B] comment block for output messages in listener etc, trap errors
+** TODO [#B] Fix menu behavior: properly check other menu widgets in menubar hit before menu
+** TODO [#B] fix argument blocks not being created (AGAIN)
+** TODO [#B] list-scroll-decorator
+** TODO [#B] reasonable emacs configuration for ioforms dev (imenu etc)
+** TODO [#C] general svg image support
+** TODO [#B] send unfocused input to terminal? 
+** TODO [#A] escape key hide/show terminals/menus
+** TODO [#B] click again on header to close menu.
+** TODO [#C] hilbert curve turtle example 
+** TODO [#B] button to add arguments to + etc (just drop onto block list)
+** TODO [#B] close all submenus when closing a menu
+** TODO [#B] monospace textbox for editing method?
+** TODO [#B] disabled menu items, to check for presence of method in target and/or condition
+** TODO [#B] fix cursor rendering in prompt not lining up with characters
+** TODO [#B] isolate/trap all block errors and display them grayed out with an inspectable error
+** TODO [#C] make thing to search for duplicate method defs
+** TODO [#C] defblock emacs
+** TODO [#C] ALPHA issues for PNG images
+<|3b|> you want 'save color values from transparent pixels', and need to make
+       sure the pixels are white with 0 alpha
+<|3b|> also, looks like you weren't passing blend to draw-circle from
+       draw-solid-circle, not that it matters here  [23:46]
+** TODO [#A] allow string-valued method fields. resource id's of method block, uuid?
+** TODO [#C] automatically generate blocky friend faces with given body/face shapes
+** TODO [#C] pin toggle button
+** TODO [#C] pretty rubberband movement
+** TODO [#C] x button for closing menu
+** TODO [#C] yellow comment sticky note boxes
+** TODO [#B] AABB-tree (axis-aligned bounding-box)
 
-** TODO try debian wheezy on pod
+* TODO XALCYON STORYLINE
+** TODO i'm going to learn some of this: http://en.wikipedia.org/wiki/Speech_Synthesis_Markup_Language
+** TODO go for a straight space fantasy, skip the arecibo-message angle
+** TODO the planet is actually a benevolent female intelligence who announces she is dying by taking on too much mass from the surrounding clouds, which will trigger fusion in her core 
+** TODO so she calls on certain people to safely store her memories in bubbles
+** TODO recursive bubble universes , where you explore her memories and retrieve them
+** TODO female synth voice?
+** TODO bring in sanctuary monks?
+** TODO depth of field mipmapping to color distant objects with atmosphere distance/haze?
 
 ** TODO recovering ancient memory bubbles
 ** TODO story dialog buttons like Ultima
@@ -24,89 +81,6 @@
 ** TODO discover which bubbles resonate with each other
 ** TODO drop flares inside those bubbles
 
-** TODO rework simple collision detection--- abstract it out and let objects handle it
-** TODO use turtle to program polygon vertices and shit a la fluxus
-** TODO general state machine compiler for distributing moves over many frames, smooth rubberbanding etc
-** TODO Turtle graphics video demo
-**** TODO [#B] categorize methods
-**** TODO [#B] list all methods with schema for a given prototype, culling parents, removing duplicates
-*** TODO [#B] test input computation and make sure %results has enough room
-*** TODO Uniform read-error handling for entries
-*** TODO [#B] allow schema arguments to not all be shown
-*** TODO [#B] add all missing keyboard characters
-*** TODO [#A] dialog boxes for project save/load!
-*** TODO [#B] make the visual plists match the keyword arguments of the actual schema-ified methods
-*** TODO [#B] auto define (%field object) functions? mappable
-*** TODO [#C] tab and shift-tab for input nav
-*** TODO [#C] block colors/backgrounds in a list subprogram could disappear, making it look like text source code?
-*** TODO executing list block, music, sounds
-*** TODO dialog boxes are fancy SEND blocks that send to *system*
-*** TODO fix not being able to pull out sprites (or any top item) from list
-*** TODO review / prioritize tasks
-*** TODO type methods at the command line
-*** TODO [#B] start using terminal output for status message output
-*** TODO [#B] fix terminal block creation, method block creation, and text color
-*** TODO [#B] add more information to method+prototype databases
-** TODO Fix menus not closing
-** TODO Fix wrong package name:  0: (IOFORMS::FIND-PROTOTYPE "IOFORMS:TURTLE" NIL) 1: (IOFORMS:MAKE-BLOCK (TURTLE))
-  2: (IOFORMS:BLOCK-PROMPT/DO-SEXP ..)
-  3: (IOFORMS:PROMPT/ENTER ..)
-** TODO Simple data entry block based on prompt. Can be configured for any type.
-*** TODO draw-focused method should paint the cursor blink , so it only blinks in active box
-*** TODO cursor should negate underlying letter, not overpaint
-*** TODO execute should do nothing by default; fix make-block to not use %operation
-gets for entering the values
-** TODO [#B] comment block for output messages in listener etc, trap errors
-** TODO [#B] Fix menu behavior: properly check other menu widgets in menubar hit before menu
-** TODO [#A] fix argument blocks not being created (AGAIN)
-** TODO [#A] fix context menus not using correct target
-** TODO [#A] get math and basic blocks working
-** TODO [#A] make easy dialog box block maker
-** TODO [#A] fix can't select sublist 
-** TODO [#A] fix not being able to pull out sublists
-   CLOSED: [2011-06-17 Fri 23:38]
-** TODO [#B] list-scroll-decorator
-** TODO [#B] improve appearance of menus and terminal
-** TODO [#B] reasonable emacs configuration for ioforms dev (imenu etc)
-** TODO [#C] general svg image support
-** TODO [#A] make a sprite reference (i.e. uuid)
-** TODO [#A] implement "send" block using reference 
-** TODO [#A] Create DEFBLOCK block
-** TODO [#A] bring menubar and its menus to front when opening menu
-** TODO [#B] minibuffer messages
-** TODO [#B] send unfocused input to terminal
-** TODO [#B] escape key hide/show terminals/menus
-** TODO [#B] notifications!
-** TODO [#B] transcribe BYOB blocks library listing
-** TODO [#B] click again on header to close menu.
-** TODO [#B] *scratch* buffer would be a funny joke
-** TODO [#B] hilbert curve turtle example 
-** TODO [#B] editing of numbers/data entry values in-place
-** TODO [#B] Revise widgets.lisp for OpenGL
-** TODO [#B] button to add arguments to + etc
-** TODO [#B] close all submenus when closing a menu
-** TODO [#B] comment textbox
-** TODO [#B] disabled menu items check for presence of method in target and/or condition
-** TODO [#B] double click to run blocks
-** TODO [#B] fix cursor rendering in prompt not lining up with characters
-** TODO [#B] fix glitch at top left corner menu on startup before any click of Project m
-** TODO [#B] isolate/trap all block errors
-** TODO [#B] or, escape to toggle menu
-** TODO [#B] tab to switch focus between all top-level blocks
-** TODO [#C] make thing to search for duplicate method defs
-** TODO [#C] defblock emacs
-** TODO [#C] ALPHA issues for PNG images
-<|3b|> you want 'save color values from transparent pixels', and need to make
-       sure the pixels are white with 0 alpha
-<|3b|> also, looks like you weren't passing blend to draw-circle from
-       draw-solid-circle, not that it matters here  [23:46]
-** TODO [#C] allow string-valued method fields. resource id's of method block, uuid?
-** TODO [#C] automatically generate blocky friend faces with given body/face shapes
-** TODO [#C] pin toggle button
-** TODO [#C] pretty rubberband movement
-** TODO [#C] x button for closing menu
-** TODO [#C] yellow comment sticky note boxes
-** TODO [#C] AABB-tree (axis-aligned bounding-box)
 ** TODO [#C] draw-socket should draw types
 ** TODO [#C] shawn's emacs port as text widget?
 ** TODO [#C] Implement this GRAPH UI example:

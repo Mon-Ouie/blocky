@@ -651,7 +651,7 @@ If the method is not found, attempt to forward the message."
 		     (object condition)))))
 
 (defun print-copyright-notice ()
-  (format t "~A" *copyright-notice*))
+  (message "~A" *copyright-notice*))
 
 (defun definition (method object)
   (block finding

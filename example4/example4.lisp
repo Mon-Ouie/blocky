@@ -28,6 +28,7 @@
 (setf *screen-width* 800)
 (setf *screen-height* 600)
 (setf *window-title* "blocky.io")
+;; (setf *resizable* t)
 (enable-key-repeat 9 2)
 
 (defparameter *font* "sans-bold-12")

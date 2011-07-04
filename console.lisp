@@ -39,6 +39,8 @@
 
 (in-package :ioforms) 
 
+(defvar *builder-p* nil "This is set to non-nil when the Blocky.io Builder is being used.")
+
 (defvar *pending-autoload-resources* '())
 
 (defun random-choose (set)

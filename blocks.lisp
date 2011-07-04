@@ -66,6 +66,8 @@
 
 (in-package :ioforms)
 
+(defvar *script* nil)
+
 (defparameter *block-categories*
   '(:system :motion :event :message :looks :sound :structure :data
     :menu :hover :control :comment :sensing :operators :variables)
@@ -1076,10 +1078,6 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (next%initialize self)
     (setf inputs blocks)))
 
-;;; Composing blocks into larger programs, recursively.
-
-(defvar *script* nil)
-
 (defmacro with-script (script &rest body)
   `(let ((*script* ,script))
      ,@body))
@@ -1111,6 +1109,10 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (assert (contains script block))
     (delete-input self block)
     (append-input self block)))
+
+(define-method delete-block script (block)
+  (assert (contains self block))
+  (delete-input self block))
 
 (define-method update script ()
   (with-script self 

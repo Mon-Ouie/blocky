@@ -38,7 +38,7 @@
 defproject run start stop *update-function* *default-world-axis-size*
 defsprite *target* *blocks* *script* *default-world-z-size*
 install-blocks seconds->frames keyboard-held-p keyboard-pressed-p
-*use-nominal-screen-size* keyboard-released-p
+*use-nominal-screen-size* keyboard-released-p *builder*
 keyboard-time-in-current-state make-menu pretty-symbol-string
 *pointer-x* *pointer-y* keyboard-time-in-previous-state *updates*
 keyboard-down-p keyboard-keys-down keyboard-modifier-down-p
