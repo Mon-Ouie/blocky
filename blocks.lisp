@@ -905,7 +905,7 @@ override all colors."
       (let* ((dash *dash*)
 	     (left (+ x (* 2 dash)))
 	     (y0 (+ y dash 1)))
-	(error "~S" (text left y0 string color))))))
+	(text left y0 string color)))))
 
 (define-method draw-label block (expression)
   (draw-label-string self (print-expression expression)))
