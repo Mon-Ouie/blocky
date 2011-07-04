@@ -1823,13 +1823,14 @@ of the music."
     (sdl:width img)))
 
 ;; &optional (u1 0) (v1 0) (u2 1) (v2 1))
-(defun draw-textured-rectangle (x y z width height texture &key (blend :alpha) (opacity 1.0))
+(defun draw-textured-rectangle (x y z width height texture 
+				&key (blend :alpha) (opacity 1.0) (vertex-color "white"))
   (if (null blend)
       (gl:disable :blend)
       (progn (gl:enable :texture-2d :blend)	
 	     (set-blending-mode blend)))
   (gl:bind-texture :texture-2d texture)
-  (gl:color 1 1 1 opacity)
+  (set-vertex-color vertex-color)
   (gl:with-primitive :quads
     (let ((x1 x)
 	  (x2 (+ x width))
@@ -1934,8 +1935,7 @@ of the music."
   (let ((texture (find-text-image font string)))
     (multiple-value-bind (width height) 
 	(font-text-extents string font)
-      (set-vertex-color color)
-      (draw-textured-rectangle x y z width height texture))))
+      (draw-textured-rectangle x y z width height texture :vertex-color color))))
 
 ;;; Drawing shapes and other primitives
 
@@ -1982,8 +1982,7 @@ of the music."
 	(left (- x radius))
 	(top (- y radius))
 	(side (* 2 radius)))
-    (set-vertex-color color)
-    (draw-textured-rectangle left top z side side texture :blend blend)))
+    (draw-textured-rectangle left top z side side texture :blend blend :vertex-color color)))
 
     ;; (draw-textured-rectangle left top side side mask :blend :source)
     ;; (set-vertex-color color)
