@@ -282,15 +282,18 @@ The modes can be toggled with CONTROL-X.")
       (apply #'send (make-keyword operation) 
 	     receiver (mapcar #'eval arguments)))))
 
+(define-method read-expression prompt (input-string)
+  (handler-case 
+      (read-from-string (concatenate 'string "(" input-string ")"))
+    (condition (c)
+      (print-it c))))
+
 (define-method enter prompt (&optional no-clear)
   (labels ((print-it (c) 
 	     (print-data self c :comment)))
     (let* ((*read-eval* nil)
 	   (line %line)
-	   (sexp (handler-case 
-		     (read-from-string (concatenate 'string "(" line ")"))
-		   (condition (c)
-		     (print-it c)))))
+	   (sexp (read-expression self line)))
       (unless no-clear (clear-line self))
       (when sexp 
 	(say self "~A" line)
@@ -460,7 +463,7 @@ The modes can be toggled with CONTROL-X.")
 
 (define-method initialize entry (&key value type-specifier options name label-color parent)
   (next%initialize self)
-  (assert (and value type-specifier))
+  ;(assert (and value type-specifier))
   (when parent (setf %parent parent))
   (setf %type-specifier type-specifier
 	%options options
@@ -580,17 +583,10 @@ The modes can be toggled with CONTROL-X.")
 	(setf %value datum)
 	(message "Warning: value entered does not match %TYPE-SPECIFIER."))))
 
-(define-method enter entry ()2
+(define-method enter entry ()
   (next%enter self :no-clear))
 
 (define-method draw-contents entry ())
-	    
-;; (define-method draw-contents entry ()
-;;   (with-block-drawing
-;;     (with-fields (value x y) self
-;;       (text (+ x (* 2 *dash*))
-;; 	    (+ y *dash* 1)
-;; 	    (print-expression value)))))
 
 (define-method layout entry ()
   (with-fields (height width value line) self
@@ -615,6 +611,18 @@ The modes can be toggled with CONTROL-X.")
 ;; (defentry non-negative-integer (integer 0 *) 0)
 ;; (defentry sexp t nil)
 
+;;; Plain text entry
+
+(define-prototype text-entry (:parent entry))
+
+(define-method read-expression text-entry (input-string)
+  ;; pass-through; don't read string at all.
+  input-string)
+
+(define-method do-sexp text-entry (sexp)
+  (assert (stringp sexp))
+  (setf %value sexp))
+  
 ;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
 
 (define-prototype block-prompt (:parent prompt)

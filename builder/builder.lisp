@@ -42,7 +42,7 @@
 
 (define-method initialize splash (&optional (clock 380))
   (next%initialize self)
-  (update-image-dimensions self)
+  (update-image-dimensions self) ;; we need the coordinates straight away.
   (setf %x (- (/ *screen-width* 2) (/ %width 2)))
   (setf %y (- (/ *screen-height* 2) (/ %height 2)))
   (setf %clock clock))
@@ -59,9 +59,6 @@
   (new system)
   (let ((script (new script)))
     (add-block script (new splash))
-    (add-block script (new list))
-    (add-block script (new list))
-    (add-block script (new list))
     (start (new shell script))))
 
 ;;; builder.lisp ends here

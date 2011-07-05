@@ -362,9 +362,13 @@ the return value of the function (if any)."
 			(first data-type)
 			data-type))
 	 (type-specifier (if (member head-type *builtin-entry-types*)
-			     head-type data-type)))
-	(new entry :value datum 
-		   :type-specifier type-specifier)))
+			     head-type data-type))
+	 ;; see also terminal.lisp for more on data entry blocks
+	 (entry-prototype (cond 
+			    ((eq 'string type-specifier) "IOFORMS:TEXT-ENTRY")
+			    (t "IOFORMS:ENTRY"))))
+	(clone entry-prototype :value datum 
+			       :type-specifier type-specifier)))
 		    
 (defvar *make-block-package* nil)
 

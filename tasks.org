@@ -1,9 +1,9 @@
 * TODO USABLE ALPHA RELEASE OF IOFORMS
-** TODO [#A] use assertions to diagnose (unplug failure) not being able to pull out sprites (or any top item) from list
+** TODO [#A] transcribe BYOB blocks library listing
 ** TODO [#A] more scratch/byob blocks
-** TODO [#A] rework simple collision detection--- abstract it out and let objects handle it
+** TODO [#A] raw string entry
 ** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
-*** TODO [#A] transcribe BYOB blocks library listing
+** TODO [#A] rework simple collision detection--- abstract it out and let objects handle it
 ** TODO [#B] display name of current project / Unnamed project as prompt
 ** TODO [#B] wiki page organization browsing
 ** TODO [#B] morphic halos
