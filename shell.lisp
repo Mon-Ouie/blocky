@@ -232,26 +232,26 @@
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag inputs script drag-start ghost drag-offset) self
-    ;; save the block
-    (setf drag block)
-    ;; remove from script if it's a top-level block.
-    (when (object-eq script (get-parent block))
-      (unplug script block))
-    (let ((dx (field-value :x block))
-	  (dy (field-value :y block))
-	  (dw (field-value :width block))
-	  (dh (field-value :height block)))
-      (with-fields (x y width height) ghost
-	;; remember the relative mouse coordinates from the time the
-	;; user began dragging, so that the block being dragged is not
-	;; simply anchored with its top left corner located exactly at
-	;; the mouse pointer.
-	(let ((x-offset (- mouse-x dx))
-	      (y-offset (- mouse-y dy)))
-	  (when (null drag-start)
-	    (setf x dx y dy width dw height dh)
-	    (setf drag-start (cons dx dy))
-	    (setf drag-offset (cons x-offset y-offset))))))))
+    (with-script script
+      ;; save the block
+      (setf drag block)
+      (when (parent-is-script block)
+	(unplug-from-parent block))
+      (let ((dx (field-value :x block))
+	    (dy (field-value :y block))
+	    (dw (field-value :width block))
+	    (dh (field-value :height block)))
+	(with-fields (x y width height) ghost
+	  ;; remember the relative mouse coordinates from the time the
+	  ;; user began dragging, so that the block being dragged is not
+	  ;; simply anchored with its top left corner located exactly at
+	  ;; the mouse pointer.
+	  (let ((x-offset (- mouse-x dx))
+		(y-offset (- mouse-y dy)))
+	    (when (null drag-start)
+	      (setf x dx y dy width dw height dh)
+	      (setf drag-start (cons dx dy))
+	      (setf drag-offset (cons x-offset y-offset)))))))))
 
 (define-method drag-maybe shell (x y)
   ;; require some actual mouse movement to initiate a drag

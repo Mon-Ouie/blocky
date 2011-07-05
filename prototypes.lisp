@@ -1223,26 +1223,16 @@ objects after reconstruction, wherever present."
 	    (1+ (search "{" string))
 	    (search "}" string))))
 
-;; (defmethod print-object ((foo ioforms:object) stream) 
-(defun print-iob (ob)
-  (let ((object (find-object ob)))
-    (apply #'concatenate 'string
-	   (list (format nil "#<IOB ~A ~A " 
-			 (object-address-string object)
-			 (get-some-object-name object))
-		 " FIELDS: "
-		 ;; (let ((fields (object-fields object)))
-		 ;;   (if (listp fields)
-		 ;;       (labels ((separate (item)
-		 ;; 		  (format nil " ~S " (print-iob item)))
-		 ;; 		(iob (val)
-		 ;; 		  (if (object-p val)
-		 ;; 		      (print-iob val)
-		 ;; 		      (format nil "~S" val))))
-		 ;; 	 (let ((prints (mapcar #'iob fields)))
-		 ;; 	   (apply #'concatenate 'string 
-		 ;; 		  (mapcar #'separate prints))))))
-		 " DONE. "))))
+(defun print-iob (foo stream)
+  (let ((object (find-object foo)))
+    (format stream "#<IOB ~A ~A ~A>" 
+	    (get-some-object-name object)
+	    (object-address-string object)
+	    (object-uuid object))))
+
+(defun install-iob-printer ()
+  (defmethod print-object ((foo ioforms:object) stream)
+    (print-iob foo stream)))
 
 ;;; Brute force debugging
     

@@ -1,10 +1,12 @@
 * TODO USABLE ALPHA RELEASE OF IOFORMS
 ** TODO [#A] use assertions to diagnose (unplug failure) not being able to pull out sprites (or any top item) from list
-** TODO display name of current project / Unnamed project as prompt
 ** TODO [#A] more scratch/byob blocks
-** TODO project settings dialog for configuring *screen-width* and *resizable* etc
-*** TODO [#A] transcribe BYOB blocks library listing
 ** TODO [#A] rework simple collision detection--- abstract it out and let objects handle it
+** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
+*** TODO [#A] transcribe BYOB blocks library listing
+** TODO [#B] display name of current project / Unnamed project as prompt
+** TODO [#B] wiki page organization browsing
+** TODO [#B] morphic halos
 ** TODO [#C] use turtle to program polygon vertices and shit a la fluxus
 ** TODO [#B] general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
 ** TODO Turtle graphics video demo

@@ -176,13 +176,6 @@ By default, just update each child block."
   (with-fields (inputs) self
     (find block inputs :test 'eq :key #'find-object)))
 
-(define-method delete-input block (block)
-  (with-fields (inputs) self
-    (assert (contains self block))
-    (setf inputs (delete block inputs
-			 :key #'find-object
-			 :test 'eq))))
-
 (defun input-position (self input)
   (assert (not (null input)))
   (with-fields (schema inputs) self
@@ -204,13 +197,14 @@ By default, just update each child block."
     (assert (not (null inputs)))
     (nth (input-position self name) inputs)))
 
-(defun (setf input) (self name value)
+(defun (setf input) (self name block)
   (with-fields (inputs) self
 ;    (assert (not (object-p name)))
     (assert (not (null inputs)))
+    (set-parent block self)
     (setf (nth (input-position self name) inputs)
 	  ;; store the real link
-  	  (find-object value))))
+  	  (find-object block))))
 
 (define-method position-within-parent block ()
   (input-position %parent self))
@@ -225,13 +219,35 @@ By default, just update each child block."
 (define-method set-parent block (parent)
   "Store a UUID link to the enclosing block PARENT.
 If PARENT is nil, then the existing parent link is cleared."
-    (assert (is-valid-connection parent self))
-    (setf %parent (when parent 
-		    ;; always store uuid to prevent circularity
-		    (find-uuid parent))))
+  (assert (not (null parent)))
+  (assert (is-valid-connection parent self))
+  (setf %parent (when parent 
+		  ;; always store uuid to prevent circularity
+		  (find-uuid parent))))
 	       
 (define-method get-parent block ()
   %parent)
+
+(defun is-bad-connection (sink source)
+  (assert (or sink source))
+  ;; make sure source is not actually sink's parent somewhere
+  (block checking
+    (prog1 nil
+      (let ((pointer sink))
+	(loop while pointer do
+	  (if (eq (find-object pointer)
+		  (find-object source))
+	      (return-from checking t)
+	      (setf pointer (find-parent pointer))))))))
+
+(defun is-valid-connection (sink source)
+  (not (is-bad-connection sink source)))
+
+;; (defun connect-parent-links (block)
+;;   (dolist (child (field-value :inputs block))
+;;     (when child
+;;       (set-parent child block)
+;;       (connect-parent-links child))))
 
 (define-method register-uuid block ()
   (add-object-to-database self))
@@ -240,6 +256,15 @@ If PARENT is nil, then the existing parent link is cleared."
   (let ((len (length %inputs)))
     (setf %input-widths (make-list len :initial-element 0))
     (setf %results (make-list len))))
+
+(define-method delete-input block (block)
+  (with-fields (inputs) self
+    (prog1 t
+      (assert (contains self block))
+      (setf inputs (remove block inputs
+			   :key #'find-object
+			   :test 'eq))
+      (assert (not (contains self block))))))
 		   
 (define-method initialize block (&rest blocks)
   "Prepare an empty block, or if BLOCKS is non-empty, a block
@@ -392,7 +417,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 (define-method accept send (block)
   ;; make these click-align instead
-  (declare (ignore block)))
+  (assert (not (null block)))
+  nil)
 
 (defun pretty-symbol-string (thing)
   (let ((name (etypecase thing
@@ -459,28 +485,6 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	  (setf height (+ dash (if (null inputs)
 				   dash 0) max-height)))))))
 
-;;; Verifying the tree structure of the blocks    
-
-(defun is-bad-connection (sink source)
-  ;; make sure source is not actually sink's parent somewhere
-  (block checking
-    (prog1 nil
-      (let ((pointer sink))
-	(loop while pointer do
-	  (if (eq (find-object pointer)
-		  (find-object source))
-	      (return-from checking t)
-	      (setf pointer (find-parent pointer))))))))
-
-(defun is-valid-connection (sink source)
-  (not (is-bad-connection sink source)))
-
-(defun connect-parent-links (block)
-  (dolist (child (field-value :inputs block))
-    (when child
-      (set-parent child block)
-      (connect-parent-links child))))
-
 ;;; Block movement
 
 (define-method move-to block (x y &optional z)
@@ -535,15 +539,18 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 (define-method unplug block (input)
   "Disconnect the block INPUT from this block."
-  (with-fields (inputs) self
+  (with-fields (inputs parent) self
+    (assert (contains self input))
     (prog1 input
-;      (message "inputs: ~S" (length inputs))
-      (setf inputs (delete input inputs :test 'eq :key #'find-object)))))
-;      (message "inputs2: ~S" (length inputs))
+      (if (= 1 (length inputs))
+	  (setf inputs nil)
+	  (setf inputs (delete input inputs :test 'eq :key #'find-object))))))
 
 (define-method unplug-from-parent block ()
-  (with-fields (parent) self
-    (when parent
+  (prog1 t
+    (with-fields (parent) self
+      (assert (not (null parent)))
+      (assert (contains parent self))
       (unplug parent self)
       (assert (not (contains parent self)))
       (setf parent nil))))
@@ -592,7 +599,7 @@ inputs all the time."
   "Carry out whatever action this block implements. The %RESULTS field
 will be a list of results obtained by executing/evaluating the
 corresponding blocks in %INPUTS (but this behavior can be overridden;
-see also `BLOCK/EXECUTE-INPUTS' and `BLOCK/RUN').  The default is to
+see also `execute-inputs' and `run').  The default is to
 do nothing."
   nil)
 
@@ -605,25 +612,16 @@ override this RUN method and evaluate just the ones you want."
 
 ;;; recompilation: compiling block diagrams into equivalent sexps
 
-(define-method recompile-body block ()
-  nil)
+(define-method recompile-body block (&optional compiled-inputs)
+  (declare (ignore compiled-inputs))
+  self)
 
 (define-method recompile-inputs block ()
-  (mapc #'recompile %inputs))
+  (mapcar #'recompile %inputs))
 
 (define-method recompile block ()
-  (recompile-inputs self)
-  (recompile-body self))
+  (recompile-body self (recompile-inputs self)))
   
-  ;; (with-fields (operation results) self
-  ;;   (labels ((clean (item)
-  ;; 	       (if (symbolp item)
-  ;; 		   (make-keyword item)
-  ;; 		   item)))
-  ;;     (when *target*
-  ;; 	(apply #'ioforms:send nil operation *target*
-  ;; 	       (mapcar #'clean results))))))
-
 (define-method describe block ()
   "Show name and comprehensive help for this block."
   nil)
@@ -989,7 +987,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 
 (defparameter *null-display-string* "...")
 
-(defun null-block () (clone "IOFORMS:LIST"))
+(defun null-block () (new list))
 
 (define-method click list (x y)
   (dolist (block %inputs)
@@ -1010,7 +1008,9 @@ MOUSE-Y identify a point inside the block (or input block.)"
 		    (append (list input) inputs)
 		    (append inputs (list input)))))
     	;; no inputs yet. make a single-element inputs list
-	(prog1 t (setf inputs (list input))))))
+	(prog1 input 
+	  (setf inputs (list input))
+	  (set-parent input self)))))
 
 (define-method take-first list ()
   (with-fields (inputs) self
@@ -1074,13 +1074,18 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	  (draw each)))))
 
 (define-method initialize list (&rest blocks)
-  (with-fields (inputs) self
-    (next%initialize self)
-    (setf inputs blocks)))
+    (setf %inputs blocks)
+    (next%initialize self))
+
+;;; Combining blocks into scripts
 
 (defmacro with-script (script &rest body)
   `(let ((*script* ,script))
      ,@body))
+
+(define-method parent-is-script block ()
+  (assert (not (null *script*)))
+  (object-eq %parent *script*))
 
 ;; Notice that this resize method resizes a BLOCK, not a script.
 (define-method resize block (&key height width)
@@ -1104,15 +1109,15 @@ MOUSE-Y identify a point inside the block (or input block.)"
 (define-method report-layout-change script ()
   (setf %needs-layout t))
 
-(define-method bring-to-front script (block)
-  (with-fields (inputs script) self
-    (assert (contains script block))
-    (delete-input self block)
-    (append-input self block)))
-
 (define-method delete-block script (block)
   (assert (contains self block))
   (delete-input self block))
+
+;; (define-method bring-to-front script (block)
+;;   (with-fields (inputs script) self
+;;     (assert (contains script block))
+;;     (delete-input self block)
+;;     (append-input self block)))
 
 (define-method update script ()
   (with-script self 
@@ -1142,13 +1147,12 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (setf inputs (nconc inputs (list block)))))
 
 (define-method add-block script (block &optional x y)
-  (with-fields (inputs) self
-    (assert (not (contains self block)))
-    (append-input self block)
-    (when (and (integerp x)
-	       (integerp y))
-      (move-to block x y))
-    (report-layout-change self)))
+  (assert (not (contains self block)))
+  (append-input self block)
+  (when (and (integerp x)
+	     (integerp y))
+    (move-to block x y))
+  (report-layout-change self))
 
 (define-method run script ())
   ;; (with-fields (inputs target) self

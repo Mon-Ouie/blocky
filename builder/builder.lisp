@@ -59,6 +59,9 @@
   (new system)
   (let ((script (new script)))
     (add-block script (new splash))
+    (add-block script (new list))
+    (add-block script (new list))
+    (add-block script (new list))
     (start (new shell script))))
 
 ;;; builder.lisp ends here
