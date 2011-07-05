@@ -47,7 +47,7 @@ keyboard-modifiers draw-filled-circle draw-aa-circle get-keys
 *form-command-handler-function* add-block remove-block
 *initialization-hook* initialize-engine hit-blocks
 split-string-on-lines message *prompt-sweden-keybindings*
-*prompt-qwerty-keybindings* *screen-width* transform-method-body
+*prompt-qwerty-keybindings* *screen-width* transform-method-body *builder-p*
 roll-under make-stat make-universe initialize-colors
 *standard-categories* *left-turn* bind-event *right-turn*
 *default-action-points* left-turn right-turn roll bind-event-to-method
