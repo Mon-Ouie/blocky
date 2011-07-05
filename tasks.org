@@ -1,51 +1,109 @@
-* TODO USABLE ALPHA RELEASE OF IOFORMS
-** TODO [#A] transcribe BYOB blocks library listing
+** TODO [#A] Standard Blocks Library
+*** TODO move
+*** TODO move to 
+*** TODO move onto 
+*** TODO [#C] glide 
+*** TODO change <var> <amount>
+*** TODO set <var> <value>
+*** TODO get <var>
+*** TODO my <var>
+*** TODO turn left
+*** TODO turn right
+*** TODO point at
+*** TODO say
+*** TODO think <text> <time>
+*** TODO display <image>
+*** TODO blend
+*** TODO opacity
+*** TODO show
+*** TODO hide
+*** TODO move to front
+*** TODO play sound
+*** TODO play music
+*** TODO stop sound
+*** TODO [#C] play note/drum/tempo etc
+*** TODO on play
+*** TODO on click
+*** TODO on event
+*** TODO wait
+*** TODO loop
+*** TODO dotimes
+*** TODO dolist
+*** TODO send (to some other object explicitly)
+*** TODO method
+*** TODO while
+*** TODO if
+*** TODO when 
+*** TODO [#C] wait until <condition>
+*** TODO stop script
+*** TODO stop all
+*** TODO touching
+*** TODO ask <question>
+*** TODO mouse y
+*** TODO mouse x
+*** TODO mouse down <number>
+*** TODO key down <key>
+*** TODO distance to
+*** TODO common mathematical operations/relations
+*** TODO common logical connectives
+*** TODO concatenate <strings>
+*** TODO [#C] loudness, loud, sensor value
+*** TODO random <min> <max>
+*** TODO list ops: length, append, add, delete, insert
+*** TODO contains
+** TODO generic way to wrap functions?
+** TODO review all IOFORMS engine features for blocks to make
+** TODO [#A] Make dialogs for all menu options in file:system.lisp 
+** TODO [#A] Task/process abstraction built into blocks exec model, simple coroutines?
+** TODO [#B] Hide optional arguments (general horizontal list block. can also be used with APPLY block.
+** TODO [#A] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
 ** TODO [#A] more scratch/byob blocks
-** TODO [#A] raw string entry
+** TODO [#A] test raw string entry
 ** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
 ** TODO [#A] rework simple collision detection--- abstract it out and let objects handle it
-** TODO [#B] display name of current project / Unnamed project as prompt
-** TODO [#B] wiki page organization browsing
-** TODO [#B] morphic halos
-** TODO [#C] use turtle to program polygon vertices and shit a la fluxus
-** TODO [#B] general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
-** TODO Turtle graphics video demo
-**** TODO [#B] categorize methods
-**** TODO [#B] list all methods with schema for a given prototype, culling parents, removing duplicates
-** TODO splash screen with basic info
-** TODO tutorial
 ** TODO [#A] hook #'message minibuffer messages/notifications (message workspace, or different buffers?) 
-** TODO [#B] make a sprite reference (i.e. uuid)
 ** TODO [#A] implement "send" block using reference 
 ** TODO [#A] Create DEFBLOCK block
 ** TODO [#A] bring menubar and its menus to front when opening menu
+** TODO [#A] General purpose easy dialog box maker
+** TODO [#A] dialog boxes for project save/load!
+** TODO [#A] dialog boxes are fancy SEND blocks that send to *system*
+** TODO [#A] start using terminal output for status message output
+** TODO [#A] escape key hide/show terminals/menus
+** TODO [#A] allow string-valued method fields. resource id's of method block, uuid?
+** TODO [#B] display name of current project / Unnamed project as prompt
+** TODO [#B] wiki page organization browsing
+** TODO [#B] morphic halos
+** TODO [#B] general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
+** TODO [#B] tutorial
+** TODO [#B] make a sprite reference (i.e. uuid)
 ** TODO [#B] Uniform read-error handling for entries
 ** TODO [#B] allow schema arguments to not all be shown
 ** TODO [#B] add all missing keyboard characters
-** TODO [#A] General purpose easy dialog box maker
-*** TODO [#A] dialog boxes for project save/load!
-*** TODO [#A] dialog boxes are fancy SEND blocks that send to *system*
 ** TODO [#B] tab and shift-tab for input nav
-** TODO [#C] block colors/backgrounds in a list subprogram could disappear, making it look like text source code?
-** TODO [#A] start using terminal output for status message output
-** TODO [#C] add more information to method+prototype databases
-** TODO [#C] cursor should negate underlying letter, not overpaint
 ** TODO [#B] comment block for output messages in listener etc, trap errors
 ** TODO [#B] Fix menu behavior: properly check other menu widgets in menubar hit before menu
 ** TODO [#B] fix argument blocks not being created (AGAIN)
 ** TODO [#B] list-scroll-decorator
 ** TODO [#B] reasonable emacs configuration for ioforms dev (imenu etc)
-** TODO [#C] general svg image support
+** TODO [#A] BIGFIX: in cell/move and sprite/move , compute whether a move would cause a collision
+** TODO [#A] and then only allow the move to go a certain distance. return number moved
+** TODO [#A] then "resting contact" will work; the object won't try to move anymore (if gravity.)
 ** TODO [#B] send unfocused input to terminal? 
-** TODO [#A] escape key hide/show terminals/menus
 ** TODO [#B] click again on header to close menu.
-** TODO [#C] hilbert curve turtle example 
 ** TODO [#B] button to add arguments to + etc (just drop onto block list)
 ** TODO [#B] close all submenus when closing a menu
 ** TODO [#B] monospace textbox for editing method?
 ** TODO [#B] disabled menu items, to check for presence of method in target and/or condition
 ** TODO [#B] fix cursor rendering in prompt not lining up with characters
 ** TODO [#B] isolate/trap all block errors and display them grayed out with an inspectable error
+** TODO [#B] AABB-tree (axis-aligned bounding-box)
+** TODO [#C] use turtle to program polygon vertices and shit a la fluxus
+** TODO [#C] block colors/backgrounds in a list subprogram could disappear, making it look like text source code?
+** TODO [#C] add more information to method+prototype databases
+** TODO [#C] cursor should negate underlying letter, not overpaint
+** TODO [#C] general svg image support
+** TODO [#C] hilbert curve turtle example 
 ** TODO [#C] make thing to search for duplicate method defs
 ** TODO [#C] defblock emacs
 ** TODO [#C] ALPHA issues for PNG images
@@ -53,13 +111,11 @@
        sure the pixels are white with 0 alpha
 <|3b|> also, looks like you weren't passing blend to draw-circle from
        draw-solid-circle, not that it matters here  [23:46]
-** TODO [#A] allow string-valued method fields. resource id's of method block, uuid?
 ** TODO [#C] automatically generate blocky friend faces with given body/face shapes
 ** TODO [#C] pin toggle button
 ** TODO [#C] pretty rubberband movement
 ** TODO [#C] x button for closing menu
 ** TODO [#C] yellow comment sticky note boxes
-** TODO [#B] AABB-tree (axis-aligned bounding-box)
 
 * TODO XALCYON STORYLINE
 ** TODO i'm going to learn some of this: http://en.wikipedia.org/wiki/Speech_Synthesis_Markup_Language
@@ -243,22 +299,9 @@ can work with his code as well.
 
 * Eliminate all compiler warnings. Really.
 
-* ALPHA 1
-*** TODO reconsider pool.lisp
-*** TODO blocks should no longer draw onto sdl:*default-surface*
-*** TODO Consider removing "held-keys" feature
-*** TODO Consider merging "schema" into field declaration marking which fields are "arguments". get rid of the explicit "arguments" field
-*** TODO interface (zoom down into blocks, showing wider view w more help
-*** TODO [#A] open a window and do something
-* ALPHA 2
-
 * Sweep snake trail across multiplying particles in 3 reactor chambers
 ** TODO refactor collision detection without consing
 *** TODO write a function (collision *world*
-** TODO don't use clrhash
-** TODO BIGFIX: in cell/move and sprite/move , compute whether a move would cause a collision
-** TODO and then only allow the move to go a certain distance. return number moved
-** TODO then "resting contact" will work; the object won't try to move anymore (if gravity.)
 ** TODO default-keybindings as an initform 
 ** trail upgrade
 ** drifting hot rad areas that drain HP
