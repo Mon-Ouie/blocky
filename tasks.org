@@ -1,4 +1,10 @@
+** TODO Self language
+** TODO lower-right-corner resize handle decorator
+** TODO desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
+** TODO [#A] Bring back old/forms.lisp spreadsheet
 ** TODO [#A] generic folding hierarchical list widget with indentation and headlines, a la orgmode 
+*** TODO closable dialog decorator w/X button
+*** TODO licensing scroll box
 *** TODO Also allow large global tabs right underneath menu bar
 ** TODO [#A] use a non-rounded box layout and appearance for program elements, with very thin margins
 *** retain rounded rectangles for UI/workspace/etc
