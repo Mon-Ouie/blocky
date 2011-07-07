@@ -1,13 +1,9 @@
-** TODO [#A] generic folding hierarchical list widget with indentation and headlines, a la orgmode 
-*** TODO closable dialog decorator w/X button
-*** TODO licensing scroll box
-*** TODO Also allow large global tabs right underneath menu bar
 ** TODO [#A] use a non-rounded box layout and appearance for program elements, with very thin margins
 *** retain rounded rectangles for UI/workspace/etc
-** TODO [#A] script wiki database (like the file system)
-** TODO [#A] defblock link <--- to another wikipage or something
-** TODO [#A] define-method "block" has argument names as inputs
-*** TODO each name can also be a lambda list (name type &rest props
+** TODO [#A] defblock FORM: a generic folding hierarchical list widget with indentation and headlines, a la orgmode 
+*** TODO [#A] explicit "save" and "compile" buttons 
+*** TODO [#A] palette widget is a hide-able sidebar with tabs, where you pull off pieces Library / Variables / Methods / Prototypes
+*** TODO generic sidebar widget can inspect its argument (topleft socket as with send)
 ** TODO [#A] send block has socket on left for receiver name, as in Smalltalk-Elements
 *** TODO defblock block --- defining new blocks with a block.
 *** TODO defblock sprite --- defining sprites
@@ -19,6 +15,12 @@
 **** TODO a lambda list is a special case of this
 **** TODO defblock self
 *** TODO defblock quote ( to prevent evaluation )
+** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
+** TODO [#A] rename RUN to EVALUATE
+** TODO [#A] define-method "block" has argument names as inputs
+** TODO [#A] defblock link <--- to another wikipage or something
+*** TODO each name can also be a lambda list (name type &rest props
+** TODO [#B] script wiki database (like the file system)
 ** TODO [#A] test raw string entry
 ** TODO [#A] General purpose easy dialog box maker
 *** TODO dialog boxes for project save/load!
@@ -26,6 +28,9 @@
 ** TODO [#A] escape key hide/show terminals/menus
 ** TODO [#A] desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
 ** TODO [#A] allow string-valued method fields. resource id's of method block, uuid?
+** TODO [#A] closable dialog decorator w/X button
+*** TODO licensing scroll box
+*** TODO Also allow large global tabs right underneath menu bar
 ** TODO [#A] Standard Blocks Library
 *** TODO move
 *** TODO move to 
@@ -84,13 +89,8 @@
 *** TODO contains
 ** TODO [#B] lower-right-corner resize handle decorator
 ** TODO [#B] Bring back old/forms.lisp spreadsheet
-** TODO [#B] rename RUN to EVALUATE
-** TODO [#B] palette widget is a hide-able sidebar with tabs, where you pull off pieces Library / Variables / Methods / Prototypes
-*** TODO generic sidebar widget can inspect its argument (topleft socket as with send)
-** TODO [#B] interactively type live blocks (space bar instantiates and moves big fat cursor
-** TODO [#B] explicit "save" and "compile" buttons 
 *** TODO compilation options
-** TODO [#B] project settings dialog for configuring *screen-width* and *resizable* etc
+** TODO [#B] interactively type live blocks (space bar instantiates and moves big fat cursor
 ** TODO [#B] start using terminal output for status message output
 *** TODO [#A] hook #'message minibuffer messages/notifications (message workspace, or different buffers?) 
 ** TODO [#B] bring menubar and its menus to front when opening menu
