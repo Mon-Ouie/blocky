@@ -1,7 +1,3 @@
-** TODO Self language
-** TODO lower-right-corner resize handle decorator
-** TODO desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
-** TODO [#A] Bring back old/forms.lisp spreadsheet
 ** TODO [#A] generic folding hierarchical list widget with indentation and headlines, a la orgmode 
 *** TODO closable dialog decorator w/X button
 *** TODO licensing scroll box
@@ -28,6 +24,7 @@
 *** TODO dialog boxes for project save/load!
 *** TODO dialog boxes are fancy SEND blocks that send to *system*
 ** TODO [#A] escape key hide/show terminals/menus
+** TODO [#A] desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
 ** TODO [#A] allow string-valued method fields. resource id's of method block, uuid?
 ** TODO [#A] Standard Blocks Library
 *** TODO move
@@ -85,6 +82,8 @@
 *** TODO random <min> <max>
 *** TODO list ops: length, append, add, delete, insert
 *** TODO contains
+** TODO [#B] lower-right-corner resize handle decorator
+** TODO [#B] Bring back old/forms.lisp spreadsheet
 ** TODO [#B] rename RUN to EVALUATE
 ** TODO [#B] palette widget is a hide-able sidebar with tabs, where you pull off pieces Library / Variables / Methods / Prototypes
 *** TODO generic sidebar widget can inspect its argument (topleft socket as with send)
