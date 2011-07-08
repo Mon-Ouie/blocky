@@ -1,9 +1,15 @@
-** TODO [#A] use a non-rounded box layout and appearance for program elements, with very thin margins
-*** retain rounded rectangles for UI/workspace/etc
+** TODO [#A] rename RUN to EVALUATE
+** TODO [#A] DEFBLOCK DEFINE? something to associate a name to a definition of a certain type (method/block/var)
+*** TODO [#A] DEFBLOCK METHOD: define-method "block" has argument names as inputs
+*** TODO [#A] DEFBLOCK DEFBLOCK: defblock link <--- to another wikipage or something
+*** TODO each name can also be a lambda list (name type &rest props
+** TODO [#A] script wiki database (like the file system)
 ** TODO [#A] defblock FORM: a generic folding hierarchical list widget with indentation and headlines, a la orgmode 
 *** TODO [#A] explicit "save" and "compile" buttons 
 *** TODO [#A] palette widget is a hide-able sidebar with tabs, where you pull off pieces Library / Variables / Methods / Prototypes
 *** TODO generic sidebar widget can inspect its argument (topleft socket as with send)
+** TODO [#A] use a non-rounded box layout and appearance for program elements, with very thin margins
+*** retain rounded rectangles for UI/workspace/etc
 ** TODO [#A] send block has socket on left for receiver name, as in Smalltalk-Elements
 *** TODO defblock block --- defining new blocks with a block.
 *** TODO defblock sprite --- defining sprites
@@ -15,22 +21,23 @@
 **** TODO a lambda list is a special case of this
 **** TODO defblock self
 *** TODO defblock quote ( to prevent evaluation )
-** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
-** TODO [#A] rename RUN to EVALUATE
-** TODO [#A] define-method "block" has argument names as inputs
-** TODO [#A] defblock link <--- to another wikipage or something
-*** TODO each name can also be a lambda list (name type &rest props
-** TODO [#B] script wiki database (like the file system)
-** TODO [#A] test raw string entry
-** TODO [#A] General purpose easy dialog box maker
+** TODO [#A] desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
+**** TODO 
+** TODO [#B] test raw string entry
+** TODO [#B] project settings dialog for configuring *screen-width* and *resizable* etc
 *** TODO dialog boxes for project save/load!
 *** TODO dialog boxes are fancy SEND blocks that send to *system*
-** TODO [#A] escape key hide/show terminals/menus
-** TODO [#A] desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
-** TODO [#A] allow string-valued method fields. resource id's of method block, uuid?
+** TODO anything.el style 
+** TODO [#B] escape key hide/show terminals/menus
+** TODO [#B] allow string-valued method fields. resource id's of method block, uuid?
 ** TODO [#A] closable dialog decorator w/X button
 *** TODO licensing scroll box
 *** TODO Also allow large global tabs right underneath menu bar
+** TODO Universal access
+*** TODO How to handle Translations? keywords in most languages are in English even if comments/variable names are French or Japanese or whatever)
+**** TODO translate only meuns?
+*** TODO Visual theme-ability for the color-blind and visually-impaired users (larger font, higher contrast etc)
+*** TODO Braille keyboard and speech synthesis integration for blind users
 ** TODO [#A] Standard Blocks Library
 *** TODO move
 *** TODO move to 
