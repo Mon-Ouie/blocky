@@ -34,7 +34,7 @@
 ;	       (:file "gamepad" :depends-on ("console"))
 	       (:file "blocks" :depends-on ("console"))
 	       (:file "widgets" :depends-on ("blocks"))
-	       (:file "menus" :depends-on ("blocks"))
+	       (:file "trees" :depends-on ("blocks"))
 	       (:file "terminal" :depends-on ("blocks"))
 	       (:file "system" :depends-on ("blocks"))
 	       (:file "things" :depends-on ("blocks"))
