@@ -1,4 +1,4 @@
-;;; menus.lisp --- ioforms menu widgets
+;;; trees.lisp --- ioforms tree widgets
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -20,17 +20,17 @@
 
 (in-package :ioforms)
 
-;;; Menus
+;;; Trees
 
-(define-prototype menu (:parent "IOFORMS:LIST")
-  (category :initform :menu)
+(define-prototype tree (:parent "IOFORMS:LIST")
+  (category :initform :structure)
   (top-level :initform nil)
   (temporary :initform t)
   action target (expanded :initform nil) (visible :initform t))
 
-(define-method initialize menu 
+(define-method initialize tree 
     (&key action target top-level inputs pinned
-	  schema expanded (label "blank menu item..."))
+	  schema expanded (label "blank tree item..."))
   (next%initialize self)
   (setf %action action
 	%pinned pinned
@@ -45,37 +45,40 @@
       (pin each)
       (set-parent each self))))
 
-(define-method accept menu (&rest args) nil)
+(define-method accept tree (&rest args) nil)
 
-(define-method run menu ())
+(define-method run tree ())
 
-(define-method toggle-expanded menu ()
+(define-method toggle-expanded tree ()
   (with-fields (expanded) self
     (setf expanded (if expanded nil t))
     (report-layout-change *script*)))
 
-(define-method is-expanded menu ()
+(define-method is-expanded tree ()
   %expanded)
 
-(define-method expand menu ()
+(define-method expand tree ()
   (setf %expanded t)
   (report-layout-change *script*))
 
-(define-method unexpand menu ()
+(define-method unexpand tree ()
   (setf %expanded nil)
   (report-layout-change *script*))
 
-(define-method click menu (x y)
+(define-method click tree (x y)
   (declare (ignore x y))
   (with-fields (expanded action target) self
     (if (functionp action)
 	(funcall action)
 	(if (keywordp action)
-	    (send action (or target (symbol-value '*system*)))
-	    ;; we're a submenu, not an individual menu command.
+	    (send action (or target 
+			     ;; send to system if not specified.
+			     ;; is this a good idea?
+			     (symbol-value '*system*)))
+	    ;; we're a subtree, not an individual tree command.
 	    (toggle-expanded self)))))
 
-(define-method display-string menu ()	    
+(define-method display-string tree ()	    
   (with-fields (action label top-level) self
     (let ((ellipsis (concatenate 'string label *null-display-string*)))
       (if action
@@ -84,16 +87,16 @@
 	    ((or keyword function) label))
 	  (if top-level label ellipsis)))))
 
-(define-method layout-as-string menu (string)
+(define-method layout-as-string tree (string)
   (with-fields (height width) self
     (setf height (dash 1 (font-height *block-font*)))
     (setf width 
 	  (+ (dash 2) (font-text-extents string *block-font*)))))
 
-(define-method layout menu ()
+(define-method layout tree ()
   (with-fields (expanded dash inputs label width) self
     (if expanded 
-	;; we're an expanded submenu. lay it out
+	;; we're an expanded subtree. lay it out
 	(progn 
 	  (setf dash 1)
 	  (layout-as-list self)
@@ -107,15 +110,15 @@
 	;; we're not expanded. just lay out for label.
 	(layout-as-string self (display-string self)))))
 
-(define-method header-height menu ()
+(define-method header-height tree ()
   (font-height *block-font*))
 
-(define-method header-width menu ()
+(define-method header-width tree ()
   (if %expanded
       (dash 2 (font-text-extents (display-string self) *block-font*))
       %width))
 
-(define-method hit menu (mouse-x mouse-y)
+(define-method hit tree (mouse-x mouse-y)
   (with-field-values (x y expanded inputs width height) self
     (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
       (flet ((try (item)
@@ -123,7 +126,7 @@
 	(if (not expanded)
 	    self
 	    ;; we're expanded. is the mouse to the left of this
-	    ;; menu's header tab thingy?
+	    ;; tree's header tab thingy?
 	    (if %top-level
 		(when (and (< mouse-x (+ x (header-width self)))
 			   (< (header-height self) mouse-y))
@@ -132,54 +135,54 @@
 		
 ;;       (let ((hh (header-height self))
 ;; 	    (hw (header-width self)))
-;; ;;	(message "HIT MENU")
+;; ;;	(message "HIT TREE")
 ;; 	(if (< y mouse-y (+ y hh))
-;; 	    ;; we're even with the header text for this menu.
+;; 	    ;; we're even with the header text for this tree.
 ;; 	    ;; are we touching it?
 ;; 	    (if (< x mouse-x (+ x hw))
-;; 		;; mouse is over menu title. return self to get event
+;; 		;; mouse is over tree title. return self to get event
 ;; 		;; we're in the corner (possibly over top of the text
-;; 		;; of the next menu item's title in the menu bar). 
-;; 		;; so, we close this menu.
+;; 		;; of the next tree item's title in the tree bar). 
+;; 		;; so, we close this tree.
 ;; 		(prog1 nil (unexpand self)))
 ;; 	    (labels ((try (it)
 ;; 		       (hit it mouse-x mouse-y)))
 ;; 	      (some #'try inputs)))))))
 
-(define-method draw-hover menu ()
+(define-method draw-hover tree ()
   nil)
 
-(define-method draw-border menu ()
+(define-method draw-border tree ()
   nil)
 
-(define-method draw-highlight menu ()
+(define-method draw-highlight tree ()
   (with-fields (y height expanded parent top-level) self
     (when parent
       (with-fields (x width) parent
-	;; don't highlight top-level menus.
+	;; don't highlight top-level trees.
 	(when (and (not expanded) (not top-level))
 	  (draw-box x (+ y (dash 1)) width (+ height 1)
 		  :color *highlight-background-color*)
 	  (draw-label-string self (display-string self)))))))
 
-(defparameter *menu-tab-color* "gray60")
-(defparameter *menu-title-color* "white")
+(defparameter *tree-tab-color* "gray60")
+(defparameter *tree-title-color* "white")
 
-(define-method draw-expanded menu (&optional label)
+(define-method draw-expanded tree (&optional label)
   (with-field-values (action x y width height parent inputs top-level) self
     (let ((display-string (or label *null-display-string*))
 	  (header (header-height self)))
       (if top-level
-	  ;; draw the top of the menubar a bit differently to prevent 
-	  ;; over-drawing other menu bar items.
+	  ;; draw the top of the treebar a bit differently to prevent 
+	  ;; over-drawing other tree bar items.
 	  (progn (draw-patch self
 			     x
 			     (dash 3 y)
 			     (dash 2 x (header-width self))
 			     (dash 1 y header)
-			     :color *menu-tab-color*)
-		 (draw-label-string self display-string *menu-title-color*)
-		 ;; draw the rest of the menu background
+			     :color *tree-tab-color*)
+		 (draw-label-string self display-string *tree-title-color*)
+		 ;; draw the rest of the tree background
 		 (draw-patch self
 			     x (dash 2 y header)
 			     (dash 0 x width)
@@ -189,37 +192,35 @@
 		 (draw-line (+ x 1) (dash 2 y header) 
 			    (+ x width -1) (dash 2 y header)
 			    :color (find-color self :highlight))))
-      ;; draw submenu items
+      ;; draw subtree items
       (dolist (each inputs)
 	(draw each)))))
   
-(define-method draw menu (&optional highlight)
+(define-method draw tree (&optional highlight)
   (with-fields (x y width height label action visible expanded) self
     (when visible
       (if expanded 
 	  (draw-expanded self label)
-	  ;; otherwise just draw menu name and highlight, if any
+	  ;; otherwise just draw tree name and highlight, if any
 	  (draw-label-string self (display-string self))))))
 
-;; see system.lisp for example menu
-(defun make-menu (items &optional target)
+;; see system.lisp for example tree menu
+(defun make-tree (items &key target (tree-prototype "IOFORMS:TREE"))
   (labels ((xform (item)
 	     (if (listp item)
 		 (if (listp (first item))
 		     (mapcar #'xform item)
-		     (apply #'clone "IOFORMS:MENU"
+		     (apply #'clone tree-prototype
 			    :target target
 			    (mapcar #'xform item)))
 		 item)))
     (xform items)))
 
-(define-method point-through menu (mouse-x mouse-y)
-  (with-field-values (x y width) self
-    (within-extents mouse-x mouse-y
-		    (+ x (header-width self)) 
-		    y
-		    (+ x width)
-		    (+ y (header-height self)))))
+;;; Menus
+
+(define-prototype menu (:parent "IOFORMS:TREE")
+  (category :initform :menu)
+
 
 ;;; A global menu bar
 

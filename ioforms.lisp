@@ -56,7 +56,7 @@ roll-under make-stat make-universe initialize-colors
 dispatch-event run-project *user-init-file-name* distance
 icon-resource icon-image *compass-directions* *compass-opposites*
 find-resource-property compose-blank-fields font-width font-height
-*browser* browser set-browser find-object *windows*
+*browser* browser set-browser find-object *windows* build
 transform-field-reference defblock *screen-height*
 formatted-line-width *last-event* formatted-line-height
 formatted-string-height formatted-string-width get-color create-image

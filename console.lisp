@@ -2073,6 +2073,9 @@ of the music."
   (sdl-mixer:halt-music)
   (sdl-mixer:close-audio t))
 
+;; (defun build (&optional project)
+;;   (play project)
+;;   (load-project 
 
 (defun initialize-ioforms ()
   (sdl:init-sdl :video t :audio t :joystick t)

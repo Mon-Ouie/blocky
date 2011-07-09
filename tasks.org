@@ -1,13 +1,13 @@
 ** TODO [#A] rename RUN to EVALUATE
-** TODO [#A] DEFBLOCK DEFINE? something to associate a name to a definition of a certain type (method/block/var)
-*** TODO [#A] DEFBLOCK METHOD: define-method "block" has argument names as inputs
-*** TODO [#A] DEFBLOCK DEFBLOCK: defblock link <--- to another wikipage or something
-*** TODO each name can also be a lambda list (name type &rest props
-** TODO [#A] script wiki database (like the file system)
-** TODO [#A] defblock FORM: a generic folding hierarchical list widget with indentation and headlines, a la orgmode 
+** TODO [#A] defblock tree: a generic folding hierarchical list widget with indentation and headlines, a la orgmode 
 *** TODO [#A] explicit "save" and "compile" buttons 
 *** TODO [#A] palette widget is a hide-able sidebar with tabs, where you pull off pieces Library / Variables / Methods / Prototypes
 *** TODO generic sidebar widget can inspect its argument (topleft socket as with send)
+** TODO [#A] DEFBLOCK DEFBLOCK: defblock link <--- to another wikipage or something
+** TODO [#A] DEFBLOCK METHOD: define-method "block" has argument names as inputs
+*** TODO each name can also be a lambda list (name type &rest props
+** TODO [#A] DEFBLOCK DEFINE? something to associate a name to a definition of a certain type (method/block/var)
+** TODO [#A] script wiki database (like the file system)
 ** TODO [#A] use a non-rounded box layout and appearance for program elements, with very thin margins
 *** retain rounded rectangles for UI/workspace/etc
 ** TODO [#A] send block has socket on left for receiver name, as in Smalltalk-Elements
