@@ -1,15 +1,13 @@
-** TODO [#A] rename RUN to EVALUATE
+** TODO [#A] click again on header to close menu.
 ** TODO [#A] defblock tree: a generic folding hierarchical list widget with indentation and headlines, a la orgmode 
+*** TODO [#C] generic sidebar widget can inspect its argument (topleft socket as with send)
+**** TODO [#C] palette widget is a hide-able sidebar with tabs, where you pull off pieces Library / Variables / Methods / Prototypes
+** TODO [#A] DEFBLOCK DEFBLOCK
 *** TODO [#A] explicit "save" and "compile" buttons 
-*** TODO [#A] palette widget is a hide-able sidebar with tabs, where you pull off pieces Library / Variables / Methods / Prototypes
-*** TODO generic sidebar widget can inspect its argument (topleft socket as with send)
-** TODO [#A] DEFBLOCK DEFBLOCK: defblock link <--- to another wikipage or something
 ** TODO [#A] DEFBLOCK METHOD: define-method "block" has argument names as inputs
 *** TODO each name can also be a lambda list (name type &rest props
-** TODO [#A] DEFBLOCK DEFINE? something to associate a name to a definition of a certain type (method/block/var)
-** TODO [#A] script wiki database (like the file system)
-** TODO [#A] use a non-rounded box layout and appearance for program elements, with very thin margins
-*** retain rounded rectangles for UI/workspace/etc
+*** TODO [#C] tree schema? 
+** TODO [#B] : defblock link <--- to another wikipage or something
 ** TODO [#A] send block has socket on left for receiver name, as in Smalltalk-Elements
 *** TODO defblock block --- defining new blocks with a block.
 *** TODO defblock sprite --- defining sprites
@@ -21,6 +19,10 @@
 **** TODO a lambda list is a special case of this
 **** TODO defblock self
 *** TODO defblock quote ( to prevent evaluation )
+** TODO [#A] DEFBLOCK DEFINE? something to associate a name to a definition of a certain type (method/block/var)
+** TODO [#A] script wiki database (like the file system)
+** TODO [#A] use a non-rounded box layout and appearance for program elements, with very thin margins
+*** retain rounded rectangles for UI/workspace/etc
 ** TODO [#A] desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
 **** TODO 
 ** TODO [#B] test raw string entry
@@ -129,7 +131,6 @@
 ** TODO [#B] list-scroll-decorator
 ** TODO [#B] reasonable emacs configuration for ioforms dev (imenu etc)
 ** TODO [#B] send unfocused input to terminal? 
-** TODO [#B] click again on header to close menu.
 ** TODO [#B] button to add arguments to + etc (just drop onto block list)
 ** TODO [#B] close all submenus when closing a menu
 ** TODO [#B] monospace textbox for editing method?
@@ -482,3 +483,14 @@ can work with his code as well.
 
 ** TODO [#C] GAME IDEA: nested puzzle blox? got to drag your guy through various boxes of different sizes and shapes
 ***** use recursive collision detection of some kind, to enable boxes to only fit certain things
+
+* Archived Entries
+** DONE [#A] rename RUN to EVALUATE
+   CLOSED: [2011-07-09 Sat 02:15]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-07-09 Sat 02:16
+   :ARCHIVE_FILE: ~/ioforms/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END: 
+

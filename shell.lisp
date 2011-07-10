@@ -26,8 +26,8 @@
 
 (defblock trash :category :system)
 
-(define-method run trash ())
-(define-method execute trash ())
+(define-method evaluate trash ())
+(define-method evaluate trash ())
 (define-method update trash ())
 (define-method accept trash (item)
   (push item %inputs))
@@ -93,7 +93,8 @@
 (define-method initialize shell (script)
   (setf %script (find-object script))
   (assert %script)
-  (setf %menubar (new menubar (make-menu (symbol-value '*system-menu*))))
+  (setf %menubar (new menubar 
+		      (make-menu (symbol-value '*system-menu*))))
   (add-block %script %menubar)
   (setf %terminal (new terminal))
   (add-block %script %terminal)
@@ -336,6 +337,6 @@
     (setf drag-start nil
 	  drag-offset nil
 	  drag nil)
-    (report-layout-change script)))
+    (invalidate-layout script)))
 
 ;;; shell.lisp ends here

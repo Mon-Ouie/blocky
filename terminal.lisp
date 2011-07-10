@@ -312,9 +312,9 @@ The modes can be toggled with CONTROL-X.")
 	      (serious-condition (c)
 		(print-it c))))
 	(queue line %history))))
-  (do-after-execute self))
+  (do-after-evaluate self))
 
-(define-method do-after-execute prompt ()
+(define-method do-after-evaluate prompt ()
   nil)
 
 (define-method history-item prompt (n)
@@ -494,7 +494,7 @@ The modes can be toggled with CONTROL-X.")
 ;; 	(when (numberp click-index)
 ;; 	  (setf point click-index))))))
 
-(define-method execute entry ()
+(define-method evaluate entry ()
   %value)
 
 (define-method set-value entry (value)
@@ -663,8 +663,8 @@ The modes can be toggled with CONTROL-X.")
       (set-parent prompt self)
       (pin prompt))))
 
-(define-method run listener ()
-  (run (first %inputs))) ;; should I run them all?
+(define-method evaluate listener ()
+  (evaluate (first %inputs))) ;; should I evaluate them all?
 
 ;; forward keypresses to prompt for convenience
 (define-method handle-event listener (event)

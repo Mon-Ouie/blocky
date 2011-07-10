@@ -131,14 +131,36 @@ two words. This is used as a unit for various layout operations.")
   (image :initform nil :documentation "Texture to be displayed, if any.")
   (input-widths :initform nil))
 
-(defmacro defblock (name &body args)
-  "Define a new block prototype named =NAME=.
-ARGS are field specifiers, as with `define-prototype'."
-  `(define-prototype ,name (:parent "IOFORMS:BLOCK")
-    (operation :initform ,(make-keyword name))
-    ,@(if (keywordp (first args))
+(define-method before-serialize block ()
+  "Prepare a running block for serialization."
+  (initialize self))
+
+(define-method after-deserialize block ()
+  "Prepare a deserialized block for running."
+  (initialize self))
+
+(define-method invalidate-layout block ()
+  "Signal to the script manager that a layout operation is needed.
+You should invoke this method if the dimensions of the block have
+changed."
+  (when *script*
+    (invalidate-layout *script*)))
+
+;(defparameter *default-super* "IOFORMS:BLOCK")
+
+(defmacro defblock (spec &body args)
+  (let ((name0 nil)
+	(super0 "IOFORMS:BLOCK"))
+    (etypecase spec
+      (symbol (setf name0 spec))
+      (list (destructuring-bind (&key name super) spec
+	      (setf name0 name)
+	      (when super (setf super0 super)))))
+    `(define-prototype ,name0 (:parent ,(make-prototype-id super0))
+       (operation :initform ,(make-keyword name0))
+       ,@(if (keywordp (first args))
 	  (plist-to-descriptors args)
-	  args)))
+	  args))))
 
 (define-method update block ()
   "Update the simulation one step forward in time.
@@ -310,7 +332,7 @@ the return value of the function (if any)."
       (let ((func (gethash event events)))
 	(if func
 	    (prog1 (values t (funcall func))
-	      (signal-layout-needed self))
+	      (invalidate-layout self))
 	    (values nil nil))))))
 
 (defun bind-event-to-method (block event-name modifiers method-name)
@@ -406,88 +428,12 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	   (list-block sexp))
 	  ((not (null sexp)) (data-block sexp)))))
 
-;;; Generic method invocation block. The bread and butter of doing stuff.
-
-(defblock send prototype method schema target label)
-
-(define-method execute send ()
-  (apply #'send %method 
-	 (or %target *target*)
-	 (mapcar #'execute %inputs)))
-
-(define-method click send (x y)
-  (declare (ignore x y))
-  (execute self))
-
-(define-method accept send (block)
-  ;; make these click-align instead
-  (assert (not (null block)))
-  nil)
-
-(defun pretty-symbol-string (thing)
-  (let ((name (etypecase thing
-		(symbol (symbol-name thing))
-		(string thing))))
-    (string-downcase 
-     (substitute #\Space #\- name))))
-
-(define-method initialize send (&key prototype method label target)
-  (next%initialize self)
-  (setf %target target)
-  (let ((schema (method-schema (find-prototype prototype) method))
-	(inputs nil))
-    (dolist (entry schema)
-      (push (new entry
-		 :value (schema-option entry :default)
-		 :parent self
-		 :type-specifier (schema-type entry)
-		 :options (schema-options entry)
-		 :name (concatenate 'string
-				    ":" ;; mimic the keyword arguments visually
-				    (symbol-name (schema-name entry))))
-	    inputs))
-    (when inputs 
-      (setf %inputs (nreverse inputs)))
-    (let ((category (method-option (find-prototype prototype)
-				   method :category)))
-      (when category (setf %category category))
-      (setf %schema schema
-	    %prototype prototype
-	    %method method
-	    %label (or label (pretty-symbol-string method))))))
-
-(define-method draw send ()
-  (with-fields (x y width height label inputs) self
-    (draw-patch self x y (+ x width) (+ y height))
-    (let ((*text-base-y* (+ y (dash 1))))
-      (draw-label-string self label "white")
-      (dolist (each inputs)
-	(draw each)))))
-
-(define-method draw-hover send ()
-  nil)
-
-(define-method layout send ()
-  (with-fields (input-widths height width label) self
-    (with-field-values (x y inputs) self
-      (let* ((font *block-font*)
-	     (dash (dash 1))
-	     (left (+ dash dash x (font-text-extents label font)))
-	     (max-height (font-height font)))
-	(labels ((move-input (input)
-		   (move-to input (+ left dash) y)
-		   (layout input)
-		   (setf max-height (max max-height (field-value :height input)))
-		   (field-value :width input))
-		 (layout-input (input)
-		   (let ((measurement
-			  (+ dash dash (move-input input))))
-		     (prog1 measurement
-		       (incf left measurement)))))
-	  (setf input-widths (mapcar #'layout-input inputs))
-	  (setf width (+ (- left x) (* 4 dash)))
-	  (setf height (+ dash (if (null inputs)
-				   dash 0) max-height)))))))
+(define-method resize block (&key height width)
+  (when (or (not (= height %height))
+	    (not (= width %width)))
+    (setf %height height)
+    (setf %width width)
+    (invalidate-layout self)))
 
 ;;; Block movement
 
@@ -574,7 +520,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 				 (- *pointer-y* 10))))))
 
 (define-method context-menu block ()
-  (apply #'make-menu 
+  (make-menu
 	 (list (list :label (concatenate 'string 
 					 "Methods: "
 					 (get-some-object-name self)
@@ -585,11 +531,11 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 		     :pinned nil
 		     :expanded t))))
 
-(define-method execute-inputs block ()
-  "Execute all blocks in %INPUTS from left-to-right. Results are
+(define-method evaluate-inputs block ()
+  "Evaluate all blocks in %INPUTS from left-to-right. Results are
 placed in corresponding positions of %RESULTS. Override this method
-when defining new blocks if you don't want to evaluate all the
-inputs all the time."
+when defining new blocks if you don't want to evaluate all the inputs
+all the time."
   (with-fields (inputs results) self
     (let ((arity (length inputs)))
       (when (< (length results) arity)
@@ -597,22 +543,19 @@ inputs all the time."
       (dotimes (n arity)
 	(when (nth n inputs)
 	  (setf (nth n results)
-		(run (nth n inputs))))))))
+		(evaluate (nth n inputs))))))))
 
-(define-method execute block ()
-  "Carry out whatever action this block implements. The %RESULTS field
-will be a list of results obtained by executing/evaluating the
-corresponding blocks in %INPUTS (but this behavior can be overridden;
-see also `execute-inputs' and `run').  The default is to
-do nothing."
-  nil)
+(define-method evaluate block ()
+  "Evaluate input blocks to produce results, then evaluate this block
+with those results as input. If you need argument blocks unevaluated,
+override this EVALUATE method and evaluate just the ones you want.
 
-(define-method run block ()
-  "Run input blocks to produce results, then run this block with
-those results as input. If you need argument blocks unevaluated, 
-override this RUN method and evaluate just the ones you want."
-  (execute-inputs self)
-  (execute self))
+The %RESULTS field will be a list of results obtained by
+executing/evaluating the corresponding blocks in %INPUTS (but this
+behavior can be overridden; see also the block methods
+`evaluate-inputs' and `evaluate')."
+  (evaluate-inputs self)
+  (evaluate self))
 
 ;;; recompilation: compiling block diagrams into equivalent sexps
 
@@ -630,13 +573,13 @@ override this RUN method and evaluate just the ones you want."
   "Show name and comprehensive help for this block."
   nil)
 
-;; (define-method after-deserialize block ()
-;;   "Make sure the block is ready after loading."
-;;   (initialize self))
+(define-method after-deserialize block ()
+  "Make sure the block is ready after loading."
+  nil)
 
 (defun count-tree (tree)
   "Return the number of blocks enclosed in this block, including the
-current block. Used for taking a census."
+current block. Used for taking a count of all the nodes in a tree."
   (cond ((null tree) 0)
 	;; without inputs, just count the root
 	((null (field-value :inputs tree)) 1)
@@ -653,7 +596,7 @@ current block. Used for taking a census."
     :hover "red"
     :socket "gray60"
     :data "gray50"
-    :structure "gray80"
+    :structure "gray30"
     :comment "khaki"
     :looks "purple"
     :sound "orchid"
@@ -674,7 +617,7 @@ current block. Used for taking a census."
     :looks "medium orchid"
     :socket "gray80"
     :data "gray80"
-    :structure "gray92"
+    :structure "gray80"
     :sound "plum"
     :message "sienna2"
     :control "gold"
@@ -690,7 +633,7 @@ current block. Used for taking a census."
     :socket "gray90"
     :data "gray55"
     :menu "gray70"
-    :structure "gray60"
+    :structure "gray20"
     :comment "goldenrod"
     :hover "orange red"
     :looks "dark orchid"
@@ -711,7 +654,7 @@ current block. Used for taking a census."
     :hover "yellow"
     :data "white"
     :menu "gray40"
-    :structure "gray90"
+    :structure "white"
     :message "white"
     :looks "white"
     :sound "white"
@@ -893,10 +836,6 @@ override all colors."
 	      (setf width (expression-width segment)))))
       width)))
 
-(define-method after-deserialize block ()
-  "Make sure the block is ready after loading."
-  (initialize self))
-
 (define-method draw-contents block ()
   (with-fields (operation inputs) self
     (draw-label self operation)
@@ -932,10 +871,6 @@ override all colors."
 (define-method draw-focus block () nil)
 
 (define-method draw-highlight block () nil)
-  ;; (with-fields (x y width height) self
-  ;;   (draw-patch self x y (+ x *dash* width) (+ y *dash* height)
-  ;; 	      :color *highlight-background-color*)
-  ;;   (draw-contents self)))
 
 (defparameter *hover-color* "red")
 
@@ -958,6 +893,8 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	  (or result self))))))
 
 (define-method accept block (other-block)
+  "Try to accept OTHER-BLOCK as a drag-and-dropped input. Return
+non-nil to indicate that the block was accepted, nil otherwise."
   (with-field-values (parent) self
     (when parent
       (prog1 t
@@ -995,7 +932,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 
 (define-method click list (x y)
   (dolist (block %inputs)
-    (run block)))
+    (evaluate block)))
 
 (define-method accept list (input &optional prepend)
   (with-fields (inputs) self
@@ -1081,6 +1018,89 @@ MOUSE-Y identify a point inside the block (or input block.)"
     (setf %inputs blocks)
     (next%initialize self))
 
+;;; Generic method invocation block. The bread and butter of doing stuff.
+
+(defblock send prototype method schema target label)
+
+(define-method evaluate send ()
+  (apply #'send %method 
+	 (or %target *target*)
+	 (mapcar #'evaluate %inputs)))
+
+(define-method click send (x y)
+  (declare (ignore x y))
+  (evaluate self))
+
+(define-method accept send (block)
+  ;; make these click-align instead
+  (assert (not (null block)))
+  nil)
+
+(defun pretty-symbol-string (thing)
+  (let ((name (etypecase thing
+		(symbol (symbol-name thing))
+		(string thing))))
+    (string-downcase 
+     (substitute #\Space #\- name))))
+
+(define-method initialize send (&key prototype method label target)
+  (next%initialize self)
+  (setf %target target)
+  (let ((schema (method-schema (find-prototype prototype) method))
+	(inputs nil))
+    (dolist (entry schema)
+      (push (new entry
+		 :value (schema-option entry :default)
+		 :parent self
+		 :type-specifier (schema-type entry)
+		 :options (schema-options entry)
+		 :name (concatenate 'string
+				    ":" ;; mimic the keyword arguments visually
+				    (symbol-name (schema-name entry))))
+	    inputs))
+    (when inputs 
+      (setf %inputs (nreverse inputs)))
+    (let ((category (method-option (find-prototype prototype)
+				   method :category)))
+      (when category (setf %category category))
+      (setf %schema schema
+	    %prototype prototype
+	    %method method
+	    %label (or label (pretty-symbol-string method))))))
+
+(define-method draw send ()
+  (with-fields (x y width height label inputs) self
+    (draw-patch self x y (+ x width) (+ y height))
+    (let ((*text-base-y* (+ y (dash 1))))
+      (draw-label-string self label "white")
+      (dolist (each inputs)
+	(draw each)))))
+
+(define-method draw-hover send ()
+  nil)
+
+(define-method layout send ()
+  (with-fields (input-widths height width label) self
+    (with-field-values (x y inputs) self
+      (let* ((font *block-font*)
+	     (dash (dash 1))
+	     (left (+ dash dash x (font-text-extents label font)))
+	     (max-height (font-height font)))
+	(labels ((move-input (input)
+		   (move-to input (+ left dash) y)
+		   (layout input)
+		   (setf max-height (max max-height (field-value :height input)))
+		   (field-value :width input))
+		 (layout-input (input)
+		   (let ((measurement
+			  (+ dash dash (move-input input))))
+		     (prog1 measurement
+		       (incf left measurement)))))
+	  (setf input-widths (mapcar #'layout-input inputs))
+	  (setf width (+ (- left x) (* 4 dash)))
+	  (setf height (+ dash (if (null inputs)
+				   dash 0) max-height)))))))
+
 ;;; Combining blocks into scripts
 
 (defmacro with-script (script &rest body)
@@ -1091,26 +1111,13 @@ MOUSE-Y identify a point inside the block (or input block.)"
   (assert (not (null *script*)))
   (object-eq %parent *script*))
 
-;; Notice that this resize method resizes a BLOCK, not a script.
-(define-method resize block (&key height width)
-  (when (or (not (= height %height))
-	    (not (= width %width)))
-    (setf %height height)
-    (setf %width width)
-    (when *script* 
-      (send :report-layout-change *script*))))
-
-(define-method signal-layout-needed block ()
-  (when *script*
-    (send :report-layout-change *script*)))
-
 (defblock script
   (menu :initform nil)
   (target :initform nil)
   (needs-layout :initform t)
   (variables :initform (make-hash-table :test 'eq)))
 
-(define-method report-layout-change script ()
+(define-method invalidate-layout script ()
   (setf %needs-layout t))
 
 (define-method delete-block script (block)
@@ -1156,13 +1163,13 @@ MOUSE-Y identify a point inside the block (or input block.)"
   (when (and (integerp x)
 	     (integerp y))
     (move-to block x y))
-  (report-layout-change self))
+  (invalidate-layout self))
 
-(define-method run script ())
+(define-method evaluate script ())
   ;; (with-fields (inputs target) self
   ;;   (with-target target
   ;;     (dolist (block inputs)
-  ;; 	(run block)))))
+  ;; 	(evaluate block)))))
 
 ;; (define-method header-height script ()
 ;;   (with-fields (x y inputs) self

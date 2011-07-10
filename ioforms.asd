@@ -8,7 +8,7 @@
 
 (asdf:defsystem ioforms
   :name "ioforms"
-  :version "0.3"
+  :version "0.91"
   :maintainer "David T O'Toole <dto1138@gmail.com>"
   :author "David T O'Toole <dto1138@gmail.com>"
   :license "General Public License (GPL) Version 3"
@@ -39,7 +39,7 @@
 	       (:file "system" :depends-on ("blocks"))
 	       (:file "things" :depends-on ("blocks"))
 	       (:file "worlds" :depends-on ("things"))
-	       (:file "shell" :depends-on ("menus" "terminal" "system"))
+	       (:file "shell" :depends-on ("trees" "terminal" "system"))
 	       (:file "library" :depends-on ("worlds" "shell"))))
 ;;	       (:file "path")
 	       

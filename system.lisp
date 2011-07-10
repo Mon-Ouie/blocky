@@ -31,7 +31,6 @@
      :inputs
      ((:label "Create a new project" :action :create-project)
       (:label "Open an existing project" :action :open-existing-project)
-;	      :schema ((:name . :string)))
       (:label "Save current changes" :action :save-changes)
       (:label "Show current changes without saving" :action :show-changes)
       (:label "Export as archive" :action :export-archive)

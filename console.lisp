@@ -181,7 +181,7 @@ This function arranges for FUNC to be invoked whenever HOOK is triggered with
 ;;; Vector utility macro 
 
 (defmacro do-cells ((var expr) &body body)
-  "Execute the forms in BODY with VAR bound successively to the
+  "Evaluate the forms in BODY with VAR bound successively to the
 elements of the vector produced by evaluating EXPR."
   (let ((counter (gensym))
 	(vector (gensym)))
@@ -494,6 +494,7 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 					   (1 t)
 					   (0 nil)))
   (let ((sym (translate-joystick-button button)))
+    (declare (ignore sym))
     (labels ((pressed (button-name) 
 	       (let ((index (symbol-to-button button-name)))
 		 (when (integerp index)
@@ -524,6 +525,7 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 (defun poll-all-buttons ()
   (dolist (entry *joystick-mapping*)
     (destructuring-bind (button . symbol) entry
+      (declare (ignore symbol))
       (update-joystick button (poll-joystick-button button)))))
 
 (defun generate-button-events ()

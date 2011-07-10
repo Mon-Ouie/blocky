@@ -73,16 +73,16 @@
 ;;   (with-fields (height width x y) self
 ;;     (layout-as-list self)))
 
-;; (define-method execute send ()
+;; (define-method evaluate send ()
 ;;   (with-fields (inputs) self
 ;;     (destructuring-bind (id body) inputs
 ;; 	(with-target (get-sprite id)
-;; 	  (execute body)))))
+;; 	  (evaluate body)))))
 
 ;; (defblock +
 ;;   (type :initform :operators))
 
-;; ;; (define-method execute + ()
+;; ;; (define-method evaluate + ()
 ;; ;;   (with-fields (results) self
 ;; ;;     (when (every #'integerp results)
 ;; ;;       (apply #'+ results))))
@@ -115,7 +115,7 @@
 ;;   (schema :initform '(:string))
 ;;   (inputs :initform '("fanfare")))
 
-;; (define-method execute play-music ()
+;; (define-method evaluate play-music ()
 ;;   (play-music *target* (first %results) :loop t))
 
 ;; (defblock play-sound 

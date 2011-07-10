@@ -1,4 +1,5 @@
-;;; trees.lisp --- ioforms tree widgets
+;;; trees.lisp --- generic folding hierarchical list widget with
+;;; indentation and headlines, a la orgmode
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -30,40 +31,38 @@
 
 (define-method initialize tree 
     (&key action target top-level inputs pinned
-	  schema expanded (label "blank tree item..."))
+	  expanded (label "blank tree item..."))
   (next%initialize self)
   (setf %action action
 	%pinned pinned
 	%expanded expanded
 	%target target
-	%schema schema
 	%top-level top-level
 	%inputs inputs
 	%label label)
+  ;; become the parent
   (when inputs
     (dolist (each inputs)
       (pin each)
       (set-parent each self))))
 
-(define-method accept tree (&rest args) nil)
-
-(define-method run tree ())
+(define-method evaluate tree ())
 
 (define-method toggle-expanded tree ()
   (with-fields (expanded) self
     (setf expanded (if expanded nil t))
-    (report-layout-change *script*)))
+    (invalidate-layout self)))
 
 (define-method is-expanded tree ()
   %expanded)
 
 (define-method expand tree ()
   (setf %expanded t)
-  (report-layout-change *script*))
+  (invalidate-layout self))
 
 (define-method unexpand tree ()
   (setf %expanded nil)
-  (report-layout-change *script*))
+  (invalidate-layout self))
 
 (define-method click tree (x y)
   (declare (ignore x y))
@@ -73,7 +72,7 @@
 	(if (keywordp action)
 	    (send action (or target 
 			     ;; send to system if not specified.
-			     ;; is this a good idea?
+			     ;; ...is this a good idea?
 			     (symbol-value '*system*)))
 	    ;; we're a subtree, not an individual tree command.
 	    (toggle-expanded self)))))
@@ -216,11 +215,16 @@
 		 item)))
     (xform items)))
 
+(defun make-menu (items &key target)
+  (make-tree items :target target :tree-prototype "IOFORMS:MENU"))
+
 ;;; Menus
 
 (define-prototype menu (:parent "IOFORMS:TREE")
-  (category :initform :menu)
+  (category :initform :menu))
 
+;; menu items should not accept any dragged widgets.
+(define-method accept menu (&rest args) nil)
 
 ;;; A global menu bar
 
