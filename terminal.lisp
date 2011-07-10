@@ -234,7 +234,7 @@ The modes can be toggled with CONTROL-X.")
   (apply #'message args))
 
 (define-method initialize prompt ()
-  (next%initialize self)
+  (super%initialize self)
   (install-keybindings self))
 
 (define-method forward-char prompt ()
@@ -462,7 +462,7 @@ The modes can be toggled with CONTROL-X.")
   options label name type-specifier value)
 
 (define-method initialize entry (&key value type-specifier options name label-color parent)
-  (next%initialize self)
+  (super%initialize self)
   ;(assert (and value type-specifier))
   (when parent (setf %parent parent))
   (setf %type-specifier type-specifier
@@ -584,7 +584,7 @@ The modes can be toggled with CONTROL-X.")
 	(message "Warning: value entered does not match %TYPE-SPECIFIER."))))
 
 (define-method enter entry ()
-  (next%enter self :no-clear))
+  (super%enter self :no-clear))
 
 (define-method draw-contents entry ())
 
@@ -596,30 +596,30 @@ The modes can be toggled with CONTROL-X.")
 		   (max *minimum-entry-line-width*
 			(font-text-extents line *block-font*))))))
 
-;; (defmacro defentry (name type-specifier value)
-;;   `(define-prototype ,name (:parent "IOFORMS:ENTRY")
-;;      (type-specifier :initform ',type-specifier)
-;;      (value :initform ,value)))
+(defmacro defentry (name type-specifier value)
+  `(define-prototype ,name (:parent "IOFORMS:ENTRY")
+     (type-specifier :initform ',type-specifier)
+     (value :initform ,value)))
 
-;; (defentry integer integer 0)
-;; (defentry string string "")
-;; (defentry number number 0)
-;; (defentry non-negative-number (number 0 *))
-;; (defentry float float 0.0)
-;; (defentry symbol symbol nil)
-;; (defentry positive-integer (integer 1 *) 1)
-;; (defentry non-negative-integer (integer 0 *) 0)
-;; (defentry sexp t nil)
+(defentry integer integer 0)
+(defentry string string "")
+(defentry number number 0)
+(defentry non-negative-number (number 0 *) 0)
+(defentry float float 0.0)
+(defentry symbol symbol nil)
+(defentry positive-integer (integer 1 *) 1)
+(defentry non-negative-integer (integer 0 *) 0)
+(defentry sexp t nil)
 
 ;;; Plain text entry
 
-(define-prototype text-entry (:parent entry))
+(define-prototype string (:parent entry))
 
-(define-method read-expression text-entry (input-string)
+(define-method read-expression string (input-string)
   ;; pass-through; don't read string at all.
   input-string)
 
-(define-method do-sexp text-entry (sexp)
+(define-method do-sexp string (sexp)
   (assert (stringp sexp))
   (setf %value sexp))
   
@@ -631,7 +631,7 @@ The modes can be toggled with CONTROL-X.")
   output)
 
 (define-method initialize block-prompt (output)
-  (next%initialize self)
+  (super%initialize self)
   (setf %output output))
 
 (define-method set-output block-prompt (output)
@@ -657,7 +657,7 @@ The modes can be toggled with CONTROL-X.")
 (define-method initialize listener ()
   (with-fields (image inputs) self
     (let ((prompt (new block-prompt self)))
-      (next%initialize self)
+      (super%initialize self)
       (set-output prompt prompt)
       (setf inputs (list prompt))
       (set-parent prompt self)

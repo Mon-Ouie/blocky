@@ -40,6 +40,7 @@
 	       (:file "things" :depends-on ("blocks"))
 	       (:file "worlds" :depends-on ("things"))
 	       (:file "shell" :depends-on ("trees" "terminal" "system"))
+	       (:file "oop" :depends-on ("trees" "terminal" "widgets" "system"))
 	       (:file "library" :depends-on ("worlds" "shell"))))
 ;;	       (:file "path")
 	       

@@ -531,6 +531,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 		     :pinned nil
 		     :expanded t))))
 
+;;; evaluation and recompilation: compiling block diagrams into equivalent sexps
+
 (define-method evaluate-inputs block ()
   "Evaluate all blocks in %INPUTS from left-to-right. Results are
 placed in corresponding positions of %RESULTS. Override this method
@@ -543,32 +545,18 @@ all the time."
       (dotimes (n arity)
 	(when (nth n inputs)
 	  (setf (nth n results)
-		(evaluate (nth n inputs))))))))
+		(evaluate (nth n inputs))))))
+    results))
 
-(define-method evaluate block ()
-  "Evaluate input blocks to produce results, then evaluate this block
-with those results as input. If you need argument blocks unevaluated,
-override this EVALUATE method and evaluate just the ones you want.
-
-The %RESULTS field will be a list of results obtained by
-executing/evaluating the corresponding blocks in %INPUTS (but this
-behavior can be overridden; see also the block methods
-`evaluate-inputs' and `evaluate')."
-  (evaluate-inputs self)
-  (evaluate self))
-
-;;; recompilation: compiling block diagrams into equivalent sexps
-
-(define-method recompile-body block (&optional compiled-inputs)
-  (declare (ignore compiled-inputs))
-  self)
-
-(define-method recompile-inputs block ()
-  (mapcar #'recompile %inputs))
+(define-method evaluate block () 
+  (prog1 self
+    (evaluate-inputs self)))
 
 (define-method recompile block ()
-  (recompile-body self (recompile-inputs self)))
-  
+  (evaluate self))
+
+;;; Context-sensitive user help
+
 (define-method describe block ()
   "Show name and comprehensive help for this block."
   nil)
@@ -816,7 +804,19 @@ override all colors."
       *socket-width*
       (font-text-extents (print-expression expression) font)))
 
-(define-method layout block () nil)
+(define-method layout block () 
+  (with-fields (x y width height inputs) self
+    (setf width (dash 2))
+    (setf height (dash 2))
+    (let ((left (+ x (dash 1)))
+	  (top (+ y (dash 1))))
+      (dolist (input inputs)
+	(layout input)
+	(move-to input left top)
+	(let ((width0 (field-value :width input)))
+	  (incf left (+ (dash 2) width0))
+	  (incf width width0)
+	  (incf height (field-value :height input)))))))
 
 (define-method draw-expression block (x0 y0 segment type)
   (with-fields (height input-widths) self
@@ -1016,7 +1016,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (define-method initialize list (&rest blocks)
     (setf %inputs blocks)
-    (next%initialize self))
+    (super%initialize self))
 
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 
@@ -1044,7 +1044,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
      (substitute #\Space #\- name))))
 
 (define-method initialize send (&key prototype method label target)
-  (next%initialize self)
+  (super%initialize self)
   (setf %target target)
   (let ((schema (method-schema (find-prototype prototype) method))
 	(inputs nil))
@@ -1111,8 +1111,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
   (assert (not (null *script*)))
   (object-eq %parent *script*))
 
-(defblock script
-  (menu :initform nil)
+(defblock (:name script :super list)
   (target :initform nil)
   (needs-layout :initform t)
   (variables :initform (make-hash-table :test 'eq)))
@@ -1143,8 +1142,12 @@ non-nil to indicate that the block was accepted, nil otherwise."
 	(layout each))
       (setf needs-layout nil))))
 
-(define-method initialize script (&key blocks variables target)
-  (setf %blocks blocks)
+(define-method initialize script (&key blocks variables target 
+				       (width (dash 120))
+				       (height (dash 70)))
+  (apply #'super%initialize self blocks)
+  (setf %width width
+	%height height)
   (when variables (setf %variables variables))
   (when target (setf %target target)))
 
@@ -1165,11 +1168,11 @@ non-nil to indicate that the block was accepted, nil otherwise."
     (move-to block x y))
   (invalidate-layout self))
 
-(define-method evaluate script ())
-  ;; (with-fields (inputs target) self
-  ;;   (with-target target
-  ;;     (dolist (block inputs)
-  ;; 	(evaluate block)))))
+;; (define-method recompile script ()
+;;   (
+
+;; (define-method evaluate script ()
+;;   (recompile self))
 
 ;; (define-method header-height script ()
 ;;   (with-fields (x y inputs) self

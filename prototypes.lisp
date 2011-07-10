@@ -620,7 +620,7 @@ upon binding."
 (defun send (method thing &rest args)
   "Invoke the method identified by the keyword METHOD on the OBJECT with ARGS.
 If the method is not found, attempt to forward the message."
-  ;; See also `send-queue' and `send-next'
+  ;; See also `send-queue' and `send-super'
   (let ((object (find-object thing)))
     (when (not (object-p object))
       (error "Cannot send message to non-object: ~A. Did you forget the `self' argument?" object))
@@ -677,7 +677,7 @@ If the method is not found, attempt to forward the message."
 
 (defvar *next-search-start* nil)
 
-(defun send-next (method object &rest arguments)
+(defun send-super (method object &rest arguments)
   "Invoke next version of METHOD on OBJECT, passing ARGUMENTS.  We do
 this by finding the current implementation (via slot lookup), then
 finding the next implementation after that."
@@ -850,7 +850,7 @@ the method body; it is bound to the object upon which the method
 was invoked."
   (assert method-specifier)
   (when (listp prototype-name)
-    (error "Must specify a prototype name, found argument list instead. Did you forget?"))
+    (error "Must specify a prototype name, found argument list instead. Did you forget the prototype name?"))
   ;; build the components of the defun
   (let ((method-name (etypecase method-specifier
 		       (symbol method-specifier)
@@ -880,7 +880,7 @@ was invoked."
 						    "QUEUE%"
 						    method-symbol-name)))
 	   (next-defun-symbol (intern (concatenate 'string
-						   "NEXT%"
+						   "SUPER%"
 						   method-symbol-name)))
 	   (method-lambda-list (if (is-extended-arglist arglist)
 				   (make-lambda-list arglist)
@@ -922,7 +922,7 @@ was invoked."
 	       ;; and for next-method calls.
 	       (defun ,next-defun-symbol (self &rest args)
 		 ,@(when documentation (list documentation))
-		 (apply #'send-next ,name self args))
+		 (apply #'send-super ,name self args))
 	       (export ',next-defun-symbol))))))))
   
 ;;; Defining prototypes
@@ -1200,8 +1200,8 @@ objects after reconstruction, wherever present."
     ;; passthru
     (t data)))
 
-(defun next%initialize (object &rest args)
-  (apply #'send-next :initialize object args))
+(defun super%initialize (object &rest args)
+  (apply #'send-super :initialize object args))
 
 (defun queue%initialize (object &rest args)
   (apply #'send-queue :initialize object args))

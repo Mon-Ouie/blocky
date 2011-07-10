@@ -47,6 +47,91 @@
   (draw-label-string self (trash-status-string (length %inputs))
 		     "yellow"))
 
+;;; A global menu bar
+
+(defblock menubar :category :menu :temporary t)
+
+(define-method initialize menubar (&optional menus)
+  (apply #'super%initialize self 
+	 (mapcar #'find-object menus))
+  (with-fields (inputs) self
+    (dolist (each inputs)
+      (setf (field-value :top-level each) t)
+      (pin each))))
+
+(define-method hit menubar (mouse-x mouse-y)
+  (with-fields (x y width height inputs) self
+    (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
+      ;; are any of the menus open?
+      (let ((opened-menu (find-if #'is-expanded inputs)))
+	(labels ((try (m)
+		   (when m (hit m mouse-x mouse-y))))
+	  (let ((moused-menu (find-if #'try inputs)))
+	    (if (and ;; moused-menu opened-menu
+		     (object-eq moused-menu opened-menu))
+		;; we're over the opened menu, let's check if 
+		;; the user has moused onto the other parts of the menubar
+	        (flet ((try-other (menu)
+			 (when (not (object-eq menu opened-menu))
+			   (try menu))))
+		  (let ((other (some #'try-other inputs)))
+		    ;; are we touching one of the other menubar items?
+		    (if (null other)
+			;; nope, just hit the opened submenu items.
+			(try opened-menu)
+			;; yes, switch menus.
+			(prog1 other
+			  (unexpand opened-menu)
+			  (expand other)))))
+		;; we're somewhere else. just try the main menus in
+		;; the menubar.
+		(let ((candidate (find-if #'try inputs)))
+		  (if (null candidate)
+		      ;; the user moused away. close the menus.
+		      self
+		      ;; we hit one of the other menus.
+		      (if opened-menu
+			  ;; there already was a menu open.
+			  ;; close this one and open the new one.
+			  (prog1 candidate
+			    (unexpand opened-menu)
+			    (expand candidate))
+			  ;; no menu was open---just hit the menu headers
+			  (some #'try inputs)))))))))))
+			  		    	  
+(define-method draw-border menubar () nil)
+
+(define-method layout menubar ()
+  (with-fields (x y width height inputs) self
+    (setf x 0 y 0 width *screen-width* height (dash 1))
+    (let ((x1 (dash 1)))
+      (dolist (item inputs)
+	(move-to item x1 y)
+	(layout item)
+	(incf x1 (dash 2 (header-width item)))
+	(setf height (max height (field-value :height item)))))))
+        
+(define-method draw menubar ()
+  (with-fields (x y width inputs) self
+    (let ((bar-height (dash 2 1 (font-height *block-font*))))
+      (draw-box x y 
+		width bar-height
+		:color (find-color self))
+      (draw-line x bar-height width bar-height
+		 :color (find-color self :shadow))
+      (with-fields (inputs) self
+	(dolist (each inputs)
+	  (draw each))))))
+
+(define-method close-menus menubar ()
+  (with-fields (inputs) self
+    (when (some #'is-expanded inputs)
+      (mapc #'unexpand %inputs))))
+
+(define-method click menubar (x y)
+  (declare (ignore x y))
+  (close-menus self))
+
 ;;; Interactive editor shell
 
 (defblock shell
@@ -94,7 +179,8 @@
   (setf %script (find-object script))
   (assert %script)
   (setf %menubar (new menubar 
-		      (make-menu (symbol-value '*system-menu*))))
+		      (make-menu *system-menu*
+				 :target *system*)))
   (add-block %script %menubar)
   (setf %terminal (new terminal))
   (add-block %script %terminal)
@@ -128,7 +214,7 @@
 			    :test 'eq :key #'find-parent))))
 
 (define-method handle-event shell (event)
-  (or (next%handle-event self event)
+  (or (super%handle-event self event)
       (with-field-values (selection script) self
 	(let ((block
 		  (cond 

@@ -26,56 +26,55 @@
 (define-prototype tree (:parent "IOFORMS:LIST")
   (category :initform :structure)
   (top-level :initform nil)
+  (locked :initform nil)
   (temporary :initform t)
   action target (expanded :initform nil) (visible :initform t))
 
+(define-method children tree () %inputs)
+
 (define-method initialize tree 
-    (&key action target top-level inputs pinned
-	  expanded (label "blank tree item..."))
-  (next%initialize self)
+    (&key action target top-level subtree pinned locked
+	  expanded (name "no label..."))
+  (super%initialize self)
   (setf %action action
 	%pinned pinned
 	%expanded expanded
+	%locked locked
 	%target target
 	%top-level top-level
-	%inputs inputs
-	%label label)
+	%inputs subtree
+	%label name)
   ;; become the parent
-  (when inputs
-    (dolist (each inputs)
+  (when subtree
+    (dolist (each subtree)
       (pin each)
       (set-parent each self))))
 
-(define-method evaluate tree ())
+(define-method evaluate tree ()
+  (mapcar #'evaluate %inputs))
 
-(define-method toggle-expanded tree ()
-  (with-fields (expanded) self
-    (setf expanded (if expanded nil t))
-    (invalidate-layout self)))
+(define-method toggle-expanded tree (&optional force)
+  (with-fields (expanded locked) self
+    (when (or force (not locked))
+      (setf expanded (if expanded nil t))
+      (invalidate-layout self))))
 
 (define-method is-expanded tree ()
   %expanded)
 
-(define-method expand tree ()
-  (setf %expanded t)
-  (invalidate-layout self))
+(define-method expand tree (&optional force)
+  (when (or force (not %locked))
+    (setf %expanded t)
+    (invalidate-layout self)))
 
-(define-method unexpand tree ()
-  (setf %expanded nil)
-  (invalidate-layout self))
+(define-method unexpand tree (&optional force)
+  (when (or force (not %locked))
+    (setf %expanded nil)
+    (invalidate-layout self)))
 
 (define-method click tree (x y)
   (declare (ignore x y))
-  (with-fields (expanded action target) self
-    (if (functionp action)
-	(funcall action)
-	(if (keywordp action)
-	    (send action (or target 
-			     ;; send to system if not specified.
-			     ;; ...is this a good idea?
-			     (symbol-value '*system*)))
-	    ;; we're a subtree, not an individual tree command.
-	    (toggle-expanded self)))))
+  (toggle-expanded self))
 
 (define-method display-string tree ()	    
   (with-fields (action label top-level) self
@@ -220,91 +219,21 @@
 
 ;;; Menus
 
-(define-prototype menu (:parent "IOFORMS:TREE")
+(define-prototype menu (:parent :tree)
+  (action :initform nil)
   (category :initform :menu))
 
 ;; menu items should not accept any dragged widgets.
 (define-method accept menu (&rest args) nil)
 
-;;; A global menu bar
-
-(defblock menubar :category :menu :temporary t)
-
-(define-method initialize menubar (&optional menus)
-  (apply #'next%initialize self 
-	 (mapcar #'find-object menus))
-  (with-fields (inputs) self
-    (dolist (each inputs)
-      (setf (field-value :top-level each) t)
-      (pin each))))
-
-(define-method hit menubar (mouse-x mouse-y)
-  (with-fields (x y width height inputs) self
-    (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
-      ;; are any of the menus open?
-      (let ((opened-menu (find-if #'is-expanded inputs)))
-	(labels ((try (m)
-		   (when m (hit m mouse-x mouse-y))))
-	  (let ((moused-menu (find-if #'try inputs)))
-	    (if (and ;; moused-menu opened-menu
-		     (object-eq moused-menu opened-menu))
-		;; we're over the opened menu, let's check if 
-		;; the user has moused onto the other parts of the menubar
-	        (flet ((try-other (menu)
-			 (when (not (object-eq menu opened-menu))
-			   (try menu))))
-		  (let ((other (some #'try-other inputs)))
-		    ;; are we touching one of the other menubar items?
-		    (if (null other)
-			;; nope, just hit the opened submenu items.
-			(try opened-menu)
-			;; yes, switch menus.
-			(prog1 other
-			  (unexpand opened-menu)
-			  (expand other)))))
-		;; we're somewhere else. just try the main menus in
-		;; the menubar.
-		(let ((candidate (find-if #'try inputs)))
-		  (if (null candidate)
-		      ;; the user moused away. close the menus.
-		      self
-		      ;; we hit one of the other menus.
-		      (if opened-menu
-			  ;; there already was a menu open.
-			  ;; close this one and open the new one.
-			  (prog1 candidate
-			    (unexpand opened-menu)
-			    (expand candidate))
-			  ;; no menu was open---just hit the menu headers
-			  (some #'try inputs)))))))))))
-			  		    	  
-(define-method draw-border menubar () nil)
-
-(define-method layout menubar ()
-  (with-fields (x y width height inputs) self
-    (setf x 0 y 0 width *screen-width* height (dash 1))
-    (let ((x1 (dash 1)))
-      (dolist (item inputs)
-	(move-to item x1 y)
-	(layout item)
-	(incf x1 (dash 2 (header-width item)))
-	(setf height (max height (field-value :height item)))))))
-        
-(define-method draw menubar ()
-  (with-fields (x y width inputs) self
-    (let ((bar-height (dash 2 1 (font-height *block-font*))))
-      (draw-box x y 
-		width bar-height
-		:color (find-color self))
-      (draw-line x bar-height width bar-height
-		 :color (find-color self :shadow))
-      (with-fields (inputs) self
-	(dolist (each inputs)
-	  (draw each))))))
-
-(define-method close-menus menubar ()
-  (with-fields (inputs) self
-    (when (some #'is-expanded inputs)
-      (mapc #'unexpand %inputs))))
+(define-method click menu (x y)
+  (declare (ignore x y))
+  (with-fields (action target) self
+    (typecase action 
+      (function (funcall action))
+      (keyword (send action (or target (symbol-value *system*))))
+      (otherwise
+       ;; we're a submenu, not an individual menu command.
+       (toggle-expanded self)))))
 
 ;;; menus.lisp ends here

@@ -115,7 +115,7 @@
 (define-method draw turtle ()
   (dolist (line %lines)
     (apply #'draw-line line))
-  (next%draw self)
+  (super%draw self)
   (let ((distance 6))
   (with-fields (x y heading height width drawing color) self
     (let ((x0 (floor (+ x (/ width 2))))

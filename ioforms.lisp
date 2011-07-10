@@ -88,7 +88,7 @@ run-hook queue-tail make-resource-link save-resource save-project
 defresource export-application export-project make-queue queue unqueue
 queue-message queued-messages-p unqueue-message send-queue field-value
 random-direction random-choose *resources* load-font-resource
-save-object-resource next%initialize next%initialize /queue/initialize
+save-object-resource super%initialize super%initialize /queue/initialize
 queue/initialize draw-string-solid read-iof initialize-resource-table
 percent-of-time render-formatted-paragraph make-formatted-string
 draw-string-shaded set-blending-mode render-formatted-string
@@ -133,8 +133,8 @@ with-mission-locals *project* quit reset seek-music make-keyword
 object field-value make-queue find-parent set-field-value
 set-field-options field-options field-documentation
 set-field-option-value field-option-value *lookup-failure*
-no-such-field has-field has-method send send-queue send-next serialize
-deserialize initialize-method-cache *send-next-depth*
+no-such-field has-field has-method send send-queue send-super serialize
+deserialize initialize-method-cache *send-super-depth*
 initialize-documentation-tables null-parent queue unqueue empty-queue
 *message-queue* queue-message make-non-keyword with-fields queue-count
 queue-head method-documentation set-method-documentation

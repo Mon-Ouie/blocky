@@ -169,7 +169,7 @@ line."
   (delete-line self (fill-pointer %lines)))
 
 (define-method initialize formatter ()
-  (next%initialize self)
+  (super%initialize self)
   (reset-lines self)
   (newline self))
 
@@ -367,7 +367,7 @@ text INSERTION to be inserted at point."
   (bind-event-to-textbox-insertion self "QUOTE" '(:shift) "\""))
 
 (define-method initialize textbox (&rest buffer)
-  (next%initialize self)
+  (super%initialize self)
   (when (and buffer (listp buffer) (every #'stringp buffer))
     (setf %buffer buffer))
   (install-keybindings self))
@@ -539,7 +539,7 @@ text INSERTION to be inserted at point."
   (properties :initform (make-hash-table :test 'eq)))
   
 (define-method initialize pager ()
-  (send-next self :initialize self)
+  (send-super self :initialize self)
   (auto-position self)
   (labels ((s1 () (select self 1))
 	   (s2 () (select self 2))

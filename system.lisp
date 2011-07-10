@@ -27,78 +27,78 @@
 (defvar *system* nil)
 
 (defparameter *system-menu*
-  '((:label "Project"
-     :inputs
-     ((:label "Create a new project" :action :create-project)
-      (:label "Open an existing project" :action :open-existing-project)
-      (:label "Save current changes" :action :save-changes)
-      (:label "Show current changes without saving" :action :show-changes)
-      (:label "Export as archive" :action :export-archive)
-      (:label "Export as application" :action :export-application)
-      (:label "Publish to web" :action :publish-web)
-      (:label "Publish to community cloud" :action :publish-community)
-      (:label "Publish to FTP" :action :publish-ftp)
-      (:label "Edit preferences" :action :edit-preferences)
-      (:label "Quit IOFORMS" :action :quit-ioforms)))
-    (:label "Edit"
-     :inputs
-     ((:label "Cut" :action :cut)
-      (:label "Copy" :action :copy)
-      (:label "Paste" :action :paste)
-      (:label "Paste as new workspace" :action :paste-as-new-workspace)
-      (:label "Select all" :action :select-all)
-      (:label "Clear selection" :action :clear-selection)))
-    (:label "Resources"
-     :inputs
-     ((:label "Import new resource" :action :import-resources)
-      (:label "Edit resource" :action :edit-resource)
-      (:label "Search resources" :action :search-resources)
-      (:label "Export resource(s)" :action :export-resources)
-      (:label "Browse resources"
-       :inputs
-       ((:label "Browse objects" :action :browse-objects)
-	(:label "Browse blocks" :action :browse-code)
-	(:label "Browse images" :action :browse-images)
-	(:label "Browse sounds" :action :browse-sounds)
-	(:label "Browse music" :action :browse-music)
-	(:label "Browse fonts" :action :browse-fonts)
-	(:label "Browse code" :action :browse-code)))))
-    (:label "Tools" 
-     :inputs
-     ((:label "Create a command prompt" :action :create-prompt)
-      (:label "Create a note" :action :create-note)
-      (:label "Version control" :action :version-control)))
-    (:label "Workspace" :inputs
-     ((:label "Switch to workspace" :inputs
-	      ((:label "Workspace 1" :action :workspace-1)
-	       (:label "Workspace 2" :action :workspace-2)
-	       (:label "Workspace 3" :action :workspace-3)
-	       (:label "Workspace 4" :action :workspace-4)))
-      (:label "Go back to the previous workspace" :action :previous-workspace)
-      (:label "Create a new workspace" :action :create-workspace)
-      (:label "Rename this workspace" :action :rename-workspace)
-      (:label "Delete this workspace" :action :delete-workspace)
-      (:label "Workspace settings" :action :configure-workspaces)))
-    (:label "Windows"
-     :inputs
-     ((:label "Create a new window" :action :create-window)
-      (:label "Switch to the next window" :action :next-window)
-      (:label "Switch to window" :action :switch-window)
-      (:label "Close this window" :action :close-window)))
-    (:label "Devices"
-     :inputs
-     ((:label "Browse available devices" :action :browse-devices)
-      (:label "Scan for devices" :action :scan-devices)
-      (:label "Configure joystick" :action :configure-joystick)
-      (:label "Configure camera" :action :configure-camera)
-      (:label "Configure microphone" :action :configure-microphone)
-      (:label "Configure dance pad" :action :configure-dance-pad)))
-    (:label "Help"
-     :inputs
-     ((:label "General help" :action :general-help)
-      (:label "Examples" :action :show-examples)
-      (:label "Language Reference" :action :language-reference)
-      (:label "Licensing information" :action :licensing-information)))))
+  '((:name "Project"
+     :subtree
+     ((:name "Create a new project" :action :create-project)
+      (:name "Open an existing project" :action :open-existing-project)
+      (:name "Save current changes" :action :save-changes)
+      (:name "Show current changes without saving" :action :show-changes)
+      (:name "Export as archive" :action :export-archive)
+      (:name "Export as application" :action :export-application)
+      (:name "Publish to web" :action :publish-web)
+      (:name "Publish to community cloud" :action :publish-community)
+      (:name "Publish to FTP" :action :publish-ftp)
+      (:name "Edit preferences" :action :edit-preferences)
+      (:name "Quit IOFORMS" :action :quit-ioforms)))
+    (:name "Edit"
+     :subtree
+     ((:name "Cut" :action :cut)
+      (:name "Copy" :action :copy)
+      (:name "Paste" :action :paste)
+      (:name "Paste as new workspace" :action :paste-as-new-workspace)
+      (:name "Select all" :action :select-all)
+      (:name "Clear selection" :action :clear-selection)))
+    (:name "Resources"
+     :subtree
+     ((:name "Import new resource" :action :import-resources)
+      (:name "Edit resource" :action :edit-resource)
+      (:name "Search resources" :action :search-resources)
+      (:name "Export resource(s)" :action :export-resources)
+      (:name "Browse resources"
+       :subtree
+       ((:name "Browse objects" :action :browse-objects)
+	(:name "Browse blocks" :action :browse-code)
+	(:name "Browse images" :action :browse-images)
+	(:name "Browse sounds" :action :browse-sounds)
+	(:name "Browse music" :action :browse-music)
+	(:name "Browse fonts" :action :browse-fonts)
+	(:name "Browse code" :action :browse-code)))))
+    (:name "Tools" 
+     :subtree
+     ((:name "Create a command prompt" :action :create-prompt)
+      (:name "Create a note" :action :create-note)
+      (:name "Version control" :action :version-control)))
+    (:name "Workspace" :subtree
+     ((:name "Switch to workspace" :subtree
+	      ((:name "Workspace 1" :action :workspace-1)
+	       (:name "Workspace 2" :action :workspace-2)
+	       (:name "Workspace 3" :action :workspace-3)
+	       (:name "Workspace 4" :action :workspace-4)))
+      (:name "Go back to the previous workspace" :action :previous-workspace)
+      (:name "Create a new workspace" :action :create-workspace)
+      (:name "Rename this workspace" :action :rename-workspace)
+      (:name "Delete this workspace" :action :delete-workspace)
+      (:name "Workspace settings" :action :configure-workspaces)))
+    (:name "Windows"
+     :subtree
+     ((:name "Create a new window" :action :create-window)
+      (:name "Switch to the next window" :action :next-window)
+      (:name "Switch to window" :action :switch-window)
+      (:name "Close this window" :action :close-window)))
+    (:name "Devices"
+     :subtree
+     ((:name "Browse available devices" :action :browse-devices)
+      (:name "Scan for devices" :action :scan-devices)
+      (:name "Configure joystick" :action :configure-joystick)
+      (:name "Configure camera" :action :configure-camera)
+      (:name "Configure microphone" :action :configure-microphone)
+      (:name "Configure dance pad" :action :configure-dance-pad)))
+    (:name "Help"
+     :subtree
+     ((:name "General help" :action :general-help)
+      (:name "Examples" :action :show-examples)
+      (:name "Language Reference" :action :language-reference)
+      (:name "Licensing information" :action :licensing-information)))))
     
 (defblock system
   (type :initform :system)
