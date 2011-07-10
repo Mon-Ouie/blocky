@@ -153,7 +153,7 @@ changed."
 	(super0 "IOFORMS:BLOCK"))
     (etypecase spec
       (symbol (setf name0 spec))
-      (list (destructuring-bind (&key name super) spec
+      (list (destructuring-bind (name &key super) spec
 	      (setf name0 name)
 	      (when super (setf super0 super)))))
     `(define-prototype ,name0 (:parent ,(make-prototype-id super0))
@@ -1111,7 +1111,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
   (assert (not (null *script*)))
   (object-eq %parent *script*))
 
-(defblock (:name script :super list)
+(defblock (script :super list)
   (target :initform nil)
   (needs-layout :initform t)
   (variables :initform (make-hash-table :test 'eq)))

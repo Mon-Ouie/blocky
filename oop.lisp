@@ -24,7 +24,7 @@
 
 ;;; prevent evaluation
 
-(defblock (:name quote :super list)
+(defblock (quote :super list)
   :category :operators)
 
 (define-method evaluate quote () self)
@@ -43,7 +43,7 @@
 
 ;;; defblock
 
-(defblock (:name defblock :super tree))
+(defblock (defblock :super tree))
 
 (define-method initialize defblock ()
   (super%initialize 
@@ -84,7 +84,7 @@
 
 ;;; methods 
 
-(defblock (:name define-method :super tree))
+(defblock (define-method :super tree))
 
 (define-method initialize define-method ()
   (apply #'super%initialize self 
