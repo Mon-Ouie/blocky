@@ -46,13 +46,17 @@
 (defblock (:name defblock :super tree))
 
 (define-method initialize defblock ()
-  (apply #'super%initialize self 
-	 (list (make-tree :name "defblock"
-			  :expanded t :locked t
-			  :subtree (list (new string :name "name")))
-	       (make-tree :name "inherit from"
-			  :subtree (list (new string :value "block" :name "block name")))
-	       (make-tree :name "fields" :subtree (list (new list))))))
+  (super%initialize 
+   self 
+   :locked t
+   :subtree (make-tree 
+	     (list (list :name "defblock"
+			 :expanded t 
+			 :locked t
+			 :subtree (list (new string :name "name")))
+		   (list :name "inherit from"
+			 :subtree (list (new string :value "block" :name "block name")))
+		   (list :name "fields" :subtree (list (new list)))))))
 
 (define-method recompile defblock ()
   (destructuring-bind (name super fields) 
