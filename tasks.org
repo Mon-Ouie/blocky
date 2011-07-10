@@ -1,26 +1,24 @@
 ** TODO [#A] defblock tree: a generic folding hierarchical list widget with indentation and headlines, a la orgmode 
-** TODO [#B] rename "next" and "parent" to "super" 
-** TODO [#A] send block has socket on left for receiver name, as in Smalltalk-Elements
 ** TODO defblock defblock --- defining new blocks with a block.
 ** TODO defblock defsprite --- defining sprites
+*** TODO defblock quote ( to prevent evaluation )
+** TODO [#B] click again on header to close menu.
+** TODO [#A] explicit "save" and "compile" buttons 
 *** TODO merge sprites and blocks?
 *** TODO defblock field 
 *** TODO defblock with (introduce local vars) 
 *** TODO defblock defresource (a stand-in reference to a resource)
 **** TODO should resources be full-fledged objects? 
-*** TODO [#C] update fontlocking rules
-*** TODO defblock var (reference to a var, not a def)  (for lisp vars, script vars, proto names, and fields)
-*** TODO defblock let (with drag-off variable refs)
-**** TODO a lambda list is a special case of this
-**** TODO defblock self
-*** TODO defblock quote ( to prevent evaluation )
+** TODO [#A] send block has socket on left for receiver name, as in Smalltalk-Elements
 ** TODO [#C] "evaluate" and "evaluate and show" buttons
 *** TODO [#C] generic sidebar widget can inspect its argument (topleft socket as with send)
 *** TODO BRING BACK SPLIT WIDGET
 **** TODO [#C] palette widget is a hide-able sidebar with tabs, where you pull off pieces Library / Variables / Methods / Prototypes
-** TODO [#B] click again on header to close menu.
-** TODO [#A] DEFBLOCK DEFBLOCK
-*** TODO [#A] explicit "save" and "compile" buttons 
+** TODO [#C] update fontlocking rules
+*** TODO defblock var (reference to a var, not a def)  (for lisp vars, script vars, proto names, and fields)
+*** TODO defblock let (with drag-off variable refs)
+**** TODO a lambda list is a special case of this
+**** TODO defblock self
 ** TODO [#A] DEFBLOCK METHOD: define-method "block" has argument names as inputs
 *** TODO each name can also be a lambda list (name type &rest props
 *** TODO [#C] tree schema? 

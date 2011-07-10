@@ -153,15 +153,8 @@
 (define-method draw-border tree ()
   nil)
 
-(define-method draw-highlight tree ()
-  (with-fields (y height expanded parent top-level) self
-    (when parent
-      (with-fields (x width) parent
-	;; don't highlight top-level trees.
-	(when (and (not expanded) (not top-level))
-	  (draw-box x (+ y (dash 1)) width (+ height 1)
-		  :color *highlight-background-color*)
-	  (draw-label-string self (display-string self)))))))
+(define-method draw-highlight tree () 
+  nil)
 
 (defparameter *tree-tab-color* "gray60")
 (defparameter *tree-title-color* "white")
@@ -171,8 +164,8 @@
     (let ((display-string (or label *null-display-string*))
 	  (header (header-height self)))
       (if top-level
-	  ;; draw the top of the treebar a bit differently to prevent 
-	  ;; over-drawing other tree bar items.
+	  ;; draw the header a bit differently to avoid over-drawing
+	  ;; other headers in a menu bar situation.
 	  (progn (draw-patch self
 			     x
 			     (dash 3 y)
@@ -194,13 +187,16 @@
       (dolist (each inputs)
 	(draw each)))))
   
+(define-method draw-unexpanded tree (&optional label)
+  (draw-background self)
+  (draw-label-string self (or label (display-string self))))
+
 (define-method draw tree (&optional highlight)
   (with-fields (x y width height label action visible expanded) self
     (when visible
       (if expanded 
 	  (draw-expanded self label)
-	  ;; otherwise just draw tree name and highlight, if any
-	  (draw-label-string self (display-string self))))))
+	  (draw-unexpanded self label)))))
 
 ;; see system.lisp for example tree menu
 (defun make-tree (items &key target (tree-prototype "IOFORMS:TREE"))
@@ -235,5 +231,18 @@
       (otherwise
        ;; we're a submenu, not an individual menu command.
        (toggle-expanded self)))))
+  
+(define-method draw-unexpanded menu (&optional label)
+  (draw-label-string self (or label (display-string self))))
+
+(define-method draw-highlight menu ()
+  (with-fields (y height expanded parent top-level) self
+    (when parent
+      (with-fields (x width) parent
+	;; don't highlight top-level trees.
+	(when (and (not expanded) (not top-level))
+	  (draw-box x (+ y (dash 1)) width (+ height 1)
+		  :color *highlight-background-color*)
+	  (draw-label-string self (display-string self)))))))
 
 ;;; menus.lisp ends here
