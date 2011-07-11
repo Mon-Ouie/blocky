@@ -48,15 +48,14 @@
 (define-method initialize defblock ()
   (super%initialize 
    self 
-   :locked t
-   :subtree (make-tree 
-	     (list (list :name "defblock"
-			 :expanded t 
-			 :locked t
-			 :subtree (list (new string :name "name")))
-		   (list :name "inherit from"
-			 :subtree (list (new string :value "block" :name "block name")))
-		   (list :name "fields" :subtree (list (new list)))))))
+   :locked t :expanded t
+   :subtree (list 
+	     (new tree :name "defblock"
+		       :locked t :expanded t 
+		       :subtree (list (new integer :name "name")))
+	     (new tree :name "inherit from"
+		       :subtree (list (new string :value "block" :name "block name")))
+	     (new tree :name "fields" :subtree (list (new list))))))
 
 (define-method recompile defblock ()
   (destructuring-bind (name super fields) 
@@ -68,6 +67,8 @@
 
 (define-method evaluate defblock ()
   (eval (recompile self)))
+
+  
 
 ;;; arguments
 
@@ -87,13 +88,14 @@
 (defblock (define-method :super tree))
 
 (define-method initialize define-method ()
-  (apply #'super%initialize self 
-	 (list (make-tree :name "define method"
-			  :expanded t :locked t
-			  :subtree (list (new string :name "name")))
-	       (make-tree :name "for block"
-			  :subtree (list (new string :value "name" :name "")))
-	       (make-tree :name "definition" :subtree (list (new script))))))
+  (apply #'super%initialize self :subtree
+	 (list 
+	  (new tree :name "define method"
+		    :expanded t :locked t
+		    :subtree (list (new string :name "name")))
+	  (new tree :name "for block"
+		    :subtree (list (new string :value "name" :name "")))
+	  (new tree :name "definition" :subtree (list (new script))))))
 
 (define-method recompile define-method ()
   (destructuring-bind (name prototype definition) 
@@ -106,10 +108,6 @@
 (define-method evaluate define-method ()
   (eval (recompile self)))
 
-	  
 
-
-
-;;; defmethod 
 
 ;;; oop.lisp ends here

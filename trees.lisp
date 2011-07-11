@@ -47,7 +47,7 @@
   ;; become the parent
   (when subtree
     (dolist (each subtree)
-      (pin each)
+;      (pin each)
       (set-parent each self))))
 
 (define-method evaluate tree ()
@@ -192,7 +192,7 @@
   (draw-label-string self (or label (display-string self))))
 
 (define-method draw tree (&optional highlight)
-  (with-fields (x y width height label action visible expanded) self
+  (with-fields (visible expanded) self
     (when visible
       (if expanded 
 	  (draw-expanded self label)
