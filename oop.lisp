@@ -68,8 +68,6 @@
 (define-method evaluate defblock ()
   (eval (recompile self)))
 
-  
-
 ;;; arguments
 
 (defblock argument

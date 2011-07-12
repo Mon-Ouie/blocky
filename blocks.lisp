@@ -185,12 +185,12 @@ By default, just update each child block."
 (define-method is-temporary block ()
   %temporary)
 
-(define-method count-toplevel-blocks block ()
+(define-method count-top-level-blocks block ()
   (with-field-values (inputs) self
     (- (length inputs)
        (count-if #'is-temporary inputs))))
 
-(define-method toplevel-blocks block ()
+(define-method top-level-blocks block ()
   (with-field-values (inputs) self
     (remove-if #'is-temporary inputs)))
   
@@ -415,8 +415,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 					  (or (make-block-package)
 					      (find-package "IOFORMS")))))
 		     (arg-blocks (mapcar #'make-block arguments)))
-		 (message "arg-blocks ~S" (list (length arg-blocks)
-						(mapcar #'find-uuid arg-blocks)))
+		 ;; (message "arg-blocks ~S" (list (length arg-blocks)
+		 ;; 				(mapcar #'find-uuid arg-blocks)))
 		 (apply #'clone prototype arg-blocks))))
 	   (list-block (items)
 	     (apply #'clone "IOFORMS:LIST" (mapcar #'make-block items))))
@@ -584,7 +584,7 @@ current block. Used for taking a count of all the nodes in a tree."
     :hover "red"
     :socket "gray60"
     :data "gray50"
-    :structure "gray30"
+    :structure "gray50"
     :comment "khaki"
     :looks "purple"
     :sound "orchid"
@@ -605,7 +605,7 @@ current block. Used for taking a count of all the nodes in a tree."
     :looks "medium orchid"
     :socket "gray80"
     :data "gray80"
-    :structure "gray80"
+    :structure "gray65"
     :sound "plum"
     :message "sienna2"
     :control "gold"
@@ -1109,6 +1109,9 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (define-method parent-is-script block ()
   (assert (not (null *script*)))
+  (object-eq %parent *script*))
+
+(define-method is-top-level block ()
   (object-eq %parent *script*))
 
 (defblock (script :super list)

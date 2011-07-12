@@ -47,7 +47,7 @@
   ;; become the parent
   (when subtree
     (dolist (each subtree)
-;      (pin each)
+      (pin each)
       (set-parent each self))))
 
 (define-method evaluate tree ()
@@ -92,12 +92,13 @@
 	  (+ (dash 2) (font-text-extents string *block-font*)))))
 
 (define-method layout tree ()
-  (with-fields (expanded dash inputs label width) self
+  (with-fields (expanded dash height inputs label width) self
     (if expanded 
 	;; we're an expanded subtree. lay it out
 	(progn 
 	  (setf dash 1)
 	  (layout-as-list self)
+	  (incf height (dash 1))
 	  (when label 
 	    (setf width 
 		  (max width 
@@ -160,42 +161,30 @@
 (defparameter *tree-title-color* "white")
 
 (define-method draw-expanded tree (&optional label)
-  (with-field-values (action x y width height parent inputs top-level) self
+  (with-field-values (action x y width height parent inputs) self
     (let ((display-string (or label *null-display-string*))
 	  (header (header-height self)))
-      (if top-level
-	  ;; draw the header a bit differently to avoid over-drawing
-	  ;; other headers in a menu bar situation.
-	  (progn (draw-patch self
-			     x
-			     (dash 3 y)
-			     (dash 2 x (header-width self))
-			     (dash 1 y header)
-			     :color *tree-tab-color*)
-		 (draw-label-string self display-string *tree-title-color*)
-		 ;; draw the rest of the tree background
-		 (draw-patch self
-			     x (dash 2 y header)
-			     (dash 0 x width)
-			     (- (dash 1 y height) (dash 1))))
-	  (progn (draw-patch self x y (+ x width) (+ y height))
-		 (draw-label-string self display-string)
-		 (draw-line (+ x 1) (dash 2 y header) 
-			    (+ x width -1) (dash 2 y header)
-			    :color (find-color self :highlight))))
-      ;; draw subtree items
-      (dolist (each inputs)
-	(draw each)))))
+      (draw-patch self x y (+ x width) (+ y height))
+      (draw-label-string self display-string)
+      (draw-line (+ x 1) (dash 2 y header) 
+		 (+ x width -1) (dash 2 y header)
+		 :color (find-color self :highlight)))))
   
 (define-method draw-unexpanded tree (&optional label)
-  (draw-background self)
+;  (draw-background self)
   (draw-label-string self (or label (display-string self))))
 
+(define-method draw-subtree tree ()
+  (dolist (each %inputs)
+    (draw each)))
+
 (define-method draw tree (&optional highlight)
-  (with-fields (visible expanded) self
+  (with-fields (visible expanded label inputs) self
     (when visible
       (if expanded 
-	  (draw-expanded self label)
+	  (progn 
+	    (draw-expanded self label)
+	    (draw-subtree self))
 	  (draw-unexpanded self label)))))
 
 ;; see system.lisp for example tree menu
@@ -217,6 +206,7 @@
 
 (define-prototype menu (:parent :tree)
   (action :initform nil)
+  (main-menu-p :initform nil)
   (category :initform :menu))
 
 ;; menu items should not accept any dragged widgets.
@@ -231,16 +221,38 @@
       (otherwise
        ;; we're a submenu, not an individual menu command.
        (toggle-expanded self)))))
-  
+
+(define-method draw-expanded menu (&optional label)
+  (with-field-values (action x y width height parent inputs main-menu-p) self
+    (let ((header (header-height self)))
+      (if main-menu-p
+	  ;; draw the header a bit differently to avoid over-drawing
+	  ;; other headers in a menu bar situation.
+	  (progn 
+	    (assert parent)
+	    (draw-box x (field-value :y parent)
+		      (header-width self)
+		      (dash 3 header)
+		      :color *tree-tab-color*)
+		 (draw-label-string 
+		  self (or label *null-display-string*) *tree-title-color*)
+		 ;; draw the rest of the tree background
+		 (draw-patch self
+			     x (dash 2 y header)
+			     (dash 0 x width)
+			     (- (dash 1 y height) (dash 1))))
+	  ;; nope, draw in the typical fashion.
+	  (super%draw-expanded self label)))))
+
 (define-method draw-unexpanded menu (&optional label)
   (draw-label-string self (or label (display-string self))))
 
 (define-method draw-highlight menu ()
-  (with-fields (y height expanded parent top-level) self
+  (with-fields (y height expanded parent main-menu-p) self
     (when parent
       (with-fields (x width) parent
 	;; don't highlight top-level trees.
-	(when (and (not expanded) (not top-level))
+	(when (and (not expanded) (not main-menu-p))
 	  (draw-box x (+ y (dash 1)) width (+ height 1)
 		  :color *highlight-background-color*)
 	  (draw-label-string self (display-string self)))))))

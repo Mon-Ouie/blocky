@@ -56,7 +56,7 @@
 	 (mapcar #'find-object menus))
   (with-fields (inputs) self
     (dolist (each inputs)
-      (setf (field-value :top-level each) t)
+      (setf (field-value :main-menu-p each) t)
       (pin each))))
 
 (define-method hit menubar (mouse-x mouse-y)
@@ -222,8 +222,8 @@
 		    ((= 1 (length selection))
 		     (first selection))
 		    ;; nothing selected, only 1 top-level block.
-		    ((= 1 (count-toplevel-blocks script))
-		     (first (toplevel-blocks script))))))
+		    ((= 1 (count-top-level-blocks script))
+		     (first (top-level-blocks script))))))
 	  (when block 
 	    (with-script script
 	      (handle-event block event)))))))

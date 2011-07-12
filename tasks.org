@@ -1,19 +1,24 @@
+** TODO better error handling for menu methods
+** TODO define-method error shell
+** TODO define-method warning shell
+** TODO redirect messages to message bar.
+** TODO draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
 ** TODO [#A] defblock tree: a generic folding hierarchical list widget with indentation and headlines, a la orgmode 
-** TODO defblock defblock --- defining new blocks with a block.
 ** TODO defblock defsprite --- defining sprites
-*** TODO defblock quote ( to prevent evaluation )
 ** TODO [#B] click again on header to close menu.
 ** TODO [#A] explicit "save" and "compile" buttons 
-*** TODO merge sprites and blocks?
-*** TODO defblock field 
-*** TODO defblock with (introduce local vars) 
-*** TODO defblock defresource (a stand-in reference to a resource)
-**** TODO should resources be full-fledged objects? 
 ** TODO [#A] send block has socket on left for receiver name, as in Smalltalk-Elements
 ** TODO [#C] "evaluate" and "evaluate and show" buttons
 *** TODO [#C] generic sidebar widget can inspect its argument (topleft socket as with send)
 *** TODO BRING BACK SPLIT WIDGET
 **** TODO [#C] palette widget is a hide-able sidebar with tabs, where you pull off pieces Library / Variables / Methods / Prototypes
+*** TODO defblock quote ( to prevent evaluation )
+*** TODO merge sprites and blocks?
+*** TODO fix inconsistent menu highlighting (may have to do with %focused or %hover or %selected being set to nil)
+*** TODO defblock field 
+*** TODO defblock with (introduce local vars) 
+*** TODO defblock defresource (a stand-in reference to a resource)
+**** TODO should resources be full-fledged objects? 
 ** TODO [#C] update fontlocking rules
 *** TODO defblock var (reference to a var, not a def)  (for lisp vars, script vars, proto names, and fields)
 *** TODO defblock let (with drag-off variable refs)
