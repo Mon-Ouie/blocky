@@ -459,22 +459,22 @@ The modes can be toggled with CONTROL-X.")
   (pinned :initform t)
   (text-color :initform "white")
   (label-color :initform "white")
-  options label name type-specifier value)
+  options label type-specifier value)
 
-(define-method initialize entry (&key value type-specifier options name label-color parent)
+(define-method initialize entry (&key value type-specifier options label label-color parent)
   (super%initialize self)
   ;(assert (and value type-specifier))
   (when parent (setf %parent parent))
   (setf %type-specifier type-specifier
 	%options options
-	%name name
+	%label label
 	%value value)
   ;; fill in the input box with the value
   (setf %line (format nil "~S" value))
   (setf %label (getf options :label))
   (when label-color (setf %label-color label-color))
   (when (null %label)
-    (setf %pretty-label (pretty-symbol-string name))))
+    (setf %pretty-label (pretty-symbol-string label))))
 
 ;; (define-method click entry (mouse-x mouse-y)
 ;;   (declare (ignore mouse-y))
@@ -526,18 +526,28 @@ The modes can be toggled with CONTROL-X.")
 		 :font *block-font*)))
 
 (define-method draw entry (&optional nolabel)
-  (with-fields (x y options text-color width height line) self
-    ;; draw the label string 
-    (assert (stringp text-color))
-    (unless nolabel (draw-entry-label self))
-    ;; draw current input string
-    (when (null line) (setf line ""))
-    (unless (zerop (length line))
-      (draw-string line
-		   (+ (dash 2 x) (label-width self))
-		   (+ y (dash 1))
-		   :color %text-color
-		   :font *block-font*))))
+  (with-fields (x y options text-color width parent height line) self
+    (let ((label-width (label-width self))
+	  (line-width (font-text-extents line *block-font*))
+	  (fh (font-height *block-font*)))
+      ;; draw the label string 
+      (assert (stringp text-color))
+      (unless nolabel (draw-entry-label self))
+      ;; draw input area indicators
+      (draw-indicator :top-left-triangle
+       (dash 1 x label-width)
+       (dash 1 y))
+      (draw-indicator :bottom-right-triangle
+       (dash 2 x label-width line-width)
+       (dash 1 y fh))
+      ;; draw current input string
+      (when (null line) (setf line ""))
+      (unless (zerop (length line))
+	(draw-string line
+		     (+ (dash 2 x) label-width)
+		     (+ y (dash 1))
+		     :color %text-color
+		     :font *block-font*)))))
 
 (define-method draw-border entry ())
 
@@ -574,6 +584,7 @@ The modes can be toggled with CONTROL-X.")
       ;; 		    :color "white"))))) 
 
 (define-method lose-focus entry ()
+  ;; update the entry value if the user mouses away
   (enter self))
 		 
 (define-method do-sexp entry (sexp)

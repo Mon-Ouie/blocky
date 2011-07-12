@@ -354,6 +354,8 @@
 (define-method mouse-down shell (x y &optional button)
   (with-fields (click-start focused-block) self
     (when focused-block
+      ;; there's going to be a new focused block. 
+      ;; tell the current one it's no longer focused.
       (lose-focus focused-block))
     (setf focused-block nil)
     (let ((block (hit-script self x y)))

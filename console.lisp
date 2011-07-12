@@ -1796,6 +1796,12 @@ of the music."
 				     :type :color
 				     :data (list red green blue))))))
 
+(defun percent-gray (percentage)
+  (format nil "gray~S" (truncate percentage)))
+
+(defun percent-grey (percentage)
+  (percent-gray percentage))
+
 ;;; Creating and displaying images
 
 ;; The "driver dependent objects" for IOFORMS images are just SDL:SURFACE
@@ -1853,6 +1859,31 @@ of the music."
 	 (width (* scale-x (sdl:width image))))
     (let ((texture (find-texture name)))
       (draw-textured-rectangle x y z width height texture :blend blend :opacity opacity))))
+
+;;; Indicators
+
+(defparameter *active-indicator-color* "magenta")
+(defparameter *inactive-indicator-color* "gray70")
+
+(defun indicator-size () (* 0.2 (font-height *default-font*)))
+
+(defparameter *indicators* 
+  '(:asterisk "asterisk"
+    :top-left-triangle "top-left-triangle-indicator"
+    :bottom-right-triangle "bottom-right-triangle-indicator"))
+
+(defun find-indicator-texture (indicator)
+  (assert (keywordp indicator))
+  (let ((texture-name (getf *indicators* indicator)))
+    (assert (stringp texture-name))
+    (find-texture texture-name)))
+
+(defun draw-indicator (indicator x y &optional (color "white"))
+  (let ((size (indicator-size)))
+    (draw-textured-rectangle x y 0 size size 
+			     (find-indicator-texture indicator)
+			     :blend :alpha
+			     :vertex-color (or color *active-indicator-color*))))
 
 ;;; Font operations
 

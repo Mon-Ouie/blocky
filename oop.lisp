@@ -33,8 +33,8 @@
 
 (defblock field
   :category :variables
-  :inputs (list (new string :name "name")
-		(new entry :name "value"))) ;; TODO: allow any block as a value
+  :inputs (list (new string :label "name")
+		(new entry :label "value"))) ;; TODO: allow any block as a value
 
 (define-method evaluate field ()
   (destructuring-bind (name value) 
@@ -48,21 +48,20 @@
 (define-method initialize defblock ()
   (super%initialize 
    self 
+   :label "defblock"
    :locked t :expanded t
    :subtree (list 
-	     (new tree :name "defblock"
-		       :locked t :expanded t 
-		       :subtree (list (new integer :name "name")))
-	     (new tree :name "inherit from"
-		       :subtree (list (new string :value "block" :name "block name")))
-	     (new tree :name "fields" :subtree (list (new list))))))
+	     (new string :label "name")
+	     (new tree :label "options"
+		       :subtree (list (new string :value "block" :label "block name")))
+	     (new tree :label "fields" :subtree (list (new list))))))
 
 (define-method recompile defblock ()
   (destructuring-bind (name super fields) 
       (mapcar #'recompile %inputs)
     (let ((block-name (make-symbol (first name)))
 	  (super (make-prototype-id (first super))))
-	(append (list 'defblock (list :name block-name :super super))
+	(append (list 'defblock (list :label block-name :super super))
 		fields))))
 
 (define-method evaluate defblock ()
@@ -72,9 +71,9 @@
 
 (defblock argument
   :category :variables
-  :inputs (list (new string :name "name")
-		(new entry :name "type")
-		(new string :name "default")))
+  :inputs (list (new string :label "name")
+		(new entry :label "type")
+		(new string :label "default")))
 
 (define-method evaluate argument ()
   (destructuring-bind (name type default) 
@@ -86,14 +85,15 @@
 (defblock (define-method :super tree))
 
 (define-method initialize define-method ()
-  (apply #'super%initialize self :subtree
+  (apply #'super%initialize self 
+	 :label "define method"
+	 :expanded t :locked t
+	 :subtree
 	 (list 
-	  (new tree :name "define method"
-		    :expanded t :locked t
-		    :subtree (list (new string :name "name")))
-	  (new tree :name "for block"
-		    :subtree (list (new string :value "name" :name "")))
-	  (new tree :name "definition" :subtree (list (new script))))))
+	  (new string :label "name")
+	  (new tree :label "for block"
+		    :subtree (list (new string :value "name" :label "")))
+	  (new tree :label "definition" :subtree (list (new script))))))
 
 (define-method recompile define-method ()
   (destructuring-bind (name prototype definition) 

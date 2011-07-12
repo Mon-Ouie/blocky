@@ -39,16 +39,15 @@ defproject run start stop *update-function* *default-world-axis-size*
 defsprite *target* *blocks* *script* *default-world-z-size*
 install-blocks seconds->frames keyboard-held-p keyboard-pressed-p
 *use-nominal-screen-size* keyboard-released-p *builder*
-keyboard-time-in-current-state pretty-symbol-string
-*pointer-x* *pointer-y* keyboard-time-in-previous-state *updates*
-keyboard-down-p keyboard-keys-down keyboard-modifier-down-p
-keyboard-modifiers draw-filled-circle draw-aa-circle get-keys
-*project-package-name* project-package-name make-block
-*form-command-handler-function* add-block remove-block
-*initialization-hook* initialize-engine hit-blocks
-split-string-on-lines message *prompt-sweden-keybindings*
-*prompt-qwerty-keybindings* *screen-width* transform-method-body *builder-p*
-roll-under make-stat make-universe initialize-colors
+keyboard-time-in-current-state pretty-symbol-string *pointer-x*
+*pointer-y* keyboard-time-in-previous-state *updates* keyboard-down-p
+keyboard-keys-down keyboard-modifier-down-p keyboard-modifiers
+draw-filled-circle draw-aa-circle get-keys *project-package-name*
+project-package-name make-block *form-command-handler-function*
+add-block remove-block *initialization-hook* initialize-engine
+hit-blocks split-string-on-lines message *prompt-sweden-keybindings*
+*prompt-qwerty-keybindings* *screen-width* transform-method-body
+*builder-p* roll-under make-stat make-universe initialize-colors
 *standard-categories* *left-turn* bind-event *right-turn*
 *default-action-points* left-turn right-turn roll bind-event-to-method
 *colors* enable-key-repeat disable-key-repeat get-color define-method
@@ -88,26 +87,27 @@ run-hook queue-tail make-resource-link save-resource save-project
 defresource export-application export-project make-queue queue unqueue
 queue-message queued-messages-p unqueue-message send-queue field-value
 random-direction random-choose *resources* load-font-resource
-save-object-resource super%initialize super%initialize /queue/initialize
-queue/initialize draw-string-solid read-iof initialize-resource-table
-percent-of-time render-formatted-paragraph make-formatted-string
-draw-string-shaded set-blending-mode render-formatted-string
-render-formatted-line resource font-text-extents write-sexp-to-file
-with-message-sender *message-sender* read-sexp-from-file with-fields
-with-field-values write-iof *grammar* one-of left-hand-side
-right-hand-side expansions generate send-event-to-blocks play-music
-halt-music seek-music *joystick-mapping* play initialize-sound
-*generic-joystick-mapping* *ps3-joystick-mapping*
-*joystick-button-symbols* draw-resource-image *event-handler-function*
-*use-sound* trace-rectangle trace-row trace-column trace-octagon
-trace-line midpoint send-event self *project-blocks* defsprite
-get-some-object-name transform-declaration-field-descriptor
-show-blocks no-such-field find-projects-in-directory goal
-directory-is-project-p find-all-projects *project* transform-tree
-*after-startup-hook* stat-value draw-line
-*default-message-verbosities* *message-verbosities* add-overlay
-set-message-verbosities operation-symbol message-symbol play-sample
-set-music-volume add-message-verbosities with-message-queue draw-pixel
+save-object-resource super%initialize super%initialize
+/queue/initialize queue/initialize draw-string-solid read-iof
+initialize-resource-table percent-of-time render-formatted-paragraph
+make-formatted-string draw-string-shaded set-blending-mode
+render-formatted-string render-formatted-line resource
+font-text-extents write-sexp-to-file with-message-sender
+*message-sender* read-sexp-from-file with-fields with-field-values
+write-iof *grammar* one-of left-hand-side right-hand-side expansions
+generate send-event-to-blocks play-music halt-music seek-music
+*joystick-mapping* play initialize-sound *generic-joystick-mapping*
+*ps3-joystick-mapping* *joystick-button-symbols* draw-resource-image
+*event-handler-function* *use-sound* trace-rectangle trace-row
+trace-column trace-octagon trace-line midpoint send-event self
+*project-blocks* defsprite get-some-object-name
+transform-declaration-field-descriptor show-blocks no-such-field
+find-projects-in-directory goal directory-is-project-p
+find-all-projects *project* transform-tree *after-startup-hook*
+stat-value draw-line *default-message-verbosities*
+*message-verbosities* add-overlay set-message-verbosities
+operation-symbol message-symbol play-sample set-music-volume
+add-message-verbosities with-message-queue draw-pixel
 *user-keyboard-layout* *fullscreen* draw-circle set-field-option-value
 open-project field-options world set-frame-rate *frame-rate*
 *workbook* set-resource-modified-p *iof-file-extension* load-project
@@ -133,8 +133,8 @@ with-mission-locals *project* quit reset seek-music make-keyword
 object field-value make-queue find-parent set-field-value
 set-field-options field-options field-documentation
 set-field-option-value field-option-value *lookup-failure*
-no-such-field has-field has-method send send-queue send-super serialize
-deserialize initialize-method-cache *send-super-depth*
+no-such-field has-field has-method send send-queue send-super
+serialize deserialize initialize-method-cache *send-super-depth*
 initialize-documentation-tables null-parent queue unqueue empty-queue
 *message-queue* queue-message make-non-keyword with-fields queue-count
 queue-head method-documentation set-method-documentation
@@ -144,10 +144,12 @@ unqueue-and-send-message with-message-queue message-symbol
 operation-symbol *sender* message-reader transform-tree
 field-reference-p transform-field-reference transform-method-body
 object-parent object-name $ object-fields define-method
-define-prototype new object-p self
+define-prototype new object-p self percent-gray percent-grey
+*indicators* find-indicator-texture draw-indicator
 transform-declaration-field-descriptor is-a compose-blank-fields
 make-field-initializer initialize initialize-prototypes
 initialize-ioforms object-address-string draw-string make-tree
-draw-string-blended make-menu find-text-image make-text-image *default-super*
-clear-text-image-cache *token-types* *block-categories* *block-colors*
-input *block-text-colors* defblock ))
+draw-string-blended make-menu find-text-image make-text-image
+*default-super* clear-text-image-cache *token-types*
+*block-categories* *block-colors* input *block-text-colors* defblock
+))

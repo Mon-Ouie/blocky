@@ -1,8 +1,14 @@
-** TODO better error handling for menu methods
-** TODO define-method error shell
-** TODO define-method warning shell
-** TODO redirect messages to message bar.
-** TODO draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
+** TODO red triangle instead of underline to delimite non-selected input areas
+** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
+** TODO [#C] define faces with bold, italic, etc
+** TODO [#A] Improve tree widget
+*** TODO [#A] better indication of open/closed... go gradually darker as deeper?
+*** TODO [#B] draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
+** TODO [#B] Improve messaging, diagnostic output, and error handling.
+*** TODO define-method error shell
+*** TODO better error handling for menu methods
+*** TODO define-method warning shell
+*** TODO redirect messages to message bar.
 ** TODO [#A] defblock tree: a generic folding hierarchical list widget with indentation and headlines, a la orgmode 
 ** TODO defblock defsprite --- defining sprites
 ** TODO [#B] click again on header to close menu.
@@ -14,7 +20,6 @@
 **** TODO [#C] palette widget is a hide-able sidebar with tabs, where you pull off pieces Library / Variables / Methods / Prototypes
 *** TODO defblock quote ( to prevent evaluation )
 *** TODO merge sprites and blocks?
-*** TODO fix inconsistent menu highlighting (may have to do with %focused or %hover or %selected being set to nil)
 *** TODO defblock field 
 *** TODO defblock with (introduce local vars) 
 *** TODO defblock defresource (a stand-in reference to a resource)

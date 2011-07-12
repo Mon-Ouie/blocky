@@ -525,11 +525,12 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 					 "Methods: "
 					 (get-some-object-name self)
 					 "(" (object-address-string self) ")")
-		     :inputs (mapcar #'(lambda (method)
+		     :subtree (mapcar #'(lambda (method)
 					 (method-menu self method self))
 				     %methods)
 		     :pinned nil
-		     :expanded t))))
+		     :expanded t
+		     :locked t))))
 
 ;;; evaluation and recompilation: compiling block diagrams into equivalent sexps
 
@@ -605,7 +606,7 @@ current block. Used for taking a count of all the nodes in a tree."
     :looks "medium orchid"
     :socket "gray80"
     :data "gray80"
-    :structure "gray65"
+    :structure "gray60"
     :sound "plum"
     :message "sienna2"
     :control "gold"
@@ -621,7 +622,7 @@ current block. Used for taking a count of all the nodes in a tree."
     :socket "gray90"
     :data "gray55"
     :menu "gray70"
-    :structure "gray20"
+    :structure "gray35"
     :comment "goldenrod"
     :hover "orange red"
     :looks "dark orchid"
@@ -1054,7 +1055,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 		 :parent self
 		 :type-specifier (schema-type entry)
 		 :options (schema-options entry)
-		 :name (concatenate 'string
+		 :label (concatenate 'string
 				    ":" ;; mimic the keyword arguments visually
 				    (symbol-name (schema-name entry))))
 	    inputs))

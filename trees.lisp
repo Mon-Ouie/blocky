@@ -23,18 +23,36 @@
 
 ;;; Trees
 
+(defvar *tree-depth* 0)
+
+(defmacro deeper (&rest body)
+  `(let ((*tree-depth* (1+ *tree-depth*)))
+     ,@body))
+
+(defparameter *depth-gray-slope* -4)
+(defparameter *depth-gray-base* 50)
+
+(defun depth-gray (depth)
+  (percent-gray (+ *depth-gray-base* (* depth *depth-gray-slope*))))
+
 (define-prototype tree (:parent "IOFORMS:LIST")
   (category :initform :structure)
+  (is-tree :initform t)
+  (indentation-width :initform (dash 2))
   (top-level :initform nil)
   (locked :initform nil)
   (temporary :initform t)
   action target (expanded :initform nil) (visible :initform t))
 
+(defun is-tree (thing)
+  (and (has-field :is-tree thing)
+       (eq t (field-value :is-tree thing))))
+
 (define-method children tree () %inputs)
 
 (define-method initialize tree 
     (&key action target top-level subtree pinned locked
-	  expanded (name "no label..."))
+	  expanded (label "no label..."))
   (super%initialize self)
   (setf %action action
 	%pinned pinned
@@ -43,7 +61,7 @@
 	%target target
 	%top-level top-level
 	%inputs subtree
-	%label name)
+	%label label)
   ;; become the parent
   (when subtree
     (dolist (each subtree)
@@ -51,7 +69,7 @@
       (set-parent each self))))
 
 (define-method evaluate tree ()
-  (mapcar #'evaluate %inputs))
+  (deeper (mapcar #'evaluate %inputs)))
 
 (define-method toggle-expanded tree (&optional force)
   (with-fields (expanded locked) self
@@ -86,51 +104,55 @@
 	  (if top-level label ellipsis)))))
 
 (define-method layout-as-string tree (string)
-  (with-fields (height width) self
-    (setf height (dash 1 (font-height *block-font*)))
-    (setf width 
-	  (+ (dash 2) (font-text-extents string *block-font*)))))
+  (deeper 
+   (with-fields (height width) self
+     (setf height (dash 1 (font-height *block-font*)))
+     (setf width 
+	   (+ (dash 2) (font-text-extents string *block-font*))))))
 
 (define-method layout tree ()
-  (with-fields (expanded dash height inputs label width) self
-    (if expanded 
-	;; we're an expanded subtree. lay it out
-	(progn 
-	  (setf dash 1)
-	  (layout-as-list self)
-	  (incf height (dash 1))
-	  (when label 
-	    (setf width 
-		  (max width 
-		       (dash 4 (font-text-extents label *block-font*)))))
-	  ;; make all inputs equally wide
-	  (dolist (each inputs)
-	    (setf (field-value :width each) (- width (dash 2)))))
-	;; we're not expanded. just lay out for label.
-	(layout-as-string self (display-string self)))))
-
+  (deeper
+   (with-fields (expanded dash height inputs label width) self
+     (if expanded 
+	 ;; we're an expanded subtree. lay it out
+	 (progn 
+	   (setf dash 1)
+	   (layout-as-list self)
+	   (when label 
+	     (setf width 
+		   (max width 
+			(dash 4 (font-text-extents label *block-font*)))))
+	   ;; make all inputs equally wide
+	   (dolist (each inputs)
+	     (setf (field-value :width each) (- width (dash 2)))))
+	 ;; we're not expanded. just lay out for label.
+	 (layout-as-string self (display-string self))))))
+  
 (define-method header-height tree ()
-  (font-height *block-font*))
+  (deeper 
+   (font-height *block-font*)))
 
 (define-method header-width tree ()
-  (if %expanded
-      (dash 2 (font-text-extents (display-string self) *block-font*))
-      %width))
+  (deeper 
+   (if %expanded
+       (dash 1 (font-text-extents (display-string self) *block-font*))
+       %width)))
 
 (define-method hit tree (mouse-x mouse-y)
-  (with-field-values (x y expanded inputs width height) self
-    (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
-      (flet ((try (item)
-	       (hit item mouse-x mouse-y)))
-	(if (not expanded)
-	    self
-	    ;; we're expanded. is the mouse to the left of this
-	    ;; tree's header tab thingy?
-	    (if %top-level
-		(when (and (< mouse-x (+ x (header-width self)))
-			   (< (header-height self) mouse-y))
-		  (some #'try inputs))
-		(or (some #'try inputs) self)))))))
+  (deeper
+   (with-field-values (x y expanded inputs width height) self
+     (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
+       (flet ((try (item)
+		(hit item mouse-x mouse-y)))
+	 (if (not expanded)
+	     self
+	     ;; we're expanded. is the mouse to the left of this
+	     ;; tree's header tab thingy?
+	     (if %top-level
+		 (when (and (< mouse-x (+ x (header-width self)))
+			    (< (header-height self) mouse-y))
+		   (some #'try inputs))
+		 (or (some #'try inputs) self))))))))
 		
 ;;       (let ((hh (header-height self))
 ;; 	    (hw (header-width self)))
@@ -157,14 +179,17 @@
 (define-method draw-highlight tree () 
   nil)
 
-(defparameter *tree-tab-color* "gray60")
-(defparameter *tree-title-color* "white")
-
 (define-method draw-expanded tree (&optional label)
-  (with-field-values (action x y width height parent inputs) self
+  (with-field-values (x y width height parent) self
     (let ((display-string (or label *null-display-string*))
 	  (header (header-height self)))
-      (draw-patch self x y (+ x width) (+ y height))
+      ;; possibly draw a background
+      (when (or (null parent)
+	      (not (is-tree parent)))
+	(draw-patch self x y (+ x width) (+ y height)))
+	  ;; possibly colored by depth
+	  ;; (when (plusp *tree-depth*)
+	  ;;   (draw-box x y width height :color (depth-gray *tree-depth*))))
       (draw-label-string self display-string)
       (draw-line (+ x 1) (dash 2 y header) 
 		 (+ x width -1) (dash 2 y header)
@@ -175,8 +200,9 @@
   (draw-label-string self (or label (display-string self))))
 
 (define-method draw-subtree tree ()
-  (dolist (each %inputs)
-    (draw each)))
+  (deeper 
+   (dolist (each %inputs)
+     (draw each))))
 
 (define-method draw tree (&optional highlight)
   (with-fields (visible expanded label inputs) self
@@ -184,7 +210,7 @@
       (if expanded 
 	  (progn 
 	    (draw-expanded self label)
-	    (draw-subtree self))
+	    (deeper (draw-subtree self)))
 	  (draw-unexpanded self label)))))
 
 ;; see system.lisp for example tree menu
@@ -222,6 +248,9 @@
        ;; we're a submenu, not an individual menu command.
        (toggle-expanded self)))))
 
+(defparameter *menu-tab-color* "gray60")
+(defparameter *menu-title-color* "white")
+
 (define-method draw-expanded menu (&optional label)
   (with-field-values (action x y width height parent inputs main-menu-p) self
     (let ((header (header-height self)))
@@ -230,17 +259,17 @@
 	  ;; other headers in a menu bar situation.
 	  (progn 
 	    (assert parent)
-	    (draw-box x (field-value :y parent)
-		      (header-width self)
-		      (dash 3 header)
-		      :color *tree-tab-color*)
-		 (draw-label-string 
-		  self (or label *null-display-string*) *tree-title-color*)
-		 ;; draw the rest of the tree background
-		 (draw-patch self
-			     x (dash 2 y header)
-			     (dash 0 x width)
-			     (- (dash 1 y height) (dash 1))))
+	    (draw-patch self x (+ 1 y)
+		      (+ x (header-width self))
+		      (dash 3 y header)
+		      :color *menu-tab-color*)
+	    (draw-label-string 
+	     self (or label *null-display-string*) *menu-title-color*)
+	    ;; draw the rest of the tree background
+	    (draw-patch self
+			x (dash 2 y header)
+			(dash 0 x width)
+			(- (dash 1 y height) (dash 1))))
 	  ;; nope, draw in the typical fashion.
 	  (super%draw-expanded self label)))))
 
