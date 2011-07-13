@@ -61,7 +61,7 @@
       (mapcar #'recompile %inputs)
     (let ((block-name (make-symbol (first name)))
 	  (super (make-prototype-id (first super))))
-	(append (list 'defblock (list :label block-name :super super))
+	(append (list 'defblock (list block-name :super super))
 		fields))))
 
 (define-method evaluate defblock ()

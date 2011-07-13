@@ -1,4 +1,7 @@
 ** TODO red triangle instead of underline to delimite non-selected input areas
+** TODO fix texture edge handling for indicators:
+(09:54:04 AM) |3b|: dto: that texture stuff with the triangles looks like it is accessing past the edge of the texture and wrapping to the other side, use tex-parameter and set :texture-wrap-r and :texture-wrap-s to :clamp-to-edge (assuming relatively recent GL version)
+(09:54:45 AM) |3b|: (or be more careful with texture coordinates, and shift them in by half of a texel from each edge)
 ** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
 ** TODO [#C] define faces with bold, italic, etc
 ** TODO [#A] Improve tree widget
