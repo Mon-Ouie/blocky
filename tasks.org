@@ -1,4 +1,6 @@
-** TODO fix top and bottom patch border off-by-one pixel errors on different machines
+** TODO interface flags, like colored tape flags with white txt 
+** TODO do not need topleft triangle now that shaded input area always visible?
+** TODO fix top and bottom patch border off-by-one pixel errors on different machines (use 0.5)?
 ** TODO make it easier to grab parent widgets of an entry (allow drag from entry  label)
 ** TODO fix ellipsis not displayed on menu items until highlight
 *** TODO use something other than ellipses? like my generic tree triangles
