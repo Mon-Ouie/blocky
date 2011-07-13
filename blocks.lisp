@@ -732,13 +732,13 @@ override all colors."
 	   (- x1 radius 1) y1
 	   fill)
       (line (+ x0 radius -2) (1- y1)
-	    (- x1 radius 1) (1- y1) chisel)
+	    (- x1 radius 1) y1 chisel)
       ;; top
       (box (+ x0 radius) y0
 	   (- x1 radius) (+ y0 diameter)
 	   fill)
       (line (+ x0 radius) (+ y0 0)
-	    (- x1 radius -4) (+ y0 0) bevel)
+	    (- x1 radius -4) (+ y0 1) bevel)
       ;; left
       (box x0 (+ y0 radius)
 	   (+ x0 diameter) (- y1 radius)
