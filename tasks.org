@@ -1,9 +1,10 @@
 ** TODO red triangle instead of underline to delimite non-selected input areas
-** TODO fix texture edge handling for indicators:
-(09:54:04 AM) |3b|: dto: that texture stuff with the triangles looks like it is accessing past the edge of the texture and wrapping to the other side, use tex-parameter and set :texture-wrap-r and :texture-wrap-s to :clamp-to-edge (assuming relatively recent GL version)
-(09:54:45 AM) |3b|: (or be more careful with texture coordinates, and shift them in by half of a texel from each edge)
+** TODO custom text metric caching 
+** TODO fix ellipsis not displayed on menu items until highlight
+*** TODO use something other than ellipses? like my generic tree triangles
+** TODO [#B] hotkey for focusing on terminal prompt (click also)
+** TODO fix menus being drawn under stuff
 ** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
-** TODO [#C] define faces with bold, italic, etc
 ** TODO [#A] Improve tree widget
 *** TODO [#A] better indication of open/closed... go gradually darker as deeper?
 *** TODO [#B] draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
@@ -12,6 +13,14 @@
 *** TODO better error handling for menu methods
 *** TODO define-method warning shell
 *** TODO redirect messages to message bar.
+** TODO [#B] fix texture edge handling for indicators:
+(09:54:04 AM) |3b|: dto: that texture stuff with the triangles looks
+like it is accessing past the edge of the texture and wrapping to the
+other side, use tex-parameter and set :texture-wrap-r
+and :texture-wrap-s to :clamp-to-edge (assuming relatively recent GL
+version) (09:54:45 AM) |3b|: (or be more careful with texture
+coordinates, and shift them in by half of a texel from each edge)
+** TODO [#C] define faces with bold, italic, etc
 ** TODO [#A] defblock tree: a generic folding hierarchical list widget with indentation and headlines, a la orgmode 
 ** TODO defblock defsprite --- defining sprites
 ** TODO [#B] click again on header to close menu.

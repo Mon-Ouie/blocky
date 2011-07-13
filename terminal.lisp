@@ -525,6 +525,20 @@ The modes can be toggled with CONTROL-X.")
 		 :color %label-color
 		 :font *block-font*)))
 
+(define-method draw-indicators entry (state)
+  (with-fields (x y options text-color width parent height line) self
+    (let ((label-width (label-width self))
+	  (line-width (font-text-extents line *block-font*))
+	  (fh (font-height *block-font*)))
+      (draw-indicator :top-left-triangle
+		      (dash 1 x 1 label-width)
+		      (dash 1 y)
+		      :state state)
+      (draw-indicator :bottom-right-triangle
+		      (dash 2 x -2 label-width line-width)
+		      (+ y -2 fh)
+		      :state state))))
+
 (define-method draw entry (&optional nolabel)
   (with-fields (x y options text-color width parent height line) self
     (let ((label-width (label-width self))
@@ -533,13 +547,8 @@ The modes can be toggled with CONTROL-X.")
       ;; draw the label string 
       (assert (stringp text-color))
       (unless nolabel (draw-entry-label self))
-      ;; draw input area indicators
-      (draw-indicator :top-left-triangle
-       (dash 1 x label-width)
-       (dash 1 y))
-      (draw-indicator :bottom-right-triangle
-       (dash 2 x label-width line-width)
-       (dash 1 y fh))
+      ;; draw indicators
+      (draw-indicators self :inactive)
       ;; draw current input string
       (when (null line) (setf line ""))
       (unless (zerop (length line))
@@ -553,19 +562,32 @@ The modes can be toggled with CONTROL-X.")
 
 (define-method draw-hover entry ())
 
+(defparameter *active-entry-color* "red")
+(defparameter *inactive-entry-color* "gray20")
+
+(define-method draw-input-area entry (state)
+  ;; draw shaded area for data entry.
+  ;; makes the cursor show up a bit better too.
+  (with-fields (x y parent label line) self
+    (let ((label-width (font-text-extents label *block-font*))
+	  (line-width (font-text-extents line *block-font*)))
+      (draw-box (dash 1.5 x label-width)
+		(dash 1 y)
+		(dash 2 line-width)
+		(+ 1 (font-height *block-font*))
+		:color (ecase state
+			 (:active *active-entry-color*)
+			 (:inactive (if (null parent)
+					*inactive-entry-color*
+					(find-color parent :shadow))))))))
+
 (define-method draw-focus entry () 
   (with-fields (clock x y width line parent) self
     (let* ((label (label-string self))
 	   (label-width (font-text-extents label *block-font*))
 	   (line-width (font-text-extents line *block-font*)))
-      ;; draw shaded area for data entry.
-      ;; makes the cursor show up a bit better too.
-      (draw-box (dash 1.5 x label-width)
-		(dash 1 y)
-		(dash 2 line-width)
-		(+ 1 (font-height *block-font*))
-		:color (when parent
-			 (find-color parent :shadow)))
+      ;; draw shaded area for input
+      (draw-input-area self :active)
       ;; draw cursor.
       (update-cursor-clock self)
       (draw-cursor self (if (minusp clock)
@@ -573,6 +595,8 @@ The modes can be toggled with CONTROL-X.")
 			    *prompt-cursor-blink-color*)
 		   ;; provide x offset
 		   (dash 2 (font-text-extents label *block-font*)))
+      ;; draw highlighted indicators
+      (draw-indicators self :active)
       ;; redraw content (but not label)
       (draw self :nolabel))))
       ;; draw input area underlining
@@ -601,7 +625,7 @@ The modes can be toggled with CONTROL-X.")
 
 (define-method layout entry ()
   (with-fields (height width value line) self
-    (setf height (+ (* 1 *dash*) (font-height *block-font*)))
+    (setf height (+ (* 2 *dash*) (font-height *block-font*)))
     (setf width (+ (* 4 *dash*)
 		   (font-text-extents (label-string self) *block-font*)
 		   (max *minimum-entry-line-width*

@@ -132,6 +132,14 @@
   (declare (ignore x y))
   (close-menus self))
 
+;; Don't allow anything to be dropped on the menus, for now.
+
+(define-method draw-hover menubar () nil)
+
+(define-method accept menubar (thing)
+  (declare (ignore thing))
+  nil)
+
 ;;; Interactive editor shell
 
 (defblock shell

@@ -82,10 +82,10 @@ concatenation.")
   "Define a memoized function named NAME.
 ARGS is the lambda list giving the memoized function's arguments.
 MEMO-ARGS is a list with optional keyword arguments for the
-memoization process: :KEY and :TEST."
+memoization process: :KEY, :VALIDATOR, and :TEST."
   `(memoize (defun ,name ,args . ,body) ,@memo-args))
 
-(defun memo (fn &key (key #'first) (test #'eql) name)
+(defun memo (fn &key (key #'first) (test #'eql) validator name)
   "Return a memo-function of fn."
   (let ((table (make-hash-table :test test)))
     (setf (get name 'memo) table)
@@ -93,15 +93,21 @@ memoization process: :KEY and :TEST."
         (let ((k (funcall key args)))
           (multiple-value-bind (val found-p)
               (gethash k table)
-            (if found-p val
-                (setf (gethash k table) (apply fn args))))))))
+            (if found-p 
+		val
+		;; only cache if value is valid
+		(let ((candidate-value (apply fn args)))
+		  (prog1 candidate-value
+		    (when (or (null validator)
+			      (funcall validator candidate-value))
+		      (setf (gethash k table) candidate-value))))))))))
 
-(defun memoize (fn-name &key (key #'first) (test #'eql))
+(defun memoize (fn-name &key (key #'first) (test #'eql) validator)
   "Replace fn-name's global definition with a memoized version."
   (clear-memoize fn-name)
   (setf (symbol-function fn-name)
         (memo (symbol-function fn-name)
-              :name fn-name :key key :test test)))
+              :name fn-name :key key :test test :validator validator)))
 
 (defun clear-memoize (fn-name)
   "Clear the hash table from a memo function."

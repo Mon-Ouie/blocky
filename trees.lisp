@@ -112,12 +112,13 @@
 
 (define-method layout tree ()
   (deeper
-   (with-fields (expanded dash height inputs label width) self
+   (with-fields (expanded height inputs label width) self
      (if expanded 
 	 ;; we're an expanded subtree. lay it out
 	 (progn 
-	   (setf dash 1)
+	   ;; lay out the children as in a typical list
 	   (layout-as-list self)
+	   ;; handle the case that the label is wider than the content.
 	   (when label 
 	     (setf width 
 		   (max width 
@@ -135,7 +136,7 @@
 (define-method header-width tree ()
   (deeper 
    (if %expanded
-       (dash 1 (font-text-extents (display-string self) *block-font*))
+       (dash 2 (font-text-extents (display-string self) *block-font*))
        %width)))
 
 (define-method hit tree (mouse-x mouse-y)
@@ -180,12 +181,13 @@
   nil)
 
 (define-method draw-expanded tree (&optional label)
-  (with-field-values (x y width height parent) self
+  (with-field-values (x y width height parent inputs) self
     (let ((display-string (or label *null-display-string*))
 	  (header (header-height self)))
       ;; possibly draw a background
       (when (or (null parent)
-	      (not (is-tree parent)))
+		(not (null inputs))
+		(not (is-tree parent)))
 	(draw-patch self x y (+ x width) (+ y height)))
 	  ;; possibly colored by depth
 	  ;; (when (plusp *tree-depth*)

@@ -323,6 +323,7 @@ Please set the variable ioforms:*event-handler-function*")
       (funcall *event-handler-function* event)))
 
 (defun normalize-event (event)
+;    (:key #'identity :test 'equal)
   "Convert EVENT to a normal form suitable for `equal' comparisons."
   (let ((name (first event)))
     (cons (make-keyword name)
@@ -618,22 +619,6 @@ becomes larger.")
  
 (defparameter *z-near* -100)
 (defparameter *z-far* 100)
-
-;; (defun do-orthographic-projection (&optional (x0 0) (y0 0) (scale-x 1.0) (scale-y 1.0))
-;;   "Configure OpenGL so that the screen coordinates go from (X0,Y0) at
-;;  top left to ((+ X0 WIDTH) (+ Y0 HEIGHT)) at lower right."
-;;   (gl:matrix-mode :projection)
-;;   (gl:load-identity)
-;;   (gl:viewport 0 0 *screen-width* *screen-height*)
-;;   (if *use-nominal-screen-size*
-;;       (setf *gl-screen-width* *nominal-screen-width*
-;; 	    *gl-screen-height* *nominal-screen-height*)
-;;       (setf *gl-screen-width* *screen-width*
-;; 	    *gl-screen-height* *screen-height*))
-;;   (let ((x1 (* scale-x (+ x0 *gl-screen-width*)))
-;; 	(y1 (* scale-y (+ y0 *gl-screen-height*))))
-;;     (gl:ortho x0 x1 y1 y0 *z-near* *z-far*)
-;;     (gl:matrix-mode :modelview)))
 
 (defun do-orthographic-projection ()
   "Configure OpenGL so that the screen coordinates go from (X0,Y0) at
@@ -1264,13 +1249,17 @@ also the documentation for DESERIALIZE."
     (surface &key source-format (internal-format :rgba)
 		  (filter :mipmap))
   (let ((texture (car (gl:gen-textures 1))))
-    ;; (message "Binding new gl texture ~A" texture)
     (gl:bind-texture :texture-2d texture)
+    ;; set filtering parameters
     (ecase filter 
       (:linear (gl:tex-parameter :texture-2d :texture-min-filter :linear)
 		(gl:tex-parameter :texture-2d :texture-mag-filter :linear))
       (:mipmap (gl:tex-parameter :texture-2d :generate-mipmap t) 
        (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear)))
+    ;; set wrapping parameters
+    (gl:tex-parameter :texture-2d :texture-wrap-r :clamp-to-edge)
+    (gl:tex-parameter :texture-2d :texture-wrap-s :clamp-to-edge)
+    ;; convert image data from SDL surface to GL texture
     (sdl-base::with-pixel (pix (sdl:fp surface))
       (let ((texture-format (ecase (sdl-base::pixel-bpp pix)
                               (1 :luminance)
@@ -1305,7 +1294,6 @@ also the documentation for DESERIALIZE."
 
 (defun load-image-resource (resource)
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
-  ;; (message "Loading image resource ~A" resource)
   (initialize-textures-maybe)
   (let* ((source-format (getf (resource-properties resource) :format))
 	 (surface (sdl-image:load-image (namestring (resource-file resource))
@@ -1318,12 +1306,10 @@ also the documentation for DESERIALIZE."
     (prog1 surface
       (let ((old-texture (gethash name *textures*)))
 	(when old-texture
-	  ;; (message "Deleting old texture ~S..." name)
 	  (gl:delete-textures (list old-texture))
 	  (remhash name *textures*))
 	(progn 
 	  (setf (gethash name *textures*) texture))))))
-	  ;;(message "Now loaded texture ~S for a total of ~A textures." texture (hash-table-count *textures*)))))))
 
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
@@ -1865,7 +1851,7 @@ of the music."
 (defparameter *active-indicator-color* "magenta")
 (defparameter *inactive-indicator-color* "gray70")
 
-(defun indicator-size () (* 0.2 (font-height *default-font*)))
+(defun indicator-size () (* 0.4 (font-height *default-font*)))
 
 (defparameter *indicators* 
   '(:asterisk "asterisk"
@@ -1878,12 +1864,15 @@ of the music."
     (assert (stringp texture-name))
     (find-texture texture-name)))
 
-(defun draw-indicator (indicator x y &optional (color "white"))
+(defun draw-indicator (indicator x y &key color (state :inactive))
   (let ((size (indicator-size)))
     (draw-textured-rectangle x y 0 size size 
 			     (find-indicator-texture indicator)
 			     :blend :alpha
-			     :vertex-color (or color *active-indicator-color*))))
+			     :vertex-color 
+			     (or color (ecase state
+					 (:active *active-indicator-color*)
+					 (:inactive *inactive-indicator-color*))))))
 
 ;;; Font operations
 
@@ -1899,7 +1888,8 @@ of the music."
 ;; points in the font size, for example :size 12 would be a 12-point
 ;; version of the font.
 
-(defun font-height (font)
+(defun-memo font-height (font)
+    (:key #'first :test 'equal :validator #'identity)
   (let ((resource (find-resource font)))
     (ecase (resource-type resource)
       (:font (find-resource-property font :height))
@@ -1911,13 +1901,17 @@ of the music."
       (:font (find-resource-property font :width))
       (:ttf (error "Cannot get width of a TTF font.")))))
 
+(defun-memo font-text-width (string font)
+    (:key #'identity :test 'equal :validator #'identity)
+  (sdl:get-font-size string :size :w :font (find-resource-object font)))
+
 (defun font-text-extents (string font)
   (let ((resource (find-resource font)))  
     (ecase (resource-type resource)
       (:font (* (length string)
 		(font-width font)))
-      (:ttf (values (sdl:get-font-size string :size :w :font (resource-object resource))
-		    (sdl:get-font-height :font (resource-object resource)))))))
+      (:ttf (values (font-text-width string font)
+		    (font-height font))))))
 
 (defun make-text-image (font string)
   (multiple-value-bind (width height)
@@ -1948,7 +1942,7 @@ of the music."
 	      do (gl:delete-textures (list texture)))
       (clrhash table)))))
 
-(defun gl-color-values (color-name)
+(defun gl-color-values (color-name); (:key #'identity :test 'equal)
   (let ((color (find-resource color-name)))
     (assert (eq :color (resource-type color)))
     (flet ((floatify (integer)

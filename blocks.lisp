@@ -984,7 +984,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (define-method layout-as-list list ()
   (with-fields (x y height width inputs dash) self
     (flet ((ldash (&rest args)
-	     (apply #'dash dash args)))
+	     (apply #'dash 1 args)))
     (let* ((header-height (ldash (header-height self)))
 	   (y0 (ldash y header-height))
 	   (line-height (font-height *block-font*)))
@@ -997,6 +997,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 	(incf height (+ (ldash) (field-value :height element)))
 	(incf y0 (field-value :height element))
 	(setf width (max width (field-value :width element))))
+      (incf height (dash 1))
       (incf width (dash 10))))))
 
 (define-method layout list ()
