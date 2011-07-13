@@ -470,7 +470,7 @@ The modes can be toggled with CONTROL-X.")
 	%label label
 	%value value)
   ;; fill in the input box with the value
-  (setf %line (format nil "~S" value))
+  (setf %line (format nil "~A" value))
   (setf %label (getf options :label))
   (when label-color (setf %label-color label-color))
   (when (null %label)
@@ -546,9 +546,12 @@ The modes can be toggled with CONTROL-X.")
 	  (fh (font-height *block-font*)))
       ;; draw the label string 
       (assert (stringp text-color))
-      (unless nolabel (draw-entry-label self))
-      ;; draw indicators
-      (draw-indicators self :inactive)
+      (unless nolabel 
+	(draw-entry-label self)
+	;; draw shaded area for input
+	(draw-input-area self :inactive)
+	;; draw indicators
+	(draw-indicators self :inactive))
       ;; draw current input string
       (when (null line) (setf line ""))
       (unless (zerop (length line))
@@ -569,7 +572,8 @@ The modes can be toggled with CONTROL-X.")
   ;; draw shaded area for data entry.
   ;; makes the cursor show up a bit better too.
   (with-fields (x y parent label line) self
-    (let ((label-width (font-text-extents label *block-font*))
+    (assert (not (null line)))
+    (let ((label-width (label-width self))
 	  (line-width (font-text-extents line *block-font*)))
       (draw-box (dash 1.5 x label-width)
 		(dash 1 y)
@@ -584,8 +588,8 @@ The modes can be toggled with CONTROL-X.")
 (define-method draw-focus entry () 
   (with-fields (clock x y width line parent) self
     (let* ((label (label-string self))
-	   (label-width (font-text-extents label *block-font*))
-	   (line-width (font-text-extents line *block-font*)))
+	   (label-width (dash 2 (font-text-width label *block-font*)))
+	   (line-width (font-text-width line *block-font*)))
       ;; draw shaded area for input
       (draw-input-area self :active)
       ;; draw cursor.
@@ -594,7 +598,7 @@ The modes can be toggled with CONTROL-X.")
 			    *prompt-cursor-color*
 			    *prompt-cursor-blink-color*)
 		   ;; provide x offset
-		   (dash 2 (font-text-extents label *block-font*)))
+		   (dash 2 (font-text-width label *block-font*)))
       ;; draw highlighted indicators
       (draw-indicators self :active)
       ;; redraw content (but not label)

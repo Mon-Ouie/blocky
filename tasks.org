@@ -1,5 +1,5 @@
-** TODO red triangle instead of underline to delimite non-selected input areas
-** TODO custom text metric caching 
+** TODO fix top and bottom patch border off-by-one pixel errors on different machines
+** TODO make it easier to grab parent widgets of an entry (allow drag from entry  label)
 ** TODO fix ellipsis not displayed on menu items until highlight
 *** TODO use something other than ellipses? like my generic tree triangles
 ** TODO [#B] hotkey for focusing on terminal prompt (click also)

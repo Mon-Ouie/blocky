@@ -816,8 +816,10 @@ override all colors."
 	(move-to input left top)
 	(let ((width0 (field-value :width input)))
 	  (incf left (+ (dash 2) width0))
-	  (incf width width0)
-	  (incf height (field-value :height input)))))))
+	  (incf width (+ width0 (dash 2)))
+	  (setf height (max height (field-value :height input))))))
+    (incf height (dash 2))
+    (incf width (dash 2))))
 
 (define-method draw-expression block (x0 y0 segment type)
   (with-fields (height input-widths) self
@@ -836,6 +838,9 @@ override all colors."
 		  (print-expression segment))
 	      (setf width (expression-width segment)))))
       width)))
+
+(define-method draw-inputs block ()
+  (mapc #'draw %inputs))
 
 (define-method draw-contents block ()
   (with-fields (operation inputs) self
@@ -896,6 +901,7 @@ MOUSE-Y identify a point inside the block (or input block.)"
 (define-method accept block (other-block)
   "Try to accept OTHER-BLOCK as a drag-and-dropped input. Return
 non-nil to indicate that the block was accepted, nil otherwise."
+  (verify other-block)
   (with-field-values (parent) self
     (when parent
       (prog1 t
@@ -936,6 +942,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
     (evaluate block)))
 
 (define-method accept list (input &optional prepend)
+  (verify input)
   (with-fields (inputs) self
     (if inputs
 	;; we've got inputs. add it to the list (prepending or not)
@@ -1017,8 +1024,10 @@ non-nil to indicate that the block was accepted, nil otherwise."
 	  (draw each)))))
 
 (define-method initialize list (&rest blocks)
-    (setf %inputs blocks)
-    (super%initialize self))
+  (when blocks 
+    (every #'verify blocks))
+  (setf %inputs blocks)
+  (super%initialize self))
 
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 
@@ -1035,7 +1044,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (define-method accept send (block)
   ;; make these click-align instead
-  (assert (not (null block)))
+  (verify block) 
   nil)
 
 (defun pretty-symbol-string (thing)
@@ -1107,6 +1116,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (defmacro with-script (script &rest body)
   `(let ((*script* ,script))
+     (verify *script*)
      ,@body))
 
 (define-method parent-is-script block ()
@@ -1125,6 +1135,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
   (setf %needs-layout t))
 
 (define-method delete-block script (block)
+  (verify block)
   (assert (contains self block))
   (delete-input self block))
 
@@ -1157,15 +1168,18 @@ non-nil to indicate that the block was accepted, nil otherwise."
   (when target (setf %target target)))
 
 (define-method set-target script (target)
+  (verify target)
   (setf %target target))
 
 (define-method append-input script (block)
+  (verify block)
   (with-fields (inputs) self
     (assert (not (contains self block)))
     (set-parent block self)
     (setf inputs (nconc inputs (list block)))))
 
 (define-method add-block script (block &optional x y)
+  (verify block)
   (assert (not (contains self block)))
   (append-input self block)
   (when (and (integerp x)

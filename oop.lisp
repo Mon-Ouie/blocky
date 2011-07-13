@@ -41,6 +41,11 @@
       (mapcar #'recompile %inputs)
     (list name :initform value)))
 
+(define-method draw field ()
+  (with-fields (x y width height inputs) self
+    (draw-patch self x y (+ x width) (+ y height))
+    (mapc #'draw inputs)))
+
 ;;; defblock
 
 (defblock (defblock :super tree))
@@ -53,7 +58,7 @@
    :subtree (list 
 	     (new string :label "name")
 	     (new tree :label "options"
-		       :subtree (list (new string :value "block" :label "block name")))
+		       :subtree (list (new string :value "block" :label "super")))
 	     (new tree :label "fields" :subtree (list (new list))))))
 
 (define-method recompile defblock ()
@@ -79,6 +84,11 @@
   (destructuring-bind (name type default) 
       (mapcar #'recompile %inputs)
     (list (make-symbol name) type :default default)))
+
+(define-method draw argument ()
+  (with-fields (x y width height inputs) self
+    (draw-patch self x y (+ x width) (+ y height))
+    (mapc #'draw inputs)))
 
 ;;; methods 
 

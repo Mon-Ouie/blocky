@@ -150,6 +150,6 @@ transform-declaration-field-descriptor is-a compose-blank-fields
 make-field-initializer initialize initialize-prototypes
 initialize-ioforms object-address-string draw-string make-tree
 draw-string-blended make-menu find-text-image make-text-image
-*default-super* clear-text-image-cache *token-types*
+*default-super* clear-text-image-cache *token-types* verify
 *block-categories* *block-colors* input *block-text-colors* defblock
 ))

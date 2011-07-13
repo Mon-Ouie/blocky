@@ -1848,7 +1848,7 @@ of the music."
 
 ;;; Indicators
 
-(defparameter *active-indicator-color* "magenta")
+(defparameter *active-indicator-color* "yellow")
 (defparameter *inactive-indicator-color* "gray70")
 
 (defun indicator-size () (* 0.4 (font-height *default-font*)))

@@ -391,6 +391,9 @@ extended argument list ARGLIST."
 (defun find-uuid (object)
   (object-uuid (find-object object)))
 
+(defun verify (thing)
+  (assert (object-p (find-object thing))))
+
 ;;; Fields
 
 ;; An object's field collection is either a hash table or plist. The
