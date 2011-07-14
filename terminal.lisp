@@ -205,10 +205,11 @@
     (decf %point)))
 
 (define-method delete-char prompt ()
-  (when (< 0 %point) 
-    (setf %line (concatenate 'string
-			      (subseq %line 0 %point)
-			      (subseq %line (1+ %point))))))
+  (with-fields (point line) self
+    (when (< 1 point (1- (length line)))
+      (setf line (concatenate 'string
+			      (subseq line 0 point)
+			      (subseq line (1+ point)))))))
 
 (define-method print-data prompt (data &optional comment)
   (dolist (line (split-string-on-lines (write-to-string data :circle t :pretty t :escape nil :lines 5)))
@@ -408,7 +409,7 @@
       ;; redraw content (but not label)
       (draw self :nolabel))))
 
-(define-method draw prompt ()
+(define-method draw prompt (&rest ignore)
   (with-fields (x y width height clock point parent background
 		  line prompt-string) self
     (let ((strings-y *default-prompt-margin*))
@@ -450,7 +451,9 @@
 	%label label
 	%value value)
   ;; fill in the input box with the value
-  (setf %line (format nil "~A" value))
+  (setf %line (if (null value)
+		  " "
+		  (format nil "~A" value)))
   (setf %label (getf options :label))
   (when label-color (setf %label-color label-color))
   (when (null %label)
@@ -495,7 +498,7 @@
       ;; draw the label string 
       (assert (stringp text-color))
       (unless nolabel 
-	(draw-entry-label self)
+	(draw-label self)
 	;; draw shaded area for input
 	(draw-input-area self :inactive)
 	;; draw indicators
@@ -510,11 +513,14 @@
 		     :font *block-font*)))))
 		 
 (define-method do-sexp entry (sexp)
-  (assert (and (listp sexp) (= 1 (length sexp))))
-  (let ((datum (first sexp)))
-    (if (typep datum %type-specifier)
-	(setf %value datum)
-	(message "Warning: value entered does not match %TYPE-SPECIFIER."))))
+  (with-fields (value type-specifier) self
+    (assert (and (listp sexp) (= 1 (length sexp))))
+    (let ((datum (first sexp)))
+      (if (typep datum type-specifier)
+	  (setf value datum)
+	  (when type-specifier 
+	    (message "Warning: value entered does not match type ~S"
+		     type-specifier))))))
 
 (define-method enter entry ()
   (super%enter self :no-clear))
@@ -532,6 +538,14 @@
 (define-method lose-focus entry ()
   ;; update the entry value if the user mouses away
   (enter self))
+
+;;; Allow dragging the parent block more easily
+
+(define-method hit entry (x y)
+  (when (super%hit self x y)
+    (if (< x (+ %x (label-width self)))
+	%parent 
+	self)))
 
 ;;; Easily defining new entry blocks
 
