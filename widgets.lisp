@@ -42,7 +42,7 @@
     (or width
 	(if image 
 	    (image-width image)
-	    (* (font-text-extents string font))))))
+	    (* (font-text-width string font))))))
 
 (defun formatted-line-height (line)
   (apply #'max (mapcar #'formatted-string-height line)))
@@ -294,7 +294,7 @@ auto-updated displays."
   (let* ((buffer %buffer)
 	 (line-height (font-height %font))
 	 (line-lengths (mapcar #'(lambda (s)
-				   (font-text-extents s %font))
+				   (font-text-width s %font))
 			       buffer)))
     ;; update geometry
     (let ((width0 (max *textbox-minimum-width*
@@ -513,7 +513,7 @@ text INSERTION to be inserted at point."
 	      (let* ((current-line (nth point-row buffer))
 		     (cursor-width *textbox-cursor-width*)
 		     (x1 (+ x *textbox-margin*
-			    (font-text-extents (subseq current-line 0 %point-column)
+			    (font-text-width (subseq current-line 0 %point-column)
 					       font)))
 		     (y1 (+ y *textbox-margin* text-height)))
 		(draw-rectangle x1 y1 cursor-width line-height 

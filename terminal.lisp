@@ -25,107 +25,48 @@
 (defparameter *prompt-blink-time* 8)
 (defparameter *prompt-cursor-color* "magenta")
 (defparameter *prompt-cursor-blink-color* "yellow")
-(defparameter *cursor-inactive-color* "gray50")
+(defparameter *active-prompt-color* "red")
+(defparameter *inactive-prompt-color* "gray20")
+(defparameter *prompt-cursor-inactive-color* "gray50")
 
-(defparameter *direct-prompt-string* "> ")
-(defparameter *forward-prompt-string* "Press CONTROL-X to enter the prompt.")
+(defparameter *default-prompt-text-color* "white")
+(defparameter *default-prompt-label-color* "gray20")
+
+(defparameter *default-entry-text-color* "white")
+(defparameter *default-entry-label-color* "white")
+(defparameter *default-prompt-string* "Command:")
 
 (defparameter *default-prompt-margin* 4)
 
 (defparameter *default-prompt-history-size* 100)
 (defparameter *default-cursor-width* 1)
 
-(define-prototype prompt
-    (:parent "IOFORMS:BLOCK" :documentation 
-"The command prompt block is a text input area with Emacs-like
-keybindings. It is used to send messages to objects. (For ease of
-use, prompt commands may also be bound to single keystrokes.)
-
- The command syntax is:
-
-:  command-name arg1 arg2 ...
-
-All tokens must be Lisp-readable symbols, strings, or numbers.
-
-The command prompt will change its commands into message sends, and
-send them to a designated command receiver:
-
-:  yes             -->   (yes %receiver)
-:  move :north     -->   (move %receiver :north)
-:  attack :west :with :left-hand  --> (attack %receiver :west 
-:                                             :with :left-hand)
-
-So the commands are just the receiver's methods. The command
-line's HELP system is just a method documentation browser
- (i.e. SLOT-DESCRIPTORS.) 
-
-The prompt can bind single keystrokes (i.e. one or more modifiers
-and a keypress code) to the insertion of an arbitrary string at
-point in the prompt. A string that ends in a period is a
-\"terminating\" keybinding; a terminating keybinding also completes
-the command input, causing the resulting command to be executed.
-
-Examples: 
-
-:   %up      -->    move :north .
-:  shift-%up -->    push :north .
-:    C-q      -->    quaff         ;; also shows potion list as output
-:    M-1      -->    choose 1 .    ;; choose option 1 from output
-
-The prompt has two input modes; direct mode and forward mode. In
-direct mode, the prompt block's own keymap is used. In forward
-mode, all keypresses (except for the mode escape key) are rejected
-by returning `nil' from `handle-key'.
-
-In the typical setup, the first block to receive the keypress
-would be the default command prompt; a customized prompt, with
-game-specific keybindings, would come second. During play, the
-command prompt would reject all keypresses, which would pass on to
-the next block in the frame (the customized prompt.) To 'escape'
-this and enter commands, hit ESCAPE (and again to return to forward
-mode.)
-
-The modes can be toggled with CONTROL-X.")
-  (mode :documentation "Either :direct or :forward." :initform :direct)
+(defblock prompt
   (clock :initform *prompt-blink-time*)
   (text-color :initform "gray20")
   (visible :documentation "When non-nil, the prompt is drawn." :initform t)
-  (receiver :documentation "The object to send command messages to when in :forward mode.")
+  (receiver :documentation "The object to send command messages to.")
   (point :initform 0 :documentation "Integer index of cursor within prompt line.")
   (line :initform "" :documentation "Currently edited command line.")
   (background :initform t)
-  (prompt-string :initform "> ")
+  (text-color :initform *default-prompt-text-color*)
+  (label-color :initform *default-prompt-label-color*)
+  options label
+  (prompt-string :initform *default-prompt-string*)
   (category :initform :data)
   (history :initform (make-queue :max *default-prompt-history-size*)
 	   :documentation "A queue of strings containing the command history.")
   (history-position :initform 0)
   (debug-on-error :initform nil))
 
-;; (define-method handle-event prompt (event)
-;;   "Reject all keypresses when in :forward mode; otherwise handle them
-;; normally."
-;;   (ecase %mode
-;;     ;; returning t stops the frame from trying other blocks
-;;     (:direct (prog1 t (let ((func (gethash event %keymap)))
-;; 			(when func
-;; 			  (funcall func)))))
-;;     (:forward (when (equal (normalize-event '("X" :control))
-;; 			   event)
-;; 		(prog1 t (goto self))))))
-
 (define-method accept prompt (&rest args)
   nil)
 
 (define-method exit prompt ()
-  (clear-line self)
-  (setf %mode :forward))
+  (clear-line self))
 
 (define-method goto prompt ()
-  (say self "Enter command below at the >> prompt. Press ENTER when finished, or CONTROL-X to cancel.")
-  (setf %mode :direct))
-
-(define-method set-mode prompt (mode)
-  (setf %mode mode))
+  (say self "Enter command below at the >> prompt. Press ENTER when finished, or CONTROL-X to cancel."))
 
 (defun bind-event-to-prompt-insertion (self key mods text)
   (bind-event-to-function self key mods 
@@ -350,17 +291,17 @@ The modes can be toggled with CONTROL-X.")
 
 (define-method draw-cursor prompt 
     (&optional (color "magenta") x-offset y-offset)
-  (with-fields (x y width height clock mode point parent background
-		  line) self
+  (with-fields (x y width height clock point parent background
+		  prompt-string line) self
     (draw-box (+ x (or x-offset 0)
-		 (font-text-extents (if (<= point (length line))
+		 (font-text-width (if (<= point (length line))
 					(subseq line 0 point)
 					" ")
 				    *block-font*)
-		 (if x-offset 0 (font-text-extents *direct-prompt-string* *block-font*)))
+		 (if x-offset 0 (font-text-width prompt-string *block-font*)))
 	      (+ y (or y-offset 0) *default-prompt-margin*)
 	      *default-cursor-width*
-	      ;; (font-text-extents 
+	      ;; (font-text-width 
 	      ;;  (string (if (< point (length line))
 	      ;; 		   (aref line 
 	      ;; 			 (max (max 0 
@@ -372,59 +313,17 @@ The modes can be toggled with CONTROL-X.")
 
 (define-method label-width prompt () 
   (+ (dash 3) *default-prompt-margin*
-     (font-text-extents %prompt-string *block-font*)))
+     (font-text-width %prompt-string *block-font*)))
 
-(define-method draw-border prompt () nil)
+(define-method label-string prompt () %prompt-string)
 
-(define-method update-cursor-clock prompt ()
-  ;; keep the cursor blinking
-  (with-fields (clock) self
-    (decf clock)
-    (when (> (- 0 *prompt-blink-time*) clock)
-      (setf clock *prompt-blink-time*))))
+(define-method draw-border prompt ())
 
-(define-method draw-focus prompt () 
-  (with-fields (clock) self
-    (update-cursor-clock self)
-    (draw-cursor self (if (minusp clock)
-			  *prompt-cursor-color*
-			  *prompt-cursor-blink-color*)
-		 (dash 4))))
-
-(define-method draw prompt ()
-  (with-fields (x y width height clock mode point parent background
-		  line prompt-string) self
-    ;; possibly draw a background
-    ;; (cond ((stringp background)
-    ;; 	   (draw-background self background))
-    ;; 	  ((eq t background)
-    ;; 	   (draw-background self)))
-    (let ((strings-y *default-prompt-margin*))
-      ;; draw cursor (may be overdrawn with blink when selected
-      ;; (when (> point (length line))
-      ;;   (setf point (1- (length line))))
-      ;; (draw-cursor self *cursor-inactive-color* (dash 3))
-      ;; draw prompt string
-      (assert (stringp %text-color))
-      (draw-string prompt-string
-		   (+ x *default-prompt-margin*)
-		   (+ y strings-y)
-		   :color %text-color
-		   :font *block-font*)
-      (update-layout-maybe self)
-      ;; draw current command line text
-      (when (null line) (setf line ""))
-      (unless (zerop (length line))
-	(draw-string line
-		     (+ x *default-prompt-margin* 
-			(font-text-extents prompt-string *block-font*))
-		     (+ y strings-y)
-		     :color %text-color
-		     :font *block-font*)))))
+(define-method draw-hover prompt ())
 
 (define-method click prompt (mouse-x mouse-y)
   (declare (ignore mouse-y))
-  (with-fields (x y width height clock mode point parent background
+  (with-fields (x y width height clock point parent background
 		  line) self
     ;; find the left edge of the data area
     (let* ((left (+ x (label-width self) (dash 4)))
@@ -433,7 +332,7 @@ The modes can be toggled with CONTROL-X.")
       (let ((click-index 
 	      (block measuring
 		(dotimes (ix (length line))
-		  (when (< tx (font-text-extents 
+		  (when (< tx (font-text-width 
 			       (subseq line 0 ix)
 			       *block-font*))
 		    (return-from measuring ix))))))
@@ -447,19 +346,100 @@ The modes can be toggled with CONTROL-X.")
     (resize self 
 	    :width  
 	    (+ 12 (* 5 *dash*)
-	       (font-text-extents line *block-font*)
-	       (font-text-extents *direct-prompt-string* *block-font*))
+	       (font-text-width line *block-font*)
+	       (font-text-width *default-prompt-string* *block-font*))
 	    :height 
 	    (+ (* 2 *default-prompt-margin*) (font-height *block-font*)))))
 
-;;; General-purpose data entry block.
+(define-method draw-input-area prompt (state)
+  ;; draw shaded area for data entry.
+  ;; makes the cursor show up a bit better too.
+  (with-fields (x y parent label line) self
+    (assert (not (null line)))
+    (let ((label-width (label-width self))
+	  (line-width (font-text-width line *block-font*)))
+      (draw-box (dash 1.5 x label-width)
+		(dash 1 y)
+		(dash 2 line-width)
+		(+ 1 (font-height *block-font*))
+		:color (ecase state
+			 (:active *active-prompt-color*)
+			 (:inactive (if (null parent)
+					*inactive-prompt-color*
+					(find-color parent :shadow))))))))
+
+(define-method update-cursor-clock prompt ()
+  ;; keep the cursor blinking
+  (with-fields (clock) self
+    (decf clock)
+    (when (> (- 0 *prompt-blink-time*) clock)
+      (setf clock *prompt-blink-time*))))
+
+(define-method draw-indicators prompt (state)
+  (with-fields (x y options text-color width parent height line) self
+    (let ((label-width (label-width self))
+	  (line-width (font-text-width line *block-font*))
+	  (fh (font-height *block-font*)))
+      ;; (draw-indicator :top-left-triangle
+      ;; 		      (dash 1 x 1 label-width)
+      ;; 		      (dash 1 y)
+      ;; 		      :state state)
+      (draw-indicator :bottom-right-triangle
+		      (dash 2 x -2 label-width line-width)
+		      (+ y -2 fh)
+		      :state state))))
+
+(define-method draw-focus prompt () 
+  (with-fields (clock x y width line parent) self
+    (let* ((label (label-string self))
+	   (label-width (label-width self))
+	   (line-width (font-text-width line *block-font*)))
+      ;; draw shaded area for input
+      (draw-input-area self :active)
+      ;; draw cursor.
+      (update-cursor-clock self)
+      (draw-cursor self (if (minusp clock)
+			    *prompt-cursor-color*
+			    *prompt-cursor-blink-color*)
+		   ;; provide x offset
+		   (dash 2 (font-text-width label *block-font*)))
+      ;; draw highlighted indicators
+      (draw-indicators self :active)
+      ;; redraw content (but not label)
+      (draw self :nolabel))))
+
+(define-method draw prompt ()
+  (with-fields (x y width height clock point parent background
+		  line prompt-string) self
+    (let ((strings-y *default-prompt-margin*))
+      ;; draw prompt string
+      (assert (stringp %text-color))
+      (draw-string prompt-string
+		   (+ x *default-prompt-margin*)
+		   (+ y strings-y)
+		   :color %text-color
+		   :font *block-font*)
+      (update-layout-maybe self)
+      ;; draw background for input
+      (draw-input-area self :inactive)
+      ;; draw current command line text
+      (when (null line) (setf line ""))
+      (unless (zerop (length line))
+	(draw-string line
+		     (+ x *default-prompt-margin* 
+			(font-text-width prompt-string *block-font*))
+		     (+ y strings-y)
+		     :color %text-color
+		     :font *block-font*)))))
+
+;;; General-purpose data entry block based on the prompt block.
 
 (define-prototype entry (:parent "IOFORMS:PROMPT")
   (category :initform :value)
   (pinned :initform t)
-  (text-color :initform "white")
-  (label-color :initform "white")
-  options label type-specifier value)
+  (text-color :initform *default-entry-text-color*)
+  (label-color :initform *default-entry-label-color*)
+  type-specifier value)
 
 (define-method initialize entry (&key value type-specifier options label label-color parent)
   (super%initialize self)
@@ -475,24 +455,6 @@ The modes can be toggled with CONTROL-X.")
   (when label-color (setf %label-color label-color))
   (when (null %label)
     (setf %pretty-label (pretty-symbol-string label))))
-
-;; (define-method click entry (mouse-x mouse-y)
-;;   (declare (ignore mouse-y))
-;;   (with-fields (x y width height clock mode point parent background
-;; 		  line) self
-;;     ;; find the left edge of the data area
-;;     (let* ((left (+ x (label-width self) (dash 3)))
-;; 	   (tx (- mouse-x left)))
-;;       ;; which character was clicked?
-;;       (let ((click-index 
-;; 	      (block measuring
-;; 		(dotimes (ix (length line))
-;; 		  (when (< tx (font-text-extents 
-;; 			       (subseq line 0 ix)
-;; 			       *block-font*))
-;; 		    (return-from measuring ix))))))
-;; 	(when (numberp click-index)
-;; 	  (setf point click-index))))))
 
 (define-method evaluate entry ()
   %value)
@@ -511,38 +473,24 @@ The modes can be toggled with CONTROL-X.")
       %pretty-label))
 
 (define-method label-width entry ()
-  (font-text-extents (label-string self) *block-font*))
+  (font-text-width (label-string self) *block-font*))
 
 (defparameter *minimum-entry-line-width* 16)
 
-(define-method draw-entry-label entry ()
+(define-method draw-label entry ()
   (let* ((label (label-string self))
-	 (label-width (font-text-extents label *block-font*))
-	 (line-width (font-text-extents %line *block-font*)))
+	 (label-width (font-text-width label *block-font*))
+	 (line-width (font-text-width %line *block-font*)))
     (draw-string label
 		 (dash 1 %x)
 		 (+ %y (dash 1))
 		 :color %label-color
 		 :font *block-font*)))
 
-(define-method draw-indicators entry (state)
-  (with-fields (x y options text-color width parent height line) self
-    (let ((label-width (label-width self))
-	  (line-width (font-text-extents line *block-font*))
-	  (fh (font-height *block-font*)))
-      (draw-indicator :top-left-triangle
-		      (dash 1 x 1 label-width)
-		      (dash 1 y)
-		      :state state)
-      (draw-indicator :bottom-right-triangle
-		      (dash 2 x -2 label-width line-width)
-		      (+ y -2 fh)
-		      :state state))))
-
 (define-method draw entry (&optional nolabel)
   (with-fields (x y options text-color width parent height line) self
     (let ((label-width (label-width self))
-	  (line-width (font-text-extents line *block-font*))
+	  (line-width (font-text-width line *block-font*))
 	  (fh (font-height *block-font*)))
       ;; draw the label string 
       (assert (stringp text-color))
@@ -560,60 +508,6 @@ The modes can be toggled with CONTROL-X.")
 		     (+ y (dash 1))
 		     :color %text-color
 		     :font *block-font*)))))
-
-(define-method draw-border entry ())
-
-(define-method draw-hover entry ())
-
-(defparameter *active-entry-color* "red")
-(defparameter *inactive-entry-color* "gray20")
-
-(define-method draw-input-area entry (state)
-  ;; draw shaded area for data entry.
-  ;; makes the cursor show up a bit better too.
-  (with-fields (x y parent label line) self
-    (assert (not (null line)))
-    (let ((label-width (label-width self))
-	  (line-width (font-text-extents line *block-font*)))
-      (draw-box (dash 1.5 x label-width)
-		(dash 1 y)
-		(dash 2 line-width)
-		(+ 1 (font-height *block-font*))
-		:color (ecase state
-			 (:active *active-entry-color*)
-			 (:inactive (if (null parent)
-					*inactive-entry-color*
-					(find-color parent :shadow))))))))
-
-(define-method draw-focus entry () 
-  (with-fields (clock x y width line parent) self
-    (let* ((label (label-string self))
-	   (label-width (dash 2 (font-text-width label *block-font*)))
-	   (line-width (font-text-width line *block-font*)))
-      ;; draw shaded area for input
-      (draw-input-area self :active)
-      ;; draw cursor.
-      (update-cursor-clock self)
-      (draw-cursor self (if (minusp clock)
-			    *prompt-cursor-color*
-			    *prompt-cursor-blink-color*)
-		   ;; provide x offset
-		   (dash 2 (font-text-width label *block-font*)))
-      ;; draw highlighted indicators
-      (draw-indicators self :active)
-      ;; redraw content (but not label)
-      (draw self :nolabel))))
-      ;; draw input area underlining
-      ;; (let* ((label-width (font-text-extents label *block-font*))
-      ;; 	     (font-height (font-height *block-font*))
-      ;; 	     (underline-y (round (dash 1 y (* font-height 0.96)))))
-      ;; 	(draw-line  (dash 2 x label-width) underline-y
-      ;; 		    (dash 1 x width) underline-y
-      ;; 		    :color "white"))))) 
-
-(define-method lose-focus entry ()
-  ;; update the entry value if the user mouses away
-  (enter self))
 		 
 (define-method do-sexp entry (sexp)
   (assert (and (listp sexp) (= 1 (length sexp))))
@@ -631,9 +525,15 @@ The modes can be toggled with CONTROL-X.")
   (with-fields (height width value line) self
     (setf height (+ (* 2 *dash*) (font-height *block-font*)))
     (setf width (+ (* 4 *dash*)
-		   (font-text-extents (label-string self) *block-font*)
+		   (font-text-width (label-string self) *block-font*)
 		   (max *minimum-entry-line-width*
-			(font-text-extents line *block-font*))))))
+			(font-text-width line *block-font*))))))
+
+(define-method lose-focus entry ()
+  ;; update the entry value if the user mouses away
+  (enter self))
+
+;;; Easily defining new entry blocks
 
 (defmacro defentry (name type-specifier value)
   `(define-prototype ,name (:parent "IOFORMS:ENTRY")

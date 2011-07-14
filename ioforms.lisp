@@ -92,7 +92,7 @@ save-object-resource super%initialize super%initialize
 initialize-resource-table percent-of-time render-formatted-paragraph
 make-formatted-string draw-string-shaded set-blending-mode
 render-formatted-string render-formatted-line resource
-font-text-extents write-sexp-to-file with-message-sender
+font-text-width write-sexp-to-file with-message-sender
 *message-sender* read-sexp-from-file with-fields with-field-values
 write-iof *grammar* one-of left-hand-side right-hand-side expansions
 generate send-event-to-blocks play-music halt-music seek-music
@@ -145,7 +145,7 @@ operation-symbol *sender* message-reader transform-tree
 field-reference-p transform-field-reference transform-method-body
 object-parent object-name $ object-fields define-method
 define-prototype new object-p self percent-gray percent-grey
-*indicators* find-indicator-texture draw-indicator
+*indicators* find-indicator-texture draw-indicator font-text-width
 transform-declaration-field-descriptor is-a compose-blank-fields
 make-field-initializer initialize initialize-prototypes
 initialize-ioforms object-address-string draw-string make-tree

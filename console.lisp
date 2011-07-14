@@ -1889,6 +1889,8 @@ of the music."
 ;; version of the font.
 
 (defun-memo font-height (font)
+    ;; don't cache null results, because these can happen if
+    ;; font-height is called before SDL initialization
     (:key #'first :test 'equal :validator #'identity)
   (let ((resource (find-resource font)))
     (ecase (resource-type resource)
@@ -1942,17 +1944,16 @@ of the music."
 	      do (gl:delete-textures (list texture)))
       (clrhash table)))))
 
-(defun gl-color-values (color-name); (:key #'identity :test 'equal)
+(defun-memo gl-color-values (color-name)
+    (:key #'first :test 'equal)
   (let ((color (find-resource color-name)))
     (assert (eq :color (resource-type color)))
-    (flet ((floatify (integer)
-	     (/ integer 255.0)))
-      (destructuring-bind (red green blue)
-	  (mapcar #'floatify (resource-data color))
-	(values red green blue)))))
+    (mapcar #'(lambda (integer)
+		(/ integer 255.0))
+	    (resource-data color))))
 
 (defun set-vertex-color (color)
-  (multiple-value-bind (red green blue) 
+  (destructuring-bind (red green blue) 
       (gl-color-values color)
     (gl:color red green blue 1)))
 

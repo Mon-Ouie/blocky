@@ -803,7 +803,7 @@ override all colors."
 (defun expression-width (expression &optional (font *block-font*))
   (if (ioforms:object-p expression)
       *socket-width*
-      (font-text-extents (print-expression expression) font)))
+      (font-text-width (print-expression expression) font)))
 
 (define-method layout block () 
   (with-fields (x y width height inputs) self
@@ -984,7 +984,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (define-method layout-as-null list ()
   (with-fields (height width) self
     (setf width (+ (* 4 *dash*)
-		   (font-text-extents *null-display-string*
+		   (font-text-width *null-display-string*
 				      *block-font*))
 	  height (+ (font-height *block-font*) (* 4 *dash*)))))
 
@@ -1095,7 +1095,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
     (with-field-values (x y inputs) self
       (let* ((font *block-font*)
 	     (dash (dash 1))
-	     (left (+ dash dash x (font-text-extents label font)))
+	     (left (+ dash dash x (font-text-width label font)))
 	     (max-height (font-height font)))
 	(labels ((move-input (input)
 		   (move-to input (+ left dash) y)

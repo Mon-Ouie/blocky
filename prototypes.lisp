@@ -1126,7 +1126,7 @@ evaluated, then any applicable initializer is triggered."
 ;; method.
 
 (defconstant +object-type-key+ :%IOF%OBJECT%)
-(defconstant +hash-type-key+ :%IOF%HASH-TABLE%)
+(defconstant +hash-type-key+ :%IOF%HASH%)
 
 (defun serialize (object)
   "Convert a Lisp object a print-ready S-expression.

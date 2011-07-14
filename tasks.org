@@ -1,30 +1,30 @@
-** TODO interface flags, like colored tape flags with white txt 
-** TODO do not need topleft triangle now that shaded input area always visible?
-** TODO fix top and bottom patch border off-by-one pixel errors on different machines (use 0.5)?
-** TODO make it easier to grab parent widgets of an entry (allow drag from entry  label)
-** TODO fix ellipsis not displayed on menu items until highlight
-*** TODO use something other than ellipses? like my generic tree triangles
-** TODO [#B] hotkey for focusing on terminal prompt (click also)
-** TODO fix menus being drawn under stuff
-** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
-** TODO [#A] Improve tree widget
-*** TODO [#A] better indication of open/closed... go gradually darker as deeper?
-*** TODO [#B] draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
+** TODO [#B] introduce with-font macro and stop using *block-font* explicitly
+** TODO [#C] interface flags, like colored tape flags with white txt 
+** TODO [#B] joystick menu to find connected devices
+** TODO [#A] use same text entry widget for terminal
+** TODO [#C] fix top and bottom patch border off-by-one pixel errors on different machines (use 0.5)?
+** TODO [#B] make it easier to grab parent widgets of an entry (allow drag from entry  label)
 ** TODO [#B] Improve messaging, diagnostic output, and error handling.
 *** TODO define-method error shell
 *** TODO better error handling for menu methods
 *** TODO define-method warning shell
 *** TODO redirect messages to message bar.
-** TODO [#B] fix texture edge handling for indicators:
+** TODO [#B] fix ellipsis not displayed on menu items until highlight
+*** TODO use something other than ellipses? like my generic tree triangles
+** TODO [#B] click to focusing on terminal prompt 
+** TODO [#A] fix menus being drawn under stuff
+** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
+** TODO [#C] draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
+** TODO [#C] fix texture edge handling for indicators:
 (09:54:04 AM) |3b|: dto: that texture stuff with the triangles looks
 like it is accessing past the edge of the texture and wrapping to the
 other side, use tex-parameter and set :texture-wrap-r
 and :texture-wrap-s to :clamp-to-edge (assuming relatively recent GL
 version) (09:54:45 AM) |3b|: (or be more careful with texture
 coordinates, and shift them in by half of a texel from each edge)
-** TODO [#C] define faces with bold, italic, etc
-** TODO [#A] defblock tree: a generic folding hierarchical list widget with indentation and headlines, a la orgmode 
-** TODO defblock defsprite --- defining sprites
+** TODO [#B] define faces with bold, italic, etc
+** TODO [#B] defblock defsprite --- defining sprites
+*** TODO merge sprites and blocks?
 ** TODO [#B] click again on header to close menu.
 ** TODO [#A] explicit "save" and "compile" buttons 
 ** TODO [#A] send block has socket on left for receiver name, as in Smalltalk-Elements
@@ -33,7 +33,7 @@ coordinates, and shift them in by half of a texel from each edge)
 *** TODO BRING BACK SPLIT WIDGET
 **** TODO [#C] palette widget is a hide-able sidebar with tabs, where you pull off pieces Library / Variables / Methods / Prototypes
 *** TODO defblock quote ( to prevent evaluation )
-*** TODO merge sprites and blocks?
+
 *** TODO defblock field 
 *** TODO defblock with (introduce local vars) 
 *** TODO defblock defresource (a stand-in reference to a resource)

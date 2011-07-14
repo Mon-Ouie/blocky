@@ -184,14 +184,16 @@
   (update %script))
 
 (define-method initialize shell (script)
+  (super%initialize self)
   (setf %script (find-object script))
-  (assert %script)
+  (assert script)
   (setf %menubar (new menubar 
 		      (make-menu *system-menu*
 				 :target *system*)))
-  (add-block %script %menubar)
   (setf %terminal (new terminal))
-  (add-block %script %terminal)
+  (assert %terminal)
+  (add-block script %terminal)
+  (add-block script %menubar)
   (register-uuid self))
 
 (define-method script-blocks shell ()
@@ -301,12 +303,12 @@
 (defparameter *minimum-drag-distance* 7)
 
 (define-method command-line shell ()
-  (setf %focused-widget 
+  (setf %focused-block 
 	(get-prompt %terminal)))
 
 (define-method escape shell ()
   (close-menus %menubar)
-  (setf %focused-widget nil)
+  (setf %focused-block nil)
   (setf %selection nil))
 
 (define-method tab shell (&optional backward)

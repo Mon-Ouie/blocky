@@ -108,7 +108,7 @@
    (with-fields (height width) self
      (setf height (dash 1 (font-height *block-font*)))
      (setf width 
-	   (+ (dash 2) (font-text-extents string *block-font*))))))
+	   (+ (dash 2) (font-text-width string *block-font*))))))
 
 (define-method layout tree ()
   (deeper
@@ -122,7 +122,7 @@
 	   (when label 
 	     (setf width 
 		   (max width 
-			(dash 4 (font-text-extents label *block-font*)))))
+			(dash 4 (font-text-width label *block-font*)))))
 	   ;; make all inputs equally wide
 	   (dolist (each inputs)
 	     (setf (field-value :width each) (- width (dash 2)))))
@@ -136,7 +136,7 @@
 (define-method header-width tree ()
   (deeper 
    (if %expanded
-       (dash 2 (font-text-extents (display-string self) *block-font*))
+       (dash 2 (font-text-width (display-string self) *block-font*))
        %width)))
 
 (define-method hit tree (mouse-x mouse-y)
