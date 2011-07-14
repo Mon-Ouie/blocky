@@ -30,6 +30,7 @@
 (defparameter *prompt-cursor-inactive-color* "gray50")
 
 (defparameter *default-prompt-text-color* "white")
+(defparameter *default-prompt-outside-text-color* "gray20")
 (defparameter *default-prompt-label-color* "gray20")
 
 (defparameter *default-entry-text-color* "white")
@@ -313,8 +314,7 @@
 	      :color color)))
 
 (define-method label-width prompt () 
-  (+ (dash 3) *default-prompt-margin*
-     (font-text-width %prompt-string *block-font*)))
+  (font-text-width %prompt-string *block-font*))
 
 (define-method label-string prompt () %prompt-string)
 
@@ -409,29 +409,32 @@
       ;; redraw content (but not label)
       (draw self :nolabel))))
 
-(define-method draw prompt (&rest ignore)
+(define-method draw prompt (&optional nolabel)
   (with-fields (x y width height clock point parent background
 		  line prompt-string) self
     (let ((strings-y *default-prompt-margin*))
-      ;; draw prompt string
-      (assert (stringp %text-color))
-      (draw-string prompt-string
-		   (+ x *default-prompt-margin*)
-		   (+ y strings-y)
-		   :color %text-color
-		   :font *block-font*)
-      (update-layout-maybe self)
-      ;; draw background for input
-      (draw-input-area self :inactive)
+      (unless nolabel
+	;; draw prompt string
+	(assert (stringp %text-color))
+	(draw-string prompt-string
+		     (+ x *default-prompt-margin*)
+		     (+ y strings-y)
+		     :color (if (is-tree parent)
+				%text-color
+				*default-prompt-outside-text-color*)
+		     :font *block-font*)
+	(update-layout-maybe self)
+	;; draw background for input
+	(draw-input-area self :inactive))
       ;; draw current command line text
       (when (null line) (setf line ""))
       (unless (zerop (length line))
 	(draw-string line
-		     (+ x *default-prompt-margin* 
+		    *default-prompt-margin* 
 			(font-text-width prompt-string *block-font*))
 		     (+ y strings-y)
 		     :color %text-color
-		     :font *block-font*)))))
+		     :font *block-font*))))
 
 ;;; General-purpose data entry block based on the prompt block.
 

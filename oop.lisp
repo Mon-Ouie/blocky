@@ -46,6 +46,10 @@
     (draw-patch self x y (+ x width) (+ y height))
     (mapc #'draw inputs)))
 
+(define-method accept field (thing)
+  (declare (ignore thing))
+  nil)
+
 ;;; defblock
 
 (defblock (defblock :super tree))

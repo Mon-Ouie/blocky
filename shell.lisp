@@ -108,7 +108,7 @@
       (dolist (item inputs)
 	(move-to item x1 y)
 	(layout item)
-	(incf x1 (dash 2 (header-width item)))
+	(incf x1 (dash 1 (header-width item)))
 	(setf height (max height (field-value :height item)))))))
         
 (define-method draw menubar ()

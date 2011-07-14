@@ -333,7 +333,10 @@ Please set the variable ioforms:*event-handler-function*")
 ;;; Translating SDL input events into IOFORMS event lists
 
 (defvar *joystick-button-symbols*
-  '(:a :b :x :y :left :right :up :down :select :start))
+  '(:a :b :x :y ;; face buttons
+    :left :right :up :down ;; directional pad
+    :select :start ;; menu buttons
+    :left-bumper :left-trigger :right-bumper :right-trigger)) ;; shoulder buttons
 
 (defparameter *other-modifier-symbols* '(:button-down :button-up :axis))
 
@@ -398,7 +401,7 @@ as hash keys."
 		       ((eql 0 sdl-mods)
 			nil))))))
 
-;;; Joystick support (gamepad probably required)
+;;; Joystick support
 
 (defparameter *generic-joystick-mapping*
   '((0 . :button-0)
@@ -465,7 +468,20 @@ as hash keys."
     (when entry 
       (car entry))))
 
-(defvar *joystick-device-identifiers* nil)
+(defparameter *dragon-usb-joystick-mapping*
+  '((2 . :a)
+    (1 . :b)
+    (3 . :x)
+    (0 . :y)
+    (6 . :left-bumper)
+    (7 . :right-bumper)
+    (8 . :select)
+    (9 . :start)
+    (4 . :left-trigger)
+    (5 . :right-trigger)))
+
+(defvar *joystick-device-mappings* 
+  '(("DragonRise Inc.   Generic   USB  Joystick  " . *dragon-usb-joystick-mapping*)))
 
 (defvar *joystick-device* nil)
 
@@ -480,13 +496,22 @@ as hash keys."
   (setf *joystick-buttons* (make-array 100 :initial-element nil))
   (setf *joystick-position* :here))
 
-;; TODO (defun detect-joystick ()
-;;   (message "Detecting USB controllers...")
-;;   (assert *joystick-device-identifiers*)
-;;   (block detecting
-;;     (dotimes (j (sdl:num-joysticks))
-;;       (let ((name (sdl:sdl-joystick-name j))
-;; 	    (when (and (stringp name)
+(defun find-joystick-mapping (device-name)
+  (let ((entry (assoc device-name *joystick-device-mappings* :test 'equal)))
+    (when entry (cdr entry))))
+
+(defun detect-joysticks ()
+  (message "Detecting USB controllers...")
+  (block detecting
+    (dotimes (j (sdl:num-joysticks))
+      (let ((name (sdl:sdl-joystick-name j)))
+	(message "Checking joystick ~S, device name: ~S" j name)
+	(let ((mapping (find-joystick-mapping name)))
+	  (if (null mapping)
+	      (message "Could not find joystick mapping for device ~S" name)
+	      (progn 
+		(message "Found joystick mapping for device ~S" name)
+		(setf *joystick-mapping* mapping))))))))
 
 (defun update-joystick (button state)
   "Update the table in `*joystick-buttons*' to reflect the STATE of
@@ -692,6 +717,7 @@ display."
     (message "SDL driver name: ~A" (sdl:video-driver-name))
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
+    (detect-joysticks)
     (do-orthographic-projection)
     (run-project-lisp *project*)
     (run-hook '*after-startup-hook*)

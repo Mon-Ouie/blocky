@@ -1,6 +1,10 @@
-** TODO [#B] introduce with-font macro and stop using *block-font* explicitly
+** TODO terminal window can be moved around and resized
+*** TODO better terminal with better output (generic LISP command eval and good error handling)
+** TODO standard ABXY
+** TODO [#B] lower-right-corner resize handle decorator , close BOX decorator
+** TODO [#C] introduce with-font macro and stop using *block-font* explicitly
 ** TODO [#C] interface flags, like colored tape flags with white txt 
-** TODO [#B] joystick menu to find connected devices
+** TODO [#C] joystick menu to find connected devices
 ** TODO [#A] use same text entry widget for terminal
 ** TODO [#C] fix top and bottom patch border off-by-one pixel errors on different machines (use 0.5)?
 ** TODO [#B] make it easier to grab parent widgets of an entry (allow drag from entry  label)
@@ -124,7 +128,6 @@ coordinates, and shift them in by half of a texel from each edge)
 *** TODO random <min> <max>
 *** TODO list ops: length, append, add, delete, insert
 *** TODO contains
-** TODO [#B] lower-right-corner resize handle decorator
 ** TODO [#B] Bring back old/forms.lisp spreadsheet
 *** TODO compilation options
 ** TODO [#B] interactively type live blocks (space bar instantiates and moves big fat cursor

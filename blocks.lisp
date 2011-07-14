@@ -629,7 +629,7 @@ current block. Used for taking a count of all the nodes in a tree."
     :sound "violet red"
     :message "chocolate3"
     :control "dark orange"
-    :variables "DarkOrange2"
+    :variables "DarkOrange3"
     :operators "OliveDrab4"
     :sensing "steel blue")
   "X11 color names of shadows on the different block categories.")
