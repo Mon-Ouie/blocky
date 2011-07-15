@@ -1,3 +1,7 @@
+** TODO Organize TODO list
+*** Review and rate tasks for raw priority
+*** Remove tasks that are already complete
+*** Organize it into a plan
 ** TODO terminal window can be moved around and resized
 *** TODO better terminal with better output (generic LISP command eval and good error handling)
 ** TODO standard ABXY
@@ -7,7 +11,6 @@
 ** TODO [#C] joystick menu to find connected devices
 ** TODO [#A] use same text entry widget for terminal
 ** TODO [#C] fix top and bottom patch border off-by-one pixel errors on different machines (use 0.5)?
-** TODO [#B] make it easier to grab parent widgets of an entry (allow drag from entry  label)
 ** TODO [#B] Improve messaging, diagnostic output, and error handling.
 *** TODO define-method error shell
 *** TODO better error handling for menu methods
