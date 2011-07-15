@@ -1,13 +1,13 @@
-** TODO Organize TODO list
-*** Review and rate tasks for raw priority
-*** Remove tasks that are already complete
-*** Organize it into a plan
+*** TODO Read me first: F1, then click on any object for help
+** TODO [#B] popup tape-flag/balloons to show you where you are, like hints about M-x window
+*** TODO em-dash and en-dash for uniform layout
+
+*** TODO interface flags, like colored tape flags with white txt 
 ** TODO terminal window can be moved around and resized
 *** TODO better terminal with better output (generic LISP command eval and good error handling)
 ** TODO standard ABXY
 ** TODO [#B] lower-right-corner resize handle decorator , close BOX decorator
 ** TODO [#C] introduce with-font macro and stop using *block-font* explicitly
-** TODO [#C] interface flags, like colored tape flags with white txt 
 ** TODO [#C] joystick menu to find connected devices
 ** TODO [#A] use same text entry widget for terminal
 ** TODO [#C] fix top and bottom patch border off-by-one pixel errors on different machines (use 0.5)?

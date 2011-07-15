@@ -69,6 +69,11 @@
 (define-method goto prompt ()
   (say self "Enter command below at the >> prompt. Press ENTER when finished, or CONTROL-X to cancel."))
 
+(define-method toggle-debug-on-error prompt (&optional force)
+  (setf %debug-on-error
+	(if force t 
+	    (if %debug-on-error nil t))))
+
 (defun bind-event-to-prompt-insertion (self key mods text)
   (bind-event-to-function self key mods 
 			  #'(lambda ()
@@ -207,7 +212,7 @@
 
 (define-method delete-char prompt ()
   (with-fields (point line) self
-    (when (< 1 point (1- (length line)))
+    (when (< 0 point (1- (length line)))
       (setf line (concatenate 'string
 			      (subseq line 0 point)
 			      (subseq line (1+ point)))))))
@@ -216,8 +221,6 @@
   (dolist (line (split-string-on-lines (write-to-string data :circle t :pretty t :escape nil :lines 5)))
     (say self (if comment ";; ~A"
 		  " ~A") line)))
-
-(defparameter *prompt-debug-on-error* t)
 
 (define-method do-sexp prompt (sexp)
   (with-fields (receiver) self
@@ -240,7 +243,7 @@
       (unless no-clear (clear-line self))
       (when sexp 
 	(say self "~A" line)
-	(if *prompt-debug-on-error*
+	(if %debug-on-error
 	    (do-sexp self sexp)
 	    (handler-case
 		(handler-bind (((not serious-condition)
@@ -430,11 +433,10 @@
       (when (null line) (setf line ""))
       (unless (zerop (length line))
 	(draw-string line
-		    *default-prompt-margin* 
-			(font-text-width prompt-string *block-font*))
+		     (dash 2 x (label-width self))
 		     (+ y strings-y)
 		     :color %text-color
-		     :font *block-font*))))
+		     :font *block-font*)))))
 
 ;;; General-purpose data entry block based on the prompt block.
 

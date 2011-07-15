@@ -31,7 +31,7 @@
 (setf *screen-height* 480)
 (setf *window-title* "blocky.io")
 (setf *resizable* nil)
-(enable-key-repeat 9 2)
+(enable-key-repeat 9 1.2)
 
 ;;; A splash screen
 
