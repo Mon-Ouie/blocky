@@ -1,35 +1,30 @@
-*** TODO Read me first: F1, then click on any object for help
-** TODO [#B] popup tape-flag/balloons to show you where you are, like hints about M-x window
-*** TODO em-dash and en-dash for uniform layout
 
-*** TODO interface flags, like colored tape flags with white txt 
-** TODO terminal window can be moved around and resized
-*** TODO better terminal with better output (generic LISP command eval and good error handling)
-** TODO standard ABXY
-** TODO [#B] lower-right-corner resize handle decorator , close BOX decorator
+** TODO [#A] better terminal with better output (generic LISP command eval and good error handling)
+*** TODO [#A] general purpose resizer/scroller decorator thinger
+*** TODO [#A] terminal window can be moved around and resized
+*** TODO [#A] lower-right-corner resize handle decorator , close BOX decorator
+*** TODO [#B] plus button decorator for lists to add objects (fields, methods, etc)
+*** TODO [#B] Improve messaging, diagnostic output, and error handling.
+**** TODO define-method error shell
+**** TODO better error handling for menu methods
+**** TODO define-method warning shell
+**** TODO redirect messages to message bar. optionally fading notifications with widgets in them
+
+
+** TODO [#A] Read me first: F1, then click on any object for help
+*** TODO [#A] at startup, show formatted textbox with basic information for new users and "don't show this dialog box again" checkbox
+
+** TODO [#B] joystick menu to find connected devices 
+*** TODO [#B] standardize on "ABXY" for the face buttons, LB RB LT RT for the shoulder buttons
+** TODO [#B] popup tape-flag/balloons to show you where you are, like hints about M-x window
+** TODO [#B] em-dash and en-dash (optionally font-metric-dependent) for uniform declarative layout
 ** TODO [#C] introduce with-font macro and stop using *block-font* explicitly
-** TODO [#C] joystick menu to find connected devices
-** TODO [#A] use same text entry widget for terminal
-** TODO [#C] fix top and bottom patch border off-by-one pixel errors on different machines (use 0.5)?
-** TODO [#B] Improve messaging, diagnostic output, and error handling.
-*** TODO define-method error shell
-*** TODO better error handling for menu methods
-*** TODO define-method warning shell
-*** TODO redirect messages to message bar.
 ** TODO [#B] fix ellipsis not displayed on menu items until highlight
 *** TODO use something other than ellipses? like my generic tree triangles
-** TODO [#B] click to focusing on terminal prompt 
+** TODO [#B] click anywhere on terminal line to focus on prompt 
 ** TODO [#A] fix menus being drawn under stuff
-** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
 ** TODO [#C] draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
-** TODO [#C] fix texture edge handling for indicators:
-(09:54:04 AM) |3b|: dto: that texture stuff with the triangles looks
-like it is accessing past the edge of the texture and wrapping to the
-other side, use tex-parameter and set :texture-wrap-r
-and :texture-wrap-s to :clamp-to-edge (assuming relatively recent GL
-version) (09:54:45 AM) |3b|: (or be more careful with texture
-coordinates, and shift them in by half of a texel from each edge)
-** TODO [#B] define faces with bold, italic, etc
+** TODO [#B] defface with bold, italic, etc
 ** TODO [#B] defblock defsprite --- defining sprites
 *** TODO merge sprites and blocks?
 ** TODO [#B] click again on header to close menu.
