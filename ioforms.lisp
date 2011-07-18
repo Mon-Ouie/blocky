@@ -91,11 +91,11 @@ save-object-resource super%initialize super%initialize
 /queue/initialize queue/initialize draw-string-solid read-iof
 initialize-resource-table percent-of-time render-formatted-paragraph
 make-formatted-string draw-string-shaded set-blending-mode
-render-formatted-string render-formatted-line resource
-font-text-width write-sexp-to-file with-message-sender
-*message-sender* read-sexp-from-file with-fields with-field-values
-write-iof *grammar* one-of left-hand-side right-hand-side expansions
-generate send-event-to-blocks play-music halt-music seek-music
+render-formatted-string render-formatted-line resource font-text-width
+write-sexp-to-file with-message-sender *message-sender*
+read-sexp-from-file with-fields with-field-values write-iof *grammar*
+one-of left-hand-side right-hand-side expansions generate
+send-event-to-blocks play-music halt-music seek-music
 *joystick-mapping* play initialize-sound *generic-joystick-mapping*
 *ps3-joystick-mapping* *joystick-button-symbols* draw-resource-image
 *event-handler-function* *use-sound* trace-rectangle trace-row
@@ -151,5 +151,5 @@ make-field-initializer initialize initialize-prototypes
 initialize-ioforms object-address-string draw-string make-tree
 draw-string-blended make-menu find-text-image make-text-image
 *default-super* clear-text-image-cache *token-types* verify
-*block-categories* *block-colors* input *block-text-colors* defblock
-))
+toggle-debug *debug-on-error* *block-categories* *block-colors* input
+*block-text-colors* defblock ))

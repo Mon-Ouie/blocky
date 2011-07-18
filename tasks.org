@@ -1,5 +1,6 @@
 
-** TODO [#A] better terminal with better output (generic LISP command eval and good error handling)
+** TODO [#A] better terminal with better output 
+*** TODO generic LISP command eval!
 *** TODO [#A] general purpose resizer/scroller decorator thinger
 *** TODO [#A] terminal window can be moved around and resized
 *** TODO [#A] lower-right-corner resize handle decorator , close BOX decorator

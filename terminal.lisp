@@ -42,6 +42,13 @@
 (defparameter *default-prompt-history-size* 100)
 (defparameter *default-cursor-width* 1)
 
+(defvar *debug-on-error* nil)
+
+(defun toggle-debug (&optional force)
+  (assert (typep force 'boolean))
+  (setf *debug-on-error*
+	(or force (if *debug-on-error* nil t))))
+ 
 (defblock prompt
   (clock :initform *prompt-blink-time*)
   (text-color :initform "gray20")
@@ -57,8 +64,7 @@
   (category :initform :data)
   (history :initform (make-queue :max *default-prompt-history-size*)
 	   :documentation "A queue of strings containing the command history.")
-  (history-position :initform 0)
-  (debug-on-error :initform nil))
+  (history-position :initform 0))
 
 (define-method accept prompt (&rest args)
   nil)
@@ -69,10 +75,10 @@
 (define-method goto prompt ()
   (say self "Enter command below at the >> prompt. Press ENTER when finished, or CONTROL-X to cancel."))
 
-(define-method toggle-debug-on-error prompt (&optional force)
-  (setf %debug-on-error
-	(if force t 
-	    (if %debug-on-error nil t))))
+;; (define-method toggle-debug-on-error prompt (&optional force)
+;;   (setf %debug-on-error
+;; 	(if force t 
+;; 	    (if %debug-on-error nil t))))
 
 (defun bind-event-to-prompt-insertion (self key mods text)
   (bind-event-to-function self key mods 
