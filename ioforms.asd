@@ -31,7 +31,6 @@
 	       (:file "logic" :depends-on ("ioforms"))
 	       (:file "prototypes" :depends-on ("ioforms"))
 	       (:file "console" :depends-on ("prototypes"))
-;	       (:file "gamepad" :depends-on ("console"))
 	       (:file "blocks" :depends-on ("console"))
 	       (:file "widgets" :depends-on ("blocks"))
 	       (:file "trees" :depends-on ("blocks"))
