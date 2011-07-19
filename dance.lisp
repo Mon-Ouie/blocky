@@ -151,43 +151,20 @@
     ("KP9" nil "upright .")
     ("KP-ENTER" nil "start .")
     ("KP0" nil "select .")
-    ("JOYSTICK" (:up :button-down) "up .")
-    ("JOYSTICK" (:left :button-down) "left .")
-    ("JOYSTICK" (:right :button-down) "right .")
-    ("JOYSTICK" (:down :button-down) "down .")
-    ("JOYSTICK" (:downleft :button-down) "downleft .")
-    ("JOYSTICK" (:downright :button-down) "downright .")
-    ("JOYSTICK" (:upleft :button-down) "upleft .")
-    ("JOYSTICK" (:upright :button-down) "upright .")
-    ("JOYSTICK" (:start :button-down) "start .")
-    ("JOYSTICK" (:select :button-down) "select .")))
+    ("JOYSTICK" (:up :button-down) :up)   
+    ("JOYSTICK" (:left :button-down) :left)
+    ("JOYSTICK" (:right :button-down) :right)
+    ("JOYSTICK" (:down :button-down) :down)
+    ("JOYSTICK" (:downleft :button-down) :downleft)
+    ("JOYSTICK" (:downright :button-down) :downright)
+    ("JOYSTICK" (:upleft :button-down) :upleft)
+    ("JOYSTICK" (:upright :button-down) :upright)
+    ("JOYSTICK" (:start :button-down) :start)
+    ("JOYSTICK" (:select :button-down) :select)))
 
 ;; Including configurations for common dance pads is a good idea.
 ;; Eventually we need a real configuration menu.
 
-(defparameter *energy-dance-pad-mapping*
-  '((12 . :up)
-    (15 . :left)
-    (13 . :right)
-    (14 . :down)
-    (0 . :downleft)
-    (3 . :downright)
-    (2 . :upleft)
-    (1 . :upright)
-    (8 . :select)
-    (9 . :start)))
-
-(defparameter *hyperkin-adapter-mapping* 
-  '((4 . :up)
-    (7 . :left)
-    (5 . :right)
-    (6 . :down)
-    (12 . :downleft)
-    (16 . :downright)
-    (14 . :upleft)
-    (13 . :upright)
-    (0 . :select)
-    (3 . :start)))
 
 ;; (setf *joystick-device-identifiers* 
 ;;       '(("

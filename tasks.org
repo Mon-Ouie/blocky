@@ -13,8 +13,8 @@
 
 ** TODO [#A] Read me first: F1, then click on any object for help
 *** TODO [#A] at startup, show formatted textbox with basic information for new users and "don't show this dialog box again" checkbox
-
-** TODO [#B] joystick menu to find connected devices 
+** TODO add generic xbox controller support for analog bumpers (emulate buttons)
+** TODO [#B] joystick menu to find connected devices x3
 *** TODO [#B] standardize on "ABXY" for the face buttons, LB RB LT RT for the shoulder buttons
 ** TODO [#B] popup tape-flag/balloons to show you where you are, like hints about M-x window
 ** TODO [#B] em-dash and en-dash (optionally font-metric-dependent) for uniform declarative layout

@@ -115,7 +115,7 @@ open-project field-options world set-frame-rate *frame-rate*
 *default-shell-width* *default-shell-height* *system*
 set-timer-interval defgcell *message-logging* overlay
 initialize-console poll-joystick-axis poll-joystick-button
-reset-joysticks *joystick-device-identifiers* set-screen-width
+reset-joysticks *device-profiles* find-device-profile set-screen-width
 *universe* *play-args* set-screen-height genseq *zoom-factor*
 zoom-image is-zoomed-resource *timer-interval* save-objects
 enable-timer disable-timer while defmission send-to-blocks
@@ -144,7 +144,7 @@ unqueue-and-send-message with-message-queue message-symbol
 operation-symbol *sender* message-reader transform-tree
 field-reference-p transform-field-reference transform-method-body
 object-parent object-name $ object-fields define-method
-define-prototype new object-p self percent-gray percent-grey
+define-prototype new object-p self percent-gray percent-grey 
 *indicators* find-indicator-texture draw-indicator font-text-width
 transform-declaration-field-descriptor is-a compose-blank-fields
 make-field-initializer initialize initialize-prototypes

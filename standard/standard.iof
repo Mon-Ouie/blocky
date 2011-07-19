@@ -94,3 +94,49 @@
 (:name "circle-outline-flat-128" :type :image :file "circle-outline-flat-128.png" :properties (:filter :linear))
 (:name "default-font" :type :ttf :file "DejaVuSans.ttf" :properties (:size 12))
 
+ (:name "up" :type :image :file "up.png")
+ (:name "down" :type :image :file "down.png")
+ (:name "left" :type :image :file "left.png")
+ (:name "right" :type :image :file "right.png")
+ (:name "upright" :type :image :file "upright.png")
+ (:name "upleft" :type :image :file "upleft.png")
+ (:name "downright" :type :image :file "downright.png")
+ (:name "downleft" :type :image :file "downleft.png")
+ (:name "prompt" :type :image :file "prompt.png")
+ (:name "period" :type :image :file "period.png")
+ (:name "blank" :type :image :file "blank.png")
+
+ (:name "up-medium" :type :image :file "up-medium.png")
+ (:name "down-medium" :type :image :file "down-medium.png")
+ (:name "left-medium" :type :image :file "left-medium.png")
+ (:name "right-medium" :type :image :file "right-medium.png")
+ (:name "upright-medium" :type :image :file "upright-medium.png")
+ (:name "upleft-medium" :type :image :file "upleft-medium.png")
+ (:name "downright-medium" :type :image :file "downright-medium.png")
+ (:name "downleft-medium" :type :image :file "downleft-medium.png")
+ (:name "prompt-medium" :type :image :file "prompt-medium.png")
+ (:name "period-medium" :type :image :file "period-medium.png")
+ (:name "blank-medium" :type :image :file "blank-medium.png")
+
+ (:name "target-up" :type :image :file "target-up.png")
+ (:name "target-down" :type :image :file "target-down.png")
+ (:name "target-left" :type :image :file "target-left.png")
+ (:name "target-right" :type :image :file "target-right.png")
+
+ (:name "dark-target-up" :type :image :file "dark-target-up.png")
+ (:name "dark-target-down" :type :image :file "dark-target-down.png")
+ (:name "dark-target-left" :type :image :file "dark-target-left.png")
+ (:name "dark-target-right" :type :image :file "dark-target-right.png")
+
+ (:name "target-upleft" :type :image :file "target-upleft.png")
+ (:name "target-downright" :type :image :file "target-downright.png")
+ (:name "target-downleft" :type :image :file "target-downleft.png")
+ (:name "target-upright" :type :image :file "target-upright.png")
+
+ (:name "dark-target-upleft" :type :image :file "dark-target-upleft.png")
+ (:name "dark-target-downright" :type :image :file "dark-target-downright.png")
+ (:name "dark-target-downleft" :type :image :file "dark-target-downleft.png")
+ (:name "dark-target-upright" :type :image :file "dark-target-upright.png")
+
+
+

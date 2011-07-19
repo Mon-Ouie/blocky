@@ -468,6 +468,30 @@ as hash keys."
     (when entry 
       (car entry))))
 
+(defparameter *energy-dance-pad-mapping*
+  '((12 . :up)
+    (15 . :left)
+    (13 . :right)
+    (14 . :down)
+    (0 . :downleft)
+    (3 . :downright)
+    (2 . :upleft)
+    (1 . :upright)
+    (8 . :select)
+    (9 . :start)))
+
+(defparameter *hyperkin-adapter-mapping* 
+  '((4 . :up)
+    (7 . :left)
+    (5 . :right)
+    (6 . :down)
+    (12 . :downleft)
+    (16 . :downright)
+    (14 . :upleft)
+    (13 . :upright)
+    (0 . :select)
+    (3 . :start)))
+
 (defparameter *dragon-usb-joystick-mapping*
   '((2 . :a)
     (1 . :b)
@@ -480,8 +504,10 @@ as hash keys."
     (4 . :left-trigger)
     (5 . :right-trigger)))
 
-(defvar *joystick-device-mappings* 
-  '(("DragonRise Inc.   Generic   USB  Joystick  " . *dragon-usb-joystick-mapping*)))
+(defparameter *device-profiles* 
+  '(("DragonRise Inc.   Generic   USB  Joystick  " :type :joystick :name "Generic USB Gamepad (DragonRise)" :mapping *dragon-usb-joystick-mapping*)
+    ("USB Dance Pa" :name "Generic USB Dance Pad" :type :dance :mapping *energy-dance-pad-mapping*)
+    ("GASIA CORP. PS(R) Gamepad Adaptor" :type :joystick :name "Generic PS2->USB Gamepad Adaptor (GASIA Corp.)" :mapping *hyperkin-adapter-mapping*)))
 
 (defvar *joystick-device* nil)
 
@@ -496,21 +522,21 @@ as hash keys."
   (setf *joystick-buttons* (make-array 100 :initial-element nil))
   (setf *joystick-position* :here))
 
-(defun find-joystick-mapping (device-name)
-  (let ((entry (assoc device-name *joystick-device-mappings* :test 'equal)))
+(defun find-device-profile (device-name)
+  (let ((entry (assoc device-name *device-profiles* :test 'equal)))
     (when entry (cdr entry))))
 
-(defun detect-joysticks ()
-  (message "Detecting USB controllers...")
-  (block detecting
-    (dotimes (j (sdl:num-joysticks))
-      (let ((name (sdl:sdl-joystick-name j)))
-	(message "Checking joystick ~S, device name: ~S" j name)
-	(let ((mapping (find-joystick-mapping name)))
-	  (if (null mapping)
-	      (message "Could not find joystick mapping for device ~S" name)
-	      (progn 
-		(message "Found joystick mapping for device ~S" name)
+(defun scan-for-devices ()
+  (message "Scanning for connected devices...")
+  (block scanning
+    (dotimes (index (sdl:num-joysticks))
+      (let ((device (sdl:sdl-joystick-name index)))
+	(message "Checking joystick ~S, device name: ~S" index device)
+	(let ((profile (find-device-profile device)))
+	  (if (null profile)
+	      (message "Could not find device profile for ~S. Continuing..." device)
+	      (destructuring-bind (&key name mapping type) profile
+		(message "Found device profile ~S for ~S." type name)
 		(setf *joystick-mapping* mapping))))))))
 
 (defun update-joystick (button state)
@@ -717,7 +743,7 @@ display."
     (message "SDL driver name: ~A" (sdl:video-driver-name))
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
-    (detect-joysticks)
+    (scan-for-devices)
     (do-orthographic-projection)
     (run-project-lisp *project*)
     (run-hook '*after-startup-hook*)
