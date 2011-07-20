@@ -1,160 +1,158 @@
+** TODO Re-examine "invader tactics" source and see what blocks are required to reimplement it
+** TODO Read whitepaper: "Programming as an Experience: The Inspiration for Self"
 
-** TODO [#A] better terminal with better output 
-*** TODO generic LISP command eval!
-*** TODO [#A] general purpose resizer/scroller decorator thinger
-*** TODO [#A] terminal window can be moved around and resized
-*** TODO [#A] lower-right-corner resize handle decorator , close BOX decorator
-*** TODO [#B] plus button decorator for lists to add objects (fields, methods, etc)
-*** TODO [#B] Improve messaging, diagnostic output, and error handling.
-**** TODO define-method error shell
-**** TODO better error handling for menu methods
-**** TODO define-method warning shell
-**** TODO redirect messages to message bar. optionally fading notifications with widgets in them
+** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
+*** [#A] terminal window can be resized
+**** [#A] general purpose resizer/scroller decorator thinger
+**** [#A] lower-right-corner resize handle decorator
+*** [#A] generic LISP command evaluation shell
+*** TODO [#B] start using terminal output for status message output
+****  [#A] hook #'message minibuffer messages/notifications (message workspace, or different buffers?) 
+
+** TODO [#A] Finish implementing the core visual programming language in OOP.LISP
+*** defblock var (reference to a var, not a def)  (for lisp vars, script vars, proto names, and fields)
+*** defblock let (with drag-off variable refs)
+*** defblock link <--- to another wikipage or something
+*** script wiki database (like the file system)
+*** defblock self
+*** define-method "block" has argument names as inputs
+*** use a non-rounded box layout and appearance for program elements, with very thin margins
+**** retain rounded rectangles for UI/workspace/etc
+*** example visual project that can be saved and loaded 
+*** general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
 
 
-** TODO [#A] Read me first: F1, then click on any object for help
-*** TODO [#A] at startup, show formatted textbox with basic information for new users and "don't show this dialog box again" checkbox
-** TODO add generic xbox controller support for analog bumpers (emulate buttons)
-** TODO [#B] joystick menu to find connected devices x3
-*** TODO [#B] standardize on "ABXY" for the face buttons, LB RB LT RT for the shoulder buttons
-** TODO [#B] popup tape-flag/balloons to show you where you are, like hints about M-x window
-** TODO [#B] em-dash and en-dash (optionally font-metric-dependent) for uniform declarative layout
-** TODO [#C] introduce with-font macro and stop using *block-font* explicitly
-** TODO [#B] fix ellipsis not displayed on menu items until highlight
-*** TODO use something other than ellipses? like my generic tree triangles
-** TODO [#B] click anywhere on terminal line to focus on prompt 
-** TODO [#A] fix menus being drawn under stuff
-** TODO [#C] draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
-** TODO [#B] defface with bold, italic, etc
-** TODO [#B] defblock defsprite --- defining sprites
-*** TODO merge sprites and blocks?
-** TODO [#B] click again on header to close menu.
+
+** TODO [#A] Refactor collision detection to enable various types.
+*** delegate actual collision detection to method
+*** in cell/move and sprite/move , compute whether a move would cause a collision
+*** and then only allow the move to go a certain distance. return number moved
+*** then "resting contact" will work; the object won't try to move anymore (if gravity.)
+*** implement AABB-quadtree? http://en.wikipedia.org/wiki/Quadtree http://hectorgon.blogspot.com/2006/08/regular-grids-vs-aabb-trees-in-games.html
+
+** TODO [#A] Flesh out the user-friendly development environment
+*** desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
+*** KILLER FEATURE: gnome-do/anything.el style search/operate, for quick access to everything
+*** always draw menus above script
+*** add all missing keyboard characters
+*** plus button decorator for lists to add objects (fields, methods, etc)
+*** fix ellipsis not displayed on menu items until highlight
+**** use something other than ellipses? like my generic tree triangles
+*** Read me first: F1, then click on any object for help
+*** at startup, show formatted textbox with basic information for new users and "don't show this dialog box again" checkbox
+*** file selector dialog (ughhhh)
+*** pin toggle button
+*** an interactive tutorial project
+*** project settings dialog for configuring *screen-width* and *resizable* etc
+*** dialog boxes for project save/load!
+*** dialog boxes are fancy SEND blocks that send to *system*
+*** escape key hide/show terminals/menus
+*** display GPL and other licensing in scroll box
+*** project settings dialog for configuring *screen-width* and *resizable* etc
+****  dialog boxes for project save/load!
+****  dialog boxes are fancy SEND blocks that send to *system*
+*** escape key hide/show terminals/menus
+*** display GPL and other licensing in scroll box
+*** yellow comment sticky note boxes
+*** morphic-style halos
+*** tab and shift-tab for input nav
+*** comment block for output messages in listener etc, trap errors
+*** TODO [#B] isolate/trap all block errors and display them grayed out with an inspectable error
+
+
+** TODO Game engine improvements
+***  defblock with (introduce local vars) 
+***  defblock defresource (a stand-in reference to a resource)
+****  should resources be full-fledged objects? 
+
+
+** TODO [#A] Improve messaging, diagnostic output, and error handling.
+*** define-method error shell
+*** better error handling for menu methods
+*** define-method warning shell
+*** redirect messages to message bar. optionally fading notifications with widgets in them
+
 ** TODO [#A] explicit "save" and "compile" buttons 
 ** TODO [#A] send block has socket on left for receiver name, as in Smalltalk-Elements
-** TODO [#C] "evaluate" and "evaluate and show" buttons
-*** TODO [#C] generic sidebar widget can inspect its argument (topleft socket as with send)
-*** TODO BRING BACK SPLIT WIDGET
-**** TODO [#C] palette widget is a hide-able sidebar with tabs, where you pull off pieces Library / Variables / Methods / Prototypes
-*** TODO defblock quote ( to prevent evaluation )
-
-*** TODO defblock field 
-*** TODO defblock with (introduce local vars) 
-*** TODO defblock defresource (a stand-in reference to a resource)
-**** TODO should resources be full-fledged objects? 
-** TODO [#C] update fontlocking rules
-*** TODO defblock var (reference to a var, not a def)  (for lisp vars, script vars, proto names, and fields)
-*** TODO defblock let (with drag-off variable refs)
-**** TODO a lambda list is a special case of this
-**** TODO defblock self
-** TODO [#A] DEFBLOCK METHOD: define-method "block" has argument names as inputs
-*** TODO each name can also be a lambda list (name type &rest props
-*** TODO [#C] tree schema? 
-** TODO [#B] : defblock link <--- to another wikipage or something
-** TODO [#A] DEFBLOCK DEFINE? something to associate a name to a definition of a certain type (method/block/var)
-** TODO [#A] script wiki database (like the file system)
-** TODO [#A] use a non-rounded box layout and appearance for program elements, with very thin margins
-*** retain rounded rectangles for UI/workspace/etc
-** TODO [#A] desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
-**** TODO 
-** TODO [#B] test raw string entry
-** TODO [#B] project settings dialog for configuring *screen-width* and *resizable* etc
-*** TODO dialog boxes for project save/load!
-*** TODO dialog boxes are fancy SEND blocks that send to *system*
-** TODO anything.el style 
-** TODO [#B] escape key hide/show terminals/menus
-** TODO [#B] allow string-valued method fields. resource id's of method block, uuid?
-** TODO [#A] closable dialog decorator w/X button
-*** TODO licensing scroll box
-*** TODO Also allow large global tabs right underneath menu bar
-** TODO Universal access
-*** TODO How to handle Translations? keywords in most languages are in English even if comments/variable names are French or Japanese or whatever)
-**** TODO translate only meuns?
-*** TODO Visual theme-ability for the color-blind and visually-impaired users (larger font, higher contrast etc)
-*** TODO Braille keyboard and speech synthesis integration for blind users
 ** TODO [#A] Standard Blocks Library
-*** TODO move
-*** TODO move to 
-*** TODO move onto 
-*** TODO [#C] glide 
-*** TODO change <var> <amount>
-*** TODO set <var> <value>
-*** TODO get <var>
-*** TODO my <var>
-*** TODO turn left
-*** TODO turn right
-*** TODO point at
-*** TODO say
-*** TODO think <text> <time>
-*** TODO display <image>
-*** TODO blend
-*** TODO opacity
-*** TODO show
-*** TODO hide
-*** TODO move to front
-*** TODO play sound
-*** TODO play music
-*** TODO stop sound
-*** TODO [#C] play note/drum/tempo etc
-*** TODO [#B] defblock event, the script tests events on them
-**** TODO on play
-**** TODO on click
-**** TODO on event
-*** TODO wait
-*** TODO loop
-*** TODO dotimes
-*** TODO dolist
-*** TODO send (to some other object explicitly)
-*** TODO method
-*** TODO while
-*** TODO if
-**** TODO display true and false
-**** TODO use question marks and occasional symbols
-*** TODO when 
-*** TODO [#C] wait until <condition>
-*** TODO stop script
-*** TODO stop all
-*** TODO touching
-*** TODO ask <question>
-*** TODO mouse y
-*** TODO mouse x
-*** TODO mouse down <number>
-*** TODO key down <key>
-*** TODO distance to
-*** TODO common mathematical operations/relations
-*** TODO common logical connectives
-*** TODO concatenate <strings>
-*** TODO [#C] loudness, loud, sensor value
-*** TODO random <min> <max>
-*** TODO list ops: length, append, add, delete, insert
-*** TODO contains
+***  move
+***  move to 
+***  move onto 
+***  [#C] glide 
+***  change <var> <amount>
+***  set <var> <value>
+***  get <var>
+***  my <var>
+***  turn left
+***  turn right
+***  point at
+***  say
+***  think <text> <time>
+***  display <image>
+***  blend
+***  opacity
+***  show
+***  hide
+***  move to front
+***  play sound
+***  play music
+***  stop sound
+***  [#C] play note/drum/tempo etc
+***  [#B] defblock event, the script tests events on them
+****  on play
+****  on click
+****  on event
+***  wait
+***  loop
+***  dotimes
+***  dolist
+***  send (to some other object explicitly)
+***  method
+***  while
+***  if
+****  display true and false
+****  use question marks and occasional symbols
+***  when 
+***  [#C] wait until <condition>
+***  stop script
+***  stop all
+***  touching
+***  ask <question>
+***  mouse y
+***  mouse x
+***  mouse down <number>
+***  key down <key>
+***  distance to
+***  common mathematical operations/relations
+***  common logical connectives
+***  concatenate <strings>
+***  [#C] loudness, loud, sensor value
+***  random <min> <max>
+***  list ops: length, append, add, delete, insert
+***  contains
+** TODO [#B] defblock defsprite --- defining sprites
+***  merge sprites and blocks?
+
+** TODO [#B] joystick menu to find connected devices x3
+** TODO [#B] standardize on "ABXY" for the face buttons, LB RB LT RT for the shoulder buttons
+** TODO [#B] popup tape-flag/balloons to show you where you are, like hints about M-x window
+** TODO [#B] em-dash and en-dash (optionally font-metric-dependent) for uniform declarative layout
+** TODO [#B] click anywhere on terminal line to focus on prompt 
+** TODO [#B] test raw string entry
+** TODO [#B] allow string-valued method fields. resource id's of method block, uuid?
+** TODO Universal access
+***  How to handle Translations? keywords in most languages are in English even if comments/variable names are French or Japanese or whatever)
+****  translate only meuns?
+***  Visual theme-ability for the color-blind and visually-impaired users (larger font, higher contrast etc)
+***  Braille keyboard and speech synthesis integration for blind users
 ** TODO [#B] Bring back old/forms.lisp spreadsheet
-*** TODO compilation options
+***  compilation options
 ** TODO [#B] interactively type live blocks (space bar instantiates and moves big fat cursor
-** TODO [#B] start using terminal output for status message output
-*** TODO [#A] hook #'message minibuffer messages/notifications (message workspace, or different buffers?) 
 ** TODO [#B] bring menubar and its menus to front when opening menu
-** TODO [#B] REFACTOR COLLISION: 
-*** TODO delegate actual collision detection to method
-*** TODO in cell/move and sprite/move , compute whether a move would cause a collision
-*** TODO and then only allow the move to go a certain distance. return number moved
-*** TODO then "resting contact" will work; the object won't try to move anymore (if gravity.)
 ** TODO [#B] generic way to wrap functions?
 ** TODO [#B] review all IOFORMS engine features for blocks to make
 ** TODO [#B] Make dialogs for all menu options in file:system.lisp 
 ** TODO [#B] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
-** TODO [#B] rework simple collision detection--- abstract it out and let objects handle it
-** TODO [#B] Hide optional arguments (general horizontal list block. can also be used with APPLY block.
-** TODO [#B] display name of current project / Unnamed project as prompt
-** TODO [#B] wiki page organization browsing
-** TODO [#B] morphic halos
-** TODO [#B] general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
-** TODO [#B] tutorial
-** TODO [#B] make a sprite reference (i.e. uuid)
-** TODO [#B] Uniform read-error handling for entries
-** TODO [#B] allow schema arguments to not all be shown
-** TODO [#B] add all missing keyboard characters
-** TODO [#B] tab and shift-tab for input nav
-** TODO [#B] comment block for output messages in listener etc, trap errors
 ** TODO [#B] Fix menu behavior: properly check other menu widgets in menubar hit before menu
 ** TODO [#B] allow any font size to be requested
 ** TODO [#B] fix argument blocks not being created (AGAIN)
@@ -162,23 +160,25 @@
 ** TODO [#B] reasonable emacs configuration for ioforms dev (imenu etc)
 ** TODO [#B] send unfocused input to terminal? 
 ** TODO [#B] button to add arguments to + etc (just drop onto block list)
-** TODO [#B] close all submenus when closing a menu
 ** TODO [#B] monospace textbox for editing method?
 ** TODO [#B] disabled menu items, to check for presence of method in target and/or condition
 ** TODO [#B] fix cursor rendering in prompt not lining up with characters
-** TODO [#B] isolate/trap all block errors and display them grayed out with an inspectable error
 ** TODO [#B] AABB-tree (axis-aligned bounding-box)
-** TODO [#B] yellow comment sticky note boxes
+** TODO [#C] add generic xbox controller support for analog bumpers (emulate buttons)
+** TODO [#C] introduce with-font macro and stop using *block-font* explicitly
+** TODO [#C] draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
+** TODO [#C] defface with bold, italic, etc
+** TODO [#C] "evaluate" and "evaluate and show" buttons
+** TODO [#C] update fontlocking rules
 ** TODO [#C] "render as text lisp" option?
 ** TODO [#C] data entries have methods, such as 
-*** TODO script or page as terminology? script sounds scarily active, page sounds passive
-*** TODO one file per script
-*** TODO script modes
+***  script or page as terminology? script sounds scarily active, page sounds passive
+***  one file per script
+***  script modes
 ** TODO [#C] morphic halos?
 ** TODO [#C] duplicate objects / selection 
 ** TODO [#C] defblock selection 
 ** TODO [#C] send message to all blocks in selection
-** TODO [#C] Task/process abstraction built into blocks exec model, simple coroutines?
 ** TODO [#C] use turtle to program polygon vertices and shit a la fluxus
 ** TODO [#C] block colors/backgrounds in a list subprogram could disappear, making it look like text source code?
 ** TODO [#C] add more information to method+prototype databases
@@ -193,33 +193,30 @@
 <|3b|> also, looks like you weren't passing blend to draw-circle from
        draw-solid-circle, not that it matters here  [23:46]
 ** TODO [#C] automatically generate blocky friend faces with given body/face shapes
-** TODO [#C] pin toggle button
 ** TODO [#C] pretty rubberband movement
-** TODO [#C] x button for closing menu
+
+* OLDER NOTES
 
 ** TODO [#C] XALCYON STORYLINE
-*** TODO i'm going to learn some of this: http://en.wikipedia.org/wiki/Speech_Synthesis_Markup_Language
-*** TODO go for a straight space fantasy, skip the arecibo-message angle
-*** TODO the planet is actually a benevolent female intelligence who announces she is dying by taking on too much mass from the surrounding clouds, which will trigger fusion in her core 
-*** TODO so she calls on certain people to safely store her memories in bubbles
-*** TODO recursive bubble universes , where you explore her memories and retrieve them
-*** TODO female synth voice?
-*** TODO bring in sanctuary monks?
-*** TODO depth of field mipmapping to color distant objects with atmosphere distance/haze?
-
-*** TODO recovering ancient memory bubbles
-*** TODO story dialog buttons like Ultima
-*** TODO think about game design / story
-*** TODO smooth scrolling to follow player
-*** TODO smoother speed changes w/analog stick
-*** TODO health bar
-*** TODO hot zone bubbles
-*** TODO collectible bubbles
-*** TODO bubbles that you need to leave flares inside of.
-*** TODO discover which bubbles resonate with each other
-*** TODO drop flares inside those bubbles
-** TODO [#C] draw-socket should draw types
-** TODO [#C] shawn's emacs port as text widget?
+***  i'm going to learn some of this: http://en.wikipedia.org/wiki/Speech_Synthesis_Markup_Language
+***  go for a straight space fantasy, skip the arecibo-message angle
+***  the planet is actually a benevolent female intelligence who announces she is dying by taking on too much mass from the surrounding clouds, which will trigger fusion in her core 
+***  so she calls on certain people to safely store her memories in bubbles
+***  recursive bubble universes , where you explore her memories and retrieve them
+***  female synth voice?
+***  bring in sanctuary monks?
+***  depth of field mipmapping to color distant objects with atmosphere distance/haze?
+***  recovering ancient memory bubbles
+***  story dialog buttons like Ultima
+***  think about game design / story
+***  smooth scrolling to follow player
+***  smoother speed changes w/analog stick
+***  health bar
+***  hot zone bubbles
+***  collectible bubbles
+***  bubbles that you need to leave flares inside of.
+***  discover which bubbles resonate with each other
+***  drop flares inside those bubbles
 ** TODO [#C] Implement this GRAPH UI example:
    
 Say you want a nice interface helping a designer to explore various
@@ -355,14 +352,11 @@ I've been discussing with a friend who's developed quite an extensive
 Lisp game engine of his own---I'd like to develop this visual language
 toolkit as something not tied to my own game engine, so that my stuff
 can work with his code as well.
-** TODO [#C] consistent set of colored svg icons, one for each block category (enable compressed views and halos)
+** TODO [#B] consistent set of colored svg icons, one for each block category (enable compressed views and halos)
 ** TODO [#C] add least-recently-used pruning for memoize facility
-** TODO [#C] allow #RRGGBB color spec in resources
+** TODO [#B] allow #RRGGBB color spec in resources
 
-* TODO Review task list and reorganize roadmap
 
-** TODO investigate blocky.io
-** TODO investigate quadtrees http://en.wikipedia.org/wiki/Quadtree http://hectorgon.blogspot.com/2006/08/regular-grids-vs-aabb-trees-in-games.html
 
 * TODO Example 1: Blocky and the Blue Dot
   DEADLINE: <2011-06-04 Sat>
@@ -380,7 +374,7 @@ can work with his code as well.
 
 * Sweep snake trail across multiplying particles in 3 reactor chambers
 ** TODO refactor collision detection without consing
-*** TODO write a function (collision *world*
+***  write a function (collision *world*
 ** TODO default-keybindings as an initform 
 ** trail upgrade
 ** drifting hot rad areas that drain HP

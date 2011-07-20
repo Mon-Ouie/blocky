@@ -125,7 +125,7 @@ achieve *resize-hook* draw-rectangle *quitting*
 set-mission-variable with-mission-locals *background-color*
 set-sample-callback set-music-callback cffi-chunk-buffer
 convert-cffi-sample get-sample-buffer register-sample-generator
-register-voice unregister-voice register-voice-mixer mix-voices st
+register-voice unregister-voice register-voice-mixer mix-voices 
 convert-cffi-sample-to-internal *block* *script*
 convert-internal-sample-to-cffi get-ticks block-variable
 with-block-variables set-block-variable with-blocks
