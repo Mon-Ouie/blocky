@@ -21,8 +21,6 @@
 *** example visual project that can be saved and loaded 
 *** general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
 
-
-
 ** TODO [#A] Refactor collision detection to enable various types.
 *** delegate actual collision detection to method
 *** in cell/move and sprite/move , compute whether a move would cause a collision
@@ -58,7 +56,6 @@
 *** tab and shift-tab for input nav
 *** comment block for output messages in listener etc, trap errors
 *** TODO [#B] isolate/trap all block errors and display them grayed out with an inspectable error
-
 
 ** TODO Game engine improvements
 ***  defblock with (introduce local vars) 
