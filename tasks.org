@@ -1,5 +1,3 @@
-** TODO Re-examine "invader tactics" source and see what blocks are required to reimplement it
-** TODO Read whitepaper: "Programming as an Experience: The Inspiration for Self"
 
 ** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
 *** [#A] terminal window can be resized
@@ -20,6 +18,10 @@
 **** retain rounded rectangles for UI/workspace/etc
 *** example visual project that can be saved and loaded 
 *** general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
+
+** TODO Re-examine "invader tactics" source and see what blocks are required to reimplement it
+** TODO re-release "Invader"!
+
 
 ** TODO [#A] Refactor collision detection to enable various types.
 *** delegate actual collision detection to method
@@ -513,5 +515,12 @@ can work with his code as well.
    :ARCHIVE_FILE: ~/ioforms/tasks.org
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: DONE
-   :END: 
+   :END:
+** TODO [#A] Read whitepaper: "Programming as an Experience: The Inspiration for Self"
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-07-20 Wed 23:09
+   :ARCHIVE_FILE: ~/ioforms/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
 
