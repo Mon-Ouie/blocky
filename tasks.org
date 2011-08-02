@@ -1,4 +1,4 @@
-
+** TODO Fix crash when error in blocky.ini
 ** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
 *** [#A] terminal window can be resized
 **** [#A] general purpose resizer/scroller decorator thinger

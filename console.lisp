@@ -831,7 +831,7 @@ display."
   (let ((file (merge-pathnames (make-pathname :name *user-init-file-name*)
 			       (blocky-directory))))
     (when (cl-fad:file-exists-p file)
-      (load file))))
+      (load (cl-fad:pathname-as-file file)))))
 
 (defparameter *user-keyboard-layout* :qwerty)
 

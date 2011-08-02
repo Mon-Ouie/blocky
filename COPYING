@@ -1,12 +1,12 @@
 What follows the dotted line are the licensing terms for the lisp code
-in IOFORMS. IOFORMS is provided under the terms of the GNU General
+in BLOCKY. BLOCKY is provided under the terms of the GNU General
 Public License, version 3.
 
 The X11 color data is reproduced here in rgb.lisp under the MIT
 License; see rgb.lisp for details.
 
 On some platforms, binaries of libSDL 1.2 are redistributed with
-IOFORMS. libSDL 1.2 is under the LGPL license; see the file
+BLOCKY. libSDL 1.2 is under the LGPL license; see the file
 LIBSDL-LICENSE for full details.
 
 The game subdirectories may include MEDIA-COPYING files which place

@@ -21,7 +21,7 @@
 ;;; Preamble
 
 (defpackage :builder 
-    (:use :ioforms :common-lisp))
+    (:use :blocky :common-lisp))
   
 (in-package :builder)
 

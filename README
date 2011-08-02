@@ -1,7 +1,8 @@
-This is the README file for the IOFORMS source code repository.
-IOFORMS is a game engine and visual game development tool.  See the
-included file INSTALL for installation and development instructions.
-The included file "COPYING" contains licensing information.
+BLOCKY is a Lisp-based visual programming language. See the included
+file INSTALL for installation and development instructions.  The
+included file "COPYING" contains licensing information.
+
+dto@ioforms.org
 
 
 

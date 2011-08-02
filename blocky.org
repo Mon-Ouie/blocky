@@ -1,27 +1,27 @@
 # Lines beginning with a "#" sign are comments.
 # Special comments begin with "#+" and are used to control Org settings.
-#+title: IOFORMS
+#+title: BLOCKY
 #+author: David T. O'Toole 
 #+email: dto1138@gmail.com
 
 * Overview
 
-IOFORMS is a visual game programming language suitable for making
+BLOCKY is a visual game programming language suitable for making
 games and other interactive media. With the mouse and keyboard (or
 touchscreen) the user connects color coded blocks to create
 event-driven programs in the style of [[http://scratch.mit.edu][MIT Scratch]]. Full extensibility
 is provided with Common Lisp for defining new blocks and
-extending the engine's base capabilities. IOFORMS projects can be
+extending the engine's base capabilities. BLOCKY projects can be
 saved, compressed, and published on the internet as standalone files;
-the IOFORMS player is available on Windows, Mac OSX, and
+the BLOCKY player is available on Windows, Mac OSX, and
 GNU/Linux. (Applications may also embed the GPL-licensed player.)
 
-IOFORMS can take advantage of [[http://www.gnu.org/software/emacs][GNU Emacs]] if you have it installed. It
+BLOCKY can take advantage of [[http://www.gnu.org/software/emacs][GNU Emacs]] if you have it installed. It
 delegates content processing to external [[http://lispgames.ath.cx/index.php/UsefulApplications][applications]] like the GIMP,
-Pure Data, ImageMagick, FFMPEG, SBCL, and so on. IOFORMS uses [[http://en.wikipedia.org/wiki/Digital_asset_management][Digital
+Pure Data, ImageMagick, FFMPEG, SBCL, and so on. BLOCKY uses [[http://en.wikipedia.org/wiki/Digital_asset_management][Digital
 Asset Management]] (DAM) techniques to tag, annotate, store, and search
 a project's various text and binary files (code, images, sounds) as
-well as metadata describing the files. Because IOFORMS knows what
+well as metadata describing the files. Because BLOCKY knows what
 applications are available to edit and process data of various
 formats, the user can forget about organizing hundreds of files and
 instead launch their favorite editors from a hierarchical [[http://orgmode.org][org-mode]]
