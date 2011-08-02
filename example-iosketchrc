@@ -1,8 +1,0 @@
-;; -*- Mode: lisp -*-
-
-(setf iosketch:*module-directories* '(#P"/home/dto/iosketch/" #P"/home/dto/mods/"))
-(setf iosketch:*user-keyboard-layout* :qwerty)
-(setf iosketch:*use-sound* t)
-(setf iosketch:*message-logging* t)
-;; fullscreen is a pain if the game hangs
-(setf iosketch:*fullscreen* nil)
