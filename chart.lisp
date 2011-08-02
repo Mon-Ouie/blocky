@@ -119,7 +119,7 @@
 
 (defvar *engine* nil "Dance engine sound generator.")
 
-;; (define-prototype dance-frame (:parent ioforms:=split=))
+;; (define-prototype dance-frame (:parent blocky:=split=))
 
 ;; (defparameter *qwerty-keybindings*
 ;;   '(;; arrow key cursor movement
@@ -236,13 +236,13 @@
   (/off self))
 
 ;; (defun dance ()
-;;   (ioforms:message "Initializing DANCE...")
-;;   (setf ioforms:*window-title* "DANCE")
+;;   (blocky:message "Initializing DANCE...")
+;;   (setf blocky:*window-title* "DANCE")
 ;;   (clon:initialize)
-;;   (setf ioforms:*dt* 20) ;; 20 millisecond timestep
-;;   (setf ioforms:*resizable* t) ;; We want the game window to be resizable.
-;;   (ioforms:set-screen-height *window-height*)
-;;   (ioforms:set-screen-width *window-width*)
+;;   (setf blocky:*dt* 20) ;; 20 millisecond timestep
+;;   (setf blocky:*resizable* t) ;; We want the game window to be resizable.
+;;   (blocky:set-screen-height *window-height*)
+;;   (blocky:set-screen-width *window-width*)
 ;;   (let* ((prompt (clone =dance-prompt=))
 ;; 	 (help (clone =help-textbox=))
 ;; 	 (help-prompt (clone =help-prompt=))
@@ -294,7 +294,7 @@
 ;; 	       (/install-keybindings engine)
 ;; 	       (/move quickhelp :y (- *screen-height* *quickhelp-height* *pager-height*) :x (- *screen-width* *quickhelp-width* *quickhelp-spacer*))
 ;; 	       (/auto-position *pager*)))
-;;       (add-hook 'ioforms:*resize-hook* #'resize-widgets))
+;;       (add-hook 'blocky:*resize-hook* #'resize-widgets))
 ;;     ;;
 ;;     (/resize prompt :height *prompt-height* :width *screen-width*)
 ;;     (/move prompt :x 0 :y 0)
@@ -329,7 +329,7 @@
 ;;     (/set-prompt form2 prompt)
 ;;     (/set-narrator form2 terminal)
 ;;     ;;
-;;     (ioforms:halt-music 1000)
+;;     (blocky:halt-music 1000)
 ;;     ;;
 ;;     ;; (/resize help :height 540 :width 800) 
 ;;     ;; (/move help :x 0 :y 0)
@@ -370,11 +370,11 @@
 ;;     (/add-page *pager* :chart (list prompt stack frame terminal status quickhelp))
 ;;     (/add-page *pager* :help (list help-prompt help))
 ;;     (/select *pager* :chart)
-;;     (ioforms:reset-joystick)
-;;     (ioforms:enable-classic-key-repeat 100 100)
+;;     (blocky:reset-joystick)
+;;     (blocky:enable-classic-key-repeat 100 100)
 ;;     (/focus-left *frame*)
 ;;     (/label-view (/left-form *frame*))
-;;     (run-hook 'ioforms:*resize-hook*)
+;;     (run-hook 'blocky:*resize-hook*)
 ;; ;;    (play-music "electron")
 ;; ;;    (register-voice-mixer)
 ;; ))
@@ -399,7 +399,7 @@
 
 ;; (defvar *commander* nil)
 
-;; (define-prototype commander (:parent ioforms:=formatter=)
+;; (define-prototype commander (:parent blocky:=formatter=)
 ;;   (display-current-line :initform t))
 
 ;; (define-method insert commander (arrow)
@@ -549,7 +549,7 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 
 ;; see also widgets.lisp
 
-(define-prototype dance-prompt (:parent ioforms:=prompt=))
+(define-prototype dance-prompt (:parent blocky:=prompt=))
 
 (define-method say dance-prompt (&rest args)
   (apply #'send nil :say *terminal* args))

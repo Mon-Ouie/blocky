@@ -1,4 +1,4 @@
-;;; example2.lisp --- a basic ioforms example
+;;; example2.lisp --- a basic blocky example
 
 ;; Copyright (C) 2010, 2011  David O'Toole
 
@@ -24,10 +24,10 @@
 ;; languages) with `defpackage' and then enter it with `in-package'.
 
 ;; The `:use' declaration shows that we will be importing names from
-;; IOFORMS and from the base Common Lisp package.
+;; BLOCKY and from the base Common Lisp package.
 
 (defpackage :example2 
-    (:use :ioforms :common-lisp))
+    (:use :blocky :common-lisp))
   
 (in-package :example2)
 

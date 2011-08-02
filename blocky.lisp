@@ -1,4 +1,4 @@
-;;; ioforms.lisp --- a free game engine for common lisp
+;;; blocky.lisp --- a free game engine for common lisp
                
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
@@ -30,7 +30,7 @@
 
 ;;; Code:
 
-(defpackage :ioforms
+(defpackage :blocky
     (:documentation "Visual Common Lisp.")
   (:use :common-lisp) 
   (:export *default-frame-width* *default-frame-height* null-block
@@ -59,7 +59,7 @@ find-resource-property compose-blank-fields font-width font-height
 transform-field-reference defblock *screen-height*
 formatted-line-width *last-event* formatted-line-height
 formatted-string-height formatted-string-width get-color create-image
-draw-image ioforms edit define-prototype has-field *target*
+draw-image blocky edit define-prototype has-field *target*
 with-target defcell defworld *choose-direction-menu* set-field-options
 field-option-value index-resource find-project-path index-project
 load-image-resource load-lisp-resource *executable* *function-buttons*
@@ -148,7 +148,7 @@ define-prototype new object-p self percent-gray percent-grey
 *indicators* find-indicator-texture draw-indicator font-text-width
 transform-declaration-field-descriptor is-a compose-blank-fields
 make-field-initializer initialize initialize-prototypes
-initialize-ioforms object-address-string draw-string make-tree
+initialize-blocky object-address-string draw-string make-tree
 draw-string-blended make-menu find-text-image make-text-image
 *default-super* clear-text-image-cache *token-types* verify
 toggle-debug *debug-on-error* *block-categories* *block-colors* input

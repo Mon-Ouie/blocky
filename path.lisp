@@ -1,4 +1,4 @@
-;;; path.lisp --- A* pathfinding for IOFORMS
+;;; path.lisp --- A* pathfinding for BLOCKY
 
 ;; Copyright (C) 2009, 2011  David O'Toole
 
@@ -27,7 +27,7 @@
 
 ;;; Code:
 
-(in-package :ioforms)
+(in-package :blocky)
 
 (defstruct path
   world ;; Pointer to associated world. 

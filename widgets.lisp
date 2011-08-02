@@ -20,7 +20,7 @@
 
 ;;; Code:
 
-(in-package :ioforms)
+(in-package :blocky)
 
 (defvar *lowercase-alpha-characters* "abcdefghijklmnopqrstuvwxyz")
 (defvar *uppercase-alpha-characters* "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -140,7 +140,7 @@ Example: (printf my-formatter \"hello\" :foreground \"red\")"
 
 (define-method println formatter (&rest args)
   "Print the ARGS as a formatted string, following up with a newline."
-  (apply #'ioforms:send self :print self args)
+  (apply #'blocky:send self :print self args)
   (newline self))
 
 (define-method insert-space formatter ()
@@ -225,7 +225,7 @@ auto-updated displays."
 
 (defparameter *textbox-minimum-width* 80) 
 
-(define-prototype textbox (:parent "IOFORMS:BLOCK")
+(define-prototype textbox (:parent "BLOCKY:BLOCK")
   (font :initform *block-font*)
   (buffer :initform nil)
   (category :initform :comment)
@@ -521,7 +521,7 @@ text INSERTION to be inserted at point."
 
 ;;; The pager switches between different visible groups of blocks
 
-(define-prototype pager (:parent "IOFORMS:BLOCK")
+(define-prototype pager (:parent "BLOCKY:BLOCK")
   (pages :initform nil)
   (current-page :initform nil
 		:documentation "Keyword name of current page.")
@@ -578,11 +578,11 @@ text INSERTION to be inserted at point."
 	      (enable-held-keys)
 	      (disable-held-keys))
 	  ;; insert self always as first block
-	  (apply #'ioforms:install-blocks self (cdr (assoc newpage %pages)))))))
+	  (apply #'blocky:install-blocks self (cdr (assoc newpage %pages)))))))
 
-(define-method auto-position pager (&key (width ioforms:*screen-width*))
+(define-method auto-position pager (&key (width blocky:*screen-width*))
   (resize self :width width :height %pager-height)
-  (move self :x 0 :y (- ioforms:*screen-height* %pager-height)))
+  (move self :x 0 :y (- blocky:*screen-height* %pager-height)))
 
 (define-method add-page pager (keyword blocks &rest properties)
   (assert (listp blocks))
@@ -622,7 +622,7 @@ text INSERTION to be inserted at point."
 
 ;;; Splitscreen view on 2 blocks with focus border
 
-(define-prototype split (:parent "IOFORMS:BLOCK")
+(define-prototype split (:parent "BLOCKY:BLOCK")
   (active-color :initform "red")
   (inactive-color :initform "blue")
   (focus :initform 0)

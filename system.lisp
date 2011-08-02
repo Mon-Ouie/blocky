@@ -22,7 +22,7 @@
 
 ;;; Code:
 
-(in-package :ioforms)
+(in-package :blocky)
 
 (defvar *system* nil)
 
@@ -39,7 +39,7 @@
       (:label "Publish to community cloud" :action :publish-community)
       (:label "Publish to FTP" :action :publish-ftp)
       (:label "Edit preferences" :action :edit-preferences)
-      (:label "Quit IOFORMS" :action :quit-ioforms)))
+      (:label "Quit BLOCKY" :action :quit-blocky)))
     (:label "Edit"
      :subtree
      ((:label "Cut" :action :cut)
@@ -126,9 +126,9 @@
 (define-method ticks system ()
   (get-ticks))
 
-(define-method quit-ioforms system ()
+(define-method quit-blocky system ()
   ;; TODO destroy textures
-  (ioforms:quit t))
+  (blocky:quit t))
 
 
 
@@ -161,7 +161,7 @@
   ;; 		     :width *screen-width* 
   ;; 		     :height *screen-height*)))
   ;;   (add-hook '*resize-hook* #'do-resize))
-  ;; (ioforms:install-blocks self))
+  ;; (blocky:install-blocks self))
 
 ;; (define-method new system (project)
 ;;   (assert (stringp project))

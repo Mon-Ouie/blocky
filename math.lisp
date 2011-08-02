@@ -22,7 +22,7 @@
 
 ;;; Code:
 
-(in-package :ioforms)
+(in-package :blocky)
 
 ;;; Probability
 

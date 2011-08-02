@@ -19,7 +19,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :ioforms)
+(in-package :blocky)
 
 ;;; Trees
 
@@ -35,7 +35,7 @@
 (defun depth-gray (depth)
   (percent-gray (+ *depth-gray-base* (* depth *depth-gray-slope*))))
 
-(define-prototype tree (:parent "IOFORMS:LIST")
+(define-prototype tree (:parent "BLOCKY:LIST")
   (category :initform :structure)
   (is-tree :initform t)
   (indentation-width :initform (dash 2))
@@ -99,7 +99,7 @@
     (let ((ellipsis (concatenate 'string label *null-display-string*)))
       (if action
 	  (etypecase action
-	    (ioforms:object ellipsis)
+	    (blocky:object ellipsis)
 	    ((or keyword function) label))
 	  (if top-level label ellipsis)))))
 
@@ -216,7 +216,7 @@
 	  (draw-unexpanded self label)))))
 
 ;; see system.lisp for example tree menu
-(defun make-tree (items &key target (tree-prototype "IOFORMS:TREE"))
+(defun make-tree (items &key target (tree-prototype "BLOCKY:TREE"))
   (labels ((xform (item)
 	     (if (listp item)
 		 (if (listp (first item))
@@ -228,7 +228,7 @@
     (xform items)))
 
 (defun make-menu (items &key target)
-  (make-tree items :target target :tree-prototype "IOFORMS:MENU"))
+  (make-tree items :target target :tree-prototype "BLOCKY:MENU"))
 
 ;;; Menus
 

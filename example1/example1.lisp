@@ -1,4 +1,4 @@
-;;; example1.lisp --- a basic ioforms example
+;;; example1.lisp --- a basic blocky example
 
 ;; Copyright (C) 2010, 2011  David O'Toole
 
@@ -24,10 +24,10 @@
 ;; languages) with `defpackage' and then enter it with `in-package'.
 
 ;; The `:use' declaration shows that we will be importing names from
-;; IOFORMS and from the base Common Lisp package.
+;; BLOCKY and from the base Common Lisp package.
 
 (defpackage :example1 
-    (:use :ioforms :common-lisp))
+    (:use :blocky :common-lisp))
   
 (in-package :example1)
 
@@ -63,12 +63,12 @@
 (defworld hello :background "message")
 
 ;; Now we define the code that runs when your game starts. We define
-;; it as a function (using `defun') to be called later by IOFORMS.
+;; it as a function (using `defun') to be called later by BLOCKY.
 
-;; (What happens is that IOFORMS loads this file before initializing
+;; (What happens is that BLOCKY loads this file before initializing
 ;; the system, which allows you to set system variables like
 ;; `*screen-height*' and `*screen-width*' before the window actually
-;; opens. Once IOFORMS is fully initialized according to the
+;; opens. Once BLOCKY is fully initialized according to the
 ;; parameters you set, it will look for a function with the same name
 ;; as the module---in this case `example1'---and execute it, which
 ;; hands control back to you.

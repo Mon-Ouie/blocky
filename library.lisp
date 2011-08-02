@@ -1,4 +1,4 @@
-;;; library.lisp --- standard blocks library for ioforms
+;;; library.lisp --- standard blocks library for blocky
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -20,7 +20,7 @@
 
 ;;; Code:
 
-(in-package :ioforms)
+(in-package :blocky)
 
 (defblock sprite-id :sprite-uuid nil :category :structure)
 
@@ -59,7 +59,7 @@
 
 ;; ;;; Sending to an ID
 
-;; (define-prototype send (:parent "IOFORMS:LIST")
+;; (define-prototype send (:parent "BLOCKY:LIST")
 ;;   (category :initform :message)
 ;;   (schema :initform  '((:target :block)
 ;; 		       (:body :list))))

@@ -2,17 +2,17 @@
 
 ;; ASDF Manual: http://constantly.at/lisp/asdf/
 
-(defpackage :ioforms-asd)
+(defpackage :blocky-asd)
 
-(in-package :ioforms-asd)
+(in-package :blocky-asd)
 
-(asdf:defsystem ioforms
-  :name "ioforms"
+(asdf:defsystem blocky
+  :name "blocky"
   :version "0.91"
   :maintainer "David T O'Toole <dto1138@gmail.com>"
   :author "David T O'Toole <dto1138@gmail.com>"
   :license "General Public License (GPL) Version 3"
-  :description "IOFORMS is a visual programming language for Common Lisp."
+  :description "BLOCKY is a visual programming language for Common Lisp."
   :serial t
   :depends-on (:lispbuilder-sdl 
 	       :lispbuilder-sdl-image 
@@ -24,12 +24,12 @@
 	       :buildapp
 	       :cl-fad
 	       :cl-opengl)
-  :components ((:file "ioforms")
-	       (:file "rgb" :depends-on ("ioforms"))
-	       (:file "keys" :depends-on ("ioforms"))
-	       (:file "math" :depends-on ("ioforms"))
-	       (:file "logic" :depends-on ("ioforms"))
-	       (:file "prototypes" :depends-on ("ioforms"))
+  :components ((:file "blocky")
+	       (:file "rgb" :depends-on ("blocky"))
+	       (:file "keys" :depends-on ("blocky"))
+	       (:file "math" :depends-on ("blocky"))
+	       (:file "logic" :depends-on ("blocky"))
+	       (:file "prototypes" :depends-on ("blocky"))
 	       (:file "console" :depends-on ("prototypes"))
 	       (:file "blocks" :depends-on ("console"))
 	       (:file "widgets" :depends-on ("blocks"))

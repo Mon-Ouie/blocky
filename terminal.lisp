@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :ioforms)
+(in-package :blocky)
 
 ;;; Command prompt block
 
@@ -446,7 +446,7 @@
 
 ;;; General-purpose data entry block based on the prompt block.
 
-(define-prototype entry (:parent "IOFORMS:PROMPT")
+(define-prototype entry (:parent "BLOCKY:PROMPT")
   (category :initform :value)
   (pinned :initform t)
   (text-color :initform *default-entry-text-color*)
@@ -561,7 +561,7 @@
 ;;; Easily defining new entry blocks
 
 (defmacro defentry (name type-specifier value)
-  `(define-prototype ,name (:parent "IOFORMS:ENTRY")
+  `(define-prototype ,name (:parent "BLOCKY:ENTRY")
      (type-specifier :initform ',type-specifier)
      (value :initform ,value)))
 
@@ -639,7 +639,7 @@
 
 ;;; Bottom-of-the-screen emacs-style command line
 
-(define-prototype terminal (:parent "IOFORMS:LISTENER")
+(define-prototype terminal (:parent "BLOCKY:LISTENER")
   (scrollback-length :initform 100)
   (pinned :initform t)
   (category :initform :menu)

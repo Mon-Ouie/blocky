@@ -1,4 +1,4 @@
-(in-package :ioforms)
+(in-package :blocky)
 
 (define-prototype aaa () a b c)
 (define-method foo aaa ()
@@ -33,11 +33,11 @@
 (defparameter *bbb* (new bbb))
 (defparameter *ccc* (new ccc))
 
-;; foo: *ccc* -> IOFORMS:CCC -> IOFORMS:BBB* -> IOFORMS:AAA* 
-;; baz: *ccc* -> IOFORMS:CCC -> IOFORMS:BBB -> IOFORMS:AAA*
+;; foo: *ccc* -> BLOCKY:CCC -> BLOCKY:BBB* -> BLOCKY:AAA* 
+;; baz: *ccc* -> BLOCKY:CCC -> BLOCKY:BBB -> BLOCKY:AAA*
 
-;; qux: *ccc* -> IOFORMS:CCC* -> IOFORMS:BBB* -> IOFORMS:AAA*
-;; bar: *ccc* -> IOFORMS:CCC* -> IOFORMS:BBB -> IOFORMS:AAA*
+;; qux: *ccc* -> BLOCKY:CCC* -> BLOCKY:BBB* -> BLOCKY:AAA*
+;; bar: *ccc* -> BLOCKY:CCC* -> BLOCKY:BBB -> BLOCKY:AAA*
 
 (foo *aaa*)
 (foo *bbb*)

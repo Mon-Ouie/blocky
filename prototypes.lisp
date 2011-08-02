@@ -40,13 +40,13 @@
   
 ;;; Code: 
 
-(in-package :ioforms)
+(in-package :blocky)
 
 (defvar *copyright-notice*
-"Welcome to IOFORMS.
+"Welcome to BLOCKY.
 Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 by David T O'Toole
 <dto@gnu.org> <dto1138@gmail.com>
-http://ioforms.org/
+http://blocky.org/
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-On some platforms, IOFORMS includes libSDL 1.2 (Simple Direct Media
+On some platforms, BLOCKY includes libSDL 1.2 (Simple Direct Media
 Layer), which is provided under the terms of the GNU Lesser General
 Public License. See also the file LIBSDL-LICENSE for details.
 
@@ -335,7 +335,7 @@ extended argument list ARGLIST."
     (if (null thing)
 	(error "Cannot make a prototype ID for nil.")
 	(etypecase thing
-	  (ioforms:object (object-name thing))
+	  (blocky:object (object-name thing))
 	  (string 
 	   (apply #'concatenate 'string 
 		  (if (search delimiter thing)
@@ -350,7 +350,7 @@ extended argument list ARGLIST."
 	       (let ((proto (find-prototype name :noerror)))
 		 (if proto name
 		     (if create name
-			 (concatenate 'string "IOFORMS" delimiter (symbol-name thing))))))))))))
+			 (concatenate 'string "BLOCKY" delimiter (symbol-name thing))))))))))))
 		  
 
 		      ;; 	   ;; is there a built-in prototype with this
@@ -358,7 +358,7 @@ extended argument list ARGLIST."
 		      ;; (list 
 		      ;;  (if (find-prototype project-candidate :noerror)
 		      ;; 	   project-candidate
-		      ;; 	   (concatenate 'string "IOFORMS:" 
+		      ;; 	   (concatenate 'string "BLOCKY:" 
 		      ;; 			      (symbol-name thing))))))))))))
 
 
@@ -398,7 +398,7 @@ extended argument list ARGLIST."
 
 ;; An object's field collection is either a hash table or plist. The
 ;; function `field-value' implements the chaining field lookups that
-;; make behavior inheritance work in IOFORMS.
+;; make behavior inheritance work in BLOCKY.
 
 ;; If a field value is not present in a given object's field
 ;; collection, the object's parent is also checked for a value, and
@@ -608,7 +608,7 @@ upon binding."
 ;; and obtaining a return value.  
 
 ;; When a message cannot be delivered because no corresponding
-;; function was found, IOFORMS attempts to re-send the message via the
+;; function was found, BLOCKY attempts to re-send the message via the
 ;; object's `forward' method (if any).
 
 ;; An object's `forward' method should accept the method-key as the
@@ -1110,9 +1110,9 @@ evaluated, then any applicable initializer is triggered."
 ;;; Serialization support
 
 ;; The functions SERIALIZE and DESERIALIZE convert
-;; (almost abitrary) trees of Lisp objects (including IOFORMS objects)
+;; (almost abitrary) trees of Lisp objects (including BLOCKY objects)
 ;; into printable S-expressions for storing as plain text, and from
-;; this printed representation back into living IOFORMS objects.
+;; this printed representation back into living BLOCKY objects.
 
 ;; The method names :BEFORE-SERIALIZE and :AFTER-DESERIALIZE are
 ;; reserved for serialization use. :BEFORE-SERIALIZE, if such a method
@@ -1130,7 +1130,7 @@ evaluated, then any applicable initializer is triggered."
 
 (defun serialize (object)
   "Convert a Lisp object a print-ready S-expression.
-Invokes :BEFORE-SERIALIZE on IOFORMS objects whenever present. Any fields
+Invokes :BEFORE-SERIALIZE on BLOCKY objects whenever present. Any fields
 named in the list %EXCLUDED-FIELDS of said object will be ignored."
   ;; use labels here so we can call #'serialize
   (labels ((hash-to-list (hash)
@@ -1173,11 +1173,11 @@ named in the list %EXCLUDED-FIELDS of said object will be ignored."
       (otherwise object))))
 
 (defun deserialize (data)
-  "Reconstruct Lisp objects (including IOFORMS-derived objects) from an
-S-expression made by SERIALIZE. Invokes :AFTER-DESERIALIZE on IOFORMS
+  "Reconstruct Lisp objects (including BLOCKY-derived objects) from an
+S-expression made by SERIALIZE. Invokes :AFTER-DESERIALIZE on BLOCKY
 objects after reconstruction, wherever present."
   (cond 
-    ;; handle IOFORMS objects
+    ;; handle BLOCKY objects
     ((and (listp data) (eq +object-type-key+ (first data)))
      (destructuring-bind (&key parent fields &allow-other-keys)
 	 (rest data)
@@ -1234,18 +1234,18 @@ objects after reconstruction, wherever present."
 	    (object-uuid object))))
 
 (defun install-iob-printer ()
-  (defmethod print-object ((foo ioforms:object) stream)
+  (defmethod print-object ((foo blocky:object) stream)
     (print-iob foo stream)))
 
 ;;; Brute force debugging
     
-(defun ioforms-trace-all ()
-  (do-external-symbols (sym (find-package :ioforms))
+(defun blocky-trace-all ()
+  (do-external-symbols (sym (find-package :blocky))
     (when (fboundp sym)
       (ignore-errors (eval `(trace ,sym))))))
 
-(defun ioforms-untrace-all ()
-  (do-external-symbols (sym (find-package :ioforms))
+(defun blocky-untrace-all ()
+  (do-external-symbols (sym (find-package :blocky))
     (when (fboundp sym)
       (ignore-errors (eval `(untrace ,sym))))))
 

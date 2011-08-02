@@ -20,7 +20,7 @@
 
 ;;; Code:
 
-(in-package :ioforms)
+(in-package :blocky)
 
 ;;; Trash can
 

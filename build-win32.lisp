@@ -3,9 +3,9 @@
 
 (require :asdf)
 
-(defvar *dll-pathname* #p"c:/Users/Sandy/ioforms/")
+(defvar *dll-pathname* #p"c:/Users/Sandy/blocky/")
 (defvar *game* "xiotank")
-(defvar *executable* #p"c:/Users/Sandy/ioforms/app.exe")
+(defvar *executable* #p"c:/Users/Sandy/blocky/app.exe")
 (defvar *base-pathname* (make-pathname :name nil :type nil :defaults *load-pathname*))
 
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/cffi_0.10.3/") asdf:*central-registry*)
@@ -20,18 +20,18 @@
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/lispbuilder/lispbuilder-sdl-gfx/") asdf:*central-registry*)
 
 (pushnew (translate-pathname *base-pathname* "**/" "**/clon/") asdf:*central-registry*)
-(pushnew (translate-pathname *base-pathname* "**/" "**/ioforms/") asdf:*central-registry*)
+(pushnew (translate-pathname *base-pathname* "**/" "**/blocky/") asdf:*central-registry*)
 
 (asdf:oos 'asdf:load-op :cffi)
 (require 'sb-posix)
 (sb-posix:chdir *dll-pathname*)
 ;;(setf *default-pathname-defaults* (make-pathname :directory '(:relative)))
-(asdf:oos 'asdf:load-op :ioforms)
+(asdf:oos 'asdf:load-op :blocky)
 (pop cffi:*foreign-library-directories*)
 
 (defun main ()
-  (setf ioforms:*module-directories* (list (make-pathname :directory '(:relative))))
-  (ioforms:play *game*)
+  (setf blocky:*module-directories* (list (make-pathname :directory '(:relative))))
+  (blocky:play *game*)
   0)
 
 (sb-ext:save-lisp-and-die *executable* :toplevel #'main :executable t)

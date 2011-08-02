@@ -20,7 +20,7 @@
 
 ;;; Code:
 
-(in-package :ioforms)
+(in-package :blocky)
 
 (defblock cell 
   (type :initform :cell)
@@ -39,7 +39,7 @@ Cells may be placed into categories that influence their processing by
 the engine. The field `%categories' is a set of keyword symbols; if a
 symbol `:foo' is in the list, then the cell is in the category `:foo'.
 
-Although a game built on IOFORMS can define whatever categories are
+Although a game built on BLOCKY can define whatever categories are
 needed, certain base categories are built-in and have a fixed
 interpretation:
 
@@ -106,7 +106,7 @@ interpretation:
   "Define a cell named NAME, with the fields ARGS as in a normal
 prototype declaration. This is a convenience macro for defining new
 cells."
-  `(define-prototype ,name (:parent "IOFORMS:CELL")
+  `(define-prototype ,name (:parent "BLOCKY:CELL")
      ,@args))
 
 ;;; Cell death
@@ -176,7 +176,7 @@ cells."
 ;; Convenience macro for defining sprites
 
 (defmacro defsprite (name &body args)
-  `(define-prototype ,name (:parent "IOFORMS:SPRITE")
+  `(define-prototype ,name (:parent "BLOCKY:SPRITE")
      ,@args))
 
 (defun is-sprite (ob)
@@ -260,7 +260,7 @@ cells."
   (assert (member direction *compass-directions*))
   (with-field-values (x y) self
     (multiple-value-bind (y0 x0) 
-	(ioforms:step-in-direction y x direction distance)
+	(blocky:step-in-direction y x direction distance)
       ;; TODO if collision
       (move-to self x0 y0))))
 
@@ -369,7 +369,7 @@ cells."
 ;;; Temporary text balloons
 
 (defun seconds->frames (seconds)
-  (truncate (* seconds ioforms:*frame-rate*)))
+  (truncate (* seconds blocky:*frame-rate*)))
 
 (defsprite balloon 
   :text "..."
@@ -390,7 +390,7 @@ cells."
   (with-fields (x y clock text) self
     (decf clock)
     (if (plusp clock)
-	(ioforms:draw-string text x y :font %font :color "black")
+	(blocky:draw-string text x y :font %font :color "black")
 	(remove-sprite *world* self))))
 
 

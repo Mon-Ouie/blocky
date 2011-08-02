@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see %http://www.gnu.org/licenses/
 
-(in-package :ioforms)
+(in-package :blocky)
 
 (defparameter *default-grid-size* 64)
 
@@ -312,7 +312,7 @@ The cells' :destroy method is invoked."
   (concatenate 'string (get-some-object-name world) "-" (format nil "~S" (genseq))))
 
 (defun create-blank-world (&key grid-height grid-width name)
-  (let ((world (clone "IOFORMS:WORLD" :grid-height grid-height :grid-width grid-width)))
+  (let ((world (clone "BLOCKY:WORLD" :grid-height grid-height :grid-width grid-width)))
     (prog1 world
       (setf (field-value :name world)
 	    (or name (generate-world-name world))))))
@@ -392,7 +392,7 @@ The cells' :destroy method is invoked."
 PARAMETERS and interpreting the world's grammar field %GRAMMAR."
   (declare (ignore parameters))
   (with-fields (grammar stack) self
-;    (setf ioforms:*grammar* grammar)
+;    (setf blocky:*grammar* grammar)
     (let ((program (generate 'world)))
       (or program (message "WARNING: Nothing was generated from this grammar."))
       (message (prin1-to-string program))
@@ -1093,7 +1093,7 @@ PLAYER as the player."
       ;; it's a mission name
       (symbol (begin (symbol-value destination) (get-player *world*))))))
 	 
-(define-prototype launchpad (:parent "IOFORMS:GATEWAY")
+(define-prototype launchpad (:parent "BLOCKY:GATEWAY")
   (tile :initform "launchpad")
   (categories :initform '(:gateway :player-entry-point))
   (description :initform "Press RETURN here to exit this area."))
@@ -1110,7 +1110,7 @@ PLAYER as the player."
   "Define a world named NAME, with the fields ARGS as in a normal
 prototype declaration. This is a convenience macro for defining new
 worlds."
-  `(define-prototype ,name (:parent "IOFORMS:WORLD")
+  `(define-prototype ,name (:parent "BLOCKY:WORLD")
      ,@args))
 
 ;;; Missions and Goals
@@ -1213,7 +1213,7 @@ worlds."
 		 `(setf (gethash ,(make-keyword var-name) ,hash) (make-goal ,@goal-props)))))
       `(let ((,hash (make-hash-table)))
 	 (progn ,@(mapcar #'set-goal goals))
-	 (define-prototype ,name (:parent "IOFORMS:MISSION")
+	 (define-prototype ,name (:parent "BLOCKY:MISSION")
 	   (name :initform ,(make-keyword name))
 	   (description :initform ,description)
 	   (address :initform ,address)

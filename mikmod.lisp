@@ -25,7 +25,7 @@
 
 ;;; Code:
 
-(in-package :ioforms)
+(in-package :blocky)
 
 
 ;;; mikmod.lisp ends here

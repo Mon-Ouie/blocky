@@ -19,12 +19,12 @@
  
 ;;; Overview
 
-(in-package :ioforms)
+(in-package :blocky)
 
 ;;; Dance pad support
 
 ;;    The diagram below gives the standard dance pad layout for
-;;    IOFORMS. Many generic USB and/or game console compatible dance
+;;    BLOCKY. Many generic USB and/or game console compatible dance
 ;;    pads are marked this way. (Some pads are printed with "back"
 ;;    instead of "select").
 ;;
@@ -60,10 +60,10 @@
 (defparameter *dance-pad-symbols*
   (append *punctuation* *dance-arrows* *function-buttons*))
 
-;; Configure the IOFORMS engine so that it translates dance pad button presses
-;; into standard IOFORMS joystick events.
+;; Configure the BLOCKY engine so that it translates dance pad button presses
+;; into standard BLOCKY joystick events.
 
-(setf ioforms:*joystick-button-symbols* *dance-pad-symbols*)
+(setf blocky:*joystick-button-symbols* *dance-pad-symbols*)
 
 ;;; Representing dance moves as Lisp lists
 
@@ -173,7 +173,7 @@
 
 ;; TODO (defparameter *konami-ps3-pad-mapping* )
 
-(setf ioforms:*joystick-mapping* *hyperkin-adapter-mapping*)
+(setf blocky:*joystick-mapping* *hyperkin-adapter-mapping*)
 
 (defun get-button-index (arrow)
   (first (find arrow *joystick-mapping* :key #'cdr)))
@@ -227,7 +227,7 @@
   (float (/ +ticks-per-minute+ bpm)))
 
 (define-prototype tracker 
-  (:parent ioforms:=prompt= 
+  (:parent blocky:=prompt= 
    :documentation "A tracker object is the engine for Track mode.")
   (beats-per-minute :initform 110) 
   (row-remainder :initform 0.0)
@@ -247,7 +247,7 @@
       (apply #'bind-key-to-prompt-insertion self k)))
 
 (define-method quit tracker ()
-  (ioforms:quit))
+  (blocky:quit))
 
 (define-method select tracker ()
   (setf <start-time> nil)
@@ -417,6 +417,6 @@
 				      (when (string= *module* "dance")
 					(/visit *form* "FrontPage"))))
 
-(setf ioforms:*output-chunksize* 512)
+(setf blocky:*output-chunksize* 512)
 
 ;;; dance.lisp ends here

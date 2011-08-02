@@ -52,8 +52,8 @@
 ;; a block that sums its arguments could compile down into a call to
 ;; the #'+ function, and so on with things like LOOP and COND.
 
-;; For more information on the design of Ioforms, see
-;; http://ioforms.org/design.html
+;; For more information on the design of Blocky, see
+;; http://blocky.org/design.html
 
 ;; For more information on similar systems, see the following links:
 
@@ -64,7 +64,7 @@
 
 ;;; Code:
 
-(in-package :ioforms)
+(in-package :blocky)
 
 (defvar *script* nil)
 
@@ -75,7 +75,7 @@
 areas.")
 
 (defparameter *background-color* "white"
-  "The default background color of the IOFORMS user interface.")
+  "The default background color of the BLOCKY user interface.")
 
 (defparameter *socket-color* "gray80"
   "The default background color of block sockets.")
@@ -146,11 +146,11 @@ changed."
   (when *script*
     (invalidate-layout *script*)))
 
-;(defparameter *default-super* "IOFORMS:BLOCK")
+;(defparameter *default-super* "BLOCKY:BLOCK")
 
 (defmacro defblock (spec &body args)
   (let ((name0 nil)
-	(super0 "IOFORMS:BLOCK"))
+	(super0 "BLOCKY:BLOCK"))
     (etypecase spec
       (symbol (setf name0 spec))
       (list (destructuring-bind (name &key super) spec
@@ -202,7 +202,7 @@ By default, just update each child block."
   (assert (not (null input)))
   (with-fields (schema inputs) self
     (etypecase input
-      (ioforms:object (position input inputs :key #'find-object :test 'eq))
+      (blocky:object (position input inputs :key #'find-object :test 'eq))
       (string (position (find-object input) inputs :key #'find-object :test 'eq))
       (integer
        (if (< input (length inputs))
@@ -387,8 +387,8 @@ the return value of the function (if any)."
 			     head-type data-type))
 	 ;; see also terminal.lisp for more on data entry blocks
 	 (entry-prototype (cond 
-			    ((eq 'string type-specifier) "IOFORMS:TEXT-ENTRY")
-			    (t "IOFORMS:ENTRY"))))
+			    ((eq 'string type-specifier) "BLOCKY:TEXT-ENTRY")
+			    (t "BLOCKY:ENTRY"))))
 	(clone entry-prototype :value datum 
 			       :type-specifier type-specifier)))
 		    
@@ -413,13 +413,13 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 		       (make-prototype-id proto 
 					  ;; wait, is this wrong? wrong prototype?
 					  (or (make-block-package)
-					      (find-package "IOFORMS")))))
+					      (find-package "BLOCKY")))))
 		     (arg-blocks (mapcar #'make-block arguments)))
 		 ;; (message "arg-blocks ~S" (list (length arg-blocks)
 		 ;; 				(mapcar #'find-uuid arg-blocks)))
 		 (apply #'clone prototype arg-blocks))))
 	   (list-block (items)
-	     (apply #'clone "IOFORMS:LIST" (mapcar #'make-block items))))
+	     (apply #'clone "BLOCKY:LIST" (mapcar #'make-block items))))
     (cond ((is-null-block-spec sexp)
 	   (null-block))
 	  ((is-action-spec sexp)
@@ -702,7 +702,7 @@ blocks."
 
 (define-method draw-patch block (x0 y0 x1 y1
 				    &key depressed dark socket color)
-  "Draw a standard IOFORMS block notation patch.
+  "Draw a standard BLOCKY block notation patch.
 Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
 non-nil, draw an indentation; otherwise a raised area is drawn. If
 DARK is non-nil, paint a darker region. If SOCKET is non-nil, cut a hole
@@ -801,7 +801,7 @@ override all colors."
      (otherwise (format nil "~s" expression)))))
 
 (defun expression-width (expression &optional (font *block-font*))
-  (if (ioforms:object-p expression)
+  (if (blocky:object-p expression)
       *socket-width*
       (font-text-width (print-expression expression) font)))
 
@@ -917,7 +917,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
     (flet ((add-field (field value)
 	     (push (list field value) fields)))
       (typecase B
-	(ioforms:object 
+	(blocky:object 
 	 (let ((f2 (object-fields B)))
 	   (etypecase f2
 	     (hash-table (maphash #'add-field f2))

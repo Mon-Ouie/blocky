@@ -21,7 +21,7 @@
 ;;; Preamble
 
 (defpackage :example3 
-    (:use :ioforms :common-lisp))
+    (:use :blocky :common-lisp))
   
 (in-package :example3)
 

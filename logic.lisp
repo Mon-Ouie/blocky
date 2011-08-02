@@ -35,7 +35,7 @@
 
 ;; http://www.norvig.com/license.html
 
-(in-package :ioforms)
+(in-package :blocky)
 
 ;;; Grammars
 

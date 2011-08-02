@@ -1,4 +1,4 @@
-;;; console.lisp --- OS/device driver for IOFORMS
+;;; console.lisp --- OS/device driver for BLOCKY
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
@@ -22,14 +22,14 @@
 
 ;;; Commentary:
 
-;; The "console" is the library which provides all IOFORMS system
+;; The "console" is the library which provides all BLOCKY system
 ;; services. Primitive operations such as opening a window,
 ;; displaying bitmaps, drawing lines, playing sounds, file access, and
 ;; keyboard/mouse/joytstick input are handled here. 
 
 ;; Currently it uses the cross-platform SDL library (via
 ;; LISPBUILDER-SDL) as its device driver, and wraps the library for
-;; use by the rest of IOFORMS.
+;; use by the rest of BLOCKY.
 
 ;; http://lispbuilder.sourceforge.net/
 
@@ -37,7 +37,7 @@
 ;; for his excellent cl-opengl tutorials:
 ;; http://3bb.cc/tutorials/cl-opengl/
 
-(in-package :ioforms) 
+(in-package :blocky) 
 
 (defvar *builder-p* nil "This is set to non-nil when the Blocky.io Builder is being used.")
 
@@ -71,13 +71,13 @@ the object when the method is run.")
 ;; (see also keys.lisp for the symbol listing)
 
 (defun keyboard-id (key)
-  "Look up the SDL symbol corresponding to the IOFORMS symbol KEY. See keys.lisp."
+  "Look up the SDL symbol corresponding to the BLOCKY symbol KEY. See keys.lisp."
   (let* ((entry (find key *key-identifiers* :key #'first))
 	 (entry2 (find (second entry) *sdl-key-identifiers* :key #'second)))
     (first entry2)))
 
 (defun keyboard-mod (mod)
-  "Look up the SDL symbol corresponding to the IOFORMS symbol MOD. See keys.lisp."
+  "Look up the SDL symbol corresponding to the BLOCKY symbol MOD. See keys.lisp."
   (let* ((entry (find mod *key-modifiers* :key #'first))
 	 (entry2 (find (second entry) *sdl-key-modifiers* :key #'second)))
     (first entry2)))
@@ -222,7 +222,7 @@ Do not set this variable directly from a project; instead, call
 
 (defun install-blocks (&rest blocks)
   "User-level function for setting the active block set. Note that
-IOFORMS may override the current block set at any time for system menus
+BLOCKY may override the current block set at any time for system menus
 and the like."
   (setf *blocks* blocks))
 
@@ -254,7 +254,7 @@ and the like."
   "Enable key repeat on every frame when held. Arguments are ignored
 for backward-compatibility."
   (when args 
-    (message "Warning. DELAY and INTERVAL arguments to IOFORMS:ENABLE-HELD-KEYS are deprecated and ignored."))
+    (message "Warning. DELAY and INTERVAL arguments to BLOCKY:ENABLE-HELD-KEYS are deprecated and ignored."))
   (setf *key-table* (make-hash-table :test 'equal))
   (setf *held-keys* t))
 
@@ -319,7 +319,7 @@ equality with `equal' and used as hashtable keys.")
 (defun send-event (event)
   (if (null *event-handler-function*)
       (error "No event handler function installed. 
-Please set the variable ioforms:*event-handler-function*")
+Please set the variable blocky:*event-handler-function*")
       (funcall *event-handler-function* event)))
 
 (defun normalize-event (event)
@@ -330,7 +330,7 @@ Please set the variable ioforms:*event-handler-function*")
 	  (sort (remove-duplicates (delete nil (rest event)))
 		#'string< :key #'symbol-name))))
 
-;;; Translating SDL input events into IOFORMS event lists
+;;; Translating SDL input events into BLOCKY event lists
 
 (defvar *joystick-button-symbols*
   '(:a :b :x :y ;; face buttons
@@ -697,7 +697,7 @@ becomes larger.")
 
 (defparameter *resize-hook* nil)
 
-;;; The main loop of IOFORMS
+;;; The main loop of BLOCKY
 
 (defvar *after-startup-hook* nil)
 
@@ -707,7 +707,7 @@ becomes larger.")
 
 (defvar *fullscreen* nil "When non-nil, attempt to use fullscreen mode.")
 
-(defvar *window-title* "ioforms")
+(defvar *window-title* "blocky")
 
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
@@ -823,13 +823,13 @@ display."
 	       (gl:flush)
 	       (sdl:update-display))))))
 
-;;; The IOFORMS.INI user configuration file
+;;; The BLOCKY.INI user configuration file
 
-(defparameter *user-init-file-name* "ioforms.ini")
+(defparameter *user-init-file-name* "blocky.ini")
 
 (defun load-user-init-file ()
   (let ((file (merge-pathnames (make-pathname :name *user-init-file-name*)
-			       (ioforms-directory))))
+			       (blocky-directory))))
     (when (cl-fad:file-exists-p file)
       (load file))))
 
@@ -997,13 +997,13 @@ This is where all saved objects are stored.")
   (or *project-package-name* 
       (when project-name 
 	(make-keyword project-name))
-      :ioforms))
+      :blocky))
 
 (defun make-directory-maybe (directory)
   (ensure-directories-exist (make-pathname :name "NAME" :type "TYPE"
 					   :defaults directory)))
 
-(defun ioforms-directory ()
+(defun blocky-directory ()
   (if *executable*
       (make-pathname :directory 
 		     (pathname-directory 
@@ -1021,21 +1021,21 @@ This is where all saved objects are stored.")
 
 (defun projects-directory ()
   (make-pathname :name *projects-directory-name* 
-		 :defaults (ioforms-directory)))
+		 :defaults (blocky-directory)))
 
 (defun default-project-directories () 
   (let ((projects (projects-directory)))
     (make-directory-maybe projects)
-    (list (ioforms-directory) projects)))
+    (list (blocky-directory) projects)))
 
 (defvar *project-directories* nil
-  "List of directories where IOFORMS will search for projects.
+  "List of directories where BLOCKY will search for projects.
 Directories are searched in list order.")
 
 (defun search-project-path (project-name)
   "Search the `*project-directories*' path for a directory with the
 name PROJECT-NAME. Returns the pathname if found, otherwise nil."
-  (let ((dirs (cons (asdf:system-relative-pathname 'ioforms "") *project-directories*)))
+  (let ((dirs (cons (asdf:system-relative-pathname 'blocky "") *project-directories*)))
     (assert (stringp project-name))
     (message "Probing directories ~S..." dirs)
     (or 
@@ -1046,7 +1046,7 @@ name PROJECT-NAME. Returns the pathname if found, otherwise nil."
 					      (list project-name))
 			    :defaults dir))
        when path return path)
-     (error "Cannot find project ~s in paths ~S. Try checking the project name, or your *PROJECT-DIRECTORIES* settings in the IOFORMS.INI configuration file."
+     (error "Cannot find project ~s in paths ~S. Try checking the project name, or your *PROJECT-DIRECTORIES* settings in the BLOCKY.INI configuration file."
 	    project-name dirs))))
 
 (defun expand-file-name (resource)
@@ -1135,10 +1135,10 @@ object save directory. See also `save-object-resource')."
   (buildapp::main (list "sbcl"
 			"--asdf-path"
 			(sb-ext:native-namestring
-			 (asdf:system-relative-pathname :ioforms "./"))
-		       "--load-system" "ioforms"
+			 (asdf:system-relative-pathname :blocky "./"))
+		       "--load-system" "blocky"
 		       "--eval" (format nil 
-					"(progn (map nil #'ql:quickload (list :lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad :buildapp :uuid)) (ioforms:play \"~A\"))" project)
+					"(progn (map nil #'ql:quickload (list :lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad :buildapp :uuid)) (blocky:play \"~A\"))" project)
 		       "--output" (sb-ext:native-namestring (merge-pathnames output-file)))))
 
 (defun directory-is-project-p (dir)
@@ -1208,7 +1208,7 @@ table."
 ;; again. Each page is stored in one IOF file, containing a single
 ;; resource with the serialized data stored in the :DATA field of the
 ;; resource record. Page-names are resource-names, and therefore must
-;; be unique within a given IOFORMS project. A page's IOF file is
+;; be unique within a given BLOCKY project. A page's IOF file is
 ;; stored in {PROJECTNAME}/{PAGENAME}.iof, and for a given project
 ;; these IOFs will all be included by
 ;; {PROJECTNAME}/{PROJECTNAME}-OBJECT-INDEX.IOF, which is an
@@ -1842,15 +1842,15 @@ of the music."
 
 ;;; Creating and displaying images
 
-;; The "driver dependent objects" for IOFORMS images are just SDL:SURFACE
-;; objects. (The situation is the same for IOFORMS colors, fonts, and so
+;; The "driver dependent objects" for BLOCKY images are just SDL:SURFACE
+;; objects. (The situation is the same for BLOCKY colors, fonts, and so
 ;; on). So long as the clients treat the driver-dependent resource
 ;; objects as opaque, this thin wrapper is sufficient.
 
 ;; Below are some image handling functions.
 
 (defun create-image (width height)
-  "Create a new IOFORMS image of size (* WIDTH HEIGHT)."
+  "Create a new BLOCKY image of size (* WIDTH HEIGHT)."
   (assert (and (integerp width) (integerp height)))
   (sdl:create-surface width height))
 
@@ -2138,9 +2138,9 @@ of the music."
 
 (defun play (&optional project)
   #+linux (do-cffi-loading)
-  (message "Starting IOFORMS...")
+  (message "Starting BLOCKY...")
   (print-copyright-notice)
-  (initialize-ioforms)
+  (initialize-blocky)
   (let ((proj (or project *project*)))
     (when (null proj)
       (error "No current project. You must provide an argument naming the project."))
@@ -2157,12 +2157,12 @@ of the music."
 ;;   (play project)
 ;;   (load-project 
 
-(defun initialize-ioforms ()
+(defun initialize-blocky ()
   (sdl:init-sdl :video t :audio t :joystick t)
   (setf *project-package-name* nil
         *project-directories* (default-project-directories)
 	*blocks* nil
-	*window-title* "ioforms"
+	*window-title* "blocky"
 	*updates* 0
 	*resizable* nil
 	*keyboard-update-number* 0
