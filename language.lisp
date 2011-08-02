@@ -1,4 +1,4 @@
-;;; blocks.lisp --- A visual programming language inspired by MIT Scratch
+;;; language.lisp --- A visual programming language inspired by MIT Scratch
 
 ;; Copyright (C) 2010, 2011 David O'Toole
 
@@ -22,8 +22,9 @@
 
 ;; This file implements an interactive visual programming language
 ;; called Blocky, based on Common Lisp. The Blocky language is
-;; influenced heavily by Smalltalk environments like Squeak Morphic
-;; and MIT Scratch, in that programs are assembled by the user from
+;; influenced heavily by research environments like Squeak Morphic,
+;; Self, MIT Scratch, Berkeley's BYOB project, and Jens Moenig's
+;; "Smalltalk Elements".  Programs are assembled by the user from
 ;; reusable, interchangeable pieces (or "blocks") represented by
 ;; colored shapes arranged on a page. The arrangement and connection
 ;; of the different blocks on the page determine how the pieces behave
@@ -52,10 +53,13 @@
 ;; a block that sums its arguments could compile down into a call to
 ;; the #'+ function, and so on with things like LOOP and COND.
 
-;; For more information on the design of Blocky, see
-;; http://blocky.org/design.html
+;; This file implements the base language elements. For the
+;; "meta-level" visual programming system, see vmacro.lisp
 
-;; For more information on similar systems, see the following links:
+;; For more information on the design of Blocky, see
+;; http://blocky.io/design.html
+
+;; For more information on related systems, see the following links:
 
 ;; http://scratch.mit.edu/
 ;; http://byob.berkeley.edu/
@@ -1229,4 +1233,4 @@ non-nil to indicate that the block was accepted, nil otherwise."
 ;; 	   (clauses (mapcar #'make-clause symbols)))
 ;;       `(symbol-macrolet ,clauses ,@body))))
 
-;;; blocks.lisp ends here
+;;; language.lisp ends here

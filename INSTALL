@@ -1,12 +1,12 @@
-This is the INSTALL file for IOFORMS.
+This is the INSTALL file for BLOCKY.
 
-This file gives you instructions on how to download IOFORMS and
+This file gives you instructions on how to download BLOCKY and
 compile it from source code.
 
-IOFORMS works on Windows and Mac, but compiling IOFORMS on those
+BLOCKY works on Windows and Mac, but compiling BLOCKY on those
 platforms may require additional steps (such as installing the
 included SDL binary DLL's in the included win32/ subfolder of the
-IOFORMS source directory.)
+BLOCKY source directory.)
 
 More instructions for Mac and Windows will be available soon.
 
@@ -37,7 +37,7 @@ More instructions for Mac and Windows will be available soon.
 
    Your Linux distribution will most likely have SDL packages for
    sbal, sdl, sdl-image, sdl-mixer, sdl-ttf, and sdl-gfx, all of which
-   are required for to compile IOFORMS. You may also need to install
+   are required for to compile BLOCKY. You may also need to install
    the sdl-*-dev packages corresponding to each.
 
 1b. System Requirements (Windows)
@@ -48,43 +48,43 @@ More instructions for Mac and Windows will be available soon.
 
    [THIS SECTION REMAINS TO BE WRITTEN]
 
-2. If you have not already done so, download IOFORMS:
+2. If you have not already done so, download BLOCKY:
   
    mkdir ~/src
    cd ~/src
-   git clone git://github.com/dto/ioforms.git 
+   git clone git://github.com/dto/blocky.git 
    
-   If you need to use the development branch of IOFORMS, 
+   If you need to use the development branch of BLOCKY, 
    do this: 
   
-   cd ~/src/ioforms
+   cd ~/src/blocky
    git checkout develop
 
-3. Then link the ioforms.asd file into your ~/.sbcl/systems directory:
+3. Then link the blocky.asd file into your ~/.sbcl/systems directory:
 
    mkdir ~/.sbcl
    mkdir ~/.sbcl/systems
-   ln -s ~/src/ioforms/ioforms.asd ~/.sbcl/systems/ioforms.asd
+   ln -s ~/src/blocky/blocky.asd ~/.sbcl/systems/blocky.asd
 
 4. Install Quicklisp
     
     http://www.quicklisp.org/ It takes only a few moments to install
     Quicklisp, and this is the best way to download and install all
-    the Common Lisp libraries that IOFORMS depends on---automatically.
+    the Common Lisp libraries that BLOCKY depends on---automatically.
 
 6. (OPTIONAL) Configure project folders
 
    The distribution contains a text configuration file called
-   IOFORMS.INI; by default the executable looks for it in the same
+   BLOCKY.INI; by default the executable looks for it in the same
    directory.
 
-   To run projects, IOFORMS needs a line like this added to the INI
+   To run projects, BLOCKY needs a line like this added to the INI
    file so that it will know where to find them.
 
-  (setf ioforms:*project-directories* '(#P"~/ioforms/" #P"~/projects/"))
+  (setf blocky:*project-directories* '(#P"~/blocky/" #P"~/projects/"))
 
    The first item should be the pathname of wherever you installed the
-   IOFORMS source tree. This is auto-detected as the current directory
+   BLOCKY source tree. This is auto-detected as the current directory
    if you don't set it. NOTE: These must be pathnames (prefixed with
    #P) and must contain a trailing slash.
 
@@ -96,16 +96,16 @@ More instructions for Mac and Windows will be available soon.
 
    Now that the example game "XONG" is installed, we're ready to go.
 
-7. At the shell, cd to the install directory for IOFORMS, run SBCL, and
+7. At the shell, cd to the install directory for BLOCKY, run SBCL, and
    then issue the following commands at the REPL one by one:
 
    ;; load dependencies via Quicklisp
     (map nil #'ql:quickload 
     	 '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad))
 
-    ;; compile and load IOFORMS
-    (require :ioforms)
+    ;; compile and load BLOCKY
+    (require :blocky)
 
     ;; run the example
-    (ioforms:play "example1")  ;; or the name of any project in your *project-directories*
+    (blocky:play "example1")  ;; or the name of any project in your *project-directories*
 

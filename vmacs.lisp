@@ -1,4 +1,4 @@
-;;; oop.lisp --- object-oriented visual programming
+;;; vmacs.lisp --- object-oriented, hardware-accelerated Lisp macros
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -120,6 +120,4 @@
 (define-method evaluate define-method ()
   (eval (recompile self)))
 
-
-
-;;; oop.lisp ends here
+;;; vmacs.lisp ends here

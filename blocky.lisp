@@ -1,10 +1,10 @@
-;;; blocky.lisp --- a free game engine for common lisp
+;;; blocky.lisp --- a visual dialect of Common Lisp
                
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: multimedia, games
-;; Version: 2.0
+;; Version: 2.11
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -25,8 +25,7 @@
 
 ;;; Requirements:
 
-;; This program requires a Common Lisp implementation and the
-;; LISPBUILDER-SDL packages. See the included file INSTALL.
+;; See the included file INSTALL.
 
 ;;; Code:
 

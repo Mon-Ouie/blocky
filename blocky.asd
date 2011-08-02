@@ -8,7 +8,7 @@
 
 (asdf:defsystem blocky
   :name "blocky"
-  :version "0.91"
+  :version "0.98"
   :maintainer "David T O'Toole <dto1138@gmail.com>"
   :author "David T O'Toole <dto1138@gmail.com>"
   :license "General Public License (GPL) Version 3"
@@ -31,16 +31,16 @@
 	       (:file "logic" :depends-on ("blocky"))
 	       (:file "prototypes" :depends-on ("blocky"))
 	       (:file "console" :depends-on ("prototypes"))
-	       (:file "blocks" :depends-on ("console"))
-	       (:file "widgets" :depends-on ("blocks"))
-	       (:file "trees" :depends-on ("blocks"))
-	       (:file "terminal" :depends-on ("blocks"))
-	       (:file "system" :depends-on ("blocks"))
-	       (:file "things" :depends-on ("blocks"))
+	       (:file "language" :depends-on ("console"))
+	       (:file "widgets" :depends-on ("language"))
+	       (:file "trees" :depends-on ("language"))
+	       (:file "terminal" :depends-on ("language"))
+	       (:file "system" :depends-on ("language"))
+	       (:file "things" :depends-on ("language"))
 	       (:file "worlds" :depends-on ("things"))
 	       (:file "shell" :depends-on ("trees" "terminal" "system"))
-	       (:file "oop" :depends-on ("trees" "terminal" "widgets" "system"))
-	       (:file "library" :depends-on ("worlds" "shell"))))
+	       (:file "vmacs" :depends-on ("trees" "terminal" "widgets" "system"))
+	       (:file "library" :depends-on ("worlds" "shell" "vmacs"))))
 ;;	       (:file "path")
 	       
 	       

@@ -1,4 +1,4 @@
-;;; ioforms.el --- Emacs tools for ioforms
+;;; blocky.el --- Emacs tools for blocky
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010 David O'Toole
 
@@ -28,9 +28,9 @@
 ;;; Font-locking
 
 ;; Put this in your emacs initialization file to get the highlighting:
-;; (add-hook 'emacs-lisp-mode-hook #'ioforms-do-font-lock)
+;; (add-hook 'emacs-lisp-mode-hook #'blocky-do-font-lock)
 
-(defvar ioforms-font-lock-keywords
+(defvar blocky-font-lock-keywords
   `((,(rx (sequence "(" (group "define-method")
 		   (one-or-more space)
 		   (group (one-or-more (not (any space))))
@@ -73,10 +73,10 @@
 ;    ("\\<\\(\<[^<>]*\>\\)\\>" (1 font-lock-preprocessor-face))
     ("(.*\\(\>\>\\>\\)" (1 font-lock-type-face))))
 
-(defun ioforms-do-font-lock ()
+(defun blocky-do-font-lock ()
   (interactive)
   "Highlight the keywords used in prototype-oriented programming."
-  (font-lock-add-keywords nil ioforms-font-lock-keywords))
+  (font-lock-add-keywords nil blocky-font-lock-keywords))
 
-(provide 'ioforms)
-;;; ioforms.el ends here
+(provide 'blocky)
+;;; blocky.el ends here
