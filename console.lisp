@@ -828,10 +828,12 @@ display."
 (defparameter *user-init-file-name* "blocky.ini")
 
 (defun load-user-init-file ()
-  (let ((file (merge-pathnames (make-pathname :name *user-init-file-name*)
-			       (blocky-directory))))
-    (when (cl-fad:file-exists-p file)
-      (load (cl-fad:pathname-as-file file)))))
+  (let ((type :unspecific)) ;; possible sbcl non-compliant behavior
+    (let ((file (merge-pathnames (make-pathname :name *user-init-file-name*
+						:type type)
+				 (blocky-directory))))
+      (when (cl-fad:file-exists-p file)
+	(load (cl-fad:pathname-as-file file))))))
 
 (defparameter *user-keyboard-layout* :qwerty)
 
@@ -2138,7 +2140,7 @@ of the music."
 
 (defun play (&optional project)
   #+linux (do-cffi-loading)
-  (message "Starting BLOCKY...")
+  (message "Starting Blocky...")
   (print-copyright-notice)
   (initialize-blocky)
   (let ((proj (or project *project*)))
