@@ -228,7 +228,9 @@
     (xform items)))
 
 (defun make-menu (items &key target)
-  (make-tree items :target target :tree-prototype "BLOCKY:MENU"))
+  (make-tree items 
+	     :target target 
+	     :tree-prototype "BLOCKY:MENU"))
 
 ;;; Menus
 

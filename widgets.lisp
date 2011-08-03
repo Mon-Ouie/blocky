@@ -104,7 +104,7 @@ Return the height of the rendered line."
 ;; functions just defined.
 
 (define-prototype formatter 
-    (:parent block :documentation 
+    (:parent "BLOCKY:BLOCK" :documentation 
 "=FORMATTER= is a simple output formatting block for the
 presentation of messages and other in-game data. Foreground and
 background colors are supported, as well as displaying images
@@ -225,10 +225,11 @@ auto-updated displays."
 
 (defparameter *textbox-minimum-width* 80) 
 
-(define-prototype textbox (:parent "BLOCKY:BLOCK")
+(defblock textbox
+  (methods :initform '(:page-up :page-down :listen :auto-center :resize-to-fit))
   (font :initform *block-font*)
   (buffer :initform nil)
-  (category :initform :comment)
+  (category :initform :event)
   (read-only :initform nil)
   (bordered :initform nil)
   (max-displayed-lines :initform nil :documentation "An integer when scrolling is enabled.")
@@ -241,9 +242,20 @@ auto-updated displays."
   (auto-fit :initform nil)
   (visible :initform t))
 
+(define-method enter textbox ())
+
+(define-method listen textbox ()
+  (setf %buffer (reverse *message-history*))
+  (add-to-list '*message-hook-functions*
+	       #'(lambda (format-string &rest args)
+		   (insert-string 
+		    self 
+		    (apply #'format nil args))
+		   (newline self))))
+
 (define-method handle-event textbox (event)
   (unless %read-only
-    (let ((func (gethash event %keymap)))
+    (let ((func (gethash event %events)))
       (when func
 	(prog1 t
 	  (funcall func))))))
@@ -370,6 +382,8 @@ text INSERTION to be inserted at point."
   (super%initialize self)
   (when (and buffer (listp buffer) (every #'stringp buffer))
     (setf %buffer buffer))
+  (when (null (has-local-value :buffer self))
+    (setf %buffer (list "Textbox opened.")))
   (install-keybindings self))
 
 (define-method forward-char textbox ()
@@ -468,6 +482,10 @@ text INSERTION to be inserted at point."
 			       remainder)))
 	  (incf point-column)))))
 
+(define-method insert-string textbox (string)
+  (dolist (character (coerce string 'list))
+    (insert self character)))
+
 (define-method visible-lines textbox ()
   (with-fields (buffer max-displayed-lines) self
     (let ((end (length buffer)))
@@ -515,7 +533,7 @@ text INSERTION to be inserted at point."
 		     (x1 (+ x *textbox-margin*
 			    (font-text-width (subseq current-line 0 %point-column)
 					       font)))
-		     (y1 (+ y *textbox-margin* text-height)))
+		     (y1 (+ y *textbox-margin*)))
 		(draw-rectangle x1 y1 cursor-width line-height 
 				:color %cursor-color))))))))
 
@@ -658,7 +676,7 @@ text INSERTION to be inserted at point."
     (setf %focus newpos)))
 
 (define-method handle-key split (event)
-  (or (let ((func (gethash event %keymap)))
+  (or (let ((func (gethash event %events)))
 	(when func
 	  (prog1 t
 	    (funcall func))))

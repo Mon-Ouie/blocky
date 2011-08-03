@@ -65,7 +65,7 @@
 	(:label "Browse code" :action :browse-code)))))
     (:label "Tools" 
      :subtree
-     ((:label "Create a command prompt" :action :create-prompt)
+     ((:label "Create a Lisp Listener" :action :create-listener)
       (:label "Create a note" :action :create-note)
       (:label "Version control" :action :version-control)))
     (:label "Workspace" :subtree
@@ -108,7 +108,7 @@
 (define-method initialize system ()
   (setf *system* self))
 
-(define-method create-prompt system ()
+(define-method create-listener system ()
   (add-block *script* (new listener) 100 100))
 
 (define-method create-project system ())
@@ -129,9 +129,6 @@
 (define-method quit-blocky system ()
   ;; TODO destroy textures
   (blocky:quit t))
-
-
-
 
 ;; (define-method get-blocks system ()
 ;;   %children)

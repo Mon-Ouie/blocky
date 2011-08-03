@@ -525,16 +525,16 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 (define-method context-menu block ()
   (make-menu
-	 (list (list :label (concatenate 'string 
-					 "Methods: "
-					 (get-some-object-name self)
-					 "(" (object-address-string self) ")")
-		     :subtree (mapcar #'(lambda (method)
-					 (method-menu self method self))
-				     %methods)
-		     :pinned nil
-		     :expanded t
-		     :locked t))))
+	 (list :label (concatenate 'string 
+				   "Methods: "
+				   (get-some-object-name self)
+				   "(" (object-address-string self) ")")
+	       :subtree (mapcar #'(lambda (method)
+				    (method-menu self method self))
+				%methods)
+	       :pinned nil
+	       :expanded t
+	       :locked t)))
 
 ;;; evaluation and recompilation: compiling block diagrams into equivalent sexps
 

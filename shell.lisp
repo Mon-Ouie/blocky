@@ -152,7 +152,7 @@
 		    ((:x :alt) :command-line)
 		    ((:g :control) :escape)
 		    ((:escape) :escape)))
-  menubar terminal
+  menubar listener
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
   (hover :initform nil
@@ -190,9 +190,9 @@
   (setf %menubar (new menubar 
 		      (make-menu *system-menu*
 				 :target *system*)))
-  (setf %terminal (new terminal))
-  (assert %terminal)
-  (add-block script %terminal)
+  (setf %listener (new listener))
+  (assert %listener)
+  (add-block script %listener)
   (add-block script %menubar)
   (register-uuid self))
 
@@ -304,7 +304,7 @@
 
 (define-method command-line shell ()
   (setf %focused-block 
-	(get-prompt %terminal)))
+	(get-prompt %listener)))
 
 (define-method escape shell ()
   (close-menus %menubar)

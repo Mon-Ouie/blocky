@@ -1,4 +1,4 @@
-;;; terminal.lisp --- interactive blocks command-line hypermedia terminal
+;;; listener.lisp --- interactive blocks command-line hypermedia terminal
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -41,13 +41,6 @@
 
 (defparameter *default-prompt-history-size* 100)
 (defparameter *default-cursor-width* 1)
-
-(defvar *debug-on-error* nil)
-
-(defun toggle-debug (&optional force)
-  (assert (typep force 'boolean))
-  (setf *debug-on-error*
-	(or force (if *debug-on-error* nil t))))
  
 (defblock prompt
   (clock :initform *prompt-blink-time*)
@@ -59,9 +52,10 @@
   (background :initform t)
   (text-color :initform *default-prompt-text-color*)
   (label-color :initform *default-prompt-label-color*)
-  options label
+  options label 
   (prompt-string :initform *default-prompt-string*)
   (category :initform :data)
+  (debug-on-error :iniform nil)
   (history :initform (make-queue :max *default-prompt-history-size*)
 	   :documentation "A queue of strings containing the command history.")
   (history-position :initform 0))
@@ -74,11 +68,6 @@
 
 (define-method goto prompt ()
   (say self "Enter command below at the >> prompt. Press ENTER when finished, or CONTROL-X to cancel."))
-
-;; (define-method toggle-debug-on-error prompt (&optional force)
-;;   (setf %debug-on-error
-;; 	(if force t 
-;; 	    (if %debug-on-error nil t))))
 
 (defun bind-event-to-prompt-insertion (self key mods text)
   (bind-event-to-function self key mods 
@@ -589,43 +578,56 @@
   
 ;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
 
-(define-prototype block-prompt (:parent prompt)
+(define-prototype listener-prompt (:parent prompt)
   (operation :initform :prompt)
   (background :initform nil)
   output)
 
-(define-method initialize block-prompt (output)
+(define-method initialize listener-prompt (output)
   (super%initialize self)
   (setf %output output))
 
-(define-method set-output block-prompt (output)
+(define-method set-output listener-prompt (output)
   (setf %output output))
 
-(define-method do-sexp block-prompt (sexp)
+(define-method do-sexp listener-prompt (sexp)
   (with-fields (output) self
     (assert output)
-    (let ((*make-block-package* (find-package (project-package-name)))
-	  (container (get-parent output)))
-      (when container
-	(let ((block 
-		  (if (symbolp (first sexp))
-		      (make-block sexp)
-		      (make-block (first sexp)))))
-	  (accept container block))))))
+    (let ((container (get-parent output)))
+      (assert container)
+      (accept container 
+	      (make-block (eval sexp))))))
 
 (define-prototype listener (:parent list)
-  (type :initform :system))
+  (scrollback-length :initform 100)
+  (category :initform :system)
+  (temporary :initform t)
+  (display-lines :initform 12))
 
 (defparameter *minimum-listener-width* 200)
 
 (define-method initialize listener ()
   (with-fields (image inputs) self
-    (let ((prompt (new block-prompt self)))
+    (let ((prompt (new listener-prompt self)))
       (super%initialize self)
       (set-output prompt prompt)
       (setf inputs (list prompt))
       (set-parent prompt self)
       (pin prompt))))
+
+(define-method layout listener ()
+  (with-fields (x y height width parent inputs) self
+    ;; start near bottom of screen
+    (let ((y0 (+ y height (- (dash 1)))))
+      (setf height (font-height *block-font*))
+      (dolist (element inputs)
+	(layout element)
+	(decf y0 (field-value :height element))
+	(move-to element (+ x (dash 1)) y0)
+	(incf height (+ (dash 1) (field-value :height element))))
+      (incf height (dash 1)) ;; a little extra room at the top
+      ;; move to the right spot to keep the bottom on the bottom.
+      (setf y y0))))
 
 (define-method evaluate listener ()
   (evaluate (first %inputs))) ;; should I evaluate them all?
@@ -636,42 +638,17 @@
 
 (define-method get-prompt listener ()
   (first %inputs))
-
-;;; Bottom-of-the-screen emacs-style command line
-
-(define-prototype terminal (:parent "BLOCKY:LISTENER")
-  (scrollback-length :initform 100)
-  (pinned :initform t)
-  (category :initform :menu)
-  (temporary :initform t)
-  (display-lines :initform 4))
-  
-(define-method layout terminal ()
-  (with-fields (x y height width parent inputs) self
-    (setf x (field-value :x parent))
-    (setf width (field-value :width parent))
-    ;; start near bottom of screen
-    (let ((y0 (- (field-value :height parent) (dash 1))))
-	(setf height (font-height *block-font*))
-	(dolist (element inputs)
-	  (layout element)
-	  (decf y0 (field-value :height element))
-	  (move-to element (+ x (dash 1)) y0)
-	  (incf height (+ (dash 1) (field-value :height element))))
-	(incf height (dash 1)) ;; a little extra room at the top
-	;; move to the right spot to keep the bottom on the bottom.
-	(setf y y0))))
-
-(define-method accept terminal (input &optional prepend)
+ 
+(define-method accept listener (input &optional prepend)
   (declare (ignore prepend))
   (with-fields (inputs scrollback-length) self
     (assert (not (null inputs))) ;; we always have a prompt
     (prog1 t
       (assert (is-valid-connection self input))
       (let ((len (length inputs)))
-	(when (> len scrollback-length)
-	  ;; drop last item in scrollback
-	  (setf inputs (subseq inputs 0 (1- len))))
+	;; (when (> len scrollback-length)
+	;;   ;; drop last item in scrollback
+	;;   (setf inputs (subseq inputs 0 (1- len))))
 	;; set parent if necessary 
 	(when (get-parent input)
 	  (unplug-from-parent input))
@@ -681,7 +658,7 @@
 		       (list input)
 		       (nthcdr 2 inputs)))))))
 
-(define-method draw terminal ()
+(define-method draw listener ()
   (with-fields (inputs x y height width) self
     (draw-box x y width height :color (find-color self))
     (draw-line 0 y *screen-width* y :color (find-color self :shadow))
@@ -690,4 +667,4 @@
 	(dolist (each inputs)
 	  (draw each)))))
 
-;;; terminal.lisp ends here
+;;; listener.lisp ends here

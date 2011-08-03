@@ -1,3 +1,6 @@
+** TODO FIX M-x not focusing input on the prompt
+** TODO FIX trash drawing children
+
 ** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
 *** [#A] terminal window can be resized
 **** [#A] general purpose resizer/scroller decorator thinger

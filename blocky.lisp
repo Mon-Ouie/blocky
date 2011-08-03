@@ -34,9 +34,10 @@
   (:use :common-lisp) 
   (:export *default-frame-width* *default-frame-height* null-block
 *frequency* *output-chunksize* *output-channels* halt-sample *dt*
-defproject run start stop *update-function* *default-world-axis-size*
-defsprite *target* *blocks* *script* *default-world-z-size*
-install-blocks seconds->frames keyboard-held-p keyboard-pressed-p
+*message-hook-functions* add-to-list defproject run start stop
+*update-function* *default-world-axis-size* defsprite *target*
+*blocks* *script* *default-world-z-size* install-blocks
+seconds->frames keyboard-held-p keyboard-pressed-p
 *use-nominal-screen-size* keyboard-released-p *builder*
 keyboard-time-in-current-state pretty-symbol-string *pointer-x*
 *pointer-y* keyboard-time-in-previous-state *updates* keyboard-down-p
@@ -58,8 +59,8 @@ find-resource-property compose-blank-fields font-width font-height
 transform-field-reference defblock *screen-height*
 formatted-line-width *last-event* formatted-line-height
 formatted-string-height formatted-string-width get-color create-image
-draw-image blocky edit define-prototype has-field *target*
-with-target defcell defworld *choose-direction-menu* set-field-options
+draw-image blocky edit define-prototype has-field *target* with-target
+defcell defworld *choose-direction-menu* set-field-options
 field-option-value index-resource find-project-path index-project
 load-image-resource load-lisp-resource *executable* *function-buttons*
 *corner-buttons* *dance-arrows* *punctuation* *screen-height*
@@ -124,7 +125,7 @@ achieve *resize-hook* draw-rectangle *quitting*
 set-mission-variable with-mission-locals *background-color*
 set-sample-callback set-music-callback cffi-chunk-buffer
 convert-cffi-sample get-sample-buffer register-sample-generator
-register-voice unregister-voice register-voice-mixer mix-voices 
+register-voice unregister-voice register-voice-mixer mix-voices
 convert-cffi-sample-to-internal *block* *script*
 convert-internal-sample-to-cffi get-ticks block-variable
 with-block-variables set-block-variable with-blocks
@@ -143,7 +144,7 @@ unqueue-and-send-message with-message-queue message-symbol
 operation-symbol *sender* message-reader transform-tree
 field-reference-p transform-field-reference transform-method-body
 object-parent object-name $ object-fields define-method
-define-prototype new object-p self percent-gray percent-grey 
+define-prototype new object-p self percent-gray percent-grey
 *indicators* find-indicator-texture draw-indicator font-text-width
 transform-declaration-field-descriptor is-a compose-blank-fields
 make-field-initializer initialize initialize-prototypes

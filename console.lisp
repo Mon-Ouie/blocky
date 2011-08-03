@@ -140,13 +140,21 @@ the object when the method is run.")
 (defun reset-message-function ()
   (setf *message-function* #'message-to-standard-output))
 
+(defvar *message-hook-functions* nil)
+
+(defvar *message-history* nil)
+
 (defun message (format-string &rest args)
   "Print a log message by passing the arguments to
 `*message-function'. When the variable `*message-logging*' is nil,
 this output is disabled."
   (when (and *message-logging* 
 	     (functionp *message-function*))
-    (apply *message-function* format-string args)))
+    (apply *message-function* format-string args)
+    (dolist (hook *message-hook-functions*)
+      (apply hook format-string args))
+    (push (apply #'format nil format-string args)
+	  *message-history*)))
 
 ;;; Sequence numbers
 
@@ -158,6 +166,13 @@ this output is disabled."
    
 ;;; Hooks
 
+(defun add-to-list (list element)
+  (assert (and (symbolp list)
+	       (not (null list))))
+  (setf (symbol-value list)
+	(append (symbol-value list)
+		(list element))))
+	 
 (defun add-hook (hook func)
   "Hooks are special variables whose names are of the form
 `*foo-hook*' and whose values are lists of functions taking no
