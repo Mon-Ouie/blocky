@@ -29,7 +29,7 @@
 
 (setf *screen-width* 640)
 (setf *screen-height* 480)
-(setf *window-title* "blocky.io")
+(setf *window-title* "Blocky (beta)")
 (setf *resizable* nil)
 (enable-key-repeat 9 1.2)
 

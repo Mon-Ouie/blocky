@@ -1,4 +1,3 @@
-** TODO Fix crash when error in blocky.ini
 ** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
 *** [#A] terminal window can be resized
 **** [#A] general purpose resizer/scroller decorator thinger
@@ -21,7 +20,6 @@
 
 ** TODO Re-examine "invader tactics" source and see what blocks are required to reimplement it
 ** TODO re-release "Invader"!
-
 
 ** TODO [#A] Refactor collision detection to enable various types.
 *** delegate actual collision detection to method
@@ -152,6 +150,7 @@
 ** TODO [#B] review all IOFORMS engine features for blocks to make
 ** TODO [#B] Make dialogs for all menu options in file:system.lisp 
 ** TODO [#B] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
+** TODO [#C] Fix crash when error in blocky.ini
 ** TODO [#B] Fix menu behavior: properly check other menu widgets in menubar hit before menu
 ** TODO [#B] allow any font size to be requested
 ** TODO [#B] fix argument blocks not being created (AGAIN)
