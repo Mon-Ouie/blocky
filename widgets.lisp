@@ -226,7 +226,7 @@ auto-updated displays."
 (defparameter *textbox-minimum-width* 80) 
 
 (defblock textbox
-  (methods :initform '(:page-up :page-down :listen :auto-center :resize-to-fit))
+  (methods :initform '(:page-up :page-down :auto-center :resize-to-fit))
   (font :initform *block-font*)
   (buffer :initform nil)
   (category :initform :event)
@@ -243,15 +243,6 @@ auto-updated displays."
   (visible :initform t))
 
 (define-method enter textbox ())
-
-(define-method listen textbox ()
-  (setf %buffer (reverse *message-history*))
-  (add-to-list '*message-hook-functions*
-	       #'(lambda (format-string &rest args)
-		   (insert-string 
-		    self 
-		    (apply #'format nil args))
-		   (newline self))))
 
 (define-method handle-event textbox (event)
   (unless %read-only

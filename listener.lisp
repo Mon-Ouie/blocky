@@ -35,7 +35,7 @@
 
 (defparameter *default-entry-text-color* "white")
 (defparameter *default-entry-label-color* "white")
-(defparameter *default-prompt-string* "Command:")
+(defparameter *default-prompt-string* "> ")
 
 (defparameter *default-prompt-margin* 4)
 
@@ -596,7 +596,7 @@
     (let ((container (get-parent output)))
       (assert container)
       (accept container 
-	      (make-block (eval sexp))))))
+	      (make-block (eval (first sexp)))))))
 
 (define-prototype listener (:parent list)
   (scrollback-length :initform 100)
@@ -615,19 +615,19 @@
       (set-parent prompt self)
       (pin prompt))))
 
-(define-method layout listener ()
-  (with-fields (x y height width parent inputs) self
-    ;; start near bottom of screen
-    (let ((y0 (+ y height (- (dash 1)))))
-      (setf height (font-height *block-font*))
-      (dolist (element inputs)
-	(layout element)
-	(decf y0 (field-value :height element))
-	(move-to element (+ x (dash 1)) y0)
-	(incf height (+ (dash 1) (field-value :height element))))
-      (incf height (dash 1)) ;; a little extra room at the top
-      ;; move to the right spot to keep the bottom on the bottom.
-      (setf y y0))))
+;; (define-method layout listener ()
+;;   (with-fields (x y height width parent inputs) self
+;;     (let ((y0 (+ y height (- (dash 1)))))
+;;       (setf height (font-height *block-font*))
+;;       (dolist (element inputs)
+;; 	(layout element)
+;; 	(decf y0 (+ (dash 1) (field-value :height element)))
+;; 	(move-to element (+ x (dash 1)) y0)
+;; 	(incf height (+ (dash 1) (field-value :height element)))
+;; 	(setf width (max width (field-value :width element))))
+;;       (incf height (dash 1)) ;; a little extra room at the top
+;;       ;; move to the right spot to keep the bottom on the bottom.
+;;       (setf y y0))))
 
 (define-method evaluate listener ()
   (evaluate (first %inputs))) ;; should I evaluate them all?
@@ -656,12 +656,11 @@
 	  (setf inputs 
 		(nconc (list (first inputs))
 		       (list input)
-		       (nthcdr 2 inputs)))))))
+		       (nthcdr 1 inputs)))))))
 
 (define-method draw listener ()
   (with-fields (inputs x y height width) self
-    (draw-box x y width height :color (find-color self))
-    (draw-line 0 y *screen-width* y :color (find-color self :shadow))
+    (draw-patch self x y (+ x width) (+ y height))
     (if (null inputs)
 	(draw-label-string self *null-display-string*)
 	(dolist (each inputs)

@@ -2,12 +2,13 @@
 ** TODO FIX trash drawing children
 
 ** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
+*** [#A] start using terminal output for status message output
+****  [#A] hook #'message minibuffer messages/notifications (message workspace, or different buffers?) 
+*** [#A] generic LISP command evaluation shell
+
 *** [#A] terminal window can be resized
 **** [#A] general purpose resizer/scroller decorator thinger
 **** [#A] lower-right-corner resize handle decorator
-*** [#A] generic LISP command evaluation shell
-*** TODO [#B] start using terminal output for status message output
-****  [#A] hook #'message minibuffer messages/notifications (message workspace, or different buffers?) 
 
 ** TODO [#A] Finish implementing the core visual programming language in OOP.LISP
 *** defblock var (reference to a var, not a def)  (for lisp vars, script vars, proto names, and fields)

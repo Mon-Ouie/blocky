@@ -152,8 +152,7 @@
 		    ((:x :alt) :command-line)
 		    ((:g :control) :escape)
 		    ((:escape) :escape)))
-  menubar listener
-  (drag :initform nil 
+  menubar (drag :initform nil 
   	:documentation "Block being dragged, if any.")
   (hover :initform nil
 	 :documentation "Block being hovered over, if any.")
@@ -190,9 +189,6 @@
   (setf %menubar (new menubar 
 		      (make-menu *system-menu*
 				 :target *system*)))
-  (setf %listener (new listener))
-  (assert %listener)
-  (add-block script %listener)
   (add-block script %menubar)
   (register-uuid self))
 
@@ -301,10 +297,6 @@
 	  (draw-highlight highlight))))))
 
 (defparameter *minimum-drag-distance* 7)
-
-(define-method command-line shell ()
-  (setf %focused-block 
-	(get-prompt %listener)))
 
 (define-method escape shell ()
   (close-menus %menubar)
