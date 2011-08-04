@@ -226,13 +226,13 @@ auto-updated displays."
 (defparameter *textbox-minimum-width* 80) 
 
 (defblock textbox
-  (methods :initform '(:page-up :page-down :auto-center :resize-to-fit))
+  (methods :initform '(:page-up :page-down :auto-center :resize-to-fit :view-messages))
   (font :initform *block-font*)
   (buffer :initform nil)
   (category :initform :event)
   (read-only :initform nil)
   (bordered :initform nil)
-  (max-displayed-lines :initform nil :documentation "An integer when scrolling is enabled.")
+  (max-displayed-lines :initform 12 :documentation "An integer when scrolling is enabled.")
   (max-displayed-columns :initform nil)
   (background-color :initform "gray30")
   (foreground-color :initform "black")
@@ -312,6 +312,13 @@ auto-updated displays."
 	(message "resizing textbox H:~S W:~S" height0 width0)
 	(resize self :height height0 :width width0)))))
 
+(define-method view-messages textbox ()
+  (add-to-list '*message-hook-functions* 
+	       #'(lambda (string)
+		   (insert-string self string)
+		   (newline self)))
+  (setf %buffer (reverse *message-history*)))
+
 (define-method move-end-of-line textbox ()
   (setf %point-column (length (nth %point-row %buffer))))
 
@@ -374,7 +381,7 @@ text INSERTION to be inserted at point."
   (when (and buffer (listp buffer) (every #'stringp buffer))
     (setf %buffer buffer))
   (when (null (has-local-value :buffer self))
-    (setf %buffer (list "Textbox opened.")))
+    (setf %buffer (list "")))
   (install-keybindings self))
 
 (define-method forward-char textbox ()
@@ -489,44 +496,50 @@ text INSERTION to be inserted at point."
 		      end))))))
 
 (define-method layout textbox ()
-  (when %auto-fit
-    (resize-to-fit self))
-  (let* ((lines (visible-lines self))
-	 (text-height (* (font-height %font) (length lines))))
-    (setf %height (dash 4 text-height))))
+  (with-fields (height width font) self
+    (when %auto-fit
+      (resize-to-fit self))
+    (setf width 0)
+    (let* ((lines (visible-lines self))
+	   (text-height (* (font-height %font) (length lines))))
+      (setf height (dash 4 text-height))
+      (dolist (line lines)
+	(callf max width (dash 4 (font-text-width line font)))))))
 
 (defparameter *textbox-cursor-width* 2)
 
 (define-method draw textbox ()
-  (with-fields (buffer width height) self
+  (with-fields (buffer width parent height) self
     (with-field-values (x y font point-row) self
       ;; measure text
       (let ((line-height (font-height font)))
 	  ;; draw background
+	(when (null parent)
 	  (draw-patch self x y 
 		      (+ x width)
 		      (+ y height)
-		      :color (find-color self))
-	  ;; draw text
-	  (let* ((x0 (+ x *textbox-margin*))
-		 (y0 (+ y *textbox-margin*))
-		 (lines (visible-lines self))
-		 (text-height (* line-height (length lines))))
-	    (dolist (line lines)
+		      :color (find-color self)))
+	;; draw text
+	(let* ((x0 (+ x *textbox-margin*))
+	       (y0 (+ y *textbox-margin*))
+	       (lines (visible-lines self))
+	       (text-height (* line-height (length lines))))
+	  (dolist (line lines)
+	    (when (plusp (length line))
 	      (draw-string line x0 y0 
-			   :font font :color %foreground-color)
-	      (incf y0 line-height))
-	    ;; draw cursor
-	    ;; TODO fix %point-row to be drawn relative pos in scrolling
-	    (when (null %read-only)
-	      (let* ((current-line (nth point-row buffer))
-		     (cursor-width *textbox-cursor-width*)
-		     (x1 (+ x *textbox-margin*
-			    (font-text-width (subseq current-line 0 %point-column)
-					       font)))
-		     (y1 (+ y *textbox-margin*)))
-		(draw-rectangle x1 y1 cursor-width line-height 
-				:color %cursor-color))))))))
+			   :font font :color %foreground-color))
+	    (incf y0 line-height))
+	  ;; draw cursor
+	  ;; TODO fix %point-row to be drawn relative pos in scrolling
+	  (when (null %read-only)
+	    (let* ((current-line (nth point-row buffer))
+		   (cursor-width *textbox-cursor-width*)
+		   (x1 (+ x *textbox-margin*
+			  (font-text-width (subseq current-line 0 %point-column)
+					   font)))
+		   (y1 (+ y *textbox-margin*)))
+	      (draw-rectangle x1 y1 cursor-width line-height 
+			      :color %cursor-color))))))))
 
 ;;; The pager switches between different visible groups of blocks
 

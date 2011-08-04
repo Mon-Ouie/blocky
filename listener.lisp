@@ -224,10 +224,11 @@
 	     receiver (mapcar #'eval arguments)))))
 
 (define-method read-expression prompt (input-string)
-  (handler-case 
-      (read-from-string (concatenate 'string "(" input-string ")"))
-    (condition (c)
-      (print-it c))))
+  (let ((*package* (find-package (make-block-package))))
+    (handler-case 
+	(read-from-string (concatenate 'string "(" input-string ")"))
+      (condition (c)
+	(message "~S" c)))))
 
 (define-method enter prompt (&optional no-clear)
   (labels ((print-it (c) 
@@ -455,9 +456,7 @@
 		  " "
 		  (format nil "~A" value)))
   (setf %label (getf options :label))
-  (when label-color (setf %label-color label-color))
-  (when (null %label)
-    (setf %pretty-label (pretty-symbol-string label))))
+  (when label-color (setf %label-color label-color)))
 
 (define-method evaluate entry ()
   %value)
@@ -473,8 +472,8 @@
 
 (define-method label-string entry ()
   (or (getf %options :label)
-      %pretty-label))
-
+      "  "))
+      
 (define-method label-width entry ()
   (font-text-width (label-string self) *block-font*))
 
@@ -595,8 +594,17 @@
     (assert output)
     (let ((container (get-parent output)))
       (assert container)
-      (accept container 
-	      (make-block (eval (first sexp)))))))
+      (let ((result (eval (first sexp))))
+	(let ((new-block 
+		;; is it a uuid?
+		(if (and (stringp result)
+			 (find-object result))
+		    ;; yes, return it
+		    (find-object result)
+		    ;; no, make a new block
+		    (make-block result))))
+	      (unpin new-block)
+	      (accept container new-block))))))
 
 (define-prototype listener (:parent list)
   (scrollback-length :initform 100)
@@ -608,10 +616,11 @@
 
 (define-method initialize listener ()
   (with-fields (image inputs) self
-    (let ((prompt (new listener-prompt self)))
+    (let ((prompt (new listener-prompt self))
+	  (textbox (new textbox)))
       (super%initialize self)
       (set-output prompt prompt)
-      (setf inputs (list prompt))
+      (setf inputs (list textbox prompt))
       (set-parent prompt self)
       (pin prompt))))
 
@@ -629,16 +638,16 @@
 ;;       ;; move to the right spot to keep the bottom on the bottom.
 ;;       (setf y y0))))
 
+(define-method get-prompt listener ()
+  (second %inputs))
+ 
 (define-method evaluate listener ()
-  (evaluate (first %inputs))) ;; should I evaluate them all?
+  (evaluate (get-prompt self)))
 
 ;; forward keypresses to prompt for convenience
 (define-method handle-event listener (event)
-    (handle-event (first %inputs) event))
+  (handle-event (get-prompt self) event))
 
-(define-method get-prompt listener ()
-  (first %inputs))
- 
 (define-method accept listener (input &optional prepend)
   (declare (ignore prepend))
   (with-fields (inputs scrollback-length) self
@@ -646,17 +655,18 @@
     (prog1 t
       (assert (is-valid-connection self input))
       (let ((len (length inputs)))
-	;; (when (> len scrollback-length)
-	;;   ;; drop last item in scrollback
-	;;   (setf inputs (subseq inputs 0 (1- len))))
+	(when (> len scrollback-length)
+	  ;; drop last item in scrollback
+	  (setf inputs (subseq inputs 0 (1- len))))
 	;; set parent if necessary 
 	(when (get-parent input)
 	  (unplug-from-parent input))
 	  (set-parent input self)
 	  (setf inputs 
-		(nconc (list (first inputs))
+		(nconc (list (first inputs)
+			     (second inputs))
 		       (list input)
-		       (nthcdr 1 inputs)))))))
+		       (nthcdr 2 inputs)))))))
 
 (define-method draw listener ()
   (with-fields (inputs x y height width) self

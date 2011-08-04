@@ -37,6 +37,11 @@
 
 (in-package :blocky)
 
+;;; Miscellaneous
+
+(defmacro callf (function place &rest arguments)
+  `(setf ,place (apply #',function ,place (list ,@arguments))))
+
 ;;; Grammars
 
 ;; http://en.wikipedia.org/wiki/Context-free_grammar

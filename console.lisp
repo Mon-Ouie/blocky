@@ -126,12 +126,16 @@ the object when the method is run.")
 		 (first entry2)))))
     (mapcar #'translate (sdl:mods-down-p))))
 
+(defun holding-control ()
+  (or (keyboard-modifier-down-p :lctrl)
+      (keyboard-modifier-down-p :rctrl)))
+
 ;;; Logging messages to the standard output
 
 (defparameter *message-logging* t)
 
-(defun message-to-standard-output (format-string &rest args)
-  (apply #'format t format-string args)
+(defun message-to-standard-output (message-string)
+  (format t "~A" message-string)
   (fresh-line)
   (force-output))
 
@@ -148,13 +152,14 @@ the object when the method is run.")
   "Print a log message by passing the arguments to
 `*message-function'. When the variable `*message-logging*' is nil,
 this output is disabled."
-  (when (and *message-logging* 
-	     (functionp *message-function*))
-    (apply *message-function* format-string args)
-    (dolist (hook *message-hook-functions*)
-      (apply hook format-string args))
-    (push (apply #'format nil format-string args)
-	  *message-history*)))
+    (let ((message-string (apply #'format nil format-string args)))
+      (funcall *message-function* message-string)
+      (dolist (hook *message-hook-functions*)
+	(funcall hook message-string))
+      (push message-string *message-history*)
+      ;; possibly print to stdout
+      (when *message-logging* 
+	(format t "~S" message-string))))
 
 ;;; Sequence numbers
 
@@ -1985,6 +1990,8 @@ of the music."
 		    (font-height font))))))
 
 (defun make-text-image (font string)
+  (assert (and (not (null string))
+	       (plusp (length string))))
   (multiple-value-bind (width height)
       (font-text-extents string font)
     (let ((surface (sdl:create-surface width height :bpp 8))
@@ -2153,6 +2160,12 @@ of the music."
 		  "libSDL_image")))
     (cffi:use-foreign-library sdl-image))
 
+(defun print-copyright-notice ()
+  (dolist (line (split-string-on-lines *copyright-notice*))
+    (format t "~A" line)
+    (fresh-line)
+    (message line)))
+
 (defun play (&optional project)
   #+linux (do-cffi-loading)
   (message "Starting Blocky...")
@@ -2179,6 +2192,7 @@ of the music."
   (setf *project-package-name* nil
         *project-directories* (default-project-directories)
 	*blocks* nil
+	*message-hook-functions* nil
 	*window-title* "blocky"
 	*updates* 0
 	*resizable* nil

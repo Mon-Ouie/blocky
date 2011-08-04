@@ -41,7 +41,7 @@
   :image "splash" :clock 180)
 
 (define-method initialize splash (&optional (clock 380))
-  (super%initialize self)
+   (super%initialize self)
   (update-image-dimensions self) ;; we need the coordinates straight away.
   (setf %x (- (/ *screen-width* 2) (/ %width 2)))
   (setf %y (- (/ *screen-height* 2) (/ %height 2)))

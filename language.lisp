@@ -509,7 +509,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
       (assert (not (contains parent self)))
       (setf parent nil))))
 
-(define-method method-menu block (method target)
+(define-method make-send-block block (method target)
   (assert (and (keywordp method) (not (null target))))
   (let ((method-string (pretty-symbol-string method)))
     (list :label method-string
@@ -530,7 +530,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 				   (get-some-object-name self)
 				   "(" (object-address-string self) ")")
 	       :subtree (mapcar #'(lambda (method)
-				    (method-menu self method self))
+				    (make-send-block self method self))
 				%methods)
 	       :pinned nil
 	       :expanded t
