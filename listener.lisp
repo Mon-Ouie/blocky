@@ -50,6 +50,7 @@
   (point :initform 0 :documentation "Integer index of cursor within prompt line.")
   (line :initform "" :documentation "Currently edited command line.")
   (background :initform t)
+  (error-output :initform "")
   (text-color :initform *default-prompt-text-color*)
   (label-color :initform *default-prompt-label-color*)
   options label 
@@ -228,33 +229,34 @@
     (handler-case 
 	(read-from-string (concatenate 'string "(" input-string ")"))
       (condition (c)
-	(message "~S" c)))))
+	(format *error-output* "~S" c)))))
 
 (define-method enter prompt (&optional no-clear)
   (labels ((print-it (c) 
-	     (print-data self c :comment)))
+	     (message "~A" c)))
     (let* ((*read-eval* nil)
 	   (line %line)
 	   (sexp (read-expression self line)))
       (unless no-clear (clear-line self))
-      (when sexp 
-	(say self "~A" line)
-	(if %debug-on-error
-	    (do-sexp self sexp)
-	    (handler-case
-		(handler-bind (((not serious-condition)
-				(lambda (c) 
-				  (print-it c)
-				  ;; If there's a muffle-warning
-				  ;; restart associated, use it to
-				  ;; avoid double-printing.
-				  (let ((r (find-restart 'muffle-warning c)))
-				    (when r (invoke-restart r))))))
-		  (do-sexp self sexp))
-	      (serious-condition (c)
-		(print-it c))))
-	(queue line %history))))
-  (do-after-evaluate self))
+      (setf %error-output
+	    (with-output-to-string (*standard-output*)
+	      (when sexp 
+		(if %debug-on-error
+		    (do-sexp self sexp)
+		    (handler-case
+			(handler-bind (((not serious-condition)
+					 (lambda (c) 
+					   (print-it c)
+					   ;; If there's a muffle-warning
+					   ;; restart associated, use it to
+					   ;; avoid double-printing.
+					   (let ((r (find-restart 'muffle-warning c)))
+					     (when r (invoke-restart r))))))
+			  (do-sexp self sexp))
+		      (serious-condition (c)
+			(print-it c))))
+		(queue line %history))))
+      (do-after-evaluate self))))
 
 (define-method do-after-evaluate prompt ()
   nil)
@@ -594,17 +596,27 @@
     (assert output)
     (let ((container (get-parent output)))
       (assert container)
-      (let ((result (eval (first sexp))))
-	(let ((new-block 
-		;; is it a uuid?
-		(if (and (stringp result)
-			 (find-object result))
-		    ;; yes, return it
-		    (find-object result)
-		    ;; no, make a new block
-		    (make-block result))))
-	      (unpin new-block)
-	      (accept container new-block))))))
+      ;; capture messages and print as blocks
+      (labels ((print-block (message-string)
+	       (accept container (new string :value message-string))))
+	(let* ((*message-function* #'print-block))
+	  ;; also capture standard output/error
+	  (let ((result (eval (first sexp))))
+	      (let ((new-block 
+		      ;; is it a uuid?
+		      (if (and (stringp result)
+			       (find-object result))
+			  ;; yes, return the corresponding block
+			  (find-object result)
+			  ;; no, make a new block from the data
+			  (make-block result))))
+		;; print any output
+		(dolist (line (nreverse
+			       (split-string-on-lines %error-output)))
+		  (print-block line))
+		;; spit out result block
+		(unpin new-block)
+		(accept container new-block))))))))
 
 (define-prototype listener (:parent list)
   (scrollback-length :initform 100)
@@ -616,30 +628,36 @@
 
 (define-method initialize listener ()
   (with-fields (image inputs) self
-    (let ((prompt (new listener-prompt self))
-	  (textbox (new textbox)))
+    (let ((prompt (new listener-prompt self)))
       (super%initialize self)
       (set-output prompt prompt)
-      (setf inputs (list textbox prompt))
+      (setf inputs (list prompt))
       (set-parent prompt self)
       (pin prompt))))
 
-;; (define-method layout listener ()
-;;   (with-fields (x y height width parent inputs) self
-;;     (let ((y0 (+ y height (- (dash 1)))))
-;;       (setf height (font-height *block-font*))
-;;       (dolist (element inputs)
-;; 	(layout element)
-;; 	(decf y0 (+ (dash 1) (field-value :height element)))
-;; 	(move-to element (+ x (dash 1)) y0)
-;; 	(incf height (+ (dash 1) (field-value :height element)))
-;; 	(setf width (max width (field-value :width element))))
-;;       (incf height (dash 1)) ;; a little extra room at the top
-;;       ;; move to the right spot to keep the bottom on the bottom.
-;;       (setf y y0))))
+(define-method layout listener ()
+  (with-fields (x y height width parent inputs) self
+    ;; start by calculating current height
+    (setf height (font-height *block-font*))
+    ;; update all child dimensions
+    (dolist (element inputs)
+      (layout element)
+      (incf height (dash 1 (field-value :height element)))
+      (callf max width (dash 1 (field-value :width element))))
+    ;; now compute proper positions
+    (let ((y0 (+ y height (- (dash 2))))
+	  (left (dash 1 x)))
+      (dolist (element inputs)
+	(decf y0 (field-value :height element))
+	(move-to element left y0)
+	(layout element))
+      ;; a little extra room at the top
+      (incf height (dash 1)))))
+      ;; ;; move to the right spot to keep the bottom on the bottom.
+      ;; (setf y (- y0 (dash 1))))))
 
 (define-method get-prompt listener ()
-  (second %inputs))
+  (first %inputs))
  
 (define-method evaluate listener ()
   (evaluate (get-prompt self)))
@@ -655,18 +673,16 @@
     (prog1 t
       (assert (is-valid-connection self input))
       (let ((len (length inputs)))
-	(when (> len scrollback-length)
-	  ;; drop last item in scrollback
-	  (setf inputs (subseq inputs 0 (1- len))))
+	;; (when (> len scrollback-length)
+	;;   ;; drop last item in scrollback
+	;;   (setf inputs (subseq inputs 0 (1- len))))
 	;; set parent if necessary 
 	(when (get-parent input)
 	  (unplug-from-parent input))
-	  (set-parent input self)
-	  (setf inputs 
-		(nconc (list (first inputs)
-			     (second inputs))
-		       (list input)
-		       (nthcdr 2 inputs)))))))
+	(set-parent input self)
+	(setf inputs 
+	      (nconc (list (first inputs) input)
+		     (nthcdr 1 inputs)))))))
 
 (define-method draw listener ()
   (with-fields (inputs x y height width) self

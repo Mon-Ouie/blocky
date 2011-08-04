@@ -2162,8 +2162,6 @@ of the music."
 
 (defun print-copyright-notice ()
   (dolist (line (split-string-on-lines *copyright-notice*))
-    (format t "~A" line)
-    (fresh-line)
     (message line)))
 
 (defun play (&optional project)
@@ -2188,7 +2186,6 @@ of the music."
 ;;   (load-project 
 
 (defun initialize-blocky ()
-  (sdl:init-sdl :video t :audio t :joystick t)
   (setf *project-package-name* nil
         *project-directories* (default-project-directories)
 	*blocks* nil
@@ -2198,6 +2195,7 @@ of the music."
 	*resizable* nil
 	*keyboard-update-number* 0
 	*random-state* (make-random-state t))
+  (sdl:init-sdl :video t :audio t :joystick t)
   ;; add library search paths for Mac if needed
   (setup-library-search-paths)
   (load-user-init-file) ;; this step may override *project-directories* and so on 
