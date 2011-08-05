@@ -1,4 +1,3 @@
-** TODO Don't print COMMON-LISP:foo for ordinary symbols in #'SERIALIZE
 ** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
 *** TODO Implement repl
 **** DONE 
