@@ -153,15 +153,11 @@ the object when the method is run.")
 `*message-function'. When the variable `*message-logging*' is nil,
 this output is disabled."
     (let ((message-string (apply #'format nil format-string args)))
-      (funcall *message-function* message-string)
+      (when *message-logging* 
+	(funcall *message-function* message-string))
       (dolist (hook *message-hook-functions*)
 	(funcall hook message-string))
-      (push message-string *message-history*)
-      ;; possibly print to stdout
-      (when *message-logging* 
-	(format t "~A" message-string)
-	(fresh-line)
-	(force-output))))
+      (push message-string *message-history*)))
 
 ;;; Sequence numbers
 
@@ -2258,6 +2254,9 @@ of the music."
 
 (defun edit (&optional (project *untitled-project-name*) directory)
   (let ((*build* t))
+    #+linux (do-cffi-loading)
+    (message "Starting Blocky...")
+    (print-copyright-notice)
     (setf *screen-width* 640)
     (setf *screen-height* 480)
     (setf *window-title* "Blocky")
