@@ -482,7 +482,7 @@ text INSERTION to be inserted at point."
 
 (define-method insert-string textbox (string)
   (dolist (character (coerce string 'list))
-    (insert self character)))
+    (insert self (string character))))
 
 (define-method visible-lines textbox ()
   (with-fields (buffer max-displayed-lines) self

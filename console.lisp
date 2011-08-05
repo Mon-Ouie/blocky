@@ -1082,7 +1082,6 @@ name 'PROJECT-NAME.blocky' Returns the pathname if found, otherwise
 nil."
   (let ((dirs (cons (asdf:system-relative-pathname 'blocky "") *project-directories*)))
     (assert (stringp project))
-    (message "Probing directories ~S..." dirs)
     (or 
      (loop 
        for dir in dirs for path
@@ -1170,12 +1169,14 @@ object save directory. See also `save-object-resource')."
   (setf *project-path*
 	(or (search-project-path project)
 	    (create-project project)))
+  (message "Set project path to ~A" (namestring *project-path*)) 
   (assert *project-path*)
   (index-project project)
   (when autoload 
     (mapc #'load-resource (nreverse *pending-autoload-resources*)))
   (setf *pending-autoload-resources* nil)
   (load-project-objects project)
+  (load-database)
   (load-project-lisp project)
   (message "Started up successfully. Indexed ~A resources." (hash-table-count *resources*))
   (run-hook '*after-open-project-hook*))
@@ -1257,7 +1258,7 @@ table."
 				       (object-index-filename project-name))))
     (if (cl-fad:file-exists-p index-file)
 	(index-iof project-name index-file)
-	(message "No IOF file found in project. Continuing."))))
+	(message "No IOF file found in project. Continuing..."))))
 
 ;;; Standard resource names
 
@@ -1329,7 +1330,9 @@ OBJECT as the resource data."
 		 (push (save-resource name resource) index))))
       (maphash #'save *resources*)
       (write-iof (find-project-file *project* (object-index-filename *project*)) 
-		 (nreverse index)))))
+		 (nreverse index))
+      ;;
+      (save-database))))
 
 (defparameter *export-formats* '(:archive :application))
 
@@ -1531,21 +1534,50 @@ control the size of the individual frames or subimages."
 (defun load-database-resource (resource)
   (let ((database (deserialize (resource-data resource))))
     (assert (hash-table-p database))
-    (merge-hashes *database* database)))
+    (message "Merging ~S objects from database..." (hash-table-count database))
+    (prog1 nil
+      (merge-hashes *database* database))))
 
 (defun make-database-resource (&optional (database *database*))
   (let ((database2 (make-hash-table :test 'equal)))
+    (message "Serializing database...")
     (labels ((store (uuid object)
-	       (when (not (find-prototype (make-prototype-id (object-name object))))
+	       ;; don't save prototypes
+	       (when (not (object-name object))
 		 (setf (gethash uuid database2) object))))
-      (maphash #'store database)
-      (make-resource :name "--database--"
-		     :type :database
-		     :data (serialize database)))))
+      (maphash #'store database) ;; copy into database2
+      (values (make-resource :name "--database--"
+			     :type :database
+			     :data (serialize database2))
+	      (hash-table-count database2)))))
 
 (defun database-file ()
-  (
-		     
+  (assert (not (null *project*)))
+  (find-project-file *project* "database.iof"))
+
+(defun save-database (&optional (database *database*))
+  (assert (hash-table-p database))
+  (let ((file (database-file)))
+    (message "Scanning ~S objects in database..." 
+	     (hash-table-count database))
+    (multiple-value-bind (resource count)
+	(make-database-resource database)
+      (message "Saving ~S objects from database into ~A..." 
+	       count
+	       (namestring file))
+      (write-iof file (list resource))
+      (message "Finished saving database into ~A. Continuing..." file))))
+      
+(defun load-database (&optional (file (database-file)))
+  (message "Reading object database from ~A..." file)
+  (if (cl-fad:file-exists-p file)
+      (let ((resources (read-iof file)))
+	(message "Read ~S resources from ~A" (length resources) file)
+	(let ((database (first resources)))
+	  (assert (eq :database (resource-type database)))
+	  (load-database-resource database)))
+      (message "No database file found. Continuing...")))
+
 ;;; Handling different resource types
 
 (defparameter *resource-handlers* 
