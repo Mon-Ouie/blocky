@@ -225,7 +225,8 @@
 	     receiver (mapcar #'eval arguments)))))
 
 (define-method read-expression prompt (input-string)
-  (let* ((*package* (find-package (make-block-package)))
+  (let* ((*package* (or (find-package (make-block-package))
+			(find-package :blocky)))
 	 (*make-prototype-id-package* *package*))
     (handler-case 
 	(read-from-string (concatenate 'string "(" input-string ")"))
@@ -597,27 +598,25 @@
     (assert output)
     (let ((container (get-parent output)))
       (assert container)
-      ;; capture messages and print as blocks
-      (labels ((print-block (message-string)
-	       (accept container (new string :value message-string))))
-	(let* ((*message-function* #'print-block))
-	  ;; also capture standard output/error
-	  (let ((result (eval (first sexp))))
-	      (let ((new-block 
-		      ;; is it a uuid?
-		      (if (and (stringp result)
-			       (find-object result))
-			  ;; yes, return the corresponding block
-			  (find-object result)
-			  ;; no, make a new block from the data
-			  (make-block result))))
-		;; print any output
-		(dolist (line (nreverse
-			       (split-string-on-lines %error-output)))
-		  (print-block line))
-		;; spit out result block
-		(unpin new-block)
-		(accept container new-block))))))))
+      (let ((result (eval (first sexp))))
+	(let ((new-block 
+		;; is it a uuid?
+		(if (and (stringp result)
+			 (find-object result))
+		    ;; yes, return the corresponding block
+		    (find-object result)
+		    ;; no, make a new block from the data
+		    (make-block result))))
+	  ;; spit out result block
+	  (unpin new-block)
+	  (accept container new-block))))))
+
+(define-method do-after-evaluate listener-prompt ()
+  ;; print any error output
+  (when %parent
+    (dolist (line (nreverse
+		   (split-string-on-lines %error-output)))
+      (accept %parent (new string :value line)))))
 
 (define-prototype listener (:parent list)
   (scrollback-length :initform 100)

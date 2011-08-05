@@ -1025,10 +1025,6 @@ This is where all saved objects are stored.")
 	(make-keyword project-name))
       :blocky))
 
-(defun make-directory-maybe (directory)
-  (ensure-directories-exist (make-pathname :name "NAME" :type :unspecific
-					   :defaults directory)))
-
 (defun blocky-directory ()
   (if *executable*
       (make-pathname :directory 
@@ -1048,10 +1044,13 @@ This is where all saved objects are stored.")
 (defparameter *projects-directory* ".blocky")
 
 (defun projects-directory ()
-  (make-pathname 
-   :name *projects-directory*
-   :defaults (user-homedir-pathname)
-   :type :unspecific))
+   (cl-fad:pathname-as-directory 
+    (make-pathname :name *projects-directory*
+		   :defaults (user-homedir-pathname))))
+   
+   ;; :name *projects-directory*
+   ;; :defaults (user-homedir-pathname)
+   ;; :type :unspecific))
 
 (defun project-directory-name (project)
   (assert (stringp project))
@@ -1059,14 +1058,22 @@ This is where all saved objects are stored.")
 
 (defun default-project-pathname (project)
   (assert (stringp project))
-  (make-pathname
-   :name (project-directory-name project)
-   :defaults (projects-directory)
-   :type :unspecific))
+  (cl-fad:pathname-as-directory 
+   (make-pathname 
+    :name (project-directory-name project)
+    :defaults (projects-directory)
+;   :defaults (user-homedir-pathname)
+    :type :unspecific)))
+
+(defun make-directory-maybe (name)
+  (ensure-directories-exist 
+   (make-pathname :name "NAME" :type :unspecific
+		  :defaults 
+		  (cl-fad:pathname-as-directory name))))
 			     
 (defun default-project-directories () 
   (let ((projects (projects-directory)))
-    (make-directory-maybe projects)
+;    (make-directory-maybe projects)
     (list (blocky-directory) projects)))
 
 (defvar *project-directories* nil
