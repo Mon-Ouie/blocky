@@ -39,7 +39,7 @@
 
 (in-package :blocky) 
 
-(defvar *build* nil "This is set to non-nil when BUILD is being used.")
+(defvar *edit* nil "This is set to non-nil when the editor is being used.")
 
 (defvar *pending-autoload-resources* '())
 
@@ -933,7 +933,9 @@ This prepares it for printing as part of a IOF file."
 			:if-exists :overwrite
 			:if-does-not-exist :create)
     (let ((*package* *keyword-package*))
-      (format file "~S" sexp)))
+      (with-standard-io-syntax 
+	(print sexp file))))
+      ;;(format file "~S" sexp)))
   (message "Writing data to file ~S... Done." filename))
 
 (defvar *eof-value* (gensym))
@@ -941,10 +943,11 @@ This prepares it for printing as part of a IOF file."
 (defun read-sexp-from-file (filename)
   (message "Reading data from ~A..." filename)
   (with-open-file (file filename :direction :input)
-    (prog1 (loop as sexp = (read file nil *eof-value*)
-		 until (eq *eof-value* sexp)
-		 collect sexp)
-      (message "Reading data from ~A... Done." filename))))
+    (with-standard-io-syntax 
+      (prog1 (loop as sexp = (read file nil *eof-value*)
+		   until (eq *eof-value* sexp)
+		   collect sexp)
+	(message "Reading data from ~A... Done." filename)))))
 
 ;; Now tie it all together with routines that read and write
 ;; collections of records into IOF files.
@@ -1145,7 +1148,7 @@ resource is stored; see also `find-resource'."
     (if (cl-fad:file-exists-p lisp)
 	(progn (message "Loading lisp for project ~A..." project)
 	       (load lisp))
-	(message "No default lisp file found in project ~S. Continuing." project))))
+	(message "No default lisp file found in project ~S. Continuing..." project))))
 
 (defun create-project (project &optional destination-directory)
   (assert (stringp project))
@@ -1180,6 +1183,7 @@ object save directory. See also `save-object-resource')."
   (setf *pending-autoload-resources* nil)
   (load-project-objects project)
   (load-database)
+  (load-variables)
   (load-project-lisp project)
   (message "Started up successfully. Indexed ~A resources." (hash-table-count *resources*))
   (run-hook '*after-open-project-hook*))
@@ -1334,8 +1338,8 @@ OBJECT as the resource data."
       (maphash #'save *resources*)
       (write-iof (find-project-file *project* (object-index-filename *project*)) 
 		 (nreverse index))
-      ;;
-      (save-database))))
+      (save-database)
+      (save-variables))))
 
 (defparameter *export-formats* '(:archive :application))
 
@@ -1597,7 +1601,31 @@ control the size of the individual frames or subimages."
     (setf (symbol-value name)
 	  (resource-data resource))))
 
-;;; Handling different resource types
+(defvar *persistent-variables* 
+  '(*blocks* *dt* *frame-rate* *updates* *screen-width* *screen-height*))
+
+(defparameter *persistent-variables-file-name* "variables.iof")
+
+(defun persistent-variables-file (&optional (project *project*))
+  (find-project-file project *persistent-variables-file-name*))
+
+(defun save-variables (&optional (variables *persistent-variables*))
+  (message "Saving system variables ~A..." variables)
+  (write-iof (persistent-variables-file)
+	     (mapcar #'make-variable-resource variables))
+  (message "Finished saving system variables."))
+
+(defun load-variables ()
+  (let ((file (persistent-variables-file)))
+    (if (cl-fad:file-exists-p file)
+	(progn 
+	  (message "Loading system variables from ~A..." file)
+	  (mapc #'load-variable-resource 
+		(read-iof file))
+	  (message "Finished loading system variables."))
+	(message "No system variables file found in this project. Continuing..."))))
+
+;;; Handling different resource types automatically
 
 (defparameter *resource-handlers* 
   (list :image #'load-image-resource
@@ -2328,7 +2356,7 @@ of the music."
 ;;; Open a project for editing
 
 (defun edit (&optional (project *untitled-project-name*) directory)
-  (let ((*build* t))
+  (let ((*edit* t))
     #+linux (do-cffi-loading)
     (message "Starting Blocky...")
     (print-copyright-notice)
