@@ -25,7 +25,7 @@
 ;; The "console" is the library which provides all BLOCKY system
 ;; services. Primitive operations such as opening a window,
 ;; displaying bitmaps, drawing lines, playing sounds, file access, and
-;; keyboard/mouse/joytstick input are handled here. 
+;; keyboard/mouse/joystick input are handled here. 
 
 ;; Currently it uses the cross-platform SDL library (via
 ;; LISPBUILDER-SDL) as its device driver, and wraps the library for
@@ -39,7 +39,7 @@
 
 (in-package :blocky) 
 
-(defvar *builder-p* nil "This is set to non-nil when the Blocky.io Builder is being used.")
+(defvar *build* nil "This is set to non-nil when BUILD is being used.")
 
 (defvar *pending-autoload-resources* '())
 
@@ -159,7 +159,9 @@ this output is disabled."
       (push message-string *message-history*)
       ;; possibly print to stdout
       (when *message-logging* 
-	(format t "~S" message-string))))
+	(format t "~A" message-string)
+	(fresh-line)
+	(force-output))))
 
 ;;; Sequence numbers
 
@@ -1004,6 +1006,8 @@ time.")
 
 (defvar *project* nil "The name of the current project.")
 
+(defparameter *project-directory-extension* ".blocky")
+
 (defvar *project-path* nil "The pathname of the currently opened project. 
 This is where all saved objects are stored.")
 
@@ -1011,9 +1015,9 @@ This is where all saved objects are stored.")
 
 (defvar *project-package-name* nil)
 
-(defparameter *projects-directory-name* "projects")
-
 (defvar *executable* nil)
+
+(defparameter *untitled-project-name* "--untitled--")
 
 (defun project-package-name (&optional (project-name *project*))
   (or *project-package-name* 
@@ -1022,7 +1026,7 @@ This is where all saved objects are stored.")
       :blocky))
 
 (defun make-directory-maybe (directory)
-  (ensure-directories-exist (make-pathname :name "NAME" :type "TYPE"
+  (ensure-directories-exist (make-pathname :name "NAME" :type :unspecific
 					   :defaults directory)))
 
 (defun blocky-directory ()
@@ -1041,10 +1045,25 @@ This is where all saved objects are stored.")
 		       :directory (pathname-directory #.(or *compile-file-truename*
 							    *load-truename*)))))))
 
-(defun projects-directory ()
-  (make-pathname :name *projects-directory-name* 
-		 :defaults (blocky-directory)))
+(defparameter *projects-directory* ".blocky")
 
+(defun projects-directory ()
+  (make-pathname 
+   :name *projects-directory*
+   :defaults (user-homedir-pathname)
+   :type :unspecific))
+
+(defun project-directory-name (project)
+  (assert (stringp project))
+  (concatenate 'string project *project-directory-extension*))  
+
+(defun default-project-pathname (project)
+  (assert (stringp project))
+  (make-pathname
+   :name (project-directory-name project)
+   :defaults (projects-directory)
+   :type :unspecific))
+			     
 (defun default-project-directories () 
   (let ((projects (projects-directory)))
     (make-directory-maybe projects)
@@ -1054,22 +1073,23 @@ This is where all saved objects are stored.")
   "List of directories where BLOCKY will search for projects.
 Directories are searched in list order.")
 
-(defun search-project-path (project-name)
+(defun search-project-path (project)
   "Search the `*project-directories*' path for a directory with the
-name PROJECT-NAME. Returns the pathname if found, otherwise nil."
+name 'PROJECT-NAME.blocky' Returns the pathname if found, otherwise
+nil."
   (let ((dirs (cons (asdf:system-relative-pathname 'blocky "") *project-directories*)))
-    (assert (stringp project-name))
+    (assert (stringp project))
     (message "Probing directories ~S..." dirs)
     (or 
      (loop 
        for dir in dirs for path
-	 = (cl-fad:file-exists-p (make-pathname :directory 
-				      (append (pathname-directory dir) 
-					      (list project-name))
-			    :defaults dir))
+	 = (cl-fad:file-exists-p (make-pathname 
+				  :name (project-directory-name project)
+				  :directory (namestring dir)))
        when path return path)
-     (error "Cannot find project ~s in paths ~S. Try checking the project name, or your *PROJECT-DIRECTORIES* settings in the BLOCKY.INI configuration file."
-	    project-name dirs))))
+     (prog1 nil
+       (message "Cannot find project ~s in paths ~S. Try checking your *PROJECTS-DIRECTORIES* settings in the BLOCKY.INI configuration file. Continuing..."
+		project dirs)))))
 
 (defun expand-file-name (resource)
   (when (stringp (resource-file resource))
@@ -1122,14 +1142,31 @@ resource is stored; see also `find-resource'."
 	       (load lisp))
 	(message "No default lisp file found in project ~S. Continuing." project))))
 
+(defun create-project (project &optional destination-directory)
+  (assert (stringp project))
+  (let* ((directory (or destination-directory (projects-directory)))
+	 (dirs (mapcar #'string-upcase (find-projects-in-directory directory))))
+    (if (find project dirs :test 'equal)
+	(message "Cannot create project ~A because a project with this name already exists in ~A"
+		 project directory)
+	(let ((dir (default-project-pathname project)))
+	  (message "Creating new project ~A in directory ~A..." project dir)
+	  (prog1 dir
+	    (make-directory-maybe dir)
+	    (message "Finished creating directory ~A." dir)
+	    (message "Finished creating project ~A." project))))))
+
 (defun open-project (project &key (autoload t))
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
 object save directory. See also `save-object-resource')."
+  (assert (stringp project))
   (message "Opening project: ~A" (string-upcase project))
   (setf *project* project
-	*project-path* (search-project-path project)
 	*pending-autoload-resources* nil)
+  (setf *project-path*
+	(or (search-project-path project)
+	    (create-project project)))
   (assert *project-path*)
   (index-project project)
   (when autoload 
@@ -1164,7 +1201,7 @@ object save directory. See also `save-object-resource')."
 		       "--output" (sb-ext:native-namestring (merge-pathnames output-file)))))
 
 (defun directory-is-project-p (dir)
-  "Test whether a {PROJECTNAME}.IOF index file exists in a directory."
+  "Test whether a directory has the .blocky suffix."
   (let ((index-filename (concatenate 'string
 				     (file-namestring dir)
 				     *iof-file-extension*)))
@@ -1189,6 +1226,8 @@ object save directory. See also `save-object-resource')."
   "Add all the resources from the iof IOF-FILE to the resource
 table. File names are relative to the project PROJECT-NAME."
   (let ((resources (read-iof iof-file)))
+    (message "Loading ~A resources from file ~A:~A..." (length resources)
+	     project-name iof-file)
     (dolist (res resources)
       (if (eq :iof (resource-type res))
 	  ;; we're including another iof file. if :data is specified,
@@ -2164,28 +2203,7 @@ of the music."
   (dolist (line (split-string-on-lines *copyright-notice*))
     (message line)))
 
-(defun play (&optional project)
-  #+linux (do-cffi-loading)
-  (message "Starting Blocky...")
-  (print-copyright-notice)
-  (initialize-blocky)
-  (let ((proj (or project *project*)))
-    (when (null proj)
-      (error "No current project. You must provide an argument naming the project."))
-    (open-project proj)
-    (run-main-loop))
-  ;; delete any cached textures and surfaces
-  (clear-text-image-cache)
-  (delete-all-textures)
-  (delete-all-resources)
-  (sdl-mixer:halt-music)
-  (sdl-mixer:close-audio t))
-
-;; (defun build (&optional project)
-;;   (play project)
-;;   (load-project 
-
-(defun initialize-blocky ()
+(defun start-up ()
   (setf *project-package-name* nil
         *project-directories* (default-project-directories)
 	*blocks* nil
@@ -2203,7 +2221,50 @@ of the music."
   (initialize-textures-maybe :force)
   (initialize-colors)
   (initialize-sound)
-  (initialize-database)
+  (initialize-database))
+
+(defun shut-down ()
+  ;; delete any cached textures and surfaces
+  (clear-text-image-cache)
+  (delete-all-textures)
+  (delete-all-resources)
+  (sdl-mixer:halt-music)
+  (sdl-mixer:close-audio t))
+
+(defun load-standard-resources ()
   (open-project "standard"))
+
+(defun play (&optional (project *untitled-project-name*))
+  #+linux (do-cffi-loading)
+  (message "Starting Blocky...")
+  (print-copyright-notice)
+  (start-up)
+  (load-standard-resources)
+  (let ((proj (or project *project*)))
+    (when (null proj)
+      (error "No current project. You must provide an argument naming the project."))
+    (open-project proj)
+    (run-main-loop))
+  (shut-down))
+
+;;; Open a project for editing
+
+(defun edit (&optional (project *untitled-project-name*) directory)
+  (let ((*build* t))
+    (setf *screen-width* 640)
+    (setf *screen-height* 480)
+    (setf *window-title* "Blocky")
+    (setf *resizable* nil)
+    (enable-key-repeat 9 1.2)
+    (start-up)
+    (load-standard-resources)
+    (new system)
+    (open-project project)
+    (let ((script (new script)))
+      (add-block script (new listener))
+      (start (new shell script)))
+    (run-main-loop)
+    (shut-down)))
+
 
 ;;; console.lisp ends here

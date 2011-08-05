@@ -399,7 +399,7 @@ the return value of the function (if any)."
 (defvar *make-block-package* nil)
 
 (defun make-block-package ()
-  (project-package-name))
+  (or (project-package-name) (find-package :blocky)))
 
 (defun make-block (sexp)
     "Expand VALUE specifying a block diagram into real blocks.

@@ -38,7 +38,7 @@
 *update-function* *default-world-axis-size* defsprite *target*
 *blocks* *script* *default-world-z-size* install-blocks
 seconds->frames keyboard-held-p keyboard-pressed-p holding-control
-*use-nominal-screen-size* keyboard-released-p *builder* callf
+*use-nominal-screen-size* keyboard-released-p *edit* callf
 keyboard-time-in-current-state pretty-symbol-string *pointer-x*
 *pointer-y* keyboard-time-in-previous-state *updates* keyboard-down-p
 keyboard-keys-down keyboard-modifier-down-p keyboard-modifiers
@@ -47,26 +47,27 @@ project-package-name make-block *form-command-handler-function*
 add-block remove-block *initialization-hook* initialize-engine
 hit-blocks split-string-on-lines message *prompt-sweden-keybindings*
 *prompt-qwerty-keybindings* *screen-width* transform-method-body
-*builder-p* roll-under make-stat make-universe initialize-colors
-*standard-categories* *left-turn* bind-event *right-turn*
-*default-action-points* left-turn right-turn roll bind-event-to-method
-*colors* enable-key-repeat disable-key-repeat get-color define-method
-*default-font* field-value set-field-value object-fields
-dispatch-event run-project *user-init-file-name* distance
-icon-resource icon-image *compass-directions* *compass-opposites*
-find-resource-property compose-blank-fields font-width font-height
-*browser* browser set-browser find-object *windows* build
-transform-field-reference defblock *screen-height*
-formatted-line-width *last-event* formatted-line-height
-formatted-string-height formatted-string-width get-color create-image
-draw-image blocky edit define-prototype has-field *target* with-target
-defcell defworld *choose-direction-menu* set-field-options
-field-option-value index-resource find-project-path index-project
-load-image-resource load-lisp-resource *executable* *function-buttons*
-*corner-buttons* *dance-arrows* *punctuation* *screen-height*
-*screen-width* *nominal-screen-width* *nominal-screen-height*
-*gl-screen-width* *gl-screen-height* *dance-phrase-symbols*
-*dance-keybindings* *energy-dance-pad-mapping* *message-function*
+*edit* roll-under make-stat make-universe initialize-colors
+create-project *standard-categories* *left-turn* bind-event
+*right-turn* *default-action-points* left-turn right-turn roll
+bind-event-to-method *colors* enable-key-repeat disable-key-repeat
+get-color define-method *default-font* field-value set-field-value
+object-fields dispatch-event run-project *user-init-file-name*
+distance icon-resource icon-image *compass-directions*
+*compass-opposites* find-resource-property compose-blank-fields
+font-width font-height *browser* browser set-browser find-object
+*windows* edit create transform-field-reference defblock
+*screen-height* formatted-line-width *last-event*
+formatted-line-height formatted-string-height formatted-string-width
+get-color create-image draw-image blocky edit define-prototype
+has-field *target* with-target defcell defworld
+*choose-direction-menu* set-field-options field-option-value
+index-resource find-project-path index-project load-image-resource
+load-lisp-resource *executable* *function-buttons* *corner-buttons*
+*dance-arrows* *punctuation* *screen-height* *screen-width*
+*nominal-screen-width* *nominal-screen-height* *gl-screen-width*
+*gl-screen-height* *dance-phrase-symbols* *dance-keybindings*
+*energy-dance-pad-mapping* *message-function*
 *dark-target-arrow-images* get-button-index arrow-image
 message-to-standard-output reset-message-function
 *make-prototype-id-package* arrow-formatted-string ticks-per-beat

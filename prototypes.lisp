@@ -353,7 +353,7 @@ extended argument list ARGLIST."
 	   ;; check for things that are already in COMMON-LISP package
 	   (let ((thing-package (symbol-package thing)))
 	   (let ((prefix (if (eq thing-package (find-package :common-lisp))
-			     "BLOCKY" ;; override 
+			     "BLOCKY" ;; override if so
 			     (package-name thing-package))))
 	     (let ((name (concatenate 'string prefix delimiter (symbol-name thing))))
 	       (let ((proto (find-prototype name :noerror)))

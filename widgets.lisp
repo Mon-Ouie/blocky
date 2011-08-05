@@ -232,7 +232,7 @@ auto-updated displays."
   (category :initform :event)
   (read-only :initform nil)
   (bordered :initform nil)
-  (max-displayed-lines :initform 12 :documentation "An integer when scrolling is enabled.")
+  (max-displayed-lines :initform 16 :documentation "An integer when scrolling is enabled.")
   (max-displayed-columns :initform nil)
   (background-color :initform "gray30")
   (foreground-color :initform "black")
