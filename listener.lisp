@@ -225,7 +225,9 @@
 	     receiver (mapcar #'eval arguments)))))
 
 (define-method read-expression prompt (input-string)
-  (let ((*package* (find-package (make-block-package))))
+  (let* ((package (find-package (make-block-package)))
+	 (*package* package)
+	 (*make-prototype-id-package* package))
     (handler-case 
 	(read-from-string (concatenate 'string "(" input-string ")"))
       (condition (c)

@@ -1,13 +1,14 @@
 ** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
 *** TODO [#A] Read listener sexps in correct package 
-*** TODO [#A] pop up shell on M-x
 *** TODO [#A] generic LISP command evaluation shell
+*** TODO [#A] trigger context menu items with click, make block with control-click
 *** TODO [#A] terminal window can be resized
 **** [#A] general purpose resizer/scroller decorator thinger
 **** [#A] lower-right-corner resize handle decorator
-*** TODO trigger context menu items with click, make block with control-click
 *** [#B] start using terminal output for status message output
 ****  [#A] hook #'message minibuffer messages/notifications (message workspace, or different buffers?) 
+*** TODO [#B] Allow user to move entries easier via yellow triangle tab
+*** TODO [#B] pop up shell on M-x
 
 ** TODO [#A] Finish implementing the core visual programming language in OOP.LISP
 *** defblock var (reference to a var, not a def)  (for lisp vars, script vars, proto names, and fields)

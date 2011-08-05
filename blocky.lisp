@@ -69,22 +69,23 @@ load-image-resource load-lisp-resource *executable* *function-buttons*
 *dance-keybindings* *energy-dance-pad-mapping* *message-function*
 *dark-target-arrow-images* get-button-index arrow-image
 message-to-standard-output reset-message-function
-arrow-formatted-string ticks-per-beat event-time event-arrow
-default-project-directories *step-tolerance* *resource-handlers*
-load-resource find-resource find-resource-object *colors* *world*
-make-directory-maybe load-user-init-file *project-directories*
-resource-to-plist *osx* *linux* make-resource make-object-resource
-make-event *blocks* bind-event-to-prompt-insertion
-make-field-initializer clone make-field-initializer-body
-make-key-modifier-symbol make-key-string normalize-event make-keyword
-make-object queue-head queue-max queue-count *sender*
-field-reference-p null-next object-eq *message-send-symbol-suffix*
-*x11-color-data* object-name object-parent send send-super send-queue
-self opposite-direction object-address-string object step-in-direction
-direction-to plasma-rect subdivide-rect render-plasma add-hook
-run-hook queue-tail make-resource-link save-resource save-project
-*defined-resources* save-everything *export-formats* export-archive
-defresource export-application export-project make-queue queue unqueue
+*make-prototype-id-package* arrow-formatted-string ticks-per-beat
+event-time event-arrow default-project-directories *step-tolerance*
+*resource-handlers* load-resource find-resource find-resource-object
+*colors* *world* make-directory-maybe load-user-init-file
+*project-directories* resource-to-plist *osx* *linux* make-resource
+make-object-resource make-event *blocks*
+bind-event-to-prompt-insertion make-field-initializer clone
+make-field-initializer-body make-key-modifier-symbol make-key-string
+normalize-event make-keyword make-object queue-head queue-max
+queue-count *sender* field-reference-p null-next object-eq
+*message-send-symbol-suffix* *x11-color-data* object-name
+object-parent send send-super send-queue self opposite-direction
+object-address-string object step-in-direction direction-to
+plasma-rect subdivide-rect render-plasma add-hook run-hook queue-tail
+make-resource-link save-resource save-project *defined-resources*
+save-everything *export-formats* export-archive defresource
+export-application export-project make-queue queue unqueue
 queue-message queued-messages-p unqueue-message send-queue field-value
 random-direction random-choose *resources* load-font-resource
 save-object-resource super%initialize super%initialize

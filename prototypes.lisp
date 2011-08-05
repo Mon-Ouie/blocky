@@ -332,6 +332,8 @@ extended argument list ARGLIST."
 		 (setf (gethash k a) v))
 	     b)))
 	       
+(defvar *make-prototype-id-package* nil)
+
 (defun make-prototype-id (thing &optional package create) 
   (let ((delimiter ":"))
     (if (null thing)
@@ -342,12 +344,10 @@ extended argument list ARGLIST."
 	   (apply #'concatenate 'string 
 		  (if (search delimiter thing)
 		      (list thing)
-		      (list (package-name (or package *package*))
+		      (list (package-name (or *make-prototype-id-package* *package*))
 			    delimiter thing))))
 	  (symbol 
-	   (let ((prefix (if package 
-			     (symbol-name package)
-			     (package-name *package*))))
+	   (let ((prefix (package-name (symbol-package thing))))
 	     (let ((name (concatenate 'string prefix delimiter (symbol-name thing))))
 	       (let ((proto (find-prototype name :noerror)))
 		 (if proto name
