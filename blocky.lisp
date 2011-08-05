@@ -30,7 +30,7 @@
 ;;; Code:
 
 (defpackage :blocky
-    (:documentation "Visual Common Lisp.")
+    (:documentation "A visual multimedia programming language for Common Lisp.")
   (:use :common-lisp) 
   (:export *default-frame-width* *default-frame-height* null-block
 *frequency* *output-chunksize* *output-channels* halt-sample *dt*

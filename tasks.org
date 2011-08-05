@@ -1,5 +1,6 @@
 ** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
-*** TODO [#A] Read listener sexps in correct package 
+*** DONE [#A] Read listener sexps in correct package 
+    CLOSED: [2011-08-04 Thu 22:55]
 *** TODO [#A] generic LISP command evaluation shell
 *** TODO [#A] trigger context menu items with click, make block with control-click
 *** TODO [#A] terminal window can be resized

@@ -35,7 +35,7 @@
 (defun depth-gray (depth)
   (percent-gray (+ *depth-gray-base* (* depth *depth-gray-slope*))))
 
-(define-prototype tree (:parent "BLOCKY:LIST")
+(define-prototype tree (:parent :list)
   (category :initform :structure)
   (is-tree :initform t)
   (indentation-width :initform (dash 2))

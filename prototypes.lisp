@@ -251,7 +251,7 @@ extended argument list ARGLIST."
     (initialize-prototypes))
   (setf (gethash (object-name object)
 		 *prototypes*)
-	object))
+	(find-object object)))
 
 (defun find-prototype (name &optional noerror)
   (assert (hash-table-p *prototypes*))
@@ -288,12 +288,15 @@ extended argument list ARGLIST."
 
 (defun find-object (thing) 
   (when (not (null thing))
-    (etypecase thing
-      (symbol (symbol-value thing))
-      (string (or (find-object-by-uuid thing :noerror)
-		  (find-prototype thing :noerror)))
-      (object thing))))
-
+    (let ((result 
+	    (etypecase thing
+	      (symbol (symbol-value thing))
+	      (string (or (find-object-by-uuid thing :noerror)
+			  (find-prototype thing :noerror)))
+	      (object thing))))
+      (prog1 result
+	(assert (object-p result))))))
+      
 (defun find-parent (object)
   (object-parent (find-object object)))
 
@@ -334,7 +337,7 @@ extended argument list ARGLIST."
 	       
 (defvar *make-prototype-id-package* nil)
 
-(defun make-prototype-id (thing &optional package create) 
+(defun make-prototype-id (thing &optional (package (find-package :blocky)) create) 
   (let ((delimiter ":"))
     (if (null thing)
 	(error "Cannot make a prototype ID for nil.")
@@ -344,15 +347,19 @@ extended argument list ARGLIST."
 	   (apply #'concatenate 'string 
 		  (if (search delimiter thing)
 		      (list thing)
-		      (list (package-name (or *make-prototype-id-package* *package*))
+		      (list (package-name package)
 			    delimiter thing))))
 	  (symbol 
-	   (let ((prefix (package-name (symbol-package thing))))
+	   ;; check for things that are already in COMMON-LISP package
+	   (let ((thing-package (symbol-package thing)))
+	   (let ((prefix (if (eq thing-package (find-package :common-lisp))
+			     "BLOCKY" ;; override 
+			     (package-name thing-package))))
 	     (let ((name (concatenate 'string prefix delimiter (symbol-name thing))))
 	       (let ((proto (find-prototype name :noerror)))
 		 (if proto name
 		     (if create name
-			 (concatenate 'string "BLOCKY" delimiter (symbol-name thing))))))))))))
+			 (concatenate 'string "BLOCKY" delimiter (symbol-name thing)))))))))))))
 		  
 
 		      ;; 	   ;; is there a built-in prototype with this
