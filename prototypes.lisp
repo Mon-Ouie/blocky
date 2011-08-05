@@ -1150,7 +1150,11 @@ named in the list %EXCLUDED-FIELDS of said object will be ignored."
 		 (cons +hash-type-key+ (cons (hash-table-test hash) plist))))))
     (typecase object 
       (hash-table (hash-to-list object))
-      (list (mapcar #'serialize object))
+      (cons 
+       (if (consp (cdr object)) ;; it's a list
+	   (mapcar #'serialize object)
+	   (cons (serialize (car object)) ;; it's a dotted pair
+		 (serialize (cdr object)))))
       (string object)
       (vector (map 'vector #'serialize object))
       (object (let ((excluded-fields (when (has-field :excluded-fields object)
@@ -1190,7 +1194,7 @@ objects after reconstruction, wherever present."
      (destructuring-bind (&key parent fields &allow-other-keys)
 	 (rest data)
        (let ((object (make-object :fields (mapcar #'deserialize fields)
-				  :parent (symbol-value parent))))
+				  :parent (find-prototype parent))))
 	 (prog1 object
 	   (initialize-method-cache object)
 	   ;; possibly recover from deserialization
@@ -1206,8 +1210,13 @@ objects after reconstruction, wherever present."
 		  (value (pop plist)))
 	     (setf (gethash key hash) (deserialize value))))
 	 hash)))
-    ((listp data)
-     (mapcar #'deserialize data))
+    ((consp data)
+     (if (consp (cdr data))
+	 ;; it's a list
+	 (mapcar #'deserialize data)
+	 ;; it's a dotted pair
+	 (cons (deserialize (car data))
+	       (deserialize (cdr data)))))
     ;; passthru
     (t data)))
 

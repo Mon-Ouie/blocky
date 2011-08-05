@@ -135,13 +135,13 @@ two words. This is used as a unit for various layout operations.")
   (image :initform nil :documentation "Texture to be displayed, if any.")
   (input-widths :initform nil))
 
-(define-method before-serialize block ()
-  "Prepare a running block for serialization."
-  (initialize self))
+;; (define-method before-serialize block ()
+;;   "Prepare a running block for serialization."
+;;   (initialize self))
 
-(define-method after-deserialize block ()
-  "Prepare a deserialized block for running."
-  (initialize self))
+;; (define-method after-deserialize block ()
+;;   "Prepare a deserialized block for running."
+;;   (initialize self))
 
 (define-method invalidate-layout block ()
   "Signal to the script manager that a layout operation is needed.
@@ -186,8 +186,9 @@ By default, just update each child block."
 (define-method count-inputs block ()
   (length %inputs))
 
-(define-method is-temporary block ()
-  %temporary)
+(defun is-temporary (thing)
+  (and (has-field :temporary thing)
+       (field-value :temporary thing)))
 
 (define-method count-top-level-blocks block ()
   (with-field-values (inputs) self

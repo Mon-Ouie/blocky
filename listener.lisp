@@ -586,7 +586,7 @@
   (background :initform nil)
   output)
 
-(define-method initialize listener-prompt (output)
+(define-method initialize listener-prompt (&optional output)
   (super%initialize self)
   (setf %output output))
 

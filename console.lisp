@@ -1085,9 +1085,12 @@ nil."
     (or 
      (loop 
        for dir in dirs for path
-	 = (cl-fad:file-exists-p (make-pathname 
-				  :name (project-directory-name project)
-				  :directory (namestring dir)))
+	 = (cl-fad:directory-exists-p 
+	    (cl-fad:pathname-as-directory
+	     (make-pathname 
+	      :name (project-directory-name project)
+	      :defaults dir
+	      :type :unspecific)))
        when path return path)
      (prog1 nil
        (message "Cannot find project ~s in paths ~S. Try checking your *PROJECTS-DIRECTORIES* settings in the BLOCKY.INI configuration file. Continuing..."
@@ -1543,7 +1546,8 @@ control the size of the individual frames or subimages."
     (message "Serializing database...")
     (labels ((store (uuid object)
 	       ;; don't save prototypes
-	       (when (not (object-name object))
+	       (when (and (not (object-name object))
+			  (not (is-temporary object)))
 		 (setf (gethash uuid database2) object))))
       (maphash #'store database) ;; copy into database2
       (values (make-resource :name "--database--"
@@ -1578,10 +1582,26 @@ control the size of the individual frames or subimages."
 	  (load-database-resource database)))
       (message "No database file found. Continuing...")))
 
+;;; Loading/saving variables
+
+(defun make-variable-resource (name)
+  (assert (and (symbolp name)
+	       (boundp name)))
+  (make-resource :name (symbol-name name)
+		 :type :variable
+		 :data (serialize (symbol-value name))))
+
+(defun load-variable-resource (resource)
+  (assert (eq :variable (resource-type resource)))
+  (let ((name (intern (resource-name resource))))
+    (setf (symbol-value name)
+	  (resource-data resource))))
+
 ;;; Handling different resource types
 
 (defparameter *resource-handlers* 
   (list :image #'load-image-resource
+	:variable #'load-variable-resource
 	:lisp #'load-lisp-resource
 	:object #'load-object-resource
 	:database #'load-database-resource
