@@ -1280,8 +1280,8 @@ table."
 ;; page IOF files.
 
 (defun make-object-resource (name object)
-  "Make an object resource named NAME (a string) with the CLON object
-OBJECT as the data."
+  "Make an object resource named NAME (a string) with the Lisp object
+OBJECT as the resource data."
   (message "Creating new object resource ~S." name)
   (let ((resource (make-resource :name name 
 				 :type :object
@@ -1526,10 +1526,33 @@ control the size of the individual frames or subimages."
 	    (when (numberp volume)
 	      (setf (sdl-mixer:sample-volume chunk) volume))))))))
 
+;;; Loading and saving the object database
+
+(defun load-database-resource (resource)
+  (let ((database (deserialize (resource-data resource))))
+    (assert (hash-table-p database))
+    (merge-hashes *database* database)))
+
+(defun make-database-resource (&optional (database *database*))
+  (let ((database2 (make-hash-table :test 'equal)))
+    (labels ((store (uuid object)
+	       (when (not (find-prototype (make-prototype-id (object-name object))))
+		 (setf (gethash uuid database2) object))))
+      (maphash #'store database)
+      (make-resource :name "--database--"
+		     :type :database
+		     :data (serialize database)))))
+
+(defun database-file ()
+  (
+		     
+;;; Handling different resource types
+
 (defparameter *resource-handlers* 
   (list :image #'load-image-resource
 	:lisp #'load-lisp-resource
 	:object #'load-object-resource
+	:database #'load-database-resource
 	:sprite-sheet #'load-sprite-sheet-resource
 	:color #'load-color-resource
 	:music #'load-music-resource

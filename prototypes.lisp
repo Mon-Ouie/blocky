@@ -329,10 +329,12 @@ extended argument list ARGLIST."
     (symbol (intern (symbol-name S)))
     (string (intern S))))
 
-(defun merge-hashes (a b)
+(defun merge-hashes (a b &optional predicate)
   (prog1 a
-    (maphash #'(lambda (k v)
-		 (setf (gethash k a) v))
+    (maphash #'(lambda (key value)
+		 (when (or (null predicate)
+			   (funcall predicate key))
+		   (setf (gethash key a) value)))
 	     b)))
 	       
 (defvar *make-prototype-id-package* nil)

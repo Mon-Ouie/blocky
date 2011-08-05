@@ -1,10 +1,12 @@
 ** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
-*** TODO [#A] generic LISP command evaluation shell
-*** TODO [#A] video with basic stuff, and/or screenshots
-*** TODO [#A] trigger context menu items with click, make block with control-click
+*** TODO Implement repl
+**** DONE 
 *** TODO [#A] terminal window can be resized
 **** [#A] general purpose resizer/scroller decorator thinger
 **** [#A] lower-right-corner resize handle decorator
+
+
+*** TODO [#A] trigger context menu items with click, make block with control-click
 *** [#B] start using terminal output for status message output
 ****  [#A] hook #'message minibuffer messages/notifications (message workspace, or different buffers?) 
 *** TODO [#B] Allow user to move entries easier via yellow triangle tab
