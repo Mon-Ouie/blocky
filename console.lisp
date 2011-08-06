@@ -1334,7 +1334,7 @@ OBJECT as the resource data."
       ;; finally, mark the original as saved.
       (resource-modified-p resource) nil)))
 
-(defun *resource-index-filename* "resources.iof")
+(defvar *resource-index-filename* "resources.iof")
 
 (defun save-project (&optional force)
   (let (index)
