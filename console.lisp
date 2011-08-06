@@ -1334,21 +1334,20 @@ OBJECT as the resource data."
       ;; finally, mark the original as saved.
       (resource-modified-p resource) nil)))
 
-(defvar *resource-index-filename* "resources.iof")
-
 (defun save-project (&optional force)
   (let (index)
-    (assert (not (string= "STANDARD"
-			  (string-upcase *project*))))
-    (labels ((save (name resource) 
-	       (when (or force (resource-modified-p resource))
-		 (push (save-resource name resource) index))))
-      (maphash #'save *resources*)
-      ;; FIXME: allow to save resources in separate file
-      ;; (write-iof (find-project-file *project* *resource-index-filename*)
-      ;; 		 (nreverse index))
-      (save-database)
-      (save-variables))))
+    ;; don't save the startup project
+    (when (not (string= "STANDARD"
+			(string-upcase *project*)))
+      (labels ((save (name resource) 
+		 (when (or force (resource-modified-p resource))
+		   (push (save-resource name resource) index))))
+	(maphash #'save *resources*)
+	;; FIXME: allow to save resources in separate file
+	(write-iof (find-project-file *project* (object-index-filename *project*))
+		   (nreverse index))
+	(save-database)
+	(save-variables)))))
 
 (defparameter *export-formats* '(:archive :application))
 
@@ -1607,6 +1606,7 @@ control the size of the individual frames or subimages."
 (defun load-variable-resource (resource)
   (assert (eq :variable (resource-type resource)))
   (let ((name (intern (resource-name resource))))
+    (message "Setting variable: ~S..." name)
     (setf (symbol-value name)
 	  (resource-data resource))))
 
@@ -2323,6 +2323,9 @@ of the music."
   (dolist (line (split-string-on-lines *copyright-notice*))
     (message line)))
 
+(defun load-standard-resources ()
+  (open-project "standard"))
+
 (defun start-up ()
   #+linux (do-cffi-loading)
   ;; add library search paths for Mac if needed
@@ -2357,9 +2360,6 @@ of the music."
   (sdl-mixer:halt-music)
   (sdl-mixer:close-audio t))
 
-(defun load-standard-resources ()
-  (open-project "standard"))
-
 ;; (defmacro defsession (name &rest body)
 ;;   `(defun ,name (&optional project)
 ;;      (start-up)
@@ -2368,6 +2368,7 @@ of the music."
 (defun play (&optional (project *untitled-project-name*))
   (start-up)
   (open-project project)
+  (assert (not (null *blocks*)))
   (run-main-loop)
   (shut-down))
 
@@ -2376,6 +2377,7 @@ of the music."
   (start-up)
   (new system)
   (create-project project)
+  (open-project project)
   (start (new shell (new script)))
   (run-main-loop)
   (shut-down))

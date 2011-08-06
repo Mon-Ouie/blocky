@@ -1,20 +1,16 @@
 ** TODO Fix the way wiki page resources are stored into separate files...
 ** TODO Fix backward insertion of lines from error message into listener
-** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
-*** TODO Implement repl
-**** DONE 
-*** TODO [#A] terminal window can be resized
-**** [#A] general purpose resizer/scroller decorator thinger
-**** [#A] lower-right-corner resize handle decorator
+** TODO Improve the basic command-shell and prompt so that in-engine development is easier. 
+** TODO general purpose resizer/scroller decorator thinger
+**** lower-right-corner resize handle decorator
 
+*** TODO trigger context menu items with click, make block with control-click
+*** start using terminal output for status message output
+****  hook #'message minibuffer messages/notifications (message workspace, or different buffers?) 
+*** TODO Allow user to move entries easier via yellow triangle tab
+*** TODO pop up shell on M-x
 
-*** TODO [#A] trigger context menu items with click, make block with control-click
-*** [#B] start using terminal output for status message output
-****  [#A] hook #'message minibuffer messages/notifications (message workspace, or different buffers?) 
-*** TODO [#B] Allow user to move entries easier via yellow triangle tab
-*** TODO [#B] pop up shell on M-x
-
-** TODO [#A] Finish implementing the core visual programming language in OOP.LISP
+** TODO Finish implementing the core visual programming language in OOP.LISP
 *** defblock var (reference to a var, not a def)  (for lisp vars, script vars, proto names, and fields)
 *** defblock let (with drag-off variable refs)
 *** defblock link <--- to another wikipage or something
@@ -30,7 +26,7 @@
 ** TODO re-release "Invader"!
 
 ** TODO FIX BUGS
-*** TODO [#A] Fix wrong entry type-specifiers
+*** TODO Fix wrong entry type-specifiers
 **** TODO [#B] Menu option to change accepted type of an entry
 *** TODO [#B] FIX trash drawing children
 *** TODO [#C] FIX M-x not focusing input on the prompt
