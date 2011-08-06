@@ -1159,6 +1159,7 @@ resource is stored; see also `find-resource'."
 		 project directory)
 	(let ((dir (default-project-pathname project)))
 	  (message "Creating new project ~A in directory ~A..." project dir)
+	  (setf *project* project)
 	  (prog1 dir
 	    (make-directory-maybe dir)
 	    (message "Finished creating directory ~A." dir)
@@ -1333,14 +1334,19 @@ OBJECT as the resource data."
       ;; finally, mark the original as saved.
       (resource-modified-p resource) nil)))
 
+(defun *resource-index-filename* "resources.iof")
+
 (defun save-project (&optional force)
   (let (index)
+    (assert (not (string= "STANDARD"
+			  (string-upcase *project*))))
     (labels ((save (name resource) 
 	       (when (or force (resource-modified-p resource))
 		 (push (save-resource name resource) index))))
       (maphash #'save *resources*)
-      (write-iof (find-project-file *project* (object-index-filename *project*)) 
-		 (nreverse index))
+      ;; FIXME: allow to save resources in separate file
+      ;; (write-iof (find-project-file *project* *resource-index-filename*)
+      ;; 		 (nreverse index))
       (save-database)
       (save-variables))))
 
@@ -2374,8 +2380,6 @@ of the music."
   (run-main-loop)
   (shut-down))
 
-;; (defun share (project) ...
-
 (defun edit (&optional (project *untitled-project-name*))
   (let ((*edit* t))
     (start-up)
@@ -2383,5 +2387,6 @@ of the music."
     (run-main-loop)
     (shut-down)))
 
+;; (defun share (project) ...
 
 ;;; console.lisp ends here

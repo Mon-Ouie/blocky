@@ -1,3 +1,5 @@
+** TODO Fix the way wiki page resources are stored into separate files...
+** TODO Fix backward insertion of lines from error message into listener
 ** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
 *** TODO Implement repl
 **** DONE 
