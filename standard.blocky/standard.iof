@@ -1,4 +1,5 @@
-(:name "sans-bold-oblique-10" :type :ttf :file "DejaVuSans-BoldOblique.ttf" :properties (:size 10))
+
+NIL e "sans-bold-oblique-10" :type :ttf :file "DejaVuSans-BoldOblique.ttf" :properties (:size 10))
 (:name "sans-bold-10" :type :ttf :file "DejaVuSans-Bold.ttf" :properties (:size 10))
 (:name "sans-condensed-bold-oblique-10" :type :ttf :file "DejaVuSansCondensed-BoldOblique.ttf" :properties (:size 10))
 (:name "sans-condensed-bold-10" :type :ttf :file "DejaVuSansCondensed-Bold.ttf" :properties (:size 10))

@@ -1155,7 +1155,7 @@ resource is stored; see also `find-resource'."
   (let* ((directory (or destination-directory (projects-directory)))
 	 (dirs (mapcar #'string-upcase (find-projects-in-directory directory))))
     (if (find project dirs :test 'equal)
-	(message "Cannot create project ~A because a project with this name already exists in ~A"
+	(message "Cannot create project ~A, because a project with this name already exists in directory ~A"
 		 project directory)
 	(let ((dir (default-project-pathname project)))
 	  (message "Creating new project ~A in directory ~A..." project dir)
@@ -1164,7 +1164,7 @@ resource is stored; see also `find-resource'."
 	    (message "Finished creating directory ~A." dir)
 	    (message "Finished creating project ~A." project))))))
 
-(defun open-project (project &key (autoload t))
+(defun open-project (project &optional no-error)
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
 object save directory. See also `save-object-resource')."
@@ -1172,14 +1172,16 @@ object save directory. See also `save-object-resource')."
   (message "Opening project: ~A" (string-upcase project))
   (setf *project* project
 	*pending-autoload-resources* nil)
-  (setf *project-path*
-	(or (search-project-path project)
-	    (create-project project)))
+  ;; possibly create a project
+  (setf *project-path* (search-project-path project))
+  (when (null *project-path*)
+    (if no-error
+	(create-project project)
+	(error "Cannot find any project named ~S" project)))
   (message "Set project path to ~A" (namestring *project-path*)) 
   (assert *project-path*)
   (index-project project)
-  (when autoload 
-    (mapc #'load-resource (nreverse *pending-autoload-resources*)))
+  (mapc #'load-resource (nreverse *pending-autoload-resources*))
   (setf *pending-autoload-resources* nil)
   (load-project-objects project)
   (load-database)
@@ -1265,7 +1267,8 @@ table."
 				       (object-index-filename project-name))))
     (if (cl-fad:file-exists-p index-file)
 	(index-iof project-name index-file)
-	(message "No IOF file found in project. Continuing..."))))
+	(message "Did not find index file ~A in project ~A. Continuing..."
+		 index-file project-name))))
 
 ;;; Standard resource names
 
@@ -1602,7 +1605,12 @@ control the size of the individual frames or subimages."
 	  (resource-data resource))))
 
 (defvar *persistent-variables* 
-  '(*blocks* *dt* *frame-rate* *updates* *screen-width* *screen-height*))
+  '(*blocks* *dt* *frame-rate* *updates* *screen-width* *screen-height*
+    *world* *message-history* *sequence-number* *pointer-x* *pointer-y*
+    *keys* *mods* *resizable* *window-title* *script* *dash* *system*
+    ;; notice that THIS variable is also persistent!
+    ;; this is to avoid unwanted behavior changes in modules
+    *persistent-variables*))
 
 (defparameter *persistent-variables-file-name* "variables.iof")
 
@@ -2310,6 +2318,12 @@ of the music."
     (message line)))
 
 (defun start-up ()
+  #+linux (do-cffi-loading)
+  ;; add library search paths for Mac if needed
+  (setup-library-search-paths)
+  ;; get going...
+  (message "Starting Blocky...")
+  (print-copyright-notice)
   (setf *project-package-name* nil
         *project-directories* (default-project-directories)
 	*blocks* nil
@@ -2320,14 +2334,14 @@ of the music."
 	*keyboard-update-number* 0
 	*random-state* (make-random-state t))
   (sdl:init-sdl :video t :audio t :joystick t)
-  ;; add library search paths for Mac if needed
-  (setup-library-search-paths)
   (load-user-init-file) ;; this step may override *project-directories* and so on 
   (initialize-resource-table)
   (initialize-textures-maybe :force)
   (initialize-colors)
   (initialize-sound)
-  (initialize-database))
+  (initialize-database)
+  (load-standard-resources)
+  (enable-key-repeat 9 1.2))
 
 (defun shut-down ()
   ;; delete any cached textures and surfaces
@@ -2340,38 +2354,32 @@ of the music."
 (defun load-standard-resources ()
   (open-project "standard"))
 
+;; (defmacro defsession (name &rest body)
+;;   `(defun ,name (&optional project)
+;;      (start-up)
+;;      (
+
 (defun play (&optional (project *untitled-project-name*))
-  #+linux (do-cffi-loading)
-  (message "Starting Blocky...")
-  (print-copyright-notice)
   (start-up)
-  (load-standard-resources)
-  (let ((proj (or project *project*)))
-    (when (null proj)
-      (error "No current project. You must provide an argument naming the project."))
-    (open-project proj)
-    (run-main-loop))
+  (open-project project)
+  (run-main-loop)
   (shut-down))
 
-;;; Open a project for editing
+(defun create (project)
+  (assert (stringp project))
+  (start-up)
+  (new system)
+  (create-project project)
+  (start (new shell (new script)))
+  (run-main-loop)
+  (shut-down))
 
-(defun edit (&optional (project *untitled-project-name*) directory)
+;; (defun share (project) ...
+
+(defun edit (&optional (project *untitled-project-name*))
   (let ((*edit* t))
-    #+linux (do-cffi-loading)
-    (message "Starting Blocky...")
-    (print-copyright-notice)
-    (setf *screen-width* 640)
-    (setf *screen-height* 480)
-    (setf *window-title* "Blocky")
-    (setf *resizable* nil)
-    (enable-key-repeat 9 1.2)
     (start-up)
-    (load-standard-resources)
-    (new system)
-    (open-project project)
-    (let ((script (new script)))
-      (add-block script (new listener))
-      (start (new shell script)))
+    (open-project project :no-error)
     (run-main-loop)
     (shut-down)))
 

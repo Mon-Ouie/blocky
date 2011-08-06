@@ -1,5 +1,5 @@
 ;;; trees.lisp --- generic folding hierarchical list widget with
-;;; indentation and headlines, a la orgmode
+;;;                indentation and headlines, a la orgmode
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -247,7 +247,7 @@
   (with-fields (action target) self
     (typecase action 
       (function (funcall action))
-      (keyword (send action (or target (symbol-value *system*))))
+      (keyword (send action (or target (symbol-value '*system*))))
       (otherwise
        ;; we're a submenu, not an individual menu command.
        (toggle-expanded self)))))
