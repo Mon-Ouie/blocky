@@ -298,7 +298,7 @@ extended argument list ARGLIST."
 	(maphash #'purge *database*)
 	(maphash #'purge *prototypes*)
 	(let ((delta (- before-count (count-entries))))
-	  (message "Purged ~A objects." delta))))))
+	  (message "Removed ~A objects." delta))))))
 		  
 ;;; Finding any object by proto-name or UUID
 

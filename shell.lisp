@@ -190,7 +190,8 @@
 		      (make-menu *system-menu*
 				 :target *system*)))
   (add-block script %menubar)
-  (register-uuid self))
+  (register-uuid self)
+  (message "Opening shell..."))
 
 (define-method script-blocks shell ()
   (field-value :inputs %script))

@@ -118,7 +118,7 @@ two words. This is used as a unit for various layout operations.")
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
   (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
-  (excluded-fields :initform '(:events :input-widths :results :parent))
+  (excluded-fields :initform '(:events :results))
   ;; visual layout
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")

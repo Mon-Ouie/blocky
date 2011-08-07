@@ -765,6 +765,7 @@ display."
     (do-orthographic-projection)
     (run-project-lisp *project*)
     (run-hook '*after-startup-hook*)
+    (message "Finished initializing Blocky for project ~A." *project*)
     (sdl:with-events ()
       (:quit-event () (prog1 t (sdl:quit-sdl :force t)))
       (:video-resize-event (:w w :h h)  
@@ -1016,30 +1017,37 @@ binary image.")
 (defvar *project-package-name* nil)
 
 (defun project-package-name (&optional (project-name *project*))
-  (or *project-package-name* 
-      (make-keyword project-name)))
-;;      :blocky))
+  (make-keyword (or *project-package-name* project-name)))
+
+(defun is-standard-project ()
+  (string= "STANDARD" (string-upcase *project*)))
 
 (defun project-package-exists-p (project)
-  (when project
-    (find-package (project-package-name project))))
+  (assert (not (null project)))
+  (find-package (project-package-name (make-keyword project))))
 
 (defun define-project-package (project)
-  (let ((proj (project-package-name project)))
-    (message "Checking for user-defined project package name...")
-    (if (project-package-exists-p proj)
-	(message "Not defining new package, because user-defined project package ~S already exists. Continuing..." *project-package-name*)
-	(progn 
-	  (setf *project-package-name* project)
-	  (eval (list 'defpackage proj '(:use :blocky :common-lisp)))))))
+  (assert (stringp project))
+  (if (project-package-exists-p project)
+      (message "Not defining new package, because user-defined project package ~S already exists. Continuing..." *project-package-name*)
+      ;; define the new package
+      (setf *project* 
+	    project
+	    *project-package-name* 
+	    (make-keyword project)
+	    *package*
+	    (make-package (make-keyword project) :use '(:blocky :common-lisp)))))
        
 (defun in-project-package (project)
   (assert (not (null project)))
-  (let ((package (project-package-name project)))
-    (assert (project-package-exists-p package))
-    (message "Found project package ~S." package)
-    (setf *package* (find-package package))
-    (message "Now in package ~S." package)))
+  (if (is-standard-project)
+      (setf *package* (find-package :blocky))
+      ;; find project-specific package
+      (let ((package (project-package-name project)))
+        (assert (project-package-exists-p project))
+	(message "Found project package ~S." package)
+	(setf *package* (find-package package))
+	(message "Now in package ~S." package))))
 
 ;;; The blocky installation dir
   
@@ -1200,11 +1208,11 @@ object save directory. See also `save-object-resource')."
   ;; check path
   (message "Set project path to ~A" (namestring *project-path*)) 
   (assert *project-path*)
-  ;; load any user-written lisp
-  (load-project-lisp project)
   ;; define package if necessary
   (define-project-package project)
   (in-project-package project)
+  ;; load any user-written lisp
+  (load-project-lisp project)
   ;; load everything else
   (index-project project)
   (mapc #'load-resource (nreverse *pending-autoload-resources*))
@@ -1356,8 +1364,7 @@ OBJECT as the resource data."
 
 (defun save-project (&optional force)
   (let (index)
-    (if (string= "STANDARD"
-		 (string-upcase *project*))
+    (if (is-standard-project)
 	;; don't save the startup project
 	(message "Not saving project STANDARD. Continuing...")
 	;; save it
@@ -1579,9 +1586,9 @@ control the size of the individual frames or subimages."
   (let ((database2 (make-hash-table :test 'equal)))
     (message "Serializing database...")
     (labels ((store (uuid object)
-	       ;; don't save prototypes or temp objects (menus etc)
-	       (when (and (not (object-name object))
-			  (not (is-temporary object)))
+	       ;; don't save prototypes
+	       (when (null (object-name object))
+		 ;; (not (is-temporary object)))
 		 (setf (gethash uuid database2) object))))
       (maphash #'store database) ;; copy into database2
       (values (make-resource :name "--database--"
@@ -1607,7 +1614,7 @@ control the size of the individual frames or subimages."
       (message "Finished saving database into ~A. Continuing..." file))))
       
 (defun load-database (&optional (file (database-file)))
-  (message "Reading object database from ~A..." file)
+  (message "Looking for object database ~A..." file)
   (if (cl-fad:file-exists-p file)
       (let ((resources (read-iof file)))
 	(message "Read ~S resources from ~A" (length resources) file)
