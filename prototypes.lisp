@@ -1157,84 +1157,86 @@ evaluated, then any applicable initializer is triggered."
 Invokes :BEFORE-SERIALIZE on BLOCKY objects whenever present. Any fields
 named in the list %EXCLUDED-FIELDS of said object will be ignored."
   ;; use labels here so we can call #'serialize
-  (labels ((hash-to-list (hash)
-	     (let (plist)
-	       (labels ((collect (k v)
-			  (push (serialize v) plist)
-			  (push k plist)))
-		 (maphash #'collect hash)
-		 (cons +hash-type-key+ (cons (hash-table-test hash) plist))))))
-    (typecase object 
-      (hash-table (hash-to-list object))
-      (cons 
-       (if (consp (cdr object)) ;; it's a list
-	   (mapcar #'serialize object)
-	   (cons (serialize (car object)) ;; it's a dotted pair
-		 (serialize (cdr object)))))
-      (string object)
-      (vector (map 'vector #'serialize object))
-      (object (let ((excluded-fields (when (has-field :excluded-fields object)
-					    (field-value :excluded-fields object))))
-		     ;; possibly prepare object for serialization.
-		     (when (has-method :before-serialize object)
-		       (send :before-serialize object))
-		     (let ((parent-name (object-name (object-parent object)))
-			   (name (object-name object))
-			   (fields (object-fields object))
-			   (plist nil))
-		       (assert (and parent-name 
-				    (null name)
-				    (listp fields))) ;; TODO handle hashes?
-		       (labels ((collect (field value)
-				  (unless (member field excluded-fields)
-				    (push (serialize value) plist)
-				    (push field plist))))
-			 ;; make serialized/cleaned plist 
-			 (loop while fields
-			       do (let ((field (pop fields))
-					(value (pop fields)))
-				    (collect field value)))
-			 ;; cons up the final serialized thing
-			 (list +object-type-key+
-			       :parent parent-name
-			       :fields plist)))))
-      (otherwise object))))
-
+  (with-standard-io-syntax
+    (labels ((hash-to-list (hash)
+	       (let (plist)
+		 (labels ((collect (k v)
+			    (push (serialize v) plist)
+			    (push k plist)))
+		   (maphash #'collect hash)
+		   (cons +hash-type-key+ (cons (hash-table-test hash) plist))))))
+      (typecase object 
+	(hash-table (hash-to-list object))
+	(cons 
+	 (if (consp (cdr object)) ;; it's a list
+	     (mapcar #'serialize object)
+	     (cons (serialize (car object)) ;; it's a dotted pair
+		   (serialize (cdr object)))))
+	(string object)
+	(vector (map 'vector #'serialize object))
+	(object (let ((excluded-fields (when (has-field :excluded-fields object)
+					 (field-value :excluded-fields object))))
+		  ;; possibly prepare object for serialization.
+		  (when (has-method :before-serialize object)
+		    (send :before-serialize object))
+		  (let ((parent-name (object-name (object-parent object)))
+			(name (object-name object))
+			(fields (object-fields object))
+			(plist nil))
+		    (assert (and parent-name 
+				 (null name)
+				 (listp fields))) ;; TODO handle hashes?
+		    (labels ((collect (field value)
+			       (unless (member field excluded-fields)
+				 (push (serialize value) plist)
+				 (push field plist))))
+		      ;; make serialized/cleaned plist 
+		      (loop while fields
+			    do (let ((field (pop fields))
+				     (value (pop fields)))
+				 (collect field value)))
+		      ;; cons up the final serialized thing
+		      (list +object-type-key+
+			    :parent parent-name
+			    :fields plist)))))
+	(otherwise object)))))
+  
 (defun deserialize (data)
   "Reconstruct Lisp objects (including BLOCKY-derived objects) from an
 S-expression made by SERIALIZE. Invokes :AFTER-DESERIALIZE on BLOCKY
 objects after reconstruction, wherever present."
-  (cond 
-    ;; handle BLOCKY objects
-    ((and (listp data) (eq +object-type-key+ (first data)))
-     (destructuring-bind (&key parent fields &allow-other-keys)
-	 (rest data)
-       (let ((object (make-object :fields (mapcar #'deserialize fields)
-				  :parent (find-prototype parent))))
-	 (prog1 object
-	   (initialize-method-cache object)
-	   ;; possibly recover from deserialization
-	   (when (has-method :after-deserialize object)
-	     (send :after-deserialize object))))))
-    ;; handle hashes
-    ((and (listp data) (eq +hash-type-key+ (first data)))
-     (destructuring-bind (test &rest plist)
-	 (rest data)
-       (let ((hash (make-hash-table :test test)))
-	 (loop while plist do
-	   (let* ((key (pop plist))
-		  (value (pop plist)))
-	     (setf (gethash key hash) (deserialize value))))
-	 hash)))
-    ((consp data)
-     (if (consp (cdr data))
-	 ;; it's a list
-	 (mapcar #'deserialize data)
-	 ;; it's a dotted pair
-	 (cons (deserialize (car data))
-	       (deserialize (cdr data)))))
-    ;; passthru
-    (t data)))
+  (with-standard-io-syntax 
+    (cond 
+      ;; handle BLOCKY objects
+      ((and (listp data) (eq +object-type-key+ (first data)))
+       (destructuring-bind (&key parent fields &allow-other-keys)
+	   (rest data)
+	 (let ((object (make-object :fields (mapcar #'deserialize fields)
+				    :parent (find-prototype parent))))
+	   (prog1 object
+	     (initialize-method-cache object)
+	     ;; possibly recover from deserialization
+	     (when (has-method :after-deserialize object)
+	       (send :after-deserialize object))))))
+      ;; handle hashes
+      ((and (listp data) (eq +hash-type-key+ (first data)))
+       (destructuring-bind (test &rest plist)
+	   (rest data)
+	 (let ((hash (make-hash-table :test test)))
+	   (loop while plist do
+	     (let* ((key (pop plist))
+		    (value (pop plist)))
+	       (setf (gethash key hash) (deserialize value))))
+	   hash)))
+      ((consp data)
+       (if (consp (cdr data))
+	   ;; it's a list
+	   (mapcar #'deserialize data)
+	   ;; it's a dotted pair
+	   (cons (deserialize (car data))
+		 (deserialize (cdr data)))))
+      ;; passthru
+      (t data))))
 
 (defun super%initialize (object &rest args)
   (apply #'send-super :initialize object args))

@@ -989,13 +989,7 @@ function (see `*resource-handlers*').
 
 `Finding' a resource means looking up its record in the resource
 table, and loading the resource if it hasn't been loaded already.
-A lookup failure results in an error. See `find-resource'.
-
-A `project' is a directory full of resource files. The name of the
-project is the name of the directory. Each project must contain a
-file called {project-name}.iof, which should contain an index of
-all the project's resources. Multiple projects may be loaded at one
-time.")
+A lookup failure results in an error. See `find-resource'.")
 
 (defun initialize-resource-table ()
   "Create a new empty resource table."
@@ -1012,18 +1006,43 @@ This is where all saved objects are stored.")
 
 (defvar *after-open-project-hook* nil)
 
-(defvar *project-package-name* nil)
-
-(defvar *executable* nil)
+(defvar *executable* nil "Non-nil when running Blocky from a saved
+binary image.")
 
 (defparameter *untitled-project-name* "--untitled--")
 
+;;; Project packages
+
+(defvar *project-package-name* nil)
+
 (defun project-package-name (&optional (project-name *project*))
   (or *project-package-name* 
-      (when project-name 
-	(make-keyword project-name))
-      :blocky))
+      (make-keyword project-name)))
+;;      :blocky))
 
+(defun project-package-exists-p (project)
+  (assert (stringp project))
+  (packagep (find-package (project-package-name project))))
+
+(defmacro define-project-package (project)
+  (let ((proj (gensym)))   
+  `(let ((,proj (project-package-name ,project)))
+     (message "Checking for user-defined project package name...")
+     (if (project-package-exists-p ,proj)
+	 (message "Not defining new package, because user-defined project package ~S already exists. Continuing..." *project-package-name*)
+	 (defpackage ,proj
+	   (:use :blocky :common-lisp))))))
+       
+(defun in-project-package (project)
+  (assert (not (null project)))
+  (let ((package (project-package-name project)))
+    (assert (project-package-exists-p package))
+    (message "Found project package ~S." package)
+    (setf *package* (find-package package))
+    (message "Now in package ~S." package)))
+
+;;; The blocky installation dir
+  
 (defun blocky-directory ()
   (if *executable*
       (make-pathname :directory 
@@ -1047,10 +1066,6 @@ This is where all saved objects are stored.")
     (make-pathname :name *projects-directory*
 		   :defaults (user-homedir-pathname))))
    
-   ;; :name *projects-directory*
-   ;; :defaults (user-homedir-pathname)
-   ;; :type :unspecific))
-
 (defun project-directory-name (project)
   (assert (stringp project))
   (concatenate 'string project *project-directory-extension*))  
@@ -1174,22 +1189,29 @@ object save directory. See also `save-object-resource')."
   (assert (stringp project))
   (message "Opening project: ~A" (string-upcase project))
   (setf *project* project
-	*pending-autoload-resources* nil)
-  ;; possibly create a project
+	*pending-autoload-resources* nil
+	*project-package-name* nil)
+  ;; possibly create a new project
   (setf *project-path* (search-project-path project))
   (when (null *project-path*)
     (if no-error
 	(create-project project)
 	(error "Cannot find any project named ~S" project)))
+  ;; check path
   (message "Set project path to ~A" (namestring *project-path*)) 
   (assert *project-path*)
+  ;; load any user-written lisp
+  (load-project-lisp project)
+  ;; define package if necessary
+  (define-project-package project)
+  (in-project-package project)
+  ;; load everything else
   (index-project project)
   (mapc #'load-resource (nreverse *pending-autoload-resources*))
   (setf *pending-autoload-resources* nil)
   (load-project-objects project)
   (load-database)
   (load-variables)
-  (load-project-lisp project)
   (message "Started up successfully. Indexed ~A resources." (hash-table-count *resources*))
   (run-hook '*after-open-project-hook*))
 
@@ -1201,8 +1223,8 @@ object save directory. See also `save-object-resource')."
 	  (message "Checking for startup function ~S" start-function)
 	  (if (fboundp start-function)
 	      (funcall start-function)
-	      (message "No default startup function for: ~S" (string-upcase (symbol-name start-function)))))
-	(message "No package defined."))))
+	      (message "No default startup function for: ~S. Continuing.." (string-upcase (symbol-name start-function)))))
+	(message "Warning: No project package defined. Continuing..."))))
 
 (defun publish-project-as-application (&key (output-file "output.io")
 					    project require)
@@ -1611,8 +1633,8 @@ control the size of the individual frames or subimages."
 	  (resource-data resource))))
 
 (defvar *persistent-variables* 
-  '(*blocks* *dt* *frame-rate* *updates* *screen-width* *screen-height*
-    *world* *message-history* *sequence-number* *pointer-x* *pointer-y*
+  '(*message-history* *dt* *frame-rate* *updates* *screen-width* *screen-height*
+    *world* *blocks* *sequence-number* *pointer-x* *pointer-y*
     *keys* *mods* *resizable* *window-title* *script* *dash* *system*))
     ;; notice that THIS variable is also persistent!
     ;; this is to avoid unwanted behavior changes in modules
