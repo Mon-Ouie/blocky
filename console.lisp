@@ -1021,17 +1021,17 @@ binary image.")
 ;;      :blocky))
 
 (defun project-package-exists-p (project)
-  (assert (stringp project))
-  (packagep (find-package (project-package-name project))))
+  (when project
+    (find-package (project-package-name project))))
 
-(defmacro define-project-package (project)
-  (let ((proj (gensym)))   
-  `(let ((,proj (project-package-name ,project)))
-     (message "Checking for user-defined project package name...")
-     (if (project-package-exists-p ,proj)
-	 (message "Not defining new package, because user-defined project package ~S already exists. Continuing..." *project-package-name*)
-	 (defpackage ,proj
-	   (:use :blocky :common-lisp))))))
+(defun define-project-package (project)
+  (let ((proj (project-package-name project)))
+    (message "Checking for user-defined project package name...")
+    (if (project-package-exists-p proj)
+	(message "Not defining new package, because user-defined project package ~S already exists. Continuing..." *project-package-name*)
+	(progn 
+	  (setf *project-package-name* project)
+	  (eval (list 'defpackage proj '(:use :blocky :common-lisp)))))))
        
 (defun in-project-package (project)
   (assert (not (null project)))
