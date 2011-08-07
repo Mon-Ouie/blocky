@@ -730,7 +730,7 @@ becomes larger.")
 (defvar *window-position* :center
   "Controls the position of the game window. Either a list of coordinates or the symbol :center.")
 
-(defun run-main-loop ()
+(defun start-session ()
   "Initialize the console, open a window, and play.
 We want to process all inputs, update the game state, then update the
 display."
@@ -1137,8 +1137,10 @@ resource is stored; see also `find-resource'."
 (defun default-project-lisp-file (project-name)
   (find-project-file project-name (concatenate 'string project-name ".lisp")))
 
+(defparameter *object-index-filename* "index.iof")
+
 (defun load-project-objects (project)
-  (let ((object-index-file (find-project-file project (object-index-filename project))))
+  (let ((object-index-file (find-project-file project *object-index-filename*)))
     (when (cl-fad:file-exists-p object-index-file)
       (message "Reading saved objects from ~S" object-index-file)
       (index-iof project object-index-file))))
@@ -1258,14 +1260,10 @@ table. File names are relative to the project PROJECT-NAME."
 	    (when (getf (resource-properties res) :autoload)
 	      (push res *pending-autoload-resources*)))))))
 
-(defun object-index-filename (project-name)
-  (concatenate 'string project-name *iof-file-extension*))
-
 (defun index-project (project-name)
   "Add all the resources from the project PROJECT-NAME to the resource
 table."
-  (let ((index-file (find-project-file project-name
-				       (object-index-filename project-name))))
+  (let ((index-file (find-project-file project-name *object-index-filename*)))
     (if (cl-fad:file-exists-p index-file)
 	(index-iof project-name index-file)
 	(message "Did not find index file ~A in project ~A. Continuing..."
@@ -1336,18 +1334,20 @@ OBJECT as the resource data."
 
 (defun save-project (&optional force)
   (let (index)
-    ;; don't save the startup project
-    (when (not (string= "STANDARD"
-			(string-upcase *project*)))
-      (labels ((save (name resource) 
-		 (when (or force (resource-modified-p resource))
-		   (push (save-resource name resource) index))))
-	(maphash #'save *resources*)
-	;; FIXME: allow to save resources in separate file
-	(write-iof (find-project-file *project* (object-index-filename *project*))
-		   (nreverse index))
-	(save-database)
-	(save-variables)))))
+    (if (string= "STANDARD"
+		 (string-upcase *project*))
+	;; don't save the startup project
+	(message "Not saving project STANDARD. Continuing...")
+	;; save it
+	(labels ((save (name resource) 
+		   (when (or force (resource-modified-p resource))
+		     (push (save-resource name resource) index))))
+	  (maphash #'save *resources*)
+	  ;; FIXME: allow to save resources in separate file
+	  (write-iof (find-project-file *project* *object-index-filename*)
+		     (nreverse index))
+	  (save-database)
+	  (save-variables)))))
 
 (defparameter *export-formats* '(:archive :application))
 
@@ -1557,7 +1557,7 @@ control the size of the individual frames or subimages."
   (let ((database2 (make-hash-table :test 'equal)))
     (message "Serializing database...")
     (labels ((store (uuid object)
-	       ;; don't save prototypes
+	       ;; don't save prototypes or temp objects (menus etc)
 	       (when (and (not (object-name object))
 			  (not (is-temporary object)))
 		 (setf (gethash uuid database2) object))))
@@ -1613,10 +1613,10 @@ control the size of the individual frames or subimages."
 (defvar *persistent-variables* 
   '(*blocks* *dt* *frame-rate* *updates* *screen-width* *screen-height*
     *world* *message-history* *sequence-number* *pointer-x* *pointer-y*
-    *keys* *mods* *resizable* *window-title* *script* *dash* *system*
+    *keys* *mods* *resizable* *window-title* *script* *dash* *system*))
     ;; notice that THIS variable is also persistent!
     ;; this is to avoid unwanted behavior changes in modules
-    *persistent-variables*))
+    ;; *persistent-variables*))  ;; FIXME not for now
 
 (defparameter *persistent-variables-file-name* "variables.iof")
 
@@ -2336,6 +2336,7 @@ of the music."
   (setf *project-package-name* nil
         *project-directories* (default-project-directories)
 	*blocks* nil
+	*project* nil
 	*message-hook-functions* nil
 	*window-title* "blocky"
 	*updates* 0
@@ -2354,41 +2355,45 @@ of the music."
 
 (defun shut-down ()
   ;; delete any cached textures and surfaces
+  (purge-all-objects)
   (clear-text-image-cache)
   (delete-all-textures)
   (delete-all-resources)
   (sdl-mixer:halt-music)
   (sdl-mixer:close-audio t))
 
+(defmacro with-session (&rest body)
+  `(progn 
+     (start-up)
+     ,@body
+     (shut-down)))
+
+(defun play (&optional (project *untitled-project-name*))
+  (with-session
+    (open-project project)
+    (assert (not (null *blocks*)))
+    (start-session)))
+
+(defun create (project)
+  (with-session
+    (assert (stringp project))
+    (new system)
+    (create-project project)
+    (open-project project)
+    (start (new shell (new script)))
+    (start-session)))
+
+(defun edit (&optional (project *untitled-project-name*))
+  (with-session
+    (let ((*edit* t))
+      (open-project project :no-error)
+      (start-session))))
+
+;; (defun share (project) ...
+
 ;; (defmacro defsession (name &rest body)
 ;;   `(defun ,name (&optional project)
 ;;      (start-up)
 ;;      (
-
-(defun play (&optional (project *untitled-project-name*))
-  (start-up)
-  (open-project project)
-  (assert (not (null *blocks*)))
-  (run-main-loop)
-  (shut-down))
-
-(defun create (project)
-  (assert (stringp project))
-  (start-up)
-  (new system)
-  (create-project project)
-  (open-project project)
-  (start (new shell (new script)))
-  (run-main-loop)
-  (shut-down))
-
-(defun edit (&optional (project *untitled-project-name*))
-  (let ((*edit* t))
-    (start-up)
-    (open-project project :no-error)
-    (run-main-loop)
-    (shut-down)))
-
-;; (defun share (project) ...
 
 ;;; console.lisp ends here

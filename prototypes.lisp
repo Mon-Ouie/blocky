@@ -284,6 +284,22 @@ extended argument list ARGLIST."
       (unless noerror
 	(error "Cannot find object for uuid ~S" uuid))))
 
+(defun purge-all-objects ()
+  (flet ((count-entries () (+ (hash-table-count *database*)
+		      (hash-table-count *prototypes*))))
+    (let ((before-count (count-entries)))
+      (message "Purging ~A objects..." before-count)
+      (flet ((purge (id object)
+	       (declare (ignore key))
+	       (let ((name (object-name object)))
+		 (unless (and (stringp name)
+			      (search "BLOCKY:" name))
+		   (remhash id *database*)))))
+	(maphash #'purge *database*)
+	(maphash #'purge *prototypes*)
+	(let ((delta (- before-count (count-entries))))
+	  (message "Purged ~A objects." delta))))))
+		  
 ;;; Finding any object by proto-name or UUID
 
 (defun find-object (thing) 

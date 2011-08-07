@@ -1,16 +1,24 @@
-** TODO Fix the way wiki page resources are stored into separate files...
-** TODO Fix backward insertion of lines from error message into listener
-** TODO Improve the basic command-shell and prompt so that in-engine development is easier. 
-** TODO general purpose resizer/scroller decorator thinger
-**** lower-right-corner resize handle decorator
+** TODO properly close database by removing all non-named objects when quitting project
+** TODO create package and proto-name prefix for all projects (use projectname)
 
+** TODO FIX BUGS
+*** TODO Fix wrong entry type-specifiers
+**** TODO [#B] Menu option to change accepted type of an entry
+*** TODO [#B] FIX trash drawing children
+*** TODO [#C] FIX M-x not focusing input on the prompt
+
+** TODO [#C] Fix the way wiki page resources are stored into separate files...
+** TODO [#A] Fix backward insertion of lines from error message into listener
+** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
+** TODO [#B] general purpose resizer/scroller decorator thinger
 *** TODO trigger context menu items with click, make block with control-click
 *** start using terminal output for status message output
-****  hook #'message minibuffer messages/notifications (message workspace, or different buffers?) 
 *** TODO Allow user to move entries easier via yellow triangle tab
 *** TODO pop up shell on M-x
 
-** TODO Finish implementing the core visual programming language in OOP.LISP
+** TODO change PROJECTNAME.iof to index.iof
+
+** TODO Finish implementing the core visual programming language in VMACS
 *** defblock var (reference to a var, not a def)  (for lisp vars, script vars, proto names, and fields)
 *** defblock let (with drag-off variable refs)
 *** defblock link <--- to another wikipage or something
@@ -24,19 +32,6 @@
 
 ** TODO Re-examine "invader tactics" source and see what blocks are required to reimplement it
 ** TODO re-release "Invader"!
-
-** TODO FIX BUGS
-*** TODO Fix wrong entry type-specifiers
-**** TODO [#B] Menu option to change accepted type of an entry
-*** TODO [#B] FIX trash drawing children
-*** TODO [#C] FIX M-x not focusing input on the prompt
-
-** TODO [#A] Refactor collision detection to enable various types.
-*** delegate actual collision detection to method
-*** in cell/move and sprite/move , compute whether a move would cause a collision
-*** and then only allow the move to go a certain distance. return number moved
-*** then "resting contact" will work; the object won't try to move anymore (if gravity.)
-*** implement AABB-quadtree? http://en.wikipedia.org/wiki/Quadtree http://hectorgon.blogspot.com/2006/08/regular-grids-vs-aabb-trees-in-games.html
 
 ** TODO [#A] Flesh out the user-friendly development environment
 *** desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
@@ -66,6 +61,14 @@
 *** tab and shift-tab for input nav
 *** comment block for output messages in listener etc, trap errors
 *** TODO [#B] isolate/trap all block errors and display them grayed out with an inspectable error
+
+
+** TODO [#A] Refactor collision detection to enable various types.
+*** delegate actual collision detection to method
+*** in cell/move and sprite/move , compute whether a move would cause a collision
+*** and then only allow the move to go a certain distance. return number moved
+*** then "resting contact" will work; the object won't try to move anymore (if gravity.)
+*** implement AABB-quadtree? http://en.wikipedia.org/wiki/Quadtree http://hectorgon.blogspot.com/2006/08/regular-grids-vs-aabb-trees-in-games.html
 
 ** TODO Game engine improvements
 ***  defblock with (introduce local vars) 
