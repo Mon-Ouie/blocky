@@ -978,14 +978,8 @@ non-nil to indicate that the block was accepted, nil otherwise."
       (prog1 block
 	(unplug self block)))))
 
-;; oops, jump into clos!
-(defmethod get-length list ()
+(define-method get-length list ()
   (length %inputs))
-
-;; (define-method unplug list (input)
-;;   (with-fields (inputs) self
-;;     (delete-input input self)
-;;     (set-parent input nil)))
 
 (define-method header-height list () 0)
 

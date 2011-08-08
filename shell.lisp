@@ -182,14 +182,15 @@
 (define-method update shell ()
   (update %script))
 
-(define-method initialize shell (script)
+(define-method initialize shell (script &optional (widgets t))
   (super%initialize self)
   (setf %script (find-object script))
   (assert script)
-  (setf %menubar (new menubar 
-		      (make-menu *system-menu*
-				 :target *system*)))
-  (add-block script %menubar)
+  (when widgets
+    (setf %menubar (new menubar 
+			(make-menu *system-menu*
+				   :target *system*)))
+    (add-block script %menubar))
   (register-uuid self)
   (message "Opening shell..."))
 
@@ -300,7 +301,7 @@
 (defparameter *minimum-drag-distance* 7)
 
 (define-method escape shell ()
-  (close-menus %menubar)
+  (when %menubar (close-menus %menubar))
   (setf %focused-block nil)
   (setf %selection nil))
 

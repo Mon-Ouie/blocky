@@ -763,7 +763,7 @@ display."
     (reset-joysticks)
     (scan-for-devices)
     (do-orthographic-projection)
-    (run-project-lisp *project*)
+    (load-project-lisp *project*)
     (run-hook '*after-startup-hook*)
     (message "Finished initializing Blocky for project ~A." *project*)
     (sdl:with-events ()
@@ -1211,8 +1211,6 @@ object save directory. See also `save-object-resource')."
   ;; define package if necessary
   (define-project-package project)
   (in-project-package project)
-  ;; load any user-written lisp
-  (load-project-lisp project)
   ;; load everything else
   (index-project project)
   (mapc #'load-resource (nreverse *pending-autoload-resources*))
@@ -1221,6 +1219,8 @@ object save directory. See also `save-object-resource')."
   (load-database)
   (load-variables)
   (message "Started up successfully. Indexed ~A resources." (hash-table-count *resources*))
+   ;; load any user-written lisp
+  (run-project-lisp project)
   (run-hook '*after-open-project-hook*))
 
 (defun run-project-lisp (project)
@@ -1306,18 +1306,6 @@ table."
 ;;; Creating, saving, and loading object resources in IOF files
 
 ;; See also the documentation string for `*iof-file-extension*'.
-
-;; Object resources are IOF resources with type :object. These are
-;; used to save serialized objects to disk and read them back
-;; again. Each page is stored in one IOF file, containing a single
-;; resource with the serialized data stored in the :DATA field of the
-;; resource record. Page-names are resource-names, and therefore must
-;; be unique within a given BLOCKY project. A page's IOF file is
-;; stored in {PROJECTNAME}/{PAGENAME}.iof, and for a given project
-;; these IOFs will all be included by
-;; {PROJECTNAME}/{PROJECTNAME}-OBJECT-INDEX.IOF, which is an
-;; automatically generated IOF index linking to all the serialized
-;; page IOF files.
 
 (defun make-object-resource (name object)
   "Make an object resource named NAME (a string) with the Lisp object
