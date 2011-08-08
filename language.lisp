@@ -156,9 +156,7 @@ two words. This is used as a unit for various layout operations.")
 (defblock closure method arguments target)
 
 (define-method initialize closure (method target &rest arguments)
-  (assert (and method 
-	       (consp arguments)
-	       (find-uuid target)))
+  (assert (and method (find-uuid target)))
   (setf %method (make-keyword method)
 	%arguments arguments
 	%target (find-uuid target)))
