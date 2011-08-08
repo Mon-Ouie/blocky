@@ -1,6 +1,5 @@
 
-** TODO replace unprintable lambdas with lambda blocks in %events
-** TODO register properly all UUID on deserialization
+** TODO implement make-process coroutines
 ** TODO allow to remove temporary menus and stuff on loading (edit versus play)
 
 ** TODO FIX BUGS
@@ -14,11 +13,10 @@
 ** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
 ** TODO [#B] general purpose resizer/scroller decorator thinger
 *** TODO trigger context menu items with click, make block with control-click
-*** start using terminal output for status message output
+*** TODO start using terminal output for status message output
 *** TODO Allow user to move entries easier via yellow triangle tab
+*** TODO Use Alt as move key
 *** TODO pop up shell on M-x
-
-** TODO change PROJECTNAME.iof to index.iof
 
 ** TODO Finish implementing the core visual programming language in VMACS
 *** defblock var (reference to a var, not a def)  (for lisp vars, script vars, proto names, and fields)

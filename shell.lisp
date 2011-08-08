@@ -27,7 +27,6 @@
 (defblock trash :category :system)
 
 (define-method evaluate trash ())
-(define-method evaluate trash ())
 (define-method update trash ())
 (define-method accept trash (item)
   (push item %inputs))
@@ -182,15 +181,14 @@
 (define-method update shell ()
   (update %script))
 
-(define-method initialize shell (script &optional (widgets t))
+(define-method initialize shell (script)
   (super%initialize self)
   (setf %script (find-object script))
   (assert script)
-  (when widgets
-    (setf %menubar (new menubar 
-			(make-menu *system-menu*
-				   :target *system*)))
-    (add-block script %menubar))
+  (setf %menubar (new menubar 
+		      (make-menu *system-menu*
+				 :target *system*)))
+  ;; (add-block script %menubar)
   (register-uuid self)
   (message "Opening shell..."))
 
@@ -223,7 +221,7 @@
 
 (define-method handle-event shell (event)
   (or (super%handle-event self event)
-      (with-field-values (selection script) self
+      (with-field-values (selection menubar script) self
 	(let ((block
 		  (cond 
 		    ;; only one block selected. use that.
@@ -231,7 +229,9 @@
 		     (first selection))
 		    ;; nothing selected, only 1 top-level block.
 		    ((= 1 (count-top-level-blocks script))
-		     (first (top-level-blocks script))))))
+		     (first (top-level-blocks script)))
+		    ;; fall back to menu
+		    (t menubar))))
 	  (when block 
 	    (with-script script
 	      (handle-event block event)))))))
@@ -271,7 +271,7 @@
 (define-method draw shell ()
   (layout self)
   (with-fields (script buffer drag-start selection inputs drag
-		       focused-block highlight
+		       focused-block highlight menubar
 		       modified hover ghost prompt)
       self
     (let ((blocks (script-blocks self)))
@@ -296,7 +296,8 @@
 	    (when focused-block
 	      (draw-focus focused-block)))
 	(when highlight
-	  (draw-highlight highlight))))))
+	  (draw-highlight highlight))
+	(draw menubar)))))
 
 (defparameter *minimum-drag-distance* 7)
 

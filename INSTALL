@@ -1,21 +1,16 @@
-This is the INSTALL file for BLOCKY.
+This is the INSTALL file for Blocky.
 
-This file gives you instructions on how to download BLOCKY and
-compile it from source code.
+This file gives you instructions on how to download Blocky and compile
+it from the source code. 
 
-BLOCKY works on Windows and Mac, but compiling BLOCKY on those
+Blocky works on Windows and Mac, but compiling Blocky on those
 platforms may require additional steps (such as installing the
 included SDL binary DLL's in the included win32/ subfolder of the
-BLOCKY source directory.)
+Blocky source directory.)
 
 More instructions for Mac and Windows will be available soon.
 
 1. System Requirements (All Platforms)
-
-    - A text editor (preferably Emacs or Vim;
-      http://www.gnu.org/software/emacs) If you use Emacs check out
-      SLIME (you may need the CVS version) and if you use Vim check
-      out SLIMV.
 
     - A Common Lisp implementation such as Steel Bank Common Lisp (see
       platform-specific notes below for suggestions on SBCL; CLISP and
@@ -28,6 +23,11 @@ More instructions for Mac and Windows will be available soon.
     - Git, a distributed version control system client.
       http://git-scm.com/
 
+    - (optional) A text editor (preferably Emacs or Vim;
+      http://www.gnu.org/software/emacs) If you use Emacs check out
+      SLIME (you may need the CVS version) and if you use Vim check
+      out SLIMV.
+
 1a. System Requirements (Linux)
 
    You need a recent release of SBCL, such as 1.0.47.24. You must also
@@ -37,7 +37,7 @@ More instructions for Mac and Windows will be available soon.
 
    Your Linux distribution will most likely have SDL packages for
    sbal, sdl, sdl-image, sdl-mixer, sdl-ttf, and sdl-gfx, all of which
-   are required for to compile BLOCKY. You may also need to install
+   are required for to compile Blocky. You may also need to install
    the sdl-*-dev packages corresponding to each.
 
 1b. System Requirements (Windows)
@@ -48,14 +48,14 @@ More instructions for Mac and Windows will be available soon.
 
    [THIS SECTION REMAINS TO BE WRITTEN]
 
-2. If you have not already done so, download BLOCKY:
+2. If you have not already done so, download Blocky:
   
    mkdir ~/src
    cd ~/src
    git clone git://github.com/dto/blocky.git 
    
-   If you need to use the development branch of BLOCKY, 
-   do this: 
+   (Optional) If you need to use the development branch of Blocky, do
+   this:
   
    cd ~/src/blocky
    git checkout develop
@@ -70,40 +70,38 @@ More instructions for Mac and Windows will be available soon.
     
     http://www.quicklisp.org/ It takes only a few moments to install
     Quicklisp, and this is the best way to download and install all
-    the Common Lisp libraries that BLOCKY depends on---automatically.
+    the Common Lisp libraries that Blocky depends on---automatically.
+
+    After installing quicklisp you will see a notice about adding
+    Quicklisp to your Lisp startup file with (ql:add-to-init-file). 
+    Doing this will make Quicklisp load automatically.
 
 6. (OPTIONAL) Configure project folders
 
-   The distribution contains a text configuration file called
-   BLOCKY.INI; by default the executable looks for it in the same
-   directory.
+   By default, new projects are created in ~/.blocky 
 
-   To run projects, BLOCKY needs a line like this added to the INI
+   The distribution contains a text configuration file called
+   BLOCKY.INI; by default Blocky looks for it in the same directory as
+   the executable.
+
+   To run projects, Blocky needs a line like this added to the INI
    file so that it will know where to find them.
 
   (setf blocky:*project-directories* '(#P"~/blocky/" #P"~/projects/"))
 
    The first item should be the pathname of wherever you installed the
-   BLOCKY source tree. This is auto-detected as the current directory
+   Blocky source tree. This is auto-detected as the current directory
    if you don't set it. NOTE: These must be pathnames (prefixed with
    #P) and must contain a trailing slash.
 
-   The other directories should contain game projects. For example:
-
-    mkdir ~/projects
-    cd ~/projects
-    git clone git://github.com/dto/xong.git
-
-   Now that the example game "XONG" is installed, we're ready to go.
-
-7. At the shell, cd to the install directory for BLOCKY, run SBCL, and
+7. At the shell, cd to the install directory for Blocky, run SBCL, and
    then issue the following commands at the REPL one by one:
 
    ;; load dependencies via Quicklisp
     (map nil #'ql:quickload 
     	 '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad))
 
-    ;; compile and load BLOCKY
+    ;; compile and load Blocky
     (require :blocky)
 
     ;; run the example
