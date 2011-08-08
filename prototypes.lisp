@@ -288,7 +288,7 @@ extended argument list ARGLIST."
   (flet ((count-entries () (+ (hash-table-count *database*)
 		      (hash-table-count *prototypes*))))
     (let ((before-count (count-entries)))
-      (message "Purging ~A objects..." before-count)
+      (message "Searching in ~A objects for externals..." before-count)
       (flet ((purge (id object)
 	       (declare (ignore key))
 	       (let ((name (object-name object)))
@@ -298,7 +298,7 @@ extended argument list ARGLIST."
 	(maphash #'purge *database*)
 	(maphash #'purge *prototypes*)
 	(let ((delta (- before-count (count-entries))))
-	  (message "Removed ~A objects." delta))))))
+	  (message "Removed ~A external objects." delta))))))
 		  
 ;;; Finding any object by proto-name or UUID
 
@@ -1181,11 +1181,13 @@ named in the list %EXCLUDED-FIELDS of said object will be ignored."
 		    (send :before-serialize object))
 		  (let ((parent-name (object-name (object-parent object)))
 			(name (object-name object))
+			(uuid (object-uuid object))
 			(fields (object-fields object))
 			(plist nil))
 		    (assert (and parent-name 
 				 (null name)
-				 (listp fields))) ;; TODO handle hashes?
+				 (stringp uuid)
+				 (listp fields)))
 		    (labels ((collect (field value)
 			       (unless (member field excluded-fields)
 				 (push (serialize value) plist)
@@ -1198,6 +1200,7 @@ named in the list %EXCLUDED-FIELDS of said object will be ignored."
 		      ;; cons up the final serialized thing
 		      (list +object-type-key+
 			    :parent parent-name
+			    :uuid uuid
 			    :fields plist)))))
 	(otherwise object)))))
   
@@ -1209,9 +1212,10 @@ objects after reconstruction, wherever present."
     (cond 
       ;; handle BLOCKY objects
       ((and (listp data) (eq +object-type-key+ (first data)))
-       (destructuring-bind (&key parent fields &allow-other-keys)
+       (destructuring-bind (&key parent uuid fields &allow-other-keys)
 	   (rest data)
 	 (let ((object (make-object :fields (mapcar #'deserialize fields)
+				    :uuid uuid
 				    :parent (find-prototype parent))))
 	   (prog1 object
 	     (initialize-method-cache object)

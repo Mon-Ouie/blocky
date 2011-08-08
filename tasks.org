@@ -1,5 +1,5 @@
-** TODO properly close database by removing all non-named objects when quitting project
-** TODO create package and proto-name prefix for all projects (use projectname)
+
+** TODO use UUID everywhere except SELF
 
 ** TODO FIX BUGS
 *** TODO Fix wrong entry type-specifiers
