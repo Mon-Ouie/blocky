@@ -763,7 +763,7 @@ display."
     (reset-joysticks)
     (scan-for-devices)
     (do-orthographic-projection)
-    (load-project-lisp *project*)
+    (load-project-lisp "STANDARD")
     (run-hook '*after-startup-hook*)
     (message "Finished initializing Blocky for project ~A." *project*)
     (sdl:with-events ()
@@ -1220,6 +1220,7 @@ object save directory. See also `save-object-resource')."
   (load-variables)
   (message "Started up successfully. Indexed ~A resources." (hash-table-count *resources*))
    ;; load any user-written lisp
+  (load-project-lisp project)
   (run-project-lisp project)
   (run-hook '*after-open-project-hook*))
 

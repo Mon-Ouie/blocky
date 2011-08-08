@@ -176,7 +176,8 @@
   (with-fields (x y width height) %script
     (setf x %x y %y
 	  width %width
-	  height %height)))
+	  height %height))
+  (layout %menubar))
 
 (define-method update shell ()
   (update %script))
@@ -188,7 +189,6 @@
   (setf %menubar (new menubar 
 		      (make-menu *system-menu*
 				 :target *system*)))
-  ;; (add-block script %menubar)
   (register-uuid self)
   (message "Opening shell..."))
 
@@ -261,12 +261,14 @@
     (labels ((try (b)
 	       (when b
 		 (hit b x y))))
-      (let ((parent 
-	     (find-if #'try 
-		      (script-blocks self)
+      ;; check menubar, then script
+      (or (try %menubar)
+	  (let ((parent 
+		  (find-if #'try 
+			   (script-blocks self)
 		      :from-end t)))
-	(when parent
-	  (try parent))))))
+	    (when parent
+	      (try parent)))))))
 
 (define-method draw shell ()
   (layout self)
@@ -295,9 +297,9 @@
 		   (draw drag))
 	    (when focused-block
 	      (draw-focus focused-block)))
+	(draw menubar)
 	(when highlight
-	  (draw-highlight highlight))
-	(draw menubar)))))
+	  (draw-highlight highlight))))))
 
 (defparameter *minimum-drag-distance* 7)
 
