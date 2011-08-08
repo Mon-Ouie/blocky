@@ -1,6 +1,7 @@
 
 ** TODO replace unprintable lambdas with lambda blocks in %events
 ** TODO register properly all UUID on deserialization
+** TODO allow to remove temporary menus and stuff on loading (edit versus play)
 
 ** TODO FIX BUGS
 *** TODO Fix wrong entry type-specifiers
