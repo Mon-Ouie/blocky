@@ -118,7 +118,7 @@ two words. This is used as a unit for various layout operations.")
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
   (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
-  (excluded-fields :initform '(:events :results))
+  (excluded-fields :initform nil) ;; Yay!
   ;; visual layout
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
@@ -134,6 +134,22 @@ two words. This is used as a unit for various layout operations.")
   (visible :initform t :documentation "When non-nil, block will be visible.")
   (image :initform nil :documentation "Texture to be displayed, if any.")
   (input-widths :initform nil))
+
+;;; Standard means of defining blocks
+
+(defmacro defblock (spec &body args)
+  (let ((name0 nil)
+	(super0 "BLOCKY:BLOCK"))
+    (etypecase spec
+      (symbol (setf name0 spec))
+      (list (destructuring-bind (name &key super) spec
+	      (setf name0 name)
+	      (when super (setf super0 super)))))
+    `(define-prototype ,name0 (:parent ,(make-prototype-id super0))
+       (operation :initform ,(make-keyword name0))
+       ,@(if (keywordp (first args))
+	  (plist-to-descriptors args)
+	  args))))
 
 ;;; Defining input events for blocks
 
@@ -183,7 +199,9 @@ the return value of the function (if any)."
 	    (values nil nil))))))
 
 (defun bind-event-to-method (block event-name modifiers method-name)
-  (bind-event-to-closure block (string-upcase event-name) modifiers
+  (bind-event-to-closure block 
+			 (string-upcase event-name) 
+			 modifiers
 			 (new closure method-name block)))
 
 (define-method bind-event block (event binding)
@@ -218,22 +236,6 @@ You should invoke this method if the dimensions of the block have
 changed."
   (when *script*
     (invalidate-layout *script*)))
-
-;(defparameter *default-super* "BLOCKY:BLOCK")
-
-(defmacro defblock (spec &body args)
-  (let ((name0 nil)
-	(super0 "BLOCKY:BLOCK"))
-    (etypecase spec
-      (symbol (setf name0 spec))
-      (list (destructuring-bind (name &key super) spec
-	      (setf name0 name)
-	      (when super (setf super0 super)))))
-    `(define-prototype ,name0 (:parent ,(make-prototype-id super0))
-       (operation :initform ,(make-keyword name0))
-       ,@(if (keywordp (first args))
-	  (plist-to-descriptors args)
-	  args))))
 
 (define-method update block ()
   "Update the simulation one step forward in time.
@@ -978,7 +980,8 @@ non-nil to indicate that the block was accepted, nil otherwise."
       (prog1 block
 	(unplug self block)))))
 
-(define-method length list ()
+;; oops, jump into clos!
+(defmethod get-length list ()
   (length %inputs))
 
 ;; (define-method unplug list (input)
