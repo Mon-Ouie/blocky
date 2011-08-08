@@ -71,9 +71,8 @@
   (say self "Enter command below at the >> prompt. Press ENTER when finished, or CONTROL-X to cancel."))
 
 (defun bind-event-to-prompt-insertion (self key mods text)
-  (bind-event-to-function self key mods 
-			  #'(lambda ()
-			      (insert self text))))
+  (bind-event-to-closure self key mods 
+			 (new closure :insert self text)))
 
 (defparameter *prompt-qwerty-keybindings*
   '(("A" (:control) :move-beginning-of-line)

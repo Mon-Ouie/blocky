@@ -1628,7 +1628,7 @@ control the size of the individual frames or subimages."
 (defun make-variable-resource (name)
   (assert (and (symbolp name)
 	       (boundp name)))
-  (make-resource :name name
+  (make-resource :name (prin1-to-string name)
 		 :type :variable
 		 :data (serialize (symbol-value name))))
 

@@ -1,5 +1,6 @@
 
-** TODO use UUID everywhere except SELF
+** TODO replace unprintable lambdas with lambda blocks in %events
+** TODO register properly all UUID on deserialization
 
 ** TODO FIX BUGS
 *** TODO Fix wrong entry type-specifiers

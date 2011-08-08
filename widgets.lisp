@@ -328,12 +328,11 @@ auto-updated displays."
 (defun bind-event-to-textbox-insertion (textbox key modifiers &optional (insertion key))
   "For textbox P ensure that the event (KEY MODIFIERS) causes the
 text INSERTION to be inserted at point."
- (bind-event-to-function 
+ (bind-event-to-closure 
   textbox 
   (string-upcase key)
   modifiers
-  #'(lambda ()
-      (insert textbox insertion))))
+  (new closure :insert textbox insertion)))
 
 (define-method install-keybindings textbox ()
   ;; install basic keybindings
@@ -563,16 +562,16 @@ text INSERTION to be inserted at point."
 (define-method initialize pager ()
   (send-super self :initialize self)
   (auto-position self)
-  (labels ((s1 () (select self 1))
-	   (s2 () (select self 2))
-	   (s3 () (select self 3))
-	   (s4 () (select self 4))
-	   (s5 () (select self 5)))
-    (bind-event-to-function self "F1" nil #'s1)
-    (bind-event-to-function self "F2" nil #'s2)
-    (bind-event-to-function self "F3" nil #'s3)
-    (bind-event-to-function self "F4" nil #'s4)
-    (bind-event-to-function self "F5" nil #'s5)))
+  (let ((s1 (new closure :select self 1))
+	(s2 (new closure :select self 2))
+	(s3 (new closure :select self 3))
+	(s4 (new closure :select self 4))
+	(s5 (new closure :select self 5)))
+    (bind-event-to-closure self "F1" nil s1)
+    (bind-event-to-closure self "F2" nil s2)
+    (bind-event-to-closure self "F3" nil s3)
+    (bind-event-to-closure self "F4" nil s4)
+    (bind-event-to-closure self "F5" nil s5)))
 
 (define-method page-property pager (page-name property-keyword)
   (getf (gethash page-name %properties) property-keyword))

@@ -135,15 +135,84 @@ two words. This is used as a unit for various layout operations.")
   (image :initform nil :documentation "Texture to be displayed, if any.")
   (input-widths :initform nil))
 
+;;; Defining input events for blocks
+
+(defblock closure method arguments target)
+
+(define-method initialize closure (method target &rest arguments)
+  (assert (and method 
+	       (consp arguments)
+	       (find-uuid target)))
+  (setf %method (make-keyword method)
+	%arguments arguments
+	%target (find-uuid target)))
+
+(define-method evaluate closure ()
+  (apply #'send %method %target %arguments))
+
+(define-method initialize-events-table-maybe block (&optional force)
+  (when (or force 
+	    (null (has-local-value :events self)))
+    (setf %events (make-hash-table :test 'equal))))
+
+(define-method bind-event-to-closure block (event-name modifiers closure)
+  "Bind the described event to invoke FUNC.
+EVENT-NAME is a string giving the key name; MODIFIERS is a list of
+keywords like :control, :alt, and so on."
+  (assert (find-object closure))
+  (initialize-events-table-maybe self)
+  (let ((event (normalize-event (cons event-name modifiers))))
+    (setf (gethash event %events)
+	  closure)))
+
+(define-method unbind-event block (event-name modifiers)
+  "Remove the described event binding."
+  (remhash (normalize-event (cons event-name modifiers))
+	   %events))
+
+(define-method handle-event block (event)
+  "Look up and invoke the function (if any) bound to EVENT. Return t
+if a binding was found, nil otherwise. The second value returned is
+the return value of the function (if any)."
+  (with-fields (events) self
+    (when events
+      (let ((closure (gethash event events)))
+	(if closure
+	    (prog1 (values t (evaluate closure))
+	      (invalidate-layout self))
+	    (values nil nil))))))
+
+(defun bind-event-to-method (block event-name modifiers method-name)
+  (bind-event-to-closure block (string-upcase event-name) modifiers
+			 (new closure method-name block)))
+
+(define-method bind-event block (event binding)
+  (destructuring-bind (name &rest modifiers) event
+    (etypecase binding
+      (symbol (bind-event-to-method self name modifiers binding))
+      (list 
+       (let ((closure (new closure
+			   (make-keyword (first binding))
+			   self
+			   (rest binding))))
+	 (bind-event-to-closure self name modifiers closure))))))
+
+(define-method bind-any-default-events block ()
+  (with-fields (default-events) self
+    (when default-events
+      (initialize-events-table-maybe self)
+      (dolist (entry default-events)
+	(apply #'bind-event self entry)))))
+
 ;; (define-method before-serialize block ()
 ;;   "Prepare a running block for serialization."
 ;;   (initialize self))
 
-;; (define-method after-deserialize block ()
-;;   "Prepare a deserialized block for running."
-;;   (initialize self))
+(define-method after-deserialize block ()
+  "Prepare a deserialized block for running."
+  (register-uuid self))
 
-(define-method invalidate-layout block ()
+(define-method invalidate-layout block () ;
   "Signal to the script manager that a layout operation is needed.
 You should invoke this method if the dimensions of the block have
 changed."
@@ -270,12 +339,6 @@ If PARENT is nil, then the existing parent link is cleared."
 (defun is-valid-connection (sink source)
   (not (is-bad-connection sink source)))
 
-;; (defun connect-parent-links (block)
-;;   (dolist (child (field-value :inputs block))
-;;     (when child
-;;       (set-parent child block)
-;;       (connect-parent-links child))))
-
 (define-method register-uuid block ()
   (add-object-to-database self))
 
@@ -303,66 +366,6 @@ initialized with BLOCKS as inputs."
   (update-result-lists self)
   (bind-any-default-events self)
   (register-uuid self))
-
-;;; Defining keyboard/mouse/joystick events for blocks
-
-(define-method click block (mouse-x mouse-y)
-  (declare (ignore mouse-x mouse-y)))
-
-(define-method initialize-events-table-maybe block (&optional force)
-  (when (or force 
-	    (null (has-local-value :events self)))
-    (setf %events (make-hash-table :test 'equal))))
-
-(define-method bind-event-to-function block (event-name modifiers func)
-  "Bind the described event to invoke FUNC.
-EVENT-NAME is a string giving the key name; MODIFIERS is a list of
-keywords like :control, :alt, and so on."
-  (initialize-events-table-maybe self)
-  (let ((event (normalize-event (cons event-name modifiers))))
-    (setf (gethash event %events)
-	  func)))
-
-(define-method unbind-event block (event-name modifiers)
-  "Remove the described event binding."
-  (remhash (normalize-event (cons event-name modifiers))
-	   %events))
-
-(define-method handle-event block (event)
-  "Look up and invoke the function (if any) bound to EVENT. Return t
-if a binding was found, nil otherwise. The second value returned is
-the return value of the function (if any)."
-  (with-fields (events) self
-    (when events
-      (let ((func (gethash event events)))
-	(if func
-	    (prog1 (values t (funcall func))
-	      (invalidate-layout self))
-	    (values nil nil))))))
-
-(defun bind-event-to-method (block event-name modifiers method-name)
-  (bind-event-to-function block (string-upcase event-name) modifiers
-			  #'(lambda ()
-			      (send method-name block))))
-
-(define-method bind-event block (event binding)
-  (destructuring-bind (name &rest modifiers) event
-    (etypecase binding
-      (symbol (bind-event-to-method self name modifiers binding))
-      (list 
-       (flet ((do-it ()
-		(apply #'send 
-		       (make-keyword (first binding))
-		       self
-		       (rest binding))))
-	 (bind-event-to-function self name modifiers #'do-it))))))
-
-(define-method bind-any-default-events block ()
-  (with-fields (default-events) self
-    (when default-events
-      (initialize-events-table-maybe self)
-      (dolist (entry default-events)
-	(apply #'bind-event self entry)))))
 
 ;;; Creating blocks from S-expressions
  
@@ -472,6 +475,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 (define-method get-image block ()
   %image)
+
+(define-method click block (mouse-x mouse-y)
+  (declare (ignore mouse-x mouse-y)))
 
 (define-method mouse-move block (x y)
   (declare (ignore x y)))
