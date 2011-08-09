@@ -155,5 +155,5 @@ draw-string-blended make-menu find-text-image make-text-image
 *default-super* clear-text-image-cache *token-types* verify
 toggle-debug *debug-on-error* *block-categories* *block-colors* input
 load-variable-resource save-variable-resource *persistent-variables*
-*persistent-variables-file-name* persistent-variables-file
+*persistent-variables-file-name* persistent-variables-file *shell*
 save-variables load-variables *block-text-colors* defblock ))

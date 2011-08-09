@@ -537,7 +537,7 @@
 		   (max *minimum-entry-line-width*
 			(font-text-width line *block-font*))))))
 
-(define-method lose-focus entry ()
+(define-method on-lose-focus entry ()
   ;; update the entry value if the user mouses away
   (enter self))
 
@@ -660,6 +660,9 @@
  
 (define-method evaluate listener ()
   (evaluate (get-prompt self)))
+
+(define-method on-select listener ()
+  (grab-focus (get-prompt self)))
 
 ;; forward keypresses to prompt for convenience
 (define-method handle-event listener (event)

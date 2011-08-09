@@ -479,6 +479,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method get-image block ()
   %image)
 
+(define-method on-select block () nil)
+
 (define-method click block (mouse-x mouse-y)
   (declare (ignore mouse-x mouse-y)))
 
@@ -884,9 +886,12 @@ override all colors."
 (defparameter *highlight-background-color* "gray80")
 (defparameter *highlight-foreground-color* "gray20")
 
-(define-method get-focus block () nil)
+(define-method on-focus block () nil)
 
-(define-method lose-focus block () nil)
+(define-method on-lose-focus block () nil)
+
+(define-method grab-focus block () 
+  (send :focus-on (symbol-value '*shell*) self))
 
 (define-method draw-focus block () nil)
 

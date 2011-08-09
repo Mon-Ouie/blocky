@@ -24,6 +24,8 @@
 
 ;;; Trash can
 
+(defvar *shell*)
+
 (defblock trash :category :system)
 
 (define-method evaluate trash ())
@@ -184,6 +186,7 @@
 
 (define-method initialize shell (script)
   (super%initialize self)
+  (setf *shell* self)
   (setf %script (find-object script))
   (assert script)
   (setf %menubar (new menubar 
@@ -205,8 +208,10 @@
   (with-fields (selection) self
     (if only
 	(setf selection (list block))
-	(pushnew block selection 
-		 :test 'eq :key #'find-parent))))
+	(progn 
+	  (pushnew block selection 
+		   :test 'eq :key #'find-parent)
+	  (on-select block)))))
 
 (define-method select-if shell (predicate)
   (with-fields (selection script) self
@@ -308,18 +313,22 @@
   (setf %focused-block nil)
   (setf %selection nil))
 
+(define-method focus-on shell (block)
+  (setf %focused-block block)
+  (when block (on-focus block)))
+
 (define-method tab shell (&optional backward)
   (with-fields (focused-block) self
     (when focused-block
       (with-fields (parent) focused-block
 	(let ((index (position-within-parent focused-block)))
 	  (when (numberp index)
-	    (setf focused-block 
-		  (with-fields (inputs) parent
-		    (nth (mod (+ index
-				 (if backward -1 1))
-			      (length inputs))
-			 inputs)))))))))
+	    (focus-on self
+		      (with-fields (inputs) parent
+			(nth (mod (+ index
+				     (if backward -1 1))
+				  (length inputs))
+			     inputs)))))))))
 
 (define-method backtab shell ()
   (tab self :backward))
@@ -363,19 +372,20 @@
     (when focused-block
       ;; there's going to be a new focused block. 
       ;; tell the current one it's no longer focused.
-      (lose-focus focused-block))
-    (setf focused-block nil)
+      (on-lose-focus focused-block))
+    ;; now find what we're touching
     (let ((block (hit-script self x y)))
-      (if block
+      (if (null block)
+	  (focus-on self nil)
 	  (case button
 	    (1  (progn 
-		  (setf focused-block block)
+		  (focus-on self block)
 		  (setf click-start (cons x y))))
 	    (3 (let ((menu (context-menu block)))
 		 (when menu 
 		   (with-script %script
-		     (add-block *script* menu x y))))))
-	  (setf focused-block nil)))))
+		     (add-block *script* menu x y)))))
+	    (otherwise (focus-on self nil)))))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
   (with-fields (inputs hover highlight click-start drag-offset
@@ -418,7 +428,7 @@
 	  ;; select the dropped block
 	  (select self drag)
 	  (setf focused-block drag))
-;	  (setf hover nil)
+	;; (setf hover nil)
 	;; ok, we're not dragging.
 	;; instead it was a click.
 	(progn
@@ -426,8 +436,8 @@
 	  (when focused-block
 	    (select self focused-block)
 	    (with-script script 
-	      (click focused-block x y))
-;	    (setf focused-block nil)
+	      (click focused-block x y)
+	      (select self focused-block))
 	    (setf click-start nil))))
     (setf drag-start nil
 	  drag-offset nil
