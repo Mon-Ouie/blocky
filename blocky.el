@@ -36,7 +36,7 @@
       (message "No UUID provided.")
       (progn 
 	(assert (stringp uuid))
-	(slime-inspect 
+	(slime-inspect
 	 (format "(blocky::find-object %S)" uuid)))))
 
 (defun blocky-uuid-at-point ()

@@ -1,4 +1,4 @@
-;;; example1.lisp --- a basic blocky example
+;;; example1.lisp --- a basic blocky example with one movable character
 
 ;; Copyright (C) 2010, 2011  David O'Toole
 
@@ -41,12 +41,24 @@
 (defsprite blocky
   :image "blocky"
   :default-events
-  '(((:up) (move :north 5 :pixels))
-    ((:down) (move :south 5 :pixels)) 
-    ((:right) (move :east 5 :pixels)) 
-    ((:left) (move :west 5 :pixels)))
+  '(((:up)    :move-up)
+    ((:down)  :move-down)
+    ((:right) :move-right)
+    ((:left)  :move-left))
   :x (/ *screen-width* 2)
   :y (/ *screen-height* 2))
+
+(define-method move-up blocky ()
+  (move self :north 5))
+
+(define-method move-down blocky ()
+  (move self :south 5))
+
+(define-method move-right blocky ()
+  (move self :east 5))
+
+(define-method move-left blocky ()
+  (move self :west 5))
 
 ;;; Then define an empty world with a background image.
 
