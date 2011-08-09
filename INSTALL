@@ -87,7 +87,7 @@ More instructions for Mac and Windows will be available soon.
    To run projects, Blocky needs a line like this added to the INI
    file so that it will know where to find them.
 
-  (setf blocky:*project-directories* '(#P"~/blocky/" #P"~/projects/"))
+   (setf blocky:*project-directories* '(#P"~/blocky/" #P"~/projects/"))
 
    The first item should be the pathname of wherever you installed the
    Blocky source tree. This is auto-detected as the current directory
@@ -106,4 +106,7 @@ More instructions for Mac and Windows will be available soon.
 
     ;; run the example
     (blocky:play "example1")  ;; or the name of any project in your *project-directories*
+
+    (blocky:play "example2")  
+
 
