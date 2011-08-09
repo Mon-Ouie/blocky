@@ -1,3 +1,9 @@
+** TODO ALPHA RELEASE
+*** TODO 3 small working examples (movement, blue dot, turtle/ladybug)
+*** TODO 2 GUI examples
+*** TODO basic documentation
+*** TODO tutorial project with links to examples,docs
+
 ** TODO elisp for grabbing slime-inspect for uuid at point
 ** TODO [#B] allow to remove temporary menus and stuff on loading (edit versus play)
 ** TODO [#C] implement make-process coroutines
