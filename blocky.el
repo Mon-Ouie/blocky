@@ -54,7 +54,7 @@
 (defun blocky-inspect ()
   (interactive)
   (blocky-inspect-uuid (or (blocky-uuid-at-point)
-			   (blocky-uuid-on-this-line))
+			   (blocky-uuid-on-this-line))))
 
     
 
