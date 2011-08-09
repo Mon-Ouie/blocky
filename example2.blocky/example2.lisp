@@ -18,19 +18,6 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Preamble
-
-;; First, we set up a package (often called a "namespace" in other
-;; languages) with `defpackage' and then enter it with `in-package'.
-
-;; The `:use' declaration shows that we will be importing names from
-;; BLOCKY and from the base Common Lisp package.
-
-(defpackage :example2 
-    (:use :blocky :common-lisp))
-  
-(in-package :example2)
-
 (setf *screen-width* 640)
 (setf *screen-height* 480)
 (setf *window-title* "Blocky and the Blue Dot")
@@ -43,17 +30,17 @@
 (defsprite blocky
   :image "blocky"
   :default-events
-  '(((:up) (move :north 5 :pixels))
-    ((:down) (move :south 5 :pixels)) 
-    ((:right) (move :east 5 :pixels)) 
-    ((:left) (move :west 5 :pixels))
+  '(((:up) (move :north 5))
+    ((:down) (move :south 5)) 
+    ((:right) (move :east 5)) 
+    ((:left) (move :west 5))
     ((:space) (beep)))
   :x (- (/ *screen-width* 2) 100)
   :y (/ *screen-height* 2))
 
 (defvar *beeped* nil)
 
-(defresource (:name "beep" :type :sample :file "beep.wav" :properties (:volume 40)))
+(defresource (:name "beep" :type :sample :file "beep.wav" :properties (:volume 10)))
 
 (define-method beep blocky ()
   (setf *beeped* t)
@@ -63,7 +50,7 @@
 
 (defresource 
     (:name "blue-dot" :type :image :file "blue-dot.png")
-    (:name "woom" :type :sample :file "woom.wav" :properties (:volume 40)))
+    (:name "woom" :type :sample :file "woom.wav" :properties (:volume 30)))
 
 (defsprite blue-dot
   :image "blue-dot"

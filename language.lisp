@@ -155,7 +155,7 @@ two words. This is used as a unit for various layout operations.")
 
 (defblock closure method arguments target)
 
-(define-method initialize closure (method target &rest arguments)
+(define-method initialize closure (method target arguments)
   (assert (and method (find-uuid target)))
   (setf %method (make-keyword method)
 	%arguments arguments
@@ -163,6 +163,8 @@ two words. This is used as a unit for various layout operations.")
 
 (define-method evaluate closure ()
   (apply #'send %method %target %arguments))
+
+;;; Using closures to respond to events
 
 (define-method initialize-events-table-maybe block (&optional force)
   (when (or force 
@@ -207,6 +209,7 @@ the return value of the function (if any)."
     (etypecase binding
       (symbol (bind-event-to-method self name modifiers binding))
       (list 
+       ;; create a method call 
        (let ((closure (new closure
 			   (make-keyword (first binding))
 			   self
