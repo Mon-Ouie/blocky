@@ -72,7 +72,7 @@
 
 (defun bind-event-to-prompt-insertion (self key mods text)
   (bind-event-to-closure self key mods 
-			 (new closure :insert self text)))
+			 (new closure :insert self (list text))))
 
 (defparameter *prompt-qwerty-keybindings*
   '(("A" (:control) :move-beginning-of-line)
