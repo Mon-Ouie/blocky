@@ -25,6 +25,39 @@
 
 (require 'rx)
 
+;;; Grabbing UUIDs and inspecting the corresponding objects
+
+(defvar blocky-uuid-regexp 
+  "[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]")
+
+(defun blocky-inspect-uuid (uuid)
+  (interactive "sInspect blocky UUID: ")
+  (if (null uuid)
+      (message "No UUID provided.")
+      (progn 
+	(assert (stringp uuid))
+	(slime-inspect 
+	 (format "(blocky::find-object %S)" uuid)))))
+
+(defun blocky-uuid-at-point ()
+  (let ((thing (thing-at-point 'word)))
+    (when (and (not (null thing))
+	       (string-match blocky-uuid-regexp thing))
+      thing)))
+	  
+(defun blocky-uuid-on-this-line ()
+  (string-match blocky-uuid-regexp
+		(buffer-substring-no-properties
+		 (point-at-bol)
+		 (point-at-eol))))
+
+(defun blocky-inspect ()
+  (interactive)
+  (blocky-inspect-uuid (or (blocky-uuid-at-point)
+			   (blocky-uuid-on-this-line))
+
+    
+
 ;;; Font-locking
 
 ;; Put this in your emacs initialization file to get the highlighting:

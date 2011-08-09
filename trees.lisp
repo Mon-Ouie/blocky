@@ -247,7 +247,8 @@
   (with-fields (action target) self
     (typecase action 
       (function (funcall action))
-      (keyword (send action (or target (symbol-value '*system*))))
+      (keyword (when (has-method action target)
+		 (send action (or target (symbol-value '*system*)))))
       (otherwise
        ;; we're a submenu, not an individual menu command.
        (toggle-expanded self)))))
@@ -278,8 +279,14 @@
 	  (super%draw-expanded self label)))))
 
 (define-method draw-unexpanded menu (&optional label)
-  (draw-label-string self (or label (display-string self))))
-
+  (with-fields (action target top-level) self
+    (draw-label-string self 
+		       (or label (display-string self))
+		       ;; color text according to whether method exists
+		       (if (or (null action) (has-method action target))
+			   (find-color self :foreground)
+			   "gray70"))))
+			 
 (define-method draw-highlight menu ()
   (with-fields (y height expanded parent main-menu-p) self
     (when parent
