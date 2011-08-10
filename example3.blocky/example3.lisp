@@ -27,7 +27,7 @@
 
 (setf *screen-width* 640)
 (setf *screen-height* 480)
-(setf *window-title* "blocky example 4")
+(setf *window-title* "Blocky (example3)")
 ;; (setf *resizable* t)
 (enable-key-repeat 9 2)
 
@@ -164,12 +164,5 @@
 
 (defsprite meadow :image "meadow")
 (define-method accept meadow (other) nil)
-
-;;; Put it all together
-
-(defun example3 ()
-  (new system)
-  (let ((script (new script)))
-    (start (new shell script))))
 
 ;;; example3.lisp ends here

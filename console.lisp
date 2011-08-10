@@ -2378,7 +2378,8 @@ of the music."
   (delete-all-textures)
   (delete-all-resources)
   (sdl-mixer:halt-music)
-  (sdl-mixer:close-audio t))
+  (sdl-mixer:close-audio t)
+  (sdl:quit-sdl))
 
 (defmacro with-session (&rest body)
   `(progn 
@@ -2389,7 +2390,9 @@ of the music."
 (defun play (&optional (project *untitled-project-name*))
   (with-session
     (open-project project)
-    (assert (not (null *blocks*)))
+    (when (null *blocks*)
+      (new system)
+      (start (new shell (new script))))
     (start-session)))
 
 (defun create (project)

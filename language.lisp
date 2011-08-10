@@ -357,9 +357,7 @@ the return value of the function (if any)."
 
 ;;; Serialization hooks
 
-(define-method before-serialize block ()
-  "Prepare a running block for serialization."
-  (initialize self))
+(define-method before-serialize block ())
 
 (define-method after-deserialize block ()
   "Prepare a deserialized block for running."
@@ -1328,7 +1326,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (define-method add-block script (block &optional x y)
   (verify block)
-  (assert (not (contains self block)))
+  ;(assert (not (contains self block)))
   (append-input self block)
   (when (and (integerp x)
 	     (integerp y))

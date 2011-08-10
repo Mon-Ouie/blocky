@@ -481,6 +481,7 @@
 (define-prototype listener-prompt (:parent prompt)
   (operation :initform :prompt)
   (background :initform nil)
+  (methods :initform '(:evaluate))
   output)
 
 (define-method initialize listener-prompt (&optional output)

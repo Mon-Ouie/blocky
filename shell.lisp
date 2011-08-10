@@ -54,7 +54,7 @@
 
 (defblock menubar :category :menu :temporary t)
 
-(define-method initialize menubar (&optional menus)
+(define-method initialize menubar (&optional (menus *system-menu*))
   (apply #'super%initialize self 
 	 (mapcar #'find-object menus))
   (with-fields (inputs) self
@@ -155,7 +155,9 @@
 		    ((:x :alt) :command-line)
 		    ((:g :control) :escape)
 		    ((:escape) :escape)))
-  menubar (drag :initform nil 
+  menubar 
+  (excluded-fields :initform '(:menubar))
+  (drag :initform nil 
   	:documentation "Block being dragged, if any.")
   (hover :initform nil
 	 :documentation "Block being hovered over, if any.")
@@ -172,6 +174,9 @@
 	       :documentation "A cons (X . Y) of mouse click location on dragged block.")
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
+
+(define-method after-deserialize shell ()
+  (setf %menubar (new menubar)))
 
 (define-method layout shell ()
   (setf %x 0 %y 0 
