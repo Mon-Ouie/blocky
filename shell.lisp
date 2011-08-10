@@ -176,8 +176,8 @@
 	  :documentation "Non-nil when modified since last save."))
 
 (define-method after-deserialize shell ()
-  (with-script %script
-    (setf %menubar (make-menubar))))
+  (setf *shell* (find-uuid self))
+  (setf %menubar (make-menubar)))
 
 (define-method layout shell ()
   (with-script %script

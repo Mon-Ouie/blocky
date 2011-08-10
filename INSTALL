@@ -115,4 +115,16 @@ More instructions for Mac and Windows will be available soon.
       (blocky:play "example2")  ;; A slightly more complex example
       (blocky:play "example3")  ;; A GUI tutorial, with turtle and ladybug
 
+8. Getting help and reporting bugs 
+
+   When reporting bugs, please use the issue reporting system at
+   Github if possible: https://github.com/dto/blocky/issues
+
+   If not possible or if other questions arise, you can email or IRC
+   me as follows:
+
+   dto@ioforms.org 
+   
+   irc.freenode.org #blocky
+   		    (also #lispgames)
 

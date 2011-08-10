@@ -162,7 +162,9 @@ two words. This is used as a unit for various layout operations.")
 (defblock closure method arguments target)
 
 (define-method initialize closure (method target &optional arguments)
-  (assert (and method (find-uuid target)))
+  (assert (and method 
+	       (listp arguments)
+	       (find-uuid target)))
   (setf %method (make-keyword method)
 	%arguments arguments
 	%target (find-uuid target)))
@@ -664,15 +666,15 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (assert (and (keywordp method) (not (null target))))
   (let ((method-string (pretty-symbol-string method)))
     (list :label method-string
-	  :action #'(lambda ()
-		      (add-block *script* 
-				 (new send 
-				      :prototype (find-parent-prototype-name self)
-				      :method method
-				      :target target
-				      :label method-string)
-				 (- *pointer-x* 10) 
-				 (- *pointer-y* 10))))))
+	  :action (new closure
+		      :add-block *script* 
+		      (list (new send 
+				 :prototype (find-parent-prototype-name self)
+				 :method method
+				 :target target
+				 :label method-string)
+			    (- *pointer-x* 10) 
+			    (- *pointer-y* 10))))))
 
 (define-method context-menu block ()
   (make-menu
