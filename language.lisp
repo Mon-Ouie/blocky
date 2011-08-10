@@ -647,19 +647,18 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (with-fields (inputs parent) self
     (assert (contains self input))
     (prog1 input
-      (if (= 1 (length inputs))
-	  (setf inputs nil)
-	  (setf inputs (delete input inputs :test 'eq :key #'find-object))))))
+      (setf inputs 
+	    (delete input inputs 
+		    :test 'eq :key #'find-object)))))
 
 (define-method unplug-from-parent block ()
-  (unless (parent-is-script self)
-    (prog1 t
-      (with-fields (parent) self
-	(assert (not (null parent)))
-	(assert (contains parent self))
-	(unplug parent self)
-	(assert (not (contains parent self)))
-	(setf parent nil)))))
+  (prog1 t
+    (with-fields (parent) self
+      (assert (not (null parent)))
+      (assert (contains parent self))
+      (unplug parent self)
+      (assert (not (contains parent self)))
+      (setf parent nil))))
 
 (define-method make-send-block block (method target)
   (assert (and (keywordp method) (not (null target))))

@@ -176,20 +176,23 @@
 	  :documentation "Non-nil when modified since last save."))
 
 (define-method after-deserialize shell ()
-  (setf %menubar (make-menubar)))
+  (with-script %script
+    (setf %menubar (make-menubar))))
 
 (define-method layout shell ()
-  (setf %x 0 %y 0 
-	%width *screen-width* 
-	%height *screen-height*)
-  (with-fields (x y width height) %script
-    (setf x %x y %y
-	  width %width
-	  height %height))
-  (layout %menubar))
+  (with-script %script
+    (setf %x 0 %y 0 
+	  %width *screen-width* 
+	  %height *screen-height*)
+    (with-fields (x y width height) %script
+      (setf x %x y %y
+	    width %width
+	    height %height))
+    (layout %menubar)))
 
 (define-method update shell ()
-  (update %script))
+  (with-script %script
+    (update %script)))
 
 (defun make-menubar ()
   (find-uuid 
@@ -216,40 +219,43 @@
   (add-block %script new-block x y))
 
 (define-method select shell (block &optional only)
-  (with-fields (selection) self
-    (if only
-	(setf selection (list block))
-	(progn 
-	  (pushnew block selection 
-		   :test 'eq :key #'find-parent)
-	  (on-select block)))))
-
+  (with-script %script
+    (with-fields (selection) self
+      (if only
+	  (setf selection (list block))
+	  (progn 
+	    (pushnew block selection 
+		     :test 'eq :key #'find-parent)
+	    (on-select block))))))
+  
 (define-method select-if shell (predicate)
-  (with-fields (selection script) self
-    (setf selection 
-	  (remove-if predicate (field-value :inputs script)
-		     :key #'find-parent))))
-
+  (with-script %script
+    (with-fields (selection script) self
+      (setf selection 
+	    (remove-if predicate (field-value :inputs script)
+		       :key #'find-parent)))))
+  
 (define-method unselect shell (block)
-  (with-fields (selection) self
-    (setf selection (delete block selection 
-			    :test 'eq :key #'find-parent))))
-
+  (with-script %script
+    (with-fields (selection) self
+      (setf selection (delete block selection 
+			      :test 'eq :key #'find-parent)))))
+  
 (define-method on-event shell (event)
-  (or (super%on-event self event)
-      (with-field-values (selection menubar script) self
-	(let ((block
-		  (cond 
-		    ;; only one block selected. use that.
-		    ((= 1 (length selection))
-		     (first selection))
-		    ;; nothing selected, only 1 top-level block.
-		    ((= 1 (count-top-level-blocks script))
-		     (first (top-level-blocks script)))
-		    ;; fall back to menu
-		    (t menubar))))
-	  (when block 
-	    (with-script script
+  (with-script %script
+    (or (super%on-event self event)
+	(with-field-values (selection menubar script) self
+	  (let ((block
+		    (cond 
+		      ;; only one block selected. use that.
+		      ((= 1 (length selection))
+		       (first selection))
+		      ;; nothing selected, only 1 top-level block.
+		      ((= 1 (count-top-level-blocks script))
+		       (first (top-level-blocks script)))
+		      ;; fall back to menu
+		      (t menubar))))
+	    (when block 
 	      (on-event block event)))))))
 
 (define-method hit shell (x y)
@@ -287,14 +293,14 @@
 	      (try parent)))))))
 
 (define-method draw shell ()
-  (layout self)
-  (with-fields (script buffer drag-start selection inputs drag
-		       focused-block highlight menubar
-		       modified hover ghost prompt)
-      self
-    (let ((blocks (script-blocks self)))
-      ;; now start drawing blocks
-      (with-script script 
+  (with-script %script
+    (layout self)
+    (with-fields (script buffer drag-start selection inputs drag
+			 focused-block highlight menubar
+			 modified hover ghost prompt)
+	self
+      (let ((blocks (script-blocks self)))
+	;; now start drawing blocks
 	(dolist (block blocks)
 	  ;; draw border around any selected blocks
 	  ;; (when (find block selection :test 'eq :key #'find-object)
@@ -316,19 +322,21 @@
 	(draw menubar)
 	(when highlight
 	  (draw-highlight highlight))))))
-
+  
 (defparameter *minimum-drag-distance* 7)
-
+  
 (define-method escape shell ()
-  (when %menubar (close-menus %menubar))
-  (setf %focused-block nil)
-  (setf %selection nil))
-
+  (with-script %script
+    (when %menubar (close-menus %menubar))
+    (setf %focused-block nil)
+    (setf %selection nil)))
+  
 (define-method focus-on shell (block)
   ;; possible to pass nil
-  (setf %focused-block 
-	(when block (find-uuid block)))
-  (when block (on-focus block)))
+  (with-script %script
+    (setf %focused-block 
+	  (when block (find-uuid block)))
+    (when block (on-focus block))))
 
 (define-method tab shell (&optional backward)
   (with-fields (focused-block) self
@@ -351,7 +359,7 @@
     (with-script script
       ;; save the block
       (setf drag (find-uuid block))
-      (when (parent-is-script block)
+      (when (parent-is-script drag)
 	(unplug-from-parent block))
       (let ((dx (field-value :x block))
 	    (dy (field-value :y block))
@@ -371,14 +379,15 @@
 
 (define-method drag-maybe shell (x y)
   ;; require some actual mouse movement to initiate a drag
-  (with-fields (click-start focused-block) self
-    (when click-start
-      (destructuring-bind (x1 . y1) click-start
-	(when (and (> (distance x y x1 y1)
-		      *minimum-drag-distance*)
-		   (not (is-pinned focused-block)))
-	  (setf click-start nil)
-	  (begin-drag self x y focused-block))))))
+  (with-script %script
+    (with-fields (click-start focused-block) self
+      (when click-start
+	(destructuring-bind (x1 . y1) click-start
+	  (when (and (> (distance x y x1 y1)
+			*minimum-drag-distance*)
+		     (not (is-pinned focused-block)))
+	    (setf click-start nil)
+	    (begin-drag self x y focused-block)))))))
 
 (define-method mouse-down shell (x y &optional button)
   (with-fields (click-start focused-block) self

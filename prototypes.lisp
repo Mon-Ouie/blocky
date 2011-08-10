@@ -265,7 +265,8 @@ extended argument list ARGLIST."
   (uuid:print-bytes 
    nil 
    (uuid:make-v1-uuid)))
-;  (uuid:make-v3-uuid uuid:+namespace-oid+ "blocky.io")))
+;; why doesn't v3 work? produces always same id
+;; (uuid:make-v3-uuid uuid:+namespace-oid+ "blocky.io")))
 
 (defvar *database* nil)
 
