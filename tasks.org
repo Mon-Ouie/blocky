@@ -1,4 +1,4 @@
-** TODO [#B] pop up shell on M-x
+** TODO [#A] Also show command typed in listener log
 ** TODO [#A] Fix wrong entry type-specifiers
 ** TODO [#B] Menu option to change accepted type of an entry
 ** TODO [#A] Fix backward insertion of lines from error message into listener
@@ -80,6 +80,7 @@
 *** script wiki database (like the file system)
 *** [#A] defblock self
 ****  should resources be full-fledged objects? 
+** TODO [#B] pop up shell on M-x
 ** TODO [#A] bring menubar and its menus to front when opening menu
 ** TODO ALPHA RELEASE with a few working examples
 ** TODO [#B] Use Alt-drag to move objects

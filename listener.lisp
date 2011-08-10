@@ -157,6 +157,9 @@
 		(queue line %history))))
       (do-after-evaluate self))))
 
+(define-method newline prompt ()
+  (enter self))
+
 (define-method do-after-evaluate prompt ()
   nil)
 
@@ -455,7 +458,6 @@
      (value :initform ,value)))
 
 (defentry integer integer 0)
-(defentry string string "")
 (defentry number number 0)
 (defentry non-negative-number (number 0 *) 0)
 (defentry float float 0.0)
@@ -466,7 +468,7 @@
 
 ;;; Plain text entry
 
-(define-prototype string (:parent entry))
+(defentry string string "")
 
 (define-method read-expression string (input-string)
   ;; pass-through; don't read string at all.
@@ -555,7 +557,7 @@
       ;; (setf y (- y0 (dash 1))))))
 
 (define-method get-prompt listener ()
-  (first %inputs))
+  (car (last %inputs)))
  
 (define-method evaluate listener ()
   (evaluate (get-prompt self)))

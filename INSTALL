@@ -94,19 +94,25 @@ More instructions for Mac and Windows will be available soon.
    if you don't set it. NOTE: These must be pathnames (prefixed with
    #P) and must contain a trailing slash.
 
-7. At the shell, cd to the install directory for Blocky, run SBCL, and
-   then issue the following commands at the REPL one by one:
+7. At the shell, 
 
-   ;; load dependencies via Quicklisp
-    (map nil #'ql:quickload 
-    	 '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad))
+     cd ~/src/blocky    # or wherever you installed it...
+     sbcl       
 
-    ;; compile and load Blocky
-    (require :blocky)
+   Once SBCL is started, enter (or cut and paste) and execute the
+   following Lisp expressions one at a time:
 
-    ;; run the example
-    (blocky:play "example1")  ;; or the name of any project in your *project-directories*
+      ;; load dependencies via Quicklisp
+      (map nil #'ql:quickload 
+    	 '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx 
+	 :lispbuilder-sdl-image :uuid :buildapp -opengl :cl-fad))
 
-    (blocky:play "example2")  
+      ;; compile and load Blocky
+      (require :blocky)
+
+      ;; run the examples
+      (blocky:play "example1")  ;; "hello, world" with simple player movement
+      (blocky:play "example2")  ;; A slightly more complex example
+      (blocky:play "example3")  ;; A GUI tutorial, with turtle and ladybug
 
 

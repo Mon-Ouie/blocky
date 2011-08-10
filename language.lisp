@@ -530,14 +530,10 @@ initialized with BLOCKS as inputs."
 	 (head-type (if (listp data-type)
 			(first data-type)
 			data-type))
-	 (type-specifier (if (member head-type *builtin-entry-types*)
-			     head-type data-type))
+	 (type-specifier (if (member head-type *builtin-entry-types* :test 'equal)
+			     head-type data-type)))
 	 ;; see also terminal.lisp for more on data entry blocks
-	 (entry-prototype (cond 
-			    ((eq 'string type-specifier) "BLOCKY:TEXT-ENTRY")
-			    (t "BLOCKY:ENTRY"))))
-	(clone entry-prototype :value datum 
-			       :type-specifier type-specifier)))
+	(new entry :value datum :type-specifier type-specifier)))
 		    
 (defvar *make-block-package* nil)
 
