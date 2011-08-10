@@ -262,7 +262,10 @@ extended argument list ARGLIST."
 ;;; UUID object dictionary
 
 (defun make-uuid ()
-  (uuid:print-bytes nil (uuid:make-v1-uuid)))
+  (uuid:print-bytes 
+   nil 
+   (uuid:make-v1-uuid)))
+;  (uuid:make-v3-uuid uuid:+namespace-oid+ "blocky.io")))
 
 (defvar *database* nil)
 
@@ -416,7 +419,8 @@ extended argument list ARGLIST."
   cache)
 
 (defun find-uuid (object)
-  (object-uuid (find-object object)))
+  (when object
+    (object-uuid (find-object object))))
 
 (defun verify (thing)
   (assert (object-p (find-object thing))))

@@ -312,10 +312,10 @@ auto-updated displays."
 		   (newline self)))
   (setf %buffer (reverse *message-history*)))
 
-(define-method move-end-of-line textbox ()
+(define-method end-of-line textbox ()
   (setf %point-column (length (nth %point-row %buffer))))
 
-(define-method move-beginning-of-line textbox ()
+(define-method beginning-of-line textbox ()
   (setf %point-column 0))
 
 ;; (defun bind-event-to-textbox-insertion (textbox key modifiers &optional (insertion key))
@@ -329,10 +329,10 @@ auto-updated displays."
 
 (define-method install-text-keybindings block ()
   ;; install basic keybindings
-  (bind-event-to-method self "A" '(:control) :move-beginning-of-line)
-  (bind-event-to-method self "E" '(:control) :move-end-of-line)
-  (bind-event-to-method self "HOME" nil :move-beginning-of-line)
-  (bind-event-to-method self "END" nil :move-end-of-line)
+  (bind-event-to-method self "A" '(:control) :beginning-of-line)
+  (bind-event-to-method self "E" '(:control) :end-of-line)
+  (bind-event-to-method self "HOME" nil :beginning-of-line)
+  (bind-event-to-method self "END" nil :end-of-line)
   (bind-event-to-method self "N" '(:control) :next-line)
   (bind-event-to-method self "P" '(:control) :previous-line)
   (bind-event-to-method self "F" '(:control) :forward-char)
@@ -457,6 +457,44 @@ auto-updated displays."
 			       remainder))
 	    (decf point-column))))))
     
+(define-method get-current-line textbox ()
+  (nth %point-row %buffer))
+
+(define-method end-of-line-p textbox ()
+  (= %point-column
+     (1- (length (get-current-line self)))))
+
+(define-method beginning-of-line-p textbox ()
+  (= %point-column 0))
+
+(define-method top-of-buffer-p textbox ()
+  (= %point-row 0)) 
+
+(define-method bottom-of-buffer-p textbox ()
+  (= %point-row
+     (1- (length %buffer))))
+
+(define-method beginning-of-buffer-p textbox ()
+  (and (beginning-of-line-p self)
+       (top-of-buffer-p self)))
+
+(define-method end-of-buffer-p textbox ()
+  (and (end-of-line-p self)
+       (bottom-of-buffer-p self)))
+
+(define-method delete-char textbox ()
+  (with-fields (buffer point-row point-column) self
+    (if (end-of-line-p self)
+	;; just remove line break
+	(unless (bottom-of-buffer-p self)
+	  (next-line self)
+	  (beginning-of-line self)
+	  (backward-delete-char self))
+	;; remove a character
+	(progn 
+	  (forward-char self)
+	  (backward-delete-char self)))))
+
 (define-method insert textbox (key)       
   (with-fields (buffer point-row point-column) self
     (if (null buffer)
@@ -531,7 +569,7 @@ auto-updated displays."
 					   font)))
 		   (y1 (+ y *textbox-margin*
 			  (* point-row line-height))))
-	      (draw-rectangle x1 y1 cursor-width line-height 
+	      (draw-box x1 y1 cursor-width line-height 
 			      :color %cursor-color))))))))
 
 ;;; The pager switches between different visible groups of blocks

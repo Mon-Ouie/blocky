@@ -180,6 +180,12 @@
 					   %history-position)))
     (setf %point (length %line))))
 
+(define-method previous-line prompt ()
+  (backward-history self))
+
+(define-method next-line prompt ()
+  (forward-history self))
+
 (define-method set-receiver prompt (receiver)
   (setf %receiver receiver))
 
@@ -188,10 +194,10 @@
   (setf %point 0)
   (setf %history-position 0))
 
-(define-method move-end-of-line prompt ()
+(define-method end-of-line prompt ()
   (setf %point (length %line)))
 
-(define-method move-beginning-of-line prompt ()
+(define-method beginning-of-line prompt ()
   (setf %point 0))
 
 (define-method draw-cursor prompt 
@@ -345,13 +351,13 @@
   (pinned :initform t)
   (text-color :initform *default-entry-text-color*)
   (label-color :initform *default-entry-label-color*)
-  type-checker value)
+  type-specifier value)
 
-(define-method initialize entry (&key value type-checker options label label-color parent)
+(define-method initialize entry (&key value type-specifier options label label-color parent)
   (super%initialize self)
-  ;(assert (and value type-checker))
+  ;(assert (and value type-specifier))
   (when parent (setf %parent parent))
-  (setf %type-checker type-checker
+  (setf %type-specifier type-specifier
 	%options options
 	%label label
 	%value value)
@@ -416,14 +422,14 @@
 		     :font *block-font*)))))
 		 
 (define-method do-sexp entry (sexp)
-  (with-fields (value type-checker) self
+  (with-fields (value type-specifier) self
     (assert (and (listp sexp) (= 1 (length sexp))))
     (let ((datum (first sexp)))
-      (if (typep datum type-checker)
+      (if (type-check self datum)
 	  (setf value datum)
-	  (when type-checker 
+	  (when type-specifier 
 	    (message "Warning: value entered does not match type ~S"
-		     type-checker))))))
+		     type-specifier))))))
 
 (define-method enter entry ()
   (super%enter self :no-clear))
@@ -452,31 +458,29 @@
 
 ;;; Easily defining new entry blocks
 
-(define-method type-check entry ()
-  (evaluate %type-checker %value))
-
 (defmacro defentry (name type value)
-  (let ((checker (gensym)))
-    `(let ((,checker 
-	     (etypecase ',type
-	       (symbol (new closure :type-check self (list ',type)))
-	       (list (list 'typep  type))))))
-       (define-prototype ,name (:parent "BLOCKY:ENTRY")
-	 (type-checker :initform ,checker)
-	 (value :initform ,value)))))
+  `(define-prototype ,name (:parent "BLOCKY:ENTRY")
+     (type-specifier :initform ',type)
+     (value :initform ',value)))
 
 (defentry integer integerp 0)
 (defentry number numberp 0)
 (defentry non-negative-number (number 0 *) 0)
-(defentry float float 0.0)
-(defentry symbol symbol nil)
+(defentry float floatp 0.0)
+(defentry symbol symbolp nil)
 (defentry positive-integer (integer 1 *) 1)
 (defentry non-negative-integer (integer 0 *) 0)
-(defentry sexp t nil)
+(defentry expression t nil)
+
+(define-method type-check entry ()
+  (with-fields (type-specifier value) self
+    (etypecase type-specifier
+      (symbol (funcall type-specifier value))
+      (list (typep value type-specifier)))))
 
 ;;; Plain text entry
 
-(defentry string string "")
+(defentry string stringp "")
 
 (define-method read-expression string (input-string)
   ;; pass-through; don't read string at all.

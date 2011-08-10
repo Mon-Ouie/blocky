@@ -128,13 +128,13 @@
 ;;     ("LEFT" nil :move-cursor-left)
 ;;     ("RIGHT" nil :move-cursor-right)
 ;;     ;; emacs-style cursor movement
-;;     ("A" (:control) :move-beginning-of-line)
-;;     ("E" (:control) :move-end-of-line)
+;;     ("A" (:control) :beginning-of-line)
+;;     ("E" (:control) :end-of-line)
 ;;     ("F" (:control) :move-cursor-right)
 ;;     ("B" (:control) :move-cursor-left)
 ;;     ;; editing keys
-;;     ("HOME" nil :move-beginning-of-line)
-;;     ("END" nil :move-end-of-line)
+;;     ("HOME" nil :beginning-of-line)
+;;     ("END" nil :end-of-line)
 ;;     ("PAGEUP" nil :move-beginning-of-column)
 ;;     ("PAGEDOWN" nil :move-end-of-column)
 ;;     ;; switching windows

@@ -70,7 +70,7 @@
 
 (in-package :blocky)
 
-(defvar *script* nil)
+(defvar *script*)
 
 (defparameter *block-categories*
   '(:system :motion :event :message :looks :sound :structure :data
@@ -238,12 +238,12 @@ the return value of the function (if any)."
 (defvar *numeric-characters* "0123456789")
 
 (defparameter *text-qwerty-keybindings*
-  '(("A" (:control) :move-beginning-of-line)
-    ("E" (:control) :move-end-of-line)
+  '(("A" (:control) :beginning-of-line)
+    ("E" (:control) :end-of-line)
     ("F" (:control) :forward-char)
     ("B" (:control) :backward-char)
-    ("HOME" nil :move-beginning-of-line)
-    ("END" nil :move-end-of-line)
+    ("HOME" nil :beginning-of-line)
+    ("END" nil :end-of-line)
     ("RIGHT" nil :forward-char)
     ("LEFT" nil :backward-char)
     ("K" (:control) :clear-line)
@@ -286,12 +286,12 @@ the return value of the function (if any)."
     ("QUOTE" (:shift) "\"")))
 
 (defparameter *text-sweden-keybindings*
-  '(("A" (:CONTROL) :MOVE-BEGINNING-OF-LINE) 
-    ("E" (:CONTROL) :MOVE-END-OF-LINE)
+  '(("A" (:CONTROL) :BEGINNING-OF-LINE) 
+    ("E" (:CONTROL) :END-OF-LINE)
     ("F" (:CONTROL) :FORWARD-CHAR) 
     ("B" (:CONTROL) :BACKWARD-CHAR)
-    ("HOME" NIL :MOVE-BEGINNING-OF-LINE)
-    ("END" NIL :MOVE-END-OF-LINE)
+    ("HOME" NIL :BEGINNING-OF-LINE)
+    ("END" NIL :END-OF-LINE)
     ("RIGHT" NIL :FORWARD-CHAR)
     ("LEFT" NIL :BACKWARD-CHAR)
     ("K" (:CONTROL) :CLEAR-LINE) 
@@ -408,8 +408,15 @@ By default, just update each child block."
     (remove-if #'is-temporary inputs)))
   
 (define-method contains block (block)
-  (with-fields (inputs) self
-    (find block inputs :test 'eq :key #'find-object)))
+  (find (find-object block)
+	%inputs
+	:test 'eq
+	:key #'find-object))
+
+  ;; (block searching 
+  ;;   (dolist (input %inputs)
+  ;;     (when (object-eq input block)
+  ;; 	(return-from searching t)))))
 
 (defun input-position (self input)
   (assert (not (null input)))
@@ -645,13 +652,14 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	  (setf inputs (delete input inputs :test 'eq :key #'find-object))))))
 
 (define-method unplug-from-parent block ()
-  (prog1 t
-    (with-fields (parent) self
-      (assert (not (null parent)))
-      (assert (contains parent self))
-      (unplug parent self)
-      (assert (not (contains parent self)))
-      (setf parent nil))))
+  (unless (parent-is-script self)
+    (prog1 t
+      (with-fields (parent) self
+	(assert (not (null parent)))
+	(assert (contains parent self))
+	(unplug parent self)
+	(assert (not (contains parent self)))
+	(setf parent nil)))))
 
 (define-method make-send-block block (method target)
   (assert (and (keywordp method) (not (null target))))
@@ -710,9 +718,9 @@ all the time."
   "Show name and comprehensive help for this block."
   nil)
 
-(define-method after-deserialize block ()
-  "Make sure the block is ready after loading."
-  nil)
+;; (define-method after-deserialize block ()
+;;   "Make sure the block is ready after loading."
+;;   nil)
 
 (defun count-tree (tree)
   "Return the number of blocks enclosed in this block, including the
@@ -1261,7 +1269,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 ;;; Combining blocks into scripts
 
 (defmacro with-script (script &rest body)
-  `(let ((*script* ,script))
+  `(let ((*script* (find-uuid ,script)))
      (verify *script*)
      ,@body))
 
@@ -1297,6 +1305,10 @@ non-nil to indicate that the block was accepted, nil otherwise."
       (update each))
     (update-layout self)))
 
+;; (define-method after-deserialize script ()
+;;   (dolist (child %inputs)
+;;     (set-parent child (find-uuid self))))
+
 (define-method update-layout script (&optional force)
   (with-fields (inputs needs-layout) self
     (when (or force needs-layout)
@@ -1308,6 +1320,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 				       (width (dash 120))
 				       (height (dash 70)))
   (apply #'super%initialize self blocks)
+  (message "Initializing SCRIPT")
   (setf %width width
 	%height height)
   (when variables (setf %variables variables))

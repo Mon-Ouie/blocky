@@ -2241,10 +2241,10 @@ of the music."
       (gl:vertex x1 y)
       (gl:vertex x y))))
 
-(defun draw-rectangle (x y width height &key color) 
-  (let ((x1 (+ x width))
-	(y1 (+ y height)))
-    (draw-line x y x1 y1 :color color)))
+;; (defun draw-rectangle (x y width height &key color) 
+;;   (let ((x1 (+ x width))
+;; 	(y1 (+ y height)))
+;;     (draw-line x y x1 y1 :color color)))
 
 (defparameter *circle-textures* 
   '(:outline "circle-outline-flat-128"

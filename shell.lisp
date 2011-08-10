@@ -176,7 +176,7 @@
 	  :documentation "Non-nil when modified since last save."))
 
 (define-method after-deserialize shell ()
-  (setf %menubar (new menubar)))
+  (setf %menubar (make-menubar)))
 
 (define-method layout shell ()
   (setf %x 0 %y 0 
@@ -191,14 +191,18 @@
 (define-method update shell ()
   (update %script))
 
+(defun make-menubar ()
+  (find-uuid 
+   (new menubar 
+	(make-menu *system-menu*
+		   :target *system*))))
+
 (define-method initialize shell (script)
   (super%initialize self)
-  (setf *shell* self)
-  (setf %script (find-object script))
+  (setf *shell* (find-uuid self))
+  (setf %script (find-uuid script))
   (assert script)
-  (setf %menubar (new menubar 
-		      (make-menu *system-menu*
-				 :target *system*)))
+  (setf %menubar (make-menubar))
   (register-uuid self)
   (message "Opening shell..."))
 
@@ -206,7 +210,7 @@
   (field-value :inputs %script))
 
 (define-method open-script shell (script) 
-  (setf %script script))
+  (setf %script (find-uuid script)))
   
 (define-method add-block shell (new-block &optional x y)
   (add-block %script new-block x y))
@@ -321,7 +325,9 @@
   (setf %selection nil))
 
 (define-method focus-on shell (block)
-  (setf %focused-block block)
+  ;; possible to pass nil
+  (setf %focused-block 
+	(when block (find-uuid block)))
   (when block (on-focus block)))
 
 (define-method tab shell (&optional backward)
@@ -344,7 +350,7 @@
   (with-fields (drag inputs script drag-start ghost drag-offset) self
     (with-script script
       ;; save the block
-      (setf drag block)
+      (setf drag (find-uuid block))
       (when (parent-is-script block)
 	(unplug-from-parent block))
       (let ((dx (field-value :x block))
@@ -405,10 +411,10 @@
 		(target-y (- mouse-y oy)))
 	    (let ((candidate (hit-script self target-x target-y)))
 	      ;; obviously we dont want to plug a block into itself.
-	      (setf hover (if (eq drag candidate) nil candidate))
+	      (setf hover (if (object-eq drag candidate) nil (find-uuid candidate)))
 	      (move-to drag target-x target-y))))
 	(progn
-	  (setf highlight (hit-script self mouse-x mouse-y))
+	  (setf highlight (find-uuid (hit-script self mouse-x mouse-y)))
 	  (when (null highlight)
 	    (when %menubar
 	      (with-script %script (close-menus %menubar))))))))
@@ -434,7 +440,7 @@
 		(add-block self drag)))
 	  ;; select the dropped block
 	  (select self drag)
-	  (setf focused-block drag))
+	  (setf focused-block (find-uuid drag)))
 	;; (setf hover nil)
 	;; ok, we're not dragging.
 	;; instead it was a click.

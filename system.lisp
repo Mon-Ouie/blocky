@@ -114,16 +114,16 @@
   (running :initform nil))
 
 (define-method create-trash system ()
-  (add-block *script* (new trash) 100 100))
+  (add-block *shell* (new trash) 100 100))
 
 (define-method create-textbox system ()
-  (add-block *script* (new textbox) 100 100))
+  (add-block *shell* (new textbox) 100 100))
 
 (define-method initialize system ()
-  (setf *system* self))
+  (setf *system* (find-uuid self)))
 
 (define-method create-listener system ()
-  (add-block *script* (new listener) 100 100))
+  (add-block *shell* (new listener) 100 100))
 
 (define-method create-project system ())
 
