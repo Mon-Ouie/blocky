@@ -1,3 +1,5 @@
+** TODO REview and REprioritize TODO list
+
 ** TODO ALPHA RELEASE
 *** TODO 3 small working examples (movement, blue dot, turtle/ladybug)
 *** TODO 2 GUI examples
