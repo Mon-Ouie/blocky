@@ -233,6 +233,10 @@ the return value of the function (if any)."
   (bind-event-to-closure self key mods 
 			 (new closure :insert self (list text))))
 
+(defvar *lowercase-alpha-characters* "abcdefghijklmnopqrstuvwxyz")
+(defvar *uppercase-alpha-characters* "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+(defvar *numeric-characters* "0123456789")
+
 (defparameter *text-qwerty-keybindings*
   '(("A" (:control) :move-beginning-of-line)
     ("E" (:control) :move-end-of-line)
@@ -328,8 +332,8 @@ the return value of the function (if any)."
   '(("UP" nil :previous-line)
     ("DOWN" nil :next-line)
     ("LEFT" nil :backward-char)
-    ("RIGHT" nil :forward-char)))
-  
+    ("RIGHT" nil :forward-char))) 
+
 (define-method install-text-keybindings block ()
   ;; install keys that will vary by locale
   (with-fields (keybindings) self

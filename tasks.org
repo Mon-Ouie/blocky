@@ -1,175 +1,131 @@
-** TODO REview and REprioritize TODO list
-
-** TODO ALPHA RELEASE
-*** TODO 3 small working examples (movement, blue dot, turtle/ladybug)
-*** TODO 2 GUI examples
-*** TODO basic documentation
-*** TODO tutorial project with links to examples,docs
-*** TODO Use Alt as move key
-*** TODO pop up shell on M-x
-
-
-
-*** TODO [#B] implement make-process coroutines
-** TODO FIX BUGS
-*** TODO Fix wrong entry type-specifiers
-**** TODO [#B] Menu option to change accepted type of an entry
-*** TODO [#B] FIX trash drawing children
-*** TODO [#C] FIX M-x not focusing input on the prompt
-
-** TODO [#C] Fix the way wiki page resources are stored into separate files...
+** TODO [#B] pop up shell on M-x
+** TODO [#A] Fix wrong entry type-specifiers
+** TODO [#B] Menu option to change accepted type of an entry
 ** TODO [#A] Fix backward insertion of lines from error message into listener
-** TODO [#A] Improve the basic command-shell and prompt so that in-engine development is easier. 
-** TODO [#B] general purpose resizer/scroller decorator thinger
-*** TODO trigger context menu items with click, make block with control-click
-*** TODO start using terminal output for status message output
-*** TODO Allow user to move entries easier via yellow triangle tab
-
-** TODO Finish implementing the core visual programming language in VMACS
-*** defblock var (reference to a var, not a def)  (for lisp vars, script vars, proto names, and fields)
+** TODO [#A] trigger context menu items with click, make block with control-click
+** TODO [#A] start using terminal output for status message output
+** TODO [#A] use a non-rounded box layout and appearance for program elements, with very thin margins?
+*** retain rounded rectangles for UI/workspace/etc
+** TODO [#A] always draw menus above script
+** TODO [#A] add all missing keyboard characters to qwerty layouts
+** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
+** TODO [#A] fix ellipsis not displayed on menu items until highlight
+*** use something other than ellipses? like my generic tree triangles
+** TODO [#A] Read me first: F1, then click on any object for help
+** TODO [#A] an interactive tutorial project
+** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
+** TODO [#A] dialog boxes for project save/load!
+** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
+** TODO [#A] escape key hide/show terminals/menus
+** TODO [#A] Write standard blocks library
+*** move
+*** move to 
+*** move onto 
+*** [#C] glide 
+*** change <var> <amount>
+*** set <var> <value>
+*** get <var>
+*** my <var>
+*** turn left
+*** turn right
+*** point at
+*** say
+*** think <text> <time>
+*** display <image>
+*** blend
+*** opacity
+*** show
+*** hide
+*** move to front
+*** play sound
+*** play music
+*** stop sound
+*** [#C] play note/drum/tempo etc
+*** [#B] defblock event, the script tests events on them
+**** on play
+**** on click
+**** on event
+*** wait
+*** loop
+*** dotimes
+*** dolist
+*** send (to some other object explicitly)
+*** method
+*** while
+*** if
+**** display true and false
+**** use question marks and occasional symbols
+*** when 
+*** [#C] wait until <condition>
+*** stop script
+*** stop all
+*** touching
+*** ask <question>
+*** mouse y
+*** mouse x
+*** mouse down <number>
+*** key down <key>
+*** distance to
+*** common mathematical operations/relations
+*** common logical connectives
+*** concatenate <strings>
+*** [#C] loudness, loud, sensor value
+*** random <min> <max>
+*** list ops: length, append, add, delete, insert
+*** contains
+*** [#B] defblock with (introduce local vars) 
+*** [#B] defblock defresource (a stand-in reference to a resource)
 *** defblock let (with drag-off variable refs)
 *** defblock link <--- to another wikipage or something
 *** script wiki database (like the file system)
-*** defblock self
-*** define-method "block" has argument names as inputs
-*** use a non-rounded box layout and appearance for program elements, with very thin margins
-**** retain rounded rectangles for UI/workspace/etc
-*** example visual project that can be saved and loaded 
-*** general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
-
-** TODO Re-examine "invader tactics" source and see what blocks are required to reimplement it
-** TODO re-release "Invader"!
-
-** TODO [#A] Flesh out the user-friendly development environment
-*** desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
-*** KILLER FEATURE: gnome-do/anything.el style search/operate, for quick access to everything
-*** always draw menus above script
-*** add all missing keyboard characters
-*** plus button decorator for lists to add objects (fields, methods, etc)
-*** fix ellipsis not displayed on menu items until highlight
-**** use something other than ellipses? like my generic tree triangles
-*** Read me first: F1, then click on any object for help
-*** at startup, show formatted textbox with basic information for new users and "don't show this dialog box again" checkbox
-*** file selector dialog (ughhhh)
-*** pin toggle button
-*** an interactive tutorial project
-*** project settings dialog for configuring *screen-width* and *resizable* etc
-*** dialog boxes for project save/load!
-*** dialog boxes are fancy SEND blocks that send to *system*
-*** escape key hide/show terminals/menus
-*** display GPL and other licensing in scroll box
-*** project settings dialog for configuring *screen-width* and *resizable* etc
-****  dialog boxes for project save/load!
-****  dialog boxes are fancy SEND blocks that send to *system*
-*** escape key hide/show terminals/menus
-*** display GPL and other licensing in scroll box
-*** yellow comment sticky note boxes
-*** morphic-style halos
-*** tab and shift-tab for input nav
-*** comment block for output messages in listener etc, trap errors
-*** TODO [#B] isolate/trap all block errors and display them grayed out with an inspectable error
-
-
-** TODO [#A] Refactor collision detection to enable various types.
+*** [#A] defblock self
+****  should resources be full-fledged objects? 
+** TODO [#A] bring menubar and its menus to front when opening menu
+** TODO ALPHA RELEASE with a few working examples
+** TODO [#B] Use Alt-drag to move objects
+** TODO [#B] implement make-process coroutines
+** TODO [#B] FIX trash drawing children during drag
+** TODO [#B] Fix the way wiki page resources are stored into separate files...
+** TODO [#B] general purpose resizer/scroller decorator thinger
+** TODO [#B] Allow user to move entries easier via yellow triangle tab
+** TODO [#B] general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
+** desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
+** COOL FEATURE: gnome-do/anything.el style search/operate, for quick access to everything
+** TODO [#B] file selector dialog (only choosing from project dir at first)
+** TODO [#B] pin toggle button
+** TODO [#B] display GPL and other licensing in scroll box
+** morphic-style halos
+** tab and shift-tab for input nav
+** comment block for output messages in listener etc, trap errors
+** TODO [#B] Refactor collision detection to enable various types.
 *** delegate actual collision detection to method
 *** in cell/move and sprite/move , compute whether a move would cause a collision
 *** and then only allow the move to go a certain distance. return number moved
 *** then "resting contact" will work; the object won't try to move anymore (if gravity.)
 *** implement AABB-quadtree? http://en.wikipedia.org/wiki/Quadtree http://hectorgon.blogspot.com/2006/08/regular-grids-vs-aabb-trees-in-games.html
-
-** TODO Game engine improvements
-***  defblock with (introduce local vars) 
-***  defblock defresource (a stand-in reference to a resource)
-****  should resources be full-fledged objects? 
-
-** TODO [#A] Improve messaging, diagnostic output, and error handling.
-*** define-method error shell
-*** better error handling for menu methods
-*** define-method warning shell
-*** redirect messages to message bar. optionally fading notifications with widgets in them
-
-** TODO [#A] explicit "save" and "compile" buttons 
-** TODO [#A] send block has socket on left for receiver name, as in Smalltalk-Elements
-** TODO [#A] Standard Blocks Library
-***  move
-***  move to 
-***  move onto 
-***  [#C] glide 
-***  change <var> <amount>
-***  set <var> <value>
-***  get <var>
-***  my <var>
-***  turn left
-***  turn right
-***  point at
-***  say
-***  think <text> <time>
-***  display <image>
-***  blend
-***  opacity
-***  show
-***  hide
-***  move to front
-***  play sound
-***  play music
-***  stop sound
-***  [#C] play note/drum/tempo etc
-***  [#B] defblock event, the script tests events on them
-****  on play
-****  on click
-****  on event
-***  wait
-***  loop
-***  dotimes
-***  dolist
-***  send (to some other object explicitly)
-***  method
-***  while
-***  if
-****  display true and false
-****  use question marks and occasional symbols
-***  when 
-***  [#C] wait until <condition>
-***  stop script
-***  stop all
-***  touching
-***  ask <question>
-***  mouse y
-***  mouse x
-***  mouse down <number>
-***  key down <key>
-***  distance to
-***  common mathematical operations/relations
-***  common logical connectives
-***  concatenate <strings>
-***  [#C] loudness, loud, sensor value
-***  random <min> <max>
-***  list ops: length, append, add, delete, insert
-***  contains
-** TODO [#B] defblock defsprite --- defining sprites
-***  merge sprites and blocks?
-
+** TODO [#B] Improve error handling in shell
+*** TODO isolate/trap all block errors and display them grayed out with an inspectable error
+*** TODO define-method error shell
+*** TODO better error handling for menu methods
+*** TODO define-method warning shell
+*** TODO redirect messages to message bar. optionally fading notifications with widgets in them
+** TODO [#B] explicit "save" and "compile" buttons 
+** TODO [#B] send block has socket on left for receiver name, as in Smalltalk-Elements? is this lispy...
 ** TODO [#B] joystick menu to find connected devices x3
 ** TODO [#B] standardize on "ABXY" for the face buttons, LB RB LT RT for the shoulder buttons
 ** TODO [#B] popup tape-flag/balloons to show you where you are, like hints about M-x window
 ** TODO [#B] em-dash and en-dash (optionally font-metric-dependent) for uniform declarative layout
-** TODO [#B] click anywhere on terminal line to focus on prompt 
-** TODO [#B] test raw string entry
-** TODO [#B] allow string-valued method fields. resource id's of method block, uuid?
-** TODO Universal access
+** TODO [#B] Universal access
 ***  How to handle Translations? keywords in most languages are in English even if comments/variable names are French or Japanese or whatever)
 ****  translate only meuns?
 ***  Visual theme-ability for the color-blind and visually-impaired users (larger font, higher contrast etc)
 ***  Braille keyboard and speech synthesis integration for blind users
 ** TODO [#B] Bring back old/forms.lisp spreadsheet
 ***  compilation options
-** TODO [#B] interactively type live blocks (space bar instantiates and moves big fat cursor
-** TODO [#B] bring menubar and its menus to front when opening menu
 ** TODO [#B] generic way to wrap functions?
 ** TODO [#B] review all IOFORMS engine features for blocks to make
 ** TODO [#B] Make dialogs for all menu options in file:system.lisp 
 ** TODO [#B] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
-** TODO [#C] Fix crash when error in blocky.ini
 ** TODO [#B] Fix menu behavior: properly check other menu widgets in menubar hit before menu
 ** TODO [#B] allow any font size to be requested
 ** TODO [#B] fix argument blocks not being created (AGAIN)
@@ -181,6 +137,7 @@
 ** TODO [#B] disabled menu items, to check for presence of method in target and/or condition
 ** TODO [#B] fix cursor rendering in prompt not lining up with characters
 ** TODO [#B] AABB-tree (axis-aligned bounding-box)
+** TODO [#C] Fix crash when error in blocky.ini
 ** TODO [#C] add generic xbox controller support for analog bumpers (emulate buttons)
 ** TODO [#C] introduce with-font macro and stop using *block-font* explicitly
 ** TODO [#C] draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
@@ -196,14 +153,12 @@
 ** TODO [#C] duplicate objects / selection 
 ** TODO [#C] defblock selection 
 ** TODO [#C] send message to all blocks in selection
-** TODO [#C] use turtle to program polygon vertices and shit a la fluxus
+** TODO [#C] use turtle to program polygon vertices and stuff, like in fluxus
 ** TODO [#C] block colors/backgrounds in a list subprogram could disappear, making it look like text source code?
 ** TODO [#C] add more information to method+prototype databases
-** TODO [#C] cursor should negate underlying letter, not overpaint
+** TODO [#C] text cursor should negate underlying letter, not overpaint
 ** TODO [#C] general svg image support
-** TODO [#C] hilbert curve turtle example 
 ** TODO [#C] make thing to search for duplicate method defs
-** TODO [#C] defblock emacs
 ** TODO [#C] ALPHA issues for PNG images
 <|3b|> you want 'save color values from transparent pixels', and need to make
        sure the pixels are white with 0 alpha
@@ -234,7 +189,8 @@
 ***  bubbles that you need to leave flares inside of.
 ***  discover which bubbles resonate with each other
 ***  drop flares inside those bubbles
-** TODO [#C] Implement this GRAPH UI example:
+
+** TODO [#C] Graph UI vmacro notes
    
 Say you want a nice interface helping a designer to explore various
 choices of values for two variables---such as a function y=f(x), or
@@ -365,53 +321,11 @@ But the graph doesn't yet actually work, so we must continue.
     nightmare. Better to err on the side of people adapting the
     available "scripts" to their immediate tasks-at-hand.
 
-I've been discussing with a friend who's developed quite an extensive
-Lisp game engine of his own---I'd like to develop this visual language
-toolkit as something not tied to my own game engine, so that my stuff
-can work with his code as well.
-** TODO [#B] consistent set of colored svg icons, one for each block category (enable compressed views and halos)
-** TODO [#C] add least-recently-used pruning for memoize facility
-** TODO [#B] allow #RRGGBB color spec in resources
+** TODO [#C] (defmacro define 
+** TODO [#C] allow (setf (^field object) value) ??
 
-
-
-* TODO Example 1: Blocky and the Blue Dot
-  DEADLINE: <2011-06-04 Sat>
-** TODO keyboard input with moving character
-** TODO some text
-** TODO clickable things?
-
-* TODO Example 2: Blocky quest
-
-* TODO Example 3: mini xong
-
-* TODO PANGAEA
-
-* Eliminate all compiler warnings. Really.
-
-* Sweep snake trail across multiplying particles in 3 reactor chambers
-** TODO refactor collision detection without consing
-***  write a function (collision *world*
-** TODO default-keybindings as an initform 
-** trail upgrade
-** drifting hot rad areas that drain HP
-** instakill spots
-** enemies?
-** implement turtle graphics
-** L-systems procedural levels http://en.wikipedia.org/wiki/L-system
-* TODO Add more documentation for user-visible API things
-* TODO [#A] Get visual language builder working
-** TODO merge "schema" field into prototypes.lisp field descriptors
-** TODO (defmacro define 
-** TODO allow (setf (^field object) value) ??
-* TODO [#B] fix event list format docstrings
-* TODO [#B] watch farbrausch video presentations
-* TODO [#C] add vecto support and other prox texture stuff
-* TODO BETA RELEASE: GUI stuff
-** TODO INVADER TACTICS remake
-* TODO timeline: interactive logarithmic time scale with nasa photos that scale., pseudogame
-** TODO altering timelines... seeing results of sending objects far back in time.
-** TODO you can never go home---sending back in time to early universe allows travel to regions that are not causally connected later (neither is in the observable universe of the other)
+** TODO Re-examine "invader tactics" source and see what blocks are required to reimplement it
+** TODO re-release "Invader"!
 
 
 * TODO Review Visual language idea roadmap

@@ -22,10 +22,6 @@
 
 (in-package :blocky)
 
-(defvar *lowercase-alpha-characters* "abcdefghijklmnopqrstuvwxyz")
-(defvar *uppercase-alpha-characters* "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-(defvar *numeric-characters* "0123456789")
-
 ;;; Formatted display block
 
 (defvar *default-formatter-scrollback-size* 1000)
