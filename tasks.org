@@ -3,11 +3,12 @@
 *** TODO 2 GUI examples
 *** TODO basic documentation
 *** TODO tutorial project with links to examples,docs
+*** TODO Use Alt as move key
+*** TODO pop up shell on M-x
 
-** TODO elisp for grabbing slime-inspect for uuid at point
-** TODO [#B] allow to remove temporary menus and stuff on loading (edit versus play)
-** TODO [#C] implement make-process coroutines
 
+
+*** TODO [#B] implement make-process coroutines
 ** TODO FIX BUGS
 *** TODO Fix wrong entry type-specifiers
 **** TODO [#B] Menu option to change accepted type of an entry
@@ -21,8 +22,6 @@
 *** TODO trigger context menu items with click, make block with control-click
 *** TODO start using terminal output for status message output
 *** TODO Allow user to move entries easier via yellow triangle tab
-*** TODO Use Alt as move key
-*** TODO pop up shell on M-x
 
 ** TODO Finish implementing the core visual programming language in VMACS
 *** defblock var (reference to a var, not a def)  (for lisp vars, script vars, proto names, and fields)

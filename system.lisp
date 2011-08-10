@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2010, 2011  David O'Toole
 
-;; Author: David O'Toole %dto@gnu.org
+;; Author: David O'Toole %dto@ioforms.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@
       (:label "Export as archive" :action :export-archive)
       (:label "Export as application" :action :export-application)
       (:label "Publish to web" :action :publish-web)
-      (:label "Publish to community cloud" :action :publish-community)
+      (:label "Publish to community site" :action :publish-community)
       (:label "Publish to FTP" :action :publish-ftp)
       (:label "Edit preferences" :action :edit-preferences)
       (:label "Quit BLOCKY" :action :quit-blocky)))
@@ -48,6 +48,13 @@
       (:label "Paste as new workspace" :action :paste-as-new-workspace)
       (:label "Select all" :action :select-all)
       (:label "Clear selection" :action :clear-selection)))
+    (:label "Object"
+     :subtree
+     ((:label "Define a method" :action :define-method)
+      (:label "Extend this block" :action :extend-block)
+      (:label "Inspect" :action :inspect)
+      (:label "Copy" :action :copy)
+      (:label "Destroy" :action :destroy)))
     (:label "Resources"
      :subtree
      ((:label "Import new resource" :action :import-resources)
@@ -65,8 +72,9 @@
 	(:label "Browse code" :action :browse-code)))))
     (:label "Tools" 
      :subtree
-     ((:label "Create a Lisp Listener" :action :create-listener)
-      (:label "Create a note" :action :create-note)
+     ((:label "Create a Lisp listener" :action :create-listener)
+      (:label "Create a text box" :action :create-textbox)
+      (:label "Create a trash can" :action :create-trash)
       (:label "Version control" :action :version-control)))
     (:label "Workspace" :subtree
      ((:label "Switch to workspace" :subtree
@@ -104,6 +112,12 @@
   (type :initform :system)
   (shell :initform nil)
   (running :initform nil))
+
+(define-method create-trash system ()
+  (add-block *script* (new trash) 100 100))
+
+(define-method create-textbox system ()
+  (add-block *script* (new textbox) 100 100))
 
 (define-method initialize system ()
   (setf *system* self))

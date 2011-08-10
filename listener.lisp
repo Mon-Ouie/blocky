@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -70,114 +70,12 @@
 (define-method goto prompt ()
   (say self "Enter command below at the >> prompt. Press ENTER when finished, or CONTROL-X to cancel."))
 
-(defun bind-event-to-prompt-insertion (self key mods text)
-  (bind-event-to-closure self key mods 
-			 (new closure :insert self (list text))))
-
-(defparameter *prompt-qwerty-keybindings*
-  '(("A" (:control) :move-beginning-of-line)
-    ("E" (:control) :move-end-of-line)
-    ("F" (:control) :forward-char)
-    ("B" (:control) :backward-char)
-    ("HOME" nil :move-beginning-of-line)
-    ("END" nil :move-end-of-line)
-    ("RIGHT" nil :forward-char)
-    ("LEFT" nil :backward-char)
-    ("K" (:control) :clear-line)
-    ("BACKSPACE" nil :backward-delete-char)
-    ("DELETE" nil :delete-char)
-    ("D" (:control) :delete-char)
-    ("RETURN" nil :enter)
-    ("X" (:control) :exit)
-    ("G" (:control) :exit)
-    ("ESCAPE" nil :exit)
-    ("P" (:alt) :backward-history)
-    ("N" (:alt) :forward-history)  
-    ("UP" nil :backward-history)
-    ("DOWN" nil :forward-history)  
-    ("MINUS" nil "-")
-    ("HASH" nil "#")
-    ("SLASH" nil "/")
-    ("BACKSLASH" nil "\\")
-    ("BACKQUOTE" nil "`")
-    ("EXCLAIM" nil "!")
-    ("PERIOD" nil ".")
-    ("PERIOD" (:shift) ">")
-    ("COMMA" nil ",")
-    ("COMMA" (:shift) "<")
-    ("EQUALS" nil "=")
-    ("EQUALS" (:shift) "+")
-    ("SEMICOLON" nil ";")
-    ("SEMICOLON" (:shift) ":")
-    ("0" (:shift) ")") 
-    ("9" (:shift) "(")
-    ("8" (:shift) "*")
-    ("SPACE" nil " ")
-    ("SLASH" (:shift) "?")
-    ("QUOTE" nil "'")
-    ("QUOTE" (:shift) "\"")))
-
-(defparameter *prompt-sweden-keybindings*
-  '(("A" (:CONTROL) :MOVE-BEGINNING-OF-LINE) 
-    ("E" (:CONTROL) :MOVE-END-OF-LINE)
-    ("F" (:CONTROL) :FORWARD-CHAR) 
-    ("B" (:CONTROL) :BACKWARD-CHAR)
-    ("HOME" NIL :MOVE-BEGINNING-OF-LINE)
-    ("END" NIL :MOVE-END-OF-LINE)
-    ("RIGHT" NIL :FORWARD-CHAR)
-    ("LEFT" NIL :BACKWARD-CHAR)
-    ("K" (:CONTROL) :CLEAR-LINE) 
-    ("BACKSPACE" NIL :BACKWARD-DELETE-CHAR)
-    ("RETURN" NIL :ENTER)
-    ("X" (:CONTROL) :EXIT)
-    ("ESCAPE" NIL :EXIT)
-    ("P" (:ALT) :BACKWARD-HISTORY)
-    ("N" (:ALT) :FORWARD-HISTORY)
-    ("UP" NIL :BACKWARD-HISTORY)
-    ("DOWN" NIL :FORWARD-HISTORY)
-    ("MINUS" NIL "-")
-    ("0" (:SHIFT) "=")
-    ("EQUALS" (:SHIFT) "+")
-    ("COMMA" (:SHIFT) ";")
-    ("PERIOD" (:SHIFT) ":")
-    ("9" (:SHIFT) ")")
-    ("8" (:SHIFT) "(")
-    ("QUOTE" (:SHIFT) "*")
-    ("SPACE" NIL " ")
-    ("QUOTE" NIL "'") 
-    ("2" (:SHIFT) "\"")))
-
-(define-method install-keybindings prompt ()
-  ;; install keys that will vary by locale
-  (with-fields (keybindings) self
-    (setf keybindings (make-hash-table :test 'equal))
-    (dolist (binding (ecase *user-keyboard-layout*
-    		       (:qwerty *prompt-qwerty-keybindings*)
-    		       (:sweden *prompt-sweden-keybindings*)))
-      (destructuring-bind (key mods result) binding
-	(etypecase result
-	  (keyword (bind-event-to-method self key mods result))
-	  (string (bind-event-to-prompt-insertion self key mods result)))))
-    ;; install keybindings for self-inserting characters
-    (map nil #'(lambda (char)
-  		 (bind-event-to-prompt-insertion self (string char) nil
-  					       (string-downcase char)))
-  	 *lowercase-alpha-characters*)
-    (map nil #'(lambda (char)
-  		 (bind-event-to-prompt-insertion 
-		  self (string char) '(:shift) (string char)))
-  	 *uppercase-alpha-characters*)
-    (map nil #'(lambda (char)
-  		 (bind-event-to-prompt-insertion self (string char) 
-						 nil (string char)))
-  	 *numeric-characters*)))
-
 (define-method say prompt (&rest args)
   (apply #'message args))
 
 (define-method initialize prompt ()
   (super%initialize self)
-  (install-keybindings self))
+  (install-text-keybindings self))
 
 (define-method forward-char prompt ()
   (setf %point (min (1+ %point)

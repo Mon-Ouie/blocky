@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -322,16 +322,16 @@ auto-updated displays."
 (define-method move-beginning-of-line textbox ()
   (setf %point-column 0))
 
-(defun bind-event-to-textbox-insertion (textbox key modifiers &optional (insertion key))
-  "For textbox P ensure that the event (KEY MODIFIERS) causes the
-text INSERTION to be inserted at point."
- (bind-event-to-closure 
-  textbox 
-  (string-upcase key)
-  modifiers
-  (new closure :insert textbox (list insertion))))
+;; (defun bind-event-to-textbox-insertion (textbox key modifiers &optional (insertion key))
+;;   "For textbox P ensure that the event (KEY MODIFIERS) causes the
+;; text INSERTION to be inserted at point."
+;;  (bind-event-to-closure 
+;;   textbox 
+;;   (string-upcase key)
+;;   modifiers
+;;   (new closure :insert textbox (list insertion))))
 
-(define-method install-keybindings textbox ()
+(define-method install-text-keybindings block ()
   ;; install basic keybindings
   (bind-event-to-method self "A" '(:control) :move-beginning-of-line)
   (bind-event-to-method self "E" '(:control) :move-end-of-line)
@@ -351,27 +351,27 @@ text INSERTION to be inserted at point."
   (bind-event-to-method self "RETURN" nil :newline)
   ;; install keybindings for self-inserting characters
   (map nil #'(lambda (char)
-	       (bind-event-to-textbox-insertion self (string char) nil
+	       (bind-event-to-text-insertion self (string char) nil
 					     (string-downcase char)))
        *lowercase-alpha-characters*)
   (map nil #'(lambda (char)
-	       (bind-event-to-textbox-insertion self (string char) '(:shift)))
+	       (bind-event-to-text-insertion self (string char) '(:shift) (string char)))
        *uppercase-alpha-characters*)
   (map nil #'(lambda (char)
-	       (bind-event-to-textbox-insertion self (string char) nil))
+	       (bind-event-to-text-insertion self (string char) nil (string char)))
        *numeric-characters*)
   ;; other characters
-  (bind-event-to-textbox-insertion self "EQUALS" nil "=")
-  (bind-event-to-textbox-insertion self "MINUS" nil "-")
-  (bind-event-to-textbox-insertion self "EQUALS" '(:control) "+")
-  (bind-event-to-textbox-insertion self "SEMICOLON" nil ";")
-  (bind-event-to-textbox-insertion self "SEMICOLON" '(:shift) ":")
-  (bind-event-to-textbox-insertion self "0" '(:shift) ")")
-  (bind-event-to-textbox-insertion self "9" '(:shift) "(")
-  (bind-event-to-textbox-insertion self "8" '(:shift) "*")
-  (bind-event-to-textbox-insertion self "SPACE" nil " ")
-  (bind-event-to-textbox-insertion self "QUOTE" nil "'")
-  (bind-event-to-textbox-insertion self "QUOTE" '(:shift) "\""))
+  (bind-event-to-text-insertion self "EQUALS" nil "=")
+  (bind-event-to-text-insertion self "MINUS" nil "-")
+  (bind-event-to-text-insertion self "EQUALS" '(:control) "+")
+  (bind-event-to-text-insertion self "SEMICOLON" nil ";")
+  (bind-event-to-text-insertion self "SEMICOLON" '(:shift) ":")
+  (bind-event-to-text-insertion self "0" '(:shift) ")")
+  (bind-event-to-text-insertion self "9" '(:shift) "(")
+  (bind-event-to-text-insertion self "8" '(:shift) "*")
+  (bind-event-to-text-insertion self "SPACE" nil " ")
+  (bind-event-to-text-insertion self "QUOTE" nil "'")
+  (bind-event-to-text-insertion self "QUOTE" '(:shift) "\""))
 
 (define-method initialize textbox (&rest buffer)
   (super%initialize self)
@@ -379,7 +379,8 @@ text INSERTION to be inserted at point."
     (setf %buffer buffer))
   (when (null (has-local-value :buffer self))
     (setf %buffer (list "")))
-  (install-keybindings self))
+  (install-text-keybindings self)
+  (install-keybindings self *arrow-key-text-navigation-keybindings*))
 
 (define-method forward-char textbox ()
   (with-fields (buffer point-row point-column) self
@@ -433,7 +434,8 @@ text INSERTION to be inserted at point."
 
 (define-method backward-delete-char textbox ()
   (with-fields (buffer point-row point-column) self
-    (if (and (= 0 point-column) (= 0 point-row))
+    (if (and (= 0 point-column) 
+	     (not (= 0 point-row)))
 	(progn 
 	  ;;
 	  ;; we need to remove a line break.
@@ -449,17 +451,15 @@ text INSERTION to be inserted at point."
 	    ;; move cursor too
 	    (decf point-row)
 	    (setf point-column (length line))))
-	(progn
-	  ;;
-	  ;; otherwise, delete within current line.
-	  (when (= 0 point-column)
-	    (let* ((line (nth point-row buffer))
-		   (remainder (subseq line point-column)))
-	      (setf (nth point-row buffer)
-		    (concatenate 'string 
-				 (subseq line 0 (- point-column 1))
-				 remainder))
-	      (decf point-column)))))))
+	;; otherwise, delete within current line.
+	(when (not (= 0 point-column))
+	  (let* ((line (nth point-row buffer))
+		 (remainder (subseq line point-column)))
+	    (setf (nth point-row buffer)
+		  (concatenate 'string 
+			       (subseq line 0 (- point-column 1))
+			       remainder))
+	    (decf point-column))))))
     
 (define-method insert textbox (key)       
   (with-fields (buffer point-row point-column) self
@@ -533,7 +533,8 @@ text INSERTION to be inserted at point."
 		   (x1 (+ x *textbox-margin*
 			  (font-text-width (subseq current-line 0 %point-column)
 					   font)))
-		   (y1 (+ y *textbox-margin*)))
+		   (y1 (+ y *textbox-margin*
+			  (* point-row line-height))))
 	      (draw-rectangle x1 y1 cursor-width line-height 
 			      :color %cursor-color))))))))
 

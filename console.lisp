@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org> <dto1138@gmail.com>
+;; Author: David O'Toole <dto@ioforms.org> <dto1138@gmail.com>
 ;; Keywords: multimedia, games
 
 ;; This file is free software; you can redistribute it and/or modify

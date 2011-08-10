@@ -3,7 +3,7 @@
 
 ;; Copyright (C) 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -283,7 +283,9 @@
     (draw-label-string self 
 		       (or label (display-string self))
 		       ;; color text according to whether method exists
-		       (if (or (null action) (has-method action target))
+		       (if (or (null action) 
+			       (functionp action)
+			       (has-method action target))
 			   (find-color self :foreground)
 			   "gray70"))))
 			 

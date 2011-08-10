@@ -1,7 +1,7 @@
 ;;; prototypes.lisp --- an alternative object system for Common Lisp
 
 ;; Copyright (C) 2007, 2008, 2009, 2010, 2011  David O'Toole
-;; Author: David O'Toole %dto@gnu.org
+;; Author: David O'Toole %dto@ioforms.org
 ;; Keywords: oop
 ;; Version: 1.8
 ;;

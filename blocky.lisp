@@ -2,7 +2,7 @@
                
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: multimedia, games
 ;; Version: 2.11
 
@@ -76,7 +76,7 @@ event-time event-arrow default-project-directories *step-tolerance*
 *colors* *world* make-directory-maybe load-user-init-file
 *project-directories* resource-to-plist *osx* *linux* make-resource
 make-object-resource make-event *blocks*
-bind-event-to-prompt-insertion make-field-initializer clone
+bind-event-to-text-insertion make-field-initializer clone
 make-field-initializer-body make-key-modifier-symbol make-key-string
 normalize-event make-keyword make-object queue-head queue-max
 queue-count *sender* field-reference-p null-next object-eq
