@@ -1,8 +1,8 @@
-;;; example4.lisp --- turtle graphics example
+;;; example3.lisp --- turtle graphics example
 
 ;; Copyright (C) 2011  David O'Toole
 
-;; Author: David O'Toole <dto@gnu.org>
+;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: games
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -20,10 +20,10 @@
 
 ;;; Preamble
 
-(defpackage :example4 
+(defpackage :example3 
     (:use :blocky :common-lisp))
   
-(in-package :example4)
+(in-package :example3)
 
 (setf *screen-width* 640)
 (setf *screen-height* 480)
@@ -150,7 +150,7 @@
 (defresource (:name "chirp" :type :sample :file "chirp.wav" :properties (:volume 80)))
 
 (define-method (sing :category :sound) ladybug 
-    ((song string :default ""))
+    ((song string :default "wandering"))
   (when (> (length song)
 	   0)
     (play-music song :loop t)))
@@ -167,48 +167,9 @@
 
 ;;; Put it all together
 
-(defun example4 ()
+(defun example3 ()
   (new system)
   (let ((script (new script)))
     (start (new shell script))))
 
-    ;; (dotimes (ring 4)
-    ;;   (dotimes (petal 40)
-    ;; 	(turn-left turtle 3)
-    ;; 	(save-state turtle)
-
-    ;; 	(pen-up turtle)
-    ;; 	(go-forward turtle (+ 70 (* ring 60)))
-    ;; 	(dotimes (n 20) 
-    ;; 	  (pen-down turtle)
-    ;; 	  (set-color turtle "light salmon")
-    ;; 	  (go-forward turtle (* 0.6 n))
-    ;; 	  (turn-left turtle 70)
-    ;; 	  (go-forward turtle (* 0.8 n))
-    ;; 	  (set-color turtle "indian red")
-    ;; 	  (turn-right turtle 50)
-    ;; 	  (go-forward turtle (* 1.2 n))
-    ;; 	  (set-color turtle "orange")
-    ;; 	  (turn-left turtle 12)
-    ;; 	  (go-forward turtle (* 1.6 n))
-    ;; 	  (turn-right turtle 10))
-    ;; 	(restore-state turtle)))
-;;      (add-block script (new entry :value 0 :type-specifier 'integer) 40 40) 
-    ;; (add-block script (new send :prototype "EXAMPLE4:TURTLE"
-    ;; 				:method :pen-down) 100 100)
-    ;; (add-block script (new send :prototype "EXAMPLE4:TURTLE"
-    ;; 				:method :pen-up) 100 150)
-    ;; (add-block script (new send :prototype "EXAMPLE4:TURTLE"
-    ;; 				:method :turn-left) 100 200)
-    ;; (add-block script (new send :prototype "EXAMPLE4:TURTLE"
-    ;; 				:method :turn-right) 100 250)
-    ;; (add-block script (new send :prototype "EXAMPLE4:TURTLE"
-    ;; 				:method :go-forward) 100 300)
-    ;; (add-block script (new send :prototype "EXAMPLE4:TURTLE"
-    ;; 				:method :pen-ink) 100 350)
-    ;; (add-block script (new send :prototype "EXAMPLE4:TURTLE"
-    ;; 				:method :say) 100 400)
-
-
-
-;;; example4.lisp ends here
+;;; example3.lisp ends here
