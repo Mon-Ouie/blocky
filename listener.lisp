@@ -665,8 +665,8 @@
   (grab-focus (get-prompt self)))
 
 ;; forward keypresses to prompt for convenience
-(define-method handle-event listener (event)
-  (handle-event (get-prompt self) event))
+(define-method on-event listener (event)
+  (on-event (get-prompt self) event))
 
 (define-method accept listener (input &optional prepend)
   (declare (ignore prepend))

@@ -152,8 +152,9 @@ transform-declaration-field-descriptor is-a compose-blank-fields
 make-field-initializer initialize initialize-prototypes
 initialize-blocky object-address-string draw-string make-tree
 draw-string-blended make-menu find-text-image make-text-image
-*default-super* clear-text-image-cache *token-types* verify
-toggle-debug *debug-on-error* *block-categories* *block-colors* input
-load-variable-resource save-variable-resource *persistent-variables*
-*persistent-variables-file-name* persistent-variables-file *shell*
-save-variables load-variables *block-text-colors* defblock ))
+*default-super* clear-text-image-cache *token-types* verify *serif*
+*sans* *monospace* toggle-debug *debug-on-error* *block-categories*
+*block-colors* input load-variable-resource save-variable-resource
+*persistent-variables* *persistent-variables-file-name*
+persistent-variables-file *shell* save-variables load-variables
+*block-text-colors* defblock ))

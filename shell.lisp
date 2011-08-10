@@ -224,8 +224,8 @@
     (setf selection (delete block selection 
 			    :test 'eq :key #'find-parent))))
 
-(define-method handle-event shell (event)
-  (or (super%handle-event self event)
+(define-method on-event shell (event)
+  (or (super%on-event self event)
       (with-field-values (selection menubar script) self
 	(let ((block
 		  (cond 
@@ -239,7 +239,7 @@
 		    (t menubar))))
 	  (when block 
 	    (with-script script
-	      (handle-event block event)))))))
+	      (on-event block event)))))))
 
 (define-method hit shell (x y)
   ;; return self no matter where mouse is, so that we get to process

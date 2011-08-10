@@ -93,11 +93,11 @@ At the moment, only 0=off and 1=on are supported.")
   (setf %variables (make-hash-table :test 'equal))
   (create-default-grid self))
   
-(define-method handle-event world (event)
+(define-method on-event world (event)
   (with-fields (player) self
     (when player 
       (prog1 t
-	(handle-event player event)))))
+	(on-event player event)))))
 
 (define-method make world (&rest parameters)
   (apply #'/initialize self parameters))
@@ -1036,10 +1036,10 @@ represents the z-axis of a euclidean 3-D space."))
 (define-method draw universe ()
   (when %world (draw %world)))
 
-(define-method handle-event universe (event)
+(define-method on-event universe (event)
   (with-fields (world) self
     (when world
-      (handle-event world event))))
+      (on-event world event))))
 
 (define-method initialize universe (&key address player world)
   "Prepare a universe for play at the world identified by ADDRESS with

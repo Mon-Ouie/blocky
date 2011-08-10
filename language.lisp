@@ -87,6 +87,12 @@ areas.")
 (defparameter *block-font* "sans-11"
   "The font used in drawing block labels and input data.")
 
+(defparameter *sans* "sans-11")
+
+(defparameter *serif* "serif-11")
+
+(defparameter *monospace* "sans-mono-11")
+
 (defvar *dash* 3
   "Size in pseudo-pixels of (roughly) the size of the space between
 two words. This is used as a unit for various layout operations.")
@@ -186,7 +192,7 @@ keywords like :control, :alt, and so on."
   (remhash (normalize-event (cons event-name modifiers))
 	   %events))
 
-(define-method handle-event block (event)
+(define-method on-event block (event)
   "Look up and invoke the function (if any) bound to EVENT. Return t
 if a binding was found, nil otherwise. The second value returned is
 the return value of the function (if any)."

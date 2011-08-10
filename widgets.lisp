@@ -227,29 +227,26 @@ auto-updated displays."
 
 (defblock textbox
   (methods :initform '(:page-up :page-down :auto-center :resize-to-fit :view-messages))
-  (font :initform *block-font*)
+  (font :initform *monospace*)
   (buffer :initform nil)
-  (category :initform :event)
+  (category :initform :comment)
   (read-only :initform nil)
   (bordered :initform nil)
   (max-displayed-lines :initform 16 :documentation "An integer when scrolling is enabled.")
   (max-displayed-columns :initform nil)
   (background-color :initform "gray30")
   (foreground-color :initform "black")
-  (cursor-color :initform "yellow")
+  (cursor-color :initform "red")
   (point-row :initform 0)
   (point-column :initform 0)
-  (auto-fit :initform nil)
+  (auto-fit :initform t)
   (visible :initform t))
 
 (define-method enter textbox ())
 
-(define-method handle-event textbox (event)
+(define-method on-event textbox (event)
   (unless %read-only
-    (let ((func (gethash event %events)))
-      (when func
-	(prog1 t
-	  (funcall func))))))
+    (super%on-event self event)))
 
 (define-method set-buffer textbox (buffer)
   (setf %buffer buffer))
@@ -309,10 +306,10 @@ auto-updated displays."
 		      (* line-height (max 1 (length buffer))))))
       (when (or (< %width width0)
 		(< %height height0))
-	(message "resizing textbox H:~S W:~S" height0 width0)
 	(resize self :height height0 :width width0)))))
 
 (define-method view-messages textbox ()
+  (setf %auto-fit nil)
   (add-to-list '*message-hook-functions* 
 	       #'(lambda (string)
 		   (insert-string self string)
@@ -332,7 +329,7 @@ text INSERTION to be inserted at point."
   textbox 
   (string-upcase key)
   modifiers
-  (new closure :insert textbox insertion)))
+  (new closure :insert textbox (list insertion))))
 
 (define-method install-keybindings textbox ()
   ;; install basic keybindings
@@ -350,6 +347,7 @@ text INSERTION to be inserted at point."
   (bind-event-to-method self "LEFT" nil :backward-char)
   (bind-event-to-method self "K" '(:control) :clear)
   (bind-event-to-method self "BACKSPACE" nil :backward-delete-char)
+  (bind-event-to-method self "DELETE" nil :delete-char)
   (bind-event-to-method self "RETURN" nil :newline)
   ;; install keybindings for self-inserting characters
   (map nil #'(lambda (char)
@@ -513,11 +511,10 @@ text INSERTION to be inserted at point."
       ;; measure text
       (let ((line-height (font-height font)))
 	  ;; draw background
-	(when (null parent)
-	  (draw-patch self x y 
-		      (+ x width)
-		      (+ y height)
-		      :color (find-color self)))
+	(draw-patch self x y 
+		    (+ x width)
+		    (+ y height)
+		    :color (find-color self))
 	;; draw text
 	(let* ((x0 (+ x *textbox-margin*))
 	       (y0 (+ y *textbox-margin*))

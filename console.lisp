@@ -318,7 +318,7 @@ for backward-compatibility."
 
 (defun send-to-blocks (event &optional (blocks *blocks*))
   (labels ((try (block)
-	     (send :handle-event block event)))
+	     (send :on-event block event)))
     (some #'try blocks)))
 
 (defvar *event-handler-function* #'send-to-blocks

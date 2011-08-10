@@ -25,9 +25,9 @@
   
 (in-package :example4)
 
-(setf *screen-width* 800)
-(setf *screen-height* 600)
-(setf *window-title* "blocky.io")
+(setf *screen-width* 640)
+(setf *screen-height* 480)
+(setf *window-title* "blocky example 4")
 ;; (setf *resizable* t)
 (enable-key-repeat 9 2)
 
