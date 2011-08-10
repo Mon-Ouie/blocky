@@ -458,12 +458,11 @@
 (defmacro defentry (name type value)
   (let ((checker (gensym)))
     `(let ((,checker 
-	     (new closure :type-check
-		  (etypecase ',type
-		    (symbol ,checker)
-		    (list '(typep x ,type))))))
+	     (etypecase ',type
+	       (symbol (new closure :type-check self (list ',type)))
+	       (list (list 'typep  type))))))
        (define-prototype ,name (:parent "BLOCKY:ENTRY")
-	 (type-checker :initform ',checker)
+	 (type-checker :initform ,checker)
 	 (value :initform ,value)))))
 
 (defentry integer integerp 0)

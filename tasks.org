@@ -1,5 +1,5 @@
-** TODO [#A] Also show command typed in listener log
 ** TODO [#A] Fix wrong entry type-specifiers
+** TODO [#A] Also show command typed in listener log
 ** TODO [#B] Start using tests and more correctness-helpers
 ** TODO [#B] Menu option to change accepted type of an entry
 ** TODO [#A] Fix backward insertion of lines from error message into listener
