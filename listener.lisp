@@ -345,13 +345,13 @@
   (pinned :initform t)
   (text-color :initform *default-entry-text-color*)
   (label-color :initform *default-entry-label-color*)
-  type-specifier value)
+  type-checker value)
 
-(define-method initialize entry (&key value type-specifier options label label-color parent)
+(define-method initialize entry (&key value type-checker options label label-color parent)
   (super%initialize self)
-  ;(assert (and value type-specifier))
+  ;(assert (and value type-checker))
   (when parent (setf %parent parent))
-  (setf %type-specifier type-specifier
+  (setf %type-checker type-checker
 	%options options
 	%label label
 	%value value)
@@ -416,14 +416,14 @@
 		     :font *block-font*)))))
 		 
 (define-method do-sexp entry (sexp)
-  (with-fields (value type-specifier) self
+  (with-fields (value type-checker) self
     (assert (and (listp sexp) (= 1 (length sexp))))
     (let ((datum (first sexp)))
-      (if (typep datum type-specifier)
+      (if (typep datum type-checker)
 	  (setf value datum)
-	  (when type-specifier 
+	  (when type-checker 
 	    (message "Warning: value entered does not match type ~S"
-		     type-specifier))))))
+		     type-checker))))))
 
 (define-method enter entry ()
   (super%enter self :no-clear))
@@ -452,13 +452,22 @@
 
 ;;; Easily defining new entry blocks
 
-(defmacro defentry (name type-specifier value)
-  `(define-prototype ,name (:parent "BLOCKY:ENTRY")
-     (type-specifier :initform ',type-specifier)
-     (value :initform ,value)))
+(define-method type-check entry ()
+  (evaluate %type-checker %value))
 
-(defentry integer integer 0)
-(defentry number number 0)
+(defmacro defentry (name type value)
+  (let ((checker (gensym)))
+    `(let ((,checker 
+	     (new closure :type-check
+		  (etypecase ',type
+		    (symbol ,checker)
+		    (list '(typep x ,type))))))
+       (define-prototype ,name (:parent "BLOCKY:ENTRY")
+	 (type-checker :initform ',checker)
+	 (value :initform ,value)))))
+
+(defentry integer integerp 0)
+(defentry number numberp 0)
 (defentry non-negative-number (number 0 *) 0)
 (defentry float float 0.0)
 (defentry symbol symbol nil)
