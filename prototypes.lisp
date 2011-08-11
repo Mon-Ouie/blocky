@@ -306,7 +306,7 @@ extended argument list ARGLIST."
 		  
 ;;; Finding any object by proto-name or UUID
 
-(defun find-object (thing) 
+(defun find-object (thing &optional no-error) 
   (when (not (null thing))
     (let ((result 
 	    (etypecase thing
@@ -315,7 +315,8 @@ extended argument list ARGLIST."
 			  (find-prototype thing :noerror)))
 	      (object thing))))
       (prog1 result
-	(assert (object-p result))))))
+	(unless no-error
+	  (assert (object-p result)))))))
       
 (defun find-parent (object)
   (object-parent (find-object object)))

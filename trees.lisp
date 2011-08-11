@@ -99,7 +99,7 @@
     (let ((ellipsis (concatenate 'string label *null-display-string*)))
       (if action
 	  (etypecase action
-	    (blocky:object ellipsis)
+	    ((or string blocky:object) ellipsis)
 	    ((or keyword function) label))
 	  (if top-level label ellipsis)))))
 
@@ -247,6 +247,7 @@
   (with-fields (action target) self
     (typecase action 
       (function (funcall action))
+      (string (evaluate action)) 
       (keyword (when (has-method action target)
 		 (send action (or target (symbol-value '*system*)))))
       (otherwise
@@ -284,6 +285,7 @@
 		       (or label (display-string self))
 		       ;; color text according to whether method exists
 		       (if (or (null action) 
+			       (keywordp action)
 			       (functionp action)
 			       (has-method action target))
 			   (find-color self :foreground)

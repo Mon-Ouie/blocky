@@ -514,9 +514,9 @@
 	(let ((new-block 
 		;; is it a uuid?
 		(if (and (stringp result)
-			 (find-object result))
+			 (find-object result :no-error))
 		    ;; yes, return the corresponding block
-		    (find-object result)
+		    (find-object result :no-error)
 		    ;; no, make a new block from the data
 		    (make-block result))))
 	  ;; spit out result block
@@ -534,6 +534,7 @@
   (scrollback-length :initform 100)
   (category :initform :system)
   (temporary :initform t)
+  (methods :initform '(:evaluate))
   (display-lines :initform 12))
 
 (defparameter *minimum-listener-width* 200)

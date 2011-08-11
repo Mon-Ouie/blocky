@@ -26,10 +26,15 @@
 
 (defvar *shell*)
 
-(defblock trash :category :system)
+(defblock trash 
+  :category :system 
+  :methods '(:empty))
 
 (define-method evaluate trash ())
 (define-method update trash ())
+(define-method empty trash ()
+  (setf %inputs nil))
+
 (define-method accept trash (item)
   (push item %inputs))
 
@@ -383,7 +388,8 @@
     (with-fields (click-start focused-block) self
       (when click-start
 	(destructuring-bind (x1 . y1) click-start
-	  (when (and (> (distance x y x1 y1)
+	  (when (and focused-block
+		     (> (distance x y x1 y1)
 			*minimum-drag-distance*)
 		     (not (is-pinned focused-block)))
 	    (setf click-start nil)
