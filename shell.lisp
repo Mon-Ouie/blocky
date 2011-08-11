@@ -24,7 +24,7 @@
 
 ;;; Trash can
 
-(defvar *shell*)
+(defvar *shell* nil)
 
 (defblock trash :category :system)
 

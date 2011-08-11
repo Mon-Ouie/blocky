@@ -70,7 +70,7 @@
 
 (in-package :blocky)
 
-(defvar *script*)
+(defvar *script* nil)
 
 (defparameter *block-categories*
   '(:system :motion :event :message :looks :sound :structure :data
