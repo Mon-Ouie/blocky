@@ -1215,8 +1215,12 @@ non-nil to indicate that the block was accepted, nil otherwise."
   `(let ((*target* ,target))
      ,@body))
 
-(deflist with-target
-  :category :variables)
+(defblock with-target
+  :inputs (list (new socket)
+		(new list))
+  :category :variables))
+
+;(define-method 
 
 (define-method evaluate with-target ()
   (with-fields (inputs) self
