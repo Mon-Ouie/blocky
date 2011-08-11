@@ -1617,21 +1617,20 @@ control the size of the individual frames or subimages."
 (defun make-variable-resource (name)
   (assert (and (symbolp name)
 	       (boundp name)))
-  (make-resource :name (prin1-to-string name)
+  (make-resource :name name
 		 :type :variable
 		 :data (serialize (symbol-value name))))
 
 (defun load-variable-resource (resource)
   (assert (eq :variable (resource-type resource)))
-  (let ((name (intern (resource-name resource))))
+  (let ((name (resource-name resource)))
     (message "Setting variable: ~S..." name)
     (setf (symbol-value name)
 	  (resource-data resource))))
 
-(defvar *persistent-variables* '(*sequence-number* *frame-rate*
-  *updates* *screen-width* *screen-height* *world* *blocks* *dt*
-  *pointer-x* *pointer-y* *keys* *mods* *resizable* *window-title*
-  *script* *dash* *system*))
+(defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
+*screen-height* *world* *blocks* *dt* *pointer-x* *pointer-y*
+*resizable* *window-title* *script* *system*))
     ;; notice that THIS variable is also persistent!
     ;; this is to avoid unwanted behavior changes in modules
     ;; *persistent-variables*))  ;; FIXME not for now
@@ -1642,26 +1641,28 @@ control the size of the individual frames or subimages."
   (find-project-file project *persistent-variables-file-name*))
 
 (defun save-variables (&optional (variables *persistent-variables*))
-  (message "Saving system variables ~A..." variables)
-  (write-iof (persistent-variables-file)
-	     (mapcar #'make-variable-resource variables))
-  (message "Finished saving system variables."))
+  (with-standard-io-syntax
+    (message "Saving system variables ~A..." variables)
+    (write-iof (persistent-variables-file)
+	       (mapcar #'make-variable-resource variables))
+    (message "Finished saving system variables.")))
 
 (defun load-variables ()
-  (let ((file (persistent-variables-file)))
-    (if (cl-fad:file-exists-p file)
-	(progn 
-	  (message "Loading system variables from ~A..." file)
-	  (mapc #'load-variable-resource 
-		(read-iof file))
-	  (message "Finished loading system variables."))
-	(message "No system variables file found in this project. Continuing..."))))
-
+  (with-standard-io-syntax
+    (let ((file (persistent-variables-file)))
+      (if (cl-fad:file-exists-p file)
+	  (progn 
+	    (message "Loading system variables from ~A..." file)
+	    (mapc #'load-variable-resource 
+		  (read-iof file))
+	    (message "Finished loading system variables."))
+	  (message "No system variables file found in this project. Continuing...")))))
+  
 ;;; Handling different resource types automatically
 
 (defparameter *resource-handlers* 
   (list :image #'load-image-resource
-	:variable #'load-variable-resource
+	;; :variable #'load-variable-resource
 	:lisp #'load-lisp-resource
 	:object #'load-object-resource
 	:database #'load-database-resource
