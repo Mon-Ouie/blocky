@@ -1,3 +1,6 @@
+** TODO visually indicate clicked send blocks
+** TODO 
+** TODO define-visual-macro (via defblock?)
 ** TODO defblock with-target : schema has socket for message target, socket for list body
 *** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
 *** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc

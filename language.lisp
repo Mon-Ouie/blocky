@@ -497,14 +497,23 @@ If PARENT is nil, then the existing parent link is cleared."
 			   :key #'find-object
 			   :test 'eq))
       (assert (not (contains self block))))))
-		   
+
+(define-method default-inputs block ()
+  nil)
+ 
+(define-method deep-copy block () 
+  nil) ;; not defined for generic blocks
+
+(define-method copy block ()
+  (clone (find-parent self)))
+  
 (define-method initialize block (&rest blocks)
   "Prepare an empty block, or if BLOCKS is non-empty, a block
 initialized with BLOCKS as inputs."
-  (when blocks
-    (setf %inputs blocks)
-    (dolist (child blocks)
-      (set-parent child self)))
+  (setf %inputs 
+	(or blocks (default-inputs self)))
+  (dolist (child blocks)
+    (set-parent child self))
   (update-result-lists self)
   (bind-any-default-events self)
   (register-uuid self))
@@ -1216,16 +1225,15 @@ non-nil to indicate that the block was accepted, nil otherwise."
      ,@body))
 
 (defblock with-target
-  :inputs (list (new socket)
-		(new list))
-  :category :variables))
-
-;(define-method 
+  :category :variables)
 
 (define-method evaluate with-target ()
   (with-fields (inputs) self
     (with-target (evaluate (first inputs))
       (mapc #'evaluate (rest inputs)))))
+
+(define-method default-inputs with-target ()
+  (list (new socket :label "target") (new list :label "body")))
 
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 
