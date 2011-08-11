@@ -489,7 +489,18 @@
 (define-method do-sexp string (sexp)
   (assert (stringp sexp))
   (setf %value sexp))
-  
+ 
+;;; Block entry socket
+
+(defentry socket blocky:object-p (null-block))
+
+(define-method accept socket (thing)
+  (assert (object-p thing))
+  (setf %inputs (list thing)))
+
+(define-method evaluate socket ()
+  (evaluate (first %inputs)))
+
 ;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
 
 (define-prototype listener-prompt (:parent prompt)
