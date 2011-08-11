@@ -108,12 +108,12 @@ More instructions for Mac and Windows will be available soon.
    following Lisp expressions one at a time:
 
       ;; load dependencies via Quicklisp
-      (map nil #'ql:quickload 
+      (ql:quickload 
     	 '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx 
 	 :lispbuilder-sdl-image :uuid :buildapp :cl-opengl :cl-fad))
 
       ;; compile and load Blocky
-      (require :blocky)
+      (asdf:load-system 'blocky)
 
       ;; run the examples
       (blocky:play "example1")  ;; "hello, world" with simple player movement
