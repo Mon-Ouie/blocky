@@ -103,12 +103,6 @@ two words. This is used as a unit for various layout operations.")
 (defvar *pseudo-pixel-size* 1.0
   "Size in pixels of a pseudo-pixel.")
 
-(defvar *target* nil)
-
-(defmacro with-target (target &body body)
-  `(let ((*target* ,target))
-     ,@body))
-
 (defvar *text-base-y* nil)
 
 (define-prototype block ()
@@ -1186,6 +1180,25 @@ non-nil to indicate that the block was accepted, nil otherwise."
     (every #'verify blocks))
   (setf %inputs blocks)
   (super%initialize self))
+
+(defmacro deflist (name &rest body)
+  `(defblock (,name :super :list) ,@body))
+
+;;; Choosing who to send a message to
+
+(defvar *target* nil)
+
+(defmacro with-target (target &body body)
+  `(let ((*target* ,target))
+     ,@body))
+
+(deflist with-target
+  :category :variables)
+
+(define-method evaluate with-target ()
+  (with-fields (inputs) self
+    (with-target (evaluate (first inputs))
+      (mapc #'evaluate (rest inputs)))))
 
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 

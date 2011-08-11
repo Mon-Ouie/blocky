@@ -147,6 +147,9 @@
   ;; TODO destroy textures
   (blocky:quit t))
 
+;;; Sending a series of messages to the sender
+
+
 ;; (define-method get-blocks system ()
 ;;   %children)
 

@@ -1,3 +1,5 @@
+** TODO defblock with-system
+** TODO Fix collision detection 
 ** TODO [#A] Turn on UNICODE key translation
 ** TODO [#A] Also show clickable previous commands in listener log
 ** TODO [#A] Start using tests and more correctness-helpers
