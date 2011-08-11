@@ -1,4 +1,6 @@
-** TODO defblock with-system
+** TODO defblock with-target : schema has socket for message target, socket for list body
+*** TODO defentry socket <--- entering a block (or a quoted block)
+*** TODO move layout%%send to %%block? might be nice to have this layout available everywhere
 ** TODO Fix collision detection 
 ** TODO [#A] Turn on UNICODE key translation
 ** TODO [#A] Also show clickable previous commands in listener log

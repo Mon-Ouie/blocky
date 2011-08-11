@@ -458,10 +458,11 @@
 
 ;;; Easily defining new entry blocks
 
-(defmacro defentry (name type value)
+(defmacro defentry (name type value &rest specs)
   `(define-prototype ,name (:parent "BLOCKY:ENTRY")
      (type-specifier :initform ',type)
-     (value :initform ',value)))
+     (value :initform ',value)
+     ,@specs))
 
 (defentry integer integerp 0)
 (defentry number numberp 0)
@@ -492,7 +493,10 @@
  
 ;;; Block entry socket
 
-(defentry socket blocky:object-p (null-block))
+(defentry socket 
+  blocky:object-p 
+  (null-block)
+  (:category :socket))
 
 (define-method accept socket (thing)
   (assert (object-p thing))
