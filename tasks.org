@@ -1,6 +1,15 @@
 ** TODO [#A] Also show command typed in listener log
 ** TODO [#A] Start using tests and more correctness-helpers
 
+** TODO Win32 build tips
+
+oh, and on windows at least, you'll need to call %gl:reset-gl-pointers after you set that, when starting the new image you've built
+if you want it to work on windows, you'll need to set %gl::*gl-get-proc-address*
+I think sdl has a get-proc-address, or you can bind to the windows one yourself
+I use #'glfw:gM) sharps: me, I add "." and "%CD%" to cffi's foreign directory search list...
+(04:20:28 AM) : and just dump them in the folder with the image :)
+(04:20:40 AM) : and change the OS working directory, tooet-proc-address
+
 ** TODO [#B] Menu option to change accepted type of an entry
 ** TODO [#A] Fix backward insertion of lines from error message into listener
 ** TODO [#A] trigger context menu items with click, make block with control-click
