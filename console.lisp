@@ -1617,21 +1617,21 @@ control the size of the individual frames or subimages."
 (defun make-variable-resource (name)
   (assert (and (symbolp name)
 	       (boundp name)))
-  (make-resource :name (serialize name)
+  (make-resource :name (prin1-to-string name)
 		 :type :variable
 		 :data (serialize (symbol-value name))))
 
 (defun load-variable-resource (resource)
   (assert (eq :variable (resource-type resource)))
-  (let ((name (read-from-string (resource-name resource))))
+  (let ((name (intern (resource-name resource))))
     (message "Setting variable: ~S..." name)
     (setf (symbol-value name)
 	  (resource-data resource))))
 
-(defvar *persistent-variables* 
-  '(*message-history* *dt* *frame-rate* *updates* *screen-width* *screen-height*
-    *world* *blocks* *sequence-number* *pointer-x* *pointer-y*
-    *keys* *mods* *resizable* *window-title* *script* *dash* *system*))
+(defvar *persistent-variables* '(*sequence-number* *frame-rate*
+  *updates* *screen-width* *screen-height* *world* *blocks* *dt*
+  *pointer-x* *pointer-y* *keys* *mods* *resizable* *window-title*
+  *script* *dash* *system*))
     ;; notice that THIS variable is also persistent!
     ;; this is to avoid unwanted behavior changes in modules
     ;; *persistent-variables*))  ;; FIXME not for now
