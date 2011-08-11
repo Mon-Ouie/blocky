@@ -287,6 +287,8 @@
 		       (if (or (null action) 
 			       (keywordp action)
 			       (functionp action)
+			       (blocky:object-p action)
+			       (listp action)
 			       (has-method action target))
 			   (find-color self :foreground)
 			   "gray70"))))
