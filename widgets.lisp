@@ -238,6 +238,8 @@ auto-updated displays."
   (auto-fit :initform t)
   (visible :initform t))
 
+(define-method accept textbox (other))
+
 (define-method enter textbox ())
 
 (define-method on-event textbox (event)
