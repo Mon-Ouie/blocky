@@ -58,7 +58,12 @@ More instructions for Mac and Windows will be available soon.
    this:
   
    cd ~/src/blocky
-   git checkout develop
+   git checkout -b develop
+
+   Similarly, if you need a release, use this:
+
+   git checkout -b release/0.989  
+     # replace 0.989 with desired version
 
 3. Then link the blocky.asd file into your ~/.sbcl/systems directory:
 
