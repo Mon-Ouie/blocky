@@ -496,7 +496,7 @@
 (defentry socket 
   blocky:object-p 
   (null-block)
-  (:category :socket))
+  (:category :initform :socket))
 
 (define-method accept socket (thing)
   (assert (object-p thing))

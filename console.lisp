@@ -2374,9 +2374,9 @@ of the music."
 
 (defun shut-down ()
   ;; delete any cached textures and surfaces
-  (purge-all-objects)
   (clear-text-image-cache)
   (delete-all-textures)
+  (purge-all-objects)
   (delete-all-resources)
   (sdl-mixer:halt-music)
   (sdl-mixer:close-audio t)
@@ -2385,8 +2385,8 @@ of the music."
 (defmacro with-session (&rest body)
   `(progn 
      (start-up)
-     ,@body
-     (shut-down)))
+     ,@body))
+     ;; (shut-down)))
 
 (defun play (&optional (project *untitled-project-name*))
   (with-session
