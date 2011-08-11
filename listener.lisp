@@ -541,8 +541,7 @@
 (define-method do-after-evaluate listener-prompt ()
   ;; print any error output
   (when %parent
-    (dolist (line (nreverse
-		   (split-string-on-lines %error-output)))
+    (dolist (line (split-string-on-lines %error-output))
       (accept %parent (new string :value line)))))
 
 (define-prototype listener (:parent list)

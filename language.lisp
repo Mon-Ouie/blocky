@@ -536,10 +536,11 @@ initialized with BLOCKS as inputs."
 	 (type-specifier 
 	   (if (member head-type *builtin-entry-types* :test 'equal)
 			     head-type data-type)))
-	 ;; see also terminal.lisp for more on data entry blocks
-    (if (stringp datum)
-	(new string :value datum)
-	(new entry :value datum :type-specifier type-specifier))))
+    ;; see also terminal.lisp for more on data entry blocks
+    (typecase datum
+      (string (new string :value datum))
+      (symbol (new symbol :value datum))
+      (otherwise (new entry :value datum :type-specifier type-specifier)))))
 		    
 (defvar *make-block-package* nil)
 
@@ -959,21 +960,43 @@ override all colors."
       *socket-width*
       (font-text-width (print-expression expression) font)))
 
-(define-method layout block () 
-  (with-fields (x y width height inputs) self
-    (setf width (dash 2))
-    (setf height (dash 2))
-    (let ((left (+ x (dash 1)))
-	  (top (+ y (dash 1))))
-      (dolist (input inputs)
-	(layout input)
-	(move-to input left top)
-	(let ((width0 (field-value :width input)))
-	  (incf left (+ (dash 2) width0))
-	  (incf width (+ width0 (dash 2)))
-	  (setf height (max height (field-value :height input))))))
-    (incf height (dash 2))
-    (incf width (dash 2))))
+;; (define-method layout block () 
+;;   (with-fields (x y width height inputs) self
+;;     (setf width (dash 2))
+;;     (setf height (dash 2))
+;;     (let ((left (+ x (dash 1)))
+;; 	  (top (+ y (dash 1))))
+;;       (dolist (input inputs)
+;; 	(layout input)
+;; 	(move-to input left top)
+;; 	(let ((width0 (field-value :width input)))
+;; 	  (incf left (+ (dash 2) width0))
+;; 	  (incf width (+ width0 (dash 2)))
+;; 	  (setf height (max height (field-value :height input))))))
+;;     (incf height (dash 2))
+;;     (incf width (dash 2))))
+
+(define-method layout block ()
+  (with-fields (input-widths height width label) self
+    (with-field-values (x y inputs) self
+      (let* ((font *block-font*)
+	     (dash (dash 1))
+	     (left (+ dash dash x (font-text-width label font)))
+	     (max-height (font-height font)))
+	(labels ((move-input (input)
+		   (move-to input (+ left dash) y)
+		   (layout input)
+		   (setf max-height (max max-height (field-value :height input)))
+		   (field-value :width input))
+		 (layout-input (input)
+		   (let ((measurement
+			  (+ dash dash (move-input input))))
+		     (prog1 measurement
+		       (incf left measurement)))))
+	  (setf input-widths (mapcar #'layout-input inputs))
+	  (setf width (+ (- left x) (* 4 dash)))
+	  (setf height (+ dash (if (null inputs)
+				   dash 0) max-height)))))))
 
 (define-method draw-expression block (x0 y0 segment type)
   (with-fields (height input-widths) self
@@ -1260,28 +1283,6 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (define-method draw-hover send ()
   nil)
-
-(define-method layout send ()
-  (with-fields (input-widths height width label) self
-    (with-field-values (x y inputs) self
-      (let* ((font *block-font*)
-	     (dash (dash 1))
-	     (left (+ dash dash x (font-text-width label font)))
-	     (max-height (font-height font)))
-	(labels ((move-input (input)
-		   (move-to input (+ left dash) y)
-		   (layout input)
-		   (setf max-height (max max-height (field-value :height input)))
-		   (field-value :width input))
-		 (layout-input (input)
-		   (let ((measurement
-			  (+ dash dash (move-input input))))
-		     (prog1 measurement
-		       (incf left measurement)))))
-	  (setf input-widths (mapcar #'layout-input inputs))
-	  (setf width (+ (- left x) (* 4 dash)))
-	  (setf height (+ dash (if (null inputs)
-				   dash 0) max-height)))))))
 
 ;;; Combining blocks into scripts
 

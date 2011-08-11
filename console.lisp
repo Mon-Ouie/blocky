@@ -2385,8 +2385,8 @@ of the music."
 (defmacro with-session (&rest body)
   `(progn 
      (start-up)
-     ,@body))
-     ;; (shut-down)))
+     ,@body
+     (shut-down)))
 
 (defun play (&optional (project *untitled-project-name*))
   (with-session

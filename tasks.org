@@ -1,3 +1,5 @@
+** TODO fix drouble drawing of drag
+** TODO fix can't pull out sublists (list (list (list 1 2 3))) 
 ** TODO defblock with-target : schema has socket for message target, socket for list body
 *** TODO defentry socket <--- entering a block (or a quoted block)
 *** TODO move layout%%send to %%block? might be nice to have this layout available everywhere
