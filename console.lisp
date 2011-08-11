@@ -1617,13 +1617,13 @@ control the size of the individual frames or subimages."
 (defun make-variable-resource (name)
   (assert (and (symbolp name)
 	       (boundp name)))
-  (make-resource :name (prin1-to-string name)
+  (make-resource :name (serialize name)
 		 :type :variable
 		 :data (serialize (symbol-value name))))
 
 (defun load-variable-resource (resource)
   (assert (eq :variable (resource-type resource)))
-  (let ((name (intern (resource-name resource))))
+  (let ((name (read-from-string (resource-name resource))))
     (message "Setting variable: ~S..." name)
     (setf (symbol-value name)
 	  (resource-data resource))))
