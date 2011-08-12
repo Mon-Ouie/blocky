@@ -2206,6 +2206,7 @@ of the music."
 	    (resource-data color))))
 
 (defun set-vertex-color (color)
+  (assert (stringp color))
   (destructuring-bind (red green blue) 
       (gl-color-values color)
     (gl:color red green blue 1)))

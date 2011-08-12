@@ -406,17 +406,9 @@
       (on-lose-focus focused-block))
     ;; now find what we're touching
     (let ((block (hit-script self x y)))
-      (if (null block)
-	  (focus-on self nil)
-	  (case button
-	    (1  (progn 
-		  (focus-on self block)
-		  (setf click-start (cons x y))))
-	    (3 (let ((menu (context-menu block)))
-		 (when menu 
-		   (with-script %script
-		     (add-block *script* menu x y)))))
-	    (otherwise (focus-on self nil)))))))
+      (focus-on self block)
+      (when block 
+	(setf click-start (cons x y))))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
   (with-fields (inputs hover highlight click-start drag-offset
@@ -467,9 +459,12 @@
 	  (when focused-block
 	    (select self focused-block)
 	    (with-script script 
-	      (if (holding-control)
-		  (on-alternate-click focused-block x y)
-		  (on-click focused-block x y))
+	      (if 
+	       ;; right click and control click are interpreted the same
+	       (or (holding-control)
+		   (= button 3))
+	       (on-alternate-click focused-block x y)
+	       (on-click focused-block x y))
 	      (select self focused-block))
 	    (setf click-start nil))))
     (setf drag-start nil

@@ -57,8 +57,7 @@
   (prompt-string :initform *default-prompt-string*)
   (category :initform :data)
   (debug-on-error :iniform nil)
-  (history :initform (make-queue :max *default-prompt-history-size*)
-	   :documentation "A queue of strings containing the command history.")
+  (history :documentation "A queue of strings containing the command history.")
   (history-position :initform 0))
 
 (define-method accept prompt (&rest args)
@@ -75,6 +74,8 @@
 
 (define-method initialize prompt ()
   (super%initialize self)
+  (when (not (has-local-value :history self))
+    (setf %history (make-queue :max *default-prompt-history-size*)))
   (install-text-keybindings self))
 
 (define-method forward-char prompt ()

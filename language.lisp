@@ -636,7 +636,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 (define-method on-alternate-click block (x y)
   (declare (ignore x y))
-  nil)
+  (drop self (context-menu self)))
 
 (define-method mouse-move block (x y)
   (declare (ignore x y)))
@@ -688,6 +688,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 				 :label method-string)
 			    (- *pointer-x* 10) 
 			    (- *pointer-y* 10))))))
+
+(define-method drop block (other-block)
+  (add-block *script* other-block %x %y))
 
 (define-method context-menu block ()
   (make-menu
@@ -1036,7 +1039,8 @@ override all colors."
 
 (define-method draw-contents block ()
   (with-fields (operation inputs) self
-    (draw-label self operation)
+    (draw-label self)
+    ;; (draw-label self operation)
     (dolist (each inputs)
       (draw each))))
 
@@ -1258,7 +1262,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
      ,@body))
 
 (defblock with-target
-  category :variables)
+  (category :initform :variables))
 
 (define-method label-width with-target ()
   0)
