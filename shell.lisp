@@ -173,6 +173,8 @@
   (focused-block :initform nil)
   (click-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at moment of click.")
+  (click-start-block :initform nil
+		     :documentation "The block indicated at the beginning of a mouse movement.")
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
@@ -335,40 +337,23 @@
   
 (defparameter *minimum-drag-distance* 7)
   
-(define-method escape shell ()
-  (with-script %script
-    (when %menubar (close-menus %menubar))
-    (setf %focused-block nil)
-    (setf %selection nil)))
-  
 (define-method focus-on shell (block)
   ;; possible to pass nil
-  (with-script %script
-    (setf %focused-block 
-	  (when block (find-uuid block)))
-    (assert (or (null %focused-block)
-		(blockyp %focused-block)))
-    (when block 
-      ;; (select self block :only)
-      (on-select block)
-      (on-focus block))))
-
-(define-method tab shell (&optional backward)
-  (with-fields (focused-block) self
-    (when focused-block
-      (assert (blockyp %focused-block))
-      (with-fields (parent) focused-block
-	(let ((index (position-within-parent focused-block)))
-	  (when (numberp index)
-	    (focus-on self
-		      (with-fields (inputs) parent
-			(nth (mod (+ index
-				     (if backward -1 1))
-				  (length inputs))
-			     inputs)))))))))
-
-(define-method backtab shell ()
-  (tab self :backward))
+  (with-fields (script focused-block self) self
+    (with-script script
+      ;; there's going to be a new focused block. 
+      ;; tell the current one it's no longer focused.
+      (when focused-block
+	(on-lose-focus focused-block))
+      ;; now focus
+      (setf focused-block 
+	    (when block (find-uuid block)))
+      ;; sanity check
+      (assert (or (null focused-block)
+		(blockyp focused-block)))
+      ;; 
+      (when block 
+	(on-focus block)))))
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag inputs script drag-start ghost drag-offset) self
@@ -396,30 +381,28 @@
 (define-method drag-maybe shell (x y)
   ;; require some actual mouse movement to initiate a drag
   (with-script %script
-    (with-fields (click-start focused-block) self
-      (when click-start
+    (with-fields (click-start click-start-block) self
+      (when (and click-start click-start-block)
 	(destructuring-bind (x1 . y1) click-start
-	  (when (and focused-block
+	  (when (and click-start-block
 		     (> (distance x y x1 y1)
 			*minimum-drag-distance*)
-		     (not (is-pinned focused-block)))
-	    (assert (blockyp focused-block))
+		     (not (is-pinned click-start-block)))
+	    (assert (blockyp click-start-block))
+	    (begin-drag self x y click-start-block)
 	    (setf click-start nil)
-	    (begin-drag self x y focused-block)))))))
+	    (setf click-start-block nil)))))))
 
 (define-method mouse-down shell (x y &optional button)
-  (with-fields (click-start focused-block) self
-    (when focused-block
-      ;; there's going to be a new focused block. 
-      ;; tell the current one it's no longer focused.
-      (on-lose-focus focused-block))
+  (with-fields (click-start click-start-block focused-block) self
     ;; now find what we're touching
+    (assert (or (null focused-block)
+		(blockyp focused-block)))
     (let ((block (hit-script self x y)))
-      (assert (or (null %focused-block)
-		  (blockyp %focused-block)))
-      (focus-on self block)
       (when block 
-	(setf click-start (cons x y))))))
+	(setf click-start (cons x y))
+	(setf click-start-block (find-uuid block))
+	(focus-on self block)))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
   (with-fields (inputs hover highlight click-start drag-offset
@@ -442,8 +425,8 @@
 
 (define-method mouse-up shell (x y &optional button)
   (with-fields 
-      (drag-offset drag-start hover script selection drag
-	      click-start focused-block modified) self
+      (drag-offset drag-start hover script selection drag click-start
+	      click-start-block focused-block modified) self
     (if drag
 	;; we're dragging
 	(let ((drag-parent (get-parent drag)))
@@ -463,8 +446,8 @@
 	  (select self drag)
 	  (setf focused-block (find-uuid drag)))
 	;; (setf hover nil)
-	;; ok, we're not dragging.
-	;; instead it was a click.
+	;;
+	;; we're clicking instead of dragging
 	(progn
 	  (setf selection nil)
 	  (when focused-block
@@ -482,5 +465,28 @@
 	  drag-offset nil
 	  drag nil)
     (invalidate-layout script)))
+
+(define-method tab shell (&optional backward)
+  (with-fields (focused-block) self
+    (when focused-block
+      (assert (blockyp %focused-block))
+      (with-fields (parent) focused-block
+	(let ((index (position-within-parent focused-block)))
+	  (when (numberp index)
+	    (focus-on self
+		      (with-fields (inputs) parent
+			(nth (mod (+ index
+				     (if backward -1 1))
+				  (length inputs))
+			     inputs)))))))))
+
+(define-method backtab shell ()
+  (tab self :backward))
+  
+(define-method escape shell ()
+  (with-script %script
+    (when %menubar (close-menus %menubar))
+    (setf %focused-block nil)
+    (setf %selection nil)))
 
 ;;; shell.lisp ends here
