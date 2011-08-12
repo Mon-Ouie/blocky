@@ -359,13 +359,14 @@
   (when parent (setf %parent parent))
   (setf %type-specifier type-specifier
 	%options options
-	%label label
 	%value value)
   ;; fill in the input box with the value
   (setf %line (if (null value)
 		  " "
 		  (format nil "~A" value)))
-  (setf %label (getf options :label))
+  (setf %label 
+	(or label 
+	    (getf options :label)))
   (when label-color (setf %label-color label-color)))
 
 (define-method evaluate entry ()
@@ -390,14 +391,11 @@
 (defparameter *minimum-entry-line-width* 16)
 
 (define-method draw-label entry ()
-  (let* ((label (label-string self))
-	 (label-width (font-text-width label *block-font*))
-	 (line-width (font-text-width %line *block-font*)))
-    (draw-string label
-		 (dash 1 %x)
-		 (+ %y (dash 1))
-		 :color %label-color
-		 :font *block-font*)))
+  (draw-string (label-string self)
+	       (dash 1 %x)
+	       (+ %y (dash 1))
+	       :color %label-color
+	       :font *block-font*))
 
 (define-method draw entry (&optional nolabel)
   (with-fields (x y options text-color width parent height line) self
@@ -491,19 +489,60 @@
   (assert (stringp sexp))
   (setf %value sexp))
  
-;;; Block entry socket
+;;; Block socket
 
 (defentry socket 
   blocky:object-p 
   (null-block)
-  (:category :initform :socket))
+  (category :initform :socket))
+
+(define-method initialize socket 
+    (&key (label "socket")
+	  (block (new empty-socket)))
+  (assert (and (stringp label)
+	       (blocky:object-p block)))
+  (setf %label label)
+  (setf %inputs (list block)))
 
 (define-method accept socket (thing)
-  (assert (object-p thing))
+  (verify thing)
   (setf %inputs (list thing)))
 
 (define-method evaluate socket ()
-  (evaluate (first %inputs)))
+  (when (first %inputs)
+    (evaluate (first %inputs))))
+
+(define-method get-value socket ()
+  (evaluate self))
+
+(define-method set-value socket (value)
+  (declare (ignore value)))
+
+(define-method recompile entry ()
+  (evaluate self))
+
+(define-method hit socket (x y)
+  (hit%%block self x y))
+
+(define-method on-lose-focus socket ())
+(define-method enter socket ())
+
+(define-method draw-label socket ()
+  (assert (stringp %label))
+  (draw-label-string self %label))
+
+(define-method draw socket (&optional no-label)
+  (with-fields (x y options inputs width height) self
+    ;; draw the label string 
+    (unless no-label 
+      (draw-label self))
+    ;; draw shaded area for input
+    (draw-socket self x y (+ x width) (+ y height))
+    ;; draw block
+    (let ((block (first inputs)))
+      (when block 
+	(message "drawing socket block")
+	(draw block)))))
 
 ;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
 

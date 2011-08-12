@@ -772,9 +772,8 @@ display."
 			   (setf *screen-width* w
 				 *screen-height* h)
 ;			   (run-hook '*resize-hook*)
-			   (sdl:window w h :fps fps :title-caption *window-title*
-				       :flags sdl:SDL-RESIZABLE
-				       :position *window-position*)
+			   (sdl:resize-window w h :title-caption *window-title*
+				       :flags (logior sdl:SDL-OPENGL sdl:SDL-RESIZABLE))
 			   (do-orthographic-projection))
       (:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
 			   (setf *pointer-x* x *pointer-y* y)

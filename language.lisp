@@ -1124,8 +1124,6 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (defparameter *null-display-string* "...")
 
-(defun null-block () (new list))
-
 (define-method click list (x y)
   (dolist (block %inputs)
     (evaluate block)))
@@ -1216,6 +1214,14 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (defmacro deflist (name &rest body)
   `(defblock (,name :super :list) ,@body))
 
+(defun null-block () (new list))
+
+(deflist empty-socket)
+
+(define-method accept empty-socket (other-block)
+  "Replace this empty socket with OTHER-BLOCK."
+  (accept %parent other-block))
+    
 ;;; Choosing who to send a message to
 
 (defvar *target* nil)
@@ -1233,7 +1239,8 @@ non-nil to indicate that the block was accepted, nil otherwise."
       (mapc #'evaluate (rest inputs)))))
 
 (define-method default-inputs with-target ()
-  (list (new socket :label "target") (new list :label "body")))
+  (list (new socket :label "target") 
+	(new socket :label "body" )))
 
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 
