@@ -254,8 +254,8 @@
 		    (cond
 		      ;; we're focused. send the event there
 		      (focused-block
-		       (assert (blockyp focused-block))
-		       (on-event focused-block event))
+		       (prog1 focused-block
+			 (assert (blockyp focused-block))))
 		      ;; only one block selected. use that.
 		      ((= 1 (length selection))
 		       (first selection))
@@ -350,7 +350,7 @@
 		(blockyp %focused-block)))
     (when block 
       ;; (select self block :only)
-      ;; (on-select block)
+      (on-select block)
       (on-focus block))))
 
 (define-method tab shell (&optional backward)
