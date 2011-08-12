@@ -1118,6 +1118,11 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	(let ((result (some #'try inputs)))
 	  (or result self))))))
 
+(define-method adopt block (child)
+  (when (get-parent child)
+    (unplug-from-parent child))
+  (set-parent child self))
+
 (define-method accept block (other-block)
   "Try to accept OTHER-BLOCK as a drag-and-dropped input. Return
 non-nil to indicate that the block was accepted, nil otherwise."

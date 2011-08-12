@@ -498,9 +498,7 @@
   (category :initform :socket))
 
 (define-method initialize socket 
-    (&key (label "socket")
-	  (value (new empty-socket)))
-  (assert (stringp label))
+    (&key label (value (new empty-socket)))
   (verify value)
   (setf %label label)
   (setf %inputs (list value))
@@ -536,8 +534,8 @@
 (define-method enter socket ())
 
 (define-method draw-label socket ()
-  (assert (stringp %label))
-  (draw-label-string self %label))
+  (when (stringp %label)
+    (draw-label-string self %label)))
 
 (define-method layout socket ()
   (layout%%block self))
@@ -669,9 +667,7 @@
 	;;   ;; drop last item in scrollback
 	;;   (setf inputs (subseq inputs 0 (1- len))))
 	;; set parent if necessary 
-	(when (get-parent input)
-	  (unplug-from-parent input))
-	(set-parent input self)
+	(adopt self input)
 	(setf inputs 
 	      (nconc (list (first inputs) input)
 		     (nthcdr 1 inputs)))))))
