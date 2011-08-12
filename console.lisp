@@ -775,32 +775,32 @@ display."
 			   (sdl:resize-window w h :title-caption *window-title*
 				       :flags (logior sdl:SDL-OPENGL sdl:SDL-RESIZABLE))
 			   (do-orthographic-projection))
-      (:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
+      (:mouse-motion-event (:x x :y y)
 			   (setf *pointer-x* x *pointer-y* y)
 			   (let ((block (hit-blocks x y *blocks*)))
 			     (when block
 			       (send :mouse-move block x y))))
-      (:mouse-button-down-event (:button button :state state :x x :y y)
+      (:mouse-button-down-event (:button button :x x :y y)
 				(let ((block (hit-blocks x y *blocks*)))
 				  (when block
 				    (send :mouse-down block x y button))))
-      (:mouse-button-up-event (:button button :state state :x x :y y)
+      (:mouse-button-up-event (:button button :x x :y y)
 			      (let ((block (hit-blocks x y *blocks*)))
 				(when block
 				  (send :mouse-up block x y button))))
-      (:joy-button-down-event (:which which :button button :state state)
+      (:joy-button-down-event (:button button :state state)
 			      (when (assoc button *joystick-mapping*)
 				(update-joystick button state)
 				(send-event (make-event :joystick
 							(list (translate-joystick-button button) 
 							      :button-down)))))
-      (:joy-button-up-event (:which which :button button :state state)  
+      (:joy-button-up-event (:button button :state state)  
 			    (when (assoc button *joystick-mapping*)
 			      (update-joystick button state)
 			      (send-event (make-event :joystick
 						      (list (translate-joystick-button button) 
 							    :button-up)))))
-      (:joy-axis-motion-event (:which which :axis axis :value value)
+      (:joy-axis-motion-event (:axis axis :value value)
 			      (update-joystick-axis axis value))
       (:video-expose-event () (sdl:update-display))
       (:key-down-event (:key key :mod-key mod)

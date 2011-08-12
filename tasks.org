@@ -1,4 +1,6 @@
 ** TODO [#A] fix on-select listener not working to get keystrokes to the prompt
+** TODO [#A] Fix focus model --- first click/drag does not pull, only after mouseup
+** TODO [#B] fix erroneous double click of last element when clicking (white background)
 ** TODO [#A] Turn on UNICODE key translation
 ** TODO [#B] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
 ** TODO [#B] trigger context menu items with left click, make block with control-click/right-click

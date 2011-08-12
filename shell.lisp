@@ -20,18 +20,24 @@
 
 ;;; Code:
 
+;; This file implements the overall mouse and keyboard interface to
+;; Blocky programming. 
+
 (in-package :blocky)
 
-;;; Trash can
+(defvar *shell* nil
+  "When non-nil, the UUID of the currently active shell object.")
 
-(defvar *shell* nil)
+;;; Trash can
 
 (defblock trash 
   :category :system 
   :methods '(:empty))
 
 (define-method evaluate trash ())
+
 (define-method update trash ())
+
 (define-method empty trash ()
   (setf %inputs nil))
 
@@ -152,33 +158,37 @@
 
 (defblock shell
   (selection :initform ()
-  	     :documentation "Subset of selected blocks.")
-  (script :initform nil)
+  	     :documentation "List (subset) of selected blocks.")
+  (script :initform nil 
+	  :documentation "The script object currently open in the shell.")
   (default-events :initform
 		  '(((:tab) :tab)
 		    ((:tab :control) :backtab)
 		    ((:x :alt) :command-line)
 		    ((:g :control) :escape)
 		    ((:escape) :escape)))
-  menubar 
-  (excluded-fields :initform '(:menubar))
+  (menubar :initform nil
+	   :documentation "The menubar widget.")
+  (excluded-fields :initform '(:menubar)
+		   :documentation "Don't serialize the menu bar.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
   (hover :initform nil
 	 :documentation "Block being hovered over, if any.")
   (highlight :initform nil
 	     :documentation "Block being highlighted, if any.")
-  (ghost :initform (new block))
-  (buffer :initform nil)
-  (focused-block :initform nil)
+  (ghost :initform (new block)
+	 :documentation "Dummy block to hold original place of currently dragged block onscreen.")
+  (focused-block :initform nil
+		 :documentation "Block having current input focus, if any.")
   (click-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at moment of click.")
   (click-start-block :initform nil
-		     :documentation "The block indicated at the beginning of a mouse movement.")
+		     :documentation "The block indicated at the beginning of a drag.")
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
-	       :documentation "A cons (X . Y) of mouse click location on dragged block.")
+	       :documentation "A cons (X . Y) of relative mouse click location on dragged block.")
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
@@ -187,6 +197,7 @@
   (setf %menubar (make-menubar)))
 
 (define-method layout shell ()
+  ;; take over the entire GL window
   (with-script %script
     (setf %x 0 %y 0 
 	  %width *screen-width* 
@@ -195,26 +206,27 @@
       (setf x %x y %y
 	    width %width
 	    height %height))
+    ;; run menu bar across the top
     (layout %menubar)))
 
 (define-method update shell ()
+  ;; run script blocks every frame
   (with-script %script
     (update %script)))
 
 (defun make-menubar ()
   (find-uuid 
    (new menubar 
+	;; see also system.lisp
 	(make-menu *system-menu*
 		   :target *system*))))
 
 (define-method initialize shell (script)
+  (assert (blockyp script))
   (super%initialize self)
   (setf *shell* (find-uuid self))
   (setf %script (find-uuid script))
-  (assert script)
-  (setf %menubar (make-menubar))
-  (register-uuid self)
-  (message "Opening shell..."))
+  (setf %menubar (make-menubar)))
 
 (define-method script-blocks shell ()
   (field-value :inputs %script))
@@ -306,7 +318,7 @@
 (define-method draw shell ()
   (with-script %script
     (layout self)
-    (with-fields (script buffer drag-start selection inputs drag
+    (with-fields (script drag-start selection inputs drag
 			 focused-block highlight menubar
 			 modified hover ghost prompt)
 	self
@@ -341,11 +353,6 @@
   ;; possible to pass nil
   (with-fields (script focused-block self) self
     (with-script script
-      ;; there's going to be a new focused block. 
-      ;; tell the current one it's no longer focused.
-      (when focused-block
-	(on-lose-focus focused-block))
-      ;; now focus
       (setf focused-block 
 	    (when block (find-uuid block)))
       ;; sanity check
@@ -382,9 +389,9 @@
   ;; require some actual mouse movement to initiate a drag
   (with-script %script
     (with-fields (click-start click-start-block) self
-      (when (and click-start click-start-block)
+      (when click-start
 	(destructuring-bind (x1 . y1) click-start
-	  (when (and click-start-block
+	  (when (and focused-block
 		     (> (distance x y x1 y1)
 			*minimum-drag-distance*)
 		     (not (is-pinned click-start-block)))
@@ -402,6 +409,11 @@
       (when block 
 	(setf click-start (cons x y))
 	(setf click-start-block (find-uuid block))
+	;; there's going to be a new focused block. 
+	;; tell the current one it's no longer focused.
+	(when focused-block
+	  (on-lose-focus focused-block))
+	;; now focus
 	(focus-on self block)))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
@@ -410,13 +422,17 @@
     (setf hover nil)
     (drag-maybe self mouse-x mouse-y)
     (if drag
+	;; we're in a mouse drag.
 	(destructuring-bind (ox . oy) drag-offset
 	  (let ((target-x (- mouse-x ox))
 		(target-y (- mouse-y oy)))
 	    (let ((candidate (hit-script self target-x target-y)))
 	      ;; obviously we dont want to plug a block into itself.
-	      (setf hover (if (object-eq drag candidate) nil (find-uuid candidate)))
+	      (setf hover (if (object-eq drag candidate) nil
+			      (find-uuid candidate)))
+	      ;; keep moving along with the mouse
 	      (move-to drag target-x target-y))))
+	;; not dragging, just moving
 	(progn
 	  (setf highlight (find-uuid (hit-script self mouse-x mouse-y)))
 	  (when (null highlight)

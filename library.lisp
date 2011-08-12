@@ -22,40 +22,40 @@
 
 (in-package :blocky)
 
-(defblock sprite-id :sprite-uuid nil :category :structure)
+;; (defblock sprite-id :sprite-uuid nil :category :structure)
 
-(define-method initialize sprite-id (thing)
-  (with-fields (sprite-uuid) self
-    (super%initialize self)
-    (setf sprite-uuid (etypecase thing
-			(string thing)
-			(object (field-value :uuid thing))))))
+;; (define-method initialize sprite-id (thing)
+;;   (with-fields (sprite-uuid) self
+;;     (super%initialize self)
+;;     (setf sprite-uuid (etypecase thing
+;; 			(string thing)
+;; 			(object (field-value :uuid thing))))))
 
-(define-method header-height sprite-id ()
-  (dash 1 (font-height *block-font*)))
+;; (define-method header-height sprite-id ()
+;;   (dash 1 (font-height *block-font*)))
 
-(define-method get-sprite sprite-id ()
-  (get-object-by-uuid %sprite-uuid))
+;; (define-method get-sprite sprite-id ()
+;;   (get-object-by-uuid %sprite-uuid))
 
-(define-method layout sprite-id ()
-  (with-fields (height width) self
-    (let ((sprite (get-sprite self)))
-      (setf height (dash 1 (header-height self)
-			 (field-value :height sprite)))
-      (setf width (dash 1 (field-value :width sprite))))))
+;; (define-method layout sprite-id ()
+;;   (with-fields (height width) self
+;;     (let ((sprite (get-sprite self)))
+;;       (setf height (dash 1 (header-height self)
+;; 			 (field-value :height sprite)))
+;;       (setf width (dash 1 (field-value :width sprite))))))
 
-(define-method draw sprite-id ()
-  (with-fields (inputs x y) self
-    (let ((sprite (get-sprite self)))
-      (draw-background self)
-      (let ((header (header-height self)))
-	(draw-string (get-some-object-name sprite)
-		     (dash 1 x)
-		     header
-		     :color (find-color self :foreground))
-	(draw-image (field-value :image sprite)
-		    (dash 1 x)
-		    (dash 1 y))))))
+;; (define-method draw sprite-id ()
+;;   (with-fields (inputs x y) self
+;;     (let ((sprite (get-sprite self)))
+;;       (draw-background self)
+;;       (let ((header (header-height self)))
+;; 	(draw-string (get-some-object-name sprite)
+;; 		     (dash 1 x)
+;; 		     header
+;; 		     :color (find-color self :foreground))
+;; 	(draw-image (field-value :image sprite)
+;; 		    (dash 1 x)
+;; 		    (dash 1 y))))))
 
 ;; ;;; Sending to an ID
 
