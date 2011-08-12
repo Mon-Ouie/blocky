@@ -249,9 +249,13 @@
 (define-method on-event shell (event)
   (with-script %script
     (or (super%on-event self event)
-	(with-field-values (selection menubar script) self
+	(with-field-values (focused-block selection menubar script) self
 	  (let ((block
-		    (cond 
+		    (cond
+		      ;; we're focused. send the event there
+		      (focused-block
+		       (assert (blockyp focused-block))
+		       (on-event focused-block event))
 		      ;; only one block selected. use that.
 		      ((= 1 (length selection))
 		       (first selection))
@@ -323,6 +327,7 @@
 		     (draw-hover hover))
 		   (draw drag))
 	    (when focused-block
+	      (assert (blockyp focused-block))
 	      (draw-focus focused-block)))
 	(draw menubar)
 	(when highlight
@@ -341,6 +346,8 @@
   (with-script %script
     (setf %focused-block 
 	  (when block (find-uuid block)))
+    (assert (or (null %focused-block)
+		(blockyp %focused-block)))
     (when block 
       ;; (select self block :only)
       ;; (on-select block)
@@ -349,6 +356,7 @@
 (define-method tab shell (&optional backward)
   (with-fields (focused-block) self
     (when focused-block
+      (assert (blockyp %focused-block))
       (with-fields (parent) focused-block
 	(let ((index (position-within-parent focused-block)))
 	  (when (numberp index)
@@ -395,6 +403,7 @@
 		     (> (distance x y x1 y1)
 			*minimum-drag-distance*)
 		     (not (is-pinned focused-block)))
+	    (assert (blockyp focused-block))
 	    (setf click-start nil)
 	    (begin-drag self x y focused-block)))))))
 
@@ -406,6 +415,8 @@
       (on-lose-focus focused-block))
     ;; now find what we're touching
     (let ((block (hit-script self x y)))
+      (assert (or (null %focused-block)
+		  (blockyp %focused-block)))
       (focus-on self block)
       (when block 
 	(setf click-start (cons x y))))))

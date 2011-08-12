@@ -1,14 +1,12 @@
-** TODO consider not requiring string label for all sockets (with-target topleft socket for receiver as in Elements)
-** TODO [#A] trigger context menu items with left click, make block with control-click/right-click
-** TODO [#A] easily close menus with X in corner
-** TODO universal morphic halo?
 ** TODO [#A] fix on-select listener not working to get keystrokes to the prompt
-** TODO [#A] Fix collision detection (spheres, 
 ** TODO [#A] Turn on UNICODE key translation
+** TODO [#B] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
+** TODO [#B] trigger context menu items with left click, make block with control-click/right-click
+** TODO [#A] easily close menus with X in corner
+** TODO [#B] universal morphic halo?
+** TODO [#A] Fix collision detection (spheres, 
 ** TODO [#A] Also show clickable previous commands in listener log
 ** TODO [#A] Start using tests and more correctness-helpers
-** TODO [#A] Fix backward insertion of lines from error message into listener
-** TODO [#A] start using terminal output for status message output
 ** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
 ** TODO [#A] fix ellipsis not displayed on menu items until highlight
 *** use something other than ellipses? like my generic tree triangles
@@ -22,6 +20,7 @@
 ** TODO [#B] listener history should show only commands?
 ** TODO [#B] define-visual-macro (via defblock?)
 ** TODO [#C] visually indicate clicked send blocks
+** TODO [#B] animate text box cursor and show current line / or show textbox border
 ** TODO [#B] union fields to hold union of %methods and %excluded-fields and so on
 ** TODO [#A] Write standard blocks library
 *** move

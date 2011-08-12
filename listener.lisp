@@ -452,7 +452,7 @@
 (define-method hit entry (x y)
   (when (super%hit self x y)
     (if (< x (+ %x (label-width self)))
-	%parent 
+	(prog1 %parent (assert %parent))
 	self)))
 
 ;;; Easily defining new entry blocks
@@ -467,7 +467,8 @@
 (defentry number numberp 0)
 (defentry non-negative-number (number 0 *) 0)
 (defentry float floatp 0.0)
-(defentry symbol symbolp nil)
+(defentry symbol symbolp nil 
+  (category :initform :data))
 (defentry positive-integer (integer 1 *) 1)
 (defentry non-negative-integer (integer 0 *) 0)
 (defentry expression t nil)
@@ -654,6 +655,7 @@
 
 ;; forward keypresses to prompt for convenience
 ;; (define-method on-event listener (event)
+;;   (message "ON EVENT LISTENER")
 ;;   (on-event (get-prompt self) event))
 
 (define-method accept listener (input &optional prepend)

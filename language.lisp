@@ -1263,7 +1263,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (defvar *target* nil)
 
 (defmacro with-target (target &body body)
-  `(let ((*target* ,target))
+  `(let ((*target* (find-uuid ,target)))
      ,@body))
 
 (defblock with-target
@@ -1280,8 +1280,8 @@ non-nil to indicate that the block was accepted, nil otherwise."
       (evaluate body))))
 
 (define-method default-inputs with-target ()
-  (list (new socket :label "target" :value (new symbol :value '*system*))
-	(new socket :label "body")))
+  (list (new socket :value (new symbol :value '*system*))
+	(new socket :label "do")))
 
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 

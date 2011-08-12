@@ -427,6 +427,9 @@ extended argument list ARGLIST."
 (defun verify (thing)
   (assert (object-p (find-object thing))))
 
+(defun blockyp (thing)
+  (object-p (find-object thing)))
+
 ;;; Fields
 
 ;; An object's field collection is either a hash table or plist. The
