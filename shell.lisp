@@ -281,27 +281,21 @@
 	    (when block 
 	      (on-event block event)))))))
 
+;;; Hit testing
+
 (define-method hit shell (x y)
   ;; return self no matter where mouse is, so that we get to process
   ;; all the events.
   (declare (ignore x y))
   self)
 
-;; (define-method hit-script shell (x y) 
-;; "Recursively search the blocks in this script for a block intersecting
-;; the point X,Y. We have to search the top-level blocks starting at the
-;; end of `%INPUTS' and going backward, because the blocks are drawn in
-;; list order (i.e. the topmost blocks for mousing-over are at the end of
-;; the list.) The return value is the block found, or nil if none is
-;; found."
-;;   (with-fields (script) self
-;;     (with-fields (inputs) script
-;;       (with-script script 
-;; 	(flet ((try (block)
-;; 		 (when block (hit block x y))))
-;; 	  (try (find-if #'try inputs :from-end t)))))))
-
 (define-method hit-script shell (x y)
+  "Recursively search the blocks in this script for a block
+intersecting the point X,Y. We have to search the top-level blocks
+starting at the end of `%INPUTS' and going backward, because the
+blocks are drawn in list order (i.e. the topmost blocks for
+mousing-over are at the end of the list.) The return value is the
+block found, or nil if none is found."
   (with-script %script 
     (labels ((try (b)
 	       (when b
@@ -353,12 +347,17 @@
   ;; possible to pass nil
   (with-fields (script focused-block self) self
     (with-script script
+      ;; there's going to be a new focused block. 
+      ;; tell the current one it's no longer focused.
+      (when focused-block
+	(on-lose-focus focused-block))
+      ;; now set up the new focus (possibly nil)
       (setf focused-block 
 	    (when block (find-uuid block)))
       ;; sanity check
       (assert (or (null focused-block)
-		(blockyp focused-block)))
-      ;; 
+		  (blockyp focused-block)))
+      ;; now tell the block it has focus
       (when block 
 	(on-focus block)))))
 
@@ -388,7 +387,7 @@
 (define-method drag-maybe shell (x y)
   ;; require some actual mouse movement to initiate a drag
   (with-script %script
-    (with-fields (click-start click-start-block) self
+    (with-fields (focused-block click-start click-start-block) self
       (when click-start
 	(destructuring-bind (x1 . y1) click-start
 	  (when (and focused-block
@@ -399,22 +398,6 @@
 	    (begin-drag self x y click-start-block)
 	    (setf click-start nil)
 	    (setf click-start-block nil)))))))
-
-(define-method mouse-down shell (x y &optional button)
-  (with-fields (click-start click-start-block focused-block) self
-    ;; now find what we're touching
-    (assert (or (null focused-block)
-		(blockyp focused-block)))
-    (let ((block (hit-script self x y)))
-      (when block 
-	(setf click-start (cons x y))
-	(setf click-start-block (find-uuid block))
-	;; there's going to be a new focused block. 
-	;; tell the current one it's no longer focused.
-	(when focused-block
-	  (on-lose-focus focused-block))
-	;; now focus
-	(focus-on self block)))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
   (with-fields (inputs hover highlight click-start drag-offset
@@ -438,6 +421,22 @@
 	  (when (null highlight)
 	    (when %menubar
 	      (with-script %script (close-menus %menubar))))))))
+
+(define-method mouse-down shell (x y &optional button)
+  (declare (ignore button))
+  (with-fields (click-start click-start-block focused-block) self
+    ;; now find what we're touching
+    (assert (or (null focused-block)
+		(blockyp focused-block)))
+    (let ((block (hit-script self x y)))
+      (if (null block)
+	  (focus-on self nil)
+	  (progn 
+	    (setf click-start (cons x y))
+	    (setf click-start-block (find-uuid block))
+	    ;; now focus; this might cause another block to be
+	    ;; focused, as in the case of the Listener
+	    (focus-on self block))))))
 
 (define-method mouse-up shell (x y &optional button)
   (with-fields 
