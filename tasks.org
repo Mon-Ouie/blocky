@@ -1,11 +1,13 @@
 ** TODO visually indicate clicked send blocks
-** TODO 
+** TODO fix on-select listener not working to get keystrokes to the prompt
+** TODO union fields to hold union of %methods and %excluded-fields and so on
+** TODO listener history should show only commands?
 ** TODO define-visual-macro (via defblock?)
 ** TODO defblock with-target : schema has socket for message target, socket for list body
 *** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
 *** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
 *** TODO [#A] dialog boxes for project save/load!
-** TODO [#A] Fix collision detection 
+** TODO [#A] Fix collision detection (spheres, 
 ** TODO [#A] Turn on UNICODE key translation
 ** TODO [#A] Also show clickable previous commands in listener log
 ** TODO [#A] Start using tests and more correctness-helpers

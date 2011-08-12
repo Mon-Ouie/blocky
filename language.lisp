@@ -1239,7 +1239,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
       (mapc #'evaluate (rest inputs)))))
 
 (define-method default-inputs with-target ()
-  (list (new socket :label "target") 
+  (list (new socket :label "target" :value (new symbol :value '*system*))
 	(new socket :label "body" )))
 
 ;;; Generic method invocation block. The bread and butter of doing stuff.

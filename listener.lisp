@@ -623,7 +623,7 @@
       ;; (setf y (- y0 (dash 1))))))
 
 (define-method get-prompt listener ()
-  (car (last %inputs)))
+  (first %inputs))
  
 (define-method evaluate listener ()
   (evaluate (get-prompt self)))
@@ -632,8 +632,8 @@
   (grab-focus (get-prompt self)))
 
 ;; forward keypresses to prompt for convenience
-(define-method on-event listener (event)
-  (on-event (get-prompt self) event))
+;; (define-method on-event listener (event)
+;;   (on-event (get-prompt self) event))
 
 (define-method accept listener (input &optional prepend)
   (declare (ignore prepend))

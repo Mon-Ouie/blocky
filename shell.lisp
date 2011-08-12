@@ -341,7 +341,10 @@
   (with-script %script
     (setf %focused-block 
 	  (when block (find-uuid block)))
-    (when block (on-focus block))))
+    (when block 
+      ;; (select self block :only)
+      ;; (on-select block)
+      (on-focus block))))
 
 (define-method tab shell (&optional backward)
   (with-fields (focused-block) self
