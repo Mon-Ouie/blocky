@@ -1,7 +1,4 @@
 ** TODO [#A] fix listener prompt cursor always resetting to column 0 upon focus
-** TODO [#A] fix on-select listener not working to get keystrokes to the prompt
-** TODO [#A] Fix focus model --- first click/drag does not pull, only after mouseup
-** TODO [#B] fix erroneous double click of last element when clicking (white background)
 ** TODO [#A] Turn on UNICODE key translation
 ** TODO [#B] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
 ** TODO [#B] trigger context menu items with left click, make block with control-click/right-click
@@ -476,6 +473,27 @@ But the graph doesn't yet actually work, so we must continue.
    :PROPERTIES:
    :ARCHIVE_TIME: 2011-07-20 Wed 23:09
    :ARCHIVE_FILE: ~/ioforms/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO [#A] fix on-select listener not working to get keystrokes to the prompt
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-12 Fri 16:01
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO [#A] Fix focus model --- first click/drag does not pull, only after mouseup
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-12 Fri 16:01
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO [#B] fix erroneous double click of last element when clicking (white background)
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-12 Fri 16:01
+   :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
    :END:
