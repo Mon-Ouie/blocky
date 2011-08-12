@@ -952,9 +952,9 @@ override all colors."
     (draw-patch self x y (+ x width) (+ y height)
 		 :depressed t :socket t)))
 
-(define-method handle-width block ()
-  (+ (* 2 *dash*)
-     (expression-width %operation)))
+;; (define-method label-width block ()
+;;   (+ (* 2 *dash*)
+;;      (expression-width %operation)))
 
 (define-method header-height block () 0)
 
@@ -1186,7 +1186,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (define-method header-height list () 0)
 
-(define-method handle-width list ()
+(define-method label-width list ()
   (+ (* 2 *dash*)
      (expression-width *null-display-string*)))
 
@@ -1258,7 +1258,12 @@ non-nil to indicate that the block was accepted, nil otherwise."
      ,@body))
 
 (defblock with-target
-  :category :variables)
+  category :variables)
+
+(define-method label-width with-target ()
+  0)
+
+(define-method draw-label with-target ())
 
 (define-method evaluate with-target ()
   (destructuring-bind (target body) %inputs
@@ -1422,7 +1427,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 ;; 	  (height (font-height *block-font*)))
 ;;       (prog1 height
 ;; 	(move-to name
-;; 	       (+ x (handle-width self))
+;; 	       (+ x (label-width self))
 ;; 	       (+ y height))))))
 
 ;; (define-method draw-header script ()
