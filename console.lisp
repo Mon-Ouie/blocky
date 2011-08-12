@@ -711,7 +711,7 @@ becomes larger.")
 		0)
   (gl:scale scale-x scale-y 1))
 
-(defvar *resizable* nil)
+(defvar *resizable* t)
 
 (defparameter *resize-hook* nil)
 
@@ -2359,7 +2359,7 @@ of the music."
 	*message-hook-functions* nil
 	*window-title* "blocky"
 	*updates* 0
-	*resizable* nil
+	*resizable* t
 	*keyboard-update-number* 0
 	*random-state* (make-random-state t))
   (sdl:init-sdl :video t :audio t :joystick t)

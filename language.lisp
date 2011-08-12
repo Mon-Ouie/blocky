@@ -1316,7 +1316,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
     (dolist (entry schema)
       (push (new entry
 		 :value (schema-option entry :default)
-		 :parent self
+		 :parent (find-uuid self)
 		 :type-specifier (schema-type entry)
 		 :options (schema-options entry)
 		 :label (concatenate 'string
