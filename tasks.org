@@ -1,3 +1,4 @@
+** TODO consider not requiring string label for all sockets (with-target topleft socket for receiver as in Elements)
 ** TODO [#A] trigger context menu items with left click, make block with control-click/right-click
 ** TODO [#A] easily close menus with X in corner
 ** TODO universal morphic halo?
