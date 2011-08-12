@@ -127,6 +127,7 @@ two words. This is used as a unit for various layout operations.")
   (scale-y :initform 1)
   (blend :initform :alpha)
   (opacity :initform 1.0)
+  (label :initform nil)
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
   (depth :initform 32 :documentation "Cached depth of block.")
@@ -629,8 +630,13 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 (define-method on-select block () nil)
 
-(define-method click block (mouse-x mouse-y)
-  (declare (ignore mouse-x mouse-y)))
+(define-method on-click block (x y)
+  (declare (ignore x y))
+  nil)
+
+(define-method on-alternate-click block (x y)
+  (declare (ignore x y))
+  nil)
 
 (define-method mouse-move block (x y)
   (declare (ignore x y)))
@@ -990,7 +996,7 @@ override all colors."
     (with-field-values (x y inputs) self
       (let* ((font *block-font*)
 	     (dash (dash 1))
-	     (left (+ dash dash x (font-text-width label font)))
+	     (left (+ x (label-width self)))
 	     (max-height (font-height font)))
 	(labels ((move-input (input)
 		   (move-to input (+ left dash) y)
@@ -1034,6 +1040,25 @@ override all colors."
     (dolist (each inputs)
       (draw each))))
 
+(define-method update-parent-links block ()
+  (dolist (each %inputs)
+    (set-parent each self)))
+
+;;; Labels for blocks
+
+(define-method set-label-string block (label)
+  (assert (stringp label))
+  (setf %label label))
+
+(define-method label-string block ()
+  %label)
+
+(define-method label-width block ()
+  (if (null %label)
+      0
+      (+ (dash 2)
+	 (font-text-width %label *block-font*))))
+    
 (define-method draw-label-string block (string &optional color)
   (with-block-drawing 
     (with-field-values (x y) self
@@ -1044,6 +1069,8 @@ override all colors."
 
 (define-method draw-label block (expression)
   (draw-label-string self (print-expression expression)))
+
+;;; General block drawing
 
 (define-method draw block ()
   (with-fields (image x y width height blend opacity) self
@@ -1124,7 +1151,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (defparameter *null-display-string* "...")
 
-(define-method click list (x y)
+(define-method on-click list (x y)
   (dolist (block %inputs)
     (evaluate block)))
 
@@ -1234,13 +1261,13 @@ non-nil to indicate that the block was accepted, nil otherwise."
   :category :variables)
 
 (define-method evaluate with-target ()
-  (with-fields (inputs) self
-    (with-target (evaluate (first inputs))
-      (mapc #'evaluate (rest inputs)))))
+  (destructuring-bind (target body) %inputs
+    (with-target target
+      (evaluate body))))
 
 (define-method default-inputs with-target ()
   (list (new socket :label "target" :value (new symbol :value '*system*))
-	(new socket :label "body" )))
+	(new socket :label "body")))
 
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 
@@ -1248,10 +1275,10 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (define-method evaluate send ()
   (apply #'send %method 
-	 (or %target *target*)
+	 (or *target* %target) ;; with-target will override
 	 (mapcar #'evaluate %inputs)))
 
-(define-method click send (x y)
+(define-method on-click send (x y)
   (declare (ignore x y))
   (evaluate self))
 

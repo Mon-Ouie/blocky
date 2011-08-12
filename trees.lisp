@@ -90,7 +90,7 @@
     (setf %expanded nil)
     (invalidate-layout self)))
 
-(define-method click tree (x y)
+(define-method on-click tree (x y)
   (declare (ignore x y))
   (toggle-expanded self))
 
@@ -242,7 +242,7 @@
 ;; menu items should not accept any dragged widgets.
 (define-method accept menu (&rest args) nil)
 
-(define-method click menu (x y)
+(define-method on-click menu (x y)
   (declare (ignore x y))
   (with-fields (action target) self
     (typecase action 
@@ -253,6 +253,11 @@
       (otherwise
        ;; we're a submenu, not an individual menu command.
        (toggle-expanded self)))))
+
+(define-method on-alternate-click menu (x y)
+  (declare (ignore x y))
+  (when (keywordp %action)
+    (add-block *script* (context-menu self) x y)))
 
 (defparameter *menu-tab-color* "gray60")
 (defparameter *menu-title-color* "white")

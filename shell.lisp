@@ -136,7 +136,7 @@
     (when (some #'is-expanded inputs)
       (mapc #'unexpand %inputs))))
 
-(define-method click menubar (x y)
+(define-method on-click menubar (x y)
   (declare (ignore x y))
   (close-menus self))
 
@@ -467,7 +467,9 @@
 	  (when focused-block
 	    (select self focused-block)
 	    (with-script script 
-	      (click focused-block x y)
+	      (if (holding-control)
+		  (on-alternate-click focused-block x y)
+		  (on-click focused-block x y))
 	      (select self focused-block))
 	    (setf click-start nil))))
     (setf drag-start nil

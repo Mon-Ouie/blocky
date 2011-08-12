@@ -231,7 +231,7 @@
 
 (define-method draw-hover prompt ())
 
-(define-method click prompt (mouse-x mouse-y)
+(define-method on-click prompt (mouse-x mouse-y)
   (declare (ignore mouse-y))
   (with-fields (x y width height clock point parent background
 		  line) self
@@ -498,11 +498,12 @@
 
 (define-method initialize socket 
     (&key (label "socket")
-	  (block (new empty-socket)))
-  (assert (and (stringp label)
-	       (blocky:object-p block)))
+	  (value (new empty-socket)))
+  (assert (stringp label))
+  (verify value)
   (setf %label label)
-  (setf %inputs (list block)))
+  (setf %inputs (list value))
+  (update-parent-links self))
 
 (define-method accept socket (thing)
   (verify thing)
@@ -511,6 +512,12 @@
 (define-method evaluate socket ()
   (when (first %inputs)
     (evaluate (first %inputs))))
+
+(define-method draw-focus socket ())
+
+(define-method on-event socket (event)
+  (declare (ignore event))
+  nil)
 
 (define-method get-value socket ()
   (evaluate self))
@@ -531,26 +538,35 @@
   (assert (stringp %label))
   (draw-label-string self %label))
 
+(define-method layout socket ()
+  (layout%%block self))
+
 (define-method draw socket (&optional no-label)
   (with-fields (x y options inputs width height) self
     ;; draw the label string 
     (unless no-label 
       (draw-label self))
-    ;; draw shaded area for input
-    (draw-socket self x y (+ x width) (+ y height))
     ;; draw block
     (let ((block (first inputs)))
       (when block 
-	(message "drawing socket block")
 	(draw block)))))
+
+(define-method label-width socket () 
+  (label-width%%block self))
 
 ;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
 
 (define-prototype listener-prompt (:parent prompt)
   (operation :initform :prompt)
   (background :initform nil)
-  (methods :initform '(:evaluate))
+  (methods :initform '(:evaluate :debug-on-error :print-on-error))
   output)
+
+(define-method debug-on-error listener-prompt ()
+  (setf %debug-on-error t))
+
+(define-method print-on-error listener-prompt ()
+  (setf %debug-on-error nil))
 
 (define-method initialize listener-prompt (&optional output)
   (super%initialize self)
@@ -630,6 +646,12 @@
 
 (define-method on-select listener ()
   (grab-focus (get-prompt self)))
+
+(define-method debug-on-error listener ()
+  (debug-on-error (get-prompt self)))
+
+(define-method print-on-error listener ()
+  (print-on-error (get-prompt self)))
 
 ;; forward keypresses to prompt for convenience
 ;; (define-method on-event listener (event)
