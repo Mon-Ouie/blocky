@@ -1,3 +1,4 @@
+** TODO multilayer approach with script over top of world
 ** TODO [#A] fix listener prompt cursor always resetting to column 0 upon focus
 ** TODO [#A] Turn on UNICODE key translation
 ** TODO [#B] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
