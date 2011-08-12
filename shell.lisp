@@ -390,11 +390,10 @@ block found, or nil if none is found."
     (with-fields (focused-block click-start click-start-block) self
       (when click-start
 	(destructuring-bind (x1 . y1) click-start
-	  (when (and focused-block
+	  (when (and focused-block click-start-block
 		     (> (distance x y x1 y1)
 			*minimum-drag-distance*)
 		     (not (is-pinned click-start-block)))
-	    (assert (blockyp click-start-block))
 	    (begin-drag self x y click-start-block)
 	    (setf click-start nil)
 	    (setf click-start-block nil)))))))
