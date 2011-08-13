@@ -106,6 +106,7 @@ two words. This is used as a unit for various layout operations.")
 (defvar *text-base-y* nil)
 
 (define-prototype block ()
+  (cursor-clock :initform *cursor-blink-time*)
   ;; general information
   (inputs :initform nil :documentation 
 "List of input (or `child') blocks.")
@@ -191,9 +192,9 @@ of keywords like :control, :alt, and so on."
 	   %events))
 
 (define-method on-event block (event)
-  "Look up and invoke the function (if any) bound to EVENT. Return t
-if a binding was found, nil otherwise. The second value returned is
-the return value of the function (if any)."
+  "Look up and invoke the block closure (if any) bound to
+EVENT. Return t if a binding was found, nil otherwise. The second
+value returned is the return value of the function (if any)."
   (with-fields (events) self
     (when events
       (let ((closure (gethash event events)))
@@ -580,6 +581,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method mouse-up block (x y button)
   (declare (ignore x y button)))
 
+;;; Connecting blocks
+
 (define-method this-position block ()
   (with-fields (parent) self
     (when parent
@@ -682,6 +685,18 @@ current block. Used for taking a count of all the nodes in a tree."
 	(t (apply #'+ 1 
 		  (mapcar #'count-tree 
 			  (field-value :inputs tree))))))
+
+;;; Drawing blocks
+
+(defparameter *cursor-blink-time* 8)
+
+(defparameter *cursor-color* "magenta")
+
+(defparameter *cursor-blink-color* "yellow")
+
+(define-method draw-cursor block ((color *cursor-color*) &optional x-offset y-offset)
+  (declare (ignore color x-offset y-offset))
+  nil)
 
 (defparameter *block-colors*
   '(:motion "cornflower blue"

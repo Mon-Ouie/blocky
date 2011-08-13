@@ -22,9 +22,6 @@
 
 ;;; Command prompt block
 
-(defparameter *prompt-blink-time* 8)
-(defparameter *prompt-cursor-color* "magenta")
-(defparameter *prompt-cursor-blink-color* "yellow")
 (defparameter *active-prompt-color* "red")
 (defparameter *inactive-prompt-color* "gray20")
 (defparameter *prompt-cursor-inactive-color* "gray50")
@@ -43,7 +40,6 @@
 (defparameter *default-cursor-width* 1)
  
 (defblock prompt
-  (clock :initform *prompt-blink-time*)
   (text-color :initform "gray20")
   (visible :documentation "When non-nil, the prompt is drawn." :initform t)
   (receiver :documentation "The object to send command messages to.")
@@ -79,12 +75,14 @@
   (install-text-keybindings self))
 
 (define-method on-event prompt (event)
-  (let ((thing (first event)))
-    (if (stringp thing)
-	;; treat Unicode characters as self-inserting
-	(insert self thing)
-	;; otherwise fall back to event map
-	(super%on-event self event))))
+  (let ((thing (first event))
+	(closure (gethash event %events)))
+    (if closure
+	(prog1 (values t (evaluate closure))
+	  (invalidate-layout self))
+	(when (stringp thing)
+	  ;; treat Unicode characters as self-inserting
+	  (insert self thing)))))
   
 (define-method forward-char prompt ()
   (setf %point (min (1+ %point)
@@ -291,8 +289,8 @@
   ;; keep the cursor blinking
   (with-fields (clock) self
     (decf clock)
-    (when (> (- 0 *prompt-blink-time*) clock)
-      (setf clock *prompt-blink-time*))))
+    (when (> (- 0 *cursor-blink-time*) clock)
+      (setf clock *cursor-blink-time*))))
 
 (define-method draw-indicators prompt (state)
   (with-fields (x y options text-color width parent height line) self
@@ -309,7 +307,7 @@
 		      :state state))))
 
 (define-method draw-focus prompt () 
-  (with-fields (clock x y width line parent) self
+  (with-fields (cursor-clock x y width line parent) self
     (let* ((label (label-string self))
 	   (label-width (label-width self))
 	   (line-width (font-text-width line *block-font*)))
@@ -317,9 +315,9 @@
       (draw-input-area self :active)
       ;; draw cursor.
       (update-cursor-clock self)
-      (draw-cursor self (if (minusp clock)
-			    *prompt-cursor-color*
-			    *prompt-cursor-blink-color*)
+      (draw-cursor self (if (minusp cursor-clock)
+			    *cursor-color*
+			    *cursor-blink-color*)
 		   ;; provide x offset
 		   (dash 2 (font-text-width label *block-font*)))
       ;; draw highlighted indicators
@@ -328,7 +326,7 @@
       (draw self :nolabel))))
 
 (define-method draw prompt (&optional nolabel)
-  (with-fields (x y width height clock point parent background
+  (with-fields (x y width height point parent background
 		  line prompt-string) self
     (let ((strings-y *default-prompt-margin*))
       (unless nolabel

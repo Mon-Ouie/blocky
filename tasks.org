@@ -1,4 +1,4 @@
-** TODO [#A] Turn on UNICODE key translation
+** TODO [#A] Make cursor blink in textbox
 ** TODO [#A] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
 ** TODO [#A] easily close menus with X in corner
 *** TODO [#A] universal morphic halo?
@@ -494,6 +494,13 @@ But the graph doesn't yet actually work, so we must continue.
 ** TODO [#B] fix erroneous double click of last element when clicking (white background)
    :PROPERTIES:
    :ARCHIVE_TIME: 2011-08-12 Fri 16:01
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO [#A] Turn on UNICODE key translation
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-13 Sat 01:04
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
