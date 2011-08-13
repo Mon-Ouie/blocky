@@ -805,7 +805,7 @@ display."
       (:key-down-event (:key key :mod-key mod :unicode unicode)
 		       (let ((event (make-event (if (zerop unicode)
 						    (make-key-symbol key)
-						    unicode)
+						    (code-char unicode))
 						mod)))
 			 (if *held-keys*
 			     (hold-event event)

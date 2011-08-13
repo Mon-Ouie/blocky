@@ -80,10 +80,8 @@
 
 (define-method on-event prompt (event)
   (let ((thing (first event)))
-    (if (and (stringp thing)
-	     (null (rest event)))
-	;; treat non-modified Unicode characters
-	;; as self-inserting
+    (if (stringp thing)
+	;; treat Unicode characters as self-inserting
 	(insert self thing)
 	;; otherwise fall back to event map
 	(super%on-event self event))))
