@@ -1,28 +1,17 @@
-** TODO multilayer approach with script over top of world
-** TODO [#A] fix listener prompt cursor always resetting to column 0 upon focus
 ** TODO [#A] Turn on UNICODE key translation
-** TODO [#B] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
-** TODO [#B] trigger context menu items with left click, make block with control-click/right-click
+** TODO [#A] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
 ** TODO [#A] easily close menus with X in corner
-** TODO [#B] universal morphic halo?
-** TODO [#A] Fix collision detection (spheres, 
-** TODO [#A] Also show clickable previous commands in listener log
-** TODO [#A] Start using tests and more correctness-helpers
-** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
-** TODO [#A] fix ellipsis not displayed on menu items until highlight
-*** use something other than ellipses? like my generic tree triangles
-** TODO [#A] Read me first: F1, then click on any object for help
-** TODO [#A] an interactive tutorial project
-** TODO [#A] escape key hide/show terminals/menus
+*** TODO [#A] universal morphic halo?
+** TODO [#A] trigger context menu items with left click, make block with control-click/right-click
 ** TODO [#A] defblock with-target : schema has socket for message target, socket for list body
 *** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
 *** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
 *** TODO [#A] dialog boxes for project save/load!
-** TODO [#B] listener history should show only commands?
-** TODO [#B] define-visual-macro (via defblock?)
-** TODO [#C] visually indicate clicked send blocks
-** TODO [#B] animate text box cursor and show current line / or show textbox border
-** TODO [#B] union fields to hold union of %methods and %excluded-fields and so on
+** TODO [#A] Fix collision detection (spheres, 
+** TODO [#A] Start using tests and more correctness-helpers
+** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
+** TODO [#A] Read me first: F1, then click on any object for help
+** TODO [#A] visually indicate clicked send blocks
 ** TODO [#A] Write standard blocks library
 *** move
 *** move to 
@@ -86,9 +75,19 @@
 *** script wiki database (like the file system)
 *** [#A] defblock self
 ****  should resources be full-fledged objects? 
-** TODO [#B] pop up shell on M-x
 ** TODO [#A] bring menubar and its menus to front when opening menu
-** TODO [#C] fix can't pull out sublists (list (list (list 1 2 3))) 
+** TODO [#B] multilayer approach with script over top of world
+** TODO [#B] fix listener prompt cursor always resetting to column 0 upon focus
+** TODO [#B] Also show clickable previous commands in listener log
+** TODO [#B] fix ellipsis not displayed on menu items until highlight
+*** use something other than ellipses? like my generic tree triangles
+** TODO [#B] an interactive tutorial project
+** TODO [#B] escape key hide/show terminals/menus
+** TODO [#B] listener history should show only commands?
+** TODO [#B] define-visual-macro (via defblock?)
+** TODO [#B] animate text box cursor and show current line / or show textbox border
+** TODO [#B] union fields to hold union of %methods and %excluded-fields and so on
+** TODO [#B] pop up shell on M-x
 ** TODO ALPHA RELEASE with a few working examples
 
 ** TODO [#B] use a non-rounded box layout and appearance for program elements, with very thin margins?
@@ -100,6 +99,7 @@
 ** TODO [#B] general purpose resizer/scroller decorator thinger
 ** TODO [#B] Allow user to move entries easier via yellow triangle tab
 ** TODO [#B] general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
+** TODO [#C] fix can't pull out sublists (list (list (list 1 2 3))) 
 
 ** TODO Win32 build tips
 

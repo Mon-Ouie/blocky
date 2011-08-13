@@ -171,16 +171,17 @@ two words. This is used as a unit for various layout operations.")
 
 (define-method initialize-events-table-maybe block (&optional force)
   (when (or force 
-	    (null (has-local-value :events self)))
+	    (not (has-local-value :events self)))
     (setf %events (make-hash-table :test 'equal))))
 
 (define-method bind-event-to-closure block (event-name modifiers closure)
-  "Bind the described event to invoke FUNC.
-EVENT-NAME is a string giving the key name; MODIFIERS is a list of
-keywords like :control, :alt, and so on."
+  "Bind the described event to invoke the action of the CLOSURE.
+EVENT-NAME is either a keyword symbol identifying the keyboard key, or
+a string giving the Unicode character to be bound. MODIFIERS is a list
+of keywords like :control, :alt, and so on."
   (assert (find-object closure))
   (initialize-events-table-maybe self)
-  (let ((event (normalize-event (cons event-name modifiers))))
+  (let ((event (make-event event-name modifiers)))
     (setf (gethash event %events)
 	  closure)))
 
@@ -202,10 +203,12 @@ the return value of the function (if any)."
 	    (values nil nil))))))
 
 (defun bind-event-to-method (block event-name modifiers method-name)
-  (bind-event-to-closure block 
-			 (string-upcase event-name) 
-			 modifiers
-			 (new closure method-name block)))
+  (destructuring-bind (key . mods) 
+      (make-event event-name modifiers)
+    (bind-event-to-closure block 
+			   key
+			   mods
+			   (new closure method-name block))))
 
 (define-method bind-event block (event binding)
   (destructuring-bind (name &rest modifiers) event
@@ -229,88 +232,39 @@ the return value of the function (if any)."
 (defun bind-event-to-text-insertion (self key mods text)
   (bind-event-to-closure self key mods 
 			 (new closure :insert self (list text))))
-
+    
 (defvar *lowercase-alpha-characters* "abcdefghijklmnopqrstuvwxyz")
 (defvar *uppercase-alpha-characters* "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 (defvar *numeric-characters* "0123456789")
+(defvar *graphic-characters* "`~!@#$%^&*()_-+={[}]|\:;\"'<,>.?/")
 
 (defparameter *text-qwerty-keybindings*
-  '(("A" (:control) :beginning-of-line)
-    ("E" (:control) :end-of-line)
-    ("F" (:control) :forward-char)
-    ("B" (:control) :backward-char)
-    ("HOME" nil :beginning-of-line)
-    ("END" nil :end-of-line)
-    ("RIGHT" nil :forward-char)
-    ("LEFT" nil :backward-char)
-    ("K" (:control) :clear-line)
-    ("BACKSPACE" nil :backward-delete-char)
-    ("DELETE" nil :delete-char)
-    ("D" (:control) :delete-char)
-    ("RETURN" nil :enter)
-    ("X" (:control) :exit)
-    ("G" (:control) :exit)
-    ("ESCAPE" nil :exit)
-    ("P" (:alt) :backward-history)
-    ("N" (:alt) :forward-history)  
-    ("UP" nil :backward-history)
-    ("DOWN" nil :forward-history)  
-    ("MINUS" nil "-")
-    ("MINUS" (:shift) "_")
-    ("EQUALS" nil "=")
-    ("EQUALS" (:shift) "+")
-    ("3" nil "#")
-    ("SLASH" nil "/")
-    ("SLASH" (:shift) "?")
-    ("BACKSLASH" nil "\\")
-    ("BACKQUOTE" nil "`")
-    ("BACKQUOTE" (:shift) "~")
-    ("1" (:shift) "!")
-    ("PERIOD" nil ".")
-    ("PERIOD" (:shift) ">")
-    ("COMMA" nil ",")
-    ("COMMA" (:shift) "<")
-    ("EQUALS" nil "=")
-    ("EQUALS" (:shift) "+")
-    ("SEMICOLON" nil ";")
-    ("SEMICOLON" (:shift) ":")
-    ("0" (:shift) ")") 
-    ("9" (:shift) "(")
-    ("8" (:shift) "*")
-    ("SPACE" nil " ")
-    ("SLASH" (:shift) "?")
-    ("QUOTE" nil "'")
-    ("QUOTE" (:shift) "\"")))
+  '(("a" (:control) :beginning-of-line)
+    ("e" (:control) :end-of-line)
+    ("f" (:control) :forward-char)
+    ("b" (:control) :backward-char)
+    (:home nil :beginning-of-line)
+    (:end nil :end-of-line)
+    (:right nil :forward-char)
+    (:left nil :backward-char)
+    ("k" (:control) :clear-line)
+    (:backspace nil :backward-delete-char)
+    (:delete nil :delete-char)
+    ("d" (:control) :delete-char)
+    (:return nil :enter)
+    ("x" (:control) :exit)
+    ("g" (:control) :exit)
+    (:escape nil :exit)
+    ("p" (:alt) :backward-history)
+    ("n" (:alt) :forward-history)  
+    (:up nil :backward-history)
+    (:down nil :forward-history)))
 
-(defparameter *text-sweden-keybindings*
-  '(("A" (:CONTROL) :BEGINNING-OF-LINE) 
-    ("E" (:CONTROL) :END-OF-LINE)
-    ("F" (:CONTROL) :FORWARD-CHAR) 
-    ("B" (:CONTROL) :BACKWARD-CHAR)
-    ("HOME" NIL :BEGINNING-OF-LINE)
-    ("END" NIL :END-OF-LINE)
-    ("RIGHT" NIL :FORWARD-CHAR)
-    ("LEFT" NIL :BACKWARD-CHAR)
-    ("K" (:CONTROL) :CLEAR-LINE) 
-    ("BACKSPACE" NIL :BACKWARD-DELETE-CHAR)
-    ("RETURN" NIL :ENTER)
-    ("X" (:CONTROL) :EXIT)
-    ("ESCAPE" NIL :EXIT)
-    ("P" (:ALT) :BACKWARD-HISTORY)
-    ("N" (:ALT) :FORWARD-HISTORY)
-    ("UP" NIL :BACKWARD-HISTORY)
-    ("DOWN" NIL :FORWARD-HISTORY)
-    ("MINUS" NIL "-")
-    ("0" (:SHIFT) "=")
-    ("EQUALS" (:SHIFT) "+")
-    ("COMMA" (:SHIFT) ";")
-    ("PERIOD" (:SHIFT) ":")
-    ("9" (:SHIFT) ")")
-    ("8" (:SHIFT) "(")
-    ("QUOTE" (:SHIFT) "*")
-    ("SPACE" NIL " ")
-    ("QUOTE" NIL "'") 
-    ("2" (:SHIFT) "\"")))
+(defparameter *arrow-key-text-navigation-keybindings*
+  '(("up" nil :previous-line)
+    ("down" nil :next-line)
+    ("left" nil :backward-char)
+    ("right" nil :forward-char))) 
 
 (defun keybinding-event (binding)
   (cons (first binding)
@@ -325,36 +279,15 @@ the return value of the function (if any)."
 		(keybinding-event binding)
 		(keybinding-action binding))))
         
-(defparameter *arrow-key-text-navigation-keybindings*
-  '(("UP" nil :previous-line)
-    ("DOWN" nil :next-line)
-    ("LEFT" nil :backward-char)
-    ("RIGHT" nil :forward-char))) 
-
 (define-method install-text-keybindings block ()
-  ;; install keys that will vary by locale
+  ;; install UI keys that will vary by locale
   (with-fields (keybindings) self
     (setf keybindings (make-hash-table :test 'equal))
-    (dolist (binding (ecase *user-keyboard-layout*
-    		       (:qwerty *text-qwerty-keybindings*)
-    		       (:sweden *text-sweden-keybindings*)))
+    (dolist (binding *text-qwerty-keybindings*)
       (destructuring-bind (key mods result) binding
 	(etypecase result
 	  (keyword (bind-event-to-method self key mods result))
-	  (string (bind-event-to-text-insertion self key mods result)))))
-    ;; install keybindings for self-inserting characters
-    (map nil #'(lambda (char)
-  		 (bind-event-to-text-insertion self (string char) nil
-  					       (string-downcase char)))
-  	 *lowercase-alpha-characters*)
-    (map nil #'(lambda (char)
-  		 (bind-event-to-text-insertion 
-		  self (string char) '(:shift) (string char)))
-  	 *uppercase-alpha-characters*)
-    (map nil #'(lambda (char)
-  		 (bind-event-to-text-insertion self (string char) 
-					  nil (string char)))
-  	 *numeric-characters*)))
+	  (string (bind-event-to-text-insertion self key mods result)))))))
 
 ;;; Serialization hooks
 

@@ -341,12 +341,10 @@ Please set the variable blocky:*event-handler-function*")
       (funcall *event-handler-function* event)))
 
 (defun normalize-event (event)
-;    (:key #'identity :test 'equal)
   "Convert EVENT to a normal form suitable for `equal' comparisons."
-  (let ((name (first event)))
-    (cons (make-keyword name)
-	  (sort (remove-duplicates (delete nil (rest event)))
-		#'string< :key #'symbol-name))))
+  (cons (first event)
+	(sort (remove-duplicates (delete nil (rest event)))
+	      #'string< :key #'symbol-name)))
 
 ;;; Translating SDL input events into BLOCKY event lists
 
@@ -393,31 +391,32 @@ key event symbols."
 	(:SDL-KEY-RESERVED nil)
 	)))
   
-(defun make-key-string (sdl-key)
-  "Translate from :SDL-KEY-X to the string \"X\"."
-  (let ((prefix "SDL-KEY-"))
-    (subseq (symbol-name sdl-key)
-            (length prefix))))
+(defun make-key-symbol (sdl-key)
+  "Translate from :SDL-KEY-X to the symbol :X ."
+  (let ((prefix "SDL-KEY-")
+	(name (symbol-name sdl-key)))
+    (assert (search prefix name))
+    (make-keyword (subseq name (length prefix)))))
 
-(defun make-event (sdl-key sdl-mods)
-  "Create a normalized event out of the SDL data SDL-KEY and SDL-MODS.
-The purpose of putting events in a normal form is to enable their use
-as hash keys."
-;  (message "SDL KEY AND MODS: ~A" (list sdl-key sdl-mods))
+(defun make-event (code modifiers)
+  "Create a normalized event for the key CODE with MODIFIERS pressed.
+The CODE is either a string giving the Unicode character typed, or one
+of the keyword symbols identifying an SDL key. The purpose of putting
+events in a normal form is to enable their use as hashtable keys."
   (normalize-event
-   (cons (if (eq sdl-key :joystick) 
-	     "JOYSTICK"
-	     (if (eq sdl-key :axis) 
-		 "AXIS"
-		 (make-key-string sdl-key)))
-	 (mapcar #'make-key-modifier-symbol
-		 (cond ((keywordp sdl-mods)
-			(list sdl-mods))
-		       ((listp sdl-mods)
-			sdl-mods)
-		       ;; catch apparent lispbuilder-sdl bug?
-		       ((eql 0 sdl-mods)
-			nil))))))
+   (cons (etypecase code
+	   (character (string code))
+	   (string (prog1 code 
+		     (assert (= 1 (length code)))))
+	   (keyword code))
+	 ;; modifiers
+	 (cond ((keywordp modifiers)
+		(list modifiers))
+	       ((listp modifiers)
+		modifiers)
+	       ;; catch apparent lispbuilder-sdl bug?
+	       ((eql 0 modifiers)
+		nil)))))
 
 ;;; Joystick support
 
@@ -461,8 +460,8 @@ as hash keys."
 
 (defun do-joystick-axis-event (axis value state)
   (send-event (make-event :axis 
-			      (list (axis-value-to-direction axis value)
-				    state))))
+			  (list (axis-value-to-direction axis value)
+				state))))
 	
 (defun update-joystick-axis (axis value)
   (let ((state (if (< (abs value) *joystick-dead-zone*)
@@ -803,8 +802,11 @@ display."
       (:joy-axis-motion-event (:axis axis :value value)
 			      (update-joystick-axis axis value))
       (:video-expose-event () (sdl:update-display))
-      (:key-down-event (:key key :mod-key mod)
-		       (let ((event (make-event key mod)))
+      (:key-down-event (:key key :mod-key mod :unicode unicode)
+		       (let ((event (make-event (if (zerop unicode)
+						    (make-key-symbol key)
+						    unicode)
+						mod)))
 			 (if *held-keys*
 			     (hold-event event)
 			     (send-event event))))
@@ -2370,6 +2372,7 @@ of the music."
   (initialize-sound)
   (initialize-database)
   (load-standard-resources)
+  (sdl:enable-unicode)
   (enable-key-repeat 9 1.2))
 
 (defun shut-down ()
