@@ -243,8 +243,7 @@ auto-updated displays."
 (define-method enter textbox ())
 
 (define-method on-event textbox (event)
-  (unless %read-only
-    (super%on-event self event)))
+  (on-text-event self event))
 
 (define-method set-buffer textbox (buffer)
   (setf %buffer buffer))
@@ -560,19 +559,24 @@ auto-updated displays."
 	    (when (plusp (length line))
 	      (draw-string line x0 y0 
 			   :font font :color %foreground-color))
-	    (incf y0 line-height))
-	  ;; draw cursor
-	  ;; TODO fix %point-row to be drawn relative pos in scrolling
-	  (when (null %read-only)
-	    (let* ((current-line (nth point-row buffer))
-		   (cursor-width *textbox-cursor-width*)
-		   (x1 (+ x *textbox-margin*
-			  (font-text-width (subseq current-line 0 %point-column)
-					   font)))
-		   (y1 (+ y *textbox-margin*
-			  (* point-row line-height))))
-	      (draw-cursor-glyph self x1 y1 cursor-width line-height 
-				 :blink t))))))))
+	    (incf y0 line-height)))))))
+
+(define-method draw-focus textbox ()
+  ;; draw cursor
+  ;; TODO fix %point-row to be drawn relative pos in scrolling
+  (with-fields (buffer width parent height) self
+    (with-field-values (x y font point-row) self
+      (when (null %read-only)
+	(let* ((line-height (font-height font))
+	       (current-line (nth point-row buffer))
+	       (cursor-width *textbox-cursor-width*)
+	       (x1 (+ x *textbox-margin*
+		      (font-text-width (subseq current-line 0 %point-column)
+				       font)))
+	       (y1 (+ y *textbox-margin*
+		      (* point-row (font-height font)))))
+	  (draw-cursor-glyph self x1 y1 cursor-width line-height 
+			     :blink t))))))
 
 ;;; The pager switches between different visible groups of blocks
 

@@ -109,7 +109,7 @@ two words. This is used as a unit for various layout operations.")
 
 (defparameter *cursor-color* "magenta")
 
-(defparameter *cursor-blink-color* "yellow")
+(defparameter *cursor-blink-color* "cyan")
 
 (define-prototype block ()
   (cursor-clock :initform *cursor-blink-time*)
@@ -201,28 +201,41 @@ of keywords like :control, :alt, and so on."
 
 (define-method on-event block (event)
   "Look up and invoke the block closure (if any) bound to
-EVENT. Return t if a binding was found, nil otherwise. The second
-value returned is the return value of the function (if any)."
+EVENT. Return the closure if a binding was found, nil otherwise. The
+second value returned is the return value of the evaluated closure (if
+any)."
   (with-fields (events) self
     (when events
       (let ((closure 
 	      ;; unpack event
 	      (destructuring-bind (head &rest modifiers) event
 		;; if head is a cons, check for symbol binding first,
-		;; then for unicode binding
+		;; then for unicode binding. we do this because we'll
+		;; often want to bind keys like ENTER or BACKSPACE
+		;; regardless of their Unicode interpretation 
 		(if (consp head)
-		    (or (gethash (cons (car head)
+		    (or (gethash (cons (car head) ;; try symbol
 				       modifiers)
 				 events)
-			(gethash (cons (cdr head)
+			(gethash (cons (cdr head) ;; try unicode
 				       modifiers)
 				 events))
+		    ;; it's not a cons. 
 		    ;; just search event as-is
 		    (gethash event events)))))
 	(if closure
-	    (prog1 (values t (evaluate closure))
+	    (prog1 (values closure (evaluate closure))
 	      (invalidate-layout self))
 	    (values nil nil))))))
+
+(define-method on-text-event block (event)
+  (with-fields (events) self
+    (destructuring-bind (key . unicode) (first event)
+      (when (or (on-event%%block self (cons key (rest event)))
+		;; treat Unicode characters as self-inserting
+		(when unicode
+		  (send :insert self unicode)))
+	(invalidate-layout self)))))
 
 (defun bind-event-to-method (block event-name modifiers method-name)
   (destructuring-bind (key . mods) 

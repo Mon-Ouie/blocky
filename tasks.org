@@ -2,6 +2,7 @@
 ** TODO [#A] fix missing labels on defblock's child entries
 ** TODO [#A] trigger context menu items with left click, make block with control-click/right-click
 ** TODO [#A] Fix context-menu: method schema not being found when it's inherited
+** TODO [#A] close context menu when loses focus
 ** TODO [#A] easily close menus with X in corner
 *** TODO [#A] universal morphic halo?
 ** TODO [#A] REFACTOR with-target as title-less collapsible tree?

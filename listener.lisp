@@ -75,14 +75,8 @@
   (install-text-keybindings self))
 
 (define-method on-event prompt (event)
-  (with-fields (events) self
-    (destructuring-bind (key . unicode) (first event)
-      (or (on-event%%block self (cons key (rest event)))
-	  ;; treat Unicode characters as self-inserting
-	  (when unicode
-	    (insert self unicode))))))
-;;  (or (on-event%%block self event)
-	
+  (on-text-event self event))
+
 (define-method forward-char prompt ()
   (setf %point (min (1+ %point)
 		     (length %line))))
