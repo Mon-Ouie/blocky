@@ -303,8 +303,8 @@ value returned is the return value of the function (if any)."
         
 (define-method install-text-keybindings block ()
   ;; install UI keys that will vary by locale
-  (with-fields (keybindings) self
-    (setf keybindings (make-hash-table :test 'equal))
+  (with-fields (events) self
+    (setf events (make-hash-table :test 'equal))
     (dolist (binding *text-qwerty-keybindings*)
       (destructuring-bind (key mods result) binding
 	(etypecase result

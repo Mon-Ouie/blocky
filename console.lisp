@@ -407,7 +407,7 @@ bound."
   (let ((head
 	  (etypecase code
 	    (integer (string (code-char code)))
-	    (string (char-code (aref code 0)))
+	    (string code)
 	    (keyword code)
 	    (cons code))))
     (normalize-event
@@ -806,15 +806,14 @@ display."
 			      (update-joystick-axis axis value))
       (:video-expose-event () (sdl:update-display))
       (:key-down-event (:key key :mod-key mod :unicode unicode)
-		       (let ((event (make-event 
-						 (if (not (zerop unicode))
-						     (string (code-char unicode))
-						     (cons 
-						      (make-key-symbol key)
-						      (string (code-char unicode))))
-						 (mapcar #'make-key-modifier-symbol mod))))
+		       (let ((event 
+			       (make-event 
+				(let ((ustring (string (code-char unicode)))
+				      (key2 (make-key-symbol key)))
+				  (cons key2 ustring))
+				(mapcar #'make-key-modifier-symbol mod))))
 			 (if *held-keys*
-			     (hold-event event)
+			     (hold-event event s)
 			     (send-event event))))
       (:key-up-event (:key key :mod-key mod)
 		     ;; is this "held keys" code obsolete? it was useful for CONS control
