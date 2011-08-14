@@ -808,12 +808,11 @@ display."
       (:key-down-event (:key key :mod-key mod :unicode unicode)
 		       (let ((event 
 			       (make-event 
-				(let ((ustring (string (code-char unicode)))
-				      (key2 (make-key-symbol key)))
-				  (cons key2 ustring))
+				(cons (make-key-symbol key)
+				      (string (code-char unicode)))
 				(mapcar #'make-key-modifier-symbol mod))))
 			 (if *held-keys*
-			     (hold-event event s)
+			     (hold-event event)
 			     (send-event event))))
       (:key-up-event (:key key :mod-key mod)
 		     ;; is this "held keys" code obsolete? it was useful for CONS control
@@ -2274,6 +2273,7 @@ of the music."
     (draw-textured-rectangle left top z side side texture :blend blend :vertex-color color)))
 
 (defun draw-solid-circle (x y radius &key color (blend :alpha))
+  (declare (ignore blend))
   (draw-circle x y radius :color color :type :solid))
 
 ;;; Engine status
