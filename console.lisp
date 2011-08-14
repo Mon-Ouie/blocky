@@ -407,7 +407,8 @@ bound."
   (let ((head
 	  (etypecase code
 	    (integer (string (code-char code)))
-	    (string code)
+	    (string (prog1 code
+		      (assert (= 1 (length code)))))
 	    (keyword code)
 	    (cons code))))
     (normalize-event
@@ -808,8 +809,10 @@ display."
       (:key-down-event (:key key :mod-key mod :unicode unicode)
 		       (let ((event 
 			       (make-event 
+				;; translate from SDL format to internal
 				(cons (make-key-symbol key)
-				      (string (code-char unicode)))
+				      (when (not (zerop unicode))
+					(string (code-char unicode))))
 				(mapcar #'make-key-modifier-symbol mod))))
 			 (if *held-keys*
 			     (hold-event event)
