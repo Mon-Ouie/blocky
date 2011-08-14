@@ -400,23 +400,29 @@ key event symbols."
 
 (defun make-event (code modifiers)
   "Create a normalized event for the key CODE with MODIFIERS pressed.
-The CODE is either a string giving the Unicode character typed, or one
-of the keyword symbols identifying an SDL key. The purpose of putting
-events in a normal form is to enable their use as hashtable keys."
-  (normalize-event
-   (cons (etypecase code
-	   (character (string code))
-	   (string (prog1 code 
-		     (assert (= 1 (length code)))))
-	   (keyword code))
-	 ;; modifiers
-	 (cond ((keywordp modifiers)
-		(list modifiers))
-	       ((listp modifiers)
-		modifiers)
-	       ;; catch apparent lispbuilder-sdl bug?
-	       ((eql 0 modifiers)
-		nil)))))
+The argument CODE is either a symbol naming the keyboard key, or a
+string whose first character is the translated Unicode character being
+bound, or finally CODE may be a cons of (KEY . UNICODE). 
+
+The modifier list is sorted, enabling use of event lists as EQUAL
+hashtable keys."
+  (assert code)
+  (let (key unicode)
+    (etypecase code
+      (cons (setf key (car code)
+		  unicode (cdr code)))
+      (string (setf unicode (char-code (aref string 0))))
+      (symbol code))
+    (normalize-event
+     (cons (cons key unicode)
+	   ;; modifiers
+	   (cond ((keywordp modifiers)
+		  (list modifiers))
+		 ((listp modifiers)
+		  modifiers)
+		 ;; catch apparent lispbuilder-sdl bug?
+		 ((eql 0 modifiers)
+		  nil))))))
 
 ;;; Joystick support
 
@@ -803,9 +809,9 @@ display."
 			      (update-joystick-axis axis value))
       (:video-expose-event () (sdl:update-display))
       (:key-down-event (:key key :mod-key mod :unicode unicode)
-		       (let ((event (make-event (if (zerop unicode)
-						    (make-key-symbol key)
-						    (code-char unicode))
+		       (let ((event (make-event (cons 
+						 (make-key-symbol key)
+						 (code-char unicode))
 						mod)))
 			 (if *held-keys*
 			     (hold-event event)
@@ -813,7 +819,7 @@ display."
       (:key-up-event (:key key :mod-key mod)
 		     ;; is this "held keys" code obsolete? it was useful for CONS control
 		     (when *held-keys*
-		       (let* ((event (make-event key mod))
+		       (let* ((event (make-event (cons key nil) mod))
 			      (entry (gethash event *key-table*)))
 			 (if (numberp entry)
 			     (if (plusp entry)

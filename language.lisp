@@ -161,6 +161,8 @@ two words. This is used as a unit for various layout operations.")
 
 ;;; Defining input events for blocks
 
+;; Typical lambdas aren't serializable, so I use these.
+
 (defblock closure method arguments target)
 
 (define-method initialize closure (method target &optional arguments)
