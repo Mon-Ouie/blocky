@@ -208,26 +208,31 @@
   (setf %point 0))
 
 (define-method draw-cursor prompt 
-    (&optional (color "magenta") x-offset y-offset)
+    (&key (x-offset 0) (y-offset 0)
+	  color blink)
   (with-fields (x y width height clock point parent background
 		  prompt-string line) self
-    (draw-box (+ x (or x-offset 0)
-		 (font-text-width (if (<= point (length line))
-					(subseq line 0 point)
-					" ")
-				    *block-font*)
-		 (if x-offset 0 (font-text-width prompt-string *block-font*)))
-	      (+ y (or y-offset 0) *default-prompt-margin*)
-	      *default-cursor-width*
-	      ;; (font-text-width 
-	      ;;  (string (if (< point (length line))
-	      ;; 		   (aref line 
-	      ;; 			 (max (max 0 
-	      ;; 				   (1- (length line)))
-	      ;; 			      point))
-	      ;; 		   #\Space))
-	      (* (font-height *block-font*) 0.8)
-	      :color color)))
+    (draw-cursor-glyph self
+     ;;
+     (+ x (or x-offset 0)
+	(font-text-width (if (<= point (length line))
+			     (subseq line 0 point)
+			     " ")
+			 *block-font*)
+	(if x-offset 0 (font-text-width prompt-string *block-font*)))
+     ;;
+     (+ y (or y-offset 0) *default-prompt-margin*)
+     *default-cursor-width*
+     ;; (font-text-width 
+     ;;  (string (if (< point (length line))
+     ;; 		   (aref line 
+     ;; 			 (max (max 0 
+     ;; 				   (1- (length line)))
+     ;; 			      point))
+     ;; 		   #\Space))
+     (* (font-height *block-font*) 0.8)
+     :color color
+     :blink blink)))
 
 (define-method label-width prompt () 
   (font-text-width %prompt-string *block-font*))
@@ -285,13 +290,6 @@
 					*inactive-prompt-color*
 					(find-color parent :shadow))))))))
 
-(define-method update-cursor-clock prompt ()
-  ;; keep the cursor blinking
-  (with-fields (clock) self
-    (decf clock)
-    (when (> (- 0 *cursor-blink-time*) clock)
-      (setf clock *cursor-blink-time*))))
-
 (define-method draw-indicators prompt (state)
   (with-fields (x y options text-color width parent height line) self
     (let ((label-width (label-width self))
@@ -314,12 +312,10 @@
       ;; draw shaded area for input
       (draw-input-area self :active)
       ;; draw cursor.
-      (update-cursor-clock self)
-      (draw-cursor self (if (minusp cursor-clock)
-			    *cursor-color*
-			    *cursor-blink-color*)
-		   ;; provide x offset
-		   (dash 2 (font-text-width label *block-font*)))
+      (draw-cursor self 
+		   :x-offset
+		   (dash 2 (font-text-width label *block-font*))
+		   :blink t)
       ;; draw highlighted indicators
       (draw-indicators self :active)
       ;; redraw content (but not label)

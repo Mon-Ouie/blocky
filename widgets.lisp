@@ -571,8 +571,8 @@ auto-updated displays."
 					   font)))
 		   (y1 (+ y *textbox-margin*
 			  (* point-row line-height))))
-	      (draw-box x1 y1 cursor-width line-height 
-			      :color %cursor-color))))))))
+	      (draw-cursor-glyph self x1 y1 cursor-width line-height 
+				 :blink t))))))))
 
 ;;; The pager switches between different visible groups of blocks
 

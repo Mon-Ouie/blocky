@@ -105,6 +105,12 @@ two words. This is used as a unit for various layout operations.")
 
 (defvar *text-base-y* nil)
 
+(defparameter *cursor-blink-time* 8)
+
+(defparameter *cursor-color* "magenta")
+
+(defparameter *cursor-blink-color* "yellow")
+
 (define-prototype block ()
   (cursor-clock :initform *cursor-blink-time*)
   ;; general information
@@ -688,16 +694,6 @@ current block. Used for taking a count of all the nodes in a tree."
 
 ;;; Drawing blocks
 
-(defparameter *cursor-blink-time* 8)
-
-(defparameter *cursor-color* "magenta")
-
-(defparameter *cursor-blink-color* "yellow")
-
-(define-method draw-cursor block ((color *cursor-color*) &optional x-offset y-offset)
-  (declare (ignore color x-offset y-offset))
-  nil)
-
 (defparameter *block-colors*
   '(:motion "cornflower blue"
     :system "gray50"
@@ -885,6 +881,30 @@ override all colors."
 
 (define-method draw-socket block (x0 y0 x1 y1)
   (draw-patch self x0 y0 x1 y1 :depressed t :socket t))
+
+;;; Blinking cursor
+
+(define-method update-cursor-clock block ()
+  ;; keep the cursor blinking
+  (with-fields (cursor-clock) self
+    (decf cursor-clock)
+    (when (> (- 0 *cursor-blink-time*) cursor-clock)
+      (setf cursor-clock *cursor-blink-time*))))
+
+(define-method draw-cursor-glyph block 
+    (&optional (x 0) (y 0) (width 2) (height (font-height *block-font*))
+	       &key color blink)
+  (with-fields (cursor-clock) self
+    (update-cursor-clock self)
+    (let ((color2
+	    (if blink
+		(if (minusp cursor-clock)
+		    *cursor-color*
+		    *cursor-blink-color*)
+		*cursor-color*)))
+      (draw-box x y width height :color (or color color2)))))
+
+(define-method draw-cursor block (&rest ignore) nil)
 
 (define-method draw-border block (&optional (color *selection-color*))
   (let ((dash *dash*))
