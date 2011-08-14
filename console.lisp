@@ -407,14 +407,13 @@ bound, or finally CODE may be a cons of (KEY . UNICODE).
 The modifier list is sorted, enabling use of event lists as EQUAL
 hashtable keys."
   (assert code)
-  (let (key unicode)
-    (etypecase code
-      (cons (setf key (car code)
-		  unicode (cdr code)))
-      (string (setf unicode (char-code (aref string 0))))
-      (symbol code))
+  (let ((head
+	  (etypecase code
+	    (cons code)
+	    (string (cons nil (char-code (aref code 0))))
+	    (symbol (cons code 0)))))
     (normalize-event
-     (cons (cons key unicode)
+     (cons head
 	   ;; modifiers
 	   (cond ((keywordp modifiers)
 		  (list modifiers))
