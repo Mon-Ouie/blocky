@@ -1,4 +1,5 @@
 ** TODO Fix funny unicode characters getting used instead of SDL keys for bindings like RET and BACKSPACE
+** TODO Fix context-menu: method schema not being found when it's inherited
 ** TODO [#A] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
 ** TODO [#A] easily close menus with X in corner
 *** TODO [#A] universal morphic halo?

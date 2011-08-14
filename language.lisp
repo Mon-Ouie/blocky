@@ -115,9 +115,9 @@ two words. This is used as a unit for various layout operations.")
   (cursor-clock :initform *cursor-blink-time*)
   ;; general information
   (inputs :initform nil :documentation 
-"List of input (or `child') blocks.")
+	  "List of input (or `child') blocks.")
   (results :initform nil :documentation
-"Computed result values from the input blocks.")
+	   "Computed result values from the input blocks.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (temporary :initform nil)
   (methods :initform nil)
@@ -205,7 +205,20 @@ EVENT. Return t if a binding was found, nil otherwise. The second
 value returned is the return value of the function (if any)."
   (with-fields (events) self
     (when events
-      (let ((closure (gethash event events)))
+      (let ((closure 
+	      ;; unpack event
+	      (destructuring-bind (head &rest modifiers) event
+		;; if head is a cons, check for symbol binding first,
+		;; then for unicode binding
+		(if (consp head)
+		    (or (gethash (cons (car head)
+				       modifiers)
+				 events)
+			(gethash (cons (cdr head)
+				       modifiers)
+				 events))
+		    ;; just search event as-is
+		    (gethash event events)))))
 	(if closure
 	    (prog1 (values t (evaluate closure))
 	      (invalidate-layout self))

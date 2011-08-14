@@ -23,9 +23,9 @@
 ;;; Commentary:
 
 ;; The "console" is the library which provides all BLOCKY system
-;; services. Primitive operations such as opening a window,
-;; displaying bitmaps, drawing lines, playing sounds, file access, and
-;; keyboard/mouse/joystick input are handled here. 
+;; services. Primitive operations such as opening a window, rendering
+;; text, displaying bitmaps, drawing lines, playing sounds, file
+;; access, and device input are all handled here.
 
 ;; Currently it uses the cross-platform SDL library (via
 ;; LISPBUILDER-SDL) as its device driver, and wraps the library for
@@ -402,16 +402,14 @@ key event symbols."
   "Create a normalized event for the key CODE with MODIFIERS pressed.
 The argument CODE is either a symbol naming the keyboard key, or a
 string whose first character is the translated Unicode character being
-bound, or finally CODE may be a cons of (KEY . UNICODE). 
-
-The modifier list is sorted, enabling use of event lists as EQUAL
-hashtable keys."
+bound." 
   (assert code)
   (let ((head
 	  (etypecase code
-	    (cons code)
-	    (string (cons nil (char-code (aref code 0))))
-	    (symbol (cons code 0)))))
+	    (integer (string (code-char code)))
+	    (string (char-code (aref code 0)))
+	    (keyword code)
+	    (cons code))))
     (normalize-event
      (cons head
 	   ;; modifiers
@@ -808,10 +806,13 @@ display."
 			      (update-joystick-axis axis value))
       (:video-expose-event () (sdl:update-display))
       (:key-down-event (:key key :mod-key mod :unicode unicode)
-		       (let ((event (make-event (cons 
-						 (make-key-symbol key)
-						 (code-char unicode))
-						mod)))
+		       (let ((event (make-event 
+						 (if (not (zerop unicode))
+						     (string (code-char unicode))
+						     (cons 
+						      (make-key-symbol key)
+						      (string (code-char unicode))))
+						 (mapcar #'make-key-modifier-symbol mod))))
 			 (if *held-keys*
 			     (hold-event event)
 			     (send-event event))))

@@ -75,14 +75,12 @@
   (install-text-keybindings self))
 
 (define-method on-event prompt (event)
-  (let ((thing (first event))
-	(closure (gethash event %events)))
-    (if closure
-	(prog1 (values t (evaluate closure))
-	  (invalidate-layout self))
-	(when (stringp thing)
-	  ;; treat Unicode characters as self-inserting
-	  (insert self thing)))))
+  (let ((thing (first event)))
+    (if (stringp thing)
+	;; treat Unicode characters as self-inserting
+	(insert self thing)
+	;; fallback 
+	(on-event%%block self event))))
   
 (define-method forward-char prompt ()
   (setf %point (min (1+ %point)
