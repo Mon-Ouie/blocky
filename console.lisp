@@ -399,10 +399,21 @@ key event symbols."
     (make-keyword (subseq name (length prefix)))))
 
 (defun make-event (code modifiers)
-  "Create a normalized event for the key CODE with MODIFIERS pressed.
-The argument CODE is either a symbol naming the keyboard key, or a
-string whose first character is the translated Unicode character being
-bound." 
+  "Create an input event for the key CODE with MODIFIERS pressed.
+The argument CODE may be one of:
+
+   - a keyword symbol naming the keyboard key, such as :RETURN or :SPACE
+     (see also `make-key-symbol'.)
+
+   - a one-character string, whose first character is the translated
+     Unicode character being bound
+
+   - an integer whose value is the unicode character code from SDL
+
+or, 
+
+   - a cons of the form (key unicode) will be passed through
+     unaltered." 
   (assert code)
   (let ((head
 	  (etypecase code
@@ -809,7 +820,7 @@ display."
       (:key-down-event (:key key :mod-key mod :unicode unicode)
 		       (let ((event 
 			       (make-event 
-				;; translate from SDL format to internal
+				;; translate data items from SDL format to internal
 				(cons (make-key-symbol key)
 				      (when (not (zerop unicode))
 					(string (code-char unicode))))

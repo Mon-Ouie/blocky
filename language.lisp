@@ -1,4 +1,4 @@
-;;; language.lisp --- A visual programming language inspired by MIT Scratch
+;;; language.lisp --- core visual language model for Blocky
 
 ;; Copyright (C) 2010, 2011 David O'Toole
 
@@ -137,7 +137,7 @@ two words. This is used as a unit for various layout operations.")
   (label :initform nil)
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
-  (depth :initform 32 :documentation "Cached depth of block.")
+  (depth :initform 32 :documentation "Cached z-depth of block.")
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
   (visible :initform t :documentation "When non-nil, block will be visible.")
   (image :initform nil :documentation "Texture to be displayed, if any.")
@@ -283,10 +283,10 @@ value returned is the return value of the function (if any)."
     (:down nil :forward-history)))
 
 (defparameter *arrow-key-text-navigation-keybindings*
-  '(("up" nil :previous-line)
-    ("down" nil :next-line)
-    ("left" nil :backward-char)
-    ("right" nil :forward-char))) 
+  '((:up nil :previous-line)
+    (:down nil :next-line)
+    (:left nil :backward-char)
+    (:right nil :forward-char))) 
 
 (defun keybinding-event (binding)
   (cons (first binding)
@@ -530,8 +530,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 					  (or (make-block-package)
 					      (find-package "BLOCKY")))))
 		     (arg-blocks (mapcar #'make-block arguments)))
-		 ;; (message "arg-blocks ~S" (list (length arg-blocks)
-		 ;; 				(mapcar #'find-uuid arg-blocks)))
+		 (message "arg-blocks ~S" (list (length arg-blocks)
+		 				(mapcar #'find-uuid arg-blocks)))
 		 (apply #'clone prototype arg-blocks))))
 	   (list-block (items)
 	     (apply #'clone "BLOCKY:LIST" (mapcar #'make-block items))))
@@ -1225,10 +1225,10 @@ non-nil to indicate that the block was accepted, nil otherwise."
 	  (draw each)))))
 
 (define-method initialize list (&rest blocks)
-  (when blocks 
-    (every #'verify blocks))
-  (setf %inputs blocks)
-  (super%initialize self))
+  (apply #'super%initialize self blocks)
+  ;; allow them to be freely removed
+  (dolist (each %inputs)
+    (unpin each)))
 
 (defmacro deflist (name &rest body)
   `(defblock (,name :super :list) ,@body))

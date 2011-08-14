@@ -452,13 +452,10 @@
 
 (define-method hit entry (x y)
   (when (super%hit self x y)
-    ;; let shell grab containing block
-    (if %pinned 
-	%parent
-	;; not pinned, so just allow clicking data area
-	(if (< x (+ %x (label-width self)))
-	    (prog1 %parent (assert %parent))
-	    self))))
+    ;; always allow clicking data area
+    (if (< x (+ %x (label-width self)))
+	(prog1 %parent (assert %parent))
+	self)))
 
 ;;; Easily defining new entry blocks
 
