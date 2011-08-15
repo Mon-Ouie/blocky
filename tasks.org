@@ -1,3 +1,4 @@
+** TODO add flatrect layout style
 ** TODO core syntax example project
 *** TODO objects
 *** TODO literals (i.e. entries)
@@ -5,11 +6,10 @@
 **** TODO put verb first as in Lisp?
 *** TODO printers, printing whatever value into an Expression entry
 *** TODO define-visual-macro
-
 ** TODO color code syntax, not semantics?
 ** TODO GUI for closures
 
-** TODO [#A] REFACTOR with-target as title-less collapsible tree?
+** TODO [#A] With-target revisions
 *** TODO [#A] Fix can't pull out target
 *** TODO [#A] defblock with-target : schema has socket for message target, socket for list body
 *** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
