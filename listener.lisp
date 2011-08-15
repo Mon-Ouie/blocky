@@ -555,7 +555,7 @@
 (define-prototype listener-prompt (:parent prompt)
   (operation :initform :prompt)
   (background :initform nil)
-  (methods :initform '(:evaluate :debug-on-error :print-on-error))
+  (methods :initform '(:debug-on-error :print-on-error))
   output)
 
 (define-method debug-on-error listener-prompt ()

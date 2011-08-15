@@ -1,15 +1,30 @@
-** TODO [#A] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
-** TODO [#A] fix missing labels on defblock's child entries
-** TODO [#A] trigger context menu items with left click, make block with control-click/right-click
-** TODO [#A] Fix context-menu: method schema not being found when it's inherited
-** TODO [#A] close context menu when loses focus
-** TODO [#A] easily close menus with X in corner
-*** TODO [#A] universal morphic halo?
+** TODO core syntax example project
+*** TODO objects
+*** TODO literals (i.e. entries)
+*** TODO messages, i.e. with-target, change name to "send-to"
+**** TODO put verb first as in Lisp?
+*** TODO printers, printing whatever value into an Expression entry
+*** TODO define-visual-macro
+
+** TODO color code syntax, not semantics?
+** TODO GUI for closures
+
 ** TODO [#A] REFACTOR with-target as title-less collapsible tree?
-** TODO [#A] defblock with-target : schema has socket for message target, socket for list body
+*** TODO [#A] Fix can't pull out target
+*** TODO [#A] defblock with-target : schema has socket for message target, socket for list body
 *** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
 *** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
 *** TODO [#A] dialog boxes for project save/load!
+** TODO PRINT blocks
+
+** TODO fix entry labels not being drawn
+** TODO [#A] Fix context-menu: method schema not being found when it's inherited
+** TODO [#A] trigger context menu items with left click, make block with control-click/right-click
+** TODO [#A] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
+** TODO [#A] fix missing labels on defblock's child entries
+** TODO [#A] close context menu when loses focus
+** TODO [#A] easily close menus with X in corner
+*** TODO [#A] universal morphic halo?
 ** TODO [#A] Fix collision detection (spheres, 
 ** TODO [#A] Start using tests and more correctness-helpers
 ** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
