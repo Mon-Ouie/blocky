@@ -20,8 +20,8 @@
 	       :lispbuilder-sdl-ttf
 	       :lispbuilder-sdl-mixer
 	       :uuid
-	       :quicklisp
-	       :buildapp
+	       ;; :quicklisp
+	       ;; :buildapp
 	       :cl-fad
 	       :cl-opengl)
   :components ((:file "blocky")
