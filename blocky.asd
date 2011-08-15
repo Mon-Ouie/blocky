@@ -9,8 +9,8 @@
 (asdf:defsystem blocky
   :name "blocky"
   :version "0.98"
-  :maintainer "David T O'Toole <dto1138@gmail.com>"
-  :author "David T O'Toole <dto1138@gmail.com>"
+  :maintainer "David T O'Toole <dto@ioforms.org>"
+  :author "David T O'Toole <dto@ioforms.org>"
   :license "General Public License (GPL) Version 3"
   :description "BLOCKY is a visual programming language for Common Lisp."
   :serial t
