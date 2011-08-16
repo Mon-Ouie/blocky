@@ -27,11 +27,11 @@
     `(progn 
        (defblock (,name :super ,super)
 	 (category :initform ,category)
-	 (inputs :initform ,inputs)
+	 (inputs :initform ,inputs))
        (define-method evaluate ,name ()
 	 (eval (recompile self)))
        (define-method recompile ,name ()
-	 ,@body))))
+	 ,@body)))
 
 ;;; prevent evaluation
 
