@@ -1252,6 +1252,14 @@ non-nil to indicate that the block was accepted, nil otherwise."
   "Replace this empty socket with OTHER-BLOCK."
   (accept %parent other-block))
 
+;;; Sending to a particular target
+
+(defvar *target* nil)
+
+(defmacro with-target (target &rest body)
+  `(let ((*target* ,target))
+     ,@body))
+
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 
 (defblock send prototype method schema target label)

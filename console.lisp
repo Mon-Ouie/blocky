@@ -1254,17 +1254,17 @@ object save directory. See also `save-object-resource')."
 	      (message "No default startup function for: ~S. Continuing.." (string-upcase (symbol-name start-function)))))
 	(message "Warning: No project package defined. Continuing..."))))
 
-(defun publish-project-as-application (&key (output-file "output.io")
-					    project require)
-  (assert (stringp project))
-  (buildapp::main (list "sbcl"
-			"--asdf-path"
-			(sb-ext:native-namestring
-			 (asdf:system-relative-pathname :blocky "./"))
-		       "--load-system" "blocky"
-		       "--eval" (format nil 
-					"(progn (map nil #'ql:quickload (list :lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad :buildapp :uuid)) (blocky:play \"~A\"))" project)
-		       "--output" (sb-ext:native-namestring (merge-pathnames output-file)))))
+;; (defun publish-project-as-application (&key (output-file "output.io")
+;; 					    project require)
+;;   (assert (stringp project))
+;;   (buildapp::main (list "sbcl"
+;; 			"--asdf-path"
+;; 			(sb-ext:native-namestring
+;; 			 (asdf:system-relative-pathname :blocky "./"))
+;; 		       "--load-system" "blocky"
+;; 		       "--eval" (format nil 
+;; 					"(progn (map nil #'ql:quickload (list :lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad :buildapp :uuid)) (blocky:play \"~A\"))" project)
+;; 		       "--output" (sb-ext:native-namestring (merge-pathnames output-file)))))
 
 (defun directory-is-project-p (dir)
   "Test whether a directory has the .blocky suffix."
