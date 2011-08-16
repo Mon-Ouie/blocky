@@ -20,16 +20,25 @@
 
 ;;; Code:
 
+;; This file implements the overall mouse and keyboard interface to
+;; Blocky programming. 
+
 (in-package :blocky)
 
-;;; Trash can
+(defvar *shell* nil
+  "When non-nil, the UUID of the currently active shell object.")
 
-(defvar *shell* nil)
-
-(defblock trash :category :system)
+(defblock trash 
+  :category :system 
+  :methods '(:empty))
 
 (define-method evaluate trash ())
+
 (define-method update trash ())
+
+(define-method empty trash ()
+  (setf %inputs nil))
+
 (define-method accept trash (item)
   (push item %inputs))
 
@@ -131,7 +140,7 @@
     (when (some #'is-expanded inputs)
       (mapc #'unexpand %inputs))))
 
-(define-method click menubar (x y)
+(define-method on-click menubar (x y)
   (declare (ignore x y))
   (close-menus self))
 
@@ -147,39 +156,46 @@
 
 (defblock shell
   (selection :initform ()
-  	     :documentation "Subset of selected blocks.")
-  (script :initform nil)
+  	     :documentation "List (subset) of selected blocks.")
+  (script :initform nil 
+	  :documentation "The script object currently open in the shell.")
   (default-events :initform
 		  '(((:tab) :tab)
 		    ((:tab :control) :backtab)
 		    ((:x :alt) :command-line)
 		    ((:g :control) :escape)
 		    ((:escape) :escape)))
-  menubar 
-  (excluded-fields :initform '(:menubar))
+  (menubar :initform nil
+	   :documentation "The menubar widget.")
+  (excluded-fields :initform '(:menubar)
+		   :documentation "Don't serialize the menu bar.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
   (hover :initform nil
 	 :documentation "Block being hovered over, if any.")
   (highlight :initform nil
 	     :documentation "Block being highlighted, if any.")
-  (ghost :initform (new block))
-  (buffer :initform nil)
-  (focused-block :initform nil)
+  (ghost :initform (new block)
+	 :documentation "Dummy block to hold original place of currently dragged block onscreen.")
+  (focused-block :initform nil
+		 :documentation "Block having current input focus, if any.")
   (click-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at moment of click.")
+  (click-start-block :initform nil
+		     :documentation "The block indicated at the beginning of a drag.")
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
-	       :documentation "A cons (X . Y) of mouse click location on dragged block.")
+	       :documentation "A cons (X . Y) of relative mouse click location on dragged block.")
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
 (define-method after-deserialize shell ()
-  (with-script %script
-    (setf %menubar (make-menubar))))
+  (setf *shell* (find-uuid self))
+  (setf %menubar (make-menubar)))
 
 (define-method layout shell ()
+  ;; take over the entire GL window
   (with-script %script
     (setf %x 0 %y 0 
 	  %width *screen-width* 
@@ -188,26 +204,27 @@
       (setf x %x y %y
 	    width %width
 	    height %height))
+    ;; run menu bar across the top
     (layout %menubar)))
 
 (define-method update shell ()
+  ;; run script blocks every frame
   (with-script %script
     (update %script)))
 
 (defun make-menubar ()
   (find-uuid 
    (new menubar 
+	;; see also system.lisp
 	(make-menu *system-menu*
 		   :target *system*))))
 
 (define-method initialize shell (script)
+  (assert (blockyp script))
   (super%initialize self)
   (setf *shell* (find-uuid self))
   (setf %script (find-uuid script))
-  (assert script)
-  (setf %menubar (make-menubar))
-  (register-uuid self)
-  (message "Opening shell..."))
+  (setf %menubar (make-menubar)))
 
 (define-method script-blocks shell ()
   (field-value :inputs %script))
@@ -244,9 +261,13 @@
 (define-method on-event shell (event)
   (with-script %script
     (or (super%on-event self event)
-	(with-field-values (selection menubar script) self
+	(with-field-values (focused-block selection menubar script) self
 	  (let ((block
-		    (cond 
+		    (cond
+		      ;; we're focused. send the event there
+		      (focused-block
+		       (prog1 focused-block
+			 (assert (blockyp focused-block))))
 		      ;; only one block selected. use that.
 		      ((= 1 (length selection))
 		       (first selection))
@@ -258,27 +279,21 @@
 	    (when block 
 	      (on-event block event)))))))
 
+;;; Hit testing
+
 (define-method hit shell (x y)
   ;; return self no matter where mouse is, so that we get to process
   ;; all the events.
   (declare (ignore x y))
   self)
 
-;; (define-method hit-script shell (x y) 
-;; "Recursively search the blocks in this script for a block intersecting
-;; the point X,Y. We have to search the top-level blocks starting at the
-;; end of `%INPUTS' and going backward, because the blocks are drawn in
-;; list order (i.e. the topmost blocks for mousing-over are at the end of
-;; the list.) The return value is the block found, or nil if none is
-;; found."
-;;   (with-fields (script) self
-;;     (with-fields (inputs) script
-;;       (with-script script 
-;; 	(flet ((try (block)
-;; 		 (when block (hit block x y))))
-;; 	  (try (find-if #'try inputs :from-end t)))))))
-
 (define-method hit-script shell (x y)
+  "Recursively search the blocks in this script for a block
+intersecting the point X,Y. We have to search the top-level blocks
+starting at the end of `%INPUTS' and going backward, because the
+blocks are drawn in list order (i.e. the topmost blocks for
+mousing-over are at the end of the list.) The return value is the
+block found, or nil if none is found."
   (with-script %script 
     (labels ((try (b)
 	       (when b
@@ -295,7 +310,7 @@
 (define-method draw shell ()
   (with-script %script
     (layout self)
-    (with-fields (script buffer drag-start selection inputs drag
+    (with-fields (script drag-start selection inputs drag
 			 focused-block highlight menubar
 			 modified hover ghost prompt)
 	self
@@ -318,6 +333,7 @@
 		     (draw-hover hover))
 		   (draw drag))
 	    (when focused-block
+	      (assert (blockyp focused-block))
 	      (draw-focus focused-block)))
 	(draw menubar)
 	(when highlight
@@ -325,34 +341,23 @@
   
 (defparameter *minimum-drag-distance* 7)
   
-(define-method escape shell ()
-  (with-script %script
-    (when %menubar (close-menus %menubar))
-    (setf %focused-block nil)
-    (setf %selection nil)))
-  
 (define-method focus-on shell (block)
   ;; possible to pass nil
-  (with-script %script
-    (setf %focused-block 
-	  (when block (find-uuid block)))
-    (when block (on-focus block))))
-
-(define-method tab shell (&optional backward)
-  (with-fields (focused-block) self
-    (when focused-block
-      (with-fields (parent) focused-block
-	(let ((index (position-within-parent focused-block)))
-	  (when (numberp index)
-	    (focus-on self
-		      (with-fields (inputs) parent
-			(nth (mod (+ index
-				     (if backward -1 1))
-				  (length inputs))
-			     inputs)))))))))
-
-(define-method backtab shell ()
-  (tab self :backward))
+  (with-fields (script focused-block self) self
+    (with-script script
+      ;; there's going to be a new focused block. 
+      ;; tell the current one it's no longer focused.
+      (when focused-block
+	(on-lose-focus focused-block))
+      ;; now set up the new focus (possibly nil)
+      (setf focused-block 
+	    (when block (find-uuid block)))
+      ;; sanity check
+      (assert (or (null focused-block)
+		  (blockyp focused-block)))
+      ;; now tell the block it has focus
+      (when block 
+	(on-focus block)))))
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag inputs script drag-start ghost drag-offset) self
@@ -380,34 +385,16 @@
 (define-method drag-maybe shell (x y)
   ;; require some actual mouse movement to initiate a drag
   (with-script %script
-    (with-fields (click-start focused-block) self
+    (with-fields (focused-block click-start click-start-block) self
       (when click-start
 	(destructuring-bind (x1 . y1) click-start
-	  (when (and (> (distance x y x1 y1)
+	  (when (and focused-block click-start-block
+		     (> (distance x y x1 y1)
 			*minimum-drag-distance*)
-		     (not (is-pinned focused-block)))
+		     (not (is-pinned click-start-block)))
+	    (begin-drag self x y click-start-block)
 	    (setf click-start nil)
-	    (begin-drag self x y focused-block)))))))
-
-(define-method mouse-down shell (x y &optional button)
-  (with-fields (click-start focused-block) self
-    (when focused-block
-      ;; there's going to be a new focused block. 
-      ;; tell the current one it's no longer focused.
-      (on-lose-focus focused-block))
-    ;; now find what we're touching
-    (let ((block (hit-script self x y)))
-      (if (null block)
-	  (focus-on self nil)
-	  (case button
-	    (1  (progn 
-		  (focus-on self block)
-		  (setf click-start (cons x y))))
-	    (3 (let ((menu (context-menu block)))
-		 (when menu 
-		   (with-script %script
-		     (add-block *script* menu x y)))))
-	    (otherwise (focus-on self nil)))))))
+	    (setf click-start-block nil)))))))
 
 (define-method mouse-move shell (mouse-x mouse-y)
   (with-fields (inputs hover highlight click-start drag-offset
@@ -415,23 +402,43 @@
     (setf hover nil)
     (drag-maybe self mouse-x mouse-y)
     (if drag
+	;; we're in a mouse drag.
 	(destructuring-bind (ox . oy) drag-offset
 	  (let ((target-x (- mouse-x ox))
 		(target-y (- mouse-y oy)))
 	    (let ((candidate (hit-script self target-x target-y)))
 	      ;; obviously we dont want to plug a block into itself.
-	      (setf hover (if (object-eq drag candidate) nil (find-uuid candidate)))
+	      (setf hover (if (object-eq drag candidate) nil
+			      (find-uuid candidate)))
+	      ;; keep moving along with the mouse
 	      (move-to drag target-x target-y))))
+	;; not dragging, just moving
 	(progn
 	  (setf highlight (find-uuid (hit-script self mouse-x mouse-y)))
 	  (when (null highlight)
 	    (when %menubar
 	      (with-script %script (close-menus %menubar))))))))
 
+(define-method mouse-down shell (x y &optional button)
+  (declare (ignore button))
+  (with-fields (click-start click-start-block focused-block) self
+    ;; now find what we're touching
+    (assert (or (null focused-block)
+		(blockyp focused-block)))
+    (let ((block (hit-script self x y)))
+      (if (null block)
+	  (focus-on self nil)
+	  (progn 
+	    (setf click-start (cons x y))
+	    (setf click-start-block (find-uuid block))
+	    ;; now focus; this might cause another block to be
+	    ;; focused, as in the case of the Listener
+	    (focus-on self block))))))
+
 (define-method mouse-up shell (x y &optional button)
   (with-fields 
-      (drag-offset drag-start hover script selection drag
-	      click-start focused-block modified) self
+      (drag-offset drag-start hover script selection drag click-start
+	      click-start-block focused-block modified) self
     (if drag
 	;; we're dragging
 	(let ((drag-parent (get-parent drag)))
@@ -451,19 +458,47 @@
 	  (select self drag)
 	  (setf focused-block (find-uuid drag)))
 	;; (setf hover nil)
-	;; ok, we're not dragging.
-	;; instead it was a click.
+	;;
+	;; we're clicking instead of dragging
 	(progn
 	  (setf selection nil)
 	  (when focused-block
 	    (select self focused-block)
 	    (with-script script 
-	      (click focused-block x y)
+	      (if 
+	       ;; right click and control click are interpreted the same
+	       (or (holding-control)
+		   (= button 3))
+	       (on-alternate-click focused-block x y)
+	       (on-click focused-block x y))
 	      (select self focused-block))
 	    (setf click-start nil))))
     (setf drag-start nil
 	  drag-offset nil
 	  drag nil)
     (invalidate-layout script)))
+
+(define-method tab shell (&optional backward)
+  (with-fields (focused-block) self
+    (when focused-block
+      (assert (blockyp %focused-block))
+      (with-fields (parent) focused-block
+	(let ((index (position-within-parent focused-block)))
+	  (when (numberp index)
+	    (focus-on self
+		      (with-fields (inputs) parent
+			(nth (mod (+ index
+				     (if backward -1 1))
+				  (length inputs))
+			     inputs)))))))))
+
+(define-method backtab shell ()
+  (tab self :backward))
+  
+(define-method escape shell ()
+  (with-script %script
+    (when %menubar (close-menus %menubar))
+    (setf %focused-block nil)
+    (setf %selection nil)))
 
 ;;; shell.lisp ends here

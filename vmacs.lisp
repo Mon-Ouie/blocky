@@ -20,7 +20,18 @@
 
 (in-package :blocky)
 
-;;; This file is a sort of visual wrapper around prototypes.lisp.
+(defmacro defmacro% ((name &key (inputs nil)
+				(super :block)
+				(category :structure))
+		     &rest body)
+    `(progn 
+       (defblock (,name :super ,super)
+	 (category :initform ,category)
+	 (inputs :initform ,inputs)
+       (define-method evaluate ,name ()
+	 (eval (recompile self)))
+       (define-method recompile ,name ()
+	 ,@body))))
 
 ;;; prevent evaluation
 
@@ -29,26 +40,18 @@
 
 (define-method evaluate quote () self)
 
-;;; fields
+(define-method recompile quote () 
+  (list 'quote (mapcar #'recompile %inputs)))
 
-(defblock field
-  :category :variables
-  :inputs (list (new string :label "name")
-		(new entry :label "value"))) ;; TODO: allow any block as a value
+;;; Sending a group of messages to a particular target
 
-(define-method evaluate field ()
-  (destructuring-bind (name value) 
-      (mapcar #'recompile %inputs)
-    (list name :initform value)))
-
-(define-method draw field ()
-  (with-fields (x y width height inputs) self
-    (draw-patch self x y (+ x width) (+ y height))
-    (mapc #'draw inputs)))
-
-(define-method accept field (thing)
-  (declare (ignore thing))
-  nil)
+(defmacro% (with-target 
+	       :inputs (list (new socket)
+			     (new list)))
+	   (destructuring-bind (target body) 
+	       (mapcar #'recompile %inputs)
+	     `(with-target ,target
+		,body)))
 
 ;;; defblock
 
@@ -119,5 +122,26 @@
 
 (define-method evaluate define-method ()
   (eval (recompile self)))
+
+;;; fields
+
+(defblock field
+  :category :variables
+  :inputs (list (new string :label "name")
+		(new socket :label "value"))) ;; TODO: allow any block as a value
+
+(define-method evaluate field ()
+  (destructuring-bind (name value) 
+      (mapcar #'recompile %inputs)
+    (list name :initform value)))
+
+(define-method draw field ()
+  (with-fields (x y width height inputs) self
+    (draw-patch self x y (+ x width) (+ y height))
+    (mapc #'draw inputs)))
+
+(define-method accept field (thing)
+  (declare (ignore thing))
+  nil)
 
 ;;; vmacs.lisp ends here

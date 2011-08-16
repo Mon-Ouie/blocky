@@ -113,17 +113,20 @@
   (shell :initform nil)
   (running :initform nil))
 
+(defun shell ()
+  (symbol-value '*shell*))
+
 (define-method create-trash system ()
-  (add-block *shell* (new trash) 100 100))
+  (add-block (shell) (new trash) 100 100))
 
 (define-method create-textbox system ()
-  (add-block *shell* (new textbox) 100 100))
+  (add-block (shell) (new textbox) 100 100))
 
 (define-method initialize system ()
   (setf *system* (find-uuid self)))
 
 (define-method create-listener system ()
-  (add-block *shell* (new listener) 100 100))
+  (add-block (shell) (new listener) 100 100))
 
 (define-method create-project system ())
 
@@ -143,6 +146,9 @@
 (define-method quit-blocky system ()
   ;; TODO destroy textures
   (blocky:quit t))
+
+;;; Sending a series of messages to the sender
+
 
 ;; (define-method get-blocks system ()
 ;;   %children)

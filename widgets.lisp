@@ -238,11 +238,12 @@ auto-updated displays."
   (auto-fit :initform t)
   (visible :initform t))
 
+(define-method accept textbox (other))
+
 (define-method enter textbox ())
 
 (define-method on-event textbox (event)
-  (unless %read-only
-    (super%on-event self event)))
+  (on-text-event self event))
 
 (define-method set-buffer textbox (buffer)
   (setf %buffer buffer))
@@ -327,47 +328,47 @@ auto-updated displays."
 ;;   modifiers
 ;;   (new closure :insert textbox (list insertion))))
 
-(define-method install-text-keybindings block ()
-  ;; install basic keybindings
-  (bind-event-to-method self "A" '(:control) :beginning-of-line)
-  (bind-event-to-method self "E" '(:control) :end-of-line)
-  (bind-event-to-method self "HOME" nil :beginning-of-line)
-  (bind-event-to-method self "END" nil :end-of-line)
-  (bind-event-to-method self "N" '(:control) :next-line)
-  (bind-event-to-method self "P" '(:control) :previous-line)
-  (bind-event-to-method self "F" '(:control) :forward-char)
-  (bind-event-to-method self "B" '(:control) :backward-char)
-  (bind-event-to-method self "DOWN" nil :next-line)
-  (bind-event-to-method self "UP" nil :previous-line)
-  (bind-event-to-method self "RIGHT" nil :forward-char)
-  (bind-event-to-method self "LEFT" nil :backward-char)
-  (bind-event-to-method self "K" '(:control) :clear)
-  (bind-event-to-method self "BACKSPACE" nil :backward-delete-char)
-  (bind-event-to-method self "DELETE" nil :delete-char)
-  (bind-event-to-method self "RETURN" nil :newline)
-  ;; install keybindings for self-inserting characters
-  (map nil #'(lambda (char)
-	       (bind-event-to-text-insertion self (string char) nil
-					     (string-downcase char)))
-       *lowercase-alpha-characters*)
-  (map nil #'(lambda (char)
-	       (bind-event-to-text-insertion self (string char) '(:shift) (string char)))
-       *uppercase-alpha-characters*)
-  (map nil #'(lambda (char)
-	       (bind-event-to-text-insertion self (string char) nil (string char)))
-       *numeric-characters*)
-  ;; other characters
-  (bind-event-to-text-insertion self "EQUALS" nil "=")
-  (bind-event-to-text-insertion self "MINUS" nil "-")
-  (bind-event-to-text-insertion self "EQUALS" '(:control) "+")
-  (bind-event-to-text-insertion self "SEMICOLON" nil ";")
-  (bind-event-to-text-insertion self "SEMICOLON" '(:shift) ":")
-  (bind-event-to-text-insertion self "0" '(:shift) ")")
-  (bind-event-to-text-insertion self "9" '(:shift) "(")
-  (bind-event-to-text-insertion self "8" '(:shift) "*")
-  (bind-event-to-text-insertion self "SPACE" nil " ")
-  (bind-event-to-text-insertion self "QUOTE" nil "'")
-  (bind-event-to-text-insertion self "QUOTE" '(:shift) "\""))
+;; (define-method install-text-keybindings block ()
+;;   ;; install basic keybindings
+;;   (bind-event-to-method self "A" '(:control) :beginning-of-line)
+;;   (bind-event-to-method self "E" '(:control) :end-of-line)
+;;   (bind-event-to-method self "HOME nil :beginning-of-line)
+;;   (bind-event-to-method self "END nil :end-of-line)
+;;   (bind-event-to-method self "N" '(:control) :next-line)
+;;   (bind-event-to-method self "P" '(:control) :previous-line)
+;;   (bind-event-to-method self "F" '(:control) :forward-char)
+;;   (bind-event-to-method self "B" '(:control) :backward-char)
+;;   (bind-event-to-method self "DOWN nil :next-line)
+;;   (bind-event-to-method self "UP" nil :previous-line)
+;;   (bind-event-to-method self "RIGHT nil :forward-char)
+;;   (bind-event-to-method self "LEFT" nil :backward-char)
+;;   (bind-event-to-method self "K" '(:control) :clear)
+;;   (bind-event-to-method self "BACKSPACE" nil :backward-delete-char)
+;;   (bind-event-to-method self "DELETE" nil :delete-char)
+;;   (bind-event-to-method self "RETURN" nil :newline)
+;;   ;; install keybindings for self-inserting characters
+;;   (map nil #'(lambda (char)
+;; 	       (bind-event-to-text-insertion self (string char) nil
+;; 					     (string-downcase char)))
+;;        *lowercase-alpha-characters*)
+;;   (map nil #'(lambda (char)
+;; 	       (bind-event-to-text-insertion self (string char) '(:shift) (string char)))
+;;        *uppercase-alpha-characters*)
+;;   (map nil #'(lambda (char)
+;; 	       (bind-event-to-text-insertion self (string char) nil (string char)))
+;;        *numeric-characters*)
+;;   ;; other characters
+;;   (bind-event-to-text-insertion self "EQUALS" nil "=")
+;;   (bind-event-to-text-insertion self "MINUS" nil "-")
+;;   (bind-event-to-text-insertion self "EQUALS" '(:control) "+")
+;;   (bind-event-to-text-insertion self "SEMICOLON" nil ";")
+;;   (bind-event-to-text-insertion self "SEMICOLON" '(:shift) ":")
+;;   (bind-event-to-text-insertion self "0" '(:shift) ")")
+;;   (bind-event-to-text-insertion self "9" '(:shift) "(")
+;;   (bind-event-to-text-insertion self "8" '(:shift) "*")
+;;   (bind-event-to-text-insertion self "SPACE" nil " ")
+;;   (bind-event-to-text-insertion self "QUOTE" nil "'")
+;;   (bind-event-to-text-insertion self "QUOTE" '(:shift) "\""))
 
 (define-method initialize textbox (&rest buffer)
   (super%initialize self)
@@ -558,19 +559,24 @@ auto-updated displays."
 	    (when (plusp (length line))
 	      (draw-string line x0 y0 
 			   :font font :color %foreground-color))
-	    (incf y0 line-height))
-	  ;; draw cursor
-	  ;; TODO fix %point-row to be drawn relative pos in scrolling
-	  (when (null %read-only)
-	    (let* ((current-line (nth point-row buffer))
-		   (cursor-width *textbox-cursor-width*)
-		   (x1 (+ x *textbox-margin*
-			  (font-text-width (subseq current-line 0 %point-column)
-					   font)))
-		   (y1 (+ y *textbox-margin*
-			  (* point-row line-height))))
-	      (draw-box x1 y1 cursor-width line-height 
-			      :color %cursor-color))))))))
+	    (incf y0 line-height)))))))
+
+(define-method draw-focus textbox ()
+  ;; draw cursor
+  ;; TODO fix %point-row to be drawn relative pos in scrolling
+  (with-fields (buffer width parent height) self
+    (with-field-values (x y font point-row) self
+      (when (null %read-only)
+	(let* ((line-height (font-height font))
+	       (current-line (nth point-row buffer))
+	       (cursor-width *textbox-cursor-width*)
+	       (x1 (+ x *textbox-margin*
+		      (font-text-width (subseq current-line 0 %point-column)
+				       font)))
+	       (y1 (+ y *textbox-margin*
+		      (* point-row (font-height font)))))
+	  (draw-cursor-glyph self x1 y1 cursor-width line-height 
+			     :blink t))))))
 
 ;;; The pager switches between different visible groups of blocks
 

@@ -1,4 +1,4 @@
-;;; language.lisp --- A visual programming language inspired by MIT Scratch
+;;; language.lisp --- core visual language model for Blocky
 
 ;; Copyright (C) 2010, 2011 David O'Toole
 
@@ -103,20 +103,21 @@ two words. This is used as a unit for various layout operations.")
 (defvar *pseudo-pixel-size* 1.0
   "Size in pixels of a pseudo-pixel.")
 
-(defvar *target* nil)
-
-(defmacro with-target (target &body body)
-  `(let ((*target* ,target))
-     ,@body))
-
 (defvar *text-base-y* nil)
 
+(defparameter *cursor-blink-time* 8)
+
+(defparameter *cursor-color* "magenta")
+
+(defparameter *cursor-blink-color* "cyan")
+
 (define-prototype block ()
+  (cursor-clock :initform *cursor-blink-time*)
   ;; general information
   (inputs :initform nil :documentation 
-"List of input (or `child') blocks.")
+	  "List of input (or `child') blocks.")
   (results :initform nil :documentation
-"Computed result values from the input blocks.")
+	   "Computed result values from the input blocks.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (temporary :initform nil)
   (methods :initform nil)
@@ -133,9 +134,10 @@ two words. This is used as a unit for various layout operations.")
   (scale-y :initform 1)
   (blend :initform :alpha)
   (opacity :initform 1.0)
+  (label :initform nil)
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
-  (depth :initform 32 :documentation "Cached depth of block.")
+  (depth :initform 32 :documentation "Cached z-depth of block.")
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
   (visible :initform t :documentation "When non-nil, block will be visible.")
   (image :initform nil :documentation "Texture to be displayed, if any.")
@@ -159,10 +161,14 @@ two words. This is used as a unit for various layout operations.")
 
 ;;; Defining input events for blocks
 
+;; Typical lambdas aren't serializable, so I use these.
+
 (defblock closure method arguments target)
 
 (define-method initialize closure (method target &optional arguments)
-  (assert (and method (find-uuid target)))
+  (assert (and method 
+	       (listp arguments)
+	       (find-uuid target)))
   (setf %method (make-keyword method)
 	%arguments arguments
 	%target (find-uuid target)))
@@ -174,16 +180,17 @@ two words. This is used as a unit for various layout operations.")
 
 (define-method initialize-events-table-maybe block (&optional force)
   (when (or force 
-	    (null (has-local-value :events self)))
+	    (not (has-local-value :events self)))
     (setf %events (make-hash-table :test 'equal))))
 
 (define-method bind-event-to-closure block (event-name modifiers closure)
-  "Bind the described event to invoke FUNC.
-EVENT-NAME is a string giving the key name; MODIFIERS is a list of
-keywords like :control, :alt, and so on."
+  "Bind the described event to invoke the action of the CLOSURE.
+EVENT-NAME is either a keyword symbol identifying the keyboard key, or
+a string giving the Unicode character to be bound. MODIFIERS is a list
+of keywords like :control, :alt, and so on."
   (assert (find-object closure))
   (initialize-events-table-maybe self)
-  (let ((event (normalize-event (cons event-name modifiers))))
+  (let ((event (make-event event-name modifiers)))
     (setf (gethash event %events)
 	  closure)))
 
@@ -193,22 +200,50 @@ keywords like :control, :alt, and so on."
 	   %events))
 
 (define-method on-event block (event)
-  "Look up and invoke the function (if any) bound to EVENT. Return t
-if a binding was found, nil otherwise. The second value returned is
-the return value of the function (if any)."
+  "Look up and invoke the block closure (if any) bound to
+EVENT. Return the closure if a binding was found, nil otherwise. The
+second value returned is the return value of the evaluated closure (if
+any)."
   (with-fields (events) self
     (when events
-      (let ((closure (gethash event events)))
+      (let ((closure 
+	      ;; unpack event
+	      (destructuring-bind (head &rest modifiers) event
+		;; if head is a cons, check for symbol binding first,
+		;; then for unicode binding. we do this because we'll
+		;; often want to bind keys like ENTER or BACKSPACE
+		;; regardless of their Unicode interpretation 
+		(if (consp head)
+		    (or (gethash (cons (car head) ;; try symbol
+				       modifiers)
+				 events)
+			(gethash (cons (cdr head) ;; try unicode
+				       modifiers)
+				 events))
+		    ;; it's not a cons. 
+		    ;; just search event as-is
+		    (gethash event events)))))
 	(if closure
-	    (prog1 (values t (evaluate closure))
+	    (prog1 (values closure (evaluate closure))
 	      (invalidate-layout self))
 	    (values nil nil))))))
 
+(define-method on-text-event block (event)
+  (with-fields (events) self
+    (destructuring-bind (key . unicode) (first event)
+      (when (or (on-event%%block self (cons key (rest event)))
+		;; treat Unicode characters as self-inserting
+		(when unicode
+		  (send :insert self unicode)))
+	(invalidate-layout self)))))
+
 (defun bind-event-to-method (block event-name modifiers method-name)
-  (bind-event-to-closure block 
-			 (string-upcase event-name) 
-			 modifiers
-			 (new closure method-name block)))
+  (destructuring-bind (key . mods) 
+      (make-event event-name modifiers)
+    (bind-event-to-closure block 
+			   key
+			   mods
+			   (new closure method-name block))))
 
 (define-method bind-event block (event binding)
   (destructuring-bind (name &rest modifiers) event
@@ -232,88 +267,39 @@ the return value of the function (if any)."
 (defun bind-event-to-text-insertion (self key mods text)
   (bind-event-to-closure self key mods 
 			 (new closure :insert self (list text))))
-
+    
 (defvar *lowercase-alpha-characters* "abcdefghijklmnopqrstuvwxyz")
 (defvar *uppercase-alpha-characters* "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 (defvar *numeric-characters* "0123456789")
+(defvar *graphic-characters* "`~!@#$%^&*()_-+={[}]|\:;\"'<,>.?/")
 
 (defparameter *text-qwerty-keybindings*
-  '(("A" (:control) :beginning-of-line)
-    ("E" (:control) :end-of-line)
-    ("F" (:control) :forward-char)
-    ("B" (:control) :backward-char)
-    ("HOME" nil :beginning-of-line)
-    ("END" nil :end-of-line)
-    ("RIGHT" nil :forward-char)
-    ("LEFT" nil :backward-char)
-    ("K" (:control) :clear-line)
-    ("BACKSPACE" nil :backward-delete-char)
-    ("DELETE" nil :delete-char)
-    ("D" (:control) :delete-char)
-    ("RETURN" nil :enter)
-    ("X" (:control) :exit)
-    ("G" (:control) :exit)
-    ("ESCAPE" nil :exit)
-    ("P" (:alt) :backward-history)
-    ("N" (:alt) :forward-history)  
-    ("UP" nil :backward-history)
-    ("DOWN" nil :forward-history)  
-    ("MINUS" nil "-")
-    ("MINUS" (:shift) "_")
-    ("EQUALS" nil "=")
-    ("EQUALS" (:shift) "+")
-    ("3" nil "#")
-    ("SLASH" nil "/")
-    ("SLASH" (:shift) "?")
-    ("BACKSLASH" nil "\\")
-    ("BACKQUOTE" nil "`")
-    ("BACKQUOTE" (:shift) "~")
-    ("1" (:shift) "!")
-    ("PERIOD" nil ".")
-    ("PERIOD" (:shift) ">")
-    ("COMMA" nil ",")
-    ("COMMA" (:shift) "<")
-    ("EQUALS" nil "=")
-    ("EQUALS" (:shift) "+")
-    ("SEMICOLON" nil ";")
-    ("SEMICOLON" (:shift) ":")
-    ("0" (:shift) ")") 
-    ("9" (:shift) "(")
-    ("8" (:shift) "*")
-    ("SPACE" nil " ")
-    ("SLASH" (:shift) "?")
-    ("QUOTE" nil "'")
-    ("QUOTE" (:shift) "\"")))
+  '(("a" (:control) :beginning-of-line)
+    ("e" (:control) :end-of-line)
+    ("f" (:control) :forward-char)
+    ("b" (:control) :backward-char)
+    (:home nil :beginning-of-line)
+    (:end nil :end-of-line)
+    (:right nil :forward-char)
+    (:left nil :backward-char)
+    ("k" (:control) :clear-line)
+    (:backspace nil :backward-delete-char)
+    (:delete nil :delete-char)
+    ("d" (:control) :delete-char)
+    (:return nil :enter)
+    ("x" (:control) :exit)
+    ("g" (:control) :exit)
+    (:escape nil :exit)
+    ("p" (:alt) :backward-history)
+    ("n" (:alt) :forward-history)  
+    (:up nil :backward-history)
+    (:down nil :forward-history)))
 
-(defparameter *text-sweden-keybindings*
-  '(("A" (:CONTROL) :BEGINNING-OF-LINE) 
-    ("E" (:CONTROL) :END-OF-LINE)
-    ("F" (:CONTROL) :FORWARD-CHAR) 
-    ("B" (:CONTROL) :BACKWARD-CHAR)
-    ("HOME" NIL :BEGINNING-OF-LINE)
-    ("END" NIL :END-OF-LINE)
-    ("RIGHT" NIL :FORWARD-CHAR)
-    ("LEFT" NIL :BACKWARD-CHAR)
-    ("K" (:CONTROL) :CLEAR-LINE) 
-    ("BACKSPACE" NIL :BACKWARD-DELETE-CHAR)
-    ("RETURN" NIL :ENTER)
-    ("X" (:CONTROL) :EXIT)
-    ("ESCAPE" NIL :EXIT)
-    ("P" (:ALT) :BACKWARD-HISTORY)
-    ("N" (:ALT) :FORWARD-HISTORY)
-    ("UP" NIL :BACKWARD-HISTORY)
-    ("DOWN" NIL :FORWARD-HISTORY)
-    ("MINUS" NIL "-")
-    ("0" (:SHIFT) "=")
-    ("EQUALS" (:SHIFT) "+")
-    ("COMMA" (:SHIFT) ";")
-    ("PERIOD" (:SHIFT) ":")
-    ("9" (:SHIFT) ")")
-    ("8" (:SHIFT) "(")
-    ("QUOTE" (:SHIFT) "*")
-    ("SPACE" NIL " ")
-    ("QUOTE" NIL "'") 
-    ("2" (:SHIFT) "\"")))
+(defparameter *arrow-key-text-navigation-keybindings*
+  '((:up nil :previous-line)
+    (:down nil :next-line)
+    (:left nil :backward-char)
+    (:right nil :forward-char))) 
 
 (defun keybinding-event (binding)
   (cons (first binding)
@@ -328,36 +314,15 @@ the return value of the function (if any)."
 		(keybinding-event binding)
 		(keybinding-action binding))))
         
-(defparameter *arrow-key-text-navigation-keybindings*
-  '(("UP" nil :previous-line)
-    ("DOWN" nil :next-line)
-    ("LEFT" nil :backward-char)
-    ("RIGHT" nil :forward-char))) 
-
 (define-method install-text-keybindings block ()
-  ;; install keys that will vary by locale
-  (with-fields (keybindings) self
-    (setf keybindings (make-hash-table :test 'equal))
-    (dolist (binding (ecase *user-keyboard-layout*
-    		       (:qwerty *text-qwerty-keybindings*)
-    		       (:sweden *text-sweden-keybindings*)))
+  ;; install UI keys that will vary by locale
+  (with-fields (events) self
+    (setf events (make-hash-table :test 'equal))
+    (dolist (binding *text-qwerty-keybindings*)
       (destructuring-bind (key mods result) binding
 	(etypecase result
 	  (keyword (bind-event-to-method self key mods result))
-	  (string (bind-event-to-text-insertion self key mods result)))))
-    ;; install keybindings for self-inserting characters
-    (map nil #'(lambda (char)
-  		 (bind-event-to-text-insertion self (string char) nil
-  					       (string-downcase char)))
-  	 *lowercase-alpha-characters*)
-    (map nil #'(lambda (char)
-  		 (bind-event-to-text-insertion 
-		  self (string char) '(:shift) (string char)))
-  	 *uppercase-alpha-characters*)
-    (map nil #'(lambda (char)
-  		 (bind-event-to-text-insertion self (string char) 
-					  nil (string char)))
-  	 *numeric-characters*)))
+	  (string (bind-event-to-text-insertion self key mods result)))))))
 
 ;;; Serialization hooks
 
@@ -501,14 +466,23 @@ If PARENT is nil, then the existing parent link is cleared."
 			   :key #'find-object
 			   :test 'eq))
       (assert (not (contains self block))))))
-		   
+
+(define-method default-inputs block ()
+  nil)
+ 
+(define-method deep-copy block () 
+  nil) ;; not defined for generic blocks
+
+(define-method copy block ()
+  (clone (find-parent self)))
+  
 (define-method initialize block (&rest blocks)
   "Prepare an empty block, or if BLOCKS is non-empty, a block
 initialized with BLOCKS as inputs."
-  (when blocks
-    (setf %inputs blocks)
-    (dolist (child blocks)
-      (set-parent child self)))
+  (setf %inputs 
+	(or blocks (default-inputs self)))
+  (dolist (child blocks)
+    (set-parent child self))
   (update-result-lists self)
   (bind-any-default-events self)
   (register-uuid self))
@@ -537,10 +511,14 @@ initialized with BLOCKS as inputs."
 	 (head-type (if (listp data-type)
 			(first data-type)
 			data-type))
-	 (type-specifier (if (member head-type *builtin-entry-types* :test 'equal)
+	 (type-specifier 
+	   (if (member head-type *builtin-entry-types* :test 'equal)
 			     head-type data-type)))
-	 ;; see also terminal.lisp for more on data entry blocks
-	(new entry :value datum :type-specifier type-specifier)))
+    ;; see also terminal.lisp for more on data entry blocks
+    (typecase datum
+      (string (new string :value datum))
+      (symbol (new symbol :value datum))
+      (otherwise (new entry :value datum :type-specifier type-specifier)))))
 		    
 (defvar *make-block-package* nil)
 
@@ -565,8 +543,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 					  (or (make-block-package)
 					      (find-package "BLOCKY")))))
 		     (arg-blocks (mapcar #'make-block arguments)))
-		 ;; (message "arg-blocks ~S" (list (length arg-blocks)
-		 ;; 				(mapcar #'find-uuid arg-blocks)))
+		 (message "arg-blocks ~S" (list (length arg-blocks)
+		 				(mapcar #'find-uuid arg-blocks)))
 		 (apply #'clone prototype arg-blocks))))
 	   (list-block (items)
 	     (apply #'clone "BLOCKY:LIST" (mapcar #'make-block items))))
@@ -620,8 +598,12 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 (define-method on-select block () nil)
 
-(define-method click block (mouse-x mouse-y)
-  (declare (ignore mouse-x mouse-y)))
+(define-method on-click block (x y)
+  (declare (ignore x y))
+  nil)
+
+(define-method on-alternate-click block (x y)
+  (add-block *script* (context-menu self) x y))
 
 (define-method mouse-move block (x y)
   (declare (ignore x y)))
@@ -631,6 +613,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 (define-method mouse-up block (x y button)
   (declare (ignore x y button)))
+
+;;; Connecting blocks
 
 (define-method this-position block ()
   (with-fields (parent) self
@@ -664,15 +648,18 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (assert (and (keywordp method) (not (null target))))
   (let ((method-string (pretty-symbol-string method)))
     (list :label method-string
-	  :action #'(lambda ()
-		      (add-block *script* 
-				 (new send 
-				      :prototype (find-parent-prototype-name self)
-				      :method method
-				      :target target
-				      :label method-string)
-				 (- *pointer-x* 10) 
-				 (- *pointer-y* 10))))))
+	  :action (new closure
+		      :add-block *script* 
+		      (list (new send 
+				 :prototype (find-parent-prototype-name self)
+				 :method method
+				 :target target
+				 :label method-string)
+			    (- *pointer-x* 10) 
+			    (- *pointer-y* 10))))))
+
+(define-method drop block (other-block)
+  (add-block *script* other-block %x %y))
 
 (define-method context-menu block ()
   (make-menu
@@ -731,6 +718,8 @@ current block. Used for taking a count of all the nodes in a tree."
 	(t (apply #'+ 1 
 		  (mapcar #'count-tree 
 			  (field-value :inputs tree))))))
+
+;;; Drawing blocks
 
 (defparameter *block-colors*
   '(:motion "cornflower blue"
@@ -920,6 +909,30 @@ override all colors."
 (define-method draw-socket block (x0 y0 x1 y1)
   (draw-patch self x0 y0 x1 y1 :depressed t :socket t))
 
+;;; Blinking cursor
+
+(define-method update-cursor-clock block ()
+  ;; keep the cursor blinking
+  (with-fields (cursor-clock) self
+    (decf cursor-clock)
+    (when (> (- 0 *cursor-blink-time*) cursor-clock)
+      (setf cursor-clock *cursor-blink-time*))))
+
+(define-method draw-cursor-glyph block 
+    (&optional (x 0) (y 0) (width 2) (height (font-height *block-font*))
+	       &key color blink)
+  (with-fields (cursor-clock) self
+    (update-cursor-clock self)
+    (let ((color2
+	    (if blink
+		(if (minusp cursor-clock)
+		    *cursor-color*
+		    *cursor-blink-color*)
+		*cursor-color*)))
+      (draw-box x y width height :color (or color color2)))))
+
+(define-method draw-cursor block (&rest ignore) nil)
+
 (define-method draw-border block (&optional (color *selection-color*))
   (let ((dash *dash*))
     (with-fields (x y height width) self
@@ -937,9 +950,9 @@ override all colors."
     (draw-patch self x y (+ x width) (+ y height)
 		 :depressed t :socket t)))
 
-(define-method handle-width block ()
-  (+ (* 2 *dash*)
-     (expression-width %operation)))
+;; (define-method label-width block ()
+;;   (+ (* 2 *dash*)
+;;      (expression-width %operation)))
 
 (define-method header-height block () 0)
 
@@ -960,21 +973,43 @@ override all colors."
       *socket-width*
       (font-text-width (print-expression expression) font)))
 
-(define-method layout block () 
-  (with-fields (x y width height inputs) self
-    (setf width (dash 2))
-    (setf height (dash 2))
-    (let ((left (+ x (dash 1)))
-	  (top (+ y (dash 1))))
-      (dolist (input inputs)
-	(layout input)
-	(move-to input left top)
-	(let ((width0 (field-value :width input)))
-	  (incf left (+ (dash 2) width0))
-	  (incf width (+ width0 (dash 2)))
-	  (setf height (max height (field-value :height input))))))
-    (incf height (dash 2))
-    (incf width (dash 2))))
+;; (define-method layout block () 
+;;   (with-fields (x y width height inputs) self
+;;     (setf width (dash 2))
+;;     (setf height (dash 2))
+;;     (let ((left (+ x (dash 1)))
+;; 	  (top (+ y (dash 1))))
+;;       (dolist (input inputs)
+;; 	(layout input)
+;; 	(move-to input left top)
+;; 	(let ((width0 (field-value :width input)))
+;; 	  (incf left (+ (dash 2) width0))
+;; 	  (incf width (+ width0 (dash 2)))
+;; 	  (setf height (max height (field-value :height input))))))
+;;     (incf height (dash 2))
+;;     (incf width (dash 2))))
+
+(define-method layout block ()
+  (with-fields (input-widths height width label) self
+    (with-field-values (x y inputs) self
+      (let* ((font *block-font*)
+	     (dash (dash 1))
+	     (left (+ x (label-width self)))
+	     (max-height (font-height font)))
+	(labels ((move-input (input)
+		   (move-to input (+ left dash) y)
+		   (layout input)
+		   (setf max-height (max max-height (field-value :height input)))
+		   (field-value :width input))
+		 (layout-input (input)
+		   (let ((measurement
+			  (+ dash dash (move-input input))))
+		     (prog1 measurement
+		       (incf left measurement)))))
+	  (setf input-widths (mapcar #'layout-input inputs))
+	  (setf width (+ (- left x) (* 4 dash)))
+	  (setf height (+ dash (if (null inputs)
+				   dash 0) max-height)))))))
 
 (define-method draw-expression block (x0 y0 segment type)
   (with-fields (height input-widths) self
@@ -999,10 +1034,29 @@ override all colors."
 
 (define-method draw-contents block ()
   (with-fields (operation inputs) self
-    (draw-label self operation)
+    ;; (draw-label self operation)
     (dolist (each inputs)
       (draw each))))
 
+(define-method update-parent-links block ()
+  (dolist (each %inputs)
+    (set-parent each self)))
+
+;;; Labels for blocks
+
+(define-method set-label-string block (label)
+  (assert (stringp label))
+  (setf %label label))
+
+(define-method label-string block ()
+  %label)
+
+(define-method label-width block ()
+  (if (null %label)
+      0
+      (+ (dash 2)
+	 (font-text-width %label *block-font*))))
+    
 (define-method draw-label-string block (string &optional color)
   (with-block-drawing 
     (with-field-values (x y) self
@@ -1013,6 +1067,8 @@ override all colors."
 
 (define-method draw-label block (expression)
   (draw-label-string self (print-expression expression)))
+
+;;; General block drawing
 
 (define-method draw block ()
   (with-fields (image x y width height blend opacity) self
@@ -1056,6 +1112,11 @@ MOUSE-Y identify a point inside the block (or input block.)"
 	(let ((result (some #'try inputs)))
 	  (or result self))))))
 
+(define-method adopt block (child)
+  (when (get-parent child)
+    (unplug-from-parent child))
+  (set-parent child self))
+
 (define-method accept block (other-block)
   "Try to accept OTHER-BLOCK as a drag-and-dropped input. Return
 non-nil to indicate that the block was accepted, nil otherwise."
@@ -1093,9 +1154,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (defparameter *null-display-string* "...")
 
-(defun null-block () (new list))
-
-(define-method click list (x y)
+(define-method on-click list (x y)
   (dolist (block %inputs)
     (evaluate block)))
 
@@ -1130,7 +1189,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (define-method header-height list () 0)
 
-(define-method handle-width list ()
+(define-method label-width list ()
   (+ (* 2 *dash*)
      (expression-width *null-display-string*)))
 
@@ -1177,10 +1236,29 @@ non-nil to indicate that the block was accepted, nil otherwise."
 	  (draw each)))))
 
 (define-method initialize list (&rest blocks)
-  (when blocks 
-    (every #'verify blocks))
-  (setf %inputs blocks)
-  (super%initialize self))
+  (apply #'super%initialize self blocks)
+  ;; allow them to be freely removed
+  (dolist (each %inputs)
+    (unpin each)))
+
+(defmacro deflist (name &rest body)
+  `(defblock (,name :super :list) ,@body))
+
+(defun null-block () (new list))
+
+(deflist empty-socket)
+
+(define-method accept empty-socket (other-block)
+  "Replace this empty socket with OTHER-BLOCK."
+  (accept %parent other-block))
+
+;;; Sending to a particular target
+
+(defvar *target* nil)
+
+(defmacro with-target (target &rest body)
+  `(let ((*target* ,target))
+     ,@body))
 
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 
@@ -1188,10 +1266,10 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (define-method evaluate send ()
   (apply #'send %method 
-	 (or %target *target*)
+	 (or *target* %target) ;; with-target will override
 	 (mapcar #'evaluate %inputs)))
 
-(define-method click send (x y)
+(define-method on-click send (x y)
   (declare (ignore x y))
   (evaluate self))
 
@@ -1215,7 +1293,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
     (dolist (entry schema)
       (push (new entry
 		 :value (schema-option entry :default)
-		 :parent self
+		 :parent (find-uuid self)
 		 :type-specifier (schema-type entry)
 		 :options (schema-options entry)
 		 :label (concatenate 'string
@@ -1242,28 +1320,6 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (define-method draw-hover send ()
   nil)
-
-(define-method layout send ()
-  (with-fields (input-widths height width label) self
-    (with-field-values (x y inputs) self
-      (let* ((font *block-font*)
-	     (dash (dash 1))
-	     (left (+ dash dash x (font-text-width label font)))
-	     (max-height (font-height font)))
-	(labels ((move-input (input)
-		   (move-to input (+ left dash) y)
-		   (layout input)
-		   (setf max-height (max max-height (field-value :height input)))
-		   (field-value :width input))
-		 (layout-input (input)
-		   (let ((measurement
-			  (+ dash dash (move-input input))))
-		     (prog1 measurement
-		       (incf left measurement)))))
-	  (setf input-widths (mapcar #'layout-input inputs))
-	  (setf width (+ (- left x) (* 4 dash)))
-	  (setf height (+ dash (if (null inputs)
-				   dash 0) max-height)))))))
 
 ;;; Combining blocks into scripts
 
@@ -1357,7 +1413,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 ;; 	  (height (font-height *block-font*)))
 ;;       (prog1 height
 ;; 	(move-to name
-;; 	       (+ x (handle-width self))
+;; 	       (+ x (label-width self))
 ;; 	       (+ y height))))))
 
 ;; (define-method draw-header script ()

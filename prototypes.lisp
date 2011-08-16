@@ -264,7 +264,7 @@ extended argument list ARGLIST."
 (defun make-uuid ()
   (uuid:print-bytes 
    nil 
-   (uuid:make-v1-uuid)))
+   (uuid:make-v4-uuid)))
 ;; why doesn't v3 work? produces always same id
 ;; (uuid:make-v3-uuid uuid:+namespace-oid+ "blocky.io")))
 
@@ -306,7 +306,7 @@ extended argument list ARGLIST."
 		  
 ;;; Finding any object by proto-name or UUID
 
-(defun find-object (thing) 
+(defun find-object (thing &optional no-error) 
   (when (not (null thing))
     (let ((result 
 	    (etypecase thing
@@ -315,7 +315,8 @@ extended argument list ARGLIST."
 			  (find-prototype thing :noerror)))
 	      (object thing))))
       (prog1 result
-	(assert (object-p result))))))
+	(unless no-error
+	  (assert (object-p result)))))))
       
 (defun find-parent (object)
   (object-parent (find-object object)))
@@ -425,6 +426,9 @@ extended argument list ARGLIST."
 
 (defun verify (thing)
   (assert (object-p (find-object thing))))
+
+(defun blockyp (thing)
+  (object-p (find-object thing)))
 
 ;;; Fields
 

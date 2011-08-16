@@ -90,7 +90,7 @@
     (setf %expanded nil)
     (invalidate-layout self)))
 
-(define-method click tree (x y)
+(define-method on-click tree (x y)
   (declare (ignore x y))
   (toggle-expanded self))
 
@@ -99,7 +99,7 @@
     (let ((ellipsis (concatenate 'string label *null-display-string*)))
       (if action
 	  (etypecase action
-	    (blocky:object ellipsis)
+	    ((or string blocky:object) ellipsis)
 	    ((or keyword function) label))
 	  (if top-level label ellipsis)))))
 
@@ -242,16 +242,22 @@
 ;; menu items should not accept any dragged widgets.
 (define-method accept menu (&rest args) nil)
 
-(define-method click menu (x y)
+(define-method on-click menu (x y)
   (declare (ignore x y))
   (with-fields (action target) self
     (typecase action 
       (function (funcall action))
+      (string (evaluate action)) 
       (keyword (when (has-method action target)
 		 (send action (or target (symbol-value '*system*)))))
       (otherwise
        ;; we're a submenu, not an individual menu command.
        (toggle-expanded self)))))
+
+(define-method on-alternate-click menu (x y)
+  (declare (ignore x y))
+  (when (keywordp %action)
+    (add-block *script* (context-menu self) x y)))
 
 (defparameter *menu-tab-color* "gray60")
 (defparameter *menu-title-color* "white")
@@ -284,7 +290,10 @@
 		       (or label (display-string self))
 		       ;; color text according to whether method exists
 		       (if (or (null action) 
+			       (keywordp action)
 			       (functionp action)
+			       (blocky:object-p action)
+			       (listp action)
 			       (has-method action target))
 			   (find-color self :foreground)
 			   "gray70"))))

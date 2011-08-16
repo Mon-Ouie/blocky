@@ -1,23 +1,35 @@
-** TODO [#A] Fix wrong entry type-specifiers
-** TODO [#A] Also show command typed in listener log
-** TODO [#B] Start using tests and more correctness-helpers
-** TODO [#B] Menu option to change accepted type of an entry
-** TODO [#A] Fix backward insertion of lines from error message into listener
-** TODO [#A] trigger context menu items with click, make block with control-click
-** TODO [#A] start using terminal output for status message output
-** TODO [#A] use a non-rounded box layout and appearance for program elements, with very thin margins?
-*** retain rounded rectangles for UI/workspace/etc
-** TODO [#A] always draw menus above script
-** TODO [#A] add all missing keyboard characters to qwerty layouts
+** TODO add flatrect layout style
+** TODO core syntax example project
+*** TODO objects
+*** TODO literals (i.e. entries)
+*** TODO messages, i.e. with-target, change name to "send-to"
+**** TODO put verb first as in Lisp?
+*** TODO printers, printing whatever value into an Expression entry
+*** TODO define-visual-macro
+** TODO color code syntax, not semantics?
+** TODO GUI for closures
+
+** TODO [#A] With-target revisions
+*** TODO [#A] Fix can't pull out target
+*** TODO [#A] defblock with-target : schema has socket for message target, socket for list body
+*** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
+*** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
+*** TODO [#A] dialog boxes for project save/load!
+** TODO PRINT blocks
+
+** TODO fix entry labels not being drawn
+** TODO [#A] Fix context-menu: method schema not being found when it's inherited
+** TODO [#A] trigger context menu items with left click, make block with control-click/right-click
+** TODO [#A] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
+** TODO [#A] fix missing labels on defblock's child entries
+** TODO [#A] close context menu when loses focus
+** TODO [#A] easily close menus with X in corner
+*** TODO [#A] universal morphic halo?
+** TODO [#A] Fix collision detection (spheres, 
+** TODO [#A] Start using tests and more correctness-helpers
 ** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
-** TODO [#A] fix ellipsis not displayed on menu items until highlight
-*** use something other than ellipses? like my generic tree triangles
 ** TODO [#A] Read me first: F1, then click on any object for help
-** TODO [#A] an interactive tutorial project
-** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
-** TODO [#A] dialog boxes for project save/load!
-** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
-** TODO [#A] escape key hide/show terminals/menus
+** TODO [#A] visually indicate clicked send blocks
 ** TODO [#A] Write standard blocks library
 *** move
 *** move to 
@@ -81,9 +93,23 @@
 *** script wiki database (like the file system)
 *** [#A] defblock self
 ****  should resources be full-fledged objects? 
-** TODO [#B] pop up shell on M-x
 ** TODO [#A] bring menubar and its menus to front when opening menu
+** TODO [#B] multilayer approach with script over top of world
+** TODO [#B] fix listener prompt cursor always resetting to column 0 upon focus
+** TODO [#B] Also show clickable previous commands in listener log
+** TODO [#B] fix ellipsis not displayed on menu items until highlight
+*** use something other than ellipses? like my generic tree triangles
+** TODO [#B] an interactive tutorial project
+** TODO [#B] escape key hide/show terminals/menus
+** TODO [#B] listener history should show only commands?
+** TODO [#B] define-visual-macro (via defblock?)
+** TODO [#B] animate text box cursor and show current line / or show textbox border
+** TODO [#B] union fields to hold union of %methods and %excluded-fields and so on
+** TODO [#B] pop up shell on M-x
 ** TODO ALPHA RELEASE with a few working examples
+
+** TODO [#B] use a non-rounded box layout and appearance for program elements, with very thin margins?
+*** retain rounded rectangles for UI/workspace/etc
 ** TODO [#B] Use Alt-drag to move objects
 ** TODO [#B] implement make-process coroutines
 ** TODO [#B] FIX trash drawing children during drag
@@ -91,6 +117,18 @@
 ** TODO [#B] general purpose resizer/scroller decorator thinger
 ** TODO [#B] Allow user to move entries easier via yellow triangle tab
 ** TODO [#B] general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
+** TODO [#C] fix can't pull out sublists (list (list (list 1 2 3))) 
+
+** TODO Win32 build tips
+
+oh, and on windows at least, you'll need to call %gl:reset-gl-pointers
+after you set that, when starting the new image you've built if you
+want it to work on windows, you'll need to set
+%gl::*gl-get-proc-address* I think sdl has a get-proc-address, or you
+can bind to the windows one yourself I use #'glfw:get-proc-address , I
+add "." and "%CD%" to cffi's foreign directory search list...
+(04:20:28 AM) : and just dump them in the folder with the image :)
+(04:20:40 AM) : and change the OS working directory, too
 ** desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
 ** COOL FEATURE: gnome-do/anything.el style search/operate, for quick access to everything
 ** TODO [#B] file selector dialog (only choosing from project dir at first)
@@ -454,6 +492,49 @@ But the graph doesn't yet actually work, so we must continue.
    :PROPERTIES:
    :ARCHIVE_TIME: 2011-07-20 Wed 23:09
    :ARCHIVE_FILE: ~/ioforms/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO [#A] fix on-select listener not working to get keystrokes to the prompt
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-12 Fri 16:01
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO [#A] Fix focus model --- first click/drag does not pull, only after mouseup
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-12 Fri 16:01
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO [#B] fix erroneous double click of last element when clicking (white background)
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-12 Fri 16:01
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO [#A] Turn on UNICODE key translation
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-13 Sat 01:04
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** DONE Fix funny unicode characters getting used instead of SDL keys for bindings like RET and BACKSPACE
+   CLOSED: [2011-08-14 Sun 05:15]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-14 Sun 05:15
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END:
+** TODO fix make-block regression on (list 1 2 3) --> null list
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-14 Sun 06:48
+   :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
    :END:

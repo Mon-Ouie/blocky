@@ -22,9 +22,6 @@
 
 ;;; Command prompt block
 
-(defparameter *prompt-blink-time* 8)
-(defparameter *prompt-cursor-color* "magenta")
-(defparameter *prompt-cursor-blink-color* "yellow")
 (defparameter *active-prompt-color* "red")
 (defparameter *inactive-prompt-color* "gray20")
 (defparameter *prompt-cursor-inactive-color* "gray50")
@@ -43,7 +40,6 @@
 (defparameter *default-cursor-width* 1)
  
 (defblock prompt
-  (clock :initform *prompt-blink-time*)
   (text-color :initform "gray20")
   (visible :documentation "When non-nil, the prompt is drawn." :initform t)
   (receiver :documentation "The object to send command messages to.")
@@ -57,8 +53,7 @@
   (prompt-string :initform *default-prompt-string*)
   (category :initform :data)
   (debug-on-error :iniform nil)
-  (history :initform (make-queue :max *default-prompt-history-size*)
-	   :documentation "A queue of strings containing the command history.")
+  (history :documentation "A queue of strings containing the command history.")
   (history-position :initform 0))
 
 (define-method accept prompt (&rest args)
@@ -75,7 +70,12 @@
 
 (define-method initialize prompt ()
   (super%initialize self)
+  (when (not (has-local-value :history self))
+    (setf %history (make-queue :max *default-prompt-history-size*)))
   (install-text-keybindings self))
+
+(define-method on-event prompt (event)
+  (on-text-event self event))
 
 (define-method forward-char prompt ()
   (setf %point (min (1+ %point)
@@ -201,26 +201,31 @@
   (setf %point 0))
 
 (define-method draw-cursor prompt 
-    (&optional (color "magenta") x-offset y-offset)
+    (&key (x-offset 0) (y-offset 0)
+	  color blink)
   (with-fields (x y width height clock point parent background
 		  prompt-string line) self
-    (draw-box (+ x (or x-offset 0)
-		 (font-text-width (if (<= point (length line))
-					(subseq line 0 point)
-					" ")
-				    *block-font*)
-		 (if x-offset 0 (font-text-width prompt-string *block-font*)))
-	      (+ y (or y-offset 0) *default-prompt-margin*)
-	      *default-cursor-width*
-	      ;; (font-text-width 
-	      ;;  (string (if (< point (length line))
-	      ;; 		   (aref line 
-	      ;; 			 (max (max 0 
-	      ;; 				   (1- (length line)))
-	      ;; 			      point))
-	      ;; 		   #\Space))
-	      (* (font-height *block-font*) 0.8)
-	      :color color)))
+    (draw-cursor-glyph self
+     ;;
+     (+ x (or x-offset 0)
+	(font-text-width (if (<= point (length line))
+			     (subseq line 0 point)
+			     " ")
+			 *block-font*)
+	(if x-offset 0 (font-text-width prompt-string *block-font*)))
+     ;;
+     (+ y (or y-offset 0) *default-prompt-margin*)
+     *default-cursor-width*
+     ;; (font-text-width 
+     ;;  (string (if (< point (length line))
+     ;; 		   (aref line 
+     ;; 			 (max (max 0 
+     ;; 				   (1- (length line)))
+     ;; 			      point))
+     ;; 		   #\Space))
+     (* (font-height *block-font*) 0.8)
+     :color color
+     :blink blink)))
 
 (define-method label-width prompt () 
   (font-text-width %prompt-string *block-font*))
@@ -231,7 +236,7 @@
 
 (define-method draw-hover prompt ())
 
-(define-method click prompt (mouse-x mouse-y)
+(define-method on-click prompt (mouse-x mouse-y)
   (declare (ignore mouse-y))
   (with-fields (x y width height clock point parent background
 		  line) self
@@ -278,13 +283,6 @@
 					*inactive-prompt-color*
 					(find-color parent :shadow))))))))
 
-(define-method update-cursor-clock prompt ()
-  ;; keep the cursor blinking
-  (with-fields (clock) self
-    (decf clock)
-    (when (> (- 0 *prompt-blink-time*) clock)
-      (setf clock *prompt-blink-time*))))
-
 (define-method draw-indicators prompt (state)
   (with-fields (x y options text-color width parent height line) self
     (let ((label-width (label-width self))
@@ -300,26 +298,24 @@
 		      :state state))))
 
 (define-method draw-focus prompt () 
-  (with-fields (clock x y width line parent) self
+  (with-fields (cursor-clock x y width line parent) self
     (let* ((label (label-string self))
 	   (label-width (label-width self))
 	   (line-width (font-text-width line *block-font*)))
       ;; draw shaded area for input
       (draw-input-area self :active)
       ;; draw cursor.
-      (update-cursor-clock self)
-      (draw-cursor self (if (minusp clock)
-			    *prompt-cursor-color*
-			    *prompt-cursor-blink-color*)
-		   ;; provide x offset
-		   (dash 2 (font-text-width label *block-font*)))
+      (draw-cursor self 
+		   :x-offset
+		   (dash 2 (font-text-width label *block-font*))
+		   :blink t)
       ;; draw highlighted indicators
       (draw-indicators self :active)
       ;; redraw content (but not label)
       (draw self :nolabel))))
 
 (define-method draw prompt (&optional nolabel)
-  (with-fields (x y width height clock point parent background
+  (with-fields (x y width height point parent background
 		  line prompt-string) self
     (let ((strings-y *default-prompt-margin*))
       (unless nolabel
@@ -359,13 +355,14 @@
   (when parent (setf %parent parent))
   (setf %type-specifier type-specifier
 	%options options
-	%label label
 	%value value)
   ;; fill in the input box with the value
   (setf %line (if (null value)
 		  " "
 		  (format nil "~A" value)))
-  (setf %label (getf options :label))
+  (setf %label 
+	(or label 
+	    (getf options :label)))
   (when label-color (setf %label-color label-color)))
 
 (define-method evaluate entry ()
@@ -390,14 +387,11 @@
 (defparameter *minimum-entry-line-width* 16)
 
 (define-method draw-label entry ()
-  (let* ((label (label-string self))
-	 (label-width (font-text-width label *block-font*))
-	 (line-width (font-text-width %line *block-font*)))
-    (draw-string label
-		 (dash 1 %x)
-		 (+ %y (dash 1))
-		 :color %label-color
-		 :font *block-font*)))
+  (draw-string (label-string self)
+	       (dash 1 %x)
+	       (+ %y (dash 1))
+	       :color %label-color
+	       :font *block-font*))
 
 (define-method draw entry (&optional nolabel)
   (with-fields (x y options text-color width parent height line) self
@@ -452,22 +446,25 @@
 
 (define-method hit entry (x y)
   (when (super%hit self x y)
+    ;; always allow clicking data area
     (if (< x (+ %x (label-width self)))
-	%parent 
+	(prog1 %parent (assert %parent))
 	self)))
 
 ;;; Easily defining new entry blocks
 
-(defmacro defentry (name type value)
+(defmacro defentry (name type value &rest specs)
   `(define-prototype ,name (:parent "BLOCKY:ENTRY")
      (type-specifier :initform ',type)
-     (value :initform ',value)))
+     (value :initform ',value)
+     ,@specs))
 
 (defentry integer integerp 0)
 (defentry number numberp 0)
 (defentry non-negative-number (number 0 *) 0)
 (defentry float floatp 0.0)
-(defentry symbol symbolp nil)
+(defentry symbol symbolp nil 
+  (category :initform :data))
 (defentry positive-integer (integer 1 *) 1)
 (defentry non-negative-integer (integer 0 *) 0)
 (defentry expression t nil)
@@ -489,14 +486,83 @@
 (define-method do-sexp string (sexp)
   (assert (stringp sexp))
   (setf %value sexp))
-  
+ 
+;;; Block socket
+
+(defentry socket 
+  blocky:object-p 
+  (null-block)
+  (category :initform :socket))
+
+(define-method initialize socket 
+    (&key label (value (new empty-socket)))
+  (verify value)
+  (setf %label label)
+  (setf %inputs (list value))
+  (update-parent-links self))
+
+(define-method accept socket (thing)
+  (verify thing)
+  (setf %inputs (list thing)))
+
+(define-method evaluate socket ()
+  (when (first %inputs)
+    (evaluate (first %inputs))))
+
+(define-method draw-focus socket ())
+
+(define-method on-event socket (event)
+  (declare (ignore event))
+  nil)
+
+(define-method get-value socket ()
+  (evaluate self))
+
+(define-method set-value socket (value)
+  (declare (ignore value)))
+
+(define-method recompile entry ()
+  (evaluate self))
+
+(define-method hit socket (x y)
+  (hit%%block self x y))
+
+(define-method on-lose-focus socket ())
+(define-method enter socket ())
+
+(define-method draw-label socket ()
+  (when (stringp %label)
+    (draw-label-string self %label)))
+
+(define-method layout socket ()
+  (layout%%block self))
+
+(define-method draw socket (&optional no-label)
+  (with-fields (x y options inputs width height) self
+    ;; draw the label string 
+    (unless no-label 
+      (draw-label self))
+    ;; draw block
+    (let ((block (first inputs)))
+      (when block 
+	(draw block)))))
+
+(define-method label-width socket () 
+  (label-width%%block self))
+
 ;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
 
 (define-prototype listener-prompt (:parent prompt)
   (operation :initform :prompt)
   (background :initform nil)
-  (methods :initform '(:evaluate))
+  (methods :initform '(:debug-on-error :print-on-error))
   output)
+
+(define-method debug-on-error listener-prompt ()
+  (setf %debug-on-error t))
+
+(define-method print-on-error listener-prompt ()
+  (setf %debug-on-error nil))
 
 (define-method initialize listener-prompt (&optional output)
   (super%initialize self)
@@ -514,9 +580,9 @@
 	(let ((new-block 
 		;; is it a uuid?
 		(if (and (stringp result)
-			 (find-object result))
+			 (find-object result :no-error))
 		    ;; yes, return the corresponding block
-		    (find-object result)
+		    (find-object result :no-error)
 		    ;; no, make a new block from the data
 		    (make-block result))))
 	  ;; spit out result block
@@ -526,14 +592,14 @@
 (define-method do-after-evaluate listener-prompt ()
   ;; print any error output
   (when %parent
-    (dolist (line (nreverse
-		   (split-string-on-lines %error-output)))
+    (dolist (line (split-string-on-lines %error-output))
       (accept %parent (new string :value line)))))
 
 (define-prototype listener (:parent list)
   (scrollback-length :initform 100)
   (category :initform :system)
   (temporary :initform t)
+  (methods :initform '(:evaluate))
   (display-lines :initform 12))
 
 (defparameter *minimum-listener-width* 200)
@@ -569,17 +635,24 @@
       ;; (setf y (- y0 (dash 1))))))
 
 (define-method get-prompt listener ()
-  (car (last %inputs)))
+  (first %inputs))
  
 (define-method evaluate listener ()
   (evaluate (get-prompt self)))
 
-(define-method on-select listener ()
+(define-method on-focus listener ()
   (grab-focus (get-prompt self)))
 
+(define-method debug-on-error listener ()
+  (debug-on-error (get-prompt self)))
+
+(define-method print-on-error listener ()
+  (print-on-error (get-prompt self)))
+
 ;; forward keypresses to prompt for convenience
-(define-method on-event listener (event)
-  (on-event (get-prompt self) event))
+;; (define-method on-event listener (event)
+;;   (message "ON EVENT LISTENER")
+;;   (on-event (get-prompt self) event))
 
 (define-method accept listener (input &optional prepend)
   (declare (ignore prepend))
@@ -592,9 +665,7 @@
 	;;   ;; drop last item in scrollback
 	;;   (setf inputs (subseq inputs 0 (1- len))))
 	;; set parent if necessary 
-	(when (get-parent input)
-	  (unplug-from-parent input))
-	(set-parent input self)
+	(adopt self input)
 	(setf inputs 
 	      (nconc (list (first inputs) input)
 		     (nthcdr 1 inputs)))))))

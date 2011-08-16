@@ -58,7 +58,12 @@ More instructions for Mac and Windows will be available soon.
    this:
   
    cd ~/src/blocky
-   git checkout develop
+   git checkout -b develop
+
+   Similarly, if you need a release, use this:
+
+   git checkout -b release/0.989  
+     # replace 0.989 with desired version
 
 3. Then link the blocky.asd file into your ~/.sbcl/systems directory:
 
@@ -103,16 +108,28 @@ More instructions for Mac and Windows will be available soon.
    following Lisp expressions one at a time:
 
       ;; load dependencies via Quicklisp
-      (map nil #'ql:quickload 
+      (ql:quickload 
     	 '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx 
-	 :lispbuilder-sdl-image :uuid :buildapp -opengl :cl-fad))
+	 :lispbuilder-sdl-image :uuid :buildapp :cl-opengl :cl-fad))
 
       ;; compile and load Blocky
-      (require :blocky)
+      (asdf:load-system 'blocky)
 
       ;; run the examples
       (blocky:play "example1")  ;; "hello, world" with simple player movement
       (blocky:play "example2")  ;; A slightly more complex example
       (blocky:play "example3")  ;; A GUI tutorial, with turtle and ladybug
 
+8. Getting help and reporting bugs 
+
+   When reporting bugs, please use the issue reporting system at
+   Github if possible: https://github.com/dto/blocky/issues
+
+   If not possible or if other questions arise, you can email or IRC
+   me as follows:
+
+   dto@ioforms.org 
+   
+   irc.freenode.org #blocky
+   		    (also #lispgames)
 

@@ -23,9 +23,9 @@
 ;;; Commentary:
 
 ;; The "console" is the library which provides all BLOCKY system
-;; services. Primitive operations such as opening a window,
-;; displaying bitmaps, drawing lines, playing sounds, file access, and
-;; keyboard/mouse/joystick input are handled here. 
+;; services. Primitive operations such as opening a window, rendering
+;; text, displaying bitmaps, drawing lines, playing sounds, file
+;; access, and device input are all handled here.
 
 ;; Currently it uses the cross-platform SDL library (via
 ;; LISPBUILDER-SDL) as its device driver, and wraps the library for
@@ -341,12 +341,10 @@ Please set the variable blocky:*event-handler-function*")
       (funcall *event-handler-function* event)))
 
 (defun normalize-event (event)
-;    (:key #'identity :test 'equal)
   "Convert EVENT to a normal form suitable for `equal' comparisons."
-  (let ((name (first event)))
-    (cons (make-keyword name)
-	  (sort (remove-duplicates (delete nil (rest event)))
-		#'string< :key #'symbol-name))))
+  (cons (first event)
+	(sort (remove-duplicates (delete nil (rest event)))
+	      #'string< :key #'symbol-name)))
 
 ;;; Translating SDL input events into BLOCKY event lists
 
@@ -393,31 +391,47 @@ key event symbols."
 	(:SDL-KEY-RESERVED nil)
 	)))
   
-(defun make-key-string (sdl-key)
-  "Translate from :SDL-KEY-X to the string \"X\"."
-  (let ((prefix "SDL-KEY-"))
-    (subseq (symbol-name sdl-key)
-            (length prefix))))
+(defun make-key-symbol (sdl-key)
+  "Translate from :SDL-KEY-X to the symbol :X ."
+  (let ((prefix "SDL-KEY-")
+	(name (symbol-name sdl-key)))
+    (assert (search prefix name))
+    (make-keyword (subseq name (length prefix)))))
 
-(defun make-event (sdl-key sdl-mods)
-  "Create a normalized event out of the SDL data SDL-KEY and SDL-MODS.
-The purpose of putting events in a normal form is to enable their use
-as hash keys."
-;  (message "SDL KEY AND MODS: ~A" (list sdl-key sdl-mods))
-  (normalize-event
-   (cons (if (eq sdl-key :joystick) 
-	     "JOYSTICK"
-	     (if (eq sdl-key :axis) 
-		 "AXIS"
-		 (make-key-string sdl-key)))
-	 (mapcar #'make-key-modifier-symbol
-		 (cond ((keywordp sdl-mods)
-			(list sdl-mods))
-		       ((listp sdl-mods)
-			sdl-mods)
-		       ;; catch apparent lispbuilder-sdl bug?
-		       ((eql 0 sdl-mods)
-			nil))))))
+(defun make-event (code modifiers)
+  "Create an input event for the key CODE with MODIFIERS pressed.
+The argument CODE may be one of:
+
+   - a keyword symbol naming the keyboard key, such as :RETURN or :SPACE
+     (see also `make-key-symbol'.)
+
+   - a one-character string, whose first character is the translated
+     Unicode character being bound
+
+   - an integer whose value is the unicode character code from SDL
+
+or, 
+
+   - a cons of the form (key unicode) will be passed through
+     unaltered." 
+  (assert code)
+  (let ((head
+	  (etypecase code
+	    (integer (string (code-char code)))
+	    (string (prog1 code
+		      (assert (= 1 (length code)))))
+	    (keyword code)
+	    (cons code))))
+    (normalize-event
+     (cons head
+	   ;; modifiers
+	   (cond ((keywordp modifiers)
+		  (list modifiers))
+		 ((listp modifiers)
+		  modifiers)
+		 ;; catch apparent lispbuilder-sdl bug?
+		 ((eql 0 modifiers)
+		  nil))))))
 
 ;;; Joystick support
 
@@ -461,8 +475,8 @@ as hash keys."
 
 (defun do-joystick-axis-event (axis value state)
   (send-event (make-event :axis 
-			      (list (axis-value-to-direction axis value)
-				    state))))
+			  (list (axis-value-to-direction axis value)
+				state))))
 	
 (defun update-joystick-axis (axis value)
   (let ((state (if (< (abs value) *joystick-dead-zone*)
@@ -711,7 +725,7 @@ becomes larger.")
 		0)
   (gl:scale scale-x scale-y 1))
 
-(defvar *resizable* nil)
+(defvar *resizable* t)
 
 (defparameter *resize-hook* nil)
 
@@ -772,47 +786,52 @@ display."
 			   (setf *screen-width* w
 				 *screen-height* h)
 ;			   (run-hook '*resize-hook*)
-			   (sdl:window w h :fps fps :title-caption *window-title*
-				       :flags sdl:SDL-RESIZABLE
-				       :position *window-position*)
+			   (sdl:resize-window w h :title-caption *window-title*
+				       :flags (logior sdl:SDL-OPENGL sdl:SDL-RESIZABLE))
 			   (do-orthographic-projection))
-      (:mouse-motion-event (:state state :x x :y y :x-rel x-rel :y-rel y-rel)
+      (:mouse-motion-event (:x x :y y)
 			   (setf *pointer-x* x *pointer-y* y)
 			   (let ((block (hit-blocks x y *blocks*)))
 			     (when block
 			       (send :mouse-move block x y))))
-      (:mouse-button-down-event (:button button :state state :x x :y y)
+      (:mouse-button-down-event (:button button :x x :y y)
 				(let ((block (hit-blocks x y *blocks*)))
 				  (when block
 				    (send :mouse-down block x y button))))
-      (:mouse-button-up-event (:button button :state state :x x :y y)
+      (:mouse-button-up-event (:button button :x x :y y)
 			      (let ((block (hit-blocks x y *blocks*)))
 				(when block
 				  (send :mouse-up block x y button))))
-      (:joy-button-down-event (:which which :button button :state state)
+      (:joy-button-down-event (:button button :state state)
 			      (when (assoc button *joystick-mapping*)
 				(update-joystick button state)
 				(send-event (make-event :joystick
 							(list (translate-joystick-button button) 
 							      :button-down)))))
-      (:joy-button-up-event (:which which :button button :state state)  
+      (:joy-button-up-event (:button button :state state)  
 			    (when (assoc button *joystick-mapping*)
 			      (update-joystick button state)
 			      (send-event (make-event :joystick
 						      (list (translate-joystick-button button) 
 							    :button-up)))))
-      (:joy-axis-motion-event (:which which :axis axis :value value)
+      (:joy-axis-motion-event (:axis axis :value value)
 			      (update-joystick-axis axis value))
       (:video-expose-event () (sdl:update-display))
-      (:key-down-event (:key key :mod-key mod)
-		       (let ((event (make-event key mod)))
+      (:key-down-event (:key key :mod-key mod :unicode unicode)
+		       (let ((event 
+			       (make-event 
+				;; translate data items from SDL format to internal
+				(cons (make-key-symbol key)
+				      (when (not (zerop unicode))
+					(string (code-char unicode))))
+				(mapcar #'make-key-modifier-symbol mod))))
 			 (if *held-keys*
 			     (hold-event event)
 			     (send-event event))))
       (:key-up-event (:key key :mod-key mod)
 		     ;; is this "held keys" code obsolete? it was useful for CONS control
 		     (when *held-keys*
-		       (let* ((event (make-event key mod))
+		       (let* ((event (make-event (cons key nil) mod))
 			      (entry (gethash event *key-table*)))
 			 (if (numberp entry)
 			     (if (plusp entry)
@@ -1235,17 +1254,17 @@ object save directory. See also `save-object-resource')."
 	      (message "No default startup function for: ~S. Continuing.." (string-upcase (symbol-name start-function)))))
 	(message "Warning: No project package defined. Continuing..."))))
 
-(defun publish-project-as-application (&key (output-file "output.io")
-					    project require)
-  (assert (stringp project))
-  (buildapp::main (list "sbcl"
-			"--asdf-path"
-			(sb-ext:native-namestring
-			 (asdf:system-relative-pathname :blocky "./"))
-		       "--load-system" "blocky"
-		       "--eval" (format nil 
-					"(progn (map nil #'ql:quickload (list :lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad :buildapp :uuid)) (blocky:play \"~A\"))" project)
-		       "--output" (sb-ext:native-namestring (merge-pathnames output-file)))))
+;; (defun publish-project-as-application (&key (output-file "output.io")
+;; 					    project require)
+;;   (assert (stringp project))
+;;   (buildapp::main (list "sbcl"
+;; 			"--asdf-path"
+;; 			(sb-ext:native-namestring
+;; 			 (asdf:system-relative-pathname :blocky "./"))
+;; 		       "--load-system" "blocky"
+;; 		       "--eval" (format nil 
+;; 					"(progn (map nil #'ql:quickload (list :lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad :buildapp :uuid)) (blocky:play \"~A\"))" project)
+;; 		       "--output" (sb-ext:native-namestring (merge-pathnames output-file)))))
 
 (defun directory-is-project-p (dir)
   "Test whether a directory has the .blocky suffix."
@@ -1617,21 +1636,20 @@ control the size of the individual frames or subimages."
 (defun make-variable-resource (name)
   (assert (and (symbolp name)
 	       (boundp name)))
-  (make-resource :name (prin1-to-string name)
+  (make-resource :name name
 		 :type :variable
 		 :data (serialize (symbol-value name))))
 
 (defun load-variable-resource (resource)
   (assert (eq :variable (resource-type resource)))
-  (let ((name (intern (resource-name resource))))
+  (let ((name (resource-name resource)))
     (message "Setting variable: ~S..." name)
     (setf (symbol-value name)
 	  (resource-data resource))))
 
-(defvar *persistent-variables* 
-  '(*message-history* *dt* *frame-rate* *updates* *screen-width* *screen-height*
-    *world* *blocks* *sequence-number* *pointer-x* *pointer-y*
-    *keys* *mods* *resizable* *window-title* *script* *dash* *system*))
+(defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
+*screen-height* *world* *blocks* *dt* *pointer-x* *pointer-y*
+*resizable* *window-title* *script* *system*))
     ;; notice that THIS variable is also persistent!
     ;; this is to avoid unwanted behavior changes in modules
     ;; *persistent-variables*))  ;; FIXME not for now
@@ -1642,26 +1660,28 @@ control the size of the individual frames or subimages."
   (find-project-file project *persistent-variables-file-name*))
 
 (defun save-variables (&optional (variables *persistent-variables*))
-  (message "Saving system variables ~A..." variables)
-  (write-iof (persistent-variables-file)
-	     (mapcar #'make-variable-resource variables))
-  (message "Finished saving system variables."))
+  (with-standard-io-syntax
+    (message "Saving system variables ~A..." variables)
+    (write-iof (persistent-variables-file)
+	       (mapcar #'make-variable-resource variables))
+    (message "Finished saving system variables.")))
 
 (defun load-variables ()
-  (let ((file (persistent-variables-file)))
-    (if (cl-fad:file-exists-p file)
-	(progn 
-	  (message "Loading system variables from ~A..." file)
-	  (mapc #'load-variable-resource 
-		(read-iof file))
-	  (message "Finished loading system variables."))
-	(message "No system variables file found in this project. Continuing..."))))
-
+  (with-standard-io-syntax
+    (let ((file (persistent-variables-file)))
+      (if (cl-fad:file-exists-p file)
+	  (progn 
+	    (message "Loading system variables from ~A..." file)
+	    (mapc #'load-variable-resource 
+		  (read-iof file))
+	    (message "Finished loading system variables."))
+	  (message "No system variables file found in this project. Continuing...")))))
+  
 ;;; Handling different resource types automatically
 
 (defparameter *resource-handlers* 
   (list :image #'load-image-resource
-	:variable #'load-variable-resource
+	;; :variable #'load-variable-resource
 	:lisp #'load-lisp-resource
 	:object #'load-object-resource
 	:database #'load-database-resource
@@ -2206,6 +2226,7 @@ of the music."
 	    (resource-data color))))
 
 (defun set-vertex-color (color)
+  (assert (stringp color))
   (destructuring-bind (red green blue) 
       (gl-color-values color)
     (gl:color red green blue 1)))
@@ -2266,6 +2287,7 @@ of the music."
     (draw-textured-rectangle left top z side side texture :blend blend :vertex-color color)))
 
 (defun draw-solid-circle (x y radius &key color (blend :alpha))
+  (declare (ignore blend))
   (draw-circle x y radius :color color :type :solid))
 
 ;;; Engine status
@@ -2358,7 +2380,7 @@ of the music."
 	*message-hook-functions* nil
 	*window-title* "blocky"
 	*updates* 0
-	*resizable* nil
+	*resizable* t
 	*keyboard-update-number* 0
 	*random-state* (make-random-state t))
   (sdl:init-sdl :video t :audio t :joystick t)
@@ -2369,13 +2391,14 @@ of the music."
   (initialize-sound)
   (initialize-database)
   (load-standard-resources)
+  (sdl:enable-unicode)
   (enable-key-repeat 9 1.2))
 
 (defun shut-down ()
   ;; delete any cached textures and surfaces
-  (purge-all-objects)
   (clear-text-image-cache)
   (delete-all-textures)
+  (purge-all-objects)
   (delete-all-resources)
   (sdl-mixer:halt-music)
   (sdl-mixer:close-audio t)
