@@ -25,25 +25,18 @@
 				(category :structure))
 		     &rest body)
     `(progn 
-       (defblock (,name :super ,super)
+       (define-block (,name :super ,super)
 	 (category :initform ,category)
 	 (inputs :initform ,inputs))
-       (define-method evaluate ,name ()
-	 (eval (recompile self)))
        (define-method recompile ,name ()
-	 ,@body)))
+	 ,@body)
+       (define-method evaluate ,name ()
+	 (eval (recompile self)))))
 
-;;; prevent evaluation
-
-(defblock (quote :super list)
-  :category :operators)
-
-(define-method evaluate quote () self)
-
-(define-method recompile quote () 
-  (list 'quote (mapcar #'recompile %inputs)))
-
-;;; Sending a group of messages to a particular target
+(defmacro% (quote 
+	    :super list
+	    :category :operators)
+	   `(quote ,(mapcar #'recompile %inputs)))
 
 (defmacro% (with-target 
 	       :inputs (list (new socket)
@@ -53,92 +46,56 @@
 	     `(with-target ,target
 		,body)))
 
-;;; defblock
-
-(defblock (defblock :super tree))
-
-(define-method initialize defblock ()
-  (super%initialize 
-   self 
-   :label "defblock"
-   :locked t :expanded t
-   :subtree (list 
-	     (new string :label "name")
-	     (new tree :label "options"
-		       :subtree (list (new string :value "block" :label "super")))
-	     (new tree :label "fields" :subtree (list (new list))))))
-
-(define-method recompile defblock ()
-  (destructuring-bind (name super fields) 
-      (mapcar #'recompile %inputs)
-    (let ((block-name (make-symbol (first name)))
-	  (super (make-prototype-id (first super))))
-	(append (list 'defblock (list block-name :super super))
+(defmacro% (defblock
+	:super tree
+      ;; :label "defblock"
+      ;; :locked t :expanded t
+	:inputs 
+      (list (new string :label "name")
+	    (new tree :label "options"
+		      :inputs (list (new string :value "block" :label "super")))
+	    (new tree :label "fields" :inputs (list (new list)))))
+    ;; spit out a define-block
+    (destructuring-bind (name super fields) 
+	  (mapcar #'recompile %inputs)
+      (let ((block-name (make-symbol (first name)))
+	    (super (make-prototype-id (first super))))
+	(append (list 'define-block (list block-name :super super))
 		fields))))
 
-(define-method evaluate defblock ()
-  (eval (recompile self)))
+(defmacro% (argument
+	   :category :variables
+	   :inputs (list (new string :label "name")
+			 (new entry :label "type")
+			 (new string :label "default")))
+	   ;;
+	   (destructuring-bind (name type default) 
+	       (mapcar #'recompile %inputs)
+	     (list (make-symbol name) type :default default)))
 
-;;; arguments
+(defmacro% (method :super tree
+		   :inputs
+	    (list 
+	     (new string :label "name")
+	     (new tree :label "for block"
+		       :inputs (list (new string :value "name" :label "")))
+	     (new tree :label "definition" :inputs (list (new script)))))
+	   ;;
+	   (destructuring-bind (name prototype definition) 
+	       (mapcar #'recompile %inputs)
+	     (let ((method-name (make-symbol (first name)))
+		   (prototype-id (make-prototype-id prototype)))
+	       (append (list 'define-method method-name prototype-id)
+		       (first definition)))))
 
-(defblock argument
-  :category :variables
-  :inputs (list (new string :label "name")
-		(new entry :label "type")
-		(new string :label "default")))
-
-(define-method evaluate argument ()
-  (destructuring-bind (name type default) 
-      (mapcar #'recompile %inputs)
-    (list (make-symbol name) type :default default)))
-
-(define-method draw argument ()
-  (with-fields (x y width height inputs) self
-    (draw-patch self x y (+ x width) (+ y height))
-    (mapc #'draw inputs)))
-
-;;; methods 
-
-(defblock (define-method :super tree))
-
-(define-method initialize define-method ()
-  (apply #'super%initialize self 
-	 :label "define method"
-	 :expanded t :locked t
-	 :subtree
-	 (list 
-	  (new string :label "name")
-	  (new tree :label "for block"
-		    :subtree (list (new string :value "name" :label "")))
-	  (new tree :label "definition" :subtree (list (new script))))))
-
-(define-method recompile define-method ()
-  (destructuring-bind (name prototype definition) 
-      (mapcar #'recompile %inputs)
-    (let ((method-name (make-symbol (first name)))
-	  (prototype-id (make-prototype-id prototype)))
-      (append (list 'define-method method-name prototype-id)
-	      (first definition)))))
-
-(define-method evaluate define-method ()
-  (eval (recompile self)))
-
-;;; fields
-
-(defblock field
-  :category :variables
-  :inputs (list (new string :label "name")
-		(new socket :label "value"))) ;; TODO: allow any block as a value
-
-(define-method evaluate field ()
-  (destructuring-bind (name value) 
-      (mapcar #'recompile %inputs)
-    (list name :initform value)))
-
-(define-method draw field ()
-  (with-fields (x y width height inputs) self
-    (draw-patch self x y (+ x width) (+ y height))
-    (mapc #'draw inputs)))
+(defmacro% (field
+	    :category :variables
+	    :inputs (list (new string :label "name")
+			  (new socket :label "value")))
+	   ;;
+	   (destructuring-bind (name value) 
+	       (mapcar #'recompile %inputs)
+	     (list name :initform value)))
 
 (define-method accept field (thing)
   (declare (ignore thing))

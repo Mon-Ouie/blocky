@@ -88,7 +88,7 @@
 
 (defparameter *margin-size* 16)
 
-(defblock status 
+(define-block status 
   (height :initform *default-shell-height*)
   (width :initform (+  (* 3 *medium-arrow-width*)
 			(* 2 *margin-size*))))

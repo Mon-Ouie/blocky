@@ -221,7 +221,7 @@ auto-updated displays."
 
 (defparameter *textbox-minimum-width* 80) 
 
-(defblock textbox
+(define-block textbox
   (methods :initform '(:page-up :page-down :auto-center :resize-to-fit :view-messages))
   (font :initform *monospace*)
   (buffer :initform nil)

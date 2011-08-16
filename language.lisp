@@ -44,7 +44,7 @@
 ;; diagrams to optimized machine code via SBCL.
 
 ;; New block types and behaviors can be defined with the macro
-;; `defblock' and subsequently replacing default methods of the base
+;; `define-block' and subsequently replacing default methods of the base
 ;; block prototype via `define-method'. With the macro `make-block'
 ;; you can convert lisp expressions into working block
 ;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
@@ -145,7 +145,7 @@ two words. This is used as a unit for various layout operations.")
 
 ;;; Standard means of defining blocks
 
-(defmacro defblock (spec &body args)
+(defmacro define-block (spec &body args)
   (let ((name0 nil)
 	(super0 "BLOCKY:BLOCK"))
     (etypecase spec
@@ -163,7 +163,7 @@ two words. This is used as a unit for various layout operations.")
 
 ;; Typical lambdas aren't serializable, so I use these.
 
-(defblock closure method arguments target)
+(define-block closure method arguments target)
 
 (define-method initialize closure (method target &optional arguments)
   (assert (and method 
@@ -531,7 +531,7 @@ SEXP is of the form:
 
   (BLOCK-NAME ARG1 ARG2 ... ARGN)
 
-Where BLOCK-NAME is the name of a prototype defined with `defblock'
+Where BLOCK-NAME is the name of a prototype defined with `define-block'
 and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   ;; use labels because we need to call make-block from inside
   (labels ((action-block (spec)
@@ -667,7 +667,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 				   "Methods: "
 				   (get-some-object-name self)
 				   "(" (object-address-string self) ")")
-	       :subtree (mapcar #'(lambda (method)
+	       :inputs (mapcar #'(lambda (method)
 				    (make-send-block self method self))
 				%methods)
 	       :pinned nil
@@ -1203,7 +1203,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 ;;; Vertically stacked list of blocks
 
-(defblock list
+(define-block list
   (dash :initform 2)
   (operation :initform :empty-list)
   (category :initform :structure))
@@ -1298,7 +1298,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
     (unpin each)))
 
 (defmacro deflist (name &rest body)
-  `(defblock (,name :super :list) ,@body))
+  `(define-block (,name :super :list) ,@body))
 
 (defun null-block () (new list))
 
@@ -1318,7 +1318,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 
-(defblock send prototype method schema target label)
+(define-block send prototype method schema target label)
 
 (define-method evaluate send ()
   (apply #'send %method 
@@ -1391,7 +1391,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (define-method is-top-level block ()
   (object-eq %parent *script*))
 
-(defblock (script :super list)
+(define-block (script :super list)
   (target :initform nil)
   (needs-layout :initform t)
   (variables :initform (make-hash-table :test 'eq)))

@@ -56,7 +56,7 @@ object-fields dispatch-event run-project *user-init-file-name*
 distance icon-resource icon-image *compass-directions*
 *compass-opposites* find-resource-property compose-blank-fields
 font-width font-height *browser* browser set-browser find-object
-*windows* edit create transform-field-reference defblock
+*windows* edit create transform-field-reference define-block
 *screen-height* formatted-line-width *last-event*
 formatted-line-height formatted-string-height formatted-string-width
 get-color create-image draw-image blocky edit define-prototype
@@ -157,4 +157,4 @@ draw-string-blended make-menu find-text-image make-text-image
 *block-colors* input load-variable-resource save-variable-resource
 *persistent-variables* *persistent-variables-file-name*
 persistent-variables-file *shell* save-variables load-variables
-*block-text-colors* defblock ))
+*block-text-colors* defblock defmacro%))

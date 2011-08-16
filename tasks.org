@@ -1,9 +1,17 @@
+** TODO Basic language toolkit with all elements present
+*** TODO 
+*** TODO Can have multiple toolkit windows in a scene
+*** TODO Defining blocks and fields and methods
+*** TODO 
+
 ** TODO [#A] With-target revisions
 *** TODO [#A] Fix can't pull out target
 *** TODO [#A] defblock with-target : schema has socket for message target, socket for list body
 *** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
 *** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
 *** TODO [#A] dialog boxes for project save/load!
+
+
 ** TODO core syntax example project
 *** TODO objects
 *** TODO literals (i.e. entries)

@@ -22,7 +22,7 @@
 
 (defparameter *default-grid-size* 64)
 
-(defblock world
+(define-block world
   (name :initform nil :documentation "Name of the world.")
   (description :initform "Unknown area." :documentation "Brief description of area.")
   (window-x :initform 0)
@@ -943,7 +943,7 @@ by symbol name. This enables them to be used as hash keys."
 
 (defparameter *default-space-size* 10)
 
-(defblock universe 
+(define-block universe 
   (worlds :initform (make-hash-table :test 'equal)
 	  :documentation "Address-to-world mapping.")
   prompt

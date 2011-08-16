@@ -28,7 +28,7 @@
 
 (defparameter *system-menu*
   '((:label "Project"
-     :subtree
+     :inputs
      ((:label "Create a new project" :action :create-project)
       (:label "Open an existing project" :action :open-existing-project)
       (:label "Save current changes" :action :save-changes)
@@ -41,7 +41,7 @@
       (:label "Edit preferences" :action :edit-preferences)
       (:label "Quit BLOCKY" :action :quit-blocky)))
     (:label "Edit"
-     :subtree
+     :inputs
      ((:label "Cut" :action :cut)
       (:label "Copy" :action :copy)
       (:label "Paste" :action :paste)
@@ -49,20 +49,20 @@
       (:label "Select all" :action :select-all)
       (:label "Clear selection" :action :clear-selection)))
     (:label "Object"
-     :subtree
+     :inputs
      ((:label "Define a method" :action :define-method)
       (:label "Extend this block" :action :extend-block)
       (:label "Inspect" :action :inspect)
       (:label "Copy" :action :copy)
       (:label "Destroy" :action :destroy)))
     (:label "Resources"
-     :subtree
+     :inputs
      ((:label "Import new resource" :action :import-resources)
       (:label "Edit resource" :action :edit-resource)
       (:label "Search resources" :action :search-resources)
       (:label "Export resource(s)" :action :export-resources)
       (:label "Browse resources"
-       :subtree
+       :inputs
        ((:label "Browse objects" :action :browse-objects)
 	(:label "Browse blocks" :action :browse-code)
 	(:label "Browse images" :action :browse-images)
@@ -71,13 +71,13 @@
 	(:label "Browse fonts" :action :browse-fonts)
 	(:label "Browse code" :action :browse-code)))))
     (:label "Tools" 
-     :subtree
+     :inputs
      ((:label "Create a Lisp listener" :action :create-listener)
       (:label "Create a text box" :action :create-textbox)
       (:label "Create a trash can" :action :create-trash)
       (:label "Version control" :action :version-control)))
-    (:label "Workspace" :subtree
-     ((:label "Switch to workspace" :subtree
+    (:label "Workspace" :inputs
+     ((:label "Switch to workspace" :inputs
 	      ((:label "Workspace 1" :action :workspace-1)
 	       (:label "Workspace 2" :action :workspace-2)
 	       (:label "Workspace 3" :action :workspace-3)
@@ -88,13 +88,13 @@
       (:label "Delete this workspace" :action :delete-workspace)
       (:label "Workspace settings" :action :configure-workspaces)))
     (:label "Windows"
-     :subtree
+     :inputs
      ((:label "Create a new window" :action :create-window)
       (:label "Switch to the next window" :action :next-window)
       (:label "Switch to window" :action :switch-window)
       (:label "Close this window" :action :close-window)))
     (:label "Devices"
-     :subtree
+     :inputs
      ((:label "Browse available devices" :action :browse-devices)
       (:label "Scan for devices" :action :scan-devices)
       (:label "Configure joystick" :action :configure-joystick)
@@ -102,13 +102,13 @@
       (:label "Configure microphone" :action :configure-microphone)
       (:label "Configure dance pad" :action :configure-dance-pad)))
     (:label "Help"
-     :subtree
+     :inputs
      ((:label "General help" :action :general-help)
       (:label "Examples" :action :show-examples)
       (:label "Language Reference" :action :language-reference)
       (:label "Licensing information" :action :licensing-information)))))
     
-(defblock system
+(define-block system
   (type :initform :system)
   (shell :initform nil)
   (running :initform nil))

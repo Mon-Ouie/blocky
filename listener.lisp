@@ -39,7 +39,7 @@
 (defparameter *default-prompt-history-size* 100)
 (defparameter *default-cursor-width* 1)
  
-(defblock prompt
+(define-block prompt
   (text-color :initform "gray20")
   (visible :documentation "When non-nil, the prompt is drawn." :initform t)
   (receiver :documentation "The object to send command messages to.")

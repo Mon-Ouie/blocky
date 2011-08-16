@@ -22,7 +22,7 @@
 
 (in-package :blocky)
 
-(defblock cell 
+(define-block cell 
   (type :initform :cell)
   (row :documentation "When non-nil, the current row location of the cell.")
   (column :documentation "When non-nil, the current column of the cell.")

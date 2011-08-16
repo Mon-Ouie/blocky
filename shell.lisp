@@ -28,7 +28,7 @@
 (defvar *shell* nil
   "When non-nil, the UUID of the currently active shell object.")
 
-(defblock trash 
+(define-block trash 
   :category :system 
   :methods '(:empty))
 
@@ -61,7 +61,7 @@
 
 ;;; A global menu bar
 
-(defblock menubar :category :menu :temporary t)
+(define-block menubar :category :menu :temporary t)
 
 (define-method initialize menubar (&optional (menus *system-menu*))
   (apply #'super%initialize self 
@@ -154,7 +154,7 @@
 
 ;;; Interactive editor shell
 
-(defblock shell
+(define-block shell
   (selection :initform ()
   	     :documentation "List (subset) of selected blocks.")
   (script :initform nil 

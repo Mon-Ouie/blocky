@@ -51,7 +51,7 @@
 (define-method children tree () %inputs)
 
 (define-method initialize tree 
-    (&key action target top-level subtree pinned locked
+    (&key action target top-level inputs pinned locked
 	  expanded (label "no label..."))
   (super%initialize self)
   (setf %action action
@@ -60,11 +60,11 @@
 	%locked locked
 	%target target
 	%top-level top-level
-	%inputs subtree
+	%inputs inputs
 	%label label)
   ;; become the parent
-  (when subtree
-    (dolist (each subtree)
+  (when inputs
+    (dolist (each inputs)
       (pin each)
       (set-parent each self))))
 
