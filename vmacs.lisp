@@ -20,67 +20,59 @@
 
 (in-package :blocky)
 
-(defmacro defmacro% ((name &key (inputs nil)
-				(super :block)
-				(category :structure))
+(defmacro defmacro% ((name super &rest fields)
 		     &rest body)
     `(progn 
-       (define-block (,name :super ,super)
-	 (category :initform ,category)
-	 (inputs :initform ,inputs))
-       (define-method recompile ,name ()
-	 ,@body)
+       (define-block (,name :super ,super) ,@fields)
+       (define-method recompile ,name () ,@body)
        (define-method evaluate ,name ()
 	 (eval (recompile self)))))
 
-(defmacro% (quote 
-	    :super list
-	    :category :operators)
+(defmacro% (quote list
+	    (category :initform :operators))
 	   `(quote ,(mapcar #'recompile %inputs)))
 
-(defmacro% (with-target 
-	       :inputs (list (new socket)
-			     (new list)))
+(defmacro% (with-target block
+	     (inputs :initform (list (new socket)
+				     (new list))))
 	   (destructuring-bind (target body) 
 	       (mapcar #'recompile %inputs)
 	     `(with-target ,target
 		,body)))
 
-(defmacro% (defblock
-	:super tree
-      ;; :label "defblock"
-      ;; :locked t :expanded t
-	:inputs 
-      (list (new string :label "name")
-	    (new tree :label "options"
-		      :inputs (list (new string :value "block" :label "super")))
-	    (new tree :label "fields" :inputs (list (new list)))))
-    ;; spit out a define-block
-    (destructuring-bind (name super fields) 
-	  (mapcar #'recompile %inputs)
-      (let ((block-name (make-symbol (first name)))
-	    (super (make-prototype-id (first super))))
-	(append (list 'define-block (list block-name :super super))
-		fields))))
+(defmacro% (defblock tree
+	    (label :initform "define block")
+	    (locked :initform t)
+	    (expanded :initform t)
+	    (inputs :initform 
+		    (list (new string :label "name")
+			  (new tree :label "options"
+				    :inputs (list (new string :value "block" :label "super")))
+			  (new tree :label "fields" :inputs (list (new list))))))
+	   ;; spit out a define-block
+	   (destructuring-bind (name super fields) 
+	       (mapcar #'recompile %inputs)
+	     (let ((block-name (make-symbol (first name)))
+		   (super (make-prototype-id (first super))))
+	       (append (list 'define-block (list block-name :super super))
+		       fields))))
 
-(defmacro% (argument
-	   :category :variables
-	   :inputs (list (new string :label "name")
-			 (new entry :label "type")
-			 (new string :label "default")))
-	   ;;
+(defmacro% (argument block
+	    (category :initform :variables)
+	    (inputs :initform 
+		    (list (new string :label "name")
+			  (new entry :label "type")
+			  (new string :label "default"))))
 	   (destructuring-bind (name type default) 
 	       (mapcar #'recompile %inputs)
 	     (list (make-symbol name) type :default default)))
 
-(defmacro% (method :super tree
-		   :inputs
-	    (list 
-	     (new string :label "name")
-	     (new tree :label "for block"
-		       :inputs (list (new string :value "name" :label "")))
-	     (new tree :label "definition" :inputs (list (new script)))))
-	   ;;
+(defmacro% (method tree
+	    (inputs :initform (list 
+			       (new string :label "name")
+			       (new tree :label "for block"
+					 :inputs (list (new string :value "name" :label "")))
+			       (new tree :label "definition" :inputs (list (new script))))))
 	   (destructuring-bind (name prototype definition) 
 	       (mapcar #'recompile %inputs)
 	     (let ((method-name (make-symbol (first name)))
@@ -88,10 +80,11 @@
 	       (append (list 'define-method method-name prototype-id)
 		       (first definition)))))
 
-(defmacro% (field
-	    :category :variables
-	    :inputs (list (new string :label "name")
-			  (new socket :label "value")))
+(defmacro% (field block
+	    (category :initform :variables)
+	    (inputs :initform
+		    (list (new string :label "name")
+			  (new socket :label "value"))))
 	   ;;
 	   (destructuring-bind (name value) 
 	       (mapcar #'recompile %inputs)
