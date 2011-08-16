@@ -240,7 +240,8 @@ auto-updated displays."
 
 (define-method accept textbox (other))
 
-(define-method enter textbox ())
+(define-method enter textbox ()
+  (newline self))
 
 (define-method on-event textbox (event)
   (on-text-event self event))

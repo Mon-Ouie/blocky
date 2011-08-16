@@ -47,7 +47,7 @@ project-package-name make-block *form-command-handler-function*
 add-block remove-block *initialization-hook* initialize-engine
 hit-blocks split-string-on-lines message *prompt-sweden-keybindings*
 *prompt-qwerty-keybindings* *screen-width* transform-method-body
-*edit* roll-under make-stat make-universe initialize-colors
+*edit* roll-under make-stat make-universe initialize-colors *style*
 create-project *standard-categories* *left-turn* bind-event
 *right-turn* *default-action-points* left-turn right-turn roll
 bind-event-to-method *colors* enable-key-repeat disable-key-repeat

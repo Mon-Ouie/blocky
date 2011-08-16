@@ -812,6 +812,19 @@ of block."
 
 (defparameter *selection-color* "red")
 
+(defvar *styles* '((:rounded :dash 3)
+		   (:flat :dash 2)))
+
+(defvar *style* :rounded)
+
+(defmacro with-style (style &rest body)
+  (let ((st (gensym)))
+  `(let* ((,st ,style)
+	  (*style* ,st)
+	  (*dash* (or (getf *styles* ,st)
+		      *dash*)))
+     ,@body)))
+     
 (defmacro with-block-drawing (&body body)
   "Run BODY forms with drawing primitives.
 The primitives are CIRCLE, DISC, LINE, BOX, and TEXT. These are used
@@ -844,7 +857,7 @@ blocks."
 			     :font *block-font*)))
        ,@body)))
 
-(define-method draw-patch block (x0 y0 x1 y1
+(define-method draw-rounded-patch block (x0 y0 x1 y1
 				    &key depressed dark socket color)
   "Draw a standard BLOCKY block notation patch.
 Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
@@ -905,6 +918,49 @@ override all colors."
       (disc (+ x0 radius 1) (+ y0 radius 1) fill) ;; top left
       (disc (- x1 radius 1) (+ y0 radius 1) fill) ;; top x1
       )))
+
+(define-method draw-flat-patch block (x0 y0 x1 y1
+				    &key depressed dark socket color)
+  "Draw a panel with top left corner at (X0 Y0), bottom right at (X1
+Y1). If DEPRESSED is non-nil, draw an indentation; otherwise a raised
+area is drawn. If DARK is non-nil, paint a darker region."
+  (with-block-drawing 
+    (let ((bevel (or color (if depressed shadow highlight)))
+	  (chisel (or color (if depressed highlight shadow)))
+	  (fill (or color (if socket
+			      *socket-color*
+			      (if dark background background)))))
+      ;; content area
+      (box x0 y0  
+	   x1 y1
+	   fill)
+      ;; bottom
+      (line x0 y1 
+	    x1 y1 
+	    chisel)
+      ;; top
+      (line x0 y0
+	    x1 y0 
+	    bevel)
+      ;; left
+      (line x0 y0
+	    x0 y1 
+	    bevel)
+      ;; right
+      (line x1 y0
+	    x1 y1 
+	    chisel)
+      )))
+
+(define-method draw-patch block (x0 y0 x1 y1 
+				    &key depressed dark socket color)
+  (let ((draw-function (ecase *style*
+			 (:rounded #'draw-rounded-patch)
+			 (:flat #'draw-flat-patch))))
+    (funcall draw-function self
+	     x0 y0 x1 y1 
+	     :depressed depressed :dark dark 
+	     :socket socket :color color)))
 
 (define-method draw-socket block (x0 y0 x1 y1)
   (draw-patch self x0 y0 x1 y1 :depressed t :socket t))
