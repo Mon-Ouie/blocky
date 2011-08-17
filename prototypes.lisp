@@ -1038,13 +1038,10 @@ slot value is inherited."
 			    &body declarations)
   "Create a new object prototype (possibly based on another prototype).
 
-NAME should be a symbol naming the prototype. A special variable is
-created, with equals signs bracketing the name; this variable's value
-is the resulting prototype. For example, if your prototype is named
-`foo', the special variable will be named `=foo=', and you create
-objects with:
+NAME should be a symbol or string naming the prototype. You can create
+objects with
 
- (clone =foo=)
+ (clone :foo)
 
 See also `clone'. 
 

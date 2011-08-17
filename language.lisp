@@ -315,7 +315,7 @@ changed."
 (define-method on-update block ()
   "Update the simulation one step forward in time.
 By default, just update each child block."
-  (mapc #'update %inputs))
+  (mapc #'on-update %inputs))
 
 (define-method change-image block (image)
   (setf %image image))
@@ -670,9 +670,9 @@ all the time."
 
 ;;; Context-sensitive user help
 
-(define-method describe block ()
-  "Show name and comprehensive help for this block."
-  nil)
+;; (define-method describe block ()
+;;   "Show name and comprehensive help for this block."
+;;   nil)
 
 ;; (define-method after-deserialize block ()
 ;;   "Make sure the block is ready after loading."
