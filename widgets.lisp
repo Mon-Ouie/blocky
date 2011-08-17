@@ -100,7 +100,7 @@ Return the height of the rendered line."
 ;; functions just defined.
 
 (define-prototype formatter 
-    (:parent "BLOCKY:BLOCK" :documentation 
+    (:super "BLOCKY:BLOCK" :documentation 
 "=FORMATTER= is a simple output formatting block for the
 presentation of messages and other in-game data. Foreground and
 background colors are supported, as well as displaying images
@@ -581,7 +581,7 @@ auto-updated displays."
 
 ;;; The pager switches between different visible groups of blocks
 
-(define-prototype pager (:parent "BLOCKY:BLOCK")
+(define-prototype pager (:super "BLOCKY:BLOCK")
   (pages :initform nil)
   (current-page :initform nil
 		:documentation "Keyword name of current page.")
@@ -682,7 +682,7 @@ auto-updated displays."
 
 ;;; Splitscreen view on 2 blocks with focus border
 
-(define-prototype split (:parent "BLOCKY:BLOCK")
+(define-prototype split (:super "BLOCKY:BLOCK")
   (active-color :initform "red")
   (inactive-color :initform "blue")
   (focus :initform 0)

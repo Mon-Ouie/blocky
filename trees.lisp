@@ -35,7 +35,7 @@
 (defun depth-gray (depth)
   (percent-gray (+ *depth-gray-base* (* depth *depth-gray-slope*))))
 
-(define-prototype tree (:parent :list)
+(define-prototype tree (:super :list)
   (category :initform :structure)
   (is-tree :initform t)
   (indentation-width :initform (dash 2))
@@ -229,7 +229,7 @@
 
 ;;; Menus
 
-(define-prototype menu (:parent :tree)
+(define-prototype menu (:super :tree)
   (action :initform nil)
   (main-menu-p :initform nil)
   (category :initform :menu))

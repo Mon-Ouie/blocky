@@ -11,7 +11,7 @@
 (define-method quux aaa ()
   (list :quux :aaa))
 
-(define-prototype bbb (:parent aaa)
+(define-prototype bbb (:super aaa)
   d e f)
 ;; do not define "bar"
 (define-method foo bbb ()
@@ -20,7 +20,7 @@
 (define-method quux bbb ()
   (list :quux :bbb))
 
-(define-prototype ccc (:parent bbb)
+(define-prototype ccc (:super bbb)
   h i j)
 ;; do not define "foo"
 (define-method bar ccc ()

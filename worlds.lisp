@@ -1093,7 +1093,7 @@ PLAYER as the player."
       ;; it's a mission name
       (symbol (begin (symbol-value destination) (get-player *world*))))))
 	 
-(define-prototype launchpad (:parent "BLOCKY:GATEWAY")
+(define-prototype launchpad (:super "BLOCKY:GATEWAY")
   (tile :initform "launchpad")
   (categories :initform '(:gateway :player-entry-point))
   (description :initform "Press RETURN here to exit this area."))
@@ -1110,7 +1110,7 @@ PLAYER as the player."
   "Define a world named NAME, with the fields ARGS as in a normal
 prototype declaration. This is a convenience macro for defining new
 worlds."
-  `(define-prototype ,name (:parent "BLOCKY:WORLD")
+  `(define-prototype ,name (:super "BLOCKY:WORLD")
      ,@args))
 
 ;;; Missions and Goals
@@ -1213,7 +1213,7 @@ worlds."
 		 `(setf (gethash ,(make-keyword var-name) ,hash) (make-goal ,@goal-props)))))
       `(let ((,hash (make-hash-table)))
 	 (progn ,@(mapcar #'set-goal goals))
-	 (define-prototype ,name (:parent "BLOCKY:MISSION")
+	 (define-prototype ,name (:super "BLOCKY:MISSION")
 	   (name :initform ,(make-keyword name))
 	   (description :initform ,description)
 	   (address :initform ,address)

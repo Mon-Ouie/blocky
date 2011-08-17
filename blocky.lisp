@@ -132,7 +132,7 @@ convert-cffi-sample-to-internal *block* *script*
 convert-internal-sample-to-cffi get-ticks block-variable
 with-block-variables set-block-variable with-blocks
 with-mission-locals *project* quit reset seek-music make-keyword
-object field-value make-queue find-parent set-field-value
+object field-value make-queue find-parent set-field-value find-super
 set-field-options field-options field-documentation
 set-field-option-value field-option-value *lookup-failure*
 no-such-field has-field has-method send send-queue send-super

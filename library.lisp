@@ -59,7 +59,7 @@
 
 ;; ;;; Sending to an ID
 
-;; (define-prototype send (:parent "BLOCKY:LIST")
+;; (define-prototype send (:super "BLOCKY:LIST")
 ;;   (category :initform :message)
 ;;   (schema :initform  '((:target :block)
 ;; 		       (:body :list))))

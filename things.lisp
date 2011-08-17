@@ -106,7 +106,7 @@ interpretation:
   "Define a cell named NAME, with the fields ARGS as in a normal
 prototype declaration. This is a convenience macro for defining new
 cells."
-  `(define-prototype ,name (:parent "BLOCKY:CELL")
+  `(define-prototype ,name (:super "BLOCKY:CELL")
      ,@args))
 
 ;;; Cell death
@@ -176,7 +176,7 @@ cells."
 ;; Convenience macro for defining sprites
 
 (defmacro defsprite (name &body args)
-  `(define-prototype ,name (:parent "BLOCKY:SPRITE")
+  `(define-prototype ,name (:super "BLOCKY:SPRITE")
      ,@args))
 
 (defun is-sprite (ob)

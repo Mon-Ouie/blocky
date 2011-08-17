@@ -227,7 +227,7 @@
   (float (/ +ticks-per-minute+ bpm)))
 
 (define-prototype tracker 
-  (:parent blocky:=prompt= 
+  (:super blocky:=prompt= 
    :documentation "A tracker object is the engine for Track mode.")
   (beats-per-minute :initform 110) 
   (row-remainder :initform 0.0)
@@ -400,11 +400,11 @@
 		 (incf row)
 		 (incf y *large-arrow-height*))))))
   
-(define-prototype help-prompt (:parent =prompt=)
+(define-prototype help-prompt (:super =prompt=)
   (default-keybindings :initform '(("N" nil "page-down .")
 				   ("P" nil "page-up ."))))
 
-(define-prototype help-textbox (:parent =textbox=))
+(define-prototype help-textbox (:super =textbox=))
 
 (define-method render help-textbox ()
   (/parent>>render self)

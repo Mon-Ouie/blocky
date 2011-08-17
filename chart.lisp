@@ -1,6 +1,6 @@
 ;;; 
 
-(define-prototype chart (:parent =page=)
+(define-prototype chart (:super =page=)
   (zoom :initform 2)
   (bars :initform 1)
   (beats-per-bar :initform 4))
@@ -50,7 +50,7 @@
 
 ;;; Looping samples
 
-(define-prototype looper (:parent =voice=)
+(define-prototype looper (:super =voice=)
   sample 
   (point :initform 0)
   playing)
@@ -119,7 +119,7 @@
 
 (defvar *engine* nil "Dance engine sound generator.")
 
-;; (define-prototype dance-frame (:parent blocky:=split=))
+;; (define-prototype dance-frame (:super blocky:=split=))
 
 ;; (defparameter *qwerty-keybindings*
 ;;   '(;; arrow key cursor movement
@@ -399,7 +399,7 @@
 
 ;; (defvar *commander* nil)
 
-;; (define-prototype commander (:parent blocky:=formatter=)
+;; (define-prototype commander (:super blocky:=formatter=)
 ;;   (display-current-line :initform t))
 
 ;; (define-method insert commander (arrow)
@@ -549,7 +549,7 @@ CLONE ERASE CREATE-PAGE PASTE QUIT ENTER EXIT"
 
 ;; see also widgets.lisp
 
-(define-prototype dance-prompt (:parent blocky:=prompt=))
+(define-prototype dance-prompt (:super blocky:=prompt=))
 
 (define-method say dance-prompt (&rest args)
   (apply #'send nil :say *terminal* args))

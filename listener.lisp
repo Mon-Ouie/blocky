@@ -342,7 +342,7 @@
 
 ;;; General-purpose data entry block based on the prompt block.
 
-(define-prototype entry (:parent "BLOCKY:PROMPT")
+(define-prototype entry (:super "BLOCKY:PROMPT")
   (category :initform :value)
   (pinned :initform t)
   (text-color :initform *default-entry-text-color*)
@@ -454,7 +454,7 @@
 ;;; Easily defining new entry blocks
 
 (defmacro defentry (name type value &rest specs)
-  `(define-prototype ,name (:parent "BLOCKY:ENTRY")
+  `(define-prototype ,name (:super "BLOCKY:ENTRY")
      (type-specifier :initform ',type)
      (value :initform ',value)
      ,@specs))
@@ -552,7 +552,7 @@
 
 ;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
 
-(define-prototype listener-prompt (:parent prompt)
+(define-prototype listener-prompt (:super prompt)
   (operation :initform :prompt)
   (background :initform nil)
   (methods :initform '(:debug-on-error :print-on-error))
@@ -595,7 +595,7 @@
     (dolist (line (split-string-on-lines %error-output))
       (accept %parent (new string :value line)))))
 
-(define-prototype listener (:parent list)
+(define-prototype listener (:super list)
   (scrollback-length :initform 100)
   (category :initform :system)
   (temporary :initform t)

@@ -1,3 +1,7 @@
+** TODO Documentation:
+*** TODO basic explanation of blocks and basic methods
+*** TODO 
+
 ** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
 * TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
 *** TODO [#A] dialog boxes for project save/load!

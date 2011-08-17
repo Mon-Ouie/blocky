@@ -122,7 +122,7 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
       (list (destructuring-bind (name &key super) spec
 	      (setf name0 name)
 	      (when super (setf super0 super)))))
-    `(define-prototype ,name0 (:parent ,(make-prototype-id super0))
+    `(define-prototype ,name0 (:super ,(make-prototype-id super0))
        (operation :initform ,(make-keyword name0))
        ,@(if (keywordp (first args))
 	  (plist-to-descriptors args)
@@ -405,6 +405,9 @@ By default, just update each child block."
 (define-method get-parent block ()
   %parent)
 
+(define-method find-parent block ()
+  (find-uuid %parent))
+
 (defun is-valid-connection (sink source)
   (assert (or sink source))
   ;; make sure source is not actually sink's parent somewhere
@@ -441,7 +444,7 @@ By default, just update each child block."
   nil) ;; not defined for generic blocks
 
 (define-method copy block ()
-  (clone (find-parent self)))
+  (clone (find-super self)))
   
 (define-method initialize block (&rest blocks)
   "Prepare an empty block, or if BLOCKS is non-empty, a block
@@ -1316,7 +1319,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
     (dolist (entry schema)
       (push (new entry
 		 :value (schema-option entry :default)
-		 :parent (find-uuid self)
+		 :super (find-uuid self)
 		 :type-specifier (schema-type entry)
 		 :options (schema-options entry)
 		 :label (concatenate 'string
