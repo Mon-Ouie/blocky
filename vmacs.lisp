@@ -1,4 +1,4 @@
-;;; vmacs.lisp --- object-oriented, hardware-accelerated Lisp macros
+;;; vmacs.lisp --- visual lisp macros based on Blocky objects
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -22,6 +22,11 @@
 
 (defmacro defmacro% ((name super &rest fields)
 		     &rest body)
+  "Define a visual Blocky macro called NAME.
+The argument SUPER should be the name of the base prototype.  FIELDS
+should be a list of field descriptors as given to
+`define-prototype'. The BODY forms are evaluated when the resulting
+block is recompiled."
     `(progn 
        (define-block (,name :super ,super) ,@fields)
        (define-method recompile ,name () ,@body)
