@@ -1,0 +1,50 @@
+This is the README.org file for the Blocky programming language. It
+contains an index of important files in this distribution. See the
+included file INSTALL for installation and development
+instructions. The included file "COPYING" contains licensing
+information, including the full text of the GNU General Public
+License, Version 3.
+
+Blocky is a visual dialect of [[http://en.wikipedia.org/wiki/Common_Lisp][Common Lisp]] paired with an [[http://www.gnu.org/software/emacs/][Emacs-like]]
+user interface. In addition to borrowing ideas from GNU Emacs, the
+language design is heavily influenced by existing research
+environments such as [[http://puredata.info/][PureData]], [[http://squeak.org][Squeak]], [[http://en.wikipedia.org/wiki/Morphic_(software)][Self Morphic]], [[http://scratch.mit.edu][MIT Scratch]],
+[[http://byob.berkeley.edu][Berkeley's BYOB]] project, and more recently Jens Moenig's [[http://www.chirp.scratchr.org/blog/?p=24][Smalltalk
+Elements.]]
+
+My ultimate goal is to create an industrial-strength object-oriented
+visual Lisp by importing the "abstraction" concept from PureData. Such
+a "visual Lisp macro" facility enables much more powerful blocks to be
+defined in terms of simpler ones, interactively. In addition there are
+some improvements, such as native [[http://en.wikipedia.org/wiki/OpenGL][OpenGL]] support throughout, and of
+course the advantage of compiling your block diagrams to optimized
+machine code via [[http://sbcl.org][SBCL]]. (Don't forget [[http://quicklisp.org][Quicklisp]] either.)
+
+I also wish to enable unfettered inquiry into computable knowledge,
+and support radical autonomy of creative expression. So I have built
+Blocky first and foremost /as a human language activity supported by
+free software/, not as an app or platform---because language is a
+human right.
+
+For more information on the design of Blocky, see
+http://blocky.io/design.html
+
+Here is a quick guide to the various source files:
+
+- rgb.lisp: X11 color set
+- keys.lisp: SDL key symbol translation table
+- math.lisp: bresenham's and other algorithms
+- logic.lisp: some general CL tools from PAIP
+- prototypes.lisp: a custom Self-like object system that the rest of the
+  system is built with.
+- console.lisp: basic device and file operations for SDL, OpenGL, etc
+- language.lisp: core Blocky language model and default block behaviors
+- widgets.lisp: textboxes and other niceties
+- trees.lisp: menus and tree tab widgets
+- listener.lisp: data entry and command processing
+- system.lisp: treating the system and session like an object
+- things.lisp: sprites and such
+- worlds.lisp: places where gameplay happens
+- shell.lisp: drag-and-drop enabled editor shell for scripts
+- vmacs.lisp: visual macros
+- library.lisp: standard blocks library
