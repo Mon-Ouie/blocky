@@ -312,7 +312,7 @@ changed."
   (when *script*
     (invalidate-layout *script*)))
 
-(define-method update block ()
+(define-method on-update block ()
   "Update the simulation one step forward in time.
 By default, just update each child block."
   (mapc #'update %inputs))
@@ -575,13 +575,13 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method on-alternate-click block (x y)
   (add-block *script* (context-menu self) x y))
 
-(define-method mouse-move block (x y)
+(define-method on-mouse-move block (x y)
   (declare (ignore x y)))
 
-(define-method mouse-down block (x y button)
+(define-method on-mouse-down block (x y button)
   (declare (ignore x y button)))
 
-(define-method mouse-up block (x y button)
+(define-method on-mouse-up block (x y button)
   (declare (ignore x y button)))
 
 ;;; Connecting blocks
@@ -1380,10 +1380,10 @@ non-nil to indicate that the block was accepted, nil otherwise."
 ;;     (delete-input self block)
 ;;     (append-input self block)))
 
-(define-method update script ()
+(define-method on-update script ()
   (with-script self 
     (dolist (each %inputs)
-      (update each))
+      (on-update each))
     (update-layout self)))
 
 ;; (define-method after-deserialize script ()

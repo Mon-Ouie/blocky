@@ -671,7 +671,7 @@ most user command messages. (See also the method `forward'.)"
 	do (destructuring-bind (a b) c
 	     (collide a b))))
  
-(define-method update world (&rest args)
+(define-method on-update world (&rest args)
   (declare (optimize (speed 3)))
   (declare (ignore args))
   (with-field-values (grid sprites collisions grid-height grid-width player) self
@@ -683,10 +683,10 @@ most user command messages. (See also the method `forward'.)"
       (dotimes (j grid-width)
     	(let ((cells (aref grid i j)))
     	  (dotimes (z (fill-pointer cells))
-    	    (update (aref cells z))))))
+    	    (on-update (aref cells z))))))
     ;; run the sprites
     (dolist (sprite sprites)
-      (update sprite))
+      (on-update sprite))
     ;; do collisions
     (colliding-sprites self)
     (when %collisions

@@ -34,7 +34,7 @@
 
 (define-method evaluate trash ())
 
-(define-method update trash ())
+(define-method on-update trash ())
 
 (define-method empty trash ()
   (setf %inputs nil))
@@ -207,10 +207,10 @@
     ;; run menu bar across the top
     (layout %menubar)))
 
-(define-method update shell ()
+(define-method on-update shell ()
   ;; run script blocks every frame
   (with-script %script
-    (update %script)))
+    (on-update %script)))
 
 (defun make-menubar ()
   (find-uuid 
@@ -396,7 +396,7 @@ block found, or nil if none is found."
 	    (setf click-start nil)
 	    (setf click-start-block nil)))))))
 
-(define-method mouse-move shell (mouse-x mouse-y)
+(define-method on-mouse-move shell (mouse-x mouse-y)
   (with-fields (inputs hover highlight click-start drag-offset
 		       drag-start drag) self
     (setf hover nil)
@@ -419,7 +419,7 @@ block found, or nil if none is found."
 	    (when %menubar
 	      (with-script %script (close-menus %menubar))))))))
 
-(define-method mouse-down shell (x y &optional button)
+(define-method on-mouse-down shell (x y &optional button)
   (declare (ignore button))
   (with-fields (click-start click-start-block focused-block) self
     ;; now find what we're touching
@@ -435,7 +435,7 @@ block found, or nil if none is found."
 	    ;; focused, as in the case of the Listener
 	    (focus-on self block))))))
 
-(define-method mouse-up shell (x y &optional button)
+(define-method on-mouse-up shell (x y &optional button)
   (with-fields 
       (drag-offset drag-start hover script selection drag click-start
 	      click-start-block focused-block modified) self

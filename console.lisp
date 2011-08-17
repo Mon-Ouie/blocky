@@ -649,7 +649,7 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 
 (defun update-blocks ()
   (dolist (block *blocks*)
-    (send :update block)))
+    (send :on-update block)))
 
 (defvar *update-function* #'update-blocks)
 
@@ -793,15 +793,15 @@ display."
 			   (setf *pointer-x* x *pointer-y* y)
 			   (let ((block (hit-blocks x y *blocks*)))
 			     (when block
-			       (send :mouse-move block x y))))
+			       (send :on-mouse-move block x y))))
       (:mouse-button-down-event (:button button :x x :y y)
 				(let ((block (hit-blocks x y *blocks*)))
 				  (when block
-				    (send :mouse-down block x y button))))
+				    (send :on-mouse-down block x y button))))
       (:mouse-button-up-event (:button button :x x :y y)
 			      (let ((block (hit-blocks x y *blocks*)))
 				(when block
-				  (send :mouse-up block x y button))))
+				  (send :on-mouse-up block x y button))))
       (:joy-button-down-event (:button button :state state)
 			      (when (assoc button *joystick-mapping*)
 				(update-joystick button state)
