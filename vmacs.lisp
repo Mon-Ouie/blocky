@@ -22,12 +22,12 @@
 
 (defmacro defmacro% ((name super &rest fields)
 		     &rest body)
-  "Define a visual Blocky macro called NAME.
-The argument SUPER should be the name of the base prototype.  FIELDS
+  "Define a visual block element called NAME.
+The argument SUPER should be the name of the base prototype. FIELDS
 should be a list of field descriptors as given to
 `define-prototype'. The BODY forms are evaluated when the resulting
 block is recompiled."
-    `(progn 
+    `(prog1 
        (define-block (,name :super ,super) ,@fields)
        (define-method recompile ,name () ,@body)
        (define-method evaluate ,name ()
