@@ -20,51 +20,7 @@
 
 ;;; Commentary:
 
-;; This file implements an interactive visual programming language
-;; called Blocky, based on Common Lisp. The Blocky language is
-;; influenced heavily by research environments like Squeak Morphic,
-;; Self, MIT Scratch, Berkeley's BYOB project, and Jens Moenig's
-;; "Smalltalk Elements".  Programs are assembled by the user from
-;; reusable, interchangeable pieces (or "blocks") represented by
-;; colored shapes arranged on a page. The arrangement and connection
-;; of the different blocks on the page determine how the pieces behave
-;; (collectively) as a program.
-
-;; BYOB (Build Your Own Blocks) is an advanced dialect of Scratch
-;; developed at Berkeley; it makes Scratch into a more
-;; industrial-strength object-oriented language by supporting
-;; first-class procedures, easy abstraction, and a macro-like facility
-;; enabling much more powerful blocks to be defined in terms of
-;; simpler ones.
-
-;; With my project Blocky I am making a Lisp-based visual programming
-;; language very similar to BYOB, but with a pervasive Lisp flavor. In
-;; addition there are some improvements, such as native OpenGL support
-;; throughout, and of course the advantage of compiling your block
-;; diagrams to optimized machine code via SBCL.
-
-;; New block types and behaviors can be defined with the macro
-;; `define-block' and subsequently replacing default methods of the base
-;; block prototype via `define-method'. With the macro `make-block'
-;; you can convert lisp expressions into working block
-;; diagrams. Diagrams can be saved with `serialize' and `deserialize'.
-;; With the `recompile' function, certain blocks can be optimized away
-;; into a simpler lisp expression that does the same job. For example,
-;; a block that sums its arguments could compile down into a call to
-;; the #'+ function, and so on with things like LOOP and COND.
-
-;; This file implements the base language elements. For the
-;; "meta-level" visual programming system, see vmacro.lisp
-
-;; For more information on the design of Blocky, see
-;; http://blocky.io/design.html
-
-;; For more information on related systems, see the following links:
-
-;; http://scratch.mit.edu/
-;; http://byob.berkeley.edu/
-;; http://wiki.scratch.mit.edu/wiki/Category:Scratch_Modifications
-;; http://en.wikipedia.org/wiki/Visual_programming_language
+;; Please see the included file README.org for an overview.
 
 ;;; Code:
 
@@ -85,19 +41,25 @@ areas.")
   "The default background color of block sockets.")
 
 (defparameter *block-font* "sans-11"
-  "The font used in drawing block labels and input data.")
+  "Name of the font used in drawing block labels and input data.")
 
-(defparameter *sans* "sans-11")
+(defparameter *sans* "sans-11"
+  "Name of the default sans-serif font.")
 
-(defparameter *serif* "serif-11")
+(defparameter *serif* "serif-11"
+  "Name of the default serif font.")
 
-(defparameter *monospace* "sans-mono-11")
+(defparameter *monospace* "sans-mono-11"
+  "Name of the default monospace (fixed-width) font.")
 
 (defvar *dash* 3
   "Size in pseudo-pixels of (roughly) the size of the space between
-two words. This is used as a unit for various layout operations.")
+two words. This is used as a unit for various layout operations.
+See also `*style'.")
 
 (defun dash (n &rest terms)
+  "Return the number of pixels in N dashes. Add any remaining
+arguments. Uses `*dash*' which may be configured by `*style*'."
   (apply #'+ (* n *dash*) terms))
 
 (defvar *pseudo-pixel-size* 1.0
@@ -105,13 +67,19 @@ two words. This is used as a unit for various layout operations.")
 
 (defvar *text-base-y* nil)
 
-(defparameter *cursor-blink-time* 8)
+(defparameter *cursor-blink-time* 8 
+  "The number of frames the cursor displays each color while blinking.")
 
-(defparameter *cursor-color* "magenta")
+(defparameter *cursor-color* "magenta" 
+  "The color of the cursor when not blinking.")
 
-(defparameter *cursor-blink-color* "cyan")
+(defparameter *cursor-blink-color* "cyan"
+  "The color of the cursor when blinking.")
 
-(define-prototype block ()
+(define-prototype block 
+    (:documentation
+     "This is the base prototype for all objects in the Blocky system."
+     )
   (cursor-clock :initform *cursor-blink-time*)
   ;; general information
   (inputs :initform nil :documentation 
@@ -812,8 +780,8 @@ of block."
 
 (defparameter *selection-color* "red")
 
-(defvar *styles* '((:rounded :dash 3)
-		   (:flat :dash 2)))
+(defparameter *styles* '((:rounded :dash 3)
+		   (:flat :dash 1)))
 
 (defvar *style* :rounded)
 
