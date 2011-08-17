@@ -35,9 +35,6 @@
 ;; http://www.cliki.net/Garnet
 ;; http://iolanguage.com/about/
 
-;; TODO add docs/lambdas/argslists to slash funcs
-;; TODO fix parent lookup
-  
 ;;; Code: 
 
 (in-package :blocky)
@@ -318,13 +315,13 @@ extended argument list ARGLIST."
 	(unless no-error
 	  (assert (object-p result)))))))
       
-(defun find-parent (object)
-  (object-parent (find-object object)))
+(defun find-super (object)
+  (object-super (find-object object)))
 
-(defun find-parent-prototype-name (object)
+(defun find-super-prototype-name (object)
   (object-name
    (find-object
-    (object-parent (find-object object)))))
+    (object-super (find-object object)))))
 
 (defun object-eq (a b)
   (when (and a b)
@@ -408,9 +405,9 @@ extended argument list ARGLIST."
   fields
   ;; Objects can inherit field values from a prototype object which
   ;; then influences the new object's behavior. We must store a link
-  ;; to this "parent" object so that `field-value' can obtain the
+  ;; to this "super" object so that `field-value' can obtain the
   ;; inherited field values.
-  parent
+  super
   ;; Objects may have names. A name is a string that identifies the
   ;; object. Named objects are "prototypes" from which other objects
   ;; may be created or "cloned".
@@ -437,11 +434,11 @@ extended argument list ARGLIST."
 ;; make behavior inheritance work in BLOCKY.
 
 ;; If a field value is not present in a given object's field
-;; collection, the object's parent is also checked for a value, and
-;; then its parent, and so on. This is how objects can inherit data
+;; collection, the object's super is also checked for a value, and
+;; then its super, and so on. This is how objects can inherit data
 ;; and behavior from prototypes. See `field-value'.
 
-;; When you set the value of any field, the parent's value is
+;; When you set the value of any field, the super's value is
 ;; hidden from that point on. There is no way to remove a local field
 ;; value. See `set-field-value'.
 
@@ -485,21 +482,21 @@ method call that references a non-existent field will signal a
 
 (defun field-value (field thing &optional noerror)
   "Return the value of FIELD in the object THING.
-If the FIELD has no value in THING, then the object's parent is also
+If the FIELD has no value in THING, then the object's super is also
 checked, and so on. If a value is found during these checks, it is
 returned. If a value cannot be found, an error of type `no-such-field'
 is signaled, unless NOERROR is non-nil; in that case,
 `*lookup-failure*' is returned. See also `has-field'."
   ;; (declare (optimize (speed 3))
-  ;; 	   (inline fref set-fref object-fields object-parent find-object))
+  ;; 	   (inline fref set-fref object-fields object-super find-object))
   (let ((pointer (find-object thing))
 	result found)
     ;; search the chain of objects for a field value.
     (loop while (and pointer (not found)) do
 	 (setf result (fref (object-fields pointer) field))
 	 (if (eq *lookup-failure* result)
-	     ;; it's not here. search the parent, if any.
-	     (setf pointer (find-object (object-parent pointer)))
+	     ;; it's not here. search the super, if any.
+	     (setf pointer (find-object (object-super pointer)))
 	     ;; we found a value in this object.
 	     (setf found t)))
     (if found result
@@ -651,9 +648,9 @@ upon binding."
 ;; first argument, and the arguments of the original message as the
 ;; remaining arguments.
 
-;; We also want to be able to invoke the prototype (or "parent's")
+;; We also want to be able to invoke the prototype (or "super's")
 ;; version of a method; for example during initialization, one might
-;; wish to run the parent's initializer as the first statement in the
+;; wish to run the super's initializer as the first statement in the
 ;; child's.
 
 (defun send (method thing &rest args)
@@ -695,7 +692,7 @@ If the method is not found, attempt to forward the message."
       (when (has-local-value method object)
 	(return-from finding 
 	  (values (field-value method object) object)))
-      (setf object (find-parent object)))))
+      (setf object (find-super object)))))
 
 (defun definer (method object)
   (multiple-value-bind (definition definer)
@@ -705,8 +702,8 @@ If the method is not found, attempt to forward the message."
 
 (defun next-definer (method object)
   (if (has-local-value method object)
-      (definer method (find-parent object))
-      (next-definer method (find-parent object))))
+      (definer method (find-super object))
+      (next-definer method (find-super object))))
 
 (defun next-definition (method object)
   (field-value method (next-definer method object)))
@@ -1035,7 +1032,7 @@ slot value is inherited."
     (nreverse descriptors)))
 	
 (defmacro define-prototype (name
-			    (&key parent 
+			    (&key super 
 				  documentation
 				  &allow-other-keys)
 			    &body declarations)
@@ -1055,7 +1052,7 @@ The second argument is a property list of options for the
 prototype. Valid keys are:
 
  :DOCUMENTATION     The documentation string for this prototype.
- :PARENT            The parent prototype from which the new prototype will 
+ :SUPER            The super prototype from which the new prototype will 
                     inherit fields. This form is evaluated.
                      
 DECLARATIONS should be a list, each entry of which is
@@ -1071,7 +1068,7 @@ OPTIONS is a property list of field options. Valid keys are:
 
  :INITFORM          A form evaluated to initialize the field
                     upon cloning. If :initform is not provided,
-                    the value is inherited from the PARENT.
+                    the value is inherited from the SUPER.
                     With \":initform nil\", the field is initialized 
                     with the value nil.
  :DOCUMENTATION     Documentation string for the field.
@@ -1084,18 +1081,18 @@ OPTIONS is a property list of field options. Valid keys are:
 	 (prototype-id (make-prototype-id name (project-package-name) t ))
 	 (field-initializer-body (delete nil (mapcar #'make-field-initializer 
 						     descriptors)))
-	 (parent-sym (gensym)))
+	 (super-sym (gensym)))
        ;; Need this at top-level for compiler to know about the special var
-    `(let* ((,parent-sym ,(when parent (make-prototype-id parent)))
+    `(let* ((,super-sym ,(when super (make-prototype-id super)))
 	    (uuid (make-uuid))
 	    (fields (compose-blank-fields))
 	    (blanks (compose-blank-fields ',descriptors))
-	    (parent-descriptors (when nil ;; XXXXXX ,parent-sym
+	    (super-descriptors (when nil ;; XXXXXX ,super-sym
 				    (field-value :field-descriptors 
-						 ,parent-sym
+						 ,super-sym
 						 :noerror)))
-	    (descriptors2 (append ',descriptors (when (listp parent-descriptors)
-						    parent-descriptors))))
+	    (descriptors2 (append ',descriptors (when (listp super-descriptors)
+						    super-descriptors))))
        (setf (fref fields :field-descriptors) descriptors2)
        (setf (fref fields :documentation) ,documentation)
        (setf (fref fields :initialize-fields) (function (lambda (self) 
@@ -1103,12 +1100,12 @@ OPTIONS is a property list of field options. Valid keys are:
        (let ((prototype (make-object :fields fields
 				     :name ,prototype-id
 				     :uuid uuid
-				     :parent (find-object ,parent-sym))))
+				     :super (find-object ,super-sym))))
 	 (initialize-method-cache prototype)
 	 (merge-hashes fields blanks)
 	 ;; set the default initforms
 	 (send :initialize-fields prototype)
-	 ;; the prototype's parent may have an initialize method.
+	 ;; the prototype's super may have an initialize method.
 	 ;; if so, we need to initialize the present prototype.
 	 (when (has-field :initialize prototype)
 	   (send :initialize prototype))
@@ -1130,7 +1127,7 @@ initializer. The new object is created with fields for which INITFORMS
 were specified (if any; see `define-prototype'); the INITFORMS are
 evaluated, then any applicable initializer is triggered."
   (let ((uuid (make-uuid)))
-    (let ((new-object (make-object :parent (find-object prototype)
+    (let ((new-object (make-object :super (find-object prototype)
 				   :uuid uuid
 				   :fields (compose-blank-fields nil :list))))
     (prog1 uuid
@@ -1188,12 +1185,12 @@ named in the list %EXCLUDED-FIELDS of said object will be ignored."
 		  ;; possibly prepare object for serialization.
 		  (when (has-method :before-serialize object)
 		    (send :before-serialize object))
-		  (let ((parent-name (object-name (object-parent object)))
+		  (let ((super-name (object-name (object-super object)))
 			(name (object-name object))
 			(uuid (object-uuid object))
 			(fields (object-fields object))
 			(plist nil))
-		    (assert (and parent-name 
+		    (assert (and super-name 
 				 (null name)
 				 (stringp uuid)
 				 (listp fields)))
@@ -1208,7 +1205,7 @@ named in the list %EXCLUDED-FIELDS of said object will be ignored."
 				 (collect field value)))
 		      ;; cons up the final serialized thing
 		      (list +object-type-key+
-			    :parent parent-name
+			    :super super-name
 			    :uuid uuid
 			    :fields plist)))))
 	(otherwise object)))))
@@ -1221,11 +1218,11 @@ objects after reconstruction, wherever present."
     (cond 
       ;; handle BLOCKY objects
       ((and (listp data) (eq +object-type-key+ (first data)))
-       (destructuring-bind (&key parent uuid fields &allow-other-keys)
+       (destructuring-bind (&key super uuid fields &allow-other-keys)
 	   (rest data)
 	 (let ((object (make-object :fields (mapcar #'deserialize fields)
 				    :uuid uuid
-				    :parent (find-prototype parent))))
+				    :super (find-prototype super))))
 	   (prog1 object
 	     (initialize-method-cache object)
 	     ;; possibly recover from deserialization
@@ -1264,7 +1261,7 @@ objects after reconstruction, wherever present."
       "NULL!!"
       (let ((object (find-object ob)))
 	(if (object-p object)
-	    (find-parent-prototype-name object)
+	    (find-super-prototype-name object)
 	    "Unknown object"))))
 
 (defun object-address-string (ob)

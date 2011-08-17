@@ -26,7 +26,8 @@
 
 (in-package :blocky)
 
-(defvar *script* nil)
+(defvar *script* nil
+  "When non-nil, the UUID of the current script object.")
 
 (defparameter *block-categories*
   '(:system :motion :event :message :looks :sound :structure :data
@@ -197,6 +198,8 @@ any)."
 	    (values nil nil))))))
 
 (define-method on-text-event block (event)
+  "Look up events as with `on-event', but insert unhandled keypresses
+as Unicode characters via the `insert' function."
   (with-fields (events) self
     (destructuring-bind (key . unicode) (first event)
       (when (or (on-event%%block self (cons key (rest event)))
@@ -206,6 +209,8 @@ any)."
 	(invalidate-layout self)))))
 
 (defun bind-event-to-method (block event-name modifiers method-name)
+  "Arrange for METHOD-NAME to be sent as a message to this object
+whenever the event (EVENT-NAME . MODIFIERS) is received."
   (destructuring-bind (key . mods) 
       (make-event event-name modifiers)
     (bind-event-to-closure block 
@@ -316,12 +321,15 @@ By default, just update each child block."
   (setf %image image))
 
 (define-method pin block ()
+  "Prevent dragging and moving of this block."
   (setf %pinned t))
 
-(define-method unpin block ()
+(define-method unpin block () 
+  "Allow dragging and moving of this block."
   (setf %pinned nil))
 
 (define-method is-pinned block ()
+  "When non-nil, dragging and moving are disallowed for this block."
   %pinned)
 
 (define-method count-inputs block ()
@@ -345,11 +353,6 @@ By default, just update each child block."
 	%inputs
 	:test 'eq
 	:key #'find-object))
-
-  ;; (block searching 
-  ;;   (dolist (input %inputs)
-  ;;     (when (object-eq input block)
-  ;; 	(return-from searching t)))))
 
 (defun input-position (self input)
   (assert (not (null input)))
@@ -392,8 +395,7 @@ By default, just update each child block."
 	  (error "No such input ~S" name)))))
 
 (define-method set-parent block (parent)
-  "Store a UUID link to the enclosing block PARENT.
-If PARENT is nil, then the existing parent link is cleared."
+  "Store a UUID link to the enclosing block PARENT."
   (assert (not (null parent)))
   (assert (is-valid-connection parent self))
   (setf %parent (when parent 
@@ -403,20 +405,17 @@ If PARENT is nil, then the existing parent link is cleared."
 (define-method get-parent block ()
   %parent)
 
-(defun is-bad-connection (sink source)
+(defun is-valid-connection (sink source)
   (assert (or sink source))
   ;; make sure source is not actually sink's parent somewhere
   (block checking
-    (prog1 nil
+    (prog1 t
       (let ((pointer sink))
 	(loop while pointer do
 	  (if (eq (find-object pointer)
 		  (find-object source))
-	      (return-from checking t)
+	      (return-from checking nil)
 	      (setf pointer (find-parent pointer))))))))
-
-(defun is-valid-connection (sink source)
-  (not (is-bad-connection sink source)))
 
 (define-method register-uuid block ()
   (add-object-to-database self))
@@ -1126,15 +1125,15 @@ area is drawn. If DARK is non-nil, paint a darker region."
       (draw input))))
 
 (define-method hit block (mouse-x mouse-y)
-  "Return this block (or input block) if the coordinates MOUSE-X and
-MOUSE-Y identify a point inside the block (or input block.)"
+  "Return this block (or child input block) if the coordinates MOUSE-X
+and MOUSE-Y identify a point inside the block (or input block.)"
   (with-fields (x y width height inputs) self
     (when (within-extents mouse-x mouse-y x y
 			  (+ x width) (+ y height))
       (labels ((try (it)
 		 (hit it mouse-x mouse-y)))
-	(let ((result (some #'try inputs)))
-	  (or result self))))))
+	(or (some #'try inputs) 
+	    self)))))
 
 (define-method adopt block (child)
   (when (get-parent child)
