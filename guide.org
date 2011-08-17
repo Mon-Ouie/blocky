@@ -1,0 +1,46 @@
+#+TITLE: A programmer's guide to Blocky internals
+
+* Prototype-oriented programming: prototypes.lisp
+** prototypes and fields
+** extended argument lists
+** methods and messages (incl. super message)
+** serialization
+
+* Blocks language model: language.lisp
+** Basic blocks properties
+*** xyz position / dimensions
+*** LAYOUT
+*** drawing, scaling, blending, opacity
+**** WITH-STYLE, DRAW-PATCH
+*** ON-EVENT and ON-TEXT-EVENT
+*** ON-UPDATE
+*** COPY and DEEP-COPY
+*** pinning and visibility
+*** serialization
+*** MAKE-BLOCK and prebuilt data entry blocks
+*** the Lisp Listener block
+** Composing blocks into trees
+*** INPUTS and RESULTS
+*** parent and child relationships
+** Doing things with blocks
+*** Movement
+*** ON-MOUSE-DOWN, ON-MOUSE-UP, ON-MOUSE-MOVE
+*** ON-CLICK, ON-ALTERNATE-CLICK
+*** EVALUATE and RECOMPILE
+*** WITH-TARGET
+*** WITH-SCRIPT
+
+* Device input and output: console.lisp
+** configuration variables (screen size, etc)
+** keyboard state
+** hooks and message logging
+** input events
+** joystick data
+** configuring the GL viewport
+** resources and IOF files
+** projects
+** images 
+** text 
+
+
+
