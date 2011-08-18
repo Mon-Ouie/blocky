@@ -1,13 +1,16 @@
-This is the README.org file for the Blocky programming language. It
-contains an index of important files in this distribution. See the
-included file INSTALL for installation and development
-instructions. The included file "COPYING" contains licensing
-information, including the full text of the GNU General Public
-License, Version 3.
+This is the README.ORG file for the Blocky programming language. It
+contains general information about the project as well as an index of
+important files in this source distribution. 
 
-Blocky is a visual dialect of [[http://en.wikipedia.org/wiki/Common_Lisp][Common Lisp]] paired with an [[http://www.gnu.org/software/emacs/][Emacs-like]]
-user interface. In addition to borrowing ideas from GNU Emacs, the
-language design is heavily influenced by existing research
+The included file "COPYING" contains full licensing information,
+including the text of the GNU General Public License, Version 3.
+
+See the included file INSTALL for installation instructions. A
+programmer's guide may be found in the file GUIDE.ORG.
+
+Blocky is a visual programming language for [[http://en.wikipedia.org/wiki/Common_Lisp][Common Lisp]] paired with an
+[[http://www.gnu.org/software/emacs/][Emacs-like]] user interface. In addition to borrowing ideas from GNU
+Emacs, the language design is heavily influenced by existing research
 environments such as [[http://puredata.info/][PureData]], [[http://squeak.org][Squeak]], [[http://en.wikipedia.org/wiki/Morphic_(software)][Self Morphic]], [[http://scratch.mit.edu][MIT Scratch]],
 [[http://byob.berkeley.edu][Berkeley's BYOB]] project, and more recently Jens Moenig's [[http://www.chirp.scratchr.org/blog/?p=24][Smalltalk
 Elements.]]
@@ -21,10 +24,10 @@ course the advantage of compiling your block diagrams to optimized
 machine code via [[http://sbcl.org][SBCL]]. (Don't forget [[http://quicklisp.org][Quicklisp]] either.)
 
 I also wish to enable unfettered inquiry into computable knowledge,
-and support radical autonomy of creative expression. So I have built
-Blocky first and foremost /as a human language activity supported by
-free software/, not as an app or platform---because language is a
-human right.
+and to support radical autonomy of creative expression. So I have
+built Blocky first and foremost /as a human language activity
+supported by free software/, not as an app or platform---because
+language is a human right.
 
 For more information on the design of Blocky, see
 http://blocky.io/design.html
