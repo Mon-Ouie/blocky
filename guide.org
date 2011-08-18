@@ -139,9 +139,12 @@ are stored in a similar list called %RESULTS, and by default this
 field is filled with the values of calling EVALUATE on the
 corresponding child blocks in %INPUTS. How a given object implements
 the EVALUATE method will influence whether and when that object's
-%INPUTS are themselves evaluated, as with a Lisp macro. Similarly,
-methods like DRAW can decide how, whether, and when to draw a block's
-children.
+%INPUTS are themselves evaluated, as with a Lisp macro. 
+
+Similarly, methods like DRAW can decide how, whether, and when to draw
+a block's children; the method LAYOUT controls the placement and
+sizing of a Block and its children, and HIT enables customization of
+the way mouse movements and clicks are assigned to individual objects.
 
 Blocks do differ from Lisp expressions in being modeled somewhat
 loosely after physical objects. Each block has a spatial position in
