@@ -38,7 +38,7 @@
 *update-function* *default-world-axis-size* defsprite *target*
 *blocks* *script* *default-world-z-size* install-blocks
 seconds->frames keyboard-held-p keyboard-pressed-p holding-control
-*use-nominal-screen-size* keyboard-released-p *edit* callf
+*use-nominal-screen-size* keyboard-released-p *edit* callf with-font
 keyboard-time-in-current-state pretty-symbol-string *pointer-x*
 *pointer-y* keyboard-time-in-previous-state *updates* keyboard-down-p
 keyboard-keys-down keyboard-modifier-down-p keyboard-modifiers

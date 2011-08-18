@@ -16,7 +16,7 @@ stored in fields, so if you want to replace a clone's method
 definition with something else, just define the new method on the
 clone, and the superobject's version will be hidden.
 
-* An example of prototypes in Blocky
+* A quick tour of prototypes in Blocky
 
 ** Defining a prototype
 
@@ -25,7 +25,7 @@ First we must define a prototype and name its fields:
 : (define-prototype rectangle ()
 :   x y width height)
 
-We could also have provided initialization forms for the slots, and
+We could also have provided initialization forms for the fields, and
 documentation strings:
 
 : (define-prototype rectangle ()
@@ -107,24 +107,35 @@ the object being operated on. So it's easy to see why %foo expands to
 
 * Visual blocks
 
-When employing the traditional notion of class-as-subtype, our
-problem-domain ontology must be divided into classes whose relations
-determine which operations (i.e. methods) may be applied to a given
-object. But as Alan Perlis famously said, "It is better to have 100
-functions operate on one data structure than 10 functions on 10 data
-structures." Without the type-theoretic barriers imposed by the
-doctrine of class-as-subtype, we can mix and match behaviors more
-freely, and methods will tend to be useful on a wider range of
-objects.
+When employing the traditional notion of class-as-subtype, our problem
+domain must be divided into classes whose relations determine which
+methods may be applied to a given object. But as Alan Perlis famously
+said, "It is better to have 100 functions operate on one data
+structure than 10 functions on 10 data structures."  Without the
+type-theoretic barriers imposed by the doctrine of class-as-subtype,
+we can mix and match behaviors more freely, and methods will tend to
+be useful on a wider range of objects.
 
 In the Blocky language, everything is a Block. To explain another way:
 all objects in the system---whether they are in-game entities such as
 monsters or bullets, or whether they are menus and buttons used to
 implement the user interface---ultimately derive their behavior from
 the master prototype called "BLOCK". (The purpose of this is to mimic
-the Lisp-nature, in which everything is a symbolic expression.)
+the Lisp-nature, in which everything is a symbolic expression.) 
 
-Object composition is encouraged because all blocks have %inputs
+Like Lisp expressions, all blocks have a computed VALUE---some piece
+of Lisp data considered as the result of the entire block. This value
+is returned by the block method "EVALUATE".
+
+Also like Lisp expressions, Blocks are designed to be composed with
+each other in a tree-structure of arbitrary depth. A block's "child
+nodes" are stored in a list called %INPUTS. (The percent-sign prefix
+refers to a field value of the current object.)
+
+How a given object implements the EVALUATE method will influence
+whether and when that object's %INPUTS are themselves evaluated, as
+with a Lisp macro. Similarly, methods like DRAW can decide how,
+whether, and when to draw a block's children.
 
 ** Basic blocks properties
 *** define-block

@@ -1,4 +1,4 @@
-What follows the dotted line are the licensing terms for the lisp code
+What follows the dotted line are the licensing terms for the Lisp code
 in this package written by David T. O'Toole <dto@ioforms.org>. BLOCKY
 is provided under the terms of the GNU General Public License, version
 3.
@@ -7,7 +7,7 @@ Some functions in "logic.lisp" are based on code in Peter Norvig's
 "Paradigms of Artificial Intelligence Programming". Please see
 logic.lisp for information on those terms.
 
-The X11 color data is reproduced here in rgb.lisp under the MIT
+The X11 color data are reproduced here in rgb.lisp under the MIT
 License; see rgb.lisp for details.
 
 On some platforms, binaries of libSDL 1.2 are redistributed with
