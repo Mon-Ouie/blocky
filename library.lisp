@@ -32,7 +32,7 @@
 ;; 			(object (field-value :uuid thing))))))
 
 ;; (define-method header-height sprite-id ()
-;;   (dash 1 (font-height *block-font*)))
+;;   (dash 1 (font-height *font*)))
 
 ;; (define-method get-sprite sprite-id ()
 ;;   (get-object-by-uuid %sprite-uuid))

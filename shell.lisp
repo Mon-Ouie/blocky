@@ -49,8 +49,8 @@
   (setf %width (dash 4 (font-text-extents 
 		       (trash-status-string 
 			(length %inputs))
-		       *block-font*)))
-  (setf %height (dash 4 (font-height *block-font*))))
+		       *font*)))
+  (setf %height (dash 4 (font-height *font*))))
 
 (define-method draw trash ()
   (draw-background self)
@@ -125,7 +125,7 @@
         
 (define-method draw menubar ()
   (with-fields (x y width inputs) self
-    (let ((bar-height (dash 2 1 (font-height *block-font*))))
+    (let ((bar-height (dash 2 1 (font-height *font*))))
       (draw-box x y 
 		width bar-height
 		:color (find-color self))

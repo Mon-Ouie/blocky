@@ -373,10 +373,10 @@ cells."
 
 (defsprite balloon 
   :text "..."
-  :font *block-font*
+  :font *font*
   :clock (seconds->frames 5))
 
-(define-method initialize balloon (string &key (seconds 5.0) (font *block-font*))
+(define-method initialize balloon (string &key (seconds 5.0) (font *font*))
   (with-fields (text clock) self
     (setf clock (seconds->frames seconds))
     (setf text string)

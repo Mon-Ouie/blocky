@@ -75,18 +75,17 @@ event-time event-arrow default-project-directories *step-tolerance*
 *resource-handlers* load-resource find-resource find-resource-object
 *colors* *world* make-directory-maybe load-user-init-file
 *project-directories* resource-to-plist *osx* *linux* make-resource
-make-object-resource make-event *blocks*
-bind-event-to-text-insertion make-field-initializer clone
-make-field-initializer-body make-key-modifier-symbol make-key-string
-normalize-event make-keyword make-object queue-head queue-max
-queue-count *sender* field-reference-p null-next object-eq
-*message-send-symbol-suffix* *x11-color-data* object-name
-object-parent send send-super send-queue self opposite-direction
-object-address-string object step-in-direction direction-to
-plasma-rect subdivide-rect render-plasma add-hook run-hook queue-tail
-make-resource-link save-resource save-project *defined-resources*
-save-everything *export-formats* export-archive defresource
-export-application export-project make-queue queue unqueue
+make-object-resource make-event *blocks* bind-event-to-text-insertion
+make-field-initializer clone make-field-initializer-body
+make-key-modifier-symbol make-key-string normalize-event make-keyword
+make-object queue-head queue-max queue-count *sender*
+field-reference-p null-next object-eq *message-send-symbol-suffix*
+*x11-color-data* object-name object-parent send send-super send-queue
+self opposite-direction object-address-string object step-in-direction
+direction-to plasma-rect subdivide-rect render-plasma add-hook
+run-hook queue-tail make-resource-link save-resource save-project
+*defined-resources* save-everything *export-formats* export-archive
+defresource export-application export-project make-queue queue unqueue
 queue-message queued-messages-p unqueue-message send-queue field-value
 random-direction random-choose *resources* load-font-resource
 save-object-resource super%initialize super%initialize
@@ -133,7 +132,7 @@ convert-internal-sample-to-cffi get-ticks block-variable
 with-block-variables set-block-variable with-blocks
 with-mission-locals *project* quit reset seek-music make-keyword
 object field-value make-queue find-parent set-field-value find-super
-set-field-options field-options field-documentation
+*font* set-field-options field-options field-documentation
 set-field-option-value field-option-value *lookup-failure*
 no-such-field has-field has-method send send-queue send-super
 serialize deserialize initialize-method-cache *send-super-depth*

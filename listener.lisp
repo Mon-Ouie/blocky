@@ -211,8 +211,8 @@
 	(font-text-width (if (<= point (length line))
 			     (subseq line 0 point)
 			     " ")
-			 *block-font*)
-	(if x-offset 0 (font-text-width prompt-string *block-font*)))
+			 *font*)
+	(if x-offset 0 (font-text-width prompt-string *font*)))
      ;;
      (+ y (or y-offset 0) *default-prompt-margin*)
      *default-cursor-width*
@@ -223,12 +223,12 @@
      ;; 				   (1- (length line)))
      ;; 			      point))
      ;; 		   #\Space))
-     (* (font-height *block-font*) 0.8)
+     (* (font-height *font*) 0.8)
      :color color
      :blink blink)))
 
 (define-method label-width prompt () 
-  (font-text-width %prompt-string *block-font*))
+  (font-text-width %prompt-string *font*))
 
 (define-method label-string prompt () %prompt-string)
 
@@ -249,7 +249,7 @@
 		(dotimes (ix (length line))
 		  (when (< tx (font-text-width 
 			       (subseq line 0 ix)
-			       *block-font*))
+			       *font*))
 		    (return-from measuring ix))))))
 	(when (numberp click-index)
 	  (setf point click-index))))))
@@ -261,10 +261,10 @@
     (resize self 
 	    :width  
 	    (+ 12 (* 5 *dash*)
-	       (font-text-width line *block-font*)
-	       (font-text-width *default-prompt-string* *block-font*))
+	       (font-text-width line *font*)
+	       (font-text-width *default-prompt-string* *font*))
 	    :height 
-	    (+ (* 2 *default-prompt-margin*) (font-height *block-font*)))))
+	    (+ (* 2 *default-prompt-margin*) (font-height *font*)))))
 
 (define-method draw-input-area prompt (state)
   ;; draw shaded area for data entry.
@@ -272,11 +272,11 @@
   (with-fields (x y parent label line) self
     (assert (not (null line)))
     (let ((label-width (label-width self))
-	  (line-width (font-text-width line *block-font*)))
+	  (line-width (font-text-width line *font*)))
       (draw-box (dash 1.5 x label-width)
 		(dash 1 y)
 		(dash 2 line-width)
-		(+ 1 (font-height *block-font*))
+		(+ 1 (font-height *font*))
 		:color (ecase state
 			 (:active *active-prompt-color*)
 			 (:inactive (if (null parent)
@@ -286,8 +286,8 @@
 (define-method draw-indicators prompt (state)
   (with-fields (x y options text-color width parent height line) self
     (let ((label-width (label-width self))
-	  (line-width (font-text-width line *block-font*))
-	  (fh (font-height *block-font*)))
+	  (line-width (font-text-width line *font*))
+	  (fh (font-height *font*)))
       ;; (draw-indicator :top-left-triangle
       ;; 		      (dash 1 x 1 label-width)
       ;; 		      (dash 1 y)
@@ -301,13 +301,13 @@
   (with-fields (cursor-clock x y width line parent) self
     (let* ((label (label-string self))
 	   (label-width (label-width self))
-	   (line-width (font-text-width line *block-font*)))
+	   (line-width (font-text-width line *font*)))
       ;; draw shaded area for input
       (draw-input-area self :active)
       ;; draw cursor.
       (draw-cursor self 
 		   :x-offset
-		   (dash 2 (font-text-width label *block-font*))
+		   (dash 2 (font-text-width label *font*))
 		   :blink t)
       ;; draw highlighted indicators
       (draw-indicators self :active)
@@ -327,7 +327,7 @@
 		     :color (if (is-tree parent)
 				%text-color
 				*default-prompt-outside-text-color*)
-		     :font *block-font*)
+		     :font *font*)
 	(update-layout-maybe self)
 	;; draw background for input
 	(draw-input-area self :inactive))
@@ -338,7 +338,7 @@
 		     (dash 2 x (label-width self))
 		     (+ y strings-y)
 		     :color %text-color
-		     :font *block-font*)))))
+		     :font *font*)))))
 
 ;;; General-purpose data entry block based on the prompt block.
 
@@ -382,7 +382,7 @@
       "  "))
       
 (define-method label-width entry ()
-  (font-text-width (label-string self) *block-font*))
+  (font-text-width (label-string self) *font*))
 
 (defparameter *minimum-entry-line-width* 16)
 
@@ -391,13 +391,13 @@
 	       (dash 1 %x)
 	       (+ %y (dash 1))
 	       :color %label-color
-	       :font *block-font*))
+	       :font *font*))
 
 (define-method draw entry (&optional nolabel)
   (with-fields (x y options text-color width parent height line) self
     (let ((label-width (label-width self))
-	  (line-width (font-text-width line *block-font*))
-	  (fh (font-height *block-font*)))
+	  (line-width (font-text-width line *font*))
+	  (fh (font-height *font*)))
       ;; draw the label string 
       (assert (stringp text-color))
       (unless nolabel 
@@ -413,7 +413,7 @@
 		     (+ (dash 2 x) label-width)
 		     (+ y (dash 1))
 		     :color %text-color
-		     :font *block-font*)))))
+		     :font *font*)))))
 		 
 (define-method do-sexp entry (sexp)
   (with-fields (value type-specifier) self
@@ -432,11 +432,11 @@
 
 (define-method layout entry ()
   (with-fields (height width value line) self
-    (setf height (+ (* 2 *dash*) (font-height *block-font*)))
+    (setf height (+ (* 2 *dash*) (font-height *font*)))
     (setf width (+ (* 4 *dash*)
-		   (font-text-width (label-string self) *block-font*)
+		   (font-text-width (label-string self) *font*)
 		   (max *minimum-entry-line-width*
-			(font-text-width line *block-font*))))))
+			(font-text-width line *font*))))))
 
 (define-method on-lose-focus entry ()
   ;; update the entry value if the user mouses away
@@ -616,7 +616,7 @@
 (define-method layout listener ()
   (with-fields (x y height width parent inputs) self
     ;; start by calculating current height
-    (setf height (font-height *block-font*))
+    (setf height (font-height *font*))
     ;; update all child dimensions
     (dolist (element inputs)
       (layout element)

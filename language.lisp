@@ -41,8 +41,14 @@ areas.")
 (defparameter *socket-color* "gray80"
   "The default background color of block sockets.")
 
-(defparameter *block-font* "sans-11"
+(defparameter *blockx-font* "sans-11"
   "Name of the font used in drawing block labels and input data.")
+
+(defvar *font* *blockx-font*)
+
+(defmacro with-font (font &rest body)
+  `(let ((*font* ,font))
+     ,@body))
 
 (defparameter *sans* "sans-11"
   "Name of the default sans-serif font.")
@@ -824,7 +830,7 @@ blocks."
 		(draw-string string x 
 			     (or *text-base-y* y)
 			     :color (or color2 foreground)
-			     :font *block-font*)))
+			     :font *font*)))
        ,@body)))
 
 (define-method draw-rounded-patch block (x0 y0 x1 y1
@@ -945,7 +951,7 @@ area is drawn. If DARK is non-nil, paint a darker region."
       (setf cursor-clock *cursor-blink-time*))))
 
 (define-method draw-cursor-glyph block 
-    (&optional (x 0) (y 0) (width 2) (height (font-height *block-font*))
+    (&optional (x 0) (y 0) (width 2) (height (font-height *font*))
 	       &key color blink)
   (with-fields (cursor-clock) self
     (update-cursor-clock self)
@@ -994,7 +1000,7 @@ area is drawn. If DARK is non-nil, paint a darker region."
 	(substitute #\Space #\- (symbol-name expression)))
      (otherwise (format nil "~s" expression)))))
 
-(defun expression-width (expression &optional (font *block-font*))
+(defun expression-width (expression &optional (font *font*))
   (if (blocky:object-p expression)
       *socket-width*
       (font-text-width (print-expression expression) font)))
@@ -1018,7 +1024,7 @@ area is drawn. If DARK is non-nil, paint a darker region."
 (define-method layout block ()
   (with-fields (input-widths height width label) self
     (with-field-values (x y inputs) self
-      (let* ((font *block-font*)
+      (let* ((font *font*)
 	     (dash (dash 1))
 	     (left (+ x (label-width self)))
 	     (max-height (font-height font)))
@@ -1081,7 +1087,7 @@ area is drawn. If DARK is non-nil, paint a darker region."
   (if (null %label)
       0
       (+ (dash 2)
-	 (font-text-width %label *block-font*))))
+	 (font-text-width %label *font*))))
     
 (define-method draw-label-string block (string &optional color)
   (with-block-drawing 
@@ -1223,8 +1229,8 @@ non-nil to indicate that the block was accepted, nil otherwise."
   (with-fields (height width) self
     (setf width (+ (* 4 *dash*)
 		   (font-text-width *null-display-string*
-				      *block-font*))
-	  height (+ (font-height *block-font*) (* 4 *dash*)))))
+				      *font*))
+	  height (+ (font-height *font*) (* 4 *dash*)))))
 
 (define-method layout-as-list list ()
   (with-fields (x y height width inputs dash) self
@@ -1232,7 +1238,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 	     (apply #'dash 1 args)))
     (let* ((header-height (ldash (header-height self)))
 	   (y0 (ldash y header-height))
-	   (line-height (font-height *block-font*)))
+	   (line-height (font-height *font*)))
       (setf height (ldash line-height))
       (setf width (dash 8))
       (dolist (element inputs)
@@ -1436,14 +1442,14 @@ non-nil to indicate that the block was accepted, nil otherwise."
 ;; (define-method header-height script ()
 ;;   (with-fields (x y inputs) self
 ;;     (let ((name (first inputs))
-;; 	  (height (font-height *block-font*)))
+;; 	  (height (font-height *font*)))
 ;;       (prog1 height
 ;; 	(move-to name
 ;; 	       (+ x (label-width self))
 ;; 	       (+ y height))))))
 
 ;; (define-method draw-header script ()
-;;   (prog1 (font-height *block-font*)
+;;   (prog1 (font-height *font*)
 ;;     (with-fields (x y) self
 ;;       (with-block-drawing 
 ;; 	(text (+ x *dash* 1)

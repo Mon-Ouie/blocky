@@ -27,14 +27,14 @@
 (defvar *default-formatter-scrollback-size* 1000)
 
 (defun formatted-string-height (S)
-  (destructuring-bind (string &key image (font *block-font*) &allow-other-keys) S
+  (destructuring-bind (string &key image (font *font*) &allow-other-keys) S
     (declare (ignore string))
     (if image
 	(image-height image)
 	(font-height font))))
 
 (defun formatted-string-width (S)
-  (destructuring-bind (string &key image width (font *block-font*) &allow-other-keys) S
+  (destructuring-bind (string &key image width (font *font*) &allow-other-keys) S
     (or width
 	(if image 
 	    (image-width image)
@@ -55,7 +55,7 @@ align with inline images that are larger than the text height---see
 also `render-formatted-line')."
   (destructuring-bind (string &key (foreground "white") 
 		       width
-		       (font *block-font*)
+		       (font *font*)
 		       background image)
       formatted-string
     ;; if :width is specified, draw a background square of that width
@@ -79,7 +79,7 @@ also `render-formatted-line')."
 	    ;; 	    (draw-string-solid string x (+ text-offset y) :font font
 	    ;; 			       :color foreground)))))))
 
-(defun render-formatted-line (line x y &key (font *block-font*))
+(defun render-formatted-line (line x y &key (font *font*))
   "Render the formatted LINE at position X,Y.
 Return the height of the rendered line."
   (let* ((line-height (formatted-line-height line))
@@ -117,7 +117,7 @@ PROPERTIES are chosen from:
       found and displayed. If this is an image object, the image 
       itself is displayed.
   - :WIDTH --- Occupy this pixel width if set to an integer.
-  - :FONT ---  Font name. Defaults to *block-font*.
+  - :FONT ---  Font name. Defaults to *font*.
 ")
   (lines :documentation "Vector of lines.")
   (display-current-line :initform nil)
