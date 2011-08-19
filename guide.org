@@ -119,9 +119,10 @@ be useful on a wider range of objects.
 In the Blocky language, everything is a Block. To explain another way:
 all objects in the system---whether they are in-game entities such as
 monsters or bullets, or whether they are menus and buttons used to
-implement the user interface---ultimately derive their behavior from
-the master prototype called "BLOCK". (The purpose of this is to mimic
-the Lisp-nature, in which everything is a symbolic expression.) 
+implement the user interface---all objects ultimately derive their
+behavior from the master prototype called "BLOCK". (The purpose of
+this is to mimic the Lisp-nature, in which everything is a symbolic
+expression.)
 
 Like Lisp expressions, all blocks have a computed VALUE---some piece
 of Lisp data considered as the result of the entire block. This value
