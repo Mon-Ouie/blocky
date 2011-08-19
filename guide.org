@@ -108,27 +108,16 @@ the object being operated on. So it's easy to see why %foo expands to
 
 * Visual blocks
 
-According to the [[http://en.wikipedia.org/wiki/Subtype_polymorphism][class-as-subtype]] school of thought, the problem
-domain's objects must be partitioned into classes whose relations
-determine which methods may be applied to a given object.
-
-But as Alan Perlis famously said, "It is better to have 100 functions
-operate on one data structure than 10 functions on 10 data
-structures." That is, without the type-theoretic barriers imposed by
-the doctrine of class-as-subtype, we find opportunities to mix and
-match behaviors more freely, and individual methods will thus tend to
-be useful on a wider range of objects. (Perlis describes it as "casual
-cooperation", and this can be opposed to the more formal interactions
-required of objects in something like SIMULA or Ada.)
-
 In the Blocky language, everything is a Block, meaning that all
 objects in the language inherit certain features from a common base,
 whether they are in-game entities such as monsters or bullets, or
 whether they are menus and buttons used to implement the user
-interface, or still yet, musical cues to be triggered.
+interface, or still yet, animations to be shown or musical cues to be
+played.
 
 The purpose of this everything-is-a-Blockness is to mimic the
-Lisp-nature, in which everything is a symbolic expression. 
+Lisp-nature, in which everything is a symbolic expression. Blocky adds
+user experiences to the ontology.
 
 Like Lisp expressions, all blocks have a computed value---some piece
 of Lisp data considered as the result of the entire block. This value
@@ -179,7 +168,6 @@ functionality.
 *** xyz position / dimensions
 *** LAYOUT
 *** drawing, scaling, blending, opacity
-**** WITH-STYLE, DRAW-PATCH
 *** ON-EVENT and ON-TEXT-EVENT
 *** ON-UPDATE
 *** COPY and DEEP-COPY
@@ -187,10 +175,8 @@ functionality.
 *** serialization
 *** MAKE-BLOCK and prebuilt data entry blocks
 *** the Lisp Listener block
-** Composing blocks into trees
 *** INPUTS and RESULTS
 *** parent and child relationships
-** Doing things with blocks
 *** Movement
 *** ON-MOUSE-DOWN, ON-MOUSE-UP, ON-MOUSE-MOVE
 *** ON-CLICK, ON-ALTERNATE-CLICK
