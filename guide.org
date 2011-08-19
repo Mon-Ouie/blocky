@@ -107,50 +107,71 @@ the object being operated on. So it's easy to see why %foo expands to
 
 * Visual blocks
 
-When employing the traditional notion of class-as-subtype, our problem
-domain must be divided into classes whose relations determine which
-methods may be applied to a given object. But as Alan Perlis famously
-said, "It is better to have 100 functions operate on one data
-structure than 10 functions on 10 data structures."  Without the
-type-theoretic barriers imposed by the doctrine of class-as-subtype,
-we can mix and match behaviors more freely, and methods will tend to
-be useful on a wider range of objects.
+According to the [[http://en.wikipedia.org/wiki/Subtype_polymorphism][class-as-subtype]] school of thought, the problem
+domain's objects must be partitioned into classes whose relations
+determine which methods may be applied to a given object.
 
-In the Blocky language, everything is a Block. To explain another way:
-all objects in the system---whether they are in-game entities such as
-monsters or bullets, or whether they are menus and buttons used to
-implement the user interface---all objects ultimately derive their
-behavior from the master prototype called "BLOCK". (The purpose of
-this is to mimic the Lisp-nature, in which everything is a symbolic
-expression.)
+But as Alan Perlis famously said, "It is better to have 100 functions
+operate on one data structure than 10 functions on 10 data
+structures." That is, without the type-theoretic barriers imposed by
+the doctrine of class-as-subtype, we find opportunities to mix and
+match behaviors more freely, and individual methods will thus tend to
+be useful on a wider range of objects. (Perlis describes it as "casual
+cooperation", and this can be opposed to the more formal interactions
+required of objects in something like SIMULA or Ada.)
 
-Like Lisp expressions, all blocks have a computed VALUE---some piece
+In the Blocky language, everything is a Block, meaning that all
+objects in the language inherit certain features from a common base,
+whether they are in-game entities such as monsters or bullets, or
+whether they are menus and buttons used to implement the user
+interface, or still yet, musical cues to be triggered.
+
+The purpose of this everything-is-a-Blockness is to mimic the
+Lisp-nature, in which everything is a symbolic expression. 
+
+Like Lisp expressions, all blocks have a computed value---some piece
 of Lisp data considered as the result of the entire block. This value
-is returned by the block method "EVALUATE".
-
-Also like Lisp expressions, Blocks are designed to be composed with
-each other in a tree-structure of arbitrary depth. A block's "child
-nodes" are stored in a list called %INPUTS. (As in the prototypes
-example above, the percent-sign prefix refers to a field value of the
-current object.) The choice of "inputs" for the name of this field
-reflects the idea of Blocks as nodes in a data-flow tree where each
-node controls the computation of the results it needs from its child
+is returned by the block method "EVALUATE". Also like Lisp
+expressions, Blocks are designed to be composed with each other in a
+tree-structure of arbitrary depth. A block's "child nodes" are stored
+in a list called %INPUTS. (As in the prototypes example above, the
+percent-sign prefix refers to a field value of the current object.)
+The choice of the word "inputs" for the name of this field reflects
+the idea of Blocks as nodes in a data-flow tree where each node
+controls the computation of the results it needs from its child
 blocks. Accordingly the computed values of the child blocks (if any)
 are stored in a similar list called %RESULTS, and by default this
 field is filled with the values of calling EVALUATE on the
 corresponding child blocks in %INPUTS. How a given object implements
 the EVALUATE method will influence whether and when that object's
-%INPUTS are themselves evaluated, as with a Lisp macro. 
+%INPUTS are themselves evaluated, as with a Lisp macro.
 
 Similarly, methods like DRAW can decide how, whether, and when to draw
 a block's children; the method LAYOUT controls the placement and
 sizing of a Block and its children, and HIT enables customization of
 the way mouse movements and clicks are assigned to individual objects.
+Input events (usually from the keyboard or joysticks) are handled by
+the method ON-EVENT, and the choice of how to propagate events down
+the tree may be determined dynamically at each and every node of the
+tree, with full polymorphism available at all times to influence
+dataflow, event handling, layout, positioning, graphical rendering,
+and hit-testing. In other words, despite Blocks all having many
+universal methods and properties in common, /nothing is sacred;/
+everything can be redefined at every step, since the blocks themselves
+control the computation.
 
 Blocks do differ from Lisp expressions in being modeled somewhat
 loosely after physical objects. Each block has a spatial position in
 the form of XYZ coordinates, and possesses further attributes of
 height, width, and depth.
+
+Despite the Smalltalk influence, Blocky does not aim to be a
+hermetically sealed environment. Instead, everything is fair
+game---users are encouraged to import whatever devices and API's they
+desire into the Blocksverse by writing new blocks that wrap the
+functionality.
+
+** TODO Document fonts, colors, dashes
 
 ** Basic blocks properties
 *** define-block
