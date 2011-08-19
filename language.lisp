@@ -41,10 +41,10 @@ areas.")
 (defparameter *socket-color* "gray80"
   "The default background color of block sockets.")
 
-(defparameter *blockx-font* "sans-11"
+(defparameter *block-font* "sans-11"
   "Name of the font used in drawing block labels and input data.")
 
-(defvar *font* *blockx-font*)
+(defvar *font* *block-font*)
 
 (defmacro with-font (font &rest body)
   `(let ((*font* ,font))
