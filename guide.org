@@ -91,8 +91,9 @@ argument is the object to operate on.
 You can invoke them like ordinary functions, or use the SEND function.
 
 : (defvar rect (new rectangle :width 10 :height 8))
-:
+: ;; these two are equivalent:
 : (print-me rect)
+: (send :print-me rect)
 
 The result: 
 
