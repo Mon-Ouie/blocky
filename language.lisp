@@ -672,6 +672,8 @@ all the time."
     results))
 
 (define-method evaluate block () 
+  "Return the computed result of this block.  By default, all the
+inputs are evaluated."
   (prog1 self
     (evaluate-inputs self)))
 
