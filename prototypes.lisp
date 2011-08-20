@@ -52,11 +52,12 @@ the Free Software Foundation, either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program, in the included file named \"COPYING\".
+If not, see <http://www.gnu.org/licenses/>.
 
 On some platforms, Blocky is distributed along with libSDL 1.2 (Simple
 Direct Media Layer), which is provided under the terms of the GNU
@@ -68,8 +69,8 @@ Peter Norvig in his book 'Paradigms of Artificial Intelligence
 Programming'. See logic.lisp for details.
 
 This program includes the free DejaVu fonts family in the subdirectory
-./standard/. See the file ./standard/DEJAVU-FONTS-LICENSE for more
-information.
+./standard.blocky/. For more information, see the file named
+DEJAVU-FONTS-LICENSE in that subdirectory.
 ")
 
 ;;; Extended argument lists

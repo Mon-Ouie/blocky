@@ -106,7 +106,7 @@
      ((:label "General help" :action :general-help)
       (:label "Examples" :action :show-examples)
       (:label "Language Reference" :action :language-reference)
-      (:label "Licensing information" :action :licensing-information)))))
+      (:label "Copyright notice" :action :show-copyright-notice)))))
     
 (define-block system
   (type :initform :system)
@@ -139,6 +139,13 @@
 
 (define-method save-everything system ()
   (save-project :force))
+
+(define-method show-copyright-notice system ()
+  (let ((box (new textbox *copyright-notice*)))
+    (add-block *shell* box 100 100) 
+    (resize-to-scroll box :width 80 :height 24)
+    (set-font box *serif*)
+    (end-of-line box)))
 
 (define-method ticks system ()
   (get-ticks))

@@ -254,6 +254,10 @@ auto-updated displays."
 
 (defparameter *next-screen-context-lines* 3)
 
+(define-method set-font textbox (font)
+  (assert (stringp font))
+  (setf %font font))
+
 (define-method page-up textbox ()
   "Scroll up one page, only when %max-displayed-lines is set."
   (with-field-values (max-displayed-lines) self
@@ -371,8 +375,10 @@ auto-updated displays."
 ;;   (bind-event-to-text-insertion self "QUOTE" nil "'")
 ;;   (bind-event-to-text-insertion self "QUOTE" '(:shift) "\""))
 
-(define-method initialize textbox (&rest buffer)
+(define-method initialize textbox (buffer)
   (super%initialize self)
+  (when (stringp buffer)
+    (setf %buffer (split-string-on-lines buffer)))
   (when (and buffer (listp buffer) (every #'stringp buffer))
     (setf %buffer buffer))
   (when (null (has-local-value :buffer self))

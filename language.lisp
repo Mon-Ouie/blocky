@@ -631,7 +631,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	  :action (new closure
 		      :add-block *script* 
 		      (list (new send 
-				 :prototype (find-parent-prototype-name self)
+				 :prototype (find-super-prototype-name self)
 				 :method method
 				 :target target
 				 :label method-string)
@@ -710,7 +710,7 @@ current block. Used for taking a count of all the nodes in a tree."
     :socket "gray60"
     :data "gray50"
     :structure "gray50"
-    :comment "khaki"
+    :comment "gray83"
     :looks "purple"
     :sound "orchid"
     :message "sienna3"
