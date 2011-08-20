@@ -1,3 +1,4 @@
+** TODO Blocky in-engine inspector
 *** TODO basic explanation of blocks and basic methods
 *** TODO 
 

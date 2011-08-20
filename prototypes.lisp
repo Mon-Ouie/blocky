@@ -505,6 +505,18 @@ is signaled, unless NOERROR is non-nil; in that case,
 	    *lookup-failure*   
 	    (error 'no-such-field :field-name field :object thing)))))
 
+(defun map-fields (function object)
+  "For each field in OBJECT's field collection, the supplied FUNCTION
+is invoked with the field-name and corresponding value as its two
+arguments."
+  (let ((fields (object-fields object)))
+    (etypecase fields
+      (hash-table (prog1 nil (maphash function fields)))
+      (list (loop while fields 
+		  do (funcall function 
+			      (pop fields) 
+			      (pop fields)))))))
+
 (defun has-local-value (field thing)
   (let ((object (find-object thing)))
     (not (eq *lookup-failure* (fref (object-fields object) field)))))
@@ -530,8 +542,8 @@ The new value overrides any inherited value."
 
 (defun has-method (method object)
   (and (has-field method object)
-       (or (symbolp (field-value method object))
-	   (functionp (field-value method object)))))
+       (symbolp (field-value method object))
+       (fboundp (field-value method object))))
 
 (defun with-fields-ex (fields expression binding-type body)
   (assert (member binding-type '(let symbol-macrolet)))
