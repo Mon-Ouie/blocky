@@ -44,7 +44,7 @@ areas.")
 (defparameter *block-font* "sans-11"
   "Name of the font used in drawing block labels and input data.")
 
-(defvar *font* *block-font*)
+(defparameter *font* *block-font*)
 
 (defmacro with-font (font &rest body)
   `(let ((*font* ,font))
