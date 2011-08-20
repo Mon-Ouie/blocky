@@ -680,7 +680,8 @@
 
 ;;; Browser for inspecting objects
 
-(define-block (browser :super tree))
+;; (define-block (browser :super tree)
+;;   (
 
 ;(define-method accept browser
 
