@@ -20,7 +20,7 @@
 
 (in-package :blocky)
 
-(defmacro defmacro% ((name super &rest fields)
+(defmacro define-visual-macro ((name super &rest fields)
 		     &rest body)
   "Define a visual block element called NAME.
 The argument SUPER should be the name of the base prototype. FIELDS
@@ -33,11 +33,11 @@ block is recompiled."
        (define-method evaluate ,name ()
 	 (eval (recompile self)))))
 
-(defmacro% (quote list
+(define-visual-macro (quote list
 	    (category :initform :operators))
 	   `(quote ,(mapcar #'recompile %inputs)))
 
-(defmacro% (with-target block
+(define-visual-macro (with-target block
 	     (inputs :initform (list (new socket)
 				     (new list))))
 	   (destructuring-bind (target body) 
@@ -45,7 +45,7 @@ block is recompiled."
 	     `(with-target ,target
 		,body)))
 
-(defmacro% (defblock tree
+(define-visual-macro (defblock tree
 	    (label :initform "define block")
 	    (locked :initform t)
 	    (expanded :initform t)
@@ -62,7 +62,7 @@ block is recompiled."
 	       (append (list 'define-block (list block-name :super super))
 		       fields))))
 
-(defmacro% (argument block
+(define-visual-macro (argument block
 	    (category :initform :variables)
 	    (inputs :initform 
 		    (list (new string :label "name")
@@ -72,7 +72,7 @@ block is recompiled."
 	       (mapcar #'recompile %inputs)
 	     (list (make-symbol name) type :default default)))
 
-(defmacro% (method tree
+(define-visual-macro (method tree
 	    (inputs :initform (list 
 			       (new string :label "name")
 			       (new tree :label "for block"
@@ -85,7 +85,7 @@ block is recompiled."
 	       (append (list 'define-method method-name prototype-id)
 		       (first definition)))))
 
-(defmacro% (field block
+(define-visual-macro (field block
 	    (category :initform :variables)
 	    (inputs :initform
 		    (list (new string :label "name")

@@ -678,4 +678,10 @@
 	(dolist (each inputs)
 	  (draw each)))))
 
+;;; Browser for inspecting objects
+
+(define-block (browser :super tree))
+
+;(define-method accept browser
+
 ;;; listener.lisp ends here

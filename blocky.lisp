@@ -156,4 +156,4 @@ draw-string-blended make-menu find-text-image make-text-image
 *block-colors* input load-variable-resource save-variable-resource
 *persistent-variables* *persistent-variables-file-name*
 persistent-variables-file *shell* save-variables load-variables
-*block-text-colors* defblock defmacro%))
+*block-text-colors* defblock define-visual-macro))
