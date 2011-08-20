@@ -136,7 +136,7 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
 
 ;;; Defining input events for blocks
 
-;; Typical lambdas aren't serializable, so I use these.
+;; Typical lambdas aren't serializable, so I use these blocks.
 
 (define-block closure method arguments target)
 
@@ -247,6 +247,10 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
   (bind-event-to-closure self key mods 
 			 (new closure :insert self (list text))))
     
+(define-method insert block (string)
+  (declare (ignore string))
+  nil)
+
 (defvar *lowercase-alpha-characters* "abcdefghijklmnopqrstuvwxyz")
 (defvar *uppercase-alpha-characters* "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 (defvar *numeric-characters* "0123456789")
