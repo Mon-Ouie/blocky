@@ -330,7 +330,8 @@
 		     :font *font*)
 	(update-layout-maybe self)
 	;; draw background for input
-	(draw-input-area self :inactive))
+	(draw-input-area self :inactive)
+	(draw-indicators self :inactive))
       ;; draw current command line text
       (when (null line) (setf line ""))
       (unless (zerop (length line))
