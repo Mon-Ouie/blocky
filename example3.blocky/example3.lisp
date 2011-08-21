@@ -27,11 +27,9 @@
 
 (setf *screen-width* 800)
 (setf *screen-height* 600)
-(setf *window-title* "Blocky (example3)")
+(setf *window-title* "example3.blocky")
 (setf *resizable* t)
 (enable-key-repeat 9 2)
-
-(defparameter *font* "sans-bold-12")
 
 ;;; Defining a turtle
 
@@ -164,5 +162,9 @@
 
 (defsprite meadow :image "meadow")
 (define-method accept meadow (other) nil)
+
+(defun example3 ()
+  (new system)
+  (start (new shell (new script))))
 
 ;;; example3.lisp ends here

@@ -147,6 +147,12 @@
     (set-font box *serif*)
     (end-of-line box)))
 
+;; (define-method enter-command-line system ()
+;;   (enter-command-line *shell*))
+
+;; (define-method exit-command-line system ()
+;;   (exit-command-line *shell*))
+
 (define-method ticks system ()
   (get-ticks))
 

@@ -2427,10 +2427,12 @@ of the music."
     (start (new shell (new script)))
     (start-session)))
 
-(defun edit (&optional (project *untitled-project-name*))
+(defun edit (&optional (project *untitled-project-name*) force-shell)
   (with-session
     (let ((*edit* t))
       (open-project project :no-error)
+      (when force-shell
+	(start (new shell (new script))))
       (start-session))))
 
 ;; (defun share (project) ...

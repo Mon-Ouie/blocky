@@ -619,20 +619,21 @@
   (with-fields (x y height width parent inputs) self
     ;; start by calculating current height
     (setf height (font-height *font*))
+    (setf width 0)
     ;; update all child dimensions
     (dolist (element inputs)
       (layout element)
       (incf height (dash 1 (field-value :height element)))
-      (callf max width (dash 1 (field-value :width element))))
+      (callf max width (dash 2 (field-value :width element))))
     ;; now compute proper positions
     (let ((y0 (+ y height (- (dash 2))))
 	  (left (dash 1 x)))
       (dolist (element inputs)
 	(decf y0 (field-value :height element))
 	(move-to element left y0)
-	(layout element))
-      ;; a little extra room at the top
-      (incf height (dash 1)))))
+	(layout element)))))
+      ;; a little extra room at the top and sides
+;;      (incf height (dash 1)))))
       ;; ;; move to the right spot to keep the bottom on the bottom.
       ;; (setf y (- y0 (dash 1))))))
 
@@ -680,6 +681,17 @@
 	(dolist (each inputs)
 	  (draw each)))))
 
+;;; Minibuffer-style status bar / listener
+
+(define-block (command-line :super listener))
+
+(define-method layout command-line () 
+  (super%layout self)
+  (with-fields (width height x y) *shell*
+    (setf %width width)
+    (move-to self x (- (+ y height)
+		       %height))))
+
 ;;; A reference to another block
 
 (define-block reference
@@ -716,13 +728,13 @@
 	    (draw-background self)
 	    (draw-string name (dash 1 x) (dash 1 y))))
       ;; draw indicators
-      (draw-indicator :top-left-triangle 
-		      x y 
-		      :color "magenta"))))
-      ;; (draw-indicator :bottom-right-triangle 
-      ;; 		      (dash 1 width x)
-      ;; 		      (dash 1 height y)
+      ;; (draw-indicator :top-left-triangle 
+      ;; 		      x y 
       ;; 		      :color "magenta"))))
+      (draw-indicator :bottom-right-triangle 
+      		      (dash -2 width x)
+      		      (dash -2 height y)
+      		      :color "magenta"))))
 
 ;;; Browser for inspecting objects
 

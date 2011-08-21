@@ -162,12 +162,14 @@
   (default-events :initform
 		  '(((:tab) :tab)
 		    ((:tab :control) :backtab)
-		    ((:x :alt) :command-line)
+		    ((:x :alt) :enter-command-line)
 		    ((:g :control) :escape)
 		    ((:escape) :escape)))
   (menubar :initform nil
 	   :documentation "The menubar widget.")
-  (excluded-fields :initform '(:menubar)
+  (command-line :initform nil)
+  (command-p :initform nil)
+  (excluded-fields :initform '(:menubar :listener)
 		   :documentation "Don't serialize the menu bar.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
@@ -179,6 +181,7 @@
 	 :documentation "Dummy block to hold original place of currently dragged block onscreen.")
   (focused-block :initform nil
 		 :documentation "Block having current input focus, if any.")
+  (last-focus :initform nil)
   (click-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at moment of click.")
   (click-start-block :initform nil
@@ -190,9 +193,33 @@
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
-(define-method after-deserialize shell ()
+(defun make-menubar ()
+  (find-uuid 
+   (new menubar 
+	;; see also system.lisp
+	(make-menu *system-menu*
+		   :target *system*))))
+
+(defun make-command-line ()
+  (find-uuid (new command-line)))
+
+(define-method enter-command-line shell ()
+  (setf %command-p t)
+  (setf %last-focus %focused-block)
+  (focus-on self %command-line))
+
+(define-method exit-command-line shell ()
+  (setf %command-p nil)
+  (focus-on self %last-focus)
+  (setf %last-focus nil))
+
+(define-method make-widgets shell ()
   (setf *shell* (find-uuid self))
-  (setf %menubar (make-menubar)))
+  (setf %menubar (make-menubar))
+  (setf %command-line (make-command-line)))
+
+(define-method after-deserialize shell ()
+  (make-widgets self))
 
 (define-method layout shell ()
   ;; take over the entire GL window
@@ -204,27 +231,22 @@
       (setf x %x y %y
 	    width %width
 	    height %height))
-    ;; run menu bar across the top
-    (layout %menubar)))
+    (with-style :rounded
+      (layout %menubar))
+    ;; run command line across bottom
+    (layout %command-line)))
 
 (define-method on-update shell ()
   ;; run script blocks every frame
   (with-script %script
-    (on-update %script)))
-
-(defun make-menubar ()
-  (find-uuid 
-   (new menubar 
-	;; see also system.lisp
-	(make-menu *system-menu*
-		   :target *system*))))
-
+    (on-update %script)
+    (on-update %command-line)))
+    
 (define-method initialize shell (script)
   (assert (blockyp script))
   (super%initialize self)
-  (setf *shell* (find-uuid self))
   (setf %script (find-uuid script))
-  (setf %menubar (make-menubar)))
+  (make-widgets self))
 
 (define-method script-blocks shell ()
   (field-value :inputs %script))
@@ -261,7 +283,7 @@
 (define-method on-event shell (event)
   (with-script %script
     (or (super%on-event self event)
-	(with-field-values (focused-block selection menubar script) self
+	(with-field-values (focused-block selection menubar command-line script) self
 	  (let ((block
 		    (cond
 		      ;; we're focused. send the event there
@@ -274,8 +296,8 @@
 		      ;; nothing selected, only 1 top-level block.
 		      ((= 1 (count-top-level-blocks script))
 		       (first (top-level-blocks script)))
-		      ;; fall back to menu
-		      (t menubar))))
+		      ;; fall back to command-line
+		      (t command-line))))
 	    (when block 
 	      (on-event block event)))))))
 
@@ -299,19 +321,22 @@ block found, or nil if none is found."
 	       (when b
 		 (hit b x y))))
       ;; check menubar, then script
-      (or (try %menubar)
-	  (let ((parent 
-		  (find-if #'try 
-			   (script-blocks self)
-		      :from-end t)))
-	    (when parent
-	      (try parent)))))))
+      (or 
+       (try %command-line)
+       (try %menubar)
+       (let ((parent 
+	       (find-if #'try 
+			(script-blocks self)
+			:from-end t)))
+	 (when parent
+	   (try parent)))))))
 
 (define-method draw shell ()
   (with-script %script
     (layout self)
     (with-fields (script drag-start selection inputs drag
 			 focused-block highlight menubar
+			 command-line command-p
 			 modified hover ghost prompt)
 	self
       (let ((blocks (script-blocks self)))
@@ -322,6 +347,9 @@ block found, or nil if none is found."
 	  ;;   (draw-border block))
 	  ;; draw the block itself
 	  (draw block))
+	;; possibly draw command line background
+	(when command-p
+	  (draw command-line))
 	;; during dragging we draw the dragged block.
 	(if drag 
 	    (progn (layout drag)
@@ -335,7 +363,8 @@ block found, or nil if none is found."
 	    (when focused-block
 	      (assert (blockyp focused-block))
 	      (draw-focus focused-block)))
-	(draw menubar)
+	(with-style :rounded
+	  (draw menubar))
 	(when highlight
 	  (draw-highlight highlight))))))
   
@@ -427,7 +456,10 @@ block found, or nil if none is found."
 		(blockyp focused-block)))
     (let ((block (hit-script self x y)))
       (if (null block)
-	  (focus-on self nil)
+	  (progn
+	    (focus-on self nil)
+	    (when %command-p
+	      (exit-command-line self)))
 	  (progn 
 	    (setf click-start (cons x y))
 	    (setf click-start-block (find-uuid block))
@@ -498,7 +530,8 @@ block found, or nil if none is found."
 (define-method escape shell ()
   (with-script %script
     (when %menubar (close-menus %menubar))
-    (setf %focused-block nil)
+    (focus-on self nil)
+    (exit-command-line self)
     (setf %selection nil)))
 
 ;;; shell.lisp ends here
