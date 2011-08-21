@@ -755,7 +755,7 @@ current block. Used for taking a count of all the nodes in a tree."
 
 (defparameter *block-shadow-colors*
   '(:motion "royal blue"
-    :system "gray50"
+    :system "gray40"
     :event "gray70"
     :socket "gray90"
     :data "gray55"
@@ -796,13 +796,16 @@ current block. Used for taking a count of all the nodes in a tree."
 If PART is provided, return the color for the corresponding
 part (:BACKGROUND, :SHADOW, :FOREGROUND, or :HIGHLIGHT) of this category
 of block."
-  (let ((colors (ecase part
+  (let* ((colors (ecase part
 		  (:background *block-colors*)
 		  (:highlight *block-highlight-colors*)
 		  (:shadow *block-shadow-colors*)
-		  (:foreground *block-foreground-colors*))))
-    (let ((result (getf colors %category)))
-      (or result (prog1 nil (message "WARNING: cannot find color ~S" part))))))
+		  (:foreground *block-foreground-colors*)))
+	 (category (or %category :data))
+	 (result (getf colors category)))
+      (prog1 result 
+	(assert category)
+	(assert result))))
 
 (defparameter *selection-color* "red")
 

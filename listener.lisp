@@ -52,7 +52,7 @@
   options label 
   (prompt-string :initform *default-prompt-string*)
   (category :initform :data)
-  (debug-on-error :iniform t)
+  (debug-on-error :iniform nil)
   (history :documentation "A queue of strings containing the command history.")
   (history-position :initform 0))
 
@@ -566,6 +566,7 @@
 
 (define-method initialize listener-prompt (&optional output)
   (super%initialize self)
+  (print-on-error self)
   (setf %output output))
 
 (define-method set-output listener-prompt (output)
@@ -680,8 +681,8 @@
 
 ;;; A reference to another block
 
-(define-block (reference :super string)
-  target)
+(define-block reference
+  (category :initform :structure))
 
 (define-method evaluate reference () 
   %target)
@@ -709,18 +710,18 @@
 			(dash 1 x)
 			(dash 1 y)))
 	  (progn
-	    (setf width (dash 2 (font-text-width name)))
+	    (setf width (dash 4 (font-text-width name *font*)))
 	    (setf height (dash 2 (font-height *font*)))
 	    (draw-background self)
 	    (draw-string name (dash 1 x) (dash 1 y))))
       ;; draw indicators
-      (draw-indicator :top-left-triangle 
+      (draw-indicator :asterisk 
 		      x y 
-		      :color "magenta")
-      (draw-indicator :bottom-right-triangle 
-		      (dash 1 width x)
-		      (dash 1 height y)
 		      :color "magenta"))))
+      ;; (draw-indicator :bottom-right-triangle 
+      ;; 		      (dash 1 width x)
+      ;; 		      (dash 1 height y)
+      ;; 		      :color "magenta"))))
 
 ;;; Browser for inspecting objects
 

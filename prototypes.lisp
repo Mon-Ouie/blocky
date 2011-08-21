@@ -1274,11 +1274,12 @@ objects after reconstruction, wherever present."
 	    "Unknown object"))))
 
 (defun object-address-string (ob)
-  (let ((string (with-output-to-string (s)
-		  (print-unreadable-object (ob s :identity t)))))
-    (subseq string
-	    (1+ (search "{" string))
-	    (search "}" string))))
+  (subseq (find-uuid ob) 0 5))
+  ;; (let ((string (with-output-to-string (s)
+  ;; 		  (print-unreadable-object (ob s :identity t)))))
+  ;;   (subseq string
+  ;; 	    (1+ (search "{" string))
+  ;; 	    (search "}" string))))
 
 (defun print-iob (foo stream)
   (let ((object (find-object foo)))

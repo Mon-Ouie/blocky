@@ -2122,7 +2122,7 @@ of the music."
 (defparameter *active-indicator-color* "yellow")
 (defparameter *inactive-indicator-color* "gray70")
 
-(defun indicator-size () (* 0.4 (font-height *block-font*)))
+(defun indicator-size () (* 0.37 (font-height *font*)))
 
 (defparameter *indicators* 
   '(:asterisk "asterisk"
