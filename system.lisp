@@ -142,7 +142,7 @@
 
 (define-method show-copyright-notice system ()
   (let ((box (new textbox *copyright-notice*)))
-    (add-block *shell* box 100 100) 
+    (add-block *shell* box 50 50) 
     (resize-to-scroll box :width 80 :height 24)
     (set-font box *serif*)
     (end-of-line box)))

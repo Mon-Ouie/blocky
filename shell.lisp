@@ -322,7 +322,8 @@ block found, or nil if none is found."
 		 (hit b x y))))
       ;; check menubar, then script
       (or 
-       (try %command-line)
+       (when %command-p 
+	 (try %command-line))
        (try %menubar)
        (let ((parent 
 	       (find-if #'try 
