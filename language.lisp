@@ -655,7 +655,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
      (list :label (concatenate 'string 
 			       "Methods: "
 			       (get-some-object-name self)
-			       "(" (object-address-string self) ")")
+			       " " (object-address-string self))
 	   :inputs (mapcar #'(lambda (method)
 			       (make-send-block self method self))
 			   methods)
@@ -1176,14 +1176,15 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 (define-method accept block (other-block)
   "Try to accept OTHER-BLOCK as a drag-and-dropped input. Return
 non-nil to indicate that the block was accepted, nil otherwise."
-  (verify other-block)
-  (with-field-values (parent) self
-    (when parent
-      (prog1 t
-	(let ((position (input-position parent self)))
-	  (assert (integerp position))
-	  (assert (is-valid-connection parent other-block))
-	  (plug parent other-block position))))))
+  nil)
+  ;; (verify other-block)
+  ;; (with-field-values (parent) self
+  ;;   (when parent
+  ;;     (prog1 t
+  ;; 	(let ((position (input-position parent self)))
+  ;; 	  (assert (integerp position))
+  ;; 	  (assert (is-valid-connection parent other-block))
+  ;; 	  (plug parent other-block position))))))
 
 ;;; Printing a block
 

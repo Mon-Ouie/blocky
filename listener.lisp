@@ -700,7 +700,7 @@
     (let ((image (field-value :image target))
 	  (name (concatenate 'string
 			     (get-some-object-name target)
-			     " at "
+			     " "
 			     (object-address-string target))))
       (if image
 	  (progn 
@@ -716,7 +716,7 @@
 	    (draw-background self)
 	    (draw-string name (dash 1 x) (dash 1 y))))
       ;; draw indicators
-      (draw-indicator :asterisk 
+      (draw-indicator :top-left-triangle 
 		      x y 
 		      :color "magenta"))))
       ;; (draw-indicator :bottom-right-triangle 

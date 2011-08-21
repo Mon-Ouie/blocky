@@ -2135,9 +2135,9 @@ of the music."
     (assert (stringp texture-name))
     (find-texture texture-name)))
 
-(defun draw-indicator (indicator x y &key color (state :inactive))
+(defun draw-indicator (indicator x y &key color (scale 1) (state :inactive))
   (let ((size (indicator-size)))
-    (draw-textured-rectangle x y 0 size size 
+    (draw-textured-rectangle x y 0 (* scale size) (* scale size)
 			     (find-indicator-texture indicator)
 			     :blend :alpha
 			     :vertex-color 
