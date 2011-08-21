@@ -687,7 +687,7 @@
 
 (define-block (command-line :super listener)
   (pinned :initform t)
-  (category :initform :comment))
+  (category :initform :menu))
 
 (define-method layout command-line () 
   (super%layout self)

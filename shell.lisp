@@ -394,7 +394,8 @@ block found, or nil if none is found."
     (with-script script
       ;; save the block
       (setf drag (find-uuid block))
-      (when (parent-is-script drag)
+      (when (find-parent drag)
+	  ;;(parent-is-script drag)
 	(unplug-from-parent block))
       (let ((dx (field-value :x block))
 	    (dy (field-value :y block))
