@@ -645,11 +645,13 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (let ((methods nil)
 	(pointer self))
     ;; gather methods
-    (loop while pointer do
-      (setf methods 
-	    (append methods 
-		    (field-value :methods pointer)))
-      (setf pointer (object-super pointer)))
+    (loop do
+      (when (has-local-value :methods pointer)
+	(setf methods 
+	      (intersection methods 
+			    (field-value :methods pointer))))
+      (setf pointer (object-super pointer))
+      while pointer)
     ;; 
     (make-menu
      (list :label (concatenate 'string 

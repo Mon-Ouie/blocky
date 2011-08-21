@@ -686,6 +686,7 @@
 ;;; Minibuffer-style status bar / listener
 
 (define-block (command-line :super listener)
+  (pinned :initform t)
   (category :initform :data))
 
 (define-method layout command-line () 
@@ -694,6 +695,9 @@
     (setf %width width)
     (move-to self x (- (+ y height)
 		       %height))))
+
+(define-method on-lose-focus command-line ()
+  (clear-line (get-prompt self)))
 
 ;;; A reference to another block
 
