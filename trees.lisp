@@ -289,14 +289,13 @@
     (draw-label-string self 
 		       (or label (display-string self))
 		       ;; color text according to whether method exists
-		       (if (or (null action) 
-			       (keywordp action)
-			       (functionp action)
-			       (blocky:object-p action)
-			       (listp action)
-			       (has-method action target))
+		       (if (or (blocky:object-p action)
+			       (null target)
+			       (and (keywordp action)
+				    (has-method action target))
+			       (listp action))
 			   (find-color self :foreground)
-			   "gray70"))))
+			   (find-color self :shadow)))))
 			 
 (define-method draw-highlight menu ()
   (with-fields (y height expanded parent main-menu-p) self

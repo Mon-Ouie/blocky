@@ -64,7 +64,7 @@ areas.")
 two words. This is used as a unit for various layout operations.
 See also `*style'.")
 
-(defun dash (n &rest terms)
+(defun dash (&optional (n 1) &rest terms)
   "Return the number of pixels in N dashes. Add any remaining
 arguments. Uses `*dash*' which may be configured by `*style*'."
   (apply #'+ (* n *dash*) terms))
@@ -642,17 +642,29 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (add-block *script* other-block %x %y))
 
 (define-method context-menu block ()
-  (make-menu
-	 (list :label (concatenate 'string 
-				   "Methods: "
-				   (get-some-object-name self)
-				   "(" (object-address-string self) ")")
-	       :inputs (mapcar #'(lambda (method)
-				    (make-send-block self method self))
-				%methods)
-	       :pinned nil
-	       :expanded t
-	       :locked t)))
+  (let ((methods nil)
+	(pointer self))
+    ;; gather methods
+    (loop while pointer do
+      (setf methods 
+	    (append methods 
+		    (field-value :methods pointer)))
+      (setf pointer (object-super pointer)))
+    ;; 
+    (make-menu
+     (list :label (concatenate 'string 
+			       "Methods: "
+			       (get-some-object-name self)
+			       "(" (object-address-string self) ")")
+	   :inputs (mapcar #'(lambda (method)
+			       (make-send-block self method self))
+			   methods)
+	   :pinned nil
+	   :expanded t
+	   :locked t))))
+
+(define-method make-reference block ()
+  (new reference self))
 
 ;;; evaluation and recompilation: compiling block diagrams into equivalent sexps
 
@@ -1069,6 +1081,9 @@ area is drawn. If DARK is non-nil, paint a darker region."
 
 (define-method draw-inputs block ()
   (mapc #'draw %inputs))
+
+;; (define-method draw-halo block ()
+;;   (with-fields (x y height width) self
 
 (define-method draw-contents block ()
   (with-fields (operation inputs) self

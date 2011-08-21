@@ -537,13 +537,12 @@ The new value overrides any inherited value."
 (defsetf field-value set-field-value)
 
 (defun has-field (field object)
-  "Return non-nil if FIELD has any value in OBJECT."
+  "Return non-nil if FIELD has any value in OBJECT or its supers."
   (not (eq *lookup-failure* (field-value field object :noerror))))
 
 (defun has-method (method object)
-  (and (has-field method object)
-       (symbolp (field-value method object))
-       (fboundp (field-value method object))))
+  (let ((val (field-value method object :no-error)))
+    (and val (symbolp val) (fboundp val))))
 
 (defun with-fields-ex (fields expression binding-type body)
   (assert (member binding-type '(let symbol-macrolet)))

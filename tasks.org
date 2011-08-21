@@ -1,3 +1,7 @@
+** TODO [#A] Fix context-menu: method schema not being found when it's inherited
+** TODO [#A] trigger context menu items with left click, make block with control-click/right-click
+** TODO [#A] easily close menus with halo
+*** TODO [#A] universal morphic halo?
 ** TODO Blocky in-engine inspector
 *** TODO basic explanation of blocks and basic methods
 *** TODO 
@@ -9,13 +13,9 @@
 ** TODO GUI for closures
 ** TODO PRINTer blocks
 ** TODO fix entry labels not being drawn
-** TODO [#A] Fix context-menu: method schema not being found when it's inherited
-** TODO [#A] trigger context menu items with left click, make block with control-click/right-click
 ** TODO [#A] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
 ** TODO [#A] fix missing labels on defblock's child entries
 ** TODO [#A] close context menu when loses focus
-** TODO [#A] easily close menus with X in corner
-*** TODO [#A] universal morphic halo?
 ** TODO [#A] Fix collision detection (spheres, 
 ** TODO [#A] Start using tests and more correctness-helpers
 ** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)

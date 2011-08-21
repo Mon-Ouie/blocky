@@ -2122,7 +2122,7 @@ of the music."
 (defparameter *active-indicator-color* "yellow")
 (defparameter *inactive-indicator-color* "gray70")
 
-(defun indicator-size () (* 0.4 (font-height *default-font*)))
+(defun indicator-size () (* 0.4 (font-height *block-font*)))
 
 (defparameter *indicators* 
   '(:asterisk "asterisk"
@@ -2174,7 +2174,7 @@ of the music."
       (:font (find-resource-property font :width))
       (:ttf (error "Cannot get width of a TTF font.")))))
 
-(defun-memo font-text-width (string font)
+(defun-memo font-text-width (string &optional (font *font*))
     (:key #'identity :test 'equal :validator #'identity)
   (sdl:get-font-size string :size :w :font (find-resource-object font)))
 

@@ -375,8 +375,10 @@ auto-updated displays."
 ;;   (bind-event-to-text-insertion self "QUOTE" nil "'")
 ;;   (bind-event-to-text-insertion self "QUOTE" '(:shift) "\""))
 
-(define-method initialize textbox (buffer)
+(define-method initialize textbox (&optional buffer)
   (super%initialize self)
+  (when (null buffer)
+    (setf %buffer (list " ")))
   (when (stringp buffer)
     (setf %buffer (split-string-on-lines buffer)))
   (when (and buffer (listp buffer) (every #'stringp buffer))

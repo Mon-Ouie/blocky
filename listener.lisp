@@ -52,7 +52,7 @@
   options label 
   (prompt-string :initform *default-prompt-string*)
   (category :initform :data)
-  (debug-on-error :iniform nil)
+  (debug-on-error :iniform t)
   (history :documentation "A queue of strings containing the command history.")
   (history-position :initform 0))
 
@@ -678,10 +678,54 @@
 	(dolist (each inputs)
 	  (draw each)))))
 
+;;; A reference to another block
+
+(define-block (reference :super string)
+  target)
+
+(define-method evaluate reference () 
+  %target)
+
+(define-method initialize reference (target)
+  (setf %target 
+	(etypecase target
+	  (string (prog1 target
+		    (assert (find-object target))))
+	  (blocky:object (find-uuid object)))))
+
+(define-method draw reference ()
+  (with-fields (target x y width height) self
+    (let ((image (field-value :image target))
+	  (name (concatenate 'string
+			     (get-some-object-name target)
+			     " at "
+			     (object-address-string target))))
+      (if image
+	  (progn 
+	    (setf width (dash 2 (image-width image)))
+	    (setf height (dash 2 (image-height image)))
+	    (draw-background self)
+	    (draw-image image 
+			(dash 1 x)
+			(dash 1 y)))
+	  (progn
+	    (setf width (dash 2 (font-text-width name)))
+	    (setf height (dash 2 (font-height *font*)))
+	    (draw-background self)
+	    (draw-string name (dash 1 x) (dash 1 y))))
+      ;; draw indicators
+      (draw-indicator :top-left-triangle 
+		      x y 
+		      :color "magenta")
+      (draw-indicator :bottom-right-triangle 
+		      (dash 1 width x)
+		      (dash 1 height y)
+		      :color "magenta"))))
+
 ;;; Browser for inspecting objects
 
 ;; (define-block (browser :super tree)
-;;   (
+;;     (
 
 ;(define-method accept browser
 
