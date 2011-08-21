@@ -593,9 +593,11 @@
 
 (define-method do-after-evaluate listener-prompt ()
   ;; print any error output
-  (when %parent
-    (dolist (line (split-string-on-lines %error-output))
-      (accept %parent (new string :value line)))))
+  (when (and %parent (stringp %error-output)
+	     (plusp (length %error-output)))
+    (accept %parent (new textbox %error-output))))2
+    ;; (dolist (line (split-string-on-lines %error-output))
+    ;;   (accept %parent (new string :value line)))))
 
 (define-prototype listener (:super list)
   (scrollback-length :initform 100)
@@ -623,7 +625,7 @@
     ;; update all child dimensions
     (dolist (element inputs)
       (layout element)
-      (incf height (dash 1 (field-value :height element)))
+      (incf height (field-value :height element))
       (callf max width (dash 2 (field-value :width element))))
     ;; now compute proper positions
     (let ((y0 (+ y height (- (dash 2))))
@@ -683,7 +685,8 @@
 
 ;;; Minibuffer-style status bar / listener
 
-(define-block (command-line :super listener))
+(define-block (command-line :super listener)
+  (category :initform :data))
 
 (define-method layout command-line () 
   (super%layout self)
@@ -707,13 +710,17 @@
 		    (assert (find-object target))))
 	  (blocky:object (find-uuid object)))))
 
+(defun-memo make-reference-name (target)
+    (:key #'first :test 'equal :validator #'identity)
+  (concatenate 'string
+	       (get-some-object-name target)
+	       " "
+	       (object-address-string target)))
+
 (define-method draw reference ()
   (with-fields (target x y width height) self
     (let ((image (field-value :image target))
-	  (name (concatenate 'string
-			     (get-some-object-name target)
-			     " "
-			     (object-address-string target))))
+	  (name (make-reference-name target)))
       (if image
 	  (progn 
 	    (setf width (dash 2 (image-width image)))

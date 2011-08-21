@@ -56,7 +56,7 @@ areas.")
 (defparameter *serif* "serif-11"
   "Name of the default serif font.")
 
-(defparameter *monospace* "sans-mono-11"
+(defparameter *monospace* "sans-mono-10"
   "Name of the default monospace (fixed-width) font.")
 
 (defvar *dash* 3
