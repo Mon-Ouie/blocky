@@ -34,6 +34,9 @@
     (:name "dot3" :type :image :file "dot3.png")
     (:name "dot4" :type :image :file "dot4.png"))
 
+(defresource
+    (:name "crayon" :type :music :file "crayon.ogg"))
+
 (defparameter *wood-tiles* '("tile1" "tile2" "tile3" "tile4"))
 (defparameter *dots* '("dot1" "dot2" "dot3" "dot4"))
 
@@ -57,6 +60,7 @@
 
 (defun example4 ()
   (new system)
+  (play-music "crayon" :loop t)
   (start (new shell (new script))))
 	      
 ;;; example4.lisp ends here
