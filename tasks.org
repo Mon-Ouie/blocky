@@ -1,14 +1,12 @@
-** TODO also show ID string when image
-** TODO Fix Control-E etc not working in textbox
-** TODO Fix not traversing line break with C-f and C-b
 ** TODO [#A] Fix context-menu: method schema not being found when it's inherited
 ** TODO [#A] trigger context menu items with left click, make block with control-click/right-click
 ** TODO [#A] easily close menus with halo
 *** TODO [#A] universal morphic halo?
-** TODO Blocky in-engine inspector
+** TODO [#B] Blocky in-engine inspector
 *** TODO basic explanation of blocks and basic methods
 *** TODO 
-
+** TODO [#C] Fix Control-E etc not working in textbox
+** TODO [#C] Fix not traversing line break with C-f and C-b
 ** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
 * TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
 *** TODO [#A] dialog boxes for project save/load!
@@ -16,9 +14,8 @@
 ** TODO GUI for closures
 ** TODO PRINTer blocks
 ** TODO fix entry labels not being drawn
-** TODO [#A] emacs-like M-x pop up commandline/status (with messages widget. custom listener)
 ** TODO [#A] fix missing labels on defblock's child entries
-** TODO [#A] close context menu when loses focus
+** TODO [#A] close context menu when loses focus?
 ** TODO [#A] Fix collision detection (spheres, 
 ** TODO [#A] Start using tests and more correctness-helpers
 ** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)

@@ -191,15 +191,21 @@ extended argument list ARGLIST."
     (setf (gethash id *methods*) (list arglist options))
     (values id arglist)))
 	  	  
-(defun find-method-in-dictionary (name method &optional noerror)
+(defun find-method-in-dictionary (name method &optional no-error)
   (assert (hash-table-p *methods*))
-  (let ((id (make-method-id name method)))
-    (let ((result (gethash id *methods*)))
-      (if (null result)
-	  (if noerror
-	      (values nil nil)
-	      (error "Cannot find method ID: ~S" id))
-	  (values-list result)))))
+  (let ((proto name))
+    (block looping
+      (loop while proto do
+	(let ((id (make-method-id proto method)))
+	  (let ((result (gethash id *methods*)))
+	    (if result
+		(return-from looping
+		  (values-list result))
+		(prog1 (values nil nil)
+		  (setf proto (find-super proto))))))))))
+     ;; (if no-error
+     ;; 	 (values nil nil)
+     ;; 	 (error "Cannot find method ID: ~S" (list proto method))))))
 
 (defun method-options (name method &optional noerror)
   (multiple-value-bind (schema options)

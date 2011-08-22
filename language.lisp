@@ -660,7 +660,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 			       " " (object-address-string self))
 	   :inputs (mapcar #'(lambda (method)
 			       (make-send-block self method self))
-			   methods)
+			   %methods) ;; ignore computed methods union for now
 	   :pinned nil
 	   :expanded t
 	   :locked t))))

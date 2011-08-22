@@ -1648,7 +1648,7 @@ control the size of the individual frames or subimages."
 	  (resource-data resource))))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
-*screen-height* *world* *blocks* *dt* *pointer-x* *pointer-y*
+*screen-height* *world* *blocks* *dt* *pointer-x* *pointer-y* *trash*
 *resizable* *window-title* *script* *system*))
     ;; notice that THIS variable is also persistent!
     ;; this is to avoid unwanted behavior changes in modules
