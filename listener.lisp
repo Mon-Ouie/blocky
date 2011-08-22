@@ -702,17 +702,25 @@
 ;;; A reference to another block
 
 (define-block reference
+  (target :initform nil)
   (category :initform :structure))
 
 (define-method evaluate reference () 
   %target)
 
-(define-method initialize reference (target)
+(define-method set-target reference (target)
   (setf %target 
 	(etypecase target
 	  (string (prog1 target
 		    (assert (find-object target))))
 	  (blocky:object (find-uuid object)))))
+
+(define-method initialize reference (&optional target)
+  (when target
+    (set-target self target)))
+
+(define-method accept reference (new-block)
+  (set-target self new-block))
 
 (defun-memo make-reference-name (target)
     (:key #'first :test 'equal :validator #'identity)
@@ -723,21 +731,25 @@
 
 (define-method draw reference ()
   (with-fields (target x y width height) self
-    (let ((image (field-value :image target))
-	  (name (make-reference-name target)))
-      (if image
-	  (progn 
-	    (setf width (dash 2 (image-width image)))
-	    (setf height (dash 2 (image-height image)))
-	    (draw-background self)
-	    (draw-image image 
-			(dash 1 x)
-			(dash 1 y)))
-	  (progn
-	    (setf width (dash 4 (font-text-width name *font*)))
-	    (setf height (dash 2 (font-height *font*)))
-	    (draw-background self)
-	    (draw-string name (dash 1 x) (dash 1 y))))
+    (if target
+	(let ((image (field-value :image target))
+	      (name (make-reference-name target)))
+	  (if image
+	      (progn 
+		(setf width (dash 2 (image-width image)))
+		(setf height (dash 2 (image-height image)))
+		(draw-background self)
+		(draw-image image 
+			    (dash 1 x)
+			    (dash 1 y)))
+	      (progn
+		(setf width (dash 4 (font-text-width name *font*)))
+		(setf height (dash 2 (font-height *font*)))
+		(draw-background self)
+		(draw-string name (dash 1 x) (dash 1 y)))))
+	(progn
+	  (draw-background self)
+	  (draw-string "(null reference)" x y)))))
       ;; draw indicators
       ;; (draw-indicator :top-left-triangle 
       ;; 		      x y 
@@ -749,9 +761,10 @@
 
 ;;; Browser for inspecting objects
 
-;; (define-block (browser :super tree)
-;;     (
+(define-block (browser :super tree)
+  (inputs :initform
+	  (list (new reference
 
-;(define-method accept browser
+(define-method accept browser
 
 ;;; listener.lisp ends here
