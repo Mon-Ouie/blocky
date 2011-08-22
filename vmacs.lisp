@@ -37,13 +37,15 @@ block is recompiled."
 	    (category :initform :operators))
 	   `(quote ,(mapcar #'recompile %inputs)))
 
-(define-visual-macro (with-target block
-	     (inputs :initform (list (new socket)
-				     (new list))))
-	   (destructuring-bind (target body) 
-	       (mapcar #'recompile %inputs)
-	     `(with-target ,target
-		,body)))
+(define-visual-macro 
+    (with-target block
+      (inputs :initform (list (new socket :label "send to:")
+			      (new list)))
+      (category :initform :message))
+    (destructuring-bind (target body) 
+	(mapcar #'recompile %inputs)
+      `(with-target ,target
+	 ,body)))
 
 (define-visual-macro (defblock tree
 	    (label :initform "define block")

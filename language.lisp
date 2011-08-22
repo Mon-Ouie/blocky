@@ -95,7 +95,7 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
 	   "Computed result values from the input blocks.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (temporary :initform nil)
-  (methods :initform nil)
+  (methods :initform '(:make-reference :clone))
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
@@ -648,7 +648,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     (loop do
       (when (has-local-value :methods pointer)
 	(setf methods 
-	      (intersection methods 
+	      (union methods 
 			    (field-value :methods pointer))))
       (setf pointer (object-super pointer))
       while pointer)
@@ -1352,7 +1352,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
     (dolist (entry schema)
       (push (new entry
 		 :value (schema-option entry :default)
-		 :super (find-uuid self)
+		 :parent (find-uuid self)
 		 :type-specifier (schema-type entry)
 		 :options (schema-options entry)
 		 :label (concatenate 'string
