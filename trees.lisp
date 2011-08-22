@@ -38,6 +38,7 @@
 (define-prototype tree (:super :list)
   (category :initform :structure)
   (is-tree :initform t)
+  (method :initform nil)
   (indentation-width :initform (dash 2))
   (top-level :initform nil)
   (locked :initform nil)
@@ -51,7 +52,7 @@
 (define-method children tree () %inputs)
 
 (define-method initialize tree 
-    (&key action target top-level inputs pinned locked
+    (&key action target top-level inputs pinned locked method
 	  expanded (label "no label..."))
   (super%initialize self)
   (setf %action action
@@ -59,6 +60,7 @@
 	%expanded expanded
 	%locked locked
 	%target target
+	%method method
 	%top-level top-level
 	%inputs inputs
 	%label label)
@@ -241,6 +243,18 @@
 
 ;; menu items should not accept any dragged widgets.
 (define-method accept menu (&rest args) nil)
+
+(define-method produce menu ()
+  (if (or (keywordp %action) (blockyp %action))
+      (let ((send (new send 
+		       :prototype (find-super-prototype-name self)
+		       :method %method
+		       :target %target
+		       :label (pretty-symbol-string %method))))
+	(prog1 send 
+	  (with-fields (x y) send
+	    (setf x %x y %y))))
+      self))
 
 (define-method on-click menu (x y)
   (declare (ignore x y))

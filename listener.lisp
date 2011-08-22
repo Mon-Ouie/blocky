@@ -710,10 +710,12 @@
 
 (define-method set-target reference (target)
   (setf %target 
-	(etypecase target
-	  (string (prog1 target
-		    (assert (find-object target))))
-	  (blocky:object (find-uuid object)))))
+	(cond 
+	  ((stringp target)
+	   (prog1 target
+	     (assert (find-object target))))
+	  ((blockyp target)
+	   (find-uuid target)))))
 
 (define-method initialize reference (&optional target)
   (when target

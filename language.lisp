@@ -624,19 +624,13 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
       (assert (not (contains parent self)))
       (setf parent nil))))
 
-(define-method make-send-block block (method target)
+(define-method make-method-menu-item block (method target)
   (assert (and (keywordp method) (not (null target))))
   (let ((method-string (pretty-symbol-string method)))
     (list :label method-string
-	  :action (new closure
-		      :add-block *script* 
-		      (list (new send 
-				 :prototype (find-super-prototype-name self)
-				 :method method
-				 :target target
-				 :label method-string)
-			    (- *pointer-x* 10) 
-			    (- *pointer-y* 10))))))
+	  :method method
+	  :target target
+	  :action (new closure method target))))
 
 (define-method drop block (other-block)
   (add-block *script* other-block %x %y))
@@ -659,8 +653,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 			       (get-some-object-name self)
 			       " " (object-address-string self))
 	   :inputs (mapcar #'(lambda (method)
-			       (make-send-block self method self))
-			   %methods) ;; ignore computed methods union for now
+			       (make-method-menu-item self method self))
+			   methods) 
 	   :pinned nil
 	   :expanded t
 	   :locked t))))
@@ -1175,6 +1169,9 @@ and MOUSE-Y identify a point inside the block (or input block.)"
     (unplug-from-parent child))
   (set-parent child self))
 
+(define-method produce block ()
+  self)
+
 (define-method accept block (other-block)
   "Try to accept OTHER-BLOCK as a drag-and-dropped input. Return
 non-nil to indicate that the block was accepted, nil otherwise."
@@ -1337,7 +1334,8 @@ non-nil to indicate that the block was accepted, nil otherwise."
   (verify block) 
   nil)
 
-(defun pretty-symbol-string (thing)
+(defun-memo pretty-symbol-string (thing)
+    (:key #'first :test 'equal :validator #'identity)
   (let ((name (etypecase thing
 		(symbol (symbol-name thing))
 		(string thing))))

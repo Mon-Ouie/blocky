@@ -395,10 +395,9 @@ block found, or nil if none is found."
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag inputs script drag-start ghost drag-offset) self
     (with-script script
-      ;; save the block
+      ;; save the block, possibly producing a new one
       (setf drag (find-uuid block))
       (when (find-parent drag)
-	  ;;(parent-is-script drag)
 	(unplug-from-parent block))
       (let ((dx (field-value :x block))
 	    (dy (field-value :y block))
@@ -424,9 +423,9 @@ block found, or nil if none is found."
 	(destructuring-bind (x1 . y1) click-start
 	  (when (and focused-block click-start-block
 		     (> (distance x y x1 y1)
-			*minimum-drag-distance*)
-		     (not (is-pinned click-start-block)))
-	    (begin-drag self x y click-start-block)
+			*minimum-drag-distance*))
+		     ;(not (is-pinned click-start-block)))
+	    (begin-drag self x y (produce click-start-block))
 	    (setf click-start nil)
 	    (setf click-start-block nil)))))))
 
