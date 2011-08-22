@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2010, 2011  David O'Toole
 
-;; Author: David O'Toole %dto@ioforms.org
+;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -144,7 +144,7 @@
   (let ((box (new textbox *copyright-notice*)))
     (add-block *shell* box 50 50) 
     (resize-to-scroll box :width 80 :height 24)
-    (set-font box *serif*)
+;    (set-font box *serif*)
     (end-of-line box)))
 
 ;; (define-method enter-command-line system ()

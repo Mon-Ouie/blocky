@@ -28,6 +28,8 @@
 (defvar *shell* nil
   "When non-nil, the UUID of the currently active shell object.")
 
+(defvar *trash* nil)
+
 (define-block trash 
   :category :system 
   :methods '(:empty))
@@ -37,12 +39,13 @@
 (define-method on-update trash ())
 
 (define-method empty trash ()
-  (setf %inputs nil))
+  (setf *trash* nil))
 
 (define-method accept trash (item)
-  (push item %inputs))
+  (push item *trash*))
 
-(defun trash-status-string (count)
+(defun-memo trash-status-string (count)
+    (:key #'first :test 'equal :validator #'identity)
   (format nil "trash (~S items)" count))
 
 (define-method layout trash ()
@@ -54,7 +57,7 @@
 
 (define-method draw trash ()
   (draw-background self)
-  (draw-label-string self (trash-status-string (length %inputs))
+  (draw-label-string self (trash-status-string (length *trash*))
 		     "yellow"))
 
 (define-method draw-hover trash ())
@@ -487,7 +490,7 @@ block found, or nil if none is found."
 	      (when (not (accept hover drag))
 		;; hovered block did not accept drag. 
 		;; just drop the block
-		(add-block self drag)))
+		(add-block self drag *pointer-x* *pointer-y*)))
 	  ;; select the dropped block
 	  (select self drag)
 	  (setf focused-block (find-uuid drag)))

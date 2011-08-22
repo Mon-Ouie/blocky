@@ -1,3 +1,4 @@
+** TODO also show ID string when image
 ** TODO Fix Control-E etc not working in textbox
 ** TODO Fix not traversing line break with C-f and C-b
 ** TODO [#A] Fix context-menu: method schema not being found when it's inherited

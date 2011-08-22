@@ -720,7 +720,8 @@
     (set-target self target)))
 
 (define-method accept reference (new-block)
-  (set-target self new-block))
+  (set-target self new-block)
+  (add-block *shell* new-block *pointer-x* *pointer-y*))
 
 (defun-memo make-reference-name (target)
     (:key #'first :test 'equal :validator #'identity)
@@ -729,42 +730,44 @@
 	       " "
 	       (object-address-string target)))
 
+(defparameter *null-reference-string* "(null reference)")
+
 (define-method draw reference ()
   (with-fields (target x y width height) self
     (if target
 	(let ((image (field-value :image target))
-	      (name (make-reference-name target)))
-	  (if image
-	      (progn 
-		(setf width (dash 2 (image-width image)))
-		(setf height (dash 2 (image-height image)))
-		(draw-background self)
-		(draw-image image 
-			    (dash 1 x)
-			    (dash 1 y)))
-	      (progn
-		(setf width (dash 4 (font-text-width name *font*)))
-		(setf height (dash 2 (font-height *font*)))
-		(draw-background self)
-		(draw-string name (dash 1 x) (dash 1 y)))))
+	      (name (make-reference-name target))
+	      iwidth)
+	  (setf iwidth (if image (image-width image) 0))
+	  (setf width (dash 8 iwidth (font-text-width name *font*)))
+	  (setf height (dash 2 (font-height *font*)
+			     (if image (image-height image) 0)))
+	  (draw-background self)
+	  (draw-background self)
+	  (when image
+	    (draw-image image 
+			(dash 1 x)
+			(dash 1 y)))
+	  (draw-string name (dash 1 x iwidth) (dash 1 y)))
 	(progn
 	  (draw-background self)
-	  (draw-string "(null reference)" x y)))))
-      ;; draw indicators
-      ;; (draw-indicator :top-left-triangle 
-      ;; 		      x y 
-      ;; 		      :color "magenta"))))
-      (draw-indicator :bottom-right-triangle 
-      		      (dash -2 width x)
-      		      (dash -2 height y)
-      		      :color "magenta"))))
+	  (setf width (dash 4 (font-text-width *null-reference-string* *font*)))
+	  (draw-string *null-reference-string* x y)))
+    ;; draw indicators
+    ;; (draw-indicator :top-left-triangle 
+    ;; 		      x y 
+    ;; 		      :color "magenta"))))
+    (draw-indicator :bottom-right-triangle 
+		    (dash -2 width x)
+		    (dash -2 height y)
+		    :color "magenta")))
 
-;;; Browser for inspecting objects
+;; ;;; Browser for inspecting objects
 
-(define-block (browser :super tree)
-  (inputs :initform
-	  (list (new reference
+;; (define-block (browser :super tree)
+;;   (inputs :initform
+;; 	  (list (new reference)
 
-(define-method accept browser
+;; (define-method accept browser
 
 ;;; listener.lisp ends here
