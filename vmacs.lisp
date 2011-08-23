@@ -37,7 +37,7 @@ block is recompiled."
 
 (define-method initialize prog0 (&rest args)
   (apply #'initialize%%block self args)
-  (pin (first inputs)))
+  (pin (first %inputs)))
 
 (define-visual-macro (quote list
 	    (category :initform :operators))
