@@ -95,7 +95,7 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
 	   "Computed result values from the input blocks.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (temporary :initform nil)
-  (methods :initform '(:make-reference :clone))
+  (methods :initform '(:make-reference :copy))
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
