@@ -27,18 +27,24 @@ The argument SUPER should be the name of the base prototype. FIELDS
 should be a list of field descriptors as given to
 `define-prototype'. The BODY forms are evaluated when the resulting
 block is recompiled."
-    `(prog1 
+    `(progn 
        (define-block (,name :super ,super) ,@fields)
        (define-method recompile ,name () ,@body)
        (define-method evaluate ,name ()
 	 (eval (recompile self)))))
+
+(define-visual-macro (prog0 list))
+
+(define-method initialize prog0 (&rest args)
+  (apply #'initialize%%block self args)
+  (pin (first inputs)))
 
 (define-visual-macro (quote list
 	    (category :initform :operators))
 	   `(quote ,(mapcar #'recompile %inputs)))
 
 (define-visual-macro 
-    (with-target block
+    (with-target list
       (inputs :initform (list (new socket :label "send to:")
 			      (new list)))
       (category :initform :message))

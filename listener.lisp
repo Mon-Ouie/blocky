@@ -580,11 +580,9 @@
       (assert container)
       (let ((result (eval (first sexp))))
 	(let ((new-block 
-		;; is it a uuid?
-		(if (and (stringp result)
-			 (find-object result :no-error))
-		    ;; yes, return the corresponding block
-		    (find-object result :no-error)
+		;; is it a block?
+		(if (blockyp result)
+		    result
 		    ;; no, make a new block from the data
 		    (make-block result))))
 	  ;; spit out result block
@@ -703,7 +701,8 @@
 
 (define-block reference
   (target :initform nil)
-  (category :initform :structure))
+  (iwidth :initform 0)
+  (category :initform :data))
 
 (define-method evaluate reference () 
   %target)
@@ -734,35 +733,35 @@
 
 (defparameter *null-reference-string* "(null reference)")
 
-(define-method draw reference ()
-  (with-fields (target x y width height) self
+(define-method layout reference () 
+  (with-fields (target x y iwidth width height) self
     (if target
 	(let ((image (field-value :image target))
-	      (name (make-reference-name target))
-	      iwidth)
+	      (name (make-reference-name target)))
 	  (setf iwidth (if image (image-width image) 0))
 	  (setf width (dash 8 iwidth (font-text-width name *font*)))
 	  (setf height (dash 2 (font-height *font*)
-			     (if image (image-height image) 0)))
-	  (draw-background self)
-	  (draw-background self)
+			     (if image (image-height image) 0))))
+	(setf width (dash 4 (font-text-width *null-reference-string* *font*))
+	      height (dash 4 (font-height *font*))))))
+
+(define-method draw reference ()
+  (with-fields (target x y width height iwidth) self
+    (draw-background self)
+    (if (null target)
+	(draw-string *null-reference-string* x y)
+	(let ((image (field-value :image target))
+	      (name (make-reference-name target)))
 	  (when image
 	    (draw-image image 
 			(dash 1 x)
 			(dash 1 y)))
-	  (draw-string name (dash 1 x iwidth) (dash 1 y)))
-	(progn
-	  (draw-background self)
-	  (setf width (dash 4 (font-text-width *null-reference-string* *font*)))
-	  (draw-string *null-reference-string* x y)))
-    ;; draw indicators
-    ;; (draw-indicator :top-left-triangle 
-    ;; 		      x y 
-    ;; 		      :color "magenta"))))
-    (draw-indicator :bottom-right-triangle 
+	  (draw-string name (dash 1 x iwidth) (dash 1 y))))
+    (draw-indicator :asterisk 
 		    (dash -2 width x)
 		    (dash -2 height y)
-		    :color "magenta")))
+		    :scale 3
+		    :color "cyan")))
 
 ;; ;;; Browser for inspecting objects
 

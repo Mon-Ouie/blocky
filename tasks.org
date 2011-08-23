@@ -1,6 +1,7 @@
+** TODO make a list derivative whose first element is pinned for eval (VISUAL LAMBDA LIST?)
+** TODO [#A] fix listener history errors
 ** TODO [#A] easily close menus with halo
 ** TODO fix missing entries?? what's happening
-
 *** TODO [#A] universal morphic halo?
 ** TODO [#B] Blocky in-engine inspector
 *** TODO basic explanation of blocks and basic methods

@@ -221,6 +221,7 @@ extended argument list ARGLIST."
   (assert (hash-table-p *methods*))
   (let ((id (make-method-id prototype method)))
     (assert (stringp id))
+    (assert (gethash id *methods*))
     (values-list (gethash id *methods*))))
 
 (defun method-argument-entry (prototype method index)
@@ -432,7 +433,9 @@ extended argument list ARGLIST."
   (assert (object-p (find-object thing))))
 
 (defun blockyp (thing)
-  (object-p (find-object thing)))
+  (or (blocky:object-p thing)
+      (and (stringp thing)
+	   (find-object thing :no-error))))
 
 ;;; Fields
 

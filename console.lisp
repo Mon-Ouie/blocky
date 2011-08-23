@@ -963,11 +963,12 @@ This prepares it for printing as part of a IOF file."
 (defun read-sexp-from-file (filename)
   (message "Reading data from ~A..." filename)
   (with-open-file (file filename :direction :input)
-    (with-standard-io-syntax 
-      (prog1 (loop as sexp = (read file nil *eof-value*)
-		   until (eq *eof-value* sexp)
-		   collect sexp)
-	(message "Reading data from ~A... Done." filename)))))
+    (with-standard-io-syntax
+      (let ((*read-eval* nil))
+	(prog1 (loop as sexp = (read file nil *eof-value*)
+		     until (eq *eof-value* sexp)
+		     collect sexp)
+	  (message "Reading data from ~A... Done." filename))))))
 
 ;; Now tie it all together with routines that read and write
 ;; collections of records into IOF files.
