@@ -50,6 +50,7 @@
   (text-color :initform *default-prompt-text-color*)
   (label-color :initform *default-prompt-label-color*)
   options label 
+  (pinned :initform t)
   (prompt-string :initform *default-prompt-string*)
   (category :initform :data)
   (debug-on-error :iniform nil)

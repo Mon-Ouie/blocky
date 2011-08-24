@@ -423,9 +423,9 @@ block found, or nil if none is found."
 	(destructuring-bind (x1 . y1) click-start
 	  (when (and focused-block click-start-block
 		     (> (distance x y x1 y1)
-			*minimum-drag-distance*))
-		     ;(not (is-pinned click-start-block)))
-	    (begin-drag self x y (produce click-start-block))
+			*minimum-drag-distance*)
+		     (can-pick click-start-block))
+	    (begin-drag self x y (pick click-start-block))
 	    (setf click-start nil)
 	    (setf click-start-block nil)))))))
 

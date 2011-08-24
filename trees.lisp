@@ -244,7 +244,9 @@
 ;; menu items should not accept any dragged widgets.
 (define-method accept menu (&rest args) nil)
 
-(define-method produce menu ()
+(define-method can-pick menu () t)
+
+(define-method pick menu ()
   (if (or (keywordp %action) (blockyp %action))
       (let ((send (new send 
 		       :prototype (find-super-prototype-name self)

@@ -1164,7 +1164,10 @@ and MOUSE-Y identify a point inside the block (or input block.)"
     (unplug-from-parent child))
   (set-parent child self))
 
-(define-method produce block ()
+(define-method can-pick block ()
+  (not %pinned))
+
+(define-method pick block ()
   self)
 
 (define-method accept block (other-block)
