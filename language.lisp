@@ -1168,12 +1168,13 @@ and MOUSE-Y identify a point inside the block (or input block.)"
   (not %pinned))
 
 (define-method pick block ()
-  self)
+  self) ;; Possibly return a child, or a new object 
 
 (define-method accept block (other-block)
   "Try to accept OTHER-BLOCK as a drag-and-dropped input. Return
 non-nil to indicate that the block was accepted, nil otherwise."
   nil)
+
   ;; (verify other-block)
   ;; (with-field-values (parent) self
   ;;   (when parent
