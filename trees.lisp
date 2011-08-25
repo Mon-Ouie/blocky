@@ -273,7 +273,7 @@
 (define-method on-alternate-click menu (x y)
   (declare (ignore x y))
   (when (keywordp %action)
-    (add-block *script* (context-menu self) x y)))
+    (add-block *buffer** (context-menu self) x y)))
 
 (defparameter *menu-tab-color* "gray60")
 (defparameter *menu-title-color* "white")

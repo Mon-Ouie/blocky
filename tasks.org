@@ -1,15 +1,20 @@
-* BUGFIXES
+* BUGS
+** TODO Fix error handling: use error message bubbles with X close box and (backtrace) button?
 ** TODO Fix listener history errors
 ** TODO Fix missing entries in send block?? what's happening
 ** TODO Fix missing labels on defblock's child entries
 ** TODO Fix Control-E etc not working in textbox
 ** TODO Fix not traversing line break with C-f and C-b
-** TODO Fix error handling: use error message bubbles with X close box
 ** TODO Fix no blue dot movement in example2
 ** TODO Fix ellipsis not displayed on menu items until highlight
 ** TODO Fix crash when error in init file
 ** TODO Fix init file name (use blocky-init.lisp or ~/.blocky)
-*** use something other than ellipses? like my generic tree triangles
+** TODO Fix crashes with tab and shift-tab navigation
+* FEATURES
+** TODO collapsible windows a-la-squeak
+** TODO make reference ==> make tile?
+** TODO unified buffer abstraction for any content type (rename *SCRIPT* to *BUFFER*)
+*** TODO general widget embed layout thing. =formatter= --> but instead of rich text, it's all widgets (textboxes + img)
 ** TODO make a list derivative whose first element is pinned for eval (VISUAL LAMBDA LIST?)
 ** TODO [#B] Refactor collision detection to enable various types.
 *** delegate actual collision detection to method
@@ -125,7 +130,6 @@ add "." and "%CD%" to cffi's foreign directory search list...
 ** TODO [#B] pin toggle button
 ** TODO [#B] display GPL and other licensing in scroll box
 ** morphic-style halos
-** tab and shift-tab for input nav
 ** comment block for output messages in listener etc, trap errors
 ** TODO [#B] Improve error handling in shell
 *** TODO isolate/trap all block errors and display them grayed out with an inspectable error

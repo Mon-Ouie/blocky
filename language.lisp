@@ -26,8 +26,8 @@
 
 (in-package :blocky)
 
-(defvar *script* nil
-  "When non-nil, the UUID of the current script object.")
+(defvar *buffer* nil
+  "When non-nil, the UUID of the current buffer object.")
 
 (defparameter *block-categories*
   '(:system :motion :event :message :looks :sound :structure :data
@@ -108,6 +108,7 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
   (scale-x :initform 1)
   (scale-y :initform 1)
   (blend :initform :alpha)
+  (emblem :initform nil :documentation "An indicator icon.")
   (opacity :initform 1.0)
   (label :initform nil)
   (width :initform 32 :documentation "Cached width of block.")
@@ -316,11 +317,11 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
   (register-uuid self))
 
 (define-method invalidate-layout block () ;
-  "Signal to the script manager that a layout operation is needed.
+  "Signal to the buffer manager that a layout operation is needed.
 You should invoke this method if the dimensions of the block have
 changed."
-  (when *script*
-    (invalidate-layout *script*)))
+  (when *buffer*
+    (invalidate-layout *buffer*)))
 
 (define-method on-update block ()
   "Update the simulation one step forward in time.
@@ -585,15 +586,15 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   nil)
 
 (define-method on-alternate-click block (x y)
-  (add-block *script* (context-menu self) x y))
+  (add-block *buffer* (context-menu self) x y))
 
-(define-method on-mouse-move block (x y)
+(define-method on-point block (x y)
   (declare (ignore x y)))
 
-(define-method on-mouse-down block (x y button)
+(define-method on-press block (x y button)
   (declare (ignore x y button)))
 
-(define-method on-mouse-up block (x y button)
+(define-method on-release block (x y button)
   (declare (ignore x y button)))
 
 ;;; Connecting blocks
@@ -635,7 +636,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	  :action (new closure method target))))
 
 (define-method drop block (other-block)
-  (add-block *script* other-block %x %y))
+  (add-block *buffer* other-block %x %y))
 
 (define-method context-menu block ()
   (let ((methods nil)
@@ -688,7 +689,8 @@ inputs are evaluated."
     (evaluate-inputs self)))
 
 (define-method recompile block ()
-  (evaluate self))
+  `(progn 
+     ,@(mapcar #'recompile %inputs)))
 
 ;;; Context-sensitive user help
 
@@ -959,6 +961,20 @@ area is drawn. If DARK is non-nil, paint a darker region."
 
 (define-method draw-socket block (x0 y0 x1 y1)
   (draw-patch self x0 y0 x1 y1 :depressed t :socket t))
+
+(define-method set-emblem block (emblem)
+  (assert (getf emblem *indicators*))
+  (setf %emblem emblem))
+
+(define-method clear-emblem block ()
+  (setf %emblem nil))
+
+(define-method draw-emblem block (&optional force)
+  (with-fields (emblem x y) self
+    (when (or force emblem)
+      (draw-indicator emblem (- x (dash 3)) y 
+		      :color "red" :background "white"
+		      :scale 3))))
 
 ;;; Blinking cursor
 
@@ -1377,78 +1393,78 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (define-method draw-hover send ()
   nil)
 
-;;; Combining blocks into scripts
+;;; Combining blocks into buffers
 
-(defmacro with-script (script &rest body)
-  `(let ((*script* (find-uuid ,script)))
-     (verify *script*)
+(defmacro with-buffer (buffer &rest body)
+  `(let ((*buffer* (find-uuid ,buffer)))
+     (verify *buffer*)
      ,@body))
 
-(define-method parent-is-script block ()
-  (assert (not (null *script*)))
-  (object-eq %parent *script*))
+(define-method parent-is-buffer block ()
+  (assert (not (null *buffer*)))
+  (object-eq %parent *buffer*))
 
 (define-method is-top-level block ()
-  (object-eq %parent *script*))
+  (object-eq %parent *buffer*))
 
-(define-block (script :super list)
+(define-block (buffer :super list)
   (target :initform nil)
   (needs-layout :initform t)
   (variables :initform (make-hash-table :test 'eq)))
 
-(define-method invalidate-layout script ()
+(define-method invalidate-layout buffer ()
   (setf %needs-layout t))
 
-(define-method delete-block script (block)
+(define-method delete-block buffer (block)
   (verify block)
   (assert (contains self block))
   (delete-input self block))
 
-;; (define-method bring-to-front script (block)
-;;   (with-fields (inputs script) self
-;;     (assert (contains script block))
+;; (define-method bring-to-front buffer (block)
+;;   (with-fields (inputs buffer) self
+;;     (assert (contains buffer block))
 ;;     (delete-input self block)
 ;;     (append-input self block)))
 
-(define-method on-update script ()
-  (with-script self 
+(define-method on-update buffer ()
+  (with-buffer self 
     (dolist (each %inputs)
       (on-update each))
     (update-layout self)))
 
-;; (define-method after-deserialize script ()
+;; (define-method after-deserialize buffer ()
 ;;   (dolist (child %inputs)
 ;;     (set-parent child (find-uuid self))))
 
-(define-method update-layout script (&optional force)
+(define-method update-layout buffer (&optional force)
   (with-fields (inputs needs-layout) self
     (when (or force needs-layout)
       (dolist (each inputs)
 	(layout each))
       (setf needs-layout nil))))
 
-(define-method initialize script (&key blocks variables target 
+(define-method initialize buffer (&key blocks variables target 
 				       (width (dash 120))
 				       (height (dash 70)))
   (apply #'super%initialize self blocks)
-  (message "Initializing SCRIPT")
+  (message "Initializing BUFFER")
   (setf %width width
 	%height height)
   (when variables (setf %variables variables))
   (when target (setf %target target)))
 
-(define-method set-target script (target)
+(define-method set-target buffer (target)
   (verify target)
   (setf %target target))
 
-(define-method append-input script (block)
+(define-method append-input buffer (block)
   (verify block)
   (with-fields (inputs) self
     (assert (not (contains self block)))
     (set-parent block self)
     (setf inputs (nconc inputs (list block)))))
 
-(define-method add-block script (block &optional x y)
+(define-method add-block buffer (block &optional x y)
   (verify block)
   ;(assert (not (contains self block)))
   (append-input self block)
@@ -1457,13 +1473,13 @@ non-nil to indicate that the block was accepted, nil otherwise."
     (move-to block x y))
   (invalidate-layout self))
 
-;; (define-method recompile script ()
+;; (define-method recompile buffer ()
 ;;   (
 
-;; (define-method evaluate script ()
+;; (define-method evaluate buffer ()
 ;;   (recompile self))
 
-;; (define-method header-height script ()
+;; (define-method header-height buffer ()
 ;;   (with-fields (x y inputs) self
 ;;     (let ((name (first inputs))
 ;; 	  (height (font-height *font*)))
@@ -1472,18 +1488,18 @@ non-nil to indicate that the block was accepted, nil otherwise."
 ;; 	       (+ x (label-width self))
 ;; 	       (+ y height))))))
 
-;; (define-method draw-header script ()
+;; (define-method draw-header buffer ()
 ;;   (prog1 (font-height *font*)
 ;;     (with-fields (x y) self
 ;;       (with-block-drawing 
 ;; 	(text (+ x *dash* 1)
 ;; 	      (+ y *dash* 1)
-;; 	      "script")))))
+;; 	      "buffer")))))
 
-;; (define-method set script (var value)
+;; (define-method set buffer (var value)
 ;;   (setf (gethash var %variables) value))
 
-;; (define-method get script (var)
+;; (define-method get buffer (var)
 ;;   (gethash var %variables))
 
 ;; (defun block-variable (var-name)

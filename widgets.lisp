@@ -228,6 +228,7 @@ auto-updated displays."
   (category :initform :comment)
   (read-only :initform nil)
   (bordered :initform nil)
+  (indicator :initform nil)
   (max-displayed-lines :initform 16 :documentation "An integer when scrolling is enabled.")
   (max-displayed-columns :initform nil)
   (background-color :initform "gray30")
@@ -256,6 +257,7 @@ auto-updated displays."
 
 (define-method set-font textbox (font)
   (assert (stringp font))
+  (assert (eq :font (resource-type (find-resource font))))
   (setf %font font))
 
 (define-method page-up textbox ()
@@ -551,7 +553,7 @@ auto-updated displays."
 
 (define-method draw textbox ()
   (with-fields (buffer width parent height) self
-    (with-field-values (x y font point-row) self
+    (with-field-values (x y font point-row indicator) self
       ;; measure text
       (let ((line-height (font-height font)))
 	  ;; draw background
@@ -568,7 +570,9 @@ auto-updated displays."
 	    (when (plusp (length line))
 	      (draw-string line x0 y0 
 			   :font font :color %foreground-color))
-	    (incf y0 line-height)))))))
+	    (incf y0 line-height))))
+      ;; possibly draw emblem
+      (draw-emblem self))))
 
 (define-method draw-focus textbox ()
   ;; draw cursor

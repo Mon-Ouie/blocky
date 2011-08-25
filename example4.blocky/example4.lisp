@@ -61,6 +61,6 @@
 (defun example4 ()
   (new system)
 ;  (play-music "crayon" :loop t)
-  (start (new shell (new script))))
+  (start (new shell (new buffer))))
 	      
 ;;; example4.lisp ends here

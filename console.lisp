@@ -793,15 +793,15 @@ display."
 			   (setf *pointer-x* x *pointer-y* y)
 			   (let ((block (hit-blocks x y *blocks*)))
 			     (when block
-			       (send :on-mouse-move block x y))))
+			       (send :on-point block x y))))
       (:mouse-button-down-event (:button button :x x :y y)
 				(let ((block (hit-blocks x y *blocks*)))
 				  (when block
-				    (send :on-mouse-down block x y button))))
+				    (send :on-press block x y button))))
       (:mouse-button-up-event (:button button :x x :y y)
 			      (let ((block (hit-blocks x y *blocks*)))
 				(when block
-				  (send :on-mouse-up block x y button))))
+				  (send :on-release block x y button))))
       (:joy-button-down-event (:button button :state state)
 			      (when (assoc button *joystick-mapping*)
 				(update-joystick button state)
@@ -1650,7 +1650,7 @@ control the size of the individual frames or subimages."
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
 *screen-height* *world* *blocks* *dt* *pointer-x* *pointer-y* *trash*
-*resizable* *window-title* *script* *system*))
+*resizable* *window-title* *buffer** *system*))
     ;; notice that THIS variable is also persistent!
     ;; this is to avoid unwanted behavior changes in modules
     ;; *persistent-variables*))  ;; FIXME not for now
@@ -2141,7 +2141,7 @@ of the music."
 					  background)
   (let ((size (indicator-size)))
     (when background
-      (draw-circle x y (* scale size) :color "navyblue" :type :solid))
+      (draw-circle x y (* scale size) :color background :type :solid))
     (draw-textured-rectangle x y 0 (* scale size) (* scale size)
 			     (find-indicator-texture indicator)
 			     :blend :alpha
@@ -2420,7 +2420,7 @@ of the music."
     (open-project project)
     (when (null *blocks*)
       (new system)
-      (start (new shell (new script))))
+      (start (new shell (new buffer))))
     (start-session)))
 
 (defun create (project)
@@ -2429,7 +2429,7 @@ of the music."
     (new system)
     (create-project project)
     (open-project project)
-    (start (new shell (new script)))
+    (start (new shell (new buffer)))
     (start-session)))
 
 (defun edit (&optional (project *untitled-project-name*) force-shell)
@@ -2437,7 +2437,7 @@ of the music."
     (let ((*edit* t))
       (open-project project :no-error)
       (when force-shell
-	(start (new shell (new script))))
+	(start (new shell (new buffer))))
       (start-session))))
 
 ;; (defun share (project) ...

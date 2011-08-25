@@ -89,6 +89,7 @@
 
 (:name "asterisk" :type :image :file "asterisk.png" :properties (:filter :linear))
 (:name "bang" :type :image :file "bang.png" :properties (:filter :linear))
+(:name "close-x" :type :image :file "close-x.png" :properties (:filter :linear))
 (:name "circle-flat-128" :type :image :file "circle-flat-128.png" :properties (:filter :linear))
 (:name "top-left-triangle-indicator" :type :image :file "top-left-triangle-indicator.png" :properties (:filter :linear))
 (:name "bottom-right-triangle-indicator" :type :image :file "bottom-right-triangle-indicator.png" :properties (:filter :linear))
