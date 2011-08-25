@@ -1,4 +1,4 @@
-;;; buffers.lisp --- interactive graphical element blocks
+;;; buffers.lisp --- collecting blocks into larger meaningful entities
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
@@ -22,196 +22,298 @@
 
 (in-package :blocky)
 
-;;; Formatted display block
-
-(defvar *default-formatter-scrollback-size* 1000)
-
-(defun formatted-string-height (S)
-  (destructuring-bind (string &key image (font *font*) &allow-other-keys) S
-    (declare (ignore string))
-    (if image
-	(image-height image)
-	(font-height font))))
-
-(defun formatted-string-width (S)
-  (destructuring-bind (string &key image width (font *font*) &allow-other-keys) S
-    (or width
-	(if image 
-	    (image-width image)
-	    (* (font-text-width string font))))))
-
-(defun formatted-line-height (line)
-  (apply #'max (mapcar #'formatted-string-height line)))
-
-(defun formatted-line-width (line)
-  (apply #'+ (mapcar #'formatted-string-width line)))
-
-(defun render-formatted-string (formatted-string x y 
-				&key (text-offset 0))
-  "Render the FORMATTED-STRING to position X,Y.  
-If an integer TEXT-OFFSET is provided, add that many pixels to the Y
-coordinate for rendered text in the line. (This is used to make text
-align with inline images that are larger than the text height---see
-also `render-formatted-line')."
-  (destructuring-bind (string &key (foreground "white") 
-		       width
-		       (font *font*)
-		       background image)
-      formatted-string
-    ;; if :width is specified, draw a background square of that width
-    (when (integerp width)
-      (draw-box x y width (formatted-string-height formatted-string)
-		:color background))
-    ;; now draw foreground image or text
-    (if image
-	(draw-image (typecase image
-		      (string (find-resource-object image))
-		      (otherwise image))
-		    x y)
-	(if (null string)
-	    (message "Warning: no string to render.")
-	    (draw-string string x (+ text-offset y)
-			 :font font :color foreground)))))
-	    ;; (if background
-	    ;; 	(draw-string-shaded string x (+ text-offset y)
-	    ;; 				foreground background
-	    ;; 				:font font)
-	    ;; 	    (draw-string-solid string x (+ text-offset y) :font font
-	    ;; 			       :color foreground)))))))
-
-(defun render-formatted-line (line x y &key (font *font*))
-  "Render the formatted LINE at position X,Y.
-Return the height of the rendered line."
-  (let* ((line-height (formatted-line-height line))
-	 (default-font-height (font-height font))
-	 (text-offset (if (> line-height default-font-height)
-			  (truncate (/ (- line-height 
-					  default-font-height)
-				       2))
-			  0))
-	 (current-x x))
-    (dolist (string line)
-      (when string
-	(render-formatted-string string current-x y :text-offset text-offset )
-	(incf current-x (formatted-string-width string)))
-      line-height)))
-  
-;; Next comes the formatted-text output block, which uses the utility
-;; functions just defined.
-
-(define-prototype formatter 
-    (:super "BLOCKY:BLOCK" :documentation 
-"=FORMATTER= is a simple output formatting block for the
-presentation of messages and other in-game data. Foreground and
-background colors are supported, as well as displaying images
-in-line with text of different fonts.
-
-A formatted line is a list of formatted strings. A formatted 
-string is a cons of (STRING . PROPERTIES), where the keys in
-PROPERTIES are chosen from:
-
-  - :FOREGROUND --- Foreground color. A color resource name.
-  - :BACKGROUND --- Background color. A color resource name.
-  - :IMAGE --- Image to be displayed instead of STRING.
-      If this is a string, the corresponding resource image is 
-      found and displayed. If this is an image object, the image 
-      itself is displayed.
-  - :WIDTH --- Occupy this pixel width if set to an integer.
-  - :FONT ---  Font name. Defaults to *font*.
-")
-  (lines :documentation "Vector of lines.")
-  (display-current-line :initform nil)
-  (current-line :documentation "Formatted line currently being composed."))
-
-(define-method printf formatter (string &rest keys &key image foreground background font)
-  "Add a formatted STRING to the end of the current line.
-Example: (printf my-formatter \"hello\" :foreground \"red\")"
-  (vector-push-extend (cons string keys) %current-line))
-
-(define-method print-formatted-string formatter (formatted-string)
-  (vector-push-extend formatted-string %current-line))	       
-
-(define-method print-image formatter (image)
-  (printf self nil :image image))
-
-(define-method println formatter (&rest args)
-  "Print the ARGS as a formatted string, following up with a newline."
-  (apply #'blocky:send self :print self args)
-  (newline self))
-
-(define-method insert-space formatter ()
-  (printf self " "))
-
-(define-method clear-line formatter ()
-  (setf %current-line (make-array 10 :adjustable t :fill-pointer 0)))
-
-(define-method newline formatter ()
-  "Add the current line to the display, and start a fresh offscreen
-line."
-  (when (and (vectorp %current-line)
-	     (> (fill-pointer %current-line) 0))
-    (vector-push-extend (coerce %current-line 'list) %lines))
-  (setf %current-line (make-array 10 :adjustable t :fill-pointer 0)))
-
-(define-method reset-lines formatter ()
-  (setf %lines (make-array 10 :adjustable t :fill-pointer 0)))
-
-(define-method delete-line formatter (&optional (num-lines 1))
-  (when (>= (length %lines) num-lines)
-    (dotimes (n num-lines)
-      (vector-pop %lines))))
-
-(define-method delete-all-lines formatter ()
-  (delete-line self (fill-pointer %lines)))
-
-(define-method initialize formatter ()
-  (super%initialize self)
-  (reset-lines self)
-  (newline self))
-
-(define-method update formatter ()
-  "Invoked before each render. Replace this method for custom
-auto-updated displays."  
-  nil)
-
-(define-method print-object-tag formatter (ob)
-  (print-image self (or (field-value :tile ob) (field-value :image ob)))
-  (insert-space self)
-  (printf self (get-some-object-name ob))
-  (insert-space self))
-
-(define-method print-separator formatter ()
-  (printf self "  :  " :foreground "gray20"))
-
-(define-method draw formatter ()
-  (let* ((current-line (coerce %current-line 'list))
-	 (y-offset (if current-line
-		       (formatted-line-height current-line)
-		       0)))
-    (let ((y (- %height (if %display-current-line
-			    y-offset 0)))
-	  (n 0)
-	  line
-	  (lines %lines))
-      (when (and current-line %display-current-line)
-	(render-formatted-line current-line 0 (- %height y-offset)))
-      (setf n (fill-pointer lines))
-      (when (plusp n)
-	(loop do
-	  (progn 
-	    (setf line (aref lines (- n 1)))
-	    (decf y (formatted-line-height line))
-	    (render-formatted-line line 0 y)
-	    (decf n))
-	  ;; reached top of output image?
-	      while (and (plusp y) 
-			 ;; ran out of lines to display?
-			 (not (zerop n))))))))
-
 (defun split-string-on-lines (string)
   (with-input-from-string (stream string)
     (loop for line = (read-line stream nil)
 	  while line collect line)))
+
+;;; Vertically stacked list of blocks
+
+(define-block list
+  (dash :initform 2)
+  (operation :initform :empty-list)
+  (category :initform :structure))
+
+(defparameter *null-display-string* "...")
+
+(define-method on-click list (x y)
+  (dolist (block %inputs)
+    (evaluate block)))
+
+(define-method accept list (input &optional prepend)
+  (verify input)
+  (with-fields (inputs) self
+    (if inputs
+	;; we've got inputs. add it to the list (prepending or not)
+	(prog1 t
+	  (assert (is-valid-connection self input))
+	  ;; set parent if necessary 
+	  (when (get-parent input)
+	    (unplug-from-parent input))
+	  (set-parent input self)
+	  (setf inputs 
+		(if prepend
+		    (append (list input) inputs)
+		    (append inputs (list input)))))
+    	;; no inputs yet. make a single-element inputs list
+	(prog1 input 
+	  (setf inputs (list input))
+	  (set-parent input self)))))
+
+(define-method take-first list ()
+  (with-fields (inputs) self
+    (let ((block (first inputs)))
+      (prog1 block
+	(unplug self block)))))
+
+(define-method get-length list ()
+  (length %inputs))
+
+(define-method header-height list () 0)
+
+(define-method label-width list ()
+  (+ (* 2 *dash*)
+     (expression-width *null-display-string*)))
+
+(define-method layout-as-null list ()
+  (with-fields (height width) self
+    (setf width (+ (* 4 *dash*)
+		   (font-text-width *null-display-string*
+				      *font*))
+	  height (+ (font-height *font*) (* 4 *dash*)))))
+
+(define-method layout-as-list list ()
+  (with-fields (x y height width inputs dash) self
+    (flet ((ldash (&rest args)
+	     (apply #'dash 1 args)))
+    (let* ((header-height (ldash (header-height self)))
+	   (y0 (ldash y header-height))
+	   (line-height (font-height *font*)))
+      (setf height (ldash line-height))
+      (setf width (dash 8))
+      (dolist (element inputs)
+;	(message "layout: ~S" (list x y0 width))
+	(move-to element (ldash x) y0)
+	(layout element)
+	(incf height (+ (ldash) (field-value :height element)))
+	(incf y0 (field-value :height element))
+	(setf width (max width (field-value :width element))))
+      (incf height (dash 1))
+      (incf width (dash 10))))))
+
+(define-method layout list ()
+  (with-fields (inputs) self
+    (if (null inputs)
+	(layout-as-null self)
+	(layout-as-list self))))
+
+(define-method draw-header list () 0)
+
+(define-method draw list ()
+  (with-fields (inputs) self
+    (draw-background self)
+    (if (null inputs)
+	(draw-label-string self *null-display-string*)
+	(dolist (each inputs)
+	  (draw each)))))
+
+(define-method initialize list (&rest blocks)
+  (apply #'super%initialize self blocks)
+  ;; allow them to be freely removed
+  (dolist (each %inputs)
+    (unpin each)))
+
+(defmacro deflist (name &rest body)
+  `(define-block (,name :super :list) ,@body))
+
+(defun null-block () (new list))
+
+(deflist empty-socket)
+
+(define-method accept empty-socket (other-block)
+  "Replace this empty socket with OTHER-BLOCK."
+  (accept %parent other-block))
+
+;;; Sending to a particular target
+
+(defvar *target* nil)
+
+(defmacro with-target (target &rest body)
+  `(let ((*target* ,target))
+     ,@body))
+
+;;; Generic method invocation block. The bread and butter of doing stuff.
+
+(define-block send prototype method schema target label)
+
+(define-method evaluate send ()
+  (apply #'send %method 
+	 (or *target* %target) ;; with-target will override
+	 (mapcar #'evaluate %inputs)))
+
+(define-method on-click send (x y)
+  (declare (ignore x y))
+  (evaluate self))
+
+(define-method accept send (block)
+  ;; make these click-align instead
+  (verify block) 
+  nil)
+
+(defun-memo pretty-symbol-string (thing)
+    (:key #'first :test 'equal :validator #'identity)
+  (let ((name (etypecase thing
+		(symbol (symbol-name thing))
+		(string thing))))
+    (string-downcase 
+     (substitute #\Space #\- name))))
+
+(define-method initialize send (&key prototype method label target)
+  (super%initialize self)
+  (setf %target target)
+  (let ((schema (method-schema (find-prototype prototype) method))
+	(inputs nil))
+    (dolist (entry schema)
+      (push (new entry
+		 :value (schema-option entry :default)
+		 :parent (find-uuid self)
+		 :type-specifier (schema-type entry)
+		 :options (schema-options entry)
+		 :label (concatenate 'string
+				    ":" ;; mimic the keyword arguments visually
+				    (symbol-name (schema-name entry))))
+	    inputs))
+    (when inputs 
+      (setf %inputs (nreverse inputs)))
+    (let ((category (method-option (find-prototype prototype)
+				   method :category)))
+      (when category (setf %category category))
+      (setf %schema schema
+	    %prototype prototype
+	    %method method
+	    %label (or label (pretty-symbol-string method))))))
+
+(define-method draw send ()
+  (with-fields (x y width height label inputs) self
+    (draw-patch self x y (+ x width) (+ y height))
+    (let ((*text-base-y* (+ y (dash 1))))
+      (draw-label-string self label "white")
+      (dolist (each inputs)
+	(draw each)))))
+
+(define-method draw-hover send ()
+  nil)
+
+;;; Grouping blocks into buffers with buffer-local variables
+
+(defmacro with-buffer (buffer &rest body)
+  `(let ((*buffer* (find-uuid ,buffer)))
+     (assert (blockyp *buffer*))
+     ,@body))
+
+(define-block (buffer :super list)
+  (target :initform nil)
+  (needs-layout :initform t)
+  (variables :initform (make-hash-table :test 'eq)))
+
+(define-method invalidate-layout buffer ()
+  (setf %needs-layout t))
+
+(define-method delete-block buffer (block)
+  (verify block)
+  (assert (contains self block))
+  (delete-input self block))
+
+(define-method bring-to-front buffer (block)
+  (with-fields (inputs buffer) self
+    (assert (contains buffer block))
+    (delete-input self block)
+    (append-input self block)))
+
+(define-method on-update buffer ()
+  (with-buffer self 
+    (dolist (each %inputs)
+      (on-update each))
+    (update-layout self)))
+
+(define-method update-layout buffer (&optional force)
+  (with-fields (inputs needs-layout) self
+    (when (or force needs-layout)
+      (dolist (each inputs)
+	(layout each))
+      (setf needs-layout nil))))
+
+(define-method initialize buffer (&key blocks variables target 
+				       (width (dash 120))
+				       (height (dash 70)))
+  (apply #'super%initialize self blocks)
+  (message "Initializing BUFFER")
+  (setf %width width
+	%height height)
+  (when variables (setf %variables variables))
+  (when target (setf %target target)))
+
+(define-method set-target buffer (target)
+  (verify target)
+  (setf %target target))
+
+(define-method append-input buffer (block)
+  (verify block)
+  (with-fields (inputs) self
+    (assert (not (contains self block)))
+    (set-parent block self)
+    (setf inputs (nconc inputs (list block)))))
+
+(define-method add-block buffer (block &optional x y)
+  (verify block)
+  ;(assert (not (contains self block)))
+  (append-input self block)
+  (when (and (integerp x)
+	     (integerp y))
+    (move-to block x y))
+  (invalidate-layout self))
+
+;; (define-method recompile buffer ()
+;;   (
+
+;; (define-method evaluate buffer ()
+;;   (recompile self))
+
+;; (define-method header-height buffer ()
+;;   (with-fields (x y inputs) self
+;;     (let ((name (first inputs))
+;; 	  (height (font-height *font*)))
+;;       (prog1 height
+;; 	(move-to name
+;; 	       (+ x (label-width self))
+;; 	       (+ y height))))))
+
+;; (define-method draw-header buffer ()
+;;   (prog1 (font-height *font*)
+;;     (with-fields (x y) self
+;;       (with-block-drawing 
+;; 	(text (+ x *dash* 1)
+;; 	      (+ y *dash* 1)
+;; 	      "buffer")))))
+
+;; (define-method set buffer (var value)
+;;   (setf (gethash var %variables) value))
+
+;; (define-method get buffer (var)
+;;   (gethash var %variables))
+
+;; (defun block-variable (var-name)
+;;   (get *block* var-name))
+
+;; (defun (setf block-variable) (var-name value)
+;;   (set *block* var-name value))
+
+;; (defmacro with-block-variables (vars &rest body)
+;;   (labels ((make-clause (sym)
+;; 	     `(,sym (block-variable ,(make-keyword sym)))))
+;;     (let* ((symbols (mapcar #'make-non-keyword vars))
+;; 	   (clauses (mapcar #'make-clause symbols)))
+;;       `(symbol-macrolet ,clauses ,@body))))
 	   
 ;;; Text display and edit control
 
