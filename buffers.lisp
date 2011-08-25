@@ -22,7 +22,7 @@
 
 (in-package :blocky)
 
-(define-block form
+(define-block window
   (buffer :documentation "The buffer to be displayed.")
   rows columns
   (entered :initform nil :documentation "When non-nil, forward key events to the entry and/or any attached widget.")
@@ -40,8 +40,8 @@
   (origin-column :initform 0 :documentation "Column number of top-left displayed cell.")
   (origin-height :initform nil)
   (origin-width :initform nil)
-  (column-widths :documentation "A vector of integers where v(x) is the pixel width of form column x.")
-  (row-heights :documentation "A vector of integers where v(x) is the pixel height of form row x.")
+  (column-widths :documentation "A vector of integers where v(x) is the pixel width of window column x.")
+  (row-heights :documentation "A vector of integers where v(x) is the pixel height of window row x.")
   (column-styles :documentation "A vector of property lists used to customize the appearance of columns.")
   (row-spacing :initform 1 :documentation "Number of pixels to add between rows.")
   (zebra-stripes :documentation "When non-nil, zebra stripes are drawn.")
@@ -56,33 +56,33 @@
 
 (defparameter *default-buffer-name* "*scratch*")
 
-(define-method initialize form (&optional (buffer *default-buffer-name*))
+(define-method initialize window (&optional (buffer *default-buffer-name*))
   (with-fields (entry) self
     (let ((buffer (find-buffer buffer)))
       (send-parent self :initialize self)
       (visit self buffer))))
 
-(define-method blank form (&rest parameters)
+(define-method blank window (&rest parameters)
   "Invoke the current buffer's default :make method, passing PARAMETER."
   (make-with-parameters %buffer parameters))
 
-(define-method set-tool form (tool)
+(define-method set-tool window (tool)
   "Set the current sheet's selected tool to TOOL."
   (assert (member tool %tool-methods))
   (setf %tool tool))
 
-(define-method get-selected-cell-data form ()
+(define-method get-selected-cell-data window ()
   (let ((cell (selected-cell self)))
     (when cell
       (get cell))))
 
-(define-method focus form ()
+(define-method focus window ()
   (setf %focused t))
 
-(define-method unfocus form ()
+(define-method unfocus window ()
   (setf %focused nil))
 
-(define-method next-tool form ()
+(define-method next-tool window ()
   "Switch to the next available tool." 
   (with-fields (tool tool-methods) self
     (let ((pos (position tool tool-methods)))
@@ -91,18 +91,18 @@
 		      tool-methods))
       (say self (format nil "Changing tool operation to ~S" tool)))))
 
-(define-method set-modified form (&optional (value t))
+(define-method set-modified window (&optional (value t))
   (with-fields (buffer) self
     (with-fields (name) buffer
       (set-resource-modified-p name value))))
   
-(define-method apply-tool form (data)
-  "Apply the current form's tool to the DATA."
+(define-method apply-tool window (data)
+  "Apply the current window's tool to the DATA."
   (set-modified self)
   (with-fields (tool tool-methods) self
     (send nil tool self data)))
 
-(define-method clone form (data)
+(define-method clone window (data)
   "Clone the prototype named by the symbol DATA and drop the clone
 at the current cursor location. See also APPLY-LEFT and APPLY-RIGHT."
   (if (and (symbolp data)
@@ -111,25 +111,25 @@ at the current cursor location. See also APPLY-LEFT and APPLY-RIGHT."
       (drop-cell %buffer (clone (symbol-value data)) %cursor-row %cursor-column)
       (say self "Cannot clone.")))
 
-(define-method inspect form ()
+(define-method inspect window ()
   nil)
 
-(define-method erase form (&optional data)
+(define-method erase window (&optional data)
   "Erase the top cell at the current location."
   (say self "Erasing top cell.")
   (let ((grid (field-value :grid %buffer)))
     (ignore-errors (vector-pop (aref grid %cursor-row %cursor-column)))))
 
-(define-method set-mark form ()
+(define-method set-mark window ()
   (setf %mark-row %cursor-row>
 	<mark-column %cursor-column)
   (say self (format nil "Mark set at (~S, ~S)." %mark-row %mark-column)))
    
-(define-method clear-mark form ()
+(define-method clear-mark window ()
   (setf %mark-row nil %mark-column nil)
   (say self "Mark cleared."))
 
-(define-method mark-region form ()
+(define-method mark-region window ()
   (with-fields (mark-row mark-column cursor-row cursor-column) self
     (if (and (integerp mark-row) (integerp mark-column))
 	(values (min mark-row cursor-row)
@@ -138,8 +138,8 @@ at the current cursor location. See also APPLY-LEFT and APPLY-RIGHT."
 		(max mark-column cursor-column))
 	(values nil nil nil nil))))
 
-(define-method visit form (&optional (buffer *default-buffer-name*))
-  "Visit the buffer BUFFER with the current form. If BUFFER is a =buffer=
+(define-method visit window (&optional (buffer *default-buffer-name*))
+  "Visit the buffer BUFFER with the current window. If BUFFER is a =buffer=
 object, visit it and add the buffer to the buffer collection. If BUFFER is a
 string, visit the named buffer. If the named buffer does not exist, a
 default buffer is created. If BUFFER is a list, it is interpreted as a
@@ -169,49 +169,49 @@ See also CREATE-BUFFER."
 	  %row-styles (make-array (+ 1 %rows)))
     (layout self)))
 
-(define-method set-prompt form (prompt)
+(define-method set-prompt window (prompt)
   (setf %prompt prompt))
 
-(define-method set-narrator form (narrator)
+(define-method set-narrator window (narrator)
   (setf %narrator narrator))
 
-(define-method install-keybindings form ()
+(define-method install-keybindings window ()
   nil)
 
-(define-method set-display-style form (style)
-  "Set the rendering style of the current form to STYLE.
+(define-method set-display-style window (style)
+  "Set the rendering style of the current window to STYLE.
 Must be one of (:image :label)."
   (setf %display-style style)
   (layout self))
 
-(define-method image-view form ()
-  "Switch to image view in the current form."
+(define-method image-view window ()
+  "Switch to image view in the current window."
   (set-display-style self :image))
 
-(define-method label-view form ()
-  "Switch to label view in the current form."
+(define-method label-view window ()
+  "Switch to label view in the current window."
   (set-display-style self :label))
 
-(define-method goto-prompt form ()
+(define-method goto-prompt window ()
   "Jump to the command prompt."
   (when %prompt
     (goto %prompt)))
 
-(define-method activate form ()
+(define-method activate window ()
   (let ((cell (selected-cell self)))
     (when cell
       (activate cell))))
 
-;; (define-method eval form (&rest args)
+;; (define-method eval window (&rest args)
 ;;   "Evaluate all the ARGS and print the result."
 ;;   (when %prompt 
 ;;     (print-data %prompt args :comment)))
  
-;; (define-method say form (text)
+;; (define-method say window (text)
 ;;   (when %prompt
 ;;     (say %prompt text)))
 
-;; (define-method help form (&optional (command-name :commands))
+;; (define-method help window (&optional (command-name :commands))
 ;;   "Print documentation for the command COMMAND-NAME.
 ;; Type HELP :COMMANDS for a list of available commands."
 ;;   (let* ((command (make-keyword command-name))
@@ -225,17 +225,17 @@ Must be one of (:image :label)."
 ;; 		    :comment)
 ;; 	(print-data prompt (format nil" ~A" docstring) :comment)))))
 
-;; (define-method save-all form ()
+;; (define-method save-all window ()
 ;;   (say self "Saving objects...")
 ;;   (blocky:save-objects :force)
 ;;   (say self "Saving objects... Done."))
 
-;; (define-method save form ()
+;; (define-method save window ()
 ;;   (say self "Saving objects...")
 ;;   (blocky:save-objects)
 ;;   (say self "Saving objects... Done."))
   
-;; (define-method create-buffer form (&key height width name object)
+;; (define-method create-buffer window (&key height width name object)
 ;;   "Create and visit a blank buffer of height HEIGHT, width WIDTH, and name NAME.
 ;; If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 ;;   (let ((buffer (or object (create-blank-buffer :height height :width width :name name))))
@@ -243,12 +243,12 @@ Must be one of (:image :label)."
 ;;     (make buffer)
 ;;     (visit self buffer)))
 
-(define-method enter-or-exit form ()
+(define-method enter-or-exit window ()
   (if %entered
       (exit self)
       (enter self)))
 
-(define-method enter form ()
+(define-method enter window ()
   "Begin entering LISP data into the current cell."
   (unless %entered
     (say self "Now entering data. Press Control-ENTER to finish, or ESCAPE to cancel.")
@@ -276,7 +276,7 @@ Must be one of (:image :label)."
       (setf (field-value :widget cell)
 	    entry))))
 
-(define-method exit form (&optional nosave)
+(define-method exit window (&optional nosave)
   "Stop entering data into the current cell."
   (when %entered
     (when nosave (say self "Canceled data entry."))
@@ -295,7 +295,7 @@ Must be one of (:image :label)."
 
 (defparameter *blank-cell-string* '(" ........ "))
 
-;; (define-method row-height form (row)
+;; (define-method row-height window (row)
 ;;   (let ((height 0) cell)
 ;;     (dotimes (column %columns)
 ;;       (setf cell (cell-at self row column))
@@ -305,7 +305,7 @@ Must be one of (:image :label)."
 ;;       (:label (max (formatted-string-height *blank-cell-string*) height))
 ;;       (:image height))))
 
-;; (define-method column-width form (column)
+;; (define-method column-width window (column)
 ;;   (let ((width 0) cell)
 ;;     (dotimes (row %rows)
 ;;       (setf cell (cell-at self row column))
@@ -315,7 +315,7 @@ Must be one of (:image :label)."
 ;;       (:label (max width (formatted-string-width *blank-cell-string*)))
 ;;       (:image width))))
 
-(define-method layout form ()
+(define-method layout window ()
   (with-field-values (rows columns display-style buffer
 			   column-widths row-heights) self
     (when buffer
@@ -346,7 +346,7 @@ Must be one of (:image :label)."
 (defparameter *even-columns-format* '(:background "gray50" :foreground "gray10"))
 (defparameter *odd-columns-format* '(:background "gray45" :foreground "gray10"))
 
-(define-method handle-key form (event)
+(define-method handle-key window (event)
   ;; possibly forward event to current cell. used for the event cell, see below.
   (prog1
       (if (or (and (equal "RETURN" (first event))
@@ -363,7 +363,7 @@ Must be one of (:image :label)."
 		  (t (send-parent self :handle-key self event)))))
     (layout self)))
 
-(define-method hit form (x0 y0) 
+(define-method hit window (x0 y0) 
   (with-field-values (row-heights column-widths origin-row origin-column rows columns x y width height)
       self
     (when (within-extents x0 y0 x y (+ x width) (+ y height))
@@ -384,11 +384,11 @@ Must be one of (:image :label)."
 	      (setf %cursor-row selected-row
 		    %cursor-column selected-column))))))))
   
-(define-method compute form ())
+(define-method compute window ())
 
 ;; TODO break up this method.
 
-(define-method render form ()
+(define-method render window ()
   (clear self)
   (when %buffer
     (with-field-values (cursor-row cursor-column row-heights buffer buffer-name 
@@ -513,7 +513,7 @@ Must be one of (:image :label)."
 	      (destructuring-bind (cell x y) args
 		(draw cell x y image)))
 	    ;; create status line
-	    ;; TODO break this formatting out into variables
+	    ;; TODO break this windowatting out into variables
 	    (setf status-line
 		  (list 
 		   (list (format nil " ( ~A )     " buffer-name) :foreground (if focused "yellow" "white")
@@ -544,7 +544,7 @@ Must be one of (:image :label)."
   
 ;;; Cursor
   
-(define-method scroll form ()
+(define-method scroll window ()
   (with-fields (cursor-row cursor-column origin-row origin-column scroll-margin
 			   origin-height origin-width buffer rows columns) self
     (when (or 
@@ -574,7 +574,7 @@ Must be one of (:image :label)."
 		      (- cursor-row
 			 (truncate (/ origin-height 2)))))))))
 
-(define-method draw-cursor form (x y width height)
+(define-method draw-cursor window (x y width height)
   (with-fields (cursor-color cursor-blink-color cursor-blink-clock focused) self
     (decf cursor-blink-clock)
     (when (minusp cursor-blink-clock)
@@ -586,13 +586,13 @@ Must be one of (:image :label)."
 		     cursor-blink-color)))
       (draw-rectangle x y width height :color color :destination %image))))
 
-(define-method draw-mark form (x y width height)
+(define-method draw-mark window (x y width height)
   (draw-rectangle x y width height :color "white" :destination %image))
 
-(define-method draw-region form (x y width height)
+(define-method draw-region window (x y width height)
   (draw-rectangle x y width height :color "cyan" :destination %image))
   
-(define-method move-cursor form (direction)
+(define-method move-cursor window (direction)
   "Move the cursor one step in DIRECTION. 
 DIRECTION is one of :up :down :right :left."
   (unless %entered
@@ -616,34 +616,34 @@ DIRECTION is one of :up :down :right :left."
 	;; possibly scroll
 	(scroll self)))))
   
-(define-method move-cursor-up form ()
+(define-method move-cursor-up window ()
   (move-cursor self :up))
 
-(define-method move-cursor-down form ()
+(define-method move-cursor-down window ()
   (move-cursor self :down))
 
-(define-method move-cursor-left form ()
+(define-method move-cursor-left window ()
   (move-cursor self :left))
 
-(define-method move-cursor-right form ()
+(define-method move-cursor-right window ()
   (move-cursor self :right))
 
-(define-method move-end-of-line form ()
+(define-method move-end-of-line window ()
   (unless %entered
     (setf %cursor-column (1- %columns))
     (scroll self)))
 
-(define-method move-beginning-of-line form ()
+(define-method move-beginning-of-line window ()
   (unless %entered
     (setf %cursor-column 0)
     (scroll self)))
 
-(define-method move-end-of-column form ()
+(define-method move-end-of-column window ()
   (unless %entered
     (setf %cursor-row (1- %rows))
     (scroll self)))
 
-(define-method move-beginning-of-column form ()
+(define-method move-beginning-of-column window ()
   (unless %entered
     (setf %cursor-row 0)
     (scroll self)))
@@ -1185,7 +1185,7 @@ DIRECTION is one of :up :down :right :left."
   (remove-duplicates (mapcar #'car %pages)))
 
 (define-method message pager (formatted-string)
-  (setf %pager-message formatted-string))
+  (setf %pager-message windowatted-string))
 
 (define-method render pager ()
   ;; calculate geometry. always draw
