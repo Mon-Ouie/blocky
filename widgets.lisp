@@ -1,4 +1,4 @@
-;;; widgets.lisp --- interactive graphical element blocks
+;;; buffers.lisp --- interactive graphical element blocks
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
@@ -739,4 +739,4 @@ auto-updated displays."
 (define-method forward split (method &rest args)
   (apply #'send self method (nth %focus %children) args))
 
-;;; widgets.lisp ends here
+;;; buffers.lisp ends here

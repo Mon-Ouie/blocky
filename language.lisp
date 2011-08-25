@@ -108,7 +108,7 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
   (scale-x :initform 1)
   (scale-y :initform 1)
   (blend :initform :alpha)
-  (emblem :initform nil :documentation "An indicator icon.")
+  (halo :initform nil)
   (opacity :initform 1.0)
   (label :initform nil)
   (width :initform 32 :documentation "Cached width of block.")
@@ -307,6 +307,11 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 	(etypecase result
 	  (keyword (bind-event-to-method self key mods result))
 	  (string (bind-event-to-text-insertion self key mods result)))))))
+
+;;; Each object has a Squeak-style pop-up halo
+
+(define-method make-halo block ()
+  (setf %halo (new halo self)))
 
 ;;; Serialization hooks
 
@@ -962,19 +967,12 @@ area is drawn. If DARK is non-nil, paint a darker region."
 (define-method draw-socket block (x0 y0 x1 y1)
   (draw-patch self x0 y0 x1 y1 :depressed t :socket t))
 
-(define-method set-emblem block (emblem)
-  (assert (getf emblem *indicators*))
-  (setf %emblem emblem))
-
-(define-method clear-emblem block ()
-  (setf %emblem nil))
-
-(define-method draw-emblem block (&optional force)
-  (with-fields (emblem x y) self
-    (when (or force emblem)
-      (draw-indicator emblem (- x (dash 3)) y 
-		      :color "red" :background "white"
-		      :scale 3))))
+;; (define-method draw-emblem block (&optional force)
+;;   (with-fields (emblem x y) self
+;;     (when (or force emblem)
+;;       (draw-indicator emblem (- x (dash 3)) y 
+;; 		      :color "red" :background "white"
+;; 		      :scale 3))))
 
 ;;; Blinking cursor
 
@@ -1393,11 +1391,11 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (define-method draw-hover send ()
   nil)
 
-;;; Combining blocks into buffers
+;;; Grouping blocks into buffers with buffer-local variables
 
 (defmacro with-buffer (buffer &rest body)
   `(let ((*buffer* (find-uuid ,buffer)))
-     (verify *buffer*)
+     (assert (blockyp *buffer*))
      ,@body))
 
 (define-method parent-is-buffer block ()
@@ -1420,21 +1418,17 @@ non-nil to indicate that the block was accepted, nil otherwise."
   (assert (contains self block))
   (delete-input self block))
 
-;; (define-method bring-to-front buffer (block)
-;;   (with-fields (inputs buffer) self
-;;     (assert (contains buffer block))
-;;     (delete-input self block)
-;;     (append-input self block)))
+(define-method bring-to-front buffer (block)
+  (with-fields (inputs buffer) self
+    (assert (contains buffer block))
+    (delete-input self block)
+    (append-input self block)))
 
 (define-method on-update buffer ()
   (with-buffer self 
     (dolist (each %inputs)
       (on-update each))
     (update-layout self)))
-
-;; (define-method after-deserialize buffer ()
-;;   (dolist (child %inputs)
-;;     (set-parent child (find-uuid self))))
 
 (define-method update-layout buffer (&optional force)
   (with-fields (inputs needs-layout) self

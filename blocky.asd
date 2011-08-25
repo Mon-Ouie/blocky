@@ -32,7 +32,7 @@
 	       (:file "prototypes" :depends-on ("blocky"))
 	       (:file "console" :depends-on ("prototypes"))
 	       (:file "language" :depends-on ("console"))
-	       (:file "widgets" :depends-on ("language"))
+	       (:file "buffers" :depends-on ("language"))
 	       (:file "trees" :depends-on ("language"))
 	       (:file "listener" :depends-on ("language"))
 	       (:file "system" :depends-on ("language"))
