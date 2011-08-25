@@ -1,25 +1,34 @@
+* BUGFIXES
+** TODO Fix listener history errors
+** TODO Fix missing entries in send block?? what's happening
+** TODO Fix missing labels on defblock's child entries
+** TODO Fix Control-E etc not working in textbox
+** TODO Fix not traversing line break with C-f and C-b
+** TODO Fix error handling: use error message bubbles with X close box
+** TODO Fix no blue dot movement in example2
+** TODO Fix ellipsis not displayed on menu items until highlight
+** TODO Fix crash when error in init file
+** TODO Fix init file name (use blocky-init.lisp or ~/.blocky)
+*** use something other than ellipses? like my generic tree triangles
 ** TODO make a list derivative whose first element is pinned for eval (VISUAL LAMBDA LIST?)
-** TODO [#A] fix listener history errors
+** TODO [#B] Refactor collision detection to enable various types.
+*** delegate actual collision detection to method
+*** in cell/move and sprite/move , compute whether a move would cause a collision
+*** and then only allow the move to go a certain distance. return number moved
+*** then "resting contact" will work; the object won't try to move anymore (if gravity.)
+*** implement AABB-quadtree? http://en.wikipedia.org/wiki/Quadtree http://hectorgon.blogspot.com/2006/08/regular-grids-vs-aabb-trees-in-games.html
 ** TODO [#A] easily close menus with halo
-** TODO fix missing entries?? what's happening
 *** TODO [#A] universal morphic halo?
 ** TODO [#B] Blocky in-engine inspector
 *** TODO basic explanation of blocks and basic methods
-*** TODO 
-** TODO [#C] Fix Control-E etc not working in textbox
-** TODO [#C] Fix not traversing line break with C-f and C-b
 ** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
-* TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
-*** TODO [#A] dialog boxes for project save/load!
+** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
+** TODO [#A] dialog boxes for project save/load!
 ** TODO color code syntax, not semantics?
 ** TODO GUI for closures
-** TODO PRINTer blocks
-** TODO fix entry labels not being drawn
-** TODO [#A] fix missing labels on defblock's child entries
-** TODO [#A] close context menu when loses focus?
-** TODO [#A] Fix collision detection (spheres, 
-** TODO [#A] Start using tests and more correctness-helpers
-** TODO [#A] plus button decorator for lists to add objects (fields, methods, etc)
+** TODO [#B] PRINTer blocks
+** TODO [#A] Start unit-testing
+** TODO [#A] Plus-button decorator for lists to add objects (fields, methods, etc)
 ** TODO [#A] Read me first: F1, then click on any object for help
 ** TODO [#A] visually indicate clicked send blocks
 ** TODO [#A] Write standard blocks library
@@ -86,28 +95,19 @@
 *** [#A] defblock self
 ****  should resources be full-fledged objects? 
 ** TODO [#A] bring menubar and its menus to front when opening menu
-** TODO [#B] multilayer approach with script over top of world
-** TODO [#B] fix listener prompt cursor always resetting to column 0 upon focus
+** TODO multilayer approach with script over top of world
 ** TODO [#B] Also show clickable previous commands in listener log
-** TODO [#B] fix ellipsis not displayed on menu items until highlight
-*** use something other than ellipses? like my generic tree triangles
 ** TODO [#B] an interactive tutorial project
 ** TODO [#B] escape key hide/show terminals/menus
 ** TODO [#B] listener history should show only commands?
-** TODO [#B] define-visual-macro (via defblock?)
 ** TODO [#B] animate text box cursor and show current line / or show textbox border
 ** TODO [#B] union fields to hold union of %methods and %excluded-fields and so on
-** TODO [#B] pop up shell on M-x
-** TODO ALPHA RELEASE with a few working examples
 
-** TODO [#B] Use Alt-drag to move objects
 ** TODO [#B] implement make-process coroutines
-** TODO [#B] FIX trash drawing children during drag
-** TODO [#B] Fix the way wiki page resources are stored into separate files...
+** TODO UUID filenames for some objects
 ** TODO [#B] general purpose resizer/scroller decorator thinger
 ** TODO [#B] Allow user to move entries easier via yellow triangle tab
 ** TODO [#B] general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
-** TODO [#C] fix can't pull out sublists (list (list (list 1 2 3))) 
 
 ** TODO Win32 build tips
 
@@ -127,12 +127,6 @@ add "." and "%CD%" to cffi's foreign directory search list...
 ** morphic-style halos
 ** tab and shift-tab for input nav
 ** comment block for output messages in listener etc, trap errors
-** TODO [#B] Refactor collision detection to enable various types.
-*** delegate actual collision detection to method
-*** in cell/move and sprite/move , compute whether a move would cause a collision
-*** and then only allow the move to go a certain distance. return number moved
-*** then "resting contact" will work; the object won't try to move anymore (if gravity.)
-*** implement AABB-quadtree? http://en.wikipedia.org/wiki/Quadtree http://hectorgon.blogspot.com/2006/08/regular-grids-vs-aabb-trees-in-games.html
 ** TODO [#B] Improve error handling in shell
 *** TODO isolate/trap all block errors and display them grayed out with an inspectable error
 *** TODO define-method error shell
@@ -166,7 +160,6 @@ add "." and "%CD%" to cffi's foreign directory search list...
 ** TODO [#B] disabled menu items, to check for presence of method in target and/or condition
 ** TODO [#B] fix cursor rendering in prompt not lining up with characters
 ** TODO [#B] AABB-tree (axis-aligned bounding-box)
-** TODO [#C] Fix crash when error in blocky.ini
 ** TODO [#C] add generic xbox controller support for analog bumpers (emulate buttons)
 ** TODO [#C] introduce with-font macro and stop using *block-font* explicitly
 ** TODO [#C] draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
@@ -561,5 +554,46 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: DONE
+   :END:
+** TODO [#B] pop up shell on M-x
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-25 Thu 00:08
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BUGFIXES
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO ALPHA RELEASE with a few working examples
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-25 Thu 00:08
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BUGFIXES
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO [#B] Use Alt-drag to move objects
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-25 Thu 00:08
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BUGFIXES
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO [#B] FIX trash drawing children during drag
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-25 Thu 00:08
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BUGFIXES
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO [#B] Fix the way wiki page resources are stored into separate files...
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-25 Thu 00:08
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BUGFIXES
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
    :END:
 

@@ -2127,6 +2127,7 @@ of the music."
 
 (defparameter *indicators* 
   '(:asterisk "asterisk"
+    :bang "bang"
     :top-left-triangle "top-left-triangle-indicator"
     :bottom-right-triangle "bottom-right-triangle-indicator"))
 
@@ -2136,8 +2137,11 @@ of the music."
     (assert (stringp texture-name))
     (find-texture texture-name)))
 
-(defun draw-indicator (indicator x y &key color (scale 1) (state :inactive))
+(defun draw-indicator (indicator x y &key color (scale 1) (state :inactive)
+					  background)
   (let ((size (indicator-size)))
+    (when background
+      (draw-circle x y (* scale size) :color "navyblue" :type :solid))
     (draw-textured-rectangle x y 0 (* scale size) (* scale size)
 			     (find-indicator-texture indicator)
 			     :blend :alpha
