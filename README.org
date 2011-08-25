@@ -41,9 +41,10 @@ Here is a quick guide to the various source files:
 - prototypes.lisp: a custom Self-like object system that the rest of the
   system is built with.
 - console.lisp: basic device and file operations for SDL, OpenGL, etc
-- language.lisp: core Blocky language model and default block behaviors
-- widgets.lisp: textboxes and other niceties
-- trees.lisp: menus and tree tab widgets
+- blocks.lisp: core Blocky language model and default block behaviors
+- buffers.lisp: abstract collections of related blocks 
+- windows.lisp: generic interactive viewer for buffers
+- trees.lisp: drop-down menus and tree tab widgets
 - listener.lisp: data entry and command processing
 - system.lisp: treating the system and session like an object
 - things.lisp: sprites and such
