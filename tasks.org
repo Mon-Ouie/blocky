@@ -1,4 +1,8 @@
+* THOUGHTS
+** world is a type of buffer
+** window is something you open onto a buffer , in the shell
 * BUGS
+** TODO Fix %TARGET not being set on menu items
 ** TODO Fix error handling: use error message bubbles with X close box and (backtrace) button?
 ** TODO Fix listener history errors
 ** TODO Fix missing entries in send block?? what's happening

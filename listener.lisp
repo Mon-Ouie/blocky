@@ -237,7 +237,7 @@
 
 (define-method draw-hover prompt ())
 
-(define-method on-click prompt (mouse-x mouse-y)
+(define-method on-tap prompt (mouse-x mouse-y)
   (declare (ignore mouse-y))
   (with-fields (x y width height clock point parent background
 		  line) self

@@ -92,7 +92,7 @@
     (setf %expanded nil)
     (invalidate-layout self)))
 
-(define-method on-click tree (x y)
+(define-method on-tap tree (x y)
   (declare (ignore x y))
   (toggle-expanded self))
 
@@ -119,7 +119,7 @@
 	 ;; we're an expanded subtree. lay it out
 	 (progn 
 	   ;; lay out the children as in a typical list
-	   (layout-as-list self)
+	   (layout-vertically self)
 	   ;; handle the case that the label is wider than the content.
 	   (when label 
 	     (setf width 
@@ -258,7 +258,7 @@
 	    (setf x %x y %y))))
       self))
 
-(define-method on-click menu (x y)
+(define-method on-tap menu (x y)
   (declare (ignore x y))
   (with-fields (action target) self
     (typecase action 

@@ -39,7 +39,7 @@
 	       (:file "things" :depends-on ("blocks"))
 	       (:file "worlds" :depends-on ("things"))
 	       (:file "shell" :depends-on ("trees" "listener" "system"))
-	       (:file "vmacs" :depends-on ("trees" "listener" "widgets" "system"))
+	       (:file "vmacs" :depends-on ("trees" "listener" "buffers" "system"))
 	       (:file "library" :depends-on ("worlds" "shell" "vmacs"))))
 ;;	       (:file "path")
 	       

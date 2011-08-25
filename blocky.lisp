@@ -1,4 +1,4 @@
-;;; blocky.lisp --- a visual dialect of Common Lisp
+;;; blocky.lisp --- a visual dialect of Common Lisp inspired by Squeak
                
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 

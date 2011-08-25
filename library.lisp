@@ -71,7 +71,7 @@
 
 ;; (define-method layout send () 
 ;;   (with-fields (height width x y) self
-;;     (layout-as-list self)))
+;;     (layout-vertically self)))
 
 ;; (define-method evaluate send ()
 ;;   (with-fields (inputs) self
