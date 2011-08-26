@@ -24,21 +24,48 @@
 
 ;;; Grouping blocks into buffers with buffer-local variables
 
-(define-block (buffer :super list)
-  (mode :initform nil)
-  (name :initform nil)
-  (variables :initform (make-hash-table :test 'eq))
-  (needs-layout :initform t))
+(defvar *buffers* nil)
+
+(defun initialize-buffers ()
+  (setf *buffers* (make-hash-table :test 'equal)))
+
+(defun get-buffer (name)
+  (gethash name *buffers*))
+
+(defun make-buffer (&rest args)
+  (let* ((buffer (apply #'clone :buffer args))
+	 (name (field-value :name buffer))) ;; name may be uniqified
+    (assert (not (gethash name *buffers*)))
+    (prog1 buffer
+      (setf (gethash name *buffers*)
+	    buffer))))
+  
+(defun uniquify-buffer-name (name)
+  (let ((n 1)
+	(name0 name))
+    (block naming
+      (loop while name0 do
+	(if (get-buffer name0)
+	    (setf name0 (format nil "~A.~S" name n)
+		  n (1+ n))
+	    (return-from naming name0))))))
 
 (defmacro with-buffer (buffer &rest body)
   `(let ((*buffer* (find-uuid ,buffer)))
      (assert (blockyp *buffer*))
      ,@body))
 
-(define-method initialize buffer (&key blocks variables  
+(define-block (buffer :super list)
+  (mode :initform nil)
+  (name :initform nil)
+  (variables :initform (make-hash-table :test 'eq))
+  (needs-layout :initform t))
+
+(define-method initialize buffer (&key blocks variables name
 				       (width (dash 120))
 				       (height (dash 70)))
   (apply #'super%initialize self blocks)
+  (setf %name (uniquify-buffer-name name))
   (setf %width width
 	%height height)
   (when variables (setf %variables variables)))
