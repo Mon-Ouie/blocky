@@ -18,11 +18,9 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary:
-
-;; 
-
 ;;; Code:
+
+(in-package :blocky)
 
 (define-block window
   (buffer :initform nil :documentation "The buffer of objects to be displayed.")
@@ -89,24 +87,6 @@
   (with-fields (tool tool-methods) self
     (send nil tool self data)))
 
-;; (define-method clone window (data)
-;;   "Clone the prototype named by the symbol DATA and drop the clone
-;; at the current cursor location. See also APPLY-LEFT and APPLY-RIGHT."
-;;   (if (and (symbolp data)
-;; 	   (boundp data)
-;; 	   (object-p (symbol-value data)))
-;;       (drop-cell %buffer (clone (symbol-value data)) %point-row %point-column)
-;;       (say self "Cannot clone.")))
-
-;; (define-method inspect window ()
-;;   nil)
-
-;; (define-method erase window (&optional data)
-;;   "Erase the top cell at the current location."
-;;   (say self "Erasing top cell.")
-;;   (let ((grid (field-value :grid %buffer)))
-;;     (ignore-errors (vector-pop (aref grid %point-row %point-column)))))
-
 (define-method set-mark window ()
   (setf %mark-row %point-row>
 	<mark-column %point-column)
@@ -156,171 +136,7 @@ See also CREATE-BUFFER."
 	  %row-styles (make-array (+ 1 %rows)))
     (layout self)))
 
-(define-method cell-at window (row column)
-  (assert (and (integerp row) (integerp column)))
-  (top-cell %buffer row column))
-
-(define-method set-prompt window (prompt)
-  (setf %prompt prompt))
-
-(define-method set-narrator window (narrator)
-  (setf %narrator narrator))
-
-(define-method install-keybindings window ()
-  nil)
-
-(define-method set-display-style window (style)
-  "Set the rendering style of the current window to STYLE.
-Must be one of (:image :label)."
-  (setf %display-style style)
-  (layout self))
-
-(define-method image-view window ()
-  "Switch to image view in the current window."
-  (set-display-style self :image))
-
-(define-method label-view window ()
-  "Switch to label view in the current window."
-  (set-display-style self :label))
-
-(define-method goto-prompt window ()
-  "Jump to the command prompt."
-  (when %prompt
-    (goto %prompt)))
-
-(define-method selected-cell window ()
-  (cell-at self %point-row %point-column))
-
-(define-method activate window ()
-  (let ((cell (selected-cell self)))
-    (when cell
-      (activate cell))))
-
-(define-method eval window (&rest args)
-  "Evaluate all the ARGS and print the result."
-  (when %prompt 
-    (print-data %prompt args :comment)))
- 
-(define-method say window (text)
-  (when %prompt
-    (say %prompt text)))
-
-(define-method help window (&optional (command-name :commands))
-  "Print documentation for the command COMMAND-NAME.
-Type HELP :COMMANDS for a list of available commands."
-  (let* ((command (make-keyword command-name))
-	 (docstring (method-documentation command))
-	 (arglist (method-arglist command)))
-    (with-field-values (prompt) self
-      (when prompt
-	(print-data prompt (format nil "Command name: ~A" command) :comment)
-	(print-data prompt (format nil "Arguments: ~a" (if (eq arglist :not-available)
-					       :none arglist))
-		    :comment)
-	(print-data prompt (format nil" ~A" docstring) :comment)))))
-
-(define-method save-all window ()
-  (say self "Saving objects...")
-  (ioforms:save-objects :force)
-  (say self "Saving objects... Done."))
-
-(define-method save window ()
-  (say self "Saving objects...")
-  (ioforms:save-objects)
-  (say self "Saving objects... Done."))
-  
-(define-method create-buffer window (&key height width name object)
-  "Create and visit a blank buffer of height HEIGHT, width WIDTH, and name NAME.
-If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
-  (let ((buffer (or object (create-blank-buffer :height height :width width :name name))))
-    (when name (setf (field-value :name buffer) name))
-    (make buffer)
-    (visit self buffer)))
-
-(define-method enter-or-exit window ()
-  (if %entered
-      (exit self)
-      (enter self)))
-
-(define-method enter window ()
-  "Begin entering LISP data into the current cell."
-  (unless %entered
-    (say self "Now entering data. Press Control-ENTER to finish, or ESCAPE to cancel.")
-    (let ((entry (clone =textbox=))
-	  (cell (selected-cell self)))
-      (resize entry :width 150 :height 30)
-      (move entry :x 0 :y 0)
-      (when (null cell)
-	(setf cell (clone =data-cell=))
-	(drop-cell %buffer cell %point-row %point-column))
-      (let ((data (get cell)))
-	(when data 
-	  (let* ((output (print cell))
-		 (lines (etypecase output
-			  (string (list output))
-			  (list output))))
-	    (dolist (line lines)
-	      (insert entry line)
-	      (newline entry)))
-	  (move-end-of-line entry)))
-      (install-keybindings entry)
-      (setf (field-value :auto-fit entry) t)
-      (resize-to-fit entry)
-      (setf %entered t)
-      (setf (field-value :widget cell)
-	    entry))))
-
-(define-method exit window (&optional nosave)
-  "Stop entering data into the current cell."
-  (when %entered
-    (when nosave (say self "Canceled data entry."))
-    (with-fields (widget) (selected-cell self)
-      (let* ((data (get-buffer-as-string widget)))
-	(when data
-	  (unless nosave
-	    (let ((cell (selected-cell self)))
-	      (handler-case 
-		  (set cell (read cell data))
-		(condition (c) 
-		  (say self (format nil "Error reading data: ~S" c)))))))
-	(setf widget nil)
-	(setf %entered nil)
-	(say self "Finished entering data.")))))
-    
-(define-method open-project window (name)
-  "Load the IOFORMS project named NAME for development."
-  (say self (format nil "Loading module ~S" name))
-  (ioforms:open-project name))
-
-(define-method quit window ()
-  "Quit XIOFORMS."
-  (ioforms:quit t))
-
-(define-method cancel window ()
-  (clear-mark self)
-  (exit self :nosave))
-
 (defparameter *blank-cell-string* '(" ........ "))
-
-;; (define-method row-height window (row)
-;;   (let ((height 0) cell)
-;;     (dotimes (column %columns)
-;;       (setf cell (cell-at self row column))
-;;       (when cell
-;; 	(setf height (max height (height cell)))))
-;;     (ecase %display-style
-;;       (:label (max (formatted-string-height *blank-cell-string*) height))
-;;       (:image height))))
-
-;; (define-method column-width window (column)
-;;   (let ((width 0) cell)
-;;     (dotimes (row %rows)
-;;       (setf cell (cell-at self row column))
-;;       (when cell
-;; 	(setf width (max width (width cell)))))
-;;     (ecase %display-style 
-;;       (:label (max width (formatted-string-width *blank-cell-string*)))
-;;       (:image width))))
 
 (define-method layout window ()
   (with-field-values (rows columns display-style buffer
@@ -353,7 +169,7 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 (defparameter *even-columns-format* '(:background "gray50" :foreground "gray10"))
 (defparameter *odd-columns-format* '(:background "gray45" :foreground "gray10"))
 
-(define-method handle-key window (event)
+(define-method on-event window (event)
   ;; possibly forward event to current cell. used for the event cell, see below.
   (prog1
       (if (or (and (equal "RETURN" (first event))
@@ -391,12 +207,7 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	      (setf %point-row selected-row
 		    %point-column selected-column))))))))
   
-(define-method compute window ())
-
-;; TODO break up this method.
-
-(define-method render window ()
-  (clear self)
+(define-method draw window ()
   (when %buffer
     (with-field-values (point-row point-column row-heights buffer buffer-name 
 				   origin-row origin-column header-line status-line
@@ -548,8 +359,6 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	    (when (and (integerp mark-row) (integerp mark-column)
 		       (notany #'null (list x0 y0 x1 y1)))
 	      (draw-region self x0 y0 (- x1 x0) (- y1 y0)))))))))
-  
-;;; Cursor
   
 (define-method scroll window ()
   (with-fields (point-row point-column origin-row origin-column scroll-margin
