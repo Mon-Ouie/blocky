@@ -30,7 +30,6 @@
      ,@body))
 
 (define-block (buffer :super list)
-  (target :initform nil)
   (needs-layout :initform t)
   (variables :initform (make-hash-table :test 'eq)))
 
@@ -38,7 +37,7 @@
   (setf %needs-layout t))
 
 (define-method delete-block buffer (block)
-  (verify block)
+  (assert (blockyp block))
   (assert (contains self block))
   (delete-input self block))
 
@@ -61,19 +60,13 @@
 	(layout each))
       (setf needs-layout nil))))
 
-(define-method initialize buffer (&key blocks variables target 
+(define-method initialize buffer (&key blocks variables  
 				       (width (dash 120))
 				       (height (dash 70)))
   (apply #'super%initialize self blocks)
-  (message "Initializing BUFFER")
   (setf %width width
 	%height height)
-  (when variables (setf %variables variables))
-  (when target (setf %target target)))
-
-(define-method set-target buffer (target)
-  (verify target)
-  (setf %target target))
+  (when variables (setf %variables variables)))
 
 (define-method append-input buffer (block)
   (verify block)

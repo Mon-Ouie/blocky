@@ -1173,8 +1173,8 @@ evaluated, then any applicable initializer is triggered."
 ;; these will be properly re-initialized by the :AFTER-DESERIALIZE
 ;; method.
 
-(defconstant +object-type-key+ :%IOF%OBJECT%)
-(defconstant +hash-type-key+ :%IOF%HASH%)
+(defconstant +object-type-key+ :%IOF1%OBJECT%)
+(defconstant +hash-type-key+ :%IOF1%HASH%)
 
 (defun serialize (object)
   "Convert a Lisp object a print-ready S-expression.
