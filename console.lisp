@@ -39,6 +39,11 @@
 
 (in-package :blocky) 
 
+(defvar *buffers* nil)
+
+(defun initialize-buffers ()
+  (setf *buffers* (make-hash-table :test 'equal)))
+
 (defvar *edit* nil "This is set to non-nil when the editor is being used.")
 
 (defvar *pending-autoload-resources* '())
@@ -861,9 +866,9 @@ display."
 	       (gl:flush)
 	       (sdl:update-display))))))
 
-;;; The BLOCKY.INI user configuration file
+;;; The user configuration file
 
-(defparameter *user-init-file-name* "blocky.ini")
+(defparameter *user-init-file-name* "blocky-init.lisp")
 
 (defun load-user-init-file ()
   (let ((type :unspecific)) ;; possible sbcl non-compliant behavior
@@ -1139,7 +1144,7 @@ nil."
 	      :type :unspecific)))
        when path return path)
      (prog1 nil
-       (message "Cannot find project ~s in paths ~S. Try checking your *PROJECTS-DIRECTORIES* settings in the BLOCKY.INI configuration file. Continuing..."
+       (message "Cannot find project ~s in paths ~S. Try checking your *PROJECTS-DIRECTORIES* settings in the BLOCKY-INIT.LISP configuration file. Continuing..."
 		project dirs)))))
 
 (defun expand-file-name (resource)
@@ -1649,11 +1654,13 @@ control the size of the individual frames or subimages."
 	  (resource-data resource))))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
-*screen-height* *world* *blocks* *dt* *pointer-x* *pointer-y* *trash*
-*resizable* *window-title* *buffer** *system*))
-    ;; notice that THIS variable is also persistent!
-    ;; this is to avoid unwanted behavior changes in modules
-    ;; *persistent-variables*))  ;; FIXME not for now
+*buffers* *screen-height* *world* *blocks* *dt* *pointer-x*
+*pointer-y* *trash* *resizable* *window-title* *buffer* *system*
+				 ;; notice that THIS variable is also
+				 ;; persistent!  this is to avoid
+				 ;; unwanted behavior changes in
+				 ;; modules
+				 *persistent-variables*))
 
 (defparameter *persistent-variables-file-name* "variables.iof")
 
@@ -2393,6 +2400,7 @@ of the music."
   (initialize-resource-table)
   (initialize-textures-maybe :force)
   (initialize-colors)
+  (initialize-buffers)
   (initialize-sound)
   (initialize-database)
   (load-standard-resources)

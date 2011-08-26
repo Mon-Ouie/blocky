@@ -1,6 +1,6 @@
 ;; -*- Mode: lisp -*-
 ;;
-;; This is the Blocky configuration file "BLOCKY.INI".
+;; This is the Blocky configuration file "blocky-init.lisp".
 ;; It is also a Lisp program.
 ;; You can edit this file to configure Blocky to your preference.
 ;; Comments begin with semicolons. 

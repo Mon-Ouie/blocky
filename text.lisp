@@ -326,9 +326,9 @@
 	    (when (plusp (length line))
 	      (draw-string line x0 y0 
 			   :font font :color %foreground-color))
-	    (incf y0 line-height))))
-      ;; possibly draw emblem
-      (draw-emblem self))))
+	    (incf y0 line-height)))))))
+      ;; ;; possibly draw emblem
+      ;; (draw-emblem self))))
 
 (define-method draw-focus textbox ()
   ;; draw cursor

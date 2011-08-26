@@ -95,7 +95,7 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
 	   "Computed result values from the input blocks.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (temporary :initform nil)
-  (methods :initform '(:make-reference :copy))
+  (methods :initform '(:make-reference :duplicate :make-sibling))
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
@@ -459,7 +459,7 @@ By default, just update each child block."
 (define-method deep-copy block () 
   nil) ;; not defined for generic blocks
 
-(define-method copy block ()
+(define-method duplicate block ()
   (clone (find-super self)))
   
 (define-method initialize block (&rest blocks)

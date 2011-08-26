@@ -24,11 +24,6 @@
 
 ;;; Grouping blocks into buffers with buffer-local variables
 
-(defvar *buffers* nil)
-
-(defun initialize-buffers ()
-  (setf *buffers* (make-hash-table :test 'equal)))
-
 (defun get-buffer (name)
   (gethash name *buffers*))
 
@@ -37,8 +32,9 @@
 	 (name (field-value :name buffer))) ;; name may be uniqified
     (assert (not (gethash name *buffers*)))
     (prog1 buffer
+      ;; add it to the table
       (setf (gethash name *buffers*)
-	    buffer))))
+	    (find-uuid buffer)))))
   
 (defun uniquify-buffer-name (name)
   (let ((n 1)
