@@ -183,6 +183,25 @@ extended argument list ARGLIST."
     (concatenate 'string name
 		 "%%" (symbol-name method))))
 
+(defun find-method-id (prototype method)
+  (let ((pointer prototype))
+    (block searching
+      (loop while pointer do
+	(let ((id (make-method-id pointer method)))
+	  (let ((result (gethash id *methods*)))
+	    (if result
+		(return-from searching id)
+		(prog1 nil 
+		  (setf pointer (find-super pointer))))))))))
+
+(defun find-method-data (name method &optional no-error)
+  (assert (hash-table-p *methods*))
+  (let ((result (gethash id *methods*)))
+    (if result 
+	(values-list result)
+	(unless no-error (error "Cannot find method: ~S" 
+				(list name method))))))
+ 
 (defun add-method-to-dictionary (prototype method arglist &optional options)
   (when (null *methods*)
     (initialize-methods))
@@ -190,26 +209,10 @@ extended argument list ARGLIST."
     (assert (stringp id))
     (setf (gethash id *methods*) (list arglist options))
     (values id arglist)))
-	  	  
-(defun find-method-in-dictionary (name method &optional no-error)
-  (assert (hash-table-p *methods*))
-  (let ((proto name))
-    (block looping
-      (loop while proto do
-	(let ((id (make-method-id proto method)))
-	  (let ((result (gethash id *methods*)))
-	    (if result
-		(return-from looping
-		  (values-list result))
-		(prog1 (values nil nil)
-		  (setf proto (find-super proto))))))))))
-     ;; (if no-error
-     ;; 	 (values nil nil)
-     ;; 	 (error "Cannot find method ID: ~S" (list proto method))))))
 
 (defun method-options (name method &optional noerror)
   (multiple-value-bind (schema options)
-      (find-method-in-dictionary name method noerror)
+      (find-method-data name method noerror)
     (declare (ignore schema))
     options))
 
@@ -219,7 +222,7 @@ extended argument list ARGLIST."
 	           
 (defun method-schema (prototype method)
   (assert (hash-table-p *methods*))
-  (let ((id (make-method-id prototype method)))
+  (let ((id (find-method-id prototype method)))
     (assert (stringp id))
     (assert (gethash id *methods*))
     (values-list (gethash id *methods*))))
