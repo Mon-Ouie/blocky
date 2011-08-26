@@ -183,7 +183,7 @@ extended argument list ARGLIST."
     (concatenate 'string name
 		 "%%" (symbol-name method))))
 
-(defun find-method-id (prototype method)
+(defun find-method-id (prototype method &optional create)
   (let ((pointer prototype))
     (block searching
       (loop while pointer do
@@ -205,7 +205,7 @@ extended argument list ARGLIST."
 (defun add-method-to-dictionary (prototype method arglist &optional options)
   (when (null *methods*)
     (initialize-methods))
-  (let ((id (make-method-id prototype method)))
+  (let ((id (make-method-id prototype method :create)))
     (assert (stringp id))
     (setf (gethash id *methods*) (list arglist options))
     (values id arglist)))
@@ -224,8 +224,9 @@ extended argument list ARGLIST."
   (assert (hash-table-p *methods*))
   (let ((id (find-method-id prototype method)))
     (assert (stringp id))
-    (assert (gethash id *methods*))
-    (values-list (gethash id *methods*))))
+    (let ((result (gethash id *methods*)))
+      (when result
+	(first result)))))
 
 (defun method-argument-entry (prototype method index)
   (assert (integerp index))
