@@ -33,6 +33,7 @@
 	       (:file "console" :depends-on ("prototypes"))
 	       (:file "blocks" :depends-on ("console"))
 	       (:file "buffers" :depends-on ("blocks"))
+	       (:file "text" :depends-on ("blocks"))
 	       (:file "windows" :depends-on ("buffers"))
 	       (:file "trees" :depends-on ("blocks"))
 	       (:file "listener" :depends-on ("blocks"))
