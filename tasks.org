@@ -1,9 +1,6 @@
-** TODO universal (row,column) ref interface for buffers/blocks
-** TODO unified buffer abstraction for any content type (rename *SCRIPT* to *BUFFER*)
-** TODO basic buffer is a free-roaming space a la squeak
 ** TODO defun holding-shift
 ** TODO semi-transparent smoke glass sidebar a la etoys
-** TODO generic proportional and table layouts  
+
 ** TODO collapse windows
 ** TODO halos
 *** TODO trash (top left)
@@ -15,17 +12,6 @@
 *** TODO move
 *** TODO duplicate
 *** TODO debug
-
-* TODO Import window code and make a basic halo
-** TODO review window code and adjust buffer API as appropriate
-** TODO world implements buffer interface its own way, with grid
-** TODO generic buffer similarly 
-** TODO general widget embed layout thing. =formatter= --> but instead of rich text, it's all widgets (textboxes + img)
-
-*** world is a type of buffer
-*** window is something you open onto a buffer , in the shell
-
-* THOUGHTS
 * BUGS
 ** TODO Fix %TARGET not being set on menu items
 ** TODO Fix error handling: use error message bubbles with X close box and (backtrace) button?
@@ -39,6 +25,15 @@
 ** TODO Fix crash when error in init file
 ** TODO Fix init file name (use blocky-init.lisp or ~/.blocky)
 ** TODO Fix crashes with tab and shift-tab navigation
+
+* THOUGHTS
+** TODO universal (row,column) ref interface for buffers/blocks
+** TODO unified buffer abstraction for any content type (rename *SCRIPT* to *BUFFER*)
+** TODO basic buffer is a free-roaming space a la squeak
+** TODO generic proportional and table layouts  
+** TODO world implements buffer interface its own way, with grid
+** TODO generic buffer similarly 
+** TODO general widget embed layout thing. =formatter= --> but instead of rich text, it's all widgets (textboxes + img)
 * FEATURES
 ** TODO collapsible windows a-la-squeak
 ** TODO make reference ==> make tile?
