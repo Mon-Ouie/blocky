@@ -24,14 +24,50 @@
 
 ;;; Grouping blocks into buffers with buffer-local variables
 
+(define-block (buffer :super list)
+  (mode :initform nil)
+  (name :initform nil)
+  (variables :initform (make-hash-table :test 'eq))
+  (needs-layout :initform t))
+
 (defmacro with-buffer (buffer &rest body)
   `(let ((*buffer* (find-uuid ,buffer)))
      (assert (blockyp *buffer*))
      ,@body))
 
-(define-block (buffer :super list)
-  (needs-layout :initform t)
-  (variables :initform (make-hash-table :test 'eq)))
+(define-method initialize buffer (&key blocks variables  
+				       (width (dash 120))
+				       (height (dash 70)))
+  (apply #'super%initialize self blocks)
+  (setf %width width
+	%height height)
+  (when variables (setf %variables variables)))
+
+(define-method setvar buffer (var value)
+  (setf (gethash var %variables) value))
+
+(define-method getvar buffer (var)
+  (gethash var %variables))
+
+(defun buffer-local-variable (var-name)
+  (getvar *block* var-name))
+
+(defun (setf buffer-local-variable) (var-name value)
+  (setvar *block* var-name value))
+
+(defmacro with-buffer-local-variables (vars &rest body)
+  (labels ((make-clause (sym)
+	     `(,sym (buffer-local-variable ,(make-keyword sym)))))
+    (let* ((symbols (mapcar #'make-non-keyword vars))
+	   (clauses (mapcar #'make-clause symbols)))
+      `(symbol-macrolet ,clauses ,@body))))
+
+;;; Addressing the elements in the buffer
+
+;; (define-method element buffer (row column)
+;;   (with-field-values (inputs) self
+;;     (when (consp inputs)
+      
 
 (define-method invalidate-layout buffer ()
   (setf %needs-layout t))
@@ -60,14 +96,6 @@
 	(layout each))
       (setf needs-layout nil))))
 
-(define-method initialize buffer (&key blocks variables  
-				       (width (dash 120))
-				       (height (dash 70)))
-  (apply #'super%initialize self blocks)
-  (setf %width width
-	%height height)
-  (when variables (setf %variables variables)))
-
 (define-method append-input buffer (block)
   (assert (blockyp block))
   (with-fields (inputs) self
@@ -84,24 +112,6 @@
     (move-to block x y))
   (invalidate-layout self))
 
-(define-method setvar buffer (var value)
-  (setf (gethash var %variables) value))
-
-(define-method getvar buffer (var)
-  (gethash var %variables))
-
-(defun buffer-local-variable (var-name)
-  (getvar *block* var-name))
-
-(defun (setf buffer-local-variable) (var-name value)
-  (setvar *block* var-name value))
-
-(defmacro with-buffer-local-variables (vars &rest body)
-  (labels ((make-clause (sym)
-	     `(,sym (buffer-local-variable ,(make-keyword sym)))))
-    (let* ((symbols (mapcar #'make-non-keyword vars))
-	   (clauses (mapcar #'make-clause symbols)))
-      `(symbol-macrolet ,clauses ,@body))))
 	   
 ;;; Text display and edit control
 
