@@ -189,7 +189,7 @@ extended argument list ARGLIST."
       (loop while pointer do
 	(let ((id (make-method-id pointer method)))
 	  (let ((result (gethash id *methods*)))
-	    (if result
+	    (if (or result create)
 		(return-from searching id)
 		(prog1 nil 
 		  (setf pointer (find-super pointer))))))))))
@@ -205,7 +205,7 @@ extended argument list ARGLIST."
 (defun add-method-to-dictionary (prototype method arglist &optional options)
   (when (null *methods*)
     (initialize-methods))
-  (let ((id (make-method-id prototype method :create)))
+  (let ((id (find-method-id prototype method :create)))
     (assert (stringp id))
     (setf (gethash id *methods*) (list arglist options))
     (values id arglist)))
