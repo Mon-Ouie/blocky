@@ -1,3 +1,8 @@
+* TODO Import window code and make a basic halo
+** TODO review window code and adjust buffer API as appropriate
+** TODO possibly importing World API? 
+
+
 * THOUGHTS
 ** world is a type of buffer
 ** window is something you open onto a buffer , in the shell

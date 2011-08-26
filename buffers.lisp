@@ -69,14 +69,14 @@
   (when variables (setf %variables variables)))
 
 (define-method append-input buffer (block)
-  (verify block)
+  (assert (blockyp block))
   (with-fields (inputs) self
     (assert (not (contains self block)))
     (set-parent block self)
     (setf inputs (nconc inputs (list block)))))
 
 (define-method add-block buffer (block &optional x y)
-  (verify block)
+  (assert (blockyp block))
   ;(assert (not (contains self block)))
   (append-input self block)
   (when (and (integerp x)
@@ -213,57 +213,6 @@
 
 (define-method beginning-of-line textbox ()
   (setf %point-column 0))
-
-;; (defun bind-event-to-textbox-insertion (textbox key modifiers &optional (insertion key))
-;;   "For textbox P ensure that the event (KEY MODIFIERS) causes the
-;; text INSERTION to be inserted at point."
-;;  (bind-event-to-closure 
-;;   textbox 
-;;   (string-upcase key)
-;;   modifiers
-;;   (new closure :insert textbox (list insertion))))
-
-;; (define-method install-text-keybindings block ()
-;;   ;; install basic keybindings
-;;   (bind-event-to-method self "A" '(:control) :beginning-of-line)
-;;   (bind-event-to-method self "E" '(:control) :end-of-line)
-;;   (bind-event-to-method self "HOME nil :beginning-of-line)
-;;   (bind-event-to-method self "END nil :end-of-line)
-;;   (bind-event-to-method self "N" '(:control) :next-line)
-;;   (bind-event-to-method self "P" '(:control) :previous-line)
-;;   (bind-event-to-method self "F" '(:control) :forward-char)
-;;   (bind-event-to-method self "B" '(:control) :backward-char)
-;;   (bind-event-to-method self "DOWN nil :next-line)
-;;   (bind-event-to-method self "UP" nil :previous-line)
-;;   (bind-event-to-method self "RIGHT nil :forward-char)
-;;   (bind-event-to-method self "LEFT" nil :backward-char)
-;;   (bind-event-to-method self "K" '(:control) :clear)
-;;   (bind-event-to-method self "BACKSPACE" nil :backward-delete-char)
-;;   (bind-event-to-method self "DELETE" nil :delete-char)
-;;   (bind-event-to-method self "RETURN" nil :newline)
-;;   ;; install keybindings for self-inserting characters
-;;   (map nil #'(lambda (char)
-;; 	       (bind-event-to-text-insertion self (string char) nil
-;; 					     (string-downcase char)))
-;;        *lowercase-alpha-characters*)
-;;   (map nil #'(lambda (char)
-;; 	       (bind-event-to-text-insertion self (string char) '(:shift) (string char)))
-;;        *uppercase-alpha-characters*)
-;;   (map nil #'(lambda (char)
-;; 	       (bind-event-to-text-insertion self (string char) nil (string char)))
-;;        *numeric-characters*)
-;;   ;; other characters
-;;   (bind-event-to-text-insertion self "EQUALS" nil "=")
-;;   (bind-event-to-text-insertion self "MINUS" nil "-")
-;;   (bind-event-to-text-insertion self "EQUALS" '(:control) "+")
-;;   (bind-event-to-text-insertion self "SEMICOLON" nil ";")
-;;   (bind-event-to-text-insertion self "SEMICOLON" '(:shift) ":")
-;;   (bind-event-to-text-insertion self "0" '(:shift) ")")
-;;   (bind-event-to-text-insertion self "9" '(:shift) "(")
-;;   (bind-event-to-text-insertion self "8" '(:shift) "*")
-;;   (bind-event-to-text-insertion self "SPACE" nil " ")
-;;   (bind-event-to-text-insertion self "QUOTE" nil "'")
-;;   (bind-event-to-text-insertion self "QUOTE" '(:shift) "\""))
 
 (define-method initialize textbox (&optional buffer)
   (super%initialize self)
@@ -478,153 +427,5 @@
 		      (* point-row (font-height font)))))
 	  (draw-cursor-glyph self x1 y1 cursor-width line-height 
 			     :blink t))))))
-
-;;; The pager switches between different visible groups of blocks
-
-(define-prototype pager (:super "BLOCKY:BLOCK")
-  (pages :initform nil)
-  (current-page :initform nil
-		:documentation "Keyword name of current page.")
-  (pager-message :initform nil
-		 :documentation "Formatted string to be displayed to right of tabs.")
-  (pager-height :initform 20
-		:documentation "Height in pixels of the pager")
-  (background-color :initform "gray18")
-  (prefix-string :initform " F")
-  (number-separator-string :initform ": ")
-  (separator-string :initform "  ")
-  (style :initform '(:foreground "gray60")
-	 :documentation "Text style properties for pager display")
-  (highlighted-style :initform '(:foreground "gray20" :background "white"))
-  (properties :initform (make-hash-table :test 'eq)))
-  
-(define-method initialize pager ()
-  (send-super self :initialize self)
-  (auto-position self)
-  (let ((s1 (new closure :select self 1))
-	(s2 (new closure :select self 2))
-	(s3 (new closure :select self 3))
-	(s4 (new closure :select self 4))
-	(s5 (new closure :select self 5)))
-    (bind-event-to-closure self "F1" nil s1)
-    (bind-event-to-closure self "F2" nil s2)
-    (bind-event-to-closure self "F3" nil s3)
-    (bind-event-to-closure self "F4" nil s4)
-    (bind-event-to-closure self "F5" nil s5)))
-
-(define-method page-property pager (page-name property-keyword)
-  (getf (gethash page-name %properties) property-keyword))
-
-(define-method set-page-property pager (page-name property-keyword value)
-  (setf (gethash page-name %properties)
-	(let ((props (gethash page-name %properties)))
-	  (setf (getf props property-keyword) value)
-	  props))
-  (message "Page property set. ~A" (list page-name (gethash page-name %properties))))
-
-(define-method hit pager (x y)
-  nil)
-
-(define-method select pager (page)
-  (let ((newpage (etypecase page
-		   (number (car (nth (- page 1) %pages)))
-		   (keyword page))))
-    (if (null newpage)
-	(message "WARNING: Cannot find page.")
-	(progn 
-	  (setf %current-page newpage)
-	  ;; respect held keys property setting
-	  (if (page-property self newpage :held-keys)
-	      (enable-held-keys)
-	      (disable-held-keys))
-	  ;; insert self always as first block
-	  (apply #'blocky:install-blocks self (cdr (assoc newpage %pages)))))))
-
-(define-method auto-position pager (&key (width blocky:*screen-width*))
-  (resize self :width width :height %pager-height)
-  (move self :x 0 :y (- blocky:*screen-height* %pager-height)))
-
-(define-method add-page pager (keyword blocks &rest properties)
-  (assert (listp blocks))
-  (push (cons keyword blocks) %pages))
-
-(define-method get-page-names pager ()
-  (remove-duplicates (mapcar #'car %pages)))
-
-(define-method message pager (formatted-string)
-  (setf %pager-message windowatted-string))
-
-(define-method render pager ()
-  ;; calculate geometry. always draw
-  (when %visible
-    (clear self %background-color)
-    (let ((n 1)
-          (line '()))
-      (dolist (page %pages)
-        (let ((page-name (car page)))
-          ;; build a list of formatted strings
-          (push (cons (concatenate 'string 
-                                   %prefix-string
-                                   (format nil "~D" n)
-                                   %number-separator-string
-                                   (symbol-name page-name)
-                                   %separator-string)
-                      ;; highlight current page
-                      (if (eq page-name %current-page)
-                          %highlighted-style %style))
-                line))
-        (incf n))
-      (push (list " ") line)
-      (when %pager-message 
-        (push %pager-message line))
-      ;; draw the string
-      (render-formatted-line (nreverse line) 0 0))))
-
-;;; Splitscreen view on 2 blocks with focus border
-
-(define-prototype split (:super "BLOCKY:BLOCK")
-  (active-color :initform "red")
-  (inactive-color :initform "blue")
-  (focus :initform 0)
-  children)
-
-(define-method initialize split (&rest children)
-  (setf %children children))
-  
-(define-method set-children split (children)
-  (setf %children children))
-
-(define-method render split ()
-  (when %visible
-    (let ((y %y)
-          (x %x)
-	  (image %image)
-	  (focused-block (nth %focus %children)))
-      (dolist (block %children)
-        (move block :x x :y y)
-	(render block)
-	(draw-image (field-value :image block) x y)
-	(when (eq block focused-block)
-	  (draw-rectangle x y (field-value :width block)
-			  (field-value :height block)
-			  :color %active-color))
-        (incf x (1+ (field-value :width block)))))))
-
-(define-method hit split (x y)
-  (hit-blocks x y %children))
-
-(define-method switch-panes split ()
-  (let ((newpos (mod (1+ %focus) (length %children))))
-    (setf %focus newpos)))
-
-(define-method handle-key split (event)
-  (or (let ((func (gethash event %events)))
-	(when func
-	  (prog1 t
-	    (funcall func))))
-      (handle-key (nth %focus %children) event)))
-
-(define-method forward split (method &rest args)
-  (apply #'send self method (nth %focus %children) args))
 
 ;;; buffers.lisp ends here

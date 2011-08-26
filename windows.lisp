@@ -1,4 +1,4 @@
-;;; window.lisp --- an interactive block buffer editor
+;;; windows.lisp --- an interactive block buffer editor
 
 ;; Copyright (C) 2007, 2008, 2009, 2010, 2011  David O'Toole
 
@@ -25,7 +25,7 @@
 ;;; Code:
 
 (define-block window
-  (buffer :documentation "The buffer of objects to be displayed.")
+  (buffer :initform nil :documentation "The buffer of objects to be displayed.")
   (rows :initform 10)
   (columns :initform 10) 
   (point-row :initform 0) 
@@ -61,28 +61,13 @@
 (define-method initialize window (&optional (buffer *default-buffer-name*))
   (with-fields (entry) self
     (let ((buffer (find-buffer buffer)))
-      (send-parent self :initialize self)
+      (super%initialize self)
       (visit self buffer))))
-
-(define-method blank window (&rest parameters)
-  "Invoke the current buffer's default :make method, passing PARAMETER."
-  (make-with-parameters %\buffer parameters))
 
 (define-method set-tool window (tool)
   "Set the current sheet's selected tool to TOOL."
-  (assert (member tool %\tool-methods))
-  (setf %\tool tool))
-
-(define-method get-selected-cell-data window ()
-  (let ((cell (selected-cell self)))
-    (when cell
-      (get cell))))
-
-(define-method focus window ()
-  (setf %\focused t))
-
-(define-method unfocus window ()
-  (setf %\focused nil))
+  (assert (member tool %tool-methods))
+  (setf %tool tool))
 
 (define-method next-tool window ()
   "Switch to the next available tool." 
@@ -104,31 +89,31 @@
   (with-fields (tool tool-methods) self
     (send nil tool self data)))
 
-(define-method clone window (data)
-  "Clone the prototype named by the symbol DATA and drop the clone
-at the current cursor location. See also APPLY-LEFT and APPLY-RIGHT."
-  (if (and (symbolp data)
-	   (boundp data)
-	   (object-p (symbol-value data)))
-      (drop-cell %\buffer (clone (symbol-value data)) %\point-row %\point-column)
-      (say self "Cannot clone.")))
+;; (define-method clone window (data)
+;;   "Clone the prototype named by the symbol DATA and drop the clone
+;; at the current cursor location. See also APPLY-LEFT and APPLY-RIGHT."
+;;   (if (and (symbolp data)
+;; 	   (boundp data)
+;; 	   (object-p (symbol-value data)))
+;;       (drop-cell %buffer (clone (symbol-value data)) %point-row %point-column)
+;;       (say self "Cannot clone.")))
 
-(define-method inspect window ()
-  nil)
+;; (define-method inspect window ()
+;;   nil)
 
-(define-method erase window (&optional data)
-  "Erase the top cell at the current location."
-  (say self "Erasing top cell.")
-  (let ((grid (field-value :grid %\buffer)))
-    (ignore-errors (vector-pop (aref grid %\point-row %\point-column)))))
+;; (define-method erase window (&optional data)
+;;   "Erase the top cell at the current location."
+;;   (say self "Erasing top cell.")
+;;   (let ((grid (field-value :grid %buffer)))
+;;     (ignore-errors (vector-pop (aref grid %point-row %point-column)))))
 
 (define-method set-mark window ()
-  (setf %\mark-row %\point-row>
-	<mark-column %\point-column)
-  (say self (format nil "Mark set at (~S, ~S)." %\mark-row %\mark-column)))
+  (setf %mark-row %point-row>
+	<mark-column %point-column)
+  (say self (format nil "Mark set at (~S, ~S)." %mark-row %mark-column)))
    
 (define-method clear-mark window ()
-  (setf %\mark-row nil %\mark-column nil)
+  (setf %mark-row nil %mark-column nil)
   (say self "Mark cleared."))
 
 (define-method mark-region window ()
@@ -149,37 +134,37 @@ buffer address, and a new buffer is generated according to that address.
 See also CREATE-BUFFER."
   (let ((buffer (find-buffer buffer)))
     (assert (object-p buffer))
-    (setf %\buffer-name (field-value :name buffer))
-    (say self (format nil "Visiting buffer ~S" %\buffer-name))
-    (set-resource-modified-p %\buffer-name t)
-    (setf %\buffer buffer)
+    (setf %buffer-name (field-value :name buffer))
+    (say self (format nil "Visiting buffer ~S" %buffer-name))
+    (set-resource-modified-p %buffer-name t)
+    (setf %buffer buffer)
     (setf *buffer* buffer) ;; TODO suspicious
     (install-keybindings self)
-    (setf %\rows (field-value :height buffer))
-    (setf %\columns (field-value :width buffer))
-    (assert (integerp %\rows))
-    (assert (integerp %\columns))
-    (setf %\point-row 0)
-    (setf %\point-column 0)
+    (setf %rows (field-value :height buffer))
+    (setf %columns (field-value :width buffer))
+    (assert (integerp %rows))
+    (assert (integerp %columns))
+    (setf %point-row 0)
+    (setf %point-column 0)
     (clear-mark self)
-    (setf %\point-column (min %\columns %\point-column))
-    (setf %\point-row (min %\rows %\point-row))
-    (setf %\point-column (min %\columns %\point-column))
-    (setf %\column-widths (make-array (+ 1 %\columns) :initial-element 0)
-	  %\row-heights (make-array (+ 1 %\rows) :initial-element 0)
-	  %\column-styles (make-array (+ 1 %\columns))
-	  %\row-styles (make-array (+ 1 %\rows)))
+    (setf %point-column (min %columns %point-column))
+    (setf %point-row (min %rows %point-row))
+    (setf %point-column (min %columns %point-column))
+    (setf %column-widths (make-array (+ 1 %columns) :initial-element 0)
+	  %row-heights (make-array (+ 1 %rows) :initial-element 0)
+	  %column-styles (make-array (+ 1 %columns))
+	  %row-styles (make-array (+ 1 %rows)))
     (layout self)))
 
 (define-method cell-at window (row column)
   (assert (and (integerp row) (integerp column)))
-  (top-cell %\buffer row column))
+  (top-cell %buffer row column))
 
 (define-method set-prompt window (prompt)
-  (setf %\prompt prompt))
+  (setf %prompt prompt))
 
 (define-method set-narrator window (narrator)
-  (setf %\narrator narrator))
+  (setf %narrator narrator))
 
 (define-method install-keybindings window ()
   nil)
@@ -187,7 +172,7 @@ See also CREATE-BUFFER."
 (define-method set-display-style window (style)
   "Set the rendering style of the current window to STYLE.
 Must be one of (:image :label)."
-  (setf %\display-style style)
+  (setf %display-style style)
   (layout self))
 
 (define-method image-view window ()
@@ -200,11 +185,11 @@ Must be one of (:image :label)."
 
 (define-method goto-prompt window ()
   "Jump to the command prompt."
-  (when %\prompt
-    (goto %\prompt)))
+  (when %prompt
+    (goto %prompt)))
 
 (define-method selected-cell window ()
-  (cell-at self %\point-row %\point-column))
+  (cell-at self %point-row %point-column))
 
 (define-method activate window ()
   (let ((cell (selected-cell self)))
@@ -213,12 +198,12 @@ Must be one of (:image :label)."
 
 (define-method eval window (&rest args)
   "Evaluate all the ARGS and print the result."
-  (when %\prompt 
-    (print-data %\prompt args :comment)))
+  (when %prompt 
+    (print-data %prompt args :comment)))
  
 (define-method say window (text)
-  (when %\prompt
-    (say %\prompt text)))
+  (when %prompt
+    (say %prompt text)))
 
 (define-method help window (&optional (command-name :commands))
   "Print documentation for the command COMMAND-NAME.
@@ -253,13 +238,13 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
     (visit self buffer)))
 
 (define-method enter-or-exit window ()
-  (if %\entered
+  (if %entered
       (exit self)
       (enter self)))
 
 (define-method enter window ()
   "Begin entering LISP data into the current cell."
-  (unless %\entered
+  (unless %entered
     (say self "Now entering data. Press Control-ENTER to finish, or ESCAPE to cancel.")
     (let ((entry (clone =textbox=))
 	  (cell (selected-cell self)))
@@ -267,7 +252,7 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
       (move entry :x 0 :y 0)
       (when (null cell)
 	(setf cell (clone =data-cell=))
-	(drop-cell %\buffer cell %\point-row %\point-column))
+	(drop-cell %buffer cell %point-row %point-column))
       (let ((data (get cell)))
 	(when data 
 	  (let* ((output (print cell))
@@ -281,13 +266,13 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
       (install-keybindings entry)
       (setf (field-value :auto-fit entry) t)
       (resize-to-fit entry)
-      (setf %\entered t)
+      (setf %entered t)
       (setf (field-value :widget cell)
 	    entry))))
 
 (define-method exit window (&optional nosave)
   "Stop entering data into the current cell."
-  (when %\entered
+  (when %entered
     (when nosave (say self "Canceled data entry."))
     (with-fields (widget) (selected-cell self)
       (let* ((data (get-buffer-as-string widget)))
@@ -299,7 +284,7 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 		(condition (c) 
 		  (say self (format nil "Error reading data: ~S" c)))))))
 	(setf widget nil)
-	(setf %\entered nil)
+	(setf %entered nil)
 	(say self "Finished entering data.")))))
     
 (define-method open-project window (name)
@@ -319,21 +304,21 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 
 ;; (define-method row-height window (row)
 ;;   (let ((height 0) cell)
-;;     (dotimes (column %\columns)
+;;     (dotimes (column %columns)
 ;;       (setf cell (cell-at self row column))
 ;;       (when cell
 ;; 	(setf height (max height (height cell)))))
-;;     (ecase %\display-style
+;;     (ecase %display-style
 ;;       (:label (max (formatted-string-height *blank-cell-string*) height))
 ;;       (:image height))))
 
 ;; (define-method column-width window (column)
 ;;   (let ((width 0) cell)
-;;     (dotimes (row %\rows)
+;;     (dotimes (row %rows)
 ;;       (setf cell (cell-at self row column))
 ;;       (when cell
 ;; 	(setf width (max width (width cell)))))
-;;     (ecase %\display-style 
+;;     (ecase %display-style 
 ;;       (:label (max width (formatted-string-width *blank-cell-string*)))
 ;;       (:image width))))
 
@@ -380,7 +365,7 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	    (cond ((and cell (has-method :handle-key cell))
 		   (or (handle-key cell event)
 		       (send-parent self :handle-key self event)))
-		  ((and widget %\entered)
+		  ((and widget %entered)
 		   (prog1 nil (handle-key widget event)))
 		  (t (send-parent self :handle-key self event)))))
     (layout self)))
@@ -389,8 +374,8 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
   (with-field-values (row-heights column-widths origin-row origin-column rows columns x y width height)
       self
     (when (within-extents x0 y0 x y (+ x width) (+ y height))
-      (let* ((x %\x)
-	     (y %\y)
+      (let* ((x %x)
+	     (y %y)
 	     (selected-column 
 	      (loop for column from origin-column to columns
 		    do (incf x (aref column-widths column))
@@ -400,11 +385,11 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 		    do (incf y (aref row-heights row))
 		    when (> y y0) return row)))
 	(when (and (integerp selected-column) (integerp selected-row))
-	  (when (array-in-bounds-p (field-value :grid %\buffer)
+	  (when (array-in-bounds-p (field-value :grid %buffer)
 				 selected-row selected-column)
 	    (prog1 t
-	      (setf %\point-row selected-row
-		    %\point-column selected-column))))))))
+	      (setf %point-row selected-row
+		    %point-column selected-column))))))))
   
 (define-method compute window ())
 
@@ -412,17 +397,17 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 
 (define-method render window ()
   (clear self)
-  (when %\buffer
+  (when %buffer
     (with-field-values (point-row point-column row-heights buffer buffer-name 
 				   origin-row origin-column header-line status-line
 				   mark-row mark-column width height
 				   display-style header-style tool tool-methods entered focused
 				   row-spacing rows columns draw-blanks column-widths) self
-      (when %\computing (compute self))
+      (when %computing (compute self))
 ;;      (layout self)
-      (let* ((image %\image)
-	     (widget-width %\width)
-	     (widget-height %\height)
+      (let* ((image %image)
+	     (widget-width %width)
+	     (widget-height %height)
 	     (rightmost-visible-column
 	      (block searching
 		(let ((width 0))
@@ -446,8 +431,8 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	     (cursor-dimensions nil)
 	     (mark-dimensions nil))
 	;; store some geometry
-	(setf %\origin-width (- rightmost-visible-column origin-column))
-	(setf %\origin-height (- bottom-visible-row origin-row))
+	(setf %origin-width (- rightmost-visible-column origin-column))
+	(setf %origin-height (- bottom-visible-row origin-row))
 	;; see if current cell has a tooltip
 	;; (let ((selected-cell (cell-at self point-row point-column)))
 	;;   (when (object-p selected-cell)
@@ -547,8 +532,8 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 	    ;; draw status line
 	    (when status-line 
 	      (let* ((ht (formatted-line-height status-line))
-		     (sy (- %\height 1 ht)))
-		(draw-box 0 sy %\width ht :color "gray20" 
+		     (sy (- %height 1 ht)))
+		(draw-box 0 sy %width ht :color "gray20" 
 			  :stroke-color "gray20" :destination image)
 		(render-formatted-line status-line 
 				       0 sy 
@@ -606,18 +591,18 @@ If OBJECT is specified, use the NAME but ignore the HEIGHT and WIDTH."
 			    cursor-blink-clock))
 		     cursor-color
 		     cursor-blink-color)))
-      (draw-rectangle x y width height :color color :destination %\image))))
+      (draw-rectangle x y width height :color color :destination %image))))
 
 (define-method draw-mark window (x y width height)
-  (draw-rectangle x y width height :color "white" :destination %\image))
+  (draw-rectangle x y width height :color "white" :destination %image))
 
 (define-method draw-region window (x y width height)
-  (draw-rectangle x y width height :color "cyan" :destination %\image))
+  (draw-rectangle x y width height :color "cyan" :destination %image))
   
 (define-method move-cursor window (direction)
   "Move the cursor one step in DIRECTION. 
 DIRECTION is one of :up :down :right :left."
-  (unless %\entered
+  (unless %entered
     (with-field-values (point-row point-column rows columns) self
       (let ((cursor (list point-row point-column)))
 	(setf cursor (ecase direction
@@ -634,7 +619,7 @@ DIRECTION is one of :up :down :right :left."
 				   (list point-row (+ point-column 1))
 				   cursor))))
 	(destructuring-bind (r c) cursor
-	  (setf %\point-row r %\point-column c))
+	  (setf %point-row r %point-column c))
 	;; possibly scroll
 	(scroll self)))))
   
@@ -651,23 +636,23 @@ DIRECTION is one of :up :down :right :left."
   (move-cursor self :right))
 
 (define-method move-end-of-line window ()
-  (unless %\entered
-    (setf %\point-column (1- %\columns))
+  (unless %entered
+    (setf %point-column (1- %columns))
     (scroll self)))
 
 (define-method move-beginning-of-line window ()
-  (unless %\entered
-    (setf %\point-column 0)
+  (unless %entered
+    (setf %point-column 0)
     (scroll self)))
 
 (define-method move-end-of-column window ()
-  (unless %\entered
-    (setf %\point-row (1- %\rows))
+  (unless %entered
+    (setf %point-row (1- %rows))
     (scroll self)))
 
 (define-method move-beginning-of-column window ()
-  (unless %\entered
-    (setf %\point-row 0)
+  (unless %entered
+    (setf %point-row 0)
     (scroll self)))
 
-;;; window.lisp ends here
+;;; windows.lisp ends here
