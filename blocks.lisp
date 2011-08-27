@@ -633,7 +633,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
       (setf parent nil))))
 
 (define-method make-method-menu-item block (method target)
-  (assert (and (keywordp method) (not (null target))))
+  (assert (and target (keywordp method)))
   (let ((method-string (pretty-symbol-string method)))
     (list :label method-string
 	  :method method
@@ -655,17 +655,19 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
       (setf pointer (object-super pointer))
       while pointer)
     ;; 
-    (make-menu
-     (list :label (concatenate 'string 
-			       "Methods: "
-			       (get-some-object-name self)
-			       " " (object-address-string self))
-	   :inputs (mapcar #'(lambda (method)
-			       (make-method-menu-item self method self))
-			   methods) 
-	   :pinned nil
-	   :expanded t
-	   :locked t))))
+    (let (inputs)
+      (dolist (method methods)
+	(push (make-method-menu-item self method (find-uuid self)) inputs))
+      (make-menu
+       (list :label (concatenate 'string 
+				 "Methods: "
+				 (get-some-object-name self)
+				 " " (object-address-string self))
+	     :inputs (nreverse inputs)
+	     :pinned nil
+	     :expanded t
+	     :locked t)
+       :target (find-uuid self)))))
 
 (define-method make-reference block ()
   (new reference self))

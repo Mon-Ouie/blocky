@@ -65,6 +65,7 @@
 	%inputs inputs
 	%label label)
   ;; become the parent
+  (message "TARGET ~S for ~S" target method)
   (when inputs
     (dolist (each inputs)
       (pin each)
@@ -249,7 +250,7 @@
 (define-method pick menu ()
   (if (or (keywordp %action) (blockyp %action))
       (let ((send (new send 
-		       :prototype (find-super-prototype-name self)
+		       :prototype (find-super-prototype-name %target)
 		       :method %method
 		       :target %target
 		       :label (pretty-symbol-string %method))))

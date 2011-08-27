@@ -196,12 +196,13 @@ extended argument list ARGLIST."
 
 (defun find-method-data (name method &optional no-error)
   (assert (hash-table-p *methods*))
-  (let ((result (gethash id *methods*)))
-    (if result 
-	(values-list result)
-	(unless no-error (error "Cannot find method: ~S" 
-				(list name method))))))
- 
+  (let ((id (find-method-id name method no-error)))
+    (let ((result (gethash id *methods*)))
+      (if result 
+	  (values-list result)
+	  (unless no-error (error "Cannot find method: ~S" 
+				  (list name method)))))))
+  
 (defun add-method-to-dictionary (prototype method arglist &optional options)
   (when (null *methods*)
     (initialize-methods))
