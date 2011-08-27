@@ -12,6 +12,7 @@
 *** TODO debug
 ** TODO semi-transparent smoke glass sidebar a la etoys
 * BUGS
+** TODO Fix %VALUE not being updated
 ** TODO Fix error handling: use error message bubbles with X close box and (backtrace) button?
 ** TODO Fix listener history errors
 ** TODO Fix missing labels on defblock's child entries
@@ -20,7 +21,6 @@
 ** TODO Fix no blue dot movement in example2
 ** TODO Fix ellipsis not displayed on menu items until highlight
 ** TODO Fix crash when error in init file
-** TODO Fix init file name (use blocky-init.lisp or ~/.blocky)
 ** TODO Fix crashes with tab and shift-tab navigation
 
 * THOUGHTS
@@ -616,6 +616,22 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_TIME: 2011-08-25 Thu 00:08
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: BUGFIXES
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO Fix init file name (use blocky-init.lisp or ~/.blocky)
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-26 Fri 23:43
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BUGS
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO Fix command-line cursor alignment
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-26 Fri 23:50
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BUGS
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
    :END:

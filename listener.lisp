@@ -591,6 +591,9 @@
 	  (unpin new-block)
 	  (accept container new-block))))))
 
+(define-method label-width listener-prompt ()
+  (dash 2 (font-text-width *default-prompt-string* *font*)))
+
 (define-method do-after-evaluate listener-prompt ()
   ;; print any error output
   (when (and %parent (stringp %error-output)
