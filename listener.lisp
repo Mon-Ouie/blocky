@@ -176,10 +176,11 @@
     (setf %point (length %line))))
  
 (define-method backward-history prompt ()
-  (when (< %history-position (queue-count %history))
-    (setf %line (history-item self (progn (incf %history-position)
-					   %history-position)))
-    (setf %point (length %line))))
+  (when %history 
+    (when (< %history-position (queue-count %history))
+      (setf %line (history-item self (progn (incf %history-position)
+					    %history-position)))
+      (setf %point (length %line)))))
 
 (define-method previous-line prompt ()
   (backward-history self))
@@ -422,11 +423,11 @@
   (with-fields (value type-specifier) self
     (assert (and (listp sexp) (= 1 (length sexp))))
     (let ((datum (first sexp)))
-      (if (type-check self datum)
+      (if (or (null type-specifier)
+	      (type-check self datum))
 	  (setf value datum)
-	  (when type-specifier 
-	    (message "Warning: value entered does not match type ~S"
-		     type-specifier))))))
+	  (message "Warning: value entered does not match type ~S. Not storing value."
+		   type-specifier)))))
 
 (define-method enter entry ()
   (super%enter self :no-clear))
@@ -454,6 +455,12 @@
 	(prog1 %parent (assert %parent))
 	self)))
 
+(define-method type-check entry ()
+  (with-fields (type-specifier value) self
+    (etypecase type-specifier
+      (symbol (funcall type-specifier value))
+      (list (typep value type-specifier)))))
+
 ;;; Easily defining new entry blocks
 
 (defmacro defentry (name type value &rest specs)
@@ -471,12 +478,6 @@
 (defentry positive-integer (integer 1 *) 1)
 (defentry non-negative-integer (integer 0 *) 0)
 (defentry expression t nil)
-
-(define-method type-check entry ()
-  (with-fields (type-specifier value) self
-    (etypecase type-specifier
-      (symbol (funcall type-specifier value))
-      (list (typep value type-specifier)))))
 
 ;;; Plain text entry
 
