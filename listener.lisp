@@ -345,7 +345,7 @@
 ;;; General-purpose data entry block based on the prompt block.
 
 (define-prototype entry (:super "BLOCKY:PROMPT")
-  (category :initform :value)
+  (category :initform :data)
   (pinned :initform t)
   (text-color :initform *default-entry-text-color*)
   (label-color :initform *default-entry-label-color*)
@@ -389,11 +389,12 @@
 (defparameter *minimum-entry-line-width* 16)
 
 (define-method draw-label entry ()
-  (draw-string (label-string self)
-	       (dash 1 %x)
-	       (+ %y (dash 1))
-	       :color %label-color
-	       :font *font*))
+  (draw-label-string self %label))
+  ;; (draw-string (label-string self)
+  ;; 	       (dash 1 %x)
+  ;; 	       (+ %y (dash 1))
+  ;; 	       :color %label-color
+  ;; 	       :font *font*))
 
 (define-method draw entry (&optional nolabel)
   (with-fields (x y options text-color width parent height line) self
@@ -436,7 +437,7 @@
   (with-fields (height width value line) self
     (setf height (+ (* 2 *dash*) (font-height *font*)))
     (setf width (+ (* 4 *dash*)
-		   (font-text-width (label-string self) *font*)
+		   (label-width self)
 		   (max *minimum-entry-line-width*
 			(font-text-width line *font*))))))
 

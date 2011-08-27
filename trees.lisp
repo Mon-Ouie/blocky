@@ -65,7 +65,6 @@
 	%inputs inputs
 	%label label)
   ;; become the parent
-  (message "TARGET ~S for ~S" target method)
   (when inputs
     (dolist (each inputs)
       (pin each)

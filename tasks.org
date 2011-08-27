@@ -1,6 +1,4 @@
 ** TODO defun holding-shift
-** TODO semi-transparent smoke glass sidebar a la etoys
-
 ** TODO collapse windows
 ** TODO halos
 *** TODO trash (top left)
@@ -12,8 +10,8 @@
 *** TODO move
 *** TODO duplicate
 *** TODO debug
+** TODO semi-transparent smoke glass sidebar a la etoys
 * BUGS
-** TODO Fix %TARGET not being set on menu items
 ** TODO Fix error handling: use error message bubbles with X close box and (backtrace) button?
 ** TODO Fix listener history errors
 ** TODO Fix missing entries in send block?? what's happening
