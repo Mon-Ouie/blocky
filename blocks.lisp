@@ -1056,18 +1056,20 @@ area is drawn. If DARK is non-nil, paint a darker region."
 ;;     (incf height (dash 2))
 ;;     (incf width (dash 2))))
 
-(define-method layout block ()
+(define-method layout block () 
   (with-fields (height width label) self
     (with-field-values (x y inputs) self
-      (let* ((font *font*)
-	     (dash (dash 1))
-	     (left (+ x (label-width self)))
-	     (max-height (font-height font)))
+      (let* ((left (+ x (label-width self)))
+	     (max-height (font-height *font*))
+	     (font *font*)
+	     (dash (dash 1)))
 	(dolist (input inputs)
 	  (move-to input (+ left dash) y)
 	  (layout input)
-	  (setf max-height (max max-height (field-value :height input))))
-	(setf width (+ (- left x) (* 4 dash)))
+	  (setf max-height (max max-height (field-value :height input)))
+	  (incf left (dash 1 (field-value :width input))))
+	;; now update own dimensions
+	(setf width (- left x))
 	(setf height (+ dash (if (null inputs)
 				 dash 0) max-height))))))
 
