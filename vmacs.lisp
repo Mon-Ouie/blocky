@@ -54,7 +54,7 @@ block is recompiled."
       `(with-target ,target
 	 ,body)))
 
-(define-visual-macro (defblock tree
+(define-visual-macro (define-block tree
 	    (label :initform "define block")
 	    (locked :initform t)
 	    (expanded :initform t)

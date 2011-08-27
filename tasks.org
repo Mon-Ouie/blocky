@@ -14,7 +14,6 @@
 * BUGS
 ** TODO Fix error handling: use error message bubbles with X close box and (backtrace) button?
 ** TODO Fix listener history errors
-** TODO Fix missing entries in send block?? what's happening
 ** TODO Fix missing labels on defblock's child entries
 ** TODO Fix Control-E etc not working in textbox
 ** TODO Fix not traversing line break with C-f and C-b
