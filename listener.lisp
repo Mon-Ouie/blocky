@@ -308,7 +308,7 @@
       ;; draw cursor.
       (draw-cursor self 
 		   :x-offset
-		   (dash 2 (font-text-width label *font*))
+		   (dash 4 (font-text-width label *font*))
 		   :blink t)
       ;; draw highlighted indicators
       (draw-indicators self :active)
@@ -380,11 +380,11 @@
   %value)
 
 (define-method label-string entry ()
-  (or (getf %options :label)
+  (or %label (getf %options :label)
       "  "))
       
 (define-method label-width entry ()
-  (font-text-width (label-string self) *font*))
+  (dash 2 (font-text-width (label-string self) *font*)))
 
 (defparameter *minimum-entry-line-width* 16)
 

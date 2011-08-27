@@ -36,7 +36,8 @@ block is recompiled."
 (define-visual-macro (prog0 list))
 
 (define-method initialize prog0 (&rest args)
-  (apply #'initialize%%block self args)
+  (initialize%%block self)
+  (assert (blockyp (first %inputs)))
   (pin (first %inputs)))
 
 (define-visual-macro (quote list

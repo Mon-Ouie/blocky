@@ -1068,7 +1068,7 @@ area is drawn. If DARK is non-nil, paint a darker region."
 	  (setf max-height (max max-height (field-value :height input)))
 	  (incf left (dash 1 (field-value :width input))))
 	;; now update own dimensions
-	(setf width (- left x))
+	(setf width (dash 1 (- left x)))
 	(setf height (+ dash (if (null inputs)
 				 dash 0) max-height))))))
 
@@ -1399,7 +1399,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 		 :options (schema-options entry)
 		 :label (concatenate 'string
 				    ":" ;; mimic the keyword arguments visually
-				    (symbol-name (schema-name entry))))
+				    (string-downcase (symbol-name (schema-name entry)))))
 	    inputs))
     (when inputs 
       (setf %inputs (nreverse inputs)))
