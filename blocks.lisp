@@ -1061,7 +1061,6 @@ area is drawn. If DARK is non-nil, paint a darker region."
     (with-field-values (x y inputs) self
       (let* ((left (+ x (label-width self)))
 	     (max-height (font-height *font*))
-	     (font *font*)
 	     (dash (dash 1)))
 	(dolist (input inputs)
 	  (move-to input (+ left dash) y)
