@@ -38,6 +38,7 @@
 (define-prototype tree (:super :list)
   (category :initform :structure)
   (is-tree :initform t)
+  (style :initform :flat)
   (method :initform nil)
   (indentation-width :initform (dash 2))
   (top-level :initform nil)
@@ -124,7 +125,7 @@
 	   (when label 
 	     (setf width 
 		   (max width 
-			(dash 4 (font-text-width label *font*)))))
+			(dash 6 (font-text-width label *font*)))))
 	   ;; make all inputs equally wide
 	   (dolist (each inputs)
 	     (setf (field-value :width each) (- width (dash 2)))))
@@ -211,11 +212,12 @@
 (define-method draw tree (&optional highlight)
   (with-fields (visible expanded label inputs) self
     (when visible
-      (if expanded 
-	  (progn 
-	    (draw-expanded self label)
-	    (deeper (draw-subtree self)))
-	  (draw-unexpanded self label)))))
+      (with-style %style
+	(if expanded 
+	    (progn 
+	      (draw-expanded self label)
+	      (deeper (draw-subtree self)))
+	    (draw-unexpanded self label))))))
 
 ;; see system.lisp for example tree menu
 (defun make-tree (items &key target (tree-prototype "BLOCKY:TREE"))
@@ -233,7 +235,8 @@
 
 (define-prototype menu (:super :tree)
   (action :initform nil)
-  (main-menu-p :initform nil)
+  (style :initform :rounded)
+  (top-level :initform nil)
   (category :initform :menu))
 
 (defun make-menu (items &key target)
@@ -244,7 +247,11 @@
 ;; menu items should not accept any dragged widgets.
 (define-method accept menu (&rest args) nil)
 
-(define-method can-pick menu () t)
+(define-method can-pick menu ()
+  ;; allow making code blocks from menu items
+  (or (keywordp %action) 
+      ;; disallow pulling main menus
+      (not %top-level)))
 
 (define-method pick menu ()
   (if (or (keywordp %action) (blockyp %action))
@@ -271,23 +278,22 @@
        (toggle-expanded self)))))
 
 (define-method on-alternate-click menu (x y)
-  (declare (ignore x y))
   (when (keywordp %action)
-    (add-block *buffer** (context-menu self) x y)))
+    (add-block *buffer* (context-menu self) x y)))
 
 (defparameter *menu-tab-color* "gray60")
 (defparameter *menu-title-color* "white")
 
 (define-method draw-expanded menu (&optional label)
-  (with-field-values (action x y width height parent inputs main-menu-p) self
+  (with-field-values (action x y width height parent inputs top-level) self
     (let ((header (header-height self)))
-      (if main-menu-p
+      (if top-level
 	  ;; draw the header a bit differently to avoid over-drawing
 	  ;; other headers in a menu bar situation.
 	  (progn 
 	    (assert parent)
 	    (draw-patch self x (+ 1 y)
-		      (+ x (header-width self))
+		      (+ (dash 2) x (header-width self))
 		      (dash 3 y header)
 		      :color *menu-tab-color*)
 	    (draw-label-string 
@@ -304,21 +310,14 @@
   (with-fields (action target top-level) self
     (draw-label-string self 
 		       (or label (display-string self))
-		       ;; color text according to whether method exists
-		       (if (or (blocky:object-p action)
-			       (null target)
-			       (and (keywordp action)
-				    (has-method action target))
-			       (listp action))
-			   (find-color self :foreground)
-			   (find-color self :shadow)))))
+		       (find-color self :foreground))))
 			 
 (define-method draw-highlight menu ()
-  (with-fields (y height expanded parent main-menu-p) self
+  (with-fields (y height expanded parent top-level) self
     (when parent
       (with-fields (x width) parent
 	;; don't highlight top-level trees.
-	(when (and (not expanded) (not main-menu-p))
+	(when (and (not expanded) (not top-level))
 	  (draw-box x (+ y (dash 1)) width (+ height 1)
 		  :color *highlight-background-color*)
 	  (draw-label-string self (display-string self)))))))

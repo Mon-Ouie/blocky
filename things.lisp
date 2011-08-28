@@ -218,7 +218,7 @@ cells."
 
 (define-method create-reference sprite ()
   (with-fields (x y) self
-      (add-block *buffer** (new sprite-id self) x y)))
+      (add-block *buffer* (new sprite-id self) x y)))
 		    
 ;;; Sprite locations
 

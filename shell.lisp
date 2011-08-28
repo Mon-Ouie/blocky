@@ -67,11 +67,10 @@
 (define-block menubar :category :menu :temporary t)
 
 (define-method initialize menubar (&optional (menus *system-menu*))
-  (apply #'super%initialize self 
-	 (mapcar #'find-object menus))
+  (apply #'super%initialize self menus)
   (with-fields (inputs) self
     (dolist (each inputs)
-      (setf (field-value :main-menu-p each) t)
+      (setf (field-value :top-level each) t)
       (pin each))))
 
 (define-method hit menubar (mouse-x mouse-y)
@@ -113,7 +112,7 @@
 			    (expand candidate))
 			  ;; no menu was open---just hit the menu headers
 			  (some #'try inputs)))))))))))
-			  		    	  
+		
 (define-method draw-border menubar () nil)
 
 (define-method layout menubar ()
@@ -489,7 +488,10 @@ block found, or nil if none is found."
 	      (when (not (accept hover drag))
 		;; hovered block did not accept drag. 
 		;; just drop the block
-		(add-block self drag *pointer-x* *pointer-y*)))
+		(destructuring-bind (x0 . y0) drag-offset
+		  (add-block self drag 
+			     (- x x0)
+			     (- y y0)))))
 	  ;; select the dropped block
 	  (select self drag)
 	  (setf focused-block (find-uuid drag)))

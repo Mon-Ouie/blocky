@@ -54,7 +54,7 @@
     (when %face-up
       (draw-image (dot-image %dot) x y))))
 
-(define-method on-click tile (x y)
+(define-method on-tap tile (x y)
   (setf %face-up (if %face-up nil t))
   (setf %image (random-choose *wood-tiles*)))
 

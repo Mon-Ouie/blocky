@@ -311,7 +311,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 ;;; Each object has a Squeak-style pop-up halo
 
 (define-method make-halo block ()
-  (setf %halo (new halo self)))
+  (drop (new halo self)))  ;; Change this; don't set as member %halo
 
 ;;; Serialization hooks
 

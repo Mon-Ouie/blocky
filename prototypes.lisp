@@ -503,7 +503,7 @@ returned. If a value cannot be found, an error of type `no-such-field'
 is signaled, unless NOERROR is non-nil; in that case,
 `*lookup-failure*' is returned. See also `has-field'."
   ;; (declare (optimize (speed 3))
-  ;; 	   (inline fref set-fref object-fields object-super find-object))
+  ;; (inline fref set-fref object-fields object-super find-object))
   (let ((pointer (find-object thing))
 	result found)
     ;; search the chain of objects for a field value.

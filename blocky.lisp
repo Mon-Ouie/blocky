@@ -36,7 +36,7 @@
 *frequency* *output-chunksize* *output-channels* halt-sample *dt*
 *message-hook-functions* add-to-list defproject run start stop
 *update-function* *default-world-axis-size* defsprite *target*
-*blocks* *buffer** *default-world-z-size* install-blocks
+*blocks* *buffer* *default-world-z-size* install-blocks
 seconds->frames keyboard-held-p keyboard-pressed-p holding-control
 *use-nominal-screen-size* keyboard-released-p *edit* callf with-font
 keyboard-time-in-current-state pretty-symbol-string *pointer-x*
@@ -127,7 +127,7 @@ set-mission-variable with-mission-locals *background-color*
 set-sample-callback set-music-callback cffi-chunk-buffer
 convert-cffi-sample get-sample-buffer register-sample-generator
 register-voice unregister-voice register-voice-mixer mix-voices
-convert-cffi-sample-to-internal *block* *buffer**
+convert-cffi-sample-to-internal *block* *buffer*
 convert-internal-sample-to-cffi get-ticks block-variable
 with-block-variables set-block-variable with-blocks
 with-mission-locals *project* quit reset seek-music make-keyword

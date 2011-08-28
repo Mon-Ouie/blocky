@@ -1,6 +1,5 @@
-** TODO defun holding-shift
-** TODO collapse windows
-** TODO halos
+* CURRENT TASKS
+** TODO [#A] halos
 *** TODO trash (top left)
 *** TODO resize (bottom right)
 *** TODO menu
@@ -10,18 +9,20 @@
 *** TODO move
 *** TODO duplicate
 *** TODO debug
-** TODO semi-transparent smoke glass sidebar a la etoys
+** TODO [#B] defun holding-shift
+** TODO [#B] collapse windows
+** TODO [#C] Change submenu ellipsis to a nice triangle
+** TODO [#C] semi-transparent smoke glass s idebar a la etoys
 * BUGS
-** TODO Fix %VALUE not being updated
-** TODO Fix error handling: use error message bubbles with X close box and (backtrace) button?
-** TODO Fix listener history errors
-** TODO Fix missing labels on defblock's child entries
-** TODO Fix Control-E etc not working in textbox
-** TODO Fix not traversing line break with C-f and C-b
-** TODO Fix no blue dot movement in example2
-** TODO Fix ellipsis not displayed on menu items until highlight
-** TODO Fix crash when error in init file
-** TODO Fix crashes with tab and shift-tab navigation
+** TODO [#A] Fix %VALUE not being updated
+** TODO [#A] Fix missing labels on defblock's child entries
+** TODO [#C] Fix error handling: use error message bubbles with X close box and (backtrace) button?
+** TODO [#C] Fix listener history errors
+** TODO [#C] Fix Control-E etc not working in textbox
+** TODO [#C] Fix not traversing line break with C-f and C-b
+** TODO [#C] Fix no blue dot movement in example2
+** TODO [#C] Fix crash when error in init file
+** TODO [#C] Fix crashes with tab and shift-tab navigation
 
 * THOUGHTS
 ** TODO universal (row,column) ref interface for buffers/blocks
@@ -41,10 +42,6 @@
 *** and then only allow the move to go a certain distance. return number moved
 *** then "resting contact" will work; the object won't try to move anymore (if gravity.)
 *** implement AABB-quadtree? http://en.wikipedia.org/wiki/Quadtree http://hectorgon.blogspot.com/2006/08/regular-grids-vs-aabb-trees-in-games.html
-** TODO [#A] easily close menus with halo
-*** TODO [#A] universal morphic halo?
-** TODO [#B] Blocky in-engine inspector
-*** TODO basic explanation of blocks and basic methods
 ** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
 ** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
 ** TODO [#A] dialog boxes for project save/load!
@@ -630,6 +627,23 @@ But the graph doesn't yet actually work, so we must continue.
 ** TODO Fix command-line cursor alignment
    :PROPERTIES:
    :ARCHIVE_TIME: 2011-08-26 Fri 23:50
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BUGS
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** DONE Fix being able to drag top-level menus out of menubar
+   CLOSED: [2011-08-27 Sat 20:34]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-27 Sat 20:34
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BUGS
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END:
+** TODO Fix main menu bar title layout(too tight)
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-27 Sat 21:19
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: BUGS
    :ARCHIVE_CATEGORY: tasks
