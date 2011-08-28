@@ -249,9 +249,10 @@
 
 (define-method can-pick menu ()
   ;; allow making code blocks from menu items
-  (or (keywordp %action) 
-      ;; disallow pulling main menus
-      (not %top-level)))
+  (and %method
+       (or (keywordp %action) 
+	   ;; disallow pulling main menus
+	   (not %top-level))))
 
 (define-method pick menu ()
   (if (or (keywordp %action) (blockyp %action))

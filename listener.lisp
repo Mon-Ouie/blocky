@@ -53,7 +53,7 @@
   (pinned :initform t)
   (prompt-string :initform *default-prompt-string*)
   (category :initform :data)
-  (debug-on-error :iniform nil)
+  (debug-on-error :iniform t)
   (history :documentation "A queue of strings containing the command history.")
   (history-position :initform 0))
 
@@ -423,9 +423,12 @@
   (with-fields (value type-specifier) self
     (assert (and (listp sexp) (= 1 (length sexp))))
     (let ((datum (first sexp)))
+      (message "Datum: ~S" sexp)
       (if (or (null type-specifier)
 	      (type-check self datum))
-	  (setf value datum)
+	  (prog1 
+	      (setf value datum)
+	    (message "SET VALUE TO ~S" datum))
 	  (message "Warning: value entered does not match type ~S. Not storing value."
 		   type-specifier)))))
 
@@ -455,11 +458,11 @@
 	(prog1 %parent (assert %parent))
 	self)))
 
-(define-method type-check entry ()
-  (with-fields (type-specifier value) self
+(define-method type-check entry (datum)
+  (with-fields (type-specifier) self
     (etypecase type-specifier
-      (symbol (funcall type-specifier value))
-      (list (typep value type-specifier)))))
+      (symbol (funcall type-specifier datum))
+      (list (typep datum type-specifier)))))
 
 ;;; Easily defining new entry blocks
 
