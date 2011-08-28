@@ -443,7 +443,7 @@ block found, or nil if none is found."
 	      (setf hover (if (object-eq drag candidate) nil
 			      (find-uuid candidate)))
 	      ;; keep moving along with the mouse
-	      (do-drag drag target-x target-y))))
+	      (on-drag drag target-x target-y))))
 	;; not dragging, just moving
 	(progn
 	  (setf highlight (find-uuid (hit-buffer self mouse-x mouse-y)))

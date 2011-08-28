@@ -44,6 +44,9 @@
   (super%initialize self)
   (setf %target target))
 
+(define-method can-pick handle () nil)
+(define-method pick handle () nil)
+
 (define-method layout handle ())
 
 (define-method draw handle ()
@@ -72,27 +75,40 @@
 
 (define-handle evaluate :bang)
 
-(define-method on-tap evaluate ()
+(define-method on-tap evaluate (x y)
   (evaluate %target))
 
 (define-handle open-menu :menu)
 
 (define-method on-tap open-menu (x y)
-  (drop self (context-menu %target)))
+  (let ((menu (context-menu %target)))
+    (drop self menu)
+    (move-to menu x y)))
 
 (define-handle move :move)
 
-(define-method do-drag move (x y)
+(define-method on-drag move (x y)
   (move-to %target x y))
 
 (define-handle resize :resize)
+
+(define-method can-pick resize () t)
+
+(define-method pick resize () self)
+
+(define-method on-drag resize (x0 y0)
+  (with-fields (x y width height) %target
+    (resize %target 
+	    :width (- x0 x)
+	    :height (- y0 y))))
 
 (define-handle make-reference :reference)
 
 (define-handle discard :close)
 
 (define-method on-tap discard (x y)
-  (discard %target))
+  (discard %target)
+  (discard %parent))
      
 (define-handle collapse :collapse)
 
@@ -127,6 +143,9 @@
 
 (define-method pick halo ()
   (pick %target))
+
+(define-method on-alternate-tap halo (x y)
+  (toggle-halo %target))
 	  
 (define-method draw-hover halo ())
 (define-method draw-focus halo ())

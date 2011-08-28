@@ -45,6 +45,7 @@
 
 (defsprite tile
   (image :initform (random-choose *wood-tiles*))
+  (methods :initform '(:flip))
   (dot :initform (random 4))
   (face-up :initform nil))
   
@@ -54,9 +55,12 @@
     (when %face-up
       (draw-image (dot-image %dot) x y))))
 
-(define-method on-tap tile (x y)
+(define-method flip tile ()
   (setf %face-up (if %face-up nil t))
   (setf %image (random-choose *wood-tiles*)))
+
+(define-method on-tap tile (x y)
+  (flip self))
 
 (defun example4 ()
   (new system)

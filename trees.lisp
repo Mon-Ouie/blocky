@@ -278,9 +278,9 @@
        ;; we're a submenu, not an individual menu command.
        (toggle-expanded self)))))
 
-(define-method on-alternate-tap menu (x y)
-  (when (keywordp %action)
-    (add-block *buffer* (context-menu self) x y)))
+;; (define-method on-alternate-tap menu (x y)
+;;   (when (keywordp %action)
+;;     (add-block *buffer* (context-menu self) x y)))
 
 (defparameter *menu-tab-color* "gray60")
 (defparameter *menu-title-color* "white")

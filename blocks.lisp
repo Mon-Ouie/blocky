@@ -324,10 +324,11 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
       (discard-halo self)
       (make-halo self)))
 
-(define-method do-drag block (x y)
+(define-method on-drag block (x y)
   (move-to self x y))
 
 (define-method discard block ()
+  (mapc #'discard %inputs)
   (when %parent 
     (unplug-from-parent self))
   (push self (symbol-value '*trash*)))
@@ -564,11 +565,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	  ((not (null sexp)) (data-block sexp)))))
 
 (define-method resize block (&key height width)
-  (when (or (not (= height %height))
-	    (not (= width %width)))
-    (setf %height height)
-    (setf %width width)
-    (invalidate-layout self)))
+  (setf %height height)
+  (setf %width width)
+  (invalidate-layout self))
 
 ;;; Block movement
 
