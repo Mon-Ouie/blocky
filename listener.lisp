@@ -390,7 +390,7 @@
 (defparameter *minimum-entry-line-width* 16)
 
 (define-method draw-label entry ()
-  (draw-label-string self %label))
+  (when %label (draw-label-string self %label)))
   ;; (draw-string (label-string self)
   ;; 	       (dash 1 %x)
   ;; 	       (+ %y (dash 1))

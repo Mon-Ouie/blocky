@@ -31,7 +31,7 @@
     :bang (0 1/5)
     :top-left-triangle (0 0)
     :menu (1/5 0)
-    :collapse (0 1/5)
+    :collapse (0 2/5)
     :move (4/5 0)
     :resize (1 1)
     :reference (0 4/5)
@@ -44,25 +44,24 @@
   (super%initialize self)
   (setf %target target))
 
-(define-method layout handle ()
+(define-method layout handle ())
+
+(define-method draw handle ()
   (with-fields (x y width height) %target
     (destructuring-bind (px py) (getf *indicator-positions* %indicator)
-      (let* ((size (* *handle-scale* (indicator-size)))
-	     (margin (* 2 size))
-	     (x0 (- x size))
-	     (y0 (- y size)))
+      (let* ((margin (* *handle-scale* (indicator-size)))
+	     (x0 (- x margin))
+	     (y0 (- y margin)))
 	(setf %x (+ x0 
 		    (* px (+ width margin))))
 	(setf %y (+ y0 
 		    (* py (+ height margin))))
-	(setf %width size)
-	(setf %height size)))))
-
-(define-method draw handle ()
-  (draw-indicator %indicator %x %y 
-		  :color "white"
-		  :scale *handle-scale*
-		  :background %color))
+	(setf %width margin)
+	(setf %height margin)
+	(draw-indicator %indicator %x %y 
+			:color "white"
+			:scale *handle-scale*
+			:background %color)))))
 		
 (defmacro define-handle (name indicator &key (color "gray20"))
   (assert (symbolp name))
@@ -78,7 +77,7 @@
 
 (define-handle open-menu :menu)
 
-(define-method on-tap open-menu ()
+(define-method on-tap open-menu (x y)
   (drop self (context-menu %target)))
 
 (define-handle move :move)
@@ -88,11 +87,11 @@
 
 (define-handle resize :resize)
 
-(define-handle reference :reference)
+(define-handle make-reference :reference)
 
 (define-handle discard :close)
 
-(define-method on-tap discard ()
+(define-method on-tap discard (x y)
   (discard %target))
      
 (define-handle collapse :collapse)
@@ -100,7 +99,7 @@
 ;;; The halo itself
 
 (defparameter *halo-handles* 
-  '(:evaluate :open-menu :move :resize :reference :discard :collapse))
+  '(:evaluate :open-menu :move :resize :make-reference :discard :collapse))
 
 (define-block halo target)
 
@@ -112,7 +111,27 @@
 		       (clone (make-prototype-id handle) target))
 		 *halo-handles*)))
 
+(define-method layout halo ()
+  (with-fields (x y width height) %target
+    (let ((size (* *handle-scale* (indicator-size))))
+      (setf %x (- x size))
+      (setf %y (- y size))
+      (setf %width (+ width size))
+      (setf %height (+ height size)))))
+
 (define-method draw halo ()
   (draw-inputs self))
+
+(define-method can-pick halo ()
+  (can-pick %target))
+
+(define-method pick halo ()
+  (pick %target))
 	  
+(define-method draw-hover halo ())
+(define-method draw-focus halo ())
+(define-method draw-highlight halo ())
+(define-method accept halo (other))
+
+
 ;;; halo.lisp ends here

@@ -110,6 +110,7 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
   (blend :initform :alpha)
   (opacity :initform 1.0)
   (label :initform nil)
+  (halo :initform nil)
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
   (depth :initform 32 :documentation "Cached z-depth of block.")
@@ -310,7 +311,18 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 ;;; Each object has a Squeak-style pop-up halo
 
 (define-method make-halo block ()
-  (drop self (new halo self))) 
+  (when (null %halo)
+    (setf %halo (new halo self))
+    (drop self %halo)))
+
+(define-method discard-halo block ()
+  (discard %halo)
+  (setf %halo nil))
+
+(define-method toggle-halo block ()
+  (if %halo
+      (discard-halo self)
+      (make-halo self)))
 
 (define-method do-drag block (x y)
   (move-to self x y))
@@ -598,7 +610,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   nil)
 
 (define-method on-alternate-tap block (x y)
-  (make-halo self))
+  (toggle-halo self))
 
 (define-method on-point block (x y)
   (declare (ignore x y)))
