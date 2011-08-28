@@ -102,6 +102,9 @@
 	    :width (- x0 x)
 	    :height (- y0 y))))
 
+(define-method on-tap resize (x y)
+  (message "~S" (list x y)))
+
 (define-handle make-reference :reference)
 
 (define-handle discard :close)
@@ -132,8 +135,10 @@
     (let ((size (* *handle-scale* (indicator-size))))
       (setf %x (- x size))
       (setf %y (- y size))
-      (setf %width (+ width size))
-      (setf %height (+ height size)))))
+      ;; add twice the halo border to make sure
+      ;; we get clicks all the way to the right of the halo
+      (setf %width (+ width (* 2 size)))
+      (setf %height (+ height (* 2 size))))))
 
 (define-method draw halo ()
   (draw-inputs self))

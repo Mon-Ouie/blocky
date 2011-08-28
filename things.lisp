@@ -239,6 +239,8 @@ cells."
     (setf height (image-height image))
     (setf width (image-width image))))
 
+;(define-method layout sprite ())
+
 (define-method draw-highlight sprite ())
 (define-method draw-hover sprite ())
 (define-method draw-border sprite ())

@@ -1,8 +1,10 @@
 * CURRENT TASKS
 ** TODO [#A] halos
-*** TODO trash (top left)
+*** DONE trash (top left)
+    CLOSED: [2011-08-28 Sun 10:18]
 *** TODO resize (bottom right)
-*** TODO menu
+*** DONE menu
+    CLOSED: [2011-08-28 Sun 10:18]
 *** TODO reference
 *** TODO collapse
 *** TODO pick up

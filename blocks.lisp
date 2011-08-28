@@ -1437,4 +1437,24 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (define-method draw-hover send ()
   nil)
 
+;;; A generic color swatch
+
+(define-block color 
+  :pinned nil
+  :red 1.0 :green 0.5 :blue 1.0
+  :width (dash 20) :height (dash 20))
+
+(define-method (set-color :category :looks) color
+    ((red number :default 1.0)
+     (green number :default 1.0)
+     (blue number :default 1.0))
+    ;;
+    (setf %red red %green green %blue blue))
+
+(define-method draw color ()
+  (with-fields (x y width height red green blue) self
+    (with-style :rounded
+      (draw-patch self x y (+ x width) (+ y height)
+		  :color "white"))))
+
 ;;; blocks.lisp ends here
