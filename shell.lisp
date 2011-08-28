@@ -171,7 +171,7 @@
 	   :documentation "The menubar widget.")
   (command-line :initform nil)
   (command-p :initform nil)
-  (excluded-fields :initform '(:menubar :listener)
+  (excluded-fields :initform '(:menubar :listener :hover :highlight)
 		   :documentation "Don't serialize the menu bar.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")

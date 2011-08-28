@@ -346,5 +346,7 @@
 		      (* point-row (font-height font)))))
 	  (draw-cursor-glyph self x1 y1 cursor-width line-height 
 			     :blink t))))))
+
+(define-method draw-hover textbox () nil)
 	  
 ;;; text.lisp ends here

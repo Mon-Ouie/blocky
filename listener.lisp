@@ -423,7 +423,7 @@
   (with-fields (value type-specifier) self
     (assert (and (listp sexp) (= 1 (length sexp))))
     (let ((datum (first sexp)))
-      (message "Datum: ~S" sexp)
+      (message "Datum: ~S" datum)
       (if (or (null type-specifier)
 	      (type-check self datum))
 	  (prog1 
@@ -459,10 +459,17 @@
 	self)))
 
 (define-method type-check entry (datum)
-  (with-fields (type-specifier) self
-    (etypecase type-specifier
-      (symbol (funcall type-specifier datum))
-      (list (typep datum type-specifier)))))
+  (typep datum %type-specifier))
+  ;; (with-fields (type-specifier) self
+  ;;   (etypecase type-specifier
+  ;;     (symbol (funcall type-specifier datum))
+  ;;     (list (typep datum type-specifier)))))
+
+(define-method do-after-evaluate entry ()
+  ;; print any error output
+  (when (and (stringp %error-output)
+	     (plusp (length %error-output)))
+    (drop self (new textbox %error-output))))
 
 ;;; Easily defining new entry blocks
 
@@ -602,7 +609,7 @@
   ;; print any error output
   (when (and %parent (stringp %error-output)
 	     (plusp (length %error-output)))
-    (accept %parent (new textbox %error-output))))2
+    (accept %parent (new textbox %error-output))))
     ;; (dolist (line (split-string-on-lines %error-output))
     ;;   (accept %parent (new string :value line)))))
 
