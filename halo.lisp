@@ -47,6 +47,7 @@
 (define-method can-pick handle () nil)
 (define-method pick handle () nil)
 
+(define-method can-escape handle ()
 (define-method layout handle ())
 
 (define-method draw handle ()

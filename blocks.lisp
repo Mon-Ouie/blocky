@@ -95,7 +95,7 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
 	   "Computed result values from the input blocks.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (temporary :initform nil)
-  (methods :initform '(:make-reference :duplicate :make-sibling))
+  (methods :initform '(:make-reference :duplicate :make-sibling :discard))
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
@@ -326,6 +326,9 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 
 (define-method on-drag block (x y)
   (move-to self x y))
+
+(define-method can-escape block ()
+  t)
 
 (define-method discard block ()
   (mapc #'discard %inputs)
@@ -1441,20 +1444,24 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (define-block color 
   :pinned nil
-  :red 1.0 :green 0.5 :blue 1.0
+  :methods '(:set-color)
+  :name "gray50"
   :width (dash 20) :height (dash 20))
 
 (define-method (set-color :category :looks) color
-    ((red number :default 1.0)
-     (green number :default 1.0)
-     (blue number :default 1.0))
-    ;;
-    (setf %red red %green green %blue blue))
+    ((name string :default "gray50"))
+  (setf %name name))
 
 (define-method draw color ()
   (with-fields (x y width height red green blue) self
     (with-style :rounded
       (draw-patch self x y (+ x width) (+ y height)
-		  :color "white"))))
+		  :color %name))))
+
+(define-method layout color ())
+
+(define-method initialize color (&optional (name "gray50"))
+  (super%initialize self)
+  (setf %name name))
 
 ;;; blocks.lisp ends here
