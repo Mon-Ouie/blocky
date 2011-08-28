@@ -423,12 +423,9 @@
   (with-fields (value type-specifier) self
     (assert (and (listp sexp) (= 1 (length sexp))))
     (let ((datum (first sexp)))
-      (message "Datum: ~S" datum)
       (if (or (null type-specifier)
 	      (type-check self datum))
-	  (prog1 
-	      (setf value datum)
-	    (message "SET VALUE TO ~S" datum))
+	  (setf value datum)
 	  (message "Warning: value entered does not match type ~S. Not storing value."
 		   type-specifier)))))
 

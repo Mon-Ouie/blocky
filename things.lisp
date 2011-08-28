@@ -356,10 +356,10 @@ cells."
 
 ;;; Object dropping
 
-(define-method drop sprite (thing &optional (delta-x 0) (delta-y 0))
-;;  (assert (is-sprite thing))
-  (with-field-values (x y) self
-    (drop-sprite *world* thing (+ x delta-x) (+ y delta-y))))
+;; (define-method drop sprite (thing &optional (delta-x 0) (delta-y 0))
+;; ;;  (assert (is-sprite thing))
+;;   (with-field-values (x y) self
+;;     (drop-sprite *world* thing (+ x delta-x) (+ y delta-y))))
 
 ;;; Playing a sound
 

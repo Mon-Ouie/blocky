@@ -249,10 +249,10 @@
 
 (define-method can-pick menu ()
   ;; allow making code blocks from menu items
-  (and %method
-       (or (keywordp %action) 
-	   ;; disallow pulling main menus
-	   (not %top-level))))
+  (or %method
+      (or (keywordp %action) 
+	  ;; disallow pulling main menus
+	  (not %top-level))))
 
 (define-method pick menu ()
   (if (or (keywordp %action) (blockyp %action))
@@ -278,7 +278,7 @@
        ;; we're a submenu, not an individual menu command.
        (toggle-expanded self)))))
 
-(define-method on-alternate-click menu (x y)
+(define-method on-alternate-tap menu (x y)
   (when (keywordp %action)
     (add-block *buffer* (context-menu self) x y)))
 

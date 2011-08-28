@@ -2133,14 +2133,24 @@ of the music."
 (defun indicator-size () (* 0.37 (font-height *font*)))
 
 (defparameter *indicators* 
+  '(:asterisk :bang :top-left-triangle :bottom-right-triangle
+    :menu :collapse :move :resize :reference :close))
+
+(defparameter *indicator-images* 
   '(:asterisk "asterisk"
     :bang "bang"
     :top-left-triangle "top-left-triangle-indicator"
+    :menu "menu"
+    :collapse "collapse"
+    :move "move"
+    :resize "resize"
+    :reference "reference"
+    :close "close"
     :bottom-right-triangle "bottom-right-triangle-indicator"))
 
 (defun find-indicator-texture (indicator)
   (assert (keywordp indicator))
-  (let ((texture-name (getf *indicators* indicator)))
+  (let ((texture-name (getf *indicator-images* indicator)))
     (assert (stringp texture-name))
     (find-texture texture-name)))
 
@@ -2148,7 +2158,8 @@ of the music."
 					  background)
   (let ((size (indicator-size)))
     (when background
-      (draw-circle x y (* scale size) :color background :type :solid))
+      (draw-circle (+ x size (dash 1))
+		   (+ y size (dash 1)) (* (/ scale 2) size) :color background :type :solid))
     (draw-textured-rectangle x y 0 (* scale size) (* scale size)
 			     (find-indicator-texture indicator)
 			     :blend :alpha

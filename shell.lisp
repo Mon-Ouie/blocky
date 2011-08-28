@@ -443,7 +443,7 @@ block found, or nil if none is found."
 	      (setf hover (if (object-eq drag candidate) nil
 			      (find-uuid candidate)))
 	      ;; keep moving along with the mouse
-	      (move-to drag target-x target-y))))
+	      (do-drag drag target-x target-y))))
 	;; not dragging, just moving
 	(progn
 	  (setf highlight (find-uuid (hit-buffer self mouse-x mouse-y)))
@@ -507,7 +507,7 @@ block found, or nil if none is found."
 	       ;; right click and control click are interpreted the same
 	       (or (holding-control)
 		   (= button 3))
-	       (on-alternate-click focused-block x y)
+	       (on-alternate-tap focused-block x y)
 	       (on-tap focused-block x y))
 	      (select self focused-block))
 	    (setf click-start nil))))

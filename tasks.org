@@ -1,13 +1,3 @@
-* BUGS
-** TODO [#A] Fix ENTER%%ENTRY being called twice because of ON-LOSE-FOCUS
-** TODO [#A] Fix missing labels on defblock's child entries
-** TODO [#C] Fix error handling: use error message bubbles with X close box and (backtrace) button?
-** TODO [#C] Fix listener history errors
-** TODO [#C] Fix Control-E etc not working in textbox
-** TODO [#C] Fix not traversing line break with C-f and C-b
-** TODO [#C] Fix no blue dot movement in example2
-** TODO [#C] Fix crash when error in init file
-** TODO [#C] Fix crashes with tab and shift-tab navigation
 * CURRENT TASKS
 ** TODO [#A] halos
 *** TODO trash (top left)
@@ -23,7 +13,16 @@
 ** TODO [#B] collapse windows
 ** TODO [#C] Change submenu ellipsis to a nice triangle
 ** TODO [#C] semi-transparent smoke glass s idebar a la etoys
-
+* BUGS
+** TODO [#A] Fix missing labels on defblock's child entries
+** TODO [#B] Fix ENTER%%ENTRY being called twice because of ON-LOSE-FOCUS
+** TODO [#C] Fix error handling: use error message bubbles with X close box and (backtrace) button?
+** TODO [#C] Fix listener history errors
+** TODO [#C] Fix Control-E etc not working in textbox
+** TODO [#C] Fix not traversing line break with C-f and C-b
+** TODO [#C] Fix no blue dot movement in example2
+** TODO [#C] Fix crash when error in init file
+** TODO [#C] Fix crashes with tab and shift-tab navigation
 * THOUGHTS
 ** TODO universal (row,column) ref interface for buffers/blocks
 ** TODO unified buffer abstraction for any content type (rename *SCRIPT* to *BUFFER*)
@@ -33,6 +32,7 @@
 ** TODO generic buffer similarly 
 ** TODO general widget embed layout thing. =formatter= --> but instead of rich text, it's all widgets (textboxes + img)
 * FEATURES
+** TODO empty trash before save? dialog
 ** TODO collapsible windows a-la-squeak
 ** TODO make reference ==> make tile?
 ** TODO make a list derivative whose first element is pinned for eval (VISUAL LAMBDA LIST?)

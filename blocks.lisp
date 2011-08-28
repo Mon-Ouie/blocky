@@ -108,7 +108,6 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
   (scale-x :initform 1)
   (scale-y :initform 1)
   (blend :initform :alpha)
-  (halo :initform nil)
   (opacity :initform 1.0)
   (label :initform nil)
   (width :initform 32 :documentation "Cached width of block.")
@@ -311,7 +310,15 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 ;;; Each object has a Squeak-style pop-up halo
 
 (define-method make-halo block ()
-  (drop (new halo self)))  ;; Change this; don't set as member %halo
+  (drop self (new halo self))) 
+
+(define-method do-drag block (x y)
+  (move-to self x y))
+
+(define-method discard block ()
+  (when %parent 
+    (unplug-from-parent self))
+  (push self (symbol-value '*trash*)))
 
 ;;; Serialization hooks
 
@@ -590,8 +597,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (declare (ignore x y))
   nil)
 
-(define-method on-alternate-click block (x y)
-  (add-block *buffer* (context-menu self) x y))
+(define-method on-alternate-tap block (x y)
+  (make-halo self))
 
 (define-method on-point block (x y)
   (declare (ignore x y)))
@@ -1092,9 +1099,6 @@ area is drawn. If DARK is non-nil, paint a darker region."
 
 (define-method draw-inputs block ()
   (mapc #'draw %inputs))
-
-;; (define-method draw-halo block ()
-;;   (with-fields (x y height width) self
 
 (define-method draw-contents block ()
   (with-fields (operation inputs) self

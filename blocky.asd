@@ -32,6 +32,7 @@
 	       (:file "prototypes" :depends-on ("blocky"))
 	       (:file "console" :depends-on ("prototypes"))
 	       (:file "blocks" :depends-on ("console"))
+	       (:file "halo" :depends-on ("blocks"))
 	       (:file "buffers" :depends-on ("blocks"))
 	       (:file "text" :depends-on ("blocks"))
 	       (:file "windows" :depends-on ("buffers"))
@@ -40,8 +41,8 @@
 	       (:file "system" :depends-on ("blocks"))
 	       (:file "things" :depends-on ("blocks"))
 	       (:file "worlds" :depends-on ("things"))
-	       (:file "shell" :depends-on ("trees" "windows" "listener" "system" "text"))
-	       (:file "vmacs" :depends-on ("trees" "listener" "buffers" "system"))
+	       (:file "shell" :depends-on ("trees" "windows" "listener" "system" "text" "halo"))
+	       (:file "vmacs" :depends-on ("trees" "listener" "buffers" "system" "shell"))
 	       (:file "library" :depends-on ("worlds" "shell" "vmacs"))))
 ;;	       (:file "path")
 	       
