@@ -166,5 +166,4 @@
 (define-method draw-highlight halo ())
 (define-method accept halo (other))
 
-
 ;;; halo.lisp ends here

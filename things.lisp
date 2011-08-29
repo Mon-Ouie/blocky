@@ -1,4 +1,4 @@
-;;; things.lisp --- defining game objects 
+;;; player.lisp --- defining game objects 
 
 ;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
 
@@ -22,61 +22,53 @@
 
 (in-package :blocky)
 
-(define-block cell 
-  (type :initform :cell)
-  (row :documentation "When non-nil, the current row location of the cell.")
-  (column :documentation "When non-nil, the current column of the cell.")
-  (name :initform nil :documentation "The name of this cell.")
-  (description :initform nil :documentation "A description of the cell.") 
-  (categories :initform nil :documentation "List of category keyword symbols."))
+;;; Block tags
 
-;;; Cell categories
+(define-method has-tag block (tag)
+  "Return non-nil if this block has the specified TAG.
 
-(define-method in-category cell (category)
-  "Return non-nil if this cell is in the specified CATEGORY.
+Blocks may be marked with tags that influence their processing by the
+engine. The field `%tags' is a set of keyword symbols; if a symbol
+`:foo' is in the list, then the block is in the tag `:foo'.
 
-Cells may be placed into categories that influence their processing by
-the engine. The field `%categories' is a set of keyword symbols; if a
-symbol `:foo' is in the list, then the cell is in the category `:foo'.
-
-Although a game built on BLOCKY can define whatever categories are
-needed, certain base categories are built-in and have a fixed
+Although a game built on BLOCKY can define whatever tags are
+needed, certain base tags are built-in and have a fixed
 interpretation:
 
  -    :obstacle --- Blocks movement and causes collisions
- -    :temporary --- This cell is not preserved when exiting a world.
+ -    :temporary --- This block is not preserved when exiting a world.
  -    :light-source --- This object casts light. 
  -    :opaque --- Blocks line-of-sight, casts shadows. 
 "
-  (member category %categories))
+  (member tag %tags))
 
-(define-method add-category cell (category)
-  "Add this cell to the specified CATEGORY."
-  (pushnew category %categories))
+(define-method add-tag block (tag)
+  "Add this block to the specified TAG."
+  (pushnew tag %tags))
 
-(define-method delete-category cell (category)
-  "Remove this cell from the specified CATEGORY."
-  (setf %categories (remove category %categories)))
+(define-method delete-tag block (tag)
+  "Remove this block from the specified TAG."
+  (setf %tags (remove tag %tags)))
 
-;;; Locating the cell in grid space
+;;; Locating the block in grid space
 
-(define-method is-grid-located cell ()
-  "Returns non-nil if this cell is located somewhere on the grid."
+(define-method is-grid-located block ()
+  "Returns non-nil if this block is located somewhere on the grid."
   (and (integerp %row) (integerp %column)))
 
-(define-method grid-coordinates cell ()
+(define-method grid-coordinates block ()
   (values %row %column))
 
-(define-method xy-coordinates cell ()
+(define-method xy-coordinates block ()
   (let ((size (field-value :grid-size *world*)))
     (values (* %column size)
 	    (* %row size))))
 
-(define-method coordinates cell ()
+(define-method coordinates block ()
   (multiple-value-bind (x y) (xy-coordinates self)
     (values x y 0)))
 
-(define-method draw cell ()
+(define-method draw block ()
   (with-fields (image) self
     (when image
       (set-blending-mode %blend)
@@ -86,53 +78,53 @@ interpretation:
 
 ;;; Locating the player 
 
-(define-method player-direction cell ()
+(define-method player-direction block ()
   "Return the general compass direction of the player from X0,Y0."
   (with-fields (player) *world*
     (multiple-value-bind (x0 y0) (xy-coordinates self)
       (multiple-value-bind (x1 y1) (xy-coordinates player)
 	(direction-to y0 x0 y1 x1)))))
 
-(define-method player-distance cell ()
+(define-method player-distance block ()
   "Return the straight line distance of the player from X0,Y0."
   (with-fields (player) *world*
     (multiple-value-bind (x0 y0) (xy-coordinates self)
       (multiple-value-bind (x1 y1) (xy-coordinates player)
 	(distance x0 y0 x1 y1)))))
 
-;;; Convenience macro for defining cells.
+;;; Convenience macro for defining blocks.
 
-(defmacro defcell (name &body args)
-  "Define a cell named NAME, with the fields ARGS as in a normal
+(defmacro defblock (name &body args)
+  "Define a block named NAME, with the fields ARGS as in a normal
 prototype declaration. This is a convenience macro for defining new
-cells."
-  `(define-prototype ,name (:super "BLOCKY:CELL")
+blocks."
+  `(define-prototype ,name (:super "BLOCKY:BLOCK")
      ,@args))
 
-;;; Cell death
+;;; Block death
 
-(define-method destroy cell ())
+(define-method destroy block ())
 
-(define-method die cell ()
+(define-method die block ()
   (destroy self)
-  (delete-cell *world* self %row %column))
+  (delete-block *world* self %row %column))
 
-;;; Cell movement
+;;; Block movement
 
-(define-method move-to-grid cell (r c)
-  (delete-cell *world* self %row %column)
-  (drop-cell *world* self r c))
+(define-method move-to-grid block (r c)
+  (delete-block *world* self %row %column)
+  (drop-block *world* self r c))
 
-(define-method move-to cell (x y &optional z)
+(define-method move-to block (x y &optional z)
   (assert (and (numberp x) (numberp y)))
   (with-field-values (grid-size) *world*
     (let ((nearest-row (round y grid-size))
 	  (nearest-column (round x grid-size)))
       (move-to-grid self nearest-row nearest-column))))
 
-(define-method move cell (direction &optional (distance 1) ignore-obstacles)
+(define-method move block (direction &optional (distance 1) ignore-obstacles)
   (error "This move method needs rewriting."))
-;;   "Move this cell one step in DIRECTION on the grid. If
+;;   "Move this block one step in DIRECTION on the grid. If
 ;; IGNORE-OBSTACLES is non-nil, the move will occur even if an obstacle
 ;; is in the way. Returns non-nil if a move occurred."
 ;;   (let ((world *world*))
@@ -152,46 +144,46 @@ cells."
 ;; 		       (not (obstacle-at-p *world* r c)))
 ;; 	       ;; return t because we moved
 ;; 	       (prog1 t
-;; 		 (move-cell world self r c))))))))
+;; 		 (move-block world self r c))))))))
 
-(define-method bounding-box cell ()
+(define-method bounding-box block ()
   (multiple-value-bind (x y)
       (xy-coordinates self)
     (let ((size (field-value :grid-size *world*)))
       (values x y size size))))
 
-(define-method collide cell (object)
+(define-method collide block (object)
   (declare (ignore object))
   "Respond to a collision detected with OBJECT."
   nil)
 
 ;;; Sprites
 
-(defcell sprite 
-  (collision-type :initform :aabb)
-  (type :initform :sprite)
-  (height :initform nil :documentation "The cached width of the bounding box.")
-  (width :initform nil :documentation "The cached height of the bounding box."))
+;; (defblock sprite 
+;;   (collision-type :initform :aabb)
+;;   (type :initform :sprite)
+;;   (height :initform nil :documentation "The cached width of the bounding box.")
+;;   (width :initform nil :documentation "The cached height of the bounding box."))
 
-;; Convenience macro for defining sprites
+;; Convenience macro for defining blocks
 
-(defmacro defsprite (name &body args)
-  `(define-prototype ,name (:super "BLOCKY:SPRITE")
-     ,@args))
+;; (defmacro defblock (name &body args)
+;;   `(define-prototype ,name (:super "BLOCKY:BLOCK")
+;;      ,@args))
 
-(defun is-sprite (ob)
-  (when (eq :sprite (field-value :type ob))))
+;; (defun is-block (ob)
+;;   (when (eq :block (field-value :type ob))))
 
-(defun is-cell (ob)
-  (when (eq :cell (field-value :type ob))))
+;; (defun is-block (ob)
+;;   (when (eq :block (field-value :type ob))))
 
-(define-method update-image-dimensions sprite ()
+(define-method update-image-dimensions block ()
   (with-fields (image height width scale-x scale-y) self
     (when image
       (setf width (* scale-x (image-width image)))
       (setf height (* scale-y (image-height image))))))
 
-(define-method draw sprite ()
+(define-method draw-as-sprite block ()
   (with-fields (image x y z height opacity blend scale-x scale-y) self
     (when image
       (when (null height)
@@ -202,63 +194,54 @@ cells."
 			    :scale-x scale-x
 			    :scale-y scale-y))))
 
-(define-method change-image sprite (image)
+(define-method change-image block (image)
   (assert (stringp image))
   (setf %image image)
   (update-image-dimensions self))
 
-(define-method die sprite ()
-  (remove-sprite *world* self))
+(define-method destroy block ()
+  (remove-block *world* self)
+  (discard self))
 
-(defparameter *sprite-context-menu*
-  '((:label "Inspect" :action :inspect)
-    (:label "Create reference" :action :create-reference)
-    (:label "Destroy" :action :destroy)
-    (:label "Make a copy" :action :copy)))
+;;; Block locations
 
-(define-method create-reference sprite ()
-  (with-fields (x y) self
-      (add-block *buffer* (new sprite-id self) x y)))
-		    
-;;; Sprite locations
-
-(define-method grid-coordinates sprite ()
+(define-method grid-coordinates block ()
   (values (truncate (/ %y (field-value :tile-size *world*)))
 	  (truncate (/ %x (field-value :tile-size *world*)))))
 
-(define-method xy-coordinates sprite ()
+(define-method xy-coordinates block ()
   (values %x %y))
 
-(define-method coordinates sprite ()
+(define-method coordinates block ()
   (values %x %y %z))
 
-;;; Layout
+;; ;;; Layout
 
-(define-method layout sprite ()
-  (with-fields (height width image) self
-    (setf height (image-height image))
-    (setf width (image-width image))))
+;; (define-method layout block ()
+;;   (with-fields (height width image) self
+;;     (setf height (image-height image))
+;;     (setf width (image-width image))))
 
-;(define-method layout sprite ())
+;(define-method layout block ())
 
-(define-method draw-highlight sprite ())
-(define-method draw-hover sprite ())
-(define-method draw-border sprite ())
+;; (define-method draw-highlight block ())
+;; (define-method draw-hover block ())
+;; (define-method draw-border block ())
 
-;;; Sprite movement
+;;; Block movement
 
-(define-method move-to sprite (x y &optional z)
+(define-method move-to block (x y &optional z)
   (assert (and (numberp x) (numberp y)))
   (setf %x x %y y)
   (when (numberp z)
     (assert (numberp z))
     (setf %z z)))
 
-(define-method move-to-grid sprite (row column)
+(define-method move-to-grid block (row column)
   (with-field-values (grid-size) *world*
     (move-to self (* grid-size row) (* grid-size column))))
 
-(define-method move sprite (direction &optional (distance 1) force)
+(define-method move block (direction &optional (distance 1) force)
   (assert (member direction *compass-directions*))
   (with-field-values (x y) self
     (multiple-value-bind (y0 x0) 
@@ -281,29 +264,29 @@ cells."
 	  ;; is left to right of other right?
 	  (< o-right x)))))
 
-(define-method bounding-box sprite ()
+(define-method bounding-box block ()
   (when (null %height)
     (update-image-dimensions self))
   (values %x %y %width %height))
 
-(define-method colliding-with-rectangle sprite (o-top o-left o-width o-height)
+(define-method colliding-with-rectangle block (o-top o-left o-width o-height)
   ;; you must pass arguments in Y X order since this is TOP then LEFT
   (with-fields (x y width height) self
     (point-in-rectangle-p x y width height o-top o-left o-width o-height)))
 
-(define-method colliding-with sprite (thing)
+(define-method colliding-with block (thing)
   (multiple-value-bind (x y width height) 
       (bounding-box thing)
     (colliding-with-rectangle self y x width height)))
 
-(define-method collide sprite (thing))
+(define-method collide block (thing))
 
 ;;; Analog gamepad control
 
-(define-method aim sprite (direction)
+(define-method aim block (direction)
   (setf %direction direction))
 
-(define-method stick-move sprite (&optional multiplier)
+(define-method stick-move block (&optional multiplier)
   (destructuring-bind (horizontal vertical) *joystick-motion-axes*
     (let* ((x (poll-joystick-axis horizontal))
 	   (y (poll-joystick-axis vertical)))
@@ -338,7 +321,7 @@ cells."
 			       (axis-pressed-p aim-vert)))
 		  (aim self direction)))))))))
 
-  (define-method stick-aim sprite ()
+  (define-method stick-aim block ()
     (with-fields (direction) self
       (destructuring-bind (horizontal vertical) *joystick-aiming-axes*
         (let ((x (poll-joystick-axis horizontal))
@@ -358,14 +341,14 @@ cells."
 
 ;;; Object dropping
 
-;; (define-method drop sprite (thing &optional (delta-x 0) (delta-y 0))
-;; ;;  (assert (is-sprite thing))
+;; (define-method drop block (thing &optional (delta-x 0) (delta-y 0))
+;; ;;  (assert (is-block thing))
 ;;   (with-field-values (x y) self
-;;     (drop-sprite *world* thing (+ x delta-x) (+ y delta-y))))
+;;     (drop-block *world* thing (+ x delta-x) (+ y delta-y))))
 
 ;;; Playing a sound
 
-(define-method play-sound cell (sample-name)
+(define-method play-sound block (sample-name)
   (play-sample sample-name))
 
 ;;; Temporary text balloons
@@ -373,7 +356,7 @@ cells."
 (defun seconds->frames (seconds)
   (truncate (* seconds blocky:*frame-rate*)))
 
-(defsprite balloon 
+(defblock balloon 
   :text "..."
   :font *font*
   :clock (seconds->frames 5))
@@ -393,7 +376,7 @@ cells."
     (decf clock)
     (if (plusp clock)
 	(blocky:draw-string text x y :font %font :color "black")
-	(remove-sprite *world* self))))
+	(remove-block *world* self))))
 
 
-;;; things.lisp ends here
+;;; player.lisp ends here

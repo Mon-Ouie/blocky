@@ -94,28 +94,38 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
   (results :initform nil :documentation
 	   "Computed result values from the input blocks.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
+  (tags :initform nil)
   (temporary :initform nil)
   (methods :initform '(:make-reference :duplicate :make-sibling :discard))
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
+  (description :initform nil :documentation "A description of the block.") 
   (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
   (excluded-fields :initform nil) ;; Yay!
   ;; visual layout
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
   (z :initform 0 :documentation "Integer Z coordinate of this block's position.")
+  ;; possible grid location
+  (row :documentation "When non-nil, the current row location of the block.")
+  (column :documentation "When non-nil, the current column of the block.")
+  ;; scaling/blending
   (scale-x :initform 1)
   (scale-y :initform 1)
   (blend :initform :alpha)
   (opacity :initform 1.0)
-  (label :initform nil)
-  (halo :initform nil)
+  ;; collisions
+  (collision-type :initform :aabb)
+  ;; dimensions
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
   (depth :initform 32 :documentation "Cached z-depth of block.")
   (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
   (visible :initform t :documentation "When non-nil, block will be visible.")
+  ;; morphic style halo
+  (halo :initform nil)
+  (label :initform nil)
   (image :initform nil :documentation "Texture to be displayed, if any.")
   (input-widths :initform nil))
 
