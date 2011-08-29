@@ -48,7 +48,7 @@ block is recompiled."
     (with-target list
       (inputs :initform (list (new socket :label "send to:")
 			      (new list)))
-      (category :initform :message))
+      (category :initform :structure))
     (destructuring-bind (target body) 
 	(mapcar #'recompile %inputs)
       `(with-target ,target

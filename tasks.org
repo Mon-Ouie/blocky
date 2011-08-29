@@ -2,9 +2,9 @@
 ** TODO [#A] halos
 *** DONE trash (top left)
     CLOSED: [2011-08-28 Sun 10:18]
-*** TODO resize (bottom right)
 *** DONE menu
     CLOSED: [2011-08-28 Sun 10:18]
+*** TODO resize (bottom right)
 *** TODO reference
 *** TODO collapse
 *** TODO pick up
@@ -16,6 +16,7 @@
 ** TODO [#C] Change submenu ellipsis to a nice triangle
 ** TODO [#C] semi-transparent smoke glass s idebar a la etoys
 * BUGS
+** TODO [#A] Fix STRING not being set properly without quotes
 ** TODO [#A] Fix missing labels on defblock's child entries
 ** TODO [#B] Fix ENTER%%ENTRY being called twice because of ON-LOSE-FOCUS
 ** TODO [#C] Fix error handling: use error message bubbles with X close box and (backtrace) button?

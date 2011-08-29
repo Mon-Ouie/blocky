@@ -752,7 +752,8 @@
 	(let ((image (field-value :image target))
 	      (name (make-reference-name target)))
 	  (setf iwidth (if image (image-width image) 0))
-	  (setf width (dash 8 iwidth (font-text-width name *font*)))
+	  (setf width (dash 8 iwidth (font-text-width name *font*)
+			    (* *handle-scale* (indicator-size))))
 	  (setf height (dash 2 (font-height *font*)
 			     (if image (image-height image) 0))))
 	(setf width (dash 4 (font-text-width *null-reference-string* *font*))
@@ -761,20 +762,23 @@
 (define-method draw reference ()
   (with-fields (target x y width height iwidth) self
     (draw-background self)
-    (if (null target)
-	(draw-string *null-reference-string* x y)
+    (let ((offset (* *handle-scale* (indicator-size))))
+      (if (null target)
+	  (draw-string *null-reference-string* 
+		       (+ offset x) y)
 	(let ((image (field-value :image target))
 	      (name (make-reference-name target)))
 	  (when image
 	    (draw-image image 
 			(dash 1 x)
 			(dash 1 y)))
-	  (draw-string name (dash 1 x iwidth) (dash 1 y))))
-    (draw-indicator :asterisk 
-		    (dash -2 width x)
-		    (dash -2 height y)
-		    :scale 3
-		    :color "cyan")))
+	  (draw-string name (dash 1 x offset iwidth) (dash 1 y))))
+      (draw-indicator :asterisk 
+		      x y
+		      :scale *handle-scale*
+		      :background "purple"
+		      :color "cyan"))))
+
 
 ;; ;;; Browser for inspecting objects
 

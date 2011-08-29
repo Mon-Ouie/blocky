@@ -44,11 +44,11 @@
   (super%initialize self)
   (setf %target target))
 
-(define-method can-pick handle () nil)
+(define-method can-pick handle () t)
 (define-method pick handle () nil)
-
 (define-method can-escape handle () nil)
 (define-method layout handle ())
+(define-method toggle-halo handle () nil) ;; don't let halos have halos
 
 (define-method draw handle ()
   (with-fields (x y width height) %target
@@ -103,10 +103,13 @@
 	    :width (- x0 x)
 	    :height (- y0 y))))
 
-(define-method on-tap resize (x y)
-  (message "~S" (list x y)))
-
 (define-handle make-reference :reference)
+
+(define-method pick make-reference ()
+  (new reference %target))
+
+(define-method on-tap make-reference (x y)
+  (drop self (pick self)))
 
 (define-handle discard :close)
 
