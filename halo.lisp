@@ -45,7 +45,7 @@
   (setf %target target))
 
 (define-method can-pick handle () t)
-(define-method pick handle () nil)
+(define-method pick handle () self)
 (define-method can-escape handle () nil)
 (define-method layout handle ())
 (define-method toggle-halo handle () nil) ;; don't let halos have halos
