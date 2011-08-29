@@ -14,9 +14,11 @@
 ** TODO [#B] Audio test widget ("left, right")
 ** TODO [#C] Basic context-sensitive help
 *** TODO explanatory tooltips
+** TODO [#C] System browser
+
 * BUGS
 ** TODO [#A] Fix STRING not being set properly without quotes
-** TODO [#A] Fix missing labels on defblock's child entries
+** TODO [#A] Fix missing labels on defblock's child entries (eval going wrong?)
 ** TODO [#B] Fix ENTER%%ENTRY being called twice because of ON-LOSE-FOCUS
 ** TODO [#C] Fix error handling: use error message bubbles with X close box and (backtrace) button?
 ** TODO [#C] Fix listener history errors
