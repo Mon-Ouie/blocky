@@ -1,20 +1,19 @@
-* CURRENT TASKS
-** TODO [#A] halos
-*** DONE trash (top left)
-    CLOSED: [2011-08-28 Sun 10:18]
-*** DONE menu
-    CLOSED: [2011-08-28 Sun 10:18]
-*** TODO resize (bottom right)
-*** TODO reference
-*** TODO collapse
-*** TODO pick up
-*** TODO move
-*** TODO duplicate
-*** TODO debug
-** TODO [#B] defun holding-shift
-** TODO [#B] collapse windows
-** TODO [#C] Change submenu ellipsis to a nice triangle
-** TODO [#C] semi-transparent smoke glass s idebar a la etoys
+* BETA RELEASE EXECUTION PLAN
+** TODO [#A] Complete the core language model (define blocks and methods visually)
+*** TODO [#A] Merge sprites into basic block type
+*** TODO [#A] Test sprites with worlds
+*** TODO [#B] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
+** TODO [#A] Implement basic blocks library
+** TODO [#A] Restore basic collision detection functionality
+** TODO [#B] Ensure full and proper functioning of halos
+** TODO [#B] Fix as much of the buglist as possible
+** TODO [#B] Menus/dialogs for all basic project save/load stuff
+*** TODO "empty trash before save?" dialog
+*** TODO "quit without saving?" dialog
+** TODO [#B] Better language tutorial projects
+** TODO [#B] Audio test widget ("left, right")
+** TODO [#C] Basic context-sensitive help
+*** TODO explanatory tooltips
 * BUGS
 ** TODO [#A] Fix STRING not being set properly without quotes
 ** TODO [#A] Fix missing labels on defblock's child entries
@@ -26,6 +25,15 @@
 ** TODO [#C] Fix no blue dot movement in example2
 ** TODO [#C] Fix crash when error in init file
 ** TODO [#C] Fix crashes with tab and shift-tab navigation
+
+* CURRENT TASKS
+** TODO [#B] collapse halo handle
+** TODO [#C] pick up halo handle
+** TODO [#B] duplicate halo handle
+** TODO [#C] debug halo handle
+** TODO [#B] defun holding-shift
+** TODO [#C] Change submenu ellipsis to a nice triangle
+** TODO [#C] semi-transparent smoke glass s idebar a la etoys
 * THOUGHTS
 ** TODO universal (row,column) ref interface for buffers/blocks
 ** TODO unified buffer abstraction for any content type (rename *SCRIPT* to *BUFFER*)
@@ -35,9 +43,7 @@
 ** TODO generic buffer similarly 
 ** TODO general widget embed layout thing. =formatter= --> but instead of rich text, it's all widgets (textboxes + img)
 * FEATURES
-** TODO empty trash before save? dialog
 ** TODO collapsible windows a-la-squeak
-** TODO make reference ==> make tile?
 ** TODO make a list derivative whose first element is pinned for eval (VISUAL LAMBDA LIST?)
 ** TODO [#B] Refactor collision detection to enable various types.
 *** delegate actual collision detection to method
@@ -147,9 +153,6 @@ add "." and "%CD%" to cffi's foreign directory search list...
 ** COOL FEATURE: gnome-do/anything.el style search/operate, for quick access to everything
 ** TODO [#B] file selector dialog (only choosing from project dir at first)
 ** TODO [#B] pin toggle button
-** TODO [#B] display GPL and other licensing in scroll box
-** morphic-style halos
-** comment block for output messages in listener etc, trap errors
 ** TODO [#B] Improve error handling in shell
 *** TODO isolate/trap all block errors and display them grayed out with an inspectable error
 *** TODO define-method error shell
@@ -157,7 +160,6 @@ add "." and "%CD%" to cffi's foreign directory search list...
 *** TODO define-method warning shell
 *** TODO redirect messages to message bar. optionally fading notifications with widgets in them
 ** TODO [#B] explicit "save" and "compile" buttons 
-** TODO [#B] send block has socket on left for receiver name, as in Smalltalk-Elements? is this lispy...
 ** TODO [#B] joystick menu to find connected devices x3
 ** TODO [#B] standardize on "ABXY" for the face buttons, LB RB LT RT for the shoulder buttons
 ** TODO [#B] popup tape-flag/balloons to show you where you are, like hints about M-x window
@@ -168,10 +170,7 @@ add "." and "%CD%" to cffi's foreign directory search list...
 ***  Braille keyboard and speech synthesis integration for blind users
 ** TODO [#B] Bring back old/forms.lisp spreadsheet
 ***  compilation options
-** TODO [#B] generic way to wrap functions?
-** TODO [#B] review all IOFORMS engine features for blocks to make
 ** TODO [#B] Make dialogs for all menu options in file:system.lisp 
-** TODO [#B] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
 ** TODO [#B] Fix menu behavior: properly check other menu widgets in menubar hit before menu
 ** TODO [#B] allow any font size to be requested
 ** TODO [#B] fix argument blocks not being created (AGAIN)
@@ -179,10 +178,6 @@ add "." and "%CD%" to cffi's foreign directory search list...
 ** TODO [#B] reasonable emacs configuration for ioforms dev (imenu etc)
 ** TODO [#B] send unfocused input to terminal? 
 ** TODO [#B] button to add arguments to + etc (just drop onto block list)
-** TODO [#B] monospace textbox for editing method?
-** TODO [#B] disabled menu items, to check for presence of method in target and/or condition
-** TODO [#B] fix cursor rendering in prompt not lining up with characters
-** TODO [#B] AABB-tree (axis-aligned bounding-box)
 ** TODO [#C] add generic xbox controller support for analog bumpers (emulate buttons)
 ** TODO [#C] introduce with-font macro and stop using *block-font* explicitly
 ** TODO [#C] draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
@@ -194,7 +189,6 @@ add "." and "%CD%" to cffi's foreign directory search list...
 ***  script or page as terminology? script sounds scarily active, page sounds passive
 ***  one file per script
 ***  script modes
-** TODO [#C] morphic halos?
 ** TODO [#C] duplicate objects / selection 
 ** TODO [#C] defblock selection 
 ** TODO [#C] send message to all blocks in selection
@@ -661,4 +655,22 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: DONE
    :END:
+** TODO [#A] halos
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-28 Sun 22:09
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: CURRENT TASKS
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+*** DONE trash (top left)
+    CLOSED: [2011-08-28 Sun 10:18]
+*** DONE menu
+    CLOSED: [2011-08-28 Sun 10:18]
+*** DONE resize (bottom right)
+    CLOSED: [2011-08-28 Sun 22:09]
+*** DONE reference
+    CLOSED: [2011-08-28 Sun 22:09]
+*** DONE move
+    CLOSED: [2011-08-28 Sun 22:09]
 
