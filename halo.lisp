@@ -88,8 +88,13 @@
 
 (define-handle move :move)
 
-(define-method on-drag move (x y)
-  (move-to %target x y))
+(define-method on-drag move (x0 y0)
+  (with-fields (x y) %target
+    (let ((dx (- %x x))
+	  (dy (- %y y)))
+      (move-to %target 
+	       (- x0 dx)
+	       (- y0 dy)))))
 
 (define-handle resize :resize)
 
