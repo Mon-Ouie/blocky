@@ -556,4 +556,7 @@ block found, or nil if none is found."
     (exit-command-line self)
     (setf %selection nil)))
 
+;; (defun discard (ob &rest args)
+;;   (when ob (apply #'send :discard ob args)))
+
 ;;; shell.lisp ends here

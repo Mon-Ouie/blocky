@@ -362,7 +362,7 @@
   ;; fill in the input box with the value
   (setf %line (if (null value)
 		  " "
-		  (format nil "~A" value)))
+		  (format nil "~S" value)))
   (setf %label 
 	(or label 
 	    (getf options :label)))

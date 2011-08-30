@@ -716,11 +716,13 @@ all the time."
 		(evaluate (nth n inputs))))))
     results))
 
-(define-method evaluate block () 
-  "Return the computed result of this block.  By default, all the
-inputs are evaluated."
-  (prog1 self
-    (evaluate-inputs self)))
+(define-method evaluate block () self)
+
+;; (define-method evaluate block () 
+;;   "Return the computed result of this block.  By default, all the
+;; inputs are evaluated."
+;;   (prog1 self
+;;     (evaluate-inputs self)))
 
 (define-method recompile block ()
   `(progn 
@@ -1498,6 +1500,12 @@ and MOUSE-Y identify a point inside the block (or input block.)"
   (orientation :initform :vertical)
   (operation :initform :empty-list)
   (category :initform :structure))
+
+(define-method evaluate list () 
+  "Return the computed result of this block.  By default, all the
+inputs are evaluated."
+  (prog1 self
+    (evaluate-inputs self)))
 
 (defparameter *null-display-string* "...")
 
