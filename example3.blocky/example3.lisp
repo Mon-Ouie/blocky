@@ -165,6 +165,6 @@
 
 (defun example3 ()
   (new system)
-  (start (new shell (new buffer))))
+  (start (new shell (new block))))
 
 ;;; example3.lisp ends here
