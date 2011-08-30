@@ -357,13 +357,6 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
   "Prepare a deserialized block for running."
   (register-uuid self))
 
-(define-method invalidate-layout block () ;
-  "Signal to the buffer manager that a layout operation is needed.
-You should invoke this method if the dimensions of the block have
-changed."
-  (when *buffer*
-    (invalidate-layout *buffer*)))
-
 (define-method on-update block ()
   "Update the simulation one step forward in time.
 By default, just update each child block."
@@ -1453,6 +1446,10 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 
 (define-method invalidate-layout block ()
   (setf %needs-layout t))
+
+(define-method invalidate-buffer-layout block ()
+  (when *buffer*
+    (invalidate-layout *buffer*)))
 
 (define-method bring-to-front block (block)
   (with-fields (inputs block) self

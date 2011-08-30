@@ -231,14 +231,18 @@
     (setf %x 0 %y 0 
 	  %width *screen-width* 
 	  %height *screen-height*)
+    ;; fill screen with buffer
     (with-fields (x y width height) %buffer
       (setf x %x y %y
 	    width %width
 	    height %height))
+    ;; run menubar across top
     (with-style :rounded
       (layout %menubar))
     ;; run command line across bottom
-    (layout %command-line)))
+    (layout %command-line)
+    ;;
+    (update-layout %buffer)))
 
 (define-method on-update shell ()
   ;; run buffer blocks every frame
