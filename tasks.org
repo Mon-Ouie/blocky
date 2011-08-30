@@ -1,5 +1,11 @@
 * TODO Quickie status video lightning talk
-
+** TODO copyright notice
+** TODO trash
+** TODO listener
+** TODO lists of numbers and stuff
+** TODO colors
+** TODO halos for resizing
+** TODO turtle
 
 * BETA RELEASE EXECUTION PLAN
 ** TODO [#A] Complete the core language model (define blocks and methods visually)

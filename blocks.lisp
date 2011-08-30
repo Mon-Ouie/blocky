@@ -1444,12 +1444,12 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 	   (clauses (mapcar #'make-clause symbols)))
       `(symbol-macrolet ,clauses ,@body))))
 
-(define-method invalidate-layout block ()
+(define-method queue-layout block ()
   (setf %needs-layout t))
 
-(define-method invalidate-buffer-layout block ()
+(define-method invalidate-layout block ()
   (when *buffer*
-    (invalidate-layout *buffer*)))
+    (queue-layout *buffer*)))
 
 (define-method bring-to-front block (block)
   (with-fields (inputs block) self

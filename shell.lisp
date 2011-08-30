@@ -171,7 +171,8 @@
 	   :documentation "The menubar widget.")
   (command-line :initform nil)
   (command-p :initform nil)
-  (excluded-fields :initform '(:menubar :listener :hover :highlight)
+  (excluded-fields :initform 
+		   '(:click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :command-line :menubar :listener :drag :hover :highlight)
 		   :documentation "Don't serialize the menu bar.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
@@ -223,6 +224,7 @@
   (setf %command-line (make-command-line)))
 
 (define-method after-deserialize shell ()
+  (clear-drag-data self)
   (make-widgets self))
 
 (define-method layout shell ()
@@ -477,6 +479,12 @@ block found, or nil if none is found."
 	    ;; focused, as in the case of the Listener
 	    (focus-on self block))))))
 
+(define-method clear-drag-data shell ()
+  (setf %drag-start nil
+	%drag-offset nil
+	%drag-origin nil
+	%drag nil))
+
 (define-method on-release shell (x y &optional button)
   (with-fields 
       (drag-offset drag-start hover buffer selection drag click-start
@@ -491,14 +499,17 @@ block found, or nil if none is found."
 		;; put back in halo or wherever
 		(add-block drag-origin drag drop-x drop-y)
 		;; ok, drop. where are we dropping?
-		(if (null hover)
-		    ;; dropping on background
-		    (add-block self drag drop-x drop-y)
-		    ;; dropping on another block
-		    (when (not (accept hover drag))
-		      ;; hovered block did not accept drag. 
-		      ;; drop block if it wants to be dropped
-		      (add-block self drag drop-x drop-y))))
+		(progn 
+		  (when drag-parent
+		    (unplug-from-parent drag))
+		  (if (null hover)
+		      ;; dropping on background
+		      (add-block self drag drop-x drop-y)
+		      ;; dropping on another block
+		      (when (not (accept hover drag))
+			;; hovered block did not accept drag. 
+			;; drop block if it wants to be dropped
+			(add-block self drag drop-x drop-y)))))
 	    ;; select the dropped block
 	    (progn 
 	      (select self drag)
@@ -518,10 +529,7 @@ block found, or nil if none is found."
 	       (on-tap focused-block x y))
 	      (select self focused-block))
 	    (setf click-start nil))))
-    (setf drag-start nil
-	  drag-offset nil
-	  drag-origin nil
-	  drag nil)
+    (clear-drag-data self)
     (invalidate-layout buffer)))
 
 (define-method tab shell (&optional backward)
