@@ -477,29 +477,26 @@ block found, or nil if none is found."
     (if drag
 	;; we're dragging
 	(let ((drag-parent (get-parent drag)))
-	  (when (and (not (null drag-parent))
-		     (not (object-eq buffer drag-parent)))
-	    (unplug-from-parent drag))
-	  ;; where are we dropping?
-	  (if (null hover)
-	      ;; dropping on background
-	      (when (can-escape drag)
-		(add-block self drag))
-	      ;; dropping on another block
-	      (when (not (accept hover drag))
-		;; hovered block did not accept drag. 
-		;; drop block if it wants to be dropped
-		(when (can-escape drag)
+	  (when (can-escape drag)
+	    (when (and (not (null drag-parent))
+		       (not (object-eq buffer drag-parent)))
+	      (unplug-from-parent drag))
+	    ;; where are we dropping?
+	    (if (null hover)
+		;; dropping on background
+		(add-block self drag)
+		;; dropping on another block
+		(when (not (accept hover drag))
+		  ;; hovered block did not accept drag. 
+		  ;; drop block if it wants to be dropped
 		  (destructuring-bind (x0 . y0) drag-offset
 		    (add-block self drag 
-			     (- x x0)
-			     (- y y0))))))
-
-	  ;; select the dropped block
-	  (when (can-escape drag)
-	    (select self drag)
-	    (setf focused-block (find-uuid drag))))
-	;; (setf hover nil)
+			       (- x x0)
+			       (- y y0)))))
+	    ;; select the dropped block
+	    (progn 
+	      (select self drag)
+	      (setf focused-block (find-uuid drag)))))
 	;;
 	;; we're clicking instead of dragging
 	(progn

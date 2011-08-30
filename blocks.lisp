@@ -125,9 +125,12 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
   (visible :initform t :documentation "When non-nil, block will be visible.")
   ;; morphic style halo
   (halo :initform nil)
+  (mode :initform nil)
+  (name :initform nil)
+  (variables :initform (make-hash-table :test 'eq))
+  (needs-layout :initform t)
   (label :initform nil)
-  (image :initform nil :documentation "Texture to be displayed, if any.")
-  (input-widths :initform nil))
+  (image :initform nil :documentation "Texture to be displayed, if any."))
 
 ;;; Standard means of defining blocks
 
@@ -1399,6 +1402,97 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 	       (aim self (if (minusp x) :west :east)))
 	      ((axis-pressed-p vertical)
 	       (aim self (if (minusp y) :north :south))))))))
+
+;;; Grouping blocks into buffers with buffer-local variables
+
+(defun get-buffer (name)
+  (gethash name *buffers*))
+
+(defun make-buffer (&rest args)
+  (let* ((buffer (apply #'clone :buffer args))
+	 (name (field-value :name buffer))) ;; name may be uniqified
+    (assert (not (gethash name *buffers*)))
+    (prog1 buffer
+      ;; add it to the table
+      (setf (gethash name *buffers*)
+	    (find-uuid buffer)))))
+  
+(defun uniquify-buffer-name (name)
+  (let ((n 1)
+	(name0 name))
+    (block naming
+      (loop while name0 do
+	(if (get-buffer name0)
+	    (setf name0 (format nil "~A.~S" name n)
+		  n (1+ n))
+	    (return-from naming name0))))))
+
+(defmacro with-buffer (buffer &rest body)
+  `(let ((*buffer* (find-uuid ,buffer)))
+     (assert (blockyp *buffer*))
+     ,@body))
+
+(define-method setvar block (var value)
+  (setf (gethash var %variables) value))
+
+(define-method getvar block (var)
+  (gethash var %variables))
+
+(defun buffer-local-variable (var-name)
+  (getvar *buffer* var-name))
+
+(defun (setf buffer-local-variable) (var-name value)
+  (setvar *buffer* var-name value))
+
+(defmacro with-buffer-local-variables (vars &rest body)
+  (labels ((make-clause (sym)
+	     `(,sym (buffer-local-variable ,(make-keyword sym)))))
+    (let* ((symbols (mapcar #'make-non-keyword vars))
+	   (clauses (mapcar #'make-clause symbols)))
+      `(symbol-macrolet ,clauses ,@body))))
+
+(define-method invalidate-layout block ()
+  (setf %needs-layout t))
+
+(define-method bring-to-front block (block)
+  (with-fields (inputs block) self
+    (assert (contains buffer block))
+    (delete-input self block)
+    (append-input self block)))
+
+(define-method on-update block ()
+  (with-buffer self 
+    (dolist (each %inputs)
+      (on-update each))
+    (update-layout self)))
+
+(define-method update-layout block (&optional force)
+  (with-fields (inputs needs-layout) self
+    (when (or force needs-layout)
+      (dolist (each inputs)
+	(layout each))
+      (setf needs-layout nil))))
+
+(define-method append-input block (block)
+  (assert (blockyp block))
+  (with-fields (inputs) self
+    (assert (not (contains self block)))
+    (set-parent block self)
+    (setf inputs (nconc inputs (list block)))))
+
+(define-method add-block block (block &optional x y)
+  (assert (blockyp block))
+  ;(assert (not (contains self block)))
+  (append-input self block)
+  (when (and (integerp x)
+	     (integerp y))
+    (move-to block x y))
+  (invalidate-layout self))
+
+(define-method delete-block block (block)
+  (assert (blockyp block))
+  (assert (contains self block))
+  (delete-input self block))
 
 ;;; Vertically stacked list of blocks
 

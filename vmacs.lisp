@@ -86,7 +86,7 @@ block is recompiled."
 			       (new string :label "name")
 			       (new tree :label "for block"
 					 :inputs (list (new string :value "name" :label "")))
-			       (new tree :label "definition" :inputs (list (new buffer))))))
+			       (new tree :label "definition" :inputs (list (new block))))))
 	   (destructuring-bind (name prototype definition) 
 	       (mapcar #'recompile %inputs)
 	     (let ((method-name (make-symbol (first name)))

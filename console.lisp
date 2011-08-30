@@ -2439,7 +2439,7 @@ of the music."
     (open-project project)
     (when (null *blocks*)
       (new system)
-      (start (new shell (new buffer))))
+      (start (new shell (new block))))
     (start-session)))
 
 (defun create (project)
@@ -2448,7 +2448,7 @@ of the music."
     (new system)
     (create-project project)
     (open-project project)
-    (start (new shell (new buffer)))
+    (start (new shell (new block)))
     (start-session)))
 
 (defun edit (&optional (project *untitled-project-name*) force-shell)
@@ -2456,7 +2456,7 @@ of the music."
     (let ((*edit* t))
       (open-project project :no-error)
       (when force-shell
-	(start (new shell (new buffer))))
+	(start (new shell (new block))))
       (start-session))))
 
 ;; (defun share (project) ...

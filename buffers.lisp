@@ -20,70 +20,20 @@
 
 ;;; Code:
 
-(in-package :blocky)
+;; (in-package :blocky)
 
-;;; Grouping blocks into buffers with buffer-local variables
 
-(defun get-buffer (name)
-  (gethash name *buffers*))
+;; (define-block (buffer :super list)
 
-(defun make-buffer (&rest args)
-  (let* ((buffer (apply #'clone :buffer args))
-	 (name (field-value :name buffer))) ;; name may be uniqified
-    (assert (not (gethash name *buffers*)))
-    (prog1 buffer
-      ;; add it to the table
-      (setf (gethash name *buffers*)
-	    (find-uuid buffer)))))
-  
-(defun uniquify-buffer-name (name)
-  (let ((n 1)
-	(name0 name))
-    (block naming
-      (loop while name0 do
-	(if (get-buffer name0)
-	    (setf name0 (format nil "~A.~S" name n)
-		  n (1+ n))
-	    (return-from naming name0))))))
+;; (define-method initialize buffer (&key blocks variables name
+;; 				       (width (dash 120))
+;; 				       (height (dash 70)))
+;;   (apply #'super%initialize self blocks)
+;;   (setf %name (uniquify-buffer-name name))
+;;   (setf %width width
+;; 	%height height)
+;;   (when variables (setf %variables variables)))
 
-(defmacro with-buffer (buffer &rest body)
-  `(let ((*buffer* (find-uuid ,buffer)))
-     (assert (blockyp *buffer*))
-     ,@body))
-
-(define-block (buffer :super list)
-  (mode :initform nil)
-  (name :initform nil)
-  (variables :initform (make-hash-table :test 'eq))
-  (needs-layout :initform t))
-
-(define-method initialize buffer (&key blocks variables name
-				       (width (dash 120))
-				       (height (dash 70)))
-  (apply #'super%initialize self blocks)
-  (setf %name (uniquify-buffer-name name))
-  (setf %width width
-	%height height)
-  (when variables (setf %variables variables)))
-
-(define-method setvar buffer (var value)
-  (setf (gethash var %variables) value))
-
-(define-method getvar buffer (var)
-  (gethash var %variables))
-
-(defun buffer-local-variable (var-name)
-  (getvar *block* var-name))
-
-(defun (setf buffer-local-variable) (var-name value)
-  (setvar *block* var-name value))
-
-(defmacro with-buffer-local-variables (vars &rest body)
-  (labels ((make-clause (sym)
-	     `(,sym (buffer-local-variable ,(make-keyword sym)))))
-    (let* ((symbols (mapcar #'make-non-keyword vars))
-	   (clauses (mapcar #'make-clause symbols)))
-      `(symbol-macrolet ,clauses ,@body))))
 
 ;;; Addressing the elements in the buffer
 
@@ -91,47 +41,5 @@
 ;;   (with-field-values (inputs) self
 ;;     (when (consp inputs)
       
-(define-method invalidate-layout buffer ()
-  (setf %needs-layout t))
-
-(define-method delete-block buffer (block)
-  (assert (blockyp block))
-  (assert (contains self block))
-  (delete-input self block))
-
-(define-method bring-to-front buffer (block)
-  (with-fields (inputs buffer) self
-    (assert (contains buffer block))
-    (delete-input self block)
-    (append-input self block)))
-
-(define-method on-update buffer ()
-  (with-buffer self 
-    (dolist (each %inputs)
-      (on-update each))
-    (update-layout self)))
-
-(define-method update-layout buffer (&optional force)
-  (with-fields (inputs needs-layout) self
-    (when (or force needs-layout)
-      (dolist (each inputs)
-	(layout each))
-      (setf needs-layout nil))))
-
-(define-method append-input buffer (block)
-  (assert (blockyp block))
-  (with-fields (inputs) self
-    (assert (not (contains self block)))
-    (set-parent block self)
-    (setf inputs (nconc inputs (list block)))))
-
-(define-method add-block buffer (block &optional x y)
-  (assert (blockyp block))
-  ;(assert (not (contains self block)))
-  (append-input self block)
-  (when (and (integerp x)
-	     (integerp y))
-    (move-to block x y))
-  (invalidate-layout self))
 	  
 ;;; buffers.lisp ends here
