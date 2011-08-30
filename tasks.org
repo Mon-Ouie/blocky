@@ -14,7 +14,7 @@
 ** TODO [#B] Audio test widget ("left, right")
 ** TODO [#C] Basic context-sensitive help
 *** TODO explanatory tooltips
-** TODO [#C] System browser
+** TODO [#C] System browserd
 
 * BUGS
 ** TODO [#A] Fix STRING not being set properly without quotes

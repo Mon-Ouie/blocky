@@ -1160,6 +1160,11 @@ area is drawn. If DARK is non-nil, paint a darker region."
 (define-method draw-label block (expression)
   (draw-label-string self (print-expression expression)))
 
+;;; Sound 
+
+(define-method play-sound block (sample-name)
+  (play-sample sample-name))
+
 ;;; General block drawing
 
 (define-method draw block ()
@@ -1193,16 +1198,27 @@ area is drawn. If DARK is non-nil, paint a darker region."
     (dolist (input inputs)
       (draw input))))
 
-(define-method hit block (mouse-x mouse-y)
-  "Return this block (or child input block) if the coordinates MOUSE-X
-and MOUSE-Y identify a point inside the block (or input block.)"
-  (with-fields (x y width height inputs) self
-    (when (within-extents mouse-x mouse-y x y
-			  (+ x width) (+ y height))
-      (labels ((try (it)
-		 (hit it mouse-x mouse-y)))
-	(or (some #'try inputs) 
-	    self)))))
+(define-method update-image-dimensions block ()
+  (with-fields (image height width scale-x scale-y) self
+    (when image
+      (setf width (* scale-x (image-width image)))
+      (setf height (* scale-y (image-height image))))))
+
+(define-method draw-as-sprite block ()
+  (with-fields (image x y z height opacity blend scale-x scale-y) self
+    (when image
+      (when (null height)
+	(update-image-dimensions self))
+      (draw-image image x y :z z 
+			    :opacity opacity 
+			    :blend blend 
+			    :scale-x scale-x
+			    :scale-y scale-y))))
+
+(define-method change-image block (image)
+  (assert (stringp image))
+  (setf %image image)
+  (update-image-dimensions self))
 
 (define-method adopt block (child)
   (when (get-parent child)
@@ -1227,26 +1243,153 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (define-method is-top-level block ()
   (object-eq %parent *buffer*))
 
-;;; Printing a block
+;;; Block tags
 
-(defun print-block (B)
-  (let (fields)
-    (flet ((add-field (field value)
-	     (push (list field value) fields)))
-      (typecase B
-	(blocky:object 
-	 (let ((f2 (object-fields B)))
-	   (etypecase f2
-	     (hash-table (maphash #'add-field f2))
-	     (list (setf fields f2)))
-	   (cons (get-some-object-name B) fields)))
-	(list (mapcar #'print-block B))
-	(otherwise B)))))
+(define-method has-tag block (tag)
+  "Return non-nil if this block has the specified TAG.
 
-(defun split-string-on-lines (string)
-  (with-input-from-string (stream string)
-    (loop for line = (read-line stream nil)
-	  while line collect line)))
+Blocks may be marked with tags that influence their processing by the
+engine. The field `%tags' is a set of keyword symbols; if a symbol
+`:foo' is in the list, then the block is in the tag `:foo'.
+
+Although a game built on BLOCKY can define whatever tags are
+needed, certain base tags are built-in and have a fixed
+interpretation:
+
+ -    :obstacle --- Blocks movement and causes collisions
+ -    :temporary --- This block is not preserved when exiting a world.
+ -    :light-source --- This object casts light. 
+ -    :opaque --- Blocks line-of-sight, casts shadows. 
+"
+  (member tag %tags))
+
+(define-method add-tag block (tag)
+  "Add the specified TAG to this block."
+  (pushnew tag %tags))
+
+(define-method remove-tag block (tag)
+  "Remove the specified TAG  from this block."
+  (setf %tags (remove tag %tags)))
+
+;;; Collision detection
+
+(define-method hit block (mouse-x mouse-y)
+  "Return this block (or child input block) if the coordinates MOUSE-X
+and MOUSE-Y identify a point inside the block (or input block.)"
+  (with-fields (x y width height inputs) self
+    (when (within-extents mouse-x mouse-y x y
+			  (+ x width) (+ y height))
+      (labels ((try (it)
+		 (hit it mouse-x mouse-y)))
+	(or (some #'try inputs) 
+	    self)))))
+
+(define-method bounding-box block ()
+  (multiple-value-bind (x y)
+      (xy-coordinates self)
+    (let ((size (field-value :grid-size *world*)))
+      (values x y size size))))
+
+(define-method collide block (object)
+  (declare (ignore object))
+  "Respond to a collision detected with OBJECT."
+  nil)
+
+(define-method destroy block ()
+  (remove-block *world* self)
+  (discard self))
+
+(define-method move-to-grid block (row column)
+  (with-field-values (grid-size) *world*
+    (move-to self (* grid-size row) (* grid-size column))))
+
+(defun point-in-rectangle-p (x y width height o-top o-left o-width o-height)
+  (let ((o-right (+ o-left o-width))
+	(o-bottom (+ o-top o-height)))
+    (not (or 
+	  ;; is the top below the other bottom?
+	  (< o-bottom y)
+	  ;; is bottom above other top?
+	  (< (+ y height) o-top)
+	  ;; is right to left of other left?
+	  (< (+ x width) o-left)
+	  ;; is left to right of other right?
+	  (< o-right x)))))
+
+(define-method bounding-box block ()
+  (when (null %height)
+    (update-image-dimensions self))
+  (values %x %y %width %height))
+
+(define-method colliding-with-rectangle block (o-top o-left o-width o-height)
+  ;; you must pass arguments in Y X order since this is TOP then LEFT
+  (with-fields (x y width height) self
+    (point-in-rectangle-p x y width height o-top o-left o-width o-height)))
+
+(define-method colliding-with block (thing)
+  (multiple-value-bind (x y width height) 
+      (bounding-box thing)
+    (colliding-with-rectangle self y x width height)))
+
+(define-method collide block (thing))
+
+;;; Analog gamepad control
+
+(define-method aim block (direction)
+  (setf %direction direction))
+
+(define-method stick-move block (&optional multiplier)
+  (destructuring-bind (horizontal vertical) *joystick-motion-axes*
+    (let* ((x (poll-joystick-axis horizontal))
+	   (y (poll-joystick-axis vertical)))
+      (let ((direction 
+	      (cond 
+		;; diagonal 
+		((and (axis-pressed-p horizontal) (axis-pressed-p vertical))
+		 (if (minusp y) 
+		     (if (minusp x)
+			 :northwest
+			 :northeast)
+		     (if (minusp x)
+			 :southwest
+			 :southeast)))
+		;; horizontal 
+		((axis-pressed-p horizontal)
+		 (if (minusp x) :west :east))
+		;; vertical 
+		((axis-pressed-p vertical)
+		 (if (minusp y) :north :south)))))
+	(when direction 
+	  ;; if the player pushed a direction, move in that direction.
+	  (prog1 t 
+	    (if multiplier
+		(move-to self 
+			 (+ %x (* multiplier (axis-as-float horizontal)))
+			 (+ %y (* multiplier (axis-as-float vertical))))
+		(move self direction multiplier))
+	    ;; if the player is NOT pressing on the right stick, ALSO aim in this direction.
+	    (destructuring-bind (aim-horz aim-vert) *joystick-aiming-axes*
+	      (when (not (or (axis-pressed-p aim-horz)
+			     (axis-pressed-p aim-vert)))
+		(aim self direction)))))))))
+
+(define-method stick-aim block ()
+  (with-fields (direction) self
+    (destructuring-bind (horizontal vertical) *joystick-aiming-axes*
+      (let ((x (poll-joystick-axis horizontal))
+	    (y (poll-joystick-axis vertical)))
+	(cond ((and (axis-pressed-p horizontal) (axis-pressed-p vertical))
+	       (aim self (if (minusp y) 
+			     (if (minusp x)
+				 :northwest
+				 :northeast)
+			     (if (minusp x)
+				 :southwest
+				 :southeast))))
+	      ((axis-pressed-p horizontal)
+	       (aim self (if (minusp x) :west :east)))
+	      ((axis-pressed-p vertical)
+	       (aim self (if (minusp y) :north :south))))))))
 
 ;;; Vertically stacked list of blocks
 
@@ -1473,5 +1616,26 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (define-method initialize color (&optional (name "gray50"))
   (super%initialize self)
   (setf %name name))
+
+;;; Printing a block
+
+(defun print-block (B)
+  (let (fields)
+    (flet ((add-field (field value)
+	     (push (list field value) fields)))
+      (typecase B
+	(blocky:object 
+	 (let ((f2 (object-fields B)))
+	   (etypecase f2
+	     (hash-table (maphash #'add-field f2))
+	     (list (setf fields f2)))
+	   (cons (get-some-object-name B) fields)))
+	(list (mapcar #'print-block B))
+	(otherwise B)))))
+
+(defun split-string-on-lines (string)
+  (with-input-from-string (stream string)
+    (loop for line = (read-line stream nil)
+	  while line collect line)))
 
 ;;; blocks.lisp ends here

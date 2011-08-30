@@ -37,7 +37,7 @@
     (:name "turtle" :type :image :file "turtle.png")
     (:name "dot" :type :image :file "dot.png"))
 
-(defsprite turtle
+(define-block turtle
   :image "turtle"
   :heading 0.0 ;; in radians
   :lines nil
@@ -127,7 +127,7 @@
 (defresource (:name "ladybug" :type :image :file "ladybug.png"))
 (defresource (:name "wandering" :type :music :file "wandering.xm"))
 
-(defsprite ladybug 
+(define-block ladybug 
   :image "ladybug"
   :methods '(:chirp :wander :sit-quietly :sing)
   :moving nil
@@ -160,7 +160,7 @@
 
 (defresource (:name "meadow" :type :image :file "meadow.png"))
 
-(defsprite meadow :image "meadow")
+(define-block meadow :image "meadow")
 (define-method accept meadow (other) nil)
 
 (defun example3 ()

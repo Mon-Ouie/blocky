@@ -1074,44 +1074,44 @@ PLAYER as the player."
 
 ;;; Gateways and launchpads connect worlds together
 
-(defcell gateway
-  (tile :initform "gateway")
-  (name :initform "Gateway")
-  (categories :initform '(:gateway))
-  (destination :initform nil))
+;; (defcell gateway
+;;   (tile :initform "gateway")
+;;   (name :initform "Gateway")
+;;   (categories :initform '(:gateway))
+;;   (destination :initform nil))
 
-(define-method initialize gateway (&key destination tile name)
-  (when tile (setf %tile tile))
-  (when name (setf %name name))
-  (when destination (setf %destination destination)))
+;; (define-method initialize gateway (&key destination tile name)
+;;   (when tile (setf %tile tile))
+;;   (when name (setf %name name))
+;;   (when destination (setf %destination destination)))
 
-(define-method activate gateway ()
-  (with-fields (destination) self
-    (etypecase destination
-      ;; it's an address.
-      (list (play *universe* :address destination))
-      ;; it's a mission name
-      (symbol (begin (symbol-value destination) (get-player *world*))))))
+;; (define-method activate gateway ()
+;;   (with-fields (destination) self
+;;     (etypecase destination
+;;       ;; it's an address.
+;;       (list (play *universe* :address destination))
+;;       ;; it's a mission name
+;;       (symbol (begin (symbol-value destination) (get-player *world*))))))
 	 
-(define-prototype launchpad (:super "BLOCKY:GATEWAY")
-  (tile :initform "launchpad")
-  (categories :initform '(:gateway :player-entry-point))
-  (description :initform "Press RETURN here to exit this area."))
+;; (define-prototype launchpad (:super "BLOCKY:GATEWAY")
+;;   (tile :initform "launchpad")
+;;   (categories :initform '(:gateway :player-entry-point))
+;;   (description :initform "Press RETURN here to exit this area."))
 
-(define-method activate launchpad ()
-  (exit *universe* :player (get-player *world*)))
+;; (define-method activate launchpad ()
+;;   (exit *universe* :player (get-player *world*)))
 
-(define-method drop-entry-point world (row column)
-  (replace-grid-location self row column (new launchpad)))
+;; (define-method drop-entry-point world (row column)
+;;   (replace-grid-location self row column (new launchpad)))
 
-;;; Convenience macro for defining worlds:
+;; ;;; Convenience macro for defining worlds:
 
-(defmacro defworld (name &body args)
-  "Define a world named NAME, with the fields ARGS as in a normal
-prototype declaration. This is a convenience macro for defining new
-worlds."
-  `(define-prototype ,name (:super "BLOCKY:WORLD")
-     ,@args))
+;; (defmacro defworld (name &body args)
+;;   "Define a world named NAME, with the fields ARGS as in a normal
+;; prototype declaration. This is a convenience macro for defining new
+;; worlds."
+;;   `(define-prototype ,name (:super "BLOCKY:WORLD")
+;;      ,@args))
 
 ;;; Missions and Goals
 
@@ -1142,7 +1142,7 @@ worlds."
 
 (defvar *mission* nil)
 
-(define-prototype mission ()
+(define-block mission
   name 
   title
   description
@@ -1182,18 +1182,18 @@ worlds."
 	(maphash #'check variables)
 	(return-from checking t)))))
 	       
-(define-method begin mission (player)
-  (assert (object-p player))
-  (with-fields (name description address universe variables) self
-    (assert (listp address))
-    (when (null universe)
-      (setf universe (if (null *universe*)
-			 (new universe)
-			 *universe*)))
-    ;; this probably works better if you have already set up a universe.
-    (setf *mission* self)
-    (play universe :player player :address address)
-    (do-prologue self)))
+;; (define-method begin mission (player)
+;;   (assert (object-p player))
+;;   (with-fields (name description address universe variables) self
+;;     (assert (listp address))
+;;     (when (null universe)
+;;       (setf universe (if (null *universe*)
+;; 			 (new universe)
+;; 			 *universe*)))
+;;     ;; this probably works better if you have already set up a universe.
+;;     (setf *mission* self)
+;;     (play universe :player player :address address)
+;;     (do-prologue self)))
       
 (define-method do-prologue mission ())
 
