@@ -1,3 +1,6 @@
+* TODO Quickie status video lightning talk
+
+
 * BETA RELEASE EXECUTION PLAN
 ** TODO [#A] Complete the core language model (define blocks and methods visually)
 *** TODO [#A] Merge sprites into basic block type
@@ -17,6 +20,7 @@
 ** TODO [#C] System browserd
 
 * BUGS
+** TODO [#A] Fix listener prompt not laying out after character insertion
 ** TODO [#A] Fix STRING not being set properly without quotes
 ** TODO [#A] Fix missing labels on defblock's child entries (eval going wrong?)
 ** TODO [#B] Fix ENTER%%ENTRY being called twice because of ON-LOSE-FOCUS

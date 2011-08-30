@@ -188,6 +188,8 @@
 	      :documentation "A cons (X . Y) of widget location at moment of click.")
   (click-start-block :initform nil
 		     :documentation "The block indicated at the beginning of a drag.")
+  (drag-origin :initform nil
+	       :documentation "The parent block originally holding the dragged block.")
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
@@ -392,12 +394,13 @@ block found, or nil if none is found."
 	(on-focus block)))))
 
 (define-method begin-drag shell (mouse-x mouse-y block)
-  (with-fields (drag inputs buffer drag-start ghost drag-offset) self
+  (with-fields (drag drag-origin inputs buffer drag-start ghost drag-offset) self
     (with-buffer buffer
       ;; save the block, possibly producing a new one
       (setf drag (find-uuid block))
       (when (find-parent drag)
-	(unplug-from-parent block))
+	(setf drag-origin (find-parent drag))
+      	(unplug-from-parent block))
       (let ((dx (field-value :x block))
 	    (dy (field-value :y block))
 	    (dw (field-value :width block))
@@ -473,30 +476,29 @@ block found, or nil if none is found."
 (define-method on-release shell (x y &optional button)
   (with-fields 
       (drag-offset drag-start hover buffer selection drag click-start
-	      click-start-block focused-block modified) self
+	      click-start-block drag-origin focused-block modified) self
     (if drag
 	;; we're dragging
 	(destructuring-bind (x0 . y0) drag-offset
 	  (let ((drag-parent (get-parent drag))
 		(drop-x (- x x0))
 		(drop-y (- y y0)))
-	    (when (can-escape drag)
-	      (when (and (not (null drag-parent))
-			 (not (object-eq buffer drag-parent)))
-		(unplug-from-parent drag))
-	      ;; where are we dropping?
-	      (if (null hover)
-		;; dropping on background
-		(add-block self drag drop-x drop-y)
-		;; dropping on another block
-		(when (not (accept hover drag))
-		  ;; hovered block did not accept drag. 
-		  ;; drop block if it wants to be dropped
-		    (add-block self drag drop-x drop-y)))
+	    (if (not (can-escape drag))
+		;; put back in halo or wherever
+		(add-block drag-origin drag drop-x drop-y)
+		;; ok, drop. where are we dropping?
+		(if (null hover)
+		    ;; dropping on background
+		    (add-block self drag drop-x drop-y)
+		    ;; dropping on another block
+		    (when (not (accept hover drag))
+		      ;; hovered block did not accept drag. 
+		      ;; drop block if it wants to be dropped
+		      (add-block self drag drop-x drop-y))))
 	    ;; select the dropped block
-	      (progn 
-		(select self drag)
-		(setf focused-block (find-uuid drag))))))
+	    (progn 
+	      (select self drag)
+	      (setf focused-block (find-uuid drag)))))
 	;;
 	;; we're clicking instead of dragging
 	(progn
@@ -514,6 +516,7 @@ block found, or nil if none is found."
 	    (setf click-start nil))))
     (setf drag-start nil
 	  drag-offset nil
+	  drag-origin nil
 	  drag nil)
     (invalidate-layout buffer)))
 

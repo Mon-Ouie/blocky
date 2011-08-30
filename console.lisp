@@ -1639,19 +1639,10 @@ control the size of the individual frames or subimages."
 
 ;;; Loading/saving variables
 
-(defun make-variable-resource (name)
-  (assert (and (symbolp name)
-	       (boundp name)))
-  (make-resource :name name
-		 :type :variable
-		 :data (serialize (symbol-value name))))
-
-(defun load-variable-resource (resource)
-  (assert (eq :variable (resource-type resource)))
-  (let ((name (resource-name resource)))
-    (message "Setting variable: ~S..." name)
-    (setf (symbol-value name)
-	  (resource-data resource))))
+(defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
+*buffers* *screen-height* *world* *blocks* *dt* *pointer-x*
+*pointer-y* *trash* *resizable* *window-title* *buffer* *system*
+*persistent-variables*))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
 *buffers* *screen-height* *world* *blocks* *dt* *pointer-x*
@@ -1666,6 +1657,22 @@ control the size of the individual frames or subimages."
 
 (defun persistent-variables-file (&optional (project *project*))
   (find-project-file project *persistent-variables-file-name*))
+
+(defun make-variable-resource (name)
+  (assert (and (symbolp name)
+	       (boundp name)))
+  (assert (member name *safe-variables*))
+  (make-resource :name name
+		 :type :variable
+		 :data (serialize (symbol-value name))))
+
+(defun load-variable-resource (resource)
+  (assert (eq :variable (resource-type resource)))
+  (let ((name (resource-name resource)))
+    (assert (member name *safe-variables*))
+    (message "Setting variable: ~S..." name)
+    (setf (symbol-value name)
+	  (resource-data resource))))
 
 (defun save-variables (&optional (variables *persistent-variables*))
   (with-standard-io-syntax
