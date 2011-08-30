@@ -96,7 +96,7 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (tags :initform nil)
   (temporary :initform nil)
-  (methods :initform '(:make-reference :duplicate :make-sibling :discard))
+  (methods :initform '(:make-reference :duplicate :make-sibling))
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)

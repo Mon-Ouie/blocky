@@ -103,10 +103,10 @@
       (:label "Configure dance pad" :action :configure-dance-pad)))
     (:label "Help"
      :inputs
-     ((:label "General help" :action :general-help)
+     ((:label "Copyright notice" :action :show-copyright-notice)
+      (:label "General help" :action :general-help)
       (:label "Examples" :action :show-examples)
-      (:label "Language Reference" :action :language-reference)
-      (:label "Copyright notice" :action :show-copyright-notice)))))
+      (:label "Language Reference" :action :language-reference)))))
     
 (define-block system
   (type :initform :system)

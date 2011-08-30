@@ -1,10 +1,11 @@
-* TODO Quickie status video lightning talk
-** TODO copyright notice
-** TODO trash
-** TODO listener
+* TODO Lightning talk
+** TODO hello and welcome 
+** TODO brief demo (smalltalk borrow)
+** TODO copyright notice; trash it with halo
+** TODO listener with history
 ** TODO lists of numbers and stuff
 ** TODO colors
-** TODO halos for resizing
+** TODO halos for resizing, menus, references
 ** TODO turtle
 
 * BETA RELEASE EXECUTION PLAN
@@ -23,7 +24,7 @@
 ** TODO [#B] Audio test widget ("left, right")
 ** TODO [#C] Basic context-sensitive help
 *** TODO explanatory tooltips
-** TODO [#C] System browserd
+** TODO [#C] System browser
 
 * BUGS
 ** TODO [#A] Fix listener prompt not laying out after character insertion
