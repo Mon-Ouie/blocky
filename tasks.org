@@ -4,8 +4,8 @@
 *** TODO [#A] Test sprites with worlds
 *** TODO [#B] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
 ** TODO [#A] Implement basic blocks library
-** TODO [#A] Restore basic collision detection functionality
-** TODO [#B] Ensure full and proper functioning of halos
+** TODO [#A] Ensure full and proper functioning of halos
+** TODO [#B] Restore basic collision detection functionality
 ** TODO [#B] Fix as much of the buglist as possible
 ** TODO [#B] Menus/dialogs for all basic project save/load stuff
 *** TODO "empty trash before save?" dialog

@@ -38,7 +38,7 @@
 
 ;; Now we define him as a sprite.
 
-(defsprite blocky
+(define-block blocky
   :image "blocky"
   :default-events
   '(((:up) (move :north 5))

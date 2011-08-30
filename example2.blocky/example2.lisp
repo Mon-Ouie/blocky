@@ -27,7 +27,7 @@
 (defresource 
     (:name "blocky" :type :image :file "blocky.png"))
 
-(defsprite blocky
+(define-block blocky
   :image "blocky"
   :default-events
   '(((:up) (move :north 5))
@@ -52,7 +52,7 @@
     (:name "blue-dot" :type :image :file "blue-dot.png")
     (:name "woom" :type :sample :file "woom.wav" :properties (:volume 30)))
 
-(defsprite blue-dot
+(define-block blue-dot
   :image "blue-dot"
   :x 400 :y 245
   :steps 0 

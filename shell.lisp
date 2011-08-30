@@ -483,7 +483,8 @@ block found, or nil if none is found."
 	  ;; where are we dropping?
 	  (if (null hover)
 	      ;; dropping on background
-	      (add-block self drag)
+	      (when (can-escape drag)
+		(add-block self drag))
 	      ;; dropping on another block
 	      (when (not (accept hover drag))
 		;; hovered block did not accept drag. 

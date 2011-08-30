@@ -110,24 +110,20 @@
 ;;   (when (eq :block (field-value :type ob))))
 
 
-;;; Block locations
+;; ;;; Block locations
 
-(define-method grid-coordinates block ()
-  (values (truncate (/ %y (field-value :tile-size *world*)))
-	  (truncate (/ %x (field-value :tile-size *world*)))))
+;; (define-method grid-coordinates block ()
+;;   (values (truncate (/ %y (field-value :tile-size *world*)))
+;; 	  (truncate (/ %x (field-value :tile-size *world*)))))
 
-(define-method xy-coordinates block ()
-  (values %x %y))
+;; (define-method xy-coordinates block ()
+;;   (values %x %y))
 
-(define-method coordinates block ()
-  (values %x %y %z))
+;; (define-method coordinates block ()
+;;   (values %x %y %z))
 
 ;; ;;; Layout
 
-;; (define-method layout block ()
-;;   (with-fields (height width image) self
-;;     (setf height (image-height image))
-;;     (setf width (image-width image))))
 
 ;(define-method layout block ())
 

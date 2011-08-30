@@ -1106,12 +1106,12 @@ PLAYER as the player."
 
 ;; ;;; Convenience macro for defining worlds:
 
-;; (defmacro defworld (name &body args)
-;;   "Define a world named NAME, with the fields ARGS as in a normal
-;; prototype declaration. This is a convenience macro for defining new
-;; worlds."
-;;   `(define-prototype ,name (:super "BLOCKY:WORLD")
-;;      ,@args))
+(defmacro defworld (name &body args)
+  "Define a world named NAME, with the fields ARGS as in a normal
+prototype declaration. This is a convenience macro for defining new
+worlds."
+  `(define-prototype ,name (:super "BLOCKY:WORLD")
+     ,@args))
 
 ;;; Missions and Goals
 

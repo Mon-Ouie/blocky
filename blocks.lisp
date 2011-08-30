@@ -1087,22 +1087,29 @@ area is drawn. If DARK is non-nil, paint a darker region."
 ;;     (incf height (dash 2))
 ;;     (incf width (dash 2))))
 
-(define-method layout block () 
-  (with-fields (height width label) self
-    (with-field-values (x y inputs) self
-      (let* ((left (+ x (label-width self)))
-	     (max-height (font-height *font*))
-	     (dash (dash 1)))
-	(dolist (input inputs)
-	  (move-to input (+ left dash) y)
-	  (layout input)
-	  (setf max-height (max max-height (field-value :height input)))
-	  (incf left (dash 1 (field-value :width input))))
-	;; now update own dimensions
-	(setf width (dash 1 (- left x)))
-	(setf height (+ dash (if (null inputs)
-				 dash 0) max-height))))))
+(define-method layout-as-image block ()
+  (with-fields (height width image) self
+    (setf height (image-height image))
+    (setf width (image-width image))))
 
+(define-method layout block () 
+  (if %image 
+      (layout-as-image self)
+      (with-fields (height width label) self
+	(with-field-values (x y inputs) self
+	  (let* ((left (+ x (label-width self)))
+		 (max-height (font-height *font*))
+		 (dash (dash 1)))
+	    (dolist (input inputs)
+	      (move-to input (+ left dash) y)
+	      (layout input)
+	      (setf max-height (max max-height (field-value :height input)))
+	      (incf left (dash 1 (field-value :width input))))
+	    ;; now update own dimensions
+	    (setf width (dash 1 (- left x)))
+	    (setf height (+ dash (if (null inputs)
+				     dash 0) max-height)))))))
+  
 (define-method draw-expression block (x0 y0 segment type)
   (with-fields (height input-widths) self
     (let ((dash *dash*)
@@ -1191,12 +1198,14 @@ area is drawn. If DARK is non-nil, paint a darker region."
 
 (defparameter *hover-color* "red")
 
-(define-method draw-hover block ()
-  (with-fields (x y width height inputs) self
-    (draw-patch self x y (+ x *dash* width) (+ y *dash* height)
-	      :color *hover-color*)
-    (dolist (input inputs)
-      (draw input))))
+(define-method draw-hover block ())
+
+;; (define-method draw-hover block ()
+;;   (with-fields (x y width height inputs) self
+;;     (draw-patch self x y (+ x *dash* width) (+ y *dash* height)
+;; 	      :color *hover-color*)
+;;     (dolist (input inputs)
+;;       (draw input))))
 
 (define-method update-image-dimensions block ()
   (with-fields (image height width scale-x scale-y) self

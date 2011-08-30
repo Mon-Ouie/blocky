@@ -43,7 +43,7 @@
 (defun dot-image (n)
   (nth n *dots*))
 
-(defsprite tile
+(define-block tile
   (image :initform (random-choose *wood-tiles*))
   (methods :initform '(:flip))
   (dot :initform (random 4))
