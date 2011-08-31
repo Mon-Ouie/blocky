@@ -282,7 +282,7 @@
 		:color (ecase state
 			 (:active *active-prompt-color*)
 			 (:inactive (if (null parent)
-					*inactive-prompt-color*
+					"purple"
 					(find-color parent :shadow))))))))
 
 (define-method draw-indicators prompt (state)
@@ -405,7 +405,8 @@
       ;; draw the label string 
       (assert (stringp text-color))
       (unless nolabel 
-	(draw-label self)
+	(when (plusp (length %label))
+	  (draw-label self))
 	;; draw shaded area for input
 	(draw-input-area self :inactive)
 	;; draw indicators
@@ -442,9 +443,9 @@
 		   (max *minimum-entry-line-width*
 			(font-text-width line *font*))))))
 
-;; (define-method on-lose-focus entry ()
-;;   ;; update the entry value if the user mouses away
-;;   (enter self))
+(define-method on-lose-focus entry ()
+  ;; update the entry value if the user mouses away
+  (enter self))
 
 ;;; Allow dragging the parent block more easily
 
@@ -510,11 +511,13 @@
   (verify value)
   (setf %label label)
   (setf %inputs (list value))
+  (pin self)
   (update-parent-links self))
 
 (define-method accept socket (thing)
   (verify thing)
-  (setf %inputs (list thing)))
+  (setf %inputs (list thing))
+  (update-parent-links self))
 
 (define-method evaluate socket ()
   (when (first %inputs)

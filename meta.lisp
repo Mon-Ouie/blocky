@@ -60,29 +60,48 @@ recompilation."
     (pin ref) ;; don't allow ref to be removed
     (setf %inputs (list ref))))
 
+;;; Defining blocks visually
+
 (define-visual-macro 
-    (define-block tree
-      (label :initform "define block")
-      (expanded :initform t))
+    (define-block tree)
     ;; spit out a define-block
     (destructuring-bind (name super fields) 
 	(mapcar #'recompile %inputs)
-      (let ((block-name (make-symbol (first name)))
-	    (super (make-prototype-id (first super))))
-	(append (list 'define-block (list block-name :super super))
-		fields))))
+      (append (list 'define-block 
+		    (make-symbol name)
+		    :super (make-prototype-id super))
+	      fields)))
 
 (define-method initialize define-block ()
   (super%initialize 
    self
+   :label "define block"
    :locked t
    :expanded t
    :inputs
    (list
-    (new string :label "name")
-    (new tree :label "options"
-	      :inputs (list (new string :value "block" :label "super")))
-    (new tree :label "fields" :inputs (list (new list))))))
+    (new string :label "named:")
+    (new string :value "block" :label "inherit from:")
+    (new tree :label "fields" :expanded t :locked t :inputs (list (new list))))))
+
+;;; Defining fields 
+
+(define-visual-macro (field block
+	    (category :initform :variables))
+	   (destructuring-bind (name value) 
+	       (mapcar #'recompile %inputs)
+	     (list name :initform value)))
+
+(define-method initialize field ()
+  (super%initialize self 
+		    (new string :label "name")
+		    (new socket :label "value")))
+
+(define-method accept field (thing)
+  (declare (ignore thing))
+  nil)
+
+;;; Arguments
 
 (define-visual-macro (argument block
 	    (category :initform :variables)
@@ -94,12 +113,9 @@ recompilation."
 	       (mapcar #'recompile %inputs)
 	     (list (make-symbol name) type :default default)))
 
-(define-visual-macro (method tree
-	    (inputs :initform (list 
-			       (new string :label "name")
-			       (new tree :label "for block"
-					 :inputs (list (new string :value "name" :label "")))
-			       (new tree :label "definition" :inputs (list (new block))))))
+;;; Defining methods
+
+(define-visual-macro (method tree)
 	   (destructuring-bind (name prototype definition) 
 	       (mapcar #'recompile %inputs)
 	     (let ((method-name (make-symbol (first name)))
@@ -107,18 +123,17 @@ recompilation."
 	       (append (list 'define-method method-name prototype-id)
 		       (first definition)))))
 
-(define-visual-macro (field block
-	    (category :initform :variables)
-	    (inputs :initform
-		    (list (new string :label "name")
-			  (new socket :label "value"))))
-	   ;;
-	   (destructuring-bind (name value) 
-	       (mapcar #'recompile %inputs)
-	     (list name :initform value)))
+(define-method initialize method ()
+  (super%initialize self
+		    :locked t
+		    :expanded t
+		    :label "define method"
+		    :inputs
+		    (list
+		     (new string :label "name")
+		     (new tree :label "for block"
+			       :inputs (list (new string :value "name" :label "")))
+		     (new tree :label "definition" :inputs (list (new block))))))
 
-(define-method accept field (thing)
-  (declare (ignore thing))
-  nil)
 
 ;;; meta.lisp ends here

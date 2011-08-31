@@ -1,6 +1,7 @@
 * BETA RELEASE EXECUTION PLAN
 ** TODO [#A] Complete the core language model (define blocks and methods visually)
 *** TODO define block
+**** TODO make this into a horizontal layout for the main args, vert as-is for the fields (tighter layout)
 *** TODO define method
 *** TODO [#A] Test sprites with worlds
 *** TODO [#B] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 

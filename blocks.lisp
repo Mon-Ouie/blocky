@@ -1516,11 +1516,14 @@ and MOUSE-Y identify a point inside the block (or input block.)"
   (setf %frozen nil)
   (mapc #'unpin %inputs))
 
-(define-method evaluate list () 
+(define-method evaluate list () self)
+
+(define-method recompile list () 
+  (mapcar #'recompile %inputs))
   "Return the computed result of this block.  By default, all the
 inputs are evaluated."
-  (prog1 self
-    (evaluate-inputs self)))
+  ;; (prog1 self
+  ;;   (evaluate-inputs self)))
 
 (defparameter *null-display-string* "...")
 
@@ -1528,9 +1531,9 @@ inputs are evaluated."
   (assert (member orientation '(:horizontal :vertical)))
   (setf %orientation orientation))
 
-(define-method on-tap list (x y)
-  (dolist (block %inputs)
-    (evaluate block)))
+;; (define-method on-tap list (x y)
+;;   (dolist (block %inputs)
+;;     (evaluate block)))
 
 (define-method accept list (input &optional prepend)
   (assert (blockyp input))

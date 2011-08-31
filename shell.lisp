@@ -244,7 +244,7 @@
     ;; run command line across bottom
     (layout %command-line)
     ;;
-    (update-layout %buffer)))
+    (update-layout %buffer t)))
 
 (define-method on-update shell ()
   ;; run buffer blocks every frame
