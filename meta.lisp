@@ -67,12 +67,13 @@ recompilation."
 (define-visual-macro 
     (define-block list)
     ;; spit out a define-block
-    (destructuring-bind (name super fields) 
-	(mapcar #'recompile %inputs)
-      (append (list 'define-block 
-		    (make-symbol name)
-		    :super (make-prototype-id super))
-	      fields)))
+    (let ((fields (mapcar #'recompile (rest %inputs))))
+      (destructuring-bind (name value)
+	  (mapcar %recompile (field-value :inputs (first %inputs)))
+	(append (list 'define-block 
+		      (make-symbol name)
+		      :super (make-prototype-id super))
+		fields))))
 
 (define-method initialize define-block ()
   (let ((header
@@ -105,8 +106,8 @@ recompilation."
 
 (define-method initialize field ()
   (super%initialize self 
-		    (new string :label "name")
-		    (new socket :label "value")))
+		    (new string :label "field")
+		    (new socket :label "default")))
 
 (define-method accept field (thing)
   (declare (ignore thing))

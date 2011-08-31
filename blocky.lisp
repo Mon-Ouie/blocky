@@ -36,7 +36,7 @@
 *frequency* *output-chunksize* *output-channels* halt-sample *dt*
 *message-hook-functions* add-to-list defproject run start stop
 *update-function* *default-world-axis-size* defsprite *target*
-*blocks* *buffer* *default-world-z-size* install-blocks
+*blocks* *buffer* *default-world-z-size* install-blocks shut-down start-up
 seconds->frames keyboard-held-p keyboard-pressed-p holding-control
 *use-nominal-screen-size* keyboard-released-p *edit* callf with-font
 keyboard-time-in-current-state pretty-symbol-string *pointer-x*

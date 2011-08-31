@@ -1690,16 +1690,17 @@ inputs are evaluated."
   (super%initialize self)
   (setf %target target)
   (setf %active-on-click active-on-click)
-  (let ((schema (method-schema (find-prototype prototype) method))
-	(inputs nil)
-	(proto (or prototype (object-name (find-super target)))))
+  (let* ((schema (method-schema (find-prototype prototype) method))
+	 (inputs nil)
+	 (proto (or prototype (object-name (find-super target)))))
     (dolist (entry schema)
-      (push (new entry
-		 :value (schema-option entry :default)
-		 :parent (find-uuid self)
-		 :type-specifier (schema-type entry)
-		 :options (schema-options entry)
-		 :label (concatenate 'string
+      (push (clone (if (eq 'string (schema-type entry))
+		       "BLOCKY:STRING" "BLOCKY:ENTRY")
+		   :value (schema-option entry :default)
+		   :parent (find-uuid self)
+		   :type-specifier (schema-type entry)
+		   :options (schema-options entry)
+		   :label (concatenate 'string
 				    ":" ;; mimic the keyword arguments visually
 				    (string-downcase (symbol-name (schema-name entry)))))
 	    inputs))

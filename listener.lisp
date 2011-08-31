@@ -168,6 +168,7 @@
 
 (define-method history-item prompt (n)
   (assert (integerp n))
+  (assert (not (minusp n)))
   (nth (- (queue-count %history) n)
        (queue-head %history)))
 
