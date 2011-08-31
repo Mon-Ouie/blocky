@@ -22,6 +22,7 @@
 ** TODO [#C] System browser
 
 * BUGS
+** TODO [#A] Fix string entry printing with extra quotes
 ** TODO [#A] Fix halo handles not working after first move of object w/halo
 *** TODO Halo is in front after pickup/putdown. it should hit-test its children
 ** TODO [#A] Fix layout lags, not updating in list after accept
