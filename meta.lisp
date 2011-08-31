@@ -1,4 +1,4 @@
-w string;;; meta.lisp --- visual lisp macros for a blocky-in-blocky funfest
+;;; meta.lisp --- visual lisp macros for a blocky-in-blocky funfest
 
 ;; Copyright (C) 2011  David O'Toole
 
