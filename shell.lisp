@@ -433,9 +433,11 @@ block found, or nil if none is found."
 		     (> (distance x y x1 y1)
 			*minimum-drag-distance*)
 		     (can-pick click-start-block))
-	    (begin-drag self x y (pick click-start-block))
-	    (setf click-start nil)
-	    (setf click-start-block nil)))))))
+	    (let ((drag (pick click-start-block)))
+	      (move-to drag x y)
+	      (begin-drag self x y drag)
+	      (setf click-start nil)
+	      (setf click-start-block nil))))))))
 
 (define-method on-point shell (mouse-x mouse-y)
   (with-fields (inputs hover highlight click-start drag-offset

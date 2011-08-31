@@ -35,13 +35,12 @@ recompilation."
 	 (eval (recompile self)))))
 
 (define-visual-macro (prog0 list
-			    (category :initform :structure)
-			    (inputs :initform (list (new reference))))
+			    (category :initform :structure))
 		     (mapc #'recompile %inputs))
 
 (define-method initialize prog0 (&rest args)
   (initialize%%block self)
-  (assert (blockyp (first %inputs)))
+  (setf %inputs (list (new reference)))
   (pin (first %inputs)))
 
 (define-visual-macro (quote list
