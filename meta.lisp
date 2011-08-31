@@ -34,28 +34,26 @@ recompilation."
        (define-method evaluate ,name ()
 	 (eval (recompile self)))))
 
-(define-visual-macro (prog0 list
-			    (category :initform :structure))
-		     (mapc #'recompile %inputs))
-
-(define-method initialize prog0 (&rest args)
-  (initialize%%block self)
-  (setf %inputs (list (new reference)))
-  (pin (first %inputs)))
-
 (define-visual-macro (quote list
 			    (category :initform :operators))
 		     `(quote ,(mapcar #'recompile %inputs)))
 
+;;; Sending to a referenced object 
+
 (define-visual-macro 
     (with-target list
-      (inputs :initform (list (new socket :label "send to:")
-			      (new list)))
       (category :initform :structure))
     (destructuring-bind (target body) 
 	(mapcar #'recompile %inputs)
       `(with-target ,target
 	 ,body)))
+
+(define-method initialize with-target ()
+  (super%initialize 
+   self
+   (new reference :label "send to:")
+   (new list))
+  (freeze self))
 
 (define-visual-macro (define-block tree
 	    (label :initform "define block")

@@ -39,6 +39,8 @@
 
 (in-package :blocky)
 
+(defvar *debug-on-error* nil)
+
 (defvar *copyright-notice*
 "Welcome to the Blocky programming language.
 Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 by David T O'Toole

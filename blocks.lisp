@@ -1196,14 +1196,14 @@ area is drawn. If DARK is non-nil, paint a darker region."
 
 (defparameter *hover-color* "red")
 
-(define-method draw-hover block ())
+;; (define-method draw-hover block ())
 
-;; (define-method draw-hover block ()
-;;   (with-fields (x y width height inputs) self
-;;     (draw-patch self x y (+ x *dash* width) (+ y *dash* height)
-;; 	      :color *hover-color*)
-;;     (dolist (input inputs)
-;;       (draw input))))
+(define-method draw-hover block ()
+  (with-fields (x y width height inputs) self
+    (draw-patch self x y (+ x *dash* width) (+ y *dash* height)
+	      :color *hover-color*)
+    (dolist (input inputs)
+      (draw input))))
 
 (define-method update-image-dimensions block ()
   (with-fields (image height width scale-x scale-y) self
@@ -1497,9 +1497,20 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 
 (define-block list
   (dash :initform 2)
+  (frozen :initform nil)
   (orientation :initform :vertical)
   (operation :initform :empty-list)
   (category :initform :structure))
+
+(define-method is-frozen list () %frozen)
+
+(define-method freeze list ()
+  (setf %frozen t)
+  (mapc #'pin %inputs))
+
+(define-method unfreeze list ()
+  (setf %frozen nil)
+  (mapc #'unpin %inputs))
 
 (define-method evaluate list () 
   "Return the computed result of this block.  By default, all the
@@ -1518,24 +1529,25 @@ inputs are evaluated."
     (evaluate block)))
 
 (define-method accept list (input &optional prepend)
-  (verify input)
-  (with-fields (inputs) self
-    (if inputs
-	;; we've got inputs. add it to the list (prepending or not)
-	(prog1 t
-	  (assert (is-valid-connection self input))
-	  ;; set parent if necessary 
-	  (when (get-parent input)
-	    (unplug-from-parent input))
-	  (set-parent input self)
-	  (setf inputs 
-		(if prepend
-		    (append (list input) inputs)
-		    (append inputs (list input)))))
-    	;; no inputs yet. make a single-element inputs list
-	(prog1 input 
-	  (setf inputs (list input))
-	  (set-parent input self)))))
+  (when (not %frozen)
+    (assert (blockyp input))
+    (with-fields (inputs) self
+      (if inputs
+	  ;; we've got inputs. add it to the list (prepending or not)
+	  (prog1 t
+	    (assert (is-valid-connection self input))
+	    ;; set parent if necessary 
+	    (when (get-parent input)
+	      (unplug-from-parent input))
+	    (set-parent input self)
+	    (setf inputs 
+		  (if prepend
+		      (append (list input) inputs)
+		      (append inputs (list input)))))
+	  ;; no inputs yet. make a single-element inputs list
+	  (prog1 input 
+	    (setf inputs (list input))
+	    (set-parent input self))))))
 
 (define-method take-first list ()
   (with-fields (inputs) self
@@ -1569,14 +1581,13 @@ inputs are evaluated."
       (setf height (ldash line-height))
       (setf width (dash 8))
       (dolist (element inputs)
-;	(message "layout: ~S" (list x y0 width))
 	(move-to element (ldash x) y0)
 	(layout element)
-	(incf height (+ (ldash) (field-value :height element)))
+	(incf height (field-value :height element))
 	(incf y0 (field-value :height element))
 	(setf width (max width (field-value :width element))))
       (incf height (dash 1))
-      (incf width (dash 10))))))
+      (incf width (dash 3))))))
 
 (define-method layout-horizontally list ()
   (with-fields (x y height width inputs dash) self
@@ -1615,10 +1626,10 @@ inputs are evaluated."
 	  (draw each)))))
 
 (define-method initialize list (&rest blocks)
-  (apply #'super%initialize self blocks)
-  ;; allow them to be freely removed
-  (dolist (each %inputs)
-    (unpin each)))
+  (apply #'super%initialize self blocks))
+  ;; ;; allow them to be freely removed
+  ;; (dolist (each %inputs)
+  ;;   (unpin each)))
 
 (defmacro deflist (name &rest body)
   `(define-block (,name :super :list) ,@body))

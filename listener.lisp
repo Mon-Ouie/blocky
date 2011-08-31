@@ -53,7 +53,6 @@
   (pinned :initform t)
   (prompt-string :initform *default-prompt-string*)
   (category :initform :data)
-  (debug-on-error :iniform t)
   (history :documentation "A queue of strings containing the command history.")
   (history-position :initform 0))
 
@@ -141,7 +140,7 @@
       (setf %error-output
 	    (with-output-to-string (*standard-output*)
 	      (when sexp 
-		(if %debug-on-error
+		(if *debug-on-error*
 		    (do-sexp self sexp)
 		    (handler-case
 			(handler-bind (((not serious-condition)
@@ -177,10 +176,11 @@
  
 (define-method backward-history prompt ()
   (when %history 
-    (when (< %history-position (queue-count %history))
-      (setf %line (history-item self (progn (incf %history-position)
-					    %history-position)))
-      (setf %point (length %line)))))
+    (when (numberp %history-position)
+      (when (< %history-position (queue-count %history))
+	(setf %line (history-item self (progn (incf %history-position)
+					      %history-position)))
+	(setf %point (length %line))))))
 
 (define-method previous-line prompt ()
   (backward-history self))
@@ -570,10 +570,10 @@
   output)
 
 (define-method debug-on-error listener-prompt ()
-  (setf %debug-on-error t))
+  (setf *debug-on-error* t))
 
 (define-method print-on-error listener-prompt ()
-  (setf %debug-on-error nil))
+  (setf *debug-on-error* nil))
 
 (define-method initialize listener-prompt (&optional output)
   (super%initialize self)

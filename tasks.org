@@ -3,6 +3,7 @@
 *** TODO review vmacs.lisp and get basics working
 *** TODO define block
 *** TODO define method
+*** TODO simple scheduler: later-do
 *** TODO [#A] Test sprites with worlds
 *** TODO [#B] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
 ** TODO [#A] Implement basic blocks library
@@ -21,6 +22,8 @@
 ** TODO [#C] System browser
 
 * BUGS
+** TODO [#A] Fix list %frozen not working
+** TODO [#A] Fix first drag of object after creating halo causes jump in position 
 ** TODO [#A] Fix missing labels on defblock's child entries (eval going wrong?)
 ** TODO [#B] Fix crash when error in init file
 ** TODO [#B] Fix crashes with tab and shift-tab navigation
@@ -371,113 +374,6 @@ But the graph doesn't yet actually work, so we must continue.
 ** TODO re-release "Invader"!
 
 
-* TODO Review Visual language idea roadmap
-(02:23:25 PM) dto: did you see my new examples
-(02:23:26 PM) dto: of ioforms
-(02:23:32 PM) XORBS112: not yet
-(02:23:35 PM) dto: http://lispgamesdev.blogspot.com/
-(02:23:36 PM) dto: :)
-(02:23:45 PM) dto: they're designed to teach the engine.
-(02:23:57 PM) dto: but also tell a strangle little story.
-(02:24:29 PM) XORBS112: ha
-(02:29:34 PM) dto: now that things are coming together with ioforms i'm excited to make an actual new game after this blocky story
-(02:29:58 PM) XORBS112: is this running on opengl?
-(02:30:02 PM) dto: yes.
-(02:30:23 PM) dto: i still haven't figured out text.
-(02:30:32 PM) dto: and i'll have to rewrite some of the GUI stuff. but it should be ok.
-(02:31:10 PM) XORBS112: I'll be interested to see what you do about GUI
-(02:31:25 PM) XORBS112: so far I haven't had much luck with that
-(02:31:31 PM) dto: its going to end up looking substantially like the blocks from my recent video
-(02:31:42 PM) dto: wher i demoed the blocks ui having some interesting tweaks to the scratch model
-(02:33:12 PM) XORBS112: afk for a sec
-(02:59:07 PM) XORBS112: back
-(03:11:38 PM) XORBS112: interesting
-(03:13:48 PM) XORBS112: have you taken a stab at networked games at all?
-(03:13:56 PM) dto: no.
-(03:15:07 PM) XORBS112: I was fairly proud of the job I did with the networking code in my new game
-(03:15:17 PM) dto: i think it would be great to be able to use my visual blocks stuff with your engine
-(03:15:26 PM) XORBS112: that would be cool
-(03:15:35 PM) XORBS112: my engine needs serious cleanup
-(03:15:49 PM) dto: i've been going through that cleanup process. it's painful, but eventually wonderful and awesome
-(03:15:58 PM) dto: now things are named consistently
-(03:16:04 PM) XORBS112: but I think Lisp could use a high quality game engine
-(03:16:15 PM) dto: much obsolete code has been removed. i'm at 6500 lines now.
-(03:16:18 PM) XORBS112: I think right now everyone's working in their own little corner
-(03:16:21 PM) dto: it was 9k before
-(03:16:24 PM) XORBS112: oh nice
-(03:16:28 PM) dto: i agree
-(03:16:32 PM) dto: (re corner
-(03:17:53 PM) XORBS112: I'll make a release of my game engine
-(03:17:57 PM) XORBS112: in the next week or so
-(03:18:00 PM) dto: cool.
-(03:18:03 PM) XORBS112: and let you try it out
-(03:18:16 PM) dto: there seemed to be lots of stuff. like physics and even skeletal stuff?
-(03:18:20 PM) XORBS112: yeah
-(03:18:23 PM) XORBS112: skeleton animation
-(03:18:27 PM) XORBS112: particle effects
-(03:18:45 PM) XORBS112: arbitrary swept sphere to triangle collisions
-(03:18:51 PM) XORBS112: portals
-(03:19:25 PM) dto: i think eventually it may be good to re-base my object system onto CLOS (wouldn't be hard) and add some extra compatibility so that my visual Lisp isn't just trapped in a game engine.
-(03:19:40 PM) dto: wow.
-(03:20:32 PM) XORBS112: yeah
-(03:20:34 PM) XORBS112: one question
-(03:20:53 PM) XORBS112: is how to interface different games with some sort of a common map system
-(03:21:13 PM) dto: what do you mean by map. game worlds?
-(03:21:21 PM) XORBS112: I mean like use your visual system
-(03:21:27 PM) XORBS112: as a way to write games
-(03:21:34 PM) XORBS112: in an engine-agnostic way
-(03:21:51 PM) dto: i think i can do that.
-(03:22:10 PM) XORBS112: the only thing is
-(03:22:18 PM) XORBS112: 2D and 3D games have fairly different requirements
-(03:22:26 PM) dto: aha :)
-(03:22:32 PM) dto: that's where the visual extensibility comes in.
-(03:22:32 PM) XORBS112: spanning that cognitive gap will be interesting
-(03:23:06 PM) dto: say you need a 3d world view sort of like the multi-view in blender, where you see plan/elevation etc
-(03:23:15 PM) dto: or whatever is "different from the needs of 2d"
-(03:23:29 PM) dto: what about an isometric final fantasy tactics like game? needs a different level editor.
-(03:23:34 PM) dto: so,
-(03:24:01 PM) dto: you could write IOFORMS widgets that bridge the gap.
-(03:25:40 PM) dto: i.e. IOFORMS programs are composed of blocks positioned in 3d opengl space, and they can draw themselves however they want using any opengl commands whatsoever, arranged in a display tree so that a block can choose how/whether to draw its children, or whether to draw an interesting data UI instead of show the child widgets, etc.
-(03:26:17 PM) dto: i dont imagine it would be that hard to get IOFORMS to display pop ups or whatever, in the same opengl context that you're using your game engine in.
-(03:27:00 PM) dto: for example what about all the procedural texturing/modeling buzz
-(03:27:31 PM) dto: a lot of that stuff (farbrausch / werkkzeug etc) are visually programmed procedural synthesis/remixing
-(03:27:35 PM) dto: that is where we need to go.
-(03:27:38 PM) XORBS112: ok
-(03:27:44 PM) dto: is this nuts, or making sense?
-(03:27:58 PM) XORBS112: I think it makes sense in terms of behavior
-(03:28:05 PM) XORBS112: but not necessarily in terms of performance
-(03:28:27 PM) XORBS112: I think 3D game engines have to bend over backwards a bit to get good performance
-(03:28:29 PM) dto: what are your specific concerns?
-(03:28:56 PM) XORBS112: vertex arrays
-(03:29:01 PM) XORBS112: for example
-(03:29:24 PM) dto: the blocks' methods compile to machine code like any other lisp, and its easy to add additional semantics so that blocks reduce to even smaller expressions
-(03:29:51 PM) XORBS112: I'm not sure if I understand how it works 100%
-(03:29:53 PM) dto: do you mean just a Lisp array of (x,y,z) points?
-(03:30:06 PM) XORBS112: which then gets passed to OpenGL
-(03:30:12 PM) XORBS112: and gets stored on teh GPU
-(03:30:43 PM) dto: i guess if something is too performance critical it could always have a hand-written version.
-(03:30:43 PM) XORBS112: in general, I think things are dealt with in more of a batch-like way
-(03:31:00 PM) XORBS112: I'm not sure how to deal with batches in your system
-(03:31:12 PM) XORBS112: I think that's the biggest difference
-(03:31:23 PM) dto: hmm, in that i'm going for scratch-like "live programming"?
-(03:31:36 PM) XORBS112: when everything is an individual object, that costs performance
-(03:31:51 PM) XORBS112: do we have one ioform per game world object?
-(03:31:59 PM) dto: no
-(03:32:35 PM) dto: if you were using ioforms as a visually programmable visual programming language "add-on" and not a game engine
-(03:33:22 PM) dto: probably what would be sufficient is to implement blocks that wrap your objects and worlds so that you can at least get at them. 
-(03:34:07 PM) dto: that way you can program in terms of them (and therefore implement custom editors in terms of them) .
-(03:34:21 PM) dto: now in my case here, I'm using ioforms objects as the game engine too. 
-(03:34:48 PM) XORBS112: ok
-(03:34:54 PM) dto: the little block character, the blue dot, and the gameworld itself are blocks. the gameworld defines its draw method to paint the background, then the sprites..etc)
-(03:34:58 PM) XORBS112: so I could use it as a scripting engine?
-(03:35:01 PM) dto: yeah.
-(03:35:06 PM) XORBS112: I think that would work
-(03:35:16 PM) XORBS112: it would require some refactoring on my part
-(03:35:20 PM) XORBS112: (which I need to do anyway)
-(03:35:59 PM) dto: keep me posted. i bet i could rework things to suit your concerns.
-(03:36:11 PM) dto: have you peeked at any source for a game
-(03:36:16 PM) dto:  mean my exampls?
-(03:36:40 PM) dto: https://github.com/dto/ioforms/blob/master/example2/example2.lisp
 
 ** TODO [#C] GAME IDEA: nested puzzle blox? got to drag your guy through various boxes of different sizes and shapes
 ***** use recursive collision detection of some kind, to enable boxes to only fit certain things

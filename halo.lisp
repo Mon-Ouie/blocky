@@ -66,6 +66,8 @@
 			:color "white"
 			:scale *handle-scale*
 			:background %color)))))
+
+(define-method draw-hover handle ())
 		
 (defmacro define-handle (name indicator &key (color "gray20"))
   (assert (symbolp name))
@@ -111,7 +113,9 @@
 (define-handle make-reference :reference)
 
 (define-method pick make-reference ()
-  (new reference %target))
+  (let ((ref (new reference %target)))
+    (prog1 ref
+      (move-to ref *pointer-x* *pointer-y*))))
 
 (define-method on-tap make-reference (x y)
   (drop self (pick self)))
