@@ -442,9 +442,9 @@
 		   (max *minimum-entry-line-width*
 			(font-text-width line *font*))))))
 
-(define-method on-lose-focus entry ()
-  ;; update the entry value if the user mouses away
-  (enter self))
+;; (define-method on-lose-focus entry ()
+;;   ;; update the entry value if the user mouses away
+;;   (enter self))
 
 ;;; Allow dragging the parent block more easily
 

@@ -1,20 +1,15 @@
-* TODO Lightning talk
-** TODO hello and welcome 
-** TODO brief demo (smalltalk borrow)
-** TODO copyright notice; trash it with halo
-** TODO listener with history
-** TODO lists of numbers and stuff
-** TODO colors
-** TODO halos for resizing, menus, references
-** TODO turtle
-
 * BETA RELEASE EXECUTION PLAN
 ** TODO [#A] Complete the core language model (define blocks and methods visually)
-*** TODO [#A] Merge sprites into basic block type
+*** TODO review vmacs.lisp and get basics working
+*** TODO define block
+*** TODO define method
+*** DONE [#A] Merge sprites into basic block type
+    CLOSED: [2011-08-31 Wed 04:11]
 *** TODO [#A] Test sprites with worlds
 *** TODO [#B] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
 ** TODO [#A] Implement basic blocks library
 ** TODO [#A] Ensure full and proper functioning of halos
+*** TODO [#A] collapse halo
 ** TODO [#B] Restore basic collision detection functionality
 ** TODO [#B] Fix as much of the buglist as possible
 ** TODO [#B] Menus/dialogs for all basic project save/load stuff
@@ -27,17 +22,20 @@
 ** TODO [#C] System browser
 
 * BUGS
-** TODO [#A] Fix listener prompt not laying out after character insertion
-** TODO [#A] Fix STRING not being set properly without quotes
 ** TODO [#A] Fix missing labels on defblock's child entries (eval going wrong?)
-** TODO [#B] Fix ENTER%%ENTRY being called twice because of ON-LOSE-FOCUS
+** DONE [#A] Fix listener prompt not laying out after character insertion
+   CLOSED: [2011-08-31 Wed 04:11]
+** DONE [#A] Fix STRING not being set properly without quotes
+   CLOSED: [2011-08-31 Wed 04:11]
+** DONE [#B] Fix ENTER%%ENTRY being called twice because of ON-LOSE-FOCUS
+   CLOSED: [2011-08-31 Wed 04:08]
+** TODO [#B] Fix crash when error in init file
+** TODO [#B] Fix crashes with tab and shift-tab navigation
 ** TODO [#C] Fix error handling: use error message bubbles with X close box and (backtrace) button?
 ** TODO [#C] Fix listener history errors
 ** TODO [#C] Fix Control-E etc not working in textbox
 ** TODO [#C] Fix not traversing line break with C-f and C-b
-** TODO [#C] Fix no blue dot movement in example2
-** TODO [#C] Fix crash when error in init file
-** TODO [#C] Fix crashes with tab and shift-tab navigation
+** TODO [#C] Get rid of example1/2 and renumber
 
 * CURRENT TASKS
 ** TODO [#B] collapse halo handle
@@ -686,4 +684,19 @@ But the graph doesn't yet actually work, so we must continue.
     CLOSED: [2011-08-28 Sun 22:09]
 *** DONE move
     CLOSED: [2011-08-28 Sun 22:09]
+** TODO Lightning talk
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-31 Wed 03:08
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+*** TODO hello and welcome 
+*** TODO brief demo (smalltalk borrow)
+*** TODO copyright notice; trash it with halo
+*** TODO listener with history
+*** TODO lists of numbers and stuff
+*** TODO colors
+*** TODO halos for resizing, menus, references
+*** TODO turtle
 

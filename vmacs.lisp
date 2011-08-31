@@ -1,4 +1,4 @@
-;;; vmacs.lisp --- visual lisp macros based on Blocky objects
+;;; meta.lisp --- visual lisp macros based on Blocky objects
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -108,4 +108,4 @@ block is recompiled."
   (declare (ignore thing))
   nil)
 
-;;; vmacs.lisp ends here
+;;; meta.lisp ends here
