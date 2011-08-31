@@ -493,7 +493,7 @@
 (defentry non-negative-integer (integer 0 *) 0)
 (defentry expression t nil)
 
-;;; Plain text entry
+;;; Plain text entry, as a string
 
 (defentry string stringp "")
 
@@ -505,6 +505,8 @@
   (assert (stringp sexp))
   (setf %value sexp))
  
+;; (define-method type-check string (datum) t)
+
 ;;; Block socket
 
 (defentry socket 

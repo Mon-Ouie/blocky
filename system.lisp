@@ -131,15 +131,6 @@
 (define-method create-project system ())
 
 (define-method open-existing-project system ())
-
-(define-method (do-define-block :category :system) system
-    ((name string :default "") 
-     (super string :default "block")
-     (fields list))
-  (eval `(define-block 
-	     ,(list (make-symbol name) 
-		    :super (make-prototype-id super))
-	     ,@fields)))
 	     
 (define-method save-changes system ()
   (save-project))

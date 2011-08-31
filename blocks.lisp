@@ -566,6 +566,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	   (null-block))
 	  ((blockyp sexp) ;; catch UUIDs etc
 	   sexp)
+	  ((stringp sexp)
+	   (new string :value sexp))
 	  ((is-action-spec sexp)
 	   (action-block sexp))
 	  ((is-list-spec sexp)
@@ -1689,7 +1691,8 @@ inputs are evaluated."
   (setf %target target)
   (setf %active-on-click active-on-click)
   (let ((schema (method-schema (find-prototype prototype) method))
-	(inputs nil))
+	(inputs nil)
+	(proto (or prototype (object-name (find-super target)))))
     (dolist (entry schema)
       (push (new entry
 		 :value (schema-option entry :default)
@@ -1702,17 +1705,18 @@ inputs are evaluated."
 	    inputs))
     (when inputs 
       (setf %inputs (nreverse inputs)))
-    (let ((category (method-option (find-prototype prototype)
+    (let ((category (method-option (find-prototype proto)
 				   method :category)))
       (when category (setf %category category))
       (setf %schema schema
-	    %prototype prototype
+	    %prototype proto
 	    %method method
 	    %label (or label (pretty-symbol-string method))))))
 
 (define-method draw send ()
   (with-fields (x y width height label inputs) self
-    (draw-patch self x y (+ x width) (+ y height))
+    (when %active-on-click
+      (draw-patch self x y (+ x width) (+ y height)))
     (let ((*text-base-y* (+ y (dash 1))))
       (draw-label-string self label "white")
       (dolist (each inputs)

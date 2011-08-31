@@ -1,4 +1,4 @@
-;;; meta.lisp --- visual lisp macros for a blocky-in-blocky funfest
+w string;;; meta.lisp --- visual lisp macros for a blocky-in-blocky funfest
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -78,12 +78,22 @@ recompilation."
   (let ((header
 	  (new send 
 	       :active-on-click nil
-	       :prototype "BLOCKY:SYSTEM"
+	       :prototype (object-name (find-super self))
 	       :method :do-define-block
 	       :label "define block"
-	       :target *system*)))
+	       :target self)))
     (super%initialize self header)
     (pin header)))
+
+(define-method (do-define-block :category :system) define-block
+    ((name string :default "") 
+     (super string :default "block"))
+  ;; skip leading widget
+  (let ((fields (mapcar #'recompile (rest %inputs))))
+    (eval `(define-block 
+	       ,(list (make-symbol name) 
+		      :super (make-prototype-id super))
+	     ,@fields))))
 
 ;;; Defining fields 
 
@@ -104,15 +114,19 @@ recompilation."
 
 ;;; Arguments
 
-(define-visual-macro (argument block
-	    (category :initform :variables)
-	    (inputs :initform 
-		    (list (new string :label "name")
-			  (new entry :label "type")
-			  (new string :label "default"))))
-	   (destructuring-bind (name type default) 
-	       (mapcar #'recompile %inputs)
-	     (list (make-symbol name) type :default default)))
+(define-visual-macro 
+    (argument block
+	      (category :initform :variables))
+    (destructuring-bind (name type default) 
+	(mapcar #'recompile %inputs)
+      (list (make-symbol name) type :default default)))
+
+(define-method initialize argument ()
+  (super%initialize 
+   (new string :label "name")
+   (new entry :label "type")
+   (new string :label "default")))
+
 
 ;;; Defining methods
 
