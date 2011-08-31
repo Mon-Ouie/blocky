@@ -32,9 +32,9 @@
     :top-left-triangle (0 0)
     :menu (1/5 0)
     :collapse (0 2/5)
-    :move (4/5 0)
+    :move (1 0)
     :resize (1 1)
-    :reference (0 4/5)
+    :reference (0 1)
     :close (0 0)
     :bottom-right-triangle (1 1)))
 

@@ -121,6 +121,8 @@
 	 (progn 
 	   ;; lay out the children as in a typical list
 	   (layout-vertically self)
+	   ;; add a little padding to the bottom
+	   (incf height (dash 4))
 	   ;; handle the case that the label is wider than the content.
 	   (when label 
 	     (setf width 

@@ -489,7 +489,9 @@ block found, or nil if none is found."
 	%drag-offset nil
 	%drag-origin nil
 	%drag nil))
-
+	;; %click-start-block nil
+	;; %click-start nil))
+  
 (define-method on-release shell (x y &optional button)
   (with-fields 
       (drag-offset drag-start hover buffer selection drag click-start
@@ -520,7 +522,7 @@ block found, or nil if none is found."
 	      (select self drag)
 	      (setf focused-block (find-uuid drag)))))
 	;;
-	;; we're clicking instead of dragging
+	;; we were clicking instead of dragging
 	(progn
 	  (setf selection nil)
 	  (when focused-block

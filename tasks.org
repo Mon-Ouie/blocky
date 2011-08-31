@@ -22,11 +22,15 @@
 ** TODO [#C] System browser
 
 * BUGS
-** TODO [#A] Fix list %frozen not working
-** TODO [#A] Fix first drag of object after creating halo causes jump in position 
-** TODO [#A] Fix missing labels on defblock's child entries (eval going wrong?)
-** TODO [#B] Fix crash when error in init file
-** TODO [#B] Fix crashes with tab and shift-tab navigation
+** TODO [#A] Fix halo handles not working after first move of object w/halo
+** DONE [#A] Fix list %frozen not working
+   CLOSED: [2011-08-31 Wed 06:41]
+** DONE [#A] Fix first drag of object after creating halo causes jump in position 
+   CLOSED: [2011-08-31 Wed 06:41]
+** DONE [#A] Fix missing labels on defblock's child entries (eval going wrong?)
+   CLOSED: [2011-08-31 Wed 06:41]
+** TODO [#C] Fix crash when error in init file
+** TODO [#C] Fix crashes with tab and shift-tab navigation
 ** TODO [#C] Fix error handling: use error message bubbles with X close box and (backtrace) button?
 ** TODO [#C] Fix listener history errors
 ** TODO [#C] Fix Control-E etc not working in textbox

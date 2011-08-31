@@ -1626,10 +1626,9 @@ inputs are evaluated."
 	  (draw each)))))
 
 (define-method initialize list (&rest blocks)
-  (apply #'super%initialize self blocks))
-  ;; ;; allow them to be freely removed
-  ;; (dolist (each %inputs)
-  ;;   (unpin each)))
+  (apply #'super%initialize self blocks)
+  ;; allow them to be freely removed
+  (unfreeze self))
 
 (defmacro deflist (name &rest body)
   `(define-block (,name :super :list) ,@body))
@@ -1665,7 +1664,7 @@ inputs are evaluated."
 
 (define-method accept send (block)
   ;; make these click-align instead
-  (verify block) 
+  (assert (blockyp block))
   nil)
 
 (defun-memo pretty-symbol-string (thing)
