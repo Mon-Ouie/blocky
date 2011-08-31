@@ -1,4 +1,4 @@
-;;; meta.lisp --- visual lisp macros based on Blocky objects
+;;; meta.lisp --- visual lisp macros for a blocky-in-blocky funfest
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -23,17 +23,21 @@
 (defmacro define-visual-macro ((name super &rest fields)
 		     &rest body)
   "Define a visual block element called NAME.
-The argument SUPER should be the name of the base prototype. FIELDS
-should be a list of field descriptors as given to
-`define-prototype'. The BODY forms are evaluated when the resulting
-block is recompiled."
+The argument SUPER should be the name of the base prototype of the
+resulting block. FIELDS should be a list of field descriptors as given
+to `define-prototype'. The BODY forms are evaluated when the resulting
+block is recompiled; therefore the BODY forms define the output of the
+recompilation."
     `(progn 
        (define-block (,name :super ,super) ,@fields)
        (define-method recompile ,name () ,@body)
        (define-method evaluate ,name ()
 	 (eval (recompile self)))))
 
-(define-visual-macro (prog0 list))
+(define-visual-macro (prog0 list
+			    (category :initform :structure)
+			    (inputs :initform (list (new reference))))
+		     (mapc #'recompile %inputs))
 
 (define-method initialize prog0 (&rest args)
   (initialize%%block self)
@@ -41,8 +45,8 @@ block is recompiled."
   (pin (first %inputs)))
 
 (define-visual-macro (quote list
-	    (category :initform :operators))
-	   `(quote ,(mapcar #'recompile %inputs)))
+			    (category :initform :operators))
+		     `(quote ,(mapcar #'recompile %inputs)))
 
 (define-visual-macro 
     (with-target list

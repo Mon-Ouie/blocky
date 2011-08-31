@@ -10,6 +10,7 @@
 ** TODO [#A] Implement basic blocks library
 ** TODO [#A] Ensure full and proper functioning of halos
 *** TODO [#A] collapse halo
+** TODO [#B] Merge windows.lisp with shell code 
 ** TODO [#B] Restore basic collision detection functionality
 ** TODO [#B] Fix as much of the buglist as possible
 ** TODO [#B] Menus/dialogs for all basic project save/load stuff

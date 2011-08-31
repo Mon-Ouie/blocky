@@ -37,18 +37,20 @@ Here is a quick guide to the various source files:
 - rgb.lisp: X11 color set
 - keys.lisp: SDL key symbol translation table
 - math.lisp: bresenham's and other algorithms
-- logic.lisp: some general CL tools from PAIP
+- logic.lisp: several CL tools adapted from PAIP
 - prototypes.lisp: a custom Self-like object system that the rest of the
-  system is built with.
+                   system is built with.
 - console.lisp: basic device and file operations for SDL, OpenGL, etc
 - blocks.lisp: core Blocky language model and default block behaviors
-- buffers.lisp: abstract collections of related blocks 
+- halo.lisp: generic GUI object handles, in the style of Squeak Morphic
 - windows.lisp: generic interactive viewer for buffers
+- text.lisp: generic emacs-like textbox editing control
 - trees.lisp: drop-down menus and tree tab widgets
-- listener.lisp: data entry and command processing
+- listener.lisp: Lisp data entry and command processing
 - system.lisp: treating the system and session like an object
-- things.lisp: sprites and such
 - worlds.lisp: places where gameplay happens
-- shell.lisp: drag-and-drop enabled editor shell for scripts
-- vmacs.lisp: visual macros
+- shell.lisp: drag-and-drop enabled editor shell
+- meta.lisp: visual macros for implementing blocky-in-blocky
 - library.lisp: standard blocks library
+
+This program is dedicated to our beloved Yogi, who died 2006-10-06.
