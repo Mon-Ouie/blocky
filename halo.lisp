@@ -110,14 +110,14 @@
 	    :width (- x0 x)
 	    :height (- y0 y))))
 
-(define-handle make-reference :reference)
+(define-handle program :reference)
 
-(define-method pick make-reference ()
+(define-method pick program ()
   (let ((ref (new prog0 %target)))
     (prog1 ref
       (move-to ref *pointer-x* *pointer-y*))))
 
-(define-method on-tap make-reference (x y)
+(define-method on-tap program (x y)
   (drop self (pick self)))
 
 (define-handle discard :close)
@@ -131,7 +131,7 @@
 ;;; The halo itself
 
 (defparameter *halo-handles* 
-  '(:evaluate :open-menu :move :resize :make-reference :discard :collapse))
+  '(:evaluate :open-menu :move :resize :program :discard :collapse))
 
 (define-block halo target)
 
@@ -142,6 +142,9 @@
 	 (mapcar #'(lambda (handle)
 		       (clone (make-prototype-id handle) target))
 		 *halo-handles*)))
+
+;; (define-method hit halo (x y)
+;;   (hit%%block self x y))
 
 (define-method layout halo ()
   (with-fields (x y width height) %target

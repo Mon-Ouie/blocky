@@ -87,6 +87,9 @@
 (:name "serif-italic-14" :type :ttf :file "DejaVuSerif-Italic.ttf" :properties (:size 14))
 (:name "serif-14" :type :ttf :file "DejaVuSerif.ttf" :properties (:size 14))
 
+(:name "down-triangle-open" :type :image :file "down-triangle-indicator.png" :properties (:filter :linear))
+(:name "down-triangle-closed" :type :image :file "down-triangle-indicator-solid.png" :properties (:filter :linear))
+(:name "asterisk" :type :image :file "asterisk.png" :properties (:filter :linear))
 (:name "asterisk" :type :image :file "asterisk.png" :properties (:filter :linear))
 (:name "menu" :type :image :file "menu.png" :properties (:filter :linear))
 (:name "collapse" :type :image :file "collapse.png" :properties (:filter :linear))

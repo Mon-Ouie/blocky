@@ -2141,12 +2141,15 @@ of the music."
 
 (defparameter *indicators* 
   '(:asterisk :bang :top-left-triangle :bottom-right-triangle
+    :down-triangle-open :down-triangle-closed
     :menu :collapse :move :resize :reference :close))
 
 (defparameter *indicator-images* 
   '(:asterisk "asterisk"
     :bang "bang"
     :top-left-triangle "top-left-triangle-indicator"
+    :down-triangle-open "down-triangle-open"
+    :down-triangle-closed "down-triangle-closed"
     :menu "menu"
     :collapse "collapse"
     :move "move"

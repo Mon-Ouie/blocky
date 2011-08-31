@@ -1,14 +1,15 @@
 * BETA RELEASE EXECUTION PLAN
 ** TODO [#A] Complete the core language model (define blocks and methods visually)
-*** TODO review vmacs.lisp and get basics working
+*** DONE review vmacs.lisp and get basics working
+    CLOSED: [2011-08-31 Wed 09:05]
 *** TODO define block
 *** TODO define method
-*** TODO simple scheduler: later-do
 *** TODO [#A] Test sprites with worlds
 *** TODO [#B] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
 ** TODO [#A] Implement basic blocks library
 ** TODO [#A] Ensure full and proper functioning of halos
-*** TODO [#A] collapse halo
+*** TODO [#A] collapsed windows
+** TODO [#B] simple scheduler: later-do
 ** TODO [#B] Merge windows.lisp with shell code 
 ** TODO [#B] Restore basic collision detection functionality
 ** TODO [#B] Fix as much of the buglist as possible
@@ -23,6 +24,7 @@
 
 * BUGS
 ** TODO [#A] Fix halo handles not working after first move of object w/halo
+*** TODO Halo is in front after pickup/putdown. it should hit-test its children
 ** TODO [#A] Fix layout lags, not updating in list after accept
 ** DONE [#A] Fix list %frozen not working
    CLOSED: [2011-08-31 Wed 06:41]

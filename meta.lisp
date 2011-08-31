@@ -36,6 +36,15 @@ recompilation."
        (define-method evaluate ,name ()
 	 (eval (recompile self)))))
 
+;;; Use quote to prevent evaluation
+
+(define-visual-macro (quote list
+			    (category :initform :operators))
+		     ;; i think this is wrong
+		     `(quote ,(mapcar #'recompile %inputs)))
+
+;;; Send the messages in a list to the referent of the first element
+
 (define-block (prog0 :super list)
   (category :initform :structure))
 
@@ -51,27 +60,29 @@ recompilation."
     (pin ref) ;; don't allow ref to be removed
     (setf %inputs (list ref))))
 
-(define-visual-macro (quote list
-			    (category :initform :operators))
-		     ;; i think this is wrong
-		     `(quote ,(mapcar #'recompile %inputs)))
+(define-visual-macro 
+    (define-block tree
+      (label :initform "define block")
+      (expanded :initform t))
+    ;; spit out a define-block
+    (destructuring-bind (name super fields) 
+	(mapcar #'recompile %inputs)
+      (let ((block-name (make-symbol (first name)))
+	    (super (make-prototype-id (first super))))
+	(append (list 'define-block (list block-name :super super))
+		fields))))
 
-(define-visual-macro (define-block tree
-	    (label :initform "define block")
-	    (locked :initform t)
-	    (expanded :initform t)
-	    (inputs :initform 
-		    (list (new string :label "name")
-			  (new tree :label "options"
-				    :inputs (list (new string :value "block" :label "super")))
-			  (new tree :label "fields" :inputs (list (new list))))))
-	   ;; spit out a define-block
-	   (destructuring-bind (name super fields) 
-	       (mapcar #'recompile %inputs)
-	     (let ((block-name (make-symbol (first name)))
-		   (super (make-prototype-id (first super))))
-	       (append (list 'define-block (list block-name :super super))
-		       fields))))
+(define-method initialize define-block ()
+  (super%initialize 
+   self
+   :locked t
+   :expanded t
+   :inputs
+   (list
+    (new string :label "name")
+    (new tree :label "options"
+	      :inputs (list (new string :value "block" :label "super")))
+    (new tree :label "fields" :inputs (list (new list))))))
 
 (define-visual-macro (argument block
 	    (category :initform :variables)
