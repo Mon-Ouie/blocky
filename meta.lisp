@@ -20,6 +20,8 @@
 
 (in-package :blocky)
 
+;;; Sending to a referenced object 
+
 (defmacro define-visual-macro ((name super &rest fields)
 		     &rest body)
   "Define a visual block element called NAME.
@@ -34,26 +36,25 @@ recompilation."
        (define-method evaluate ,name ()
 	 (eval (recompile self)))))
 
+(define-block (prog0 :super list)
+  (category :initform :structure))
+
+(define-method evaluate prog0 ()
+  (destructuring-bind (target &rest body) %inputs
+    (mapcar #'evaluate (rest %inputs))
+      (with-target (evaluate target)
+	(mapc #'evaluate body))))
+
+(define-method initialize prog0 (&optional target)
+  (super%initialize self)
+  (let ((ref (new reference target)))
+    (pin ref) ;; don't allow ref to be removed
+    (setf %inputs (list ref))))
+
 (define-visual-macro (quote list
 			    (category :initform :operators))
+		     ;; i think this is wrong
 		     `(quote ,(mapcar #'recompile %inputs)))
-
-;;; Sending to a referenced object 
-
-(define-visual-macro 
-    (with-target list
-      (category :initform :structure))
-    (destructuring-bind (target body) 
-	(mapcar #'recompile %inputs)
-      `(with-target ,target
-	 ,body)))
-
-(define-method initialize with-target ()
-  (super%initialize 
-   self
-   (new reference :label "send to:")
-   (new list))
-  (freeze self))
 
 (define-visual-macro (define-block tree
 	    (label :initform "define block")

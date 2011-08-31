@@ -23,6 +23,7 @@
 
 * BUGS
 ** TODO [#A] Fix halo handles not working after first move of object w/halo
+** TODO [#A] Fix layout lags, not updating in list after accept
 ** DONE [#A] Fix list %frozen not working
    CLOSED: [2011-08-31 Wed 06:41]
 ** DONE [#A] Fix first drag of object after creating halo causes jump in position 

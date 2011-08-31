@@ -716,7 +716,8 @@ all the time."
 		(evaluate (nth n inputs))))))
     results))
 
-(define-method evaluate block () self)
+(define-method evaluate block () 
+  (eval (recompile self)))
 
 ;; (define-method evaluate block () 
 ;;   "Return the computed result of this block.  By default, all the
@@ -1502,6 +1503,9 @@ and MOUSE-Y identify a point inside the block (or input block.)"
   (operation :initform :empty-list)
   (category :initform :structure))
 
+(defun make-visual-list ()
+  (clone "BLOCKY:LIST"))
+
 (define-method is-frozen list () %frozen)
 
 (define-method freeze list ()
@@ -1529,25 +1533,27 @@ inputs are evaluated."
     (evaluate block)))
 
 (define-method accept list (input &optional prepend)
+  (assert (blockyp input))
   (when (not %frozen)
-    (assert (blockyp input))
-    (with-fields (inputs) self
-      (if inputs
-	  ;; we've got inputs. add it to the list (prepending or not)
-	  (prog1 t
-	    (assert (is-valid-connection self input))
-	    ;; set parent if necessary 
-	    (when (get-parent input)
-	      (unplug-from-parent input))
-	    (set-parent input self)
-	    (setf inputs 
-		  (if prepend
-		      (append (list input) inputs)
-		      (append inputs (list input)))))
-	  ;; no inputs yet. make a single-element inputs list
-	  (prog1 input 
-	    (setf inputs (list input))
-	    (set-parent input self))))))
+    (prog1 t
+      (invalidate-layout self)
+      (with-fields (inputs) self
+	(if inputs
+	    ;; we've got inputs. add it to the list (prepending or not)
+	    (progn 
+	      (assert (is-valid-connection self input))
+	      ;; set parent if necessary 
+	      (when (get-parent input)
+		(unplug-from-parent input))
+	      (set-parent input self)
+	      (setf inputs 
+		    (if prepend
+			(append (list input) inputs)
+			(append inputs (list input)))))
+	    ;; no inputs yet. make a single-element inputs list
+	    (progn
+	      (setf inputs (list input))
+	      (set-parent input self)))))))
 
 (define-method take-first list ()
   (with-fields (inputs) self
@@ -1735,25 +1741,76 @@ inputs are evaluated."
   (super%initialize self)
   (setf %name name))
 
-;;; Printing a block
+;;; A reference to another block
 
-(defun print-block (B)
-  (let (fields)
-    (flet ((add-field (field value)
-	     (push (list field value) fields)))
-      (typecase B
-	(blocky:object 
-	 (let ((f2 (object-fields B)))
-	   (etypecase f2
-	     (hash-table (maphash #'add-field f2))
-	     (list (setf fields f2)))
-	   (cons (get-some-object-name B) fields)))
-	(list (mapcar #'print-block B))
-	(otherwise B)))))
+(define-block reference
+  (target :initform nil)
+  (iwidth :initform 0)
+  (category :initform :data))
 
-(defun split-string-on-lines (string)
-  (with-input-from-string (stream string)
-    (loop for line = (read-line stream nil)
-	  while line collect line)))
+(define-method evaluate reference () 
+  %target)
+
+(define-method recompile reference ()
+  (recompile %target))
+
+(define-method set-target reference (target)
+  (setf %target 
+	(cond 
+	  ((stringp target)
+	   (prog1 target
+	     (assert (find-object target))))
+	  ((blockyp target)
+	   (find-uuid target)))))
+
+(define-method initialize reference (&optional target)
+  (when target
+    (set-target self target)))
+
+(define-method accept reference (new-block)
+  (prog1 nil ;; signal not accepting
+    (set-target self new-block)))
+
+(defun-memo make-reference-name (target)
+    (:key #'first :test 'equal :validator #'identity)
+  (concatenate 'string
+	       (get-some-object-name target)
+	       " "
+	       (object-address-string target)))
+
+(defparameter *null-reference-string* "(null reference)")
+
+(define-method layout reference () 
+  (with-fields (target x y iwidth width height) self
+    (if target
+	(let ((image (field-value :image target))
+	      (name (make-reference-name target)))
+	  (setf iwidth (if image (image-width image) 0))
+	  (setf width (dash 8 iwidth (font-text-width name *font*)
+			    (* *handle-scale* (indicator-size))))
+	  (setf height (dash 2 (font-height *font*)
+			     (if image (image-height image) 0))))
+	(setf width (dash 8 iwidth (font-text-width *null-reference-string* *font*))
+	      height (dash 4 (font-height *font*))))))
+
+(define-method draw reference ()
+  (with-fields (target x y width height iwidth) self
+;    (draw-background self)
+    (let ((offset (* *handle-scale* (indicator-size))))
+      (if (null target)
+	  (draw-string *null-reference-string* 
+		       (+ offset x) y)
+	(let ((image (field-value :image target))
+	      (name (make-reference-name target)))
+	  (when image
+	    (draw-image image 
+			(dash 1 x)
+			(dash 1 y)))
+	  (draw-string name (dash 1 x offset iwidth) (dash 1 y))))
+      (draw-indicator :asterisk 
+		      x y
+		      :scale *handle-scale*
+		      :background "purple"
+		      :color "cyan"))))
 
 ;;; blocks.lisp ends here
