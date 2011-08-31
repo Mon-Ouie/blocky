@@ -130,6 +130,9 @@
       (condition (c)
 	(format *error-output* "~S" c)))))
 
+(define-method print-expression prompt (sexp)
+  (format nil "~S" sexp))
+
 (define-method enter prompt (&optional no-clear)
   (labels ((print-it (c) 
 	     (message "~A" c)))
@@ -362,7 +365,10 @@
   ;; fill in the input box with the value
   (setf %line (if (null value)
 		  " "
-		  (format nil "~S" value)))
+		  (if (stringp value)
+		      ;; no extraneous quotes unless it's a general sexp entry
+		      value
+		      (format nil "~S" value))))
   (setf %label 
 	(or label 
 	    (getf options :label)))

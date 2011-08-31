@@ -496,8 +496,7 @@ By default, just update each child block."
 initialized with BLOCKS as inputs."
   (setf %inputs 
 	(or blocks (default-inputs self)))
-  (dolist (child blocks)
-    (set-parent child self))
+  (update-parent-links self)
   (update-result-lists self)
   (bind-any-default-events self)
   (register-uuid self))
@@ -1660,7 +1659,7 @@ inputs are evaluated."
 
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 
-(define-block send prototype method schema target label)
+(define-block send prototype method schema target label active-on-click)
 
 (define-method evaluate send ()
   (apply #'send %method 
@@ -1669,7 +1668,8 @@ inputs are evaluated."
 
 (define-method on-tap send (x y)
   (declare (ignore x y))
-  (evaluate self))
+  (when %active-on-click
+    (evaluate self)))
 
 (define-method accept send (block)
   ;; make these click-align instead
@@ -1684,9 +1684,10 @@ inputs are evaluated."
     (string-downcase 
      (substitute #\Space #\- name))))
 
-(define-method initialize send (&key prototype method label target)
+(define-method initialize send (&key prototype method label target (active-on-click t))
   (super%initialize self)
   (setf %target target)
+  (setf %active-on-click active-on-click)
   (let ((schema (method-schema (find-prototype prototype) method))
 	(inputs nil))
     (dolist (entry schema)

@@ -45,8 +45,8 @@ recompilation."
 
 ;;; Send the messages in a list to the referent of the first element
 
-(define-block (prog0 :super list)
-  (category :initform :structure))
+(define-visual-macro (prog0 list
+  (category :initform :structure)))
 
 (define-method evaluate prog0 ()
   (destructuring-bind (target &rest body) %inputs
@@ -54,16 +54,18 @@ recompilation."
       (with-target (evaluate target)
 	(mapc #'evaluate body))))
 
-(define-method initialize prog0 (&optional target)
+(define-method initialize prog0 (&key target inputs)
+  ;; (assert (blockyp target))
+  ;; (assert (consp inputs))
   (super%initialize self)
   (let ((ref (new reference target)))
     (pin ref) ;; don't allow ref to be removed
-    (setf %inputs (list ref))))
+    (setf %inputs (cons ref inputs))))
 
 ;;; Defining blocks visually
 
 (define-visual-macro 
-    (define-block tree)
+    (define-block list)
     ;; spit out a define-block
     (destructuring-bind (name super fields) 
 	(mapcar #'recompile %inputs)
@@ -73,16 +75,15 @@ recompilation."
 	      fields)))
 
 (define-method initialize define-block ()
-  (super%initialize 
-   self
-   :label "define block"
-   :locked t
-   :expanded t
-   :inputs
-   (list
-    (new string :label "named:")
-    (new string :value "block" :label "inherit from:")
-    (new tree :label "fields" :expanded t :locked t :inputs (list (new list))))))
+  (let ((header
+	  (new send 
+	       :active-on-click nil
+	       :prototype "BLOCKY:SYSTEM"
+	       :method :do-define-block
+	       :label "define block"
+	       :target *system*)))
+    (super%initialize self header)
+    (pin header)))
 
 ;;; Defining fields 
 

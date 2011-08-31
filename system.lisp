@@ -48,10 +48,10 @@
       (:label "Paste as new workspace" :action :paste-as-new-workspace)
       (:label "Select all" :action :select-all)
       (:label "Clear selection" :action :clear-selection)))
-    (:label "Object"
+    (:label "Blocks"
      :inputs
-     ((:label "Define a method" :action :define-method)
-      (:label "Extend this block" :action :extend-block)
+     ((:label "Define block" :action :open-define-block-dialog)
+      (:label "Extend this block" :action :open-extend-block-dialog)
       (:label "Inspect" :action :inspect)
       (:label "Copy" :action :copy)
       (:label "Destroy" :action :destroy)))
@@ -131,9 +131,16 @@
 (define-method create-project system ())
 
 (define-method open-existing-project system ())
-  ;; TODO how to get arguments?
-;  (open-project project))
 
+(define-method (do-define-block :category :system) system
+    ((name string :default "") 
+     (super string :default "block")
+     (fields list))
+  (eval `(define-block 
+	     ,(list (make-symbol name) 
+		    :super (make-prototype-id super))
+	     ,@fields)))
+	     
 (define-method save-changes system ()
   (save-project))
 
