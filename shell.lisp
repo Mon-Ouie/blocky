@@ -508,7 +508,7 @@ block found, or nil if none is found."
 		      ;; dropping on another block
 		      (when (not (accept hover drag))
 			;; hovered block did not accept drag. 
-			;; drop block if it wants to be dropped
+			;; drop it back in the shell.
 			(add-block self drag drop-x drop-y)))))
 	    ;; select the dropped block
 	    (progn 
