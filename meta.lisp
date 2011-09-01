@@ -65,36 +65,32 @@ recompilation."
 ;;; Defining blocks visually
 
 (define-visual-macro 
-    (define-block list)
+    (define-block list
+      (header :initform nil))
     ;; spit out a define-block
+    (assert (blockyp (first %inputs)))
     (let ((fields (mapcar #'recompile (rest %inputs))))
-      (destructuring-bind (name value)
-	  (mapcar %recompile (field-value :inputs (first %inputs)))
-	(append (list 'define-block 
-		      (make-symbol name)
-		      :super (make-prototype-id super))
+      (destructuring-bind (name super)
+	  (recompile (first %inputs))
+        (append (list 'define-block
+		      (list (make-non-keyword name)
+			    :super (make-prototype-id super)))
 		fields))))
 
 (define-method initialize define-block ()
-  (let ((header
-	  (new send 
-	       :active-on-click nil
-	       :prototype (object-name (find-super self))
-	       :method :do-define-block
-	       :label "define block"
-	       :target self)))
-    (super%initialize self header)
-    (pin header)))
+  (setf %header
+	(new send 
+	     :active-on-click nil
+	     :prototype (object-name (find-super self))
+	     :method :do-define-block
+	     :label "define block"
+	     :target self))
+  (initialize%%list self %header)
+  (pin %header))
 
 (define-method (do-define-block :category :system) define-block
-    ((name string :default "") 
-     (super string :default "block"))
-  ;; skip leading widget
-  (let ((fields (mapcar #'recompile (rest %inputs))))
-    (eval `(define-block 
-	       ,(list (make-symbol name) 
-		      :super (make-prototype-id super))
-	     ,@fields))))
+    ((name string :default "my-block") 
+     (super string :default "block")))
 
 ;;; Defining fields 
 
@@ -104,10 +100,14 @@ recompilation."
 	       (mapcar #'recompile %inputs)
 	     (list name :initform value)))
 
+(define-method draw field ()
+  (let ((*text-base-y* (+ %y (dash 1))))
+    (super%draw self)))
+
 (define-method initialize field ()
   (super%initialize self 
 		    (new string :label "field")
-		    (new socket :label "default")))
+		    (new socket :label ":default")))
 
 (define-method accept field (thing)
   (declare (ignore thing))
@@ -123,11 +123,10 @@ recompilation."
       (list (make-symbol name) type :default default)))
 
 (define-method initialize argument ()
-  (super%initialize 
+  (initialize%%block self
    (new string :label "name")
    (new entry :label "type")
    (new string :label "default")))
-
 
 ;;; Defining methods
 

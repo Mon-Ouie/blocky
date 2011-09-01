@@ -1,11 +1,15 @@
+* TODO Lightning Talk video 2
+** TODO textbox
+** TODO references
+
 * BETA RELEASE EXECUTION PLAN
 ** TODO [#A] Complete the core language model (define blocks and methods visually)
 *** TODO define block
-**** TODO make this into a horizontal layout for the main args, vert as-is for the fields (tighter layout)
 *** TODO define method
+*** TODO 
+** TODO [#A] Implement basic blocks library
 *** TODO [#A] Test sprites with worlds
 *** TODO [#B] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
-** TODO [#A] Implement basic blocks library
 ** TODO [#A] Ensure full and proper functioning of halos
 *** TODO [#A] collapsed windows
 ** TODO [#B] simple scheduler: later-do
@@ -13,6 +17,7 @@
 ** TODO [#B] Restore basic collision detection functionality
 ** TODO [#B] Fix as much of the buglist as possible
 ** TODO [#B] Menus/dialogs for all basic project save/load stuff
+** TODO [#B] Default location for new dialogs/widgets from menu: the command-line listener
 *** TODO "empty trash before save?" dialog
 *** TODO "quit without saving?" dialog
 ** TODO [#B] Better language tutorial projects
@@ -22,10 +27,8 @@
 ** TODO [#C] System browser
 
 * BUGS
-** TODO [#A] Fix string entry printing with extra quotes
 ** TODO [#A] Fix halo handles not working after first move of object w/halo
 *** TODO Halo is in front after pickup/putdown. it should hit-test its children
-** TODO [#A] Fix layout lags, not updating in list after accept
 ** TODO [#C] Fix crash when error in init file
 ** TODO [#C] Fix crashes with tab and shift-tab navigation
 ** TODO [#C] Fix error handling: use error message bubbles with X close box and (backtrace) button?
@@ -669,5 +672,30 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_OLPATH: BUGS
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: DONE
+   :END:
+** DONE make this into a horizontal layout for the main args, vert as-is for the fields (tighter layout)
+   CLOSED: [2011-08-31 Wed 20:02]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-31 Wed 20:02
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BETA RELEASE EXECUTION PLAN/Complete the core language model (define blocks and methods visually)/define block
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END:
+** TODO [#A] Fix string entry printing with extra quotes
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-31 Wed 20:02
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BUGS
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO [#A] Fix layout lags, not updating in list after accept
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-08-31 Wed 20:02
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BUGS
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
    :END:
 

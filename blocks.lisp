@@ -1107,7 +1107,7 @@ area is drawn. If DARK is non-nil, paint a darker region."
 	      (incf left (dash 1 (field-value :width input))))
 	    ;; now update own dimensions
 	    (setf width (dash 1 (- left x)))
-	    (setf height (+ dash (if (null inputs)
+	    (setf height (+  (if (null inputs)
 				     dash 0) max-height)))))))
   
 (define-method draw-expression block (x0 y0 segment type)
@@ -1662,6 +1662,10 @@ inputs are evaluated."
 ;;; Generic method invocation block. The bread and butter of doing stuff.
 
 (define-block send prototype method schema target label active-on-click)
+
+(define-method recompile send ()
+  ;; devolve into argument values
+  (mapcar #'recompile %inputs))
 
 (define-method evaluate send ()
   (apply #'send %method 

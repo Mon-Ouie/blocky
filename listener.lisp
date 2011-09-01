@@ -532,6 +532,10 @@
   (when (first %inputs)
     (evaluate (first %inputs))))
 
+(define-method recompile socket ()
+  (when (first %inputs)
+    (recompile (first %inputs))))
+
 (define-method draw-focus socket ())
 
 (define-method on-event socket (event)
@@ -544,9 +548,6 @@
 (define-method set-value socket (value)
   (declare (ignore value)))
 
-(define-method recompile entry ()
-  (evaluate self))
-
 (define-method hit socket (x y)
   (hit%%block self x y))
 
@@ -555,7 +556,8 @@
 
 (define-method draw-label socket ()
   (when (stringp %label)
-    (draw-label-string self %label)))
+    (draw-label-string self %label
+		       (find-color (or %parent self) :foreground))))
 
 (define-method layout socket ()
   (layout%%block self))

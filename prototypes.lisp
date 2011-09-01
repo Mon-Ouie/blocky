@@ -360,7 +360,7 @@ extended argument list ARGLIST."
   "Make the symbol or string S into a non-keyword symbol."
   (etypecase S
     (symbol (intern (symbol-name S)))
-    (string (intern S))))
+    (string (intern (string-upcase S)))))
 
 (defun merge-hashes (a b &optional predicate)
   (prog1 a
@@ -376,26 +376,27 @@ extended argument list ARGLIST."
   (let ((delimiter ":"))
     (if (null thing)
 	(error "Cannot make a prototype ID for nil.")
-	(etypecase thing
-	  (blocky:object (object-name thing))
-	  (string 
-	   (apply #'concatenate 'string 
-		  (if (search delimiter thing)
-		      (list thing)
-		      (list (package-name package)
-			    delimiter thing))))
-	  (symbol 
-	   ;; check for things that are already in COMMON-LISP package
-	   (let ((thing-package (symbol-package thing)))
-	   (let ((prefix (if (eq thing-package (find-package :common-lisp))
-			     "BLOCKY" ;; override if so
-			     (package-name thing-package))))
-	     (let ((name (concatenate 'string prefix delimiter (symbol-name thing))))
-	       (let ((proto (find-prototype name :noerror)))
-		 (if proto name
-		     (if create name
-			 (concatenate 'string "BLOCKY" delimiter (symbol-name thing)))))))))))))
-		  
+	(string-upcase
+	 (etypecase thing
+	   (blocky:object (object-name thing))
+	   (string 
+	    (apply #'concatenate 'string 
+		   (if (search delimiter thing)
+		       (list thing)
+		       (list (package-name package)
+			     delimiter thing))))
+	   (symbol 
+	    ;; check for things that are already in COMMON-LISP package
+	    (let ((thing-package (symbol-package thing)))
+	      (let ((prefix (if (eq thing-package (find-package :common-lisp))
+				"BLOCKY" ;; override if so
+				(package-name thing-package))))
+		(let ((name (concatenate 'string prefix delimiter (symbol-name thing))))
+		  (let ((proto (find-prototype name :noerror)))
+		    (if proto name
+			(if create name
+			    (concatenate 'string "BLOCKY" delimiter (symbol-name thing))))))))))))))
+  
 
 		      ;; 	   ;; is there a built-in prototype with this
 		      ;; 	   ;; name, or is it something from CL-USER?
