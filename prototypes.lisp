@@ -92,7 +92,7 @@ other destructuring features:
 
 ARG is the argument name (a symbol). DATA-TYPE is a Common Lisp
 identifier such as `integer' or `(or integer symbol)' or the like.
-See the documentation for the function `entry-option' for more
+See the documentation for the function `schema-option' for more
 information on the OPTIONS field.
 
 NOTE: &key and &optional are not yet implemented for extended
