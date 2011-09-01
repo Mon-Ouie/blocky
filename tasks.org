@@ -25,6 +25,7 @@
 ** TODO [#C] Basic context-sensitive help
 *** TODO explanatory tooltips
 ** TODO [#C] System browser
+** TODO [#C] Make textbox recompile as multi-line string so that defmethod docstrings work naturally
 
 * BUGS
 ** TODO [#A] Fix halo handles not working after first move of object w/halo

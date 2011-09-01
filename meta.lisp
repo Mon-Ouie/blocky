@@ -130,25 +130,31 @@ recompilation."
 
 ;;; Defining methods
 
-(define-visual-macro (method tree)
-	   (destructuring-bind (name prototype definition) 
-	       (mapcar #'recompile %inputs)
-	     (let ((method-name (make-symbol (first name)))
-		   (prototype-id (make-prototype-id prototype)))
-	       (append (list 'define-method method-name prototype-id)
-		       (first definition)))))
+(define-visual-macro 
+    (method list
+	    (header :initform nil))
+    ;; create a define-method form 
+    (let ((inputs (mapcar #'recompile %inputs)))
+      ;; grab contents of send entry block
+      (destructuring-bind ((name prototype) arguments body) inputs
+	(let ((method-name (make-symbol name))
+	      (prototype-id (make-prototype-id prototype))
+	      (lambda-list (mapcar #'first arguments)))
+	    `(define-method ,method-name ,prototype-id lambda-list ,@body)))))
+	     
+(define-method initialize define-method ()
+  (setf %header
+	(new send 
+	     :active-on-click nil
+	     :prototype (object-name (find-super self))
+	     :method :do-define-method
+	     :label "define method"
+	     :target self))
+  (initialize%%list self %header)
+  (pin %header))
 
-(define-method initialize method ()
-  (super%initialize self
-		    :locked t
-		    :expanded t
-		    :label "define method"
-		    :inputs
-		    (list
-		     (new string :label "name")
-		     (new tree :label "for block"
-			       :inputs (list (new string :value "name" :label "")))
-		     (new tree :label "definition" :inputs (list (new block))))))
-
+(define-method (do-define-method :category :system) define-method
+    ((name string :default "") 
+     (prototype string :default "" :label "for block:")))
 
 ;;; meta.lisp ends here

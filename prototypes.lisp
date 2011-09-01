@@ -122,7 +122,7 @@ arglists.
   :DOCUMENTATION     The documentation string.
 
   :LABEL   User-visible name of the argument. If left unset, the
-                  default is `Foo Bar Baz' for the command
+                  default is `foo bar baz' for the command
                   `foo-bar-baz'.
 
   :WHEN           Only read the value if this predicate-form returns 
