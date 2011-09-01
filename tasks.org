@@ -28,7 +28,9 @@
 
 * BUGS
 ** TODO [#A] Fix halo handles not working after first move of object w/halo
-*** TODO Halo is in front after pickup/putdown. it should hit-test its children
+*** TODO Halo is in front after pickup/putdown? it should hit-test its children
+
+** TODO [#B] Fix bad halo layout on small objects (establish a minimum size)
 ** TODO [#C] Fix crash when error in init file
 ** TODO [#C] Fix crashes with tab and shift-tab navigation
 ** TODO [#C] Fix error handling: use error message bubbles with X close box and (backtrace) button?

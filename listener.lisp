@@ -474,7 +474,7 @@
   ;; print any error output
   (when (and (stringp %error-output)
 	     (plusp (length %error-output)))
-    (drop self (new textbox %error-output))))
+    (drop self (new text %error-output))))
 
 ;;; Easily defining new entry blocks
 
@@ -620,7 +620,7 @@
   ;; print any error output
   (when (and %parent (stringp %error-output)
 	     (plusp (length %error-output)))
-    (accept %parent (new textbox %error-output))))
+    (accept %parent (new text %error-output))))
     ;; (dolist (line (split-string-on-lines %error-output))
     ;;   (accept %parent (new string :value line)))))
 

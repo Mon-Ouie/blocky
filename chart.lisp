@@ -244,7 +244,7 @@
 ;;   (blocky:set-screen-height *window-height*)
 ;;   (blocky:set-screen-width *window-width*)
 ;;   (let* ((prompt (clone =dance-prompt=))
-;; 	 (help (clone =help-textbox=))
+;; 	 (help (clone =help-text=))
 ;; 	 (help-prompt (clone =help-prompt=))
 ;; 	 (quickhelp (clone =formatter=))
 ;; 	 (form (clone =form=))

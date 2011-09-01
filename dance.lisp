@@ -404,9 +404,9 @@
   (default-keybindings :initform '(("N" nil "page-down .")
 				   ("P" nil "page-up ."))))
 
-(define-prototype help-textbox (:super =textbox=))
+(define-prototype help-text (:super =text=))
 
-(define-method render help-textbox ()
+(define-method render help-text ()
   (/parent>>render self)
   (/message *pager* 
 	   (list (format nil " --- Showing lines ~A-~A of ~A. Use PAGE UP and PAGE DOWN to scroll the text." 

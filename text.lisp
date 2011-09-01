@@ -24,11 +24,11 @@
 
 ;;; Text display and edit control
 
-(defparameter *textbox-margin* (dash 2) "Default onscreen margin (in pixels) of a textbox.")
+(defparameter *text-margin* (dash 2) "Default onscreen margin (in pixels) of a text.")
 
-(defparameter *textbox-minimum-width* 80) 
+(defparameter *text-minimum-width* 80) 
 
-(define-block textbox
+(define-block text
   (methods :initform '(:page-up :page-down :auto-center :resize-to-fit :view-messages))
   (font :initform *monospace*)
   (buffer :initform nil)
@@ -46,28 +46,28 @@
   (auto-fit :initform t)
   (visible :initform t))
 
-(define-method accept textbox (other))
+(define-method accept text (other))
 
-(define-method enter textbox ()
+(define-method enter text ()
   (newline self))
 
-(define-method on-event textbox (event)
+(define-method on-event text (event)
   (on-text-event self event))
 
-(define-method set-buffer textbox (buffer)
+(define-method set-buffer text (buffer)
   (setf %buffer buffer))
 
-(define-method get-buffer-as-string textbox ()
+(define-method get-buffer-as-string text ()
   (apply #'concatenate 'string %buffer))
 
 (defparameter *next-screen-context-lines* 3)
 
-(define-method set-font textbox (font)
+(define-method set-font text (font)
   (assert (stringp font))
   (assert (eq :font (resource-type (find-resource font))))
   (setf %font font))
 
-(define-method page-up textbox ()
+(define-method page-up text ()
   "Scroll up one page, only when %max-displayed-lines is set."
   (with-field-values (max-displayed-lines) self
     (when (integerp max-displayed-lines)
@@ -75,7 +75,7 @@
 			   (- %point-row (- max-displayed-lines
 					     *next-screen-context-lines*)))))))
 
-(define-method page-down textbox ()
+(define-method page-down text ()
   "Scroll down one page, only when %max-displayed-lines is set."
   (with-field-values (max-displayed-lines) self
     (when (integerp max-displayed-lines)
@@ -83,22 +83,22 @@
 			     (+ %point-row (- max-displayed-lines
 					     *next-screen-context-lines*)))))))
 
-(define-method auto-center textbox ()
-  "Automatically center the textbox on the screen."
+(define-method auto-center text ()
+  "Automatically center the text on the screen."
   (with-field-values (x y width height) self
     (let ((center-x (truncate (/ *screen-width* 2)))
 	  (center-y (truncate (/ *screen-height* 2))))
       (setf %x (- center-x (truncate (/ width 2)))
 	    %y (- center-y (truncate (/ height 2)))))))
 
-(define-method resize-to-scroll textbox (&key width height)
-  "Resize the textbox to WIDTH * HEIGHT and enable scrolling of contents."
+(define-method resize-to-scroll text (&key width height)
+  "Resize the text to WIDTH * HEIGHT and enable scrolling of contents."
   (assert (and (numberp width) (numberp height)))
   (resize self :height height :width width)
   (setf %max-displayed-lines (truncate (/ height (font-height %font)))))
 
-(define-method resize-to-fit textbox ()
-  "Automatically resize the textbox to fit the text, and disable scrolling."
+(define-method resize-to-fit text ()
+  "Automatically resize the text to fit the text, and disable scrolling."
   ;; disable scrolling
   (setf %max-displayed-lines nil)
   ;; measure text
@@ -108,18 +108,18 @@
 				   (font-text-width s %font))
 			       buffer)))
     ;; update geometry
-    (let ((width0 (max *textbox-minimum-width*
-		       (+ (* 2 *textbox-margin*) 4
+    (let ((width0 (max *text-minimum-width*
+		       (+ (* 2 *text-margin*) 4
 			  (if (null line-lengths)
 			      0 
 			      (apply #'max line-lengths)))))
-	  (height0 (+ (* 2 *textbox-margin*)
+	  (height0 (+ (* 2 *text-margin*)
 		      (* line-height (max 1 (length buffer))))))
       (when (or (< %width width0)
 		(< %height height0))
 	(resize self :height height0 :width width0)))))
 
-(define-method view-messages textbox ()
+(define-method view-messages text ()
   (setf %auto-fit nil)
   (add-to-list '*message-hook-functions* 
 	       #'(lambda (string)
@@ -127,13 +127,13 @@
 		   (newline self)))
   (setf %buffer (reverse *message-history*)))
 
-(define-method end-of-line textbox ()
+(define-method end-of-line text ()
   (setf %point-column (length (nth %point-row %buffer))))
 
-(define-method beginning-of-line textbox ()
+(define-method beginning-of-line text ()
   (setf %point-column 0))
 
-(define-method initialize textbox (&optional buffer)
+(define-method initialize text (&optional buffer)
   (super%initialize self)
   (when (null buffer)
     (setf %buffer (list " ")))
@@ -146,29 +146,29 @@
   (install-text-keybindings self)
   (install-keybindings self *arrow-key-text-navigation-keybindings*))
 
-(define-method forward-char textbox ()
+(define-method forward-char text ()
   (with-fields (buffer point-row point-column) self
     (setf point-column (min (1+ point-column)
 			    (length (nth point-row buffer))))))
 
-(define-method backward-char textbox ()
+(define-method backward-char text ()
   (with-fields (buffer point-row point-column) self
     (setf point-column (max 0 (1- point-column)))))
 
-(define-method next-line textbox ()
+(define-method next-line text ()
   (with-fields (buffer point-row point-column) self
     (setf point-row (min (1+ point-row)
 			 (1- (length buffer))))
     (setf point-column (min point-column 
 			    (length (nth point-row buffer))))))
 
-(define-method previous-line textbox ()
+(define-method previous-line text ()
   (with-fields (buffer point-row point-column) self
     (setf point-row (max 0 (1- point-row)))
     (setf point-column (min point-column
 			    (length (nth point-row buffer))))))
 
-(define-method newline textbox ()
+(define-method newline text ()
   (with-fields (buffer point-row point-column) self
     (if (null buffer)
 	(progn (push "" buffer)
@@ -196,7 +196,7 @@
 	      (incf point-row)			
 	      (setf point-column 0))))))
 
-(define-method backward-delete-char textbox ()
+(define-method backward-delete-char text ()
   (with-fields (buffer point-row point-column) self
     (if (and (= 0 point-column) 
 	     (not (= 0 point-row)))
@@ -225,32 +225,32 @@
 			       remainder))
 	    (decf point-column))))))
     
-(define-method get-current-line textbox ()
+(define-method get-current-line text ()
   (nth %point-row %buffer))
 
-(define-method end-of-line-p textbox ()
+(define-method end-of-line-p text ()
   (= %point-column
      (1- (length (get-current-line self)))))
 
-(define-method beginning-of-line-p textbox ()
+(define-method beginning-of-line-p text ()
   (= %point-column 0))
 
-(define-method top-of-buffer-p textbox ()
+(define-method top-of-buffer-p text ()
   (= %point-row 0)) 
 
-(define-method bottom-of-buffer-p textbox ()
+(define-method bottom-of-buffer-p text ()
   (= %point-row
      (1- (length %buffer))))
 
-(define-method beginning-of-buffer-p textbox ()
+(define-method beginning-of-buffer-p text ()
   (and (beginning-of-line-p self)
        (top-of-buffer-p self)))
 
-(define-method end-of-buffer-p textbox ()
+(define-method end-of-buffer-p text ()
   (and (end-of-line-p self)
        (bottom-of-buffer-p self)))
 
-(define-method delete-char textbox ()
+(define-method delete-char text ()
   (with-fields (buffer point-row point-column) self
     (if (end-of-line-p self)
 	;; just remove line break
@@ -263,7 +263,7 @@
 	  (forward-char self)
 	  (backward-delete-char self)))))
 
-(define-method insert textbox (key)       
+(define-method insert text (key)       
   (with-fields (buffer point-row point-column) self
     (if (null buffer)
 	(progn
@@ -279,11 +279,11 @@
 			       remainder)))
 	  (incf point-column)))))
 
-(define-method insert-string textbox (string)
+(define-method insert-string text (string)
   (dolist (character (coerce string 'list))
     (insert self (string character))))
 
-(define-method visible-lines textbox ()
+(define-method visible-lines text ()
   (with-fields (buffer max-displayed-lines) self
     (let ((end (length buffer)))
       (if %auto-fit 
@@ -294,7 +294,7 @@
 		      (min end max-displayed-lines)
 		      end))))))
 
-(define-method layout textbox ()
+(define-method layout text ()
   (with-fields (height width font) self
     (when %auto-fit
       (resize-to-fit self))
@@ -305,9 +305,9 @@
       (dolist (line lines)
 	(callf max width (dash 4 (font-text-width line font)))))))
 
-(defparameter *textbox-cursor-width* 2)
+(defparameter *text-cursor-width* 2)
 
-(define-method draw textbox ()
+(define-method draw text ()
   (with-fields (buffer width parent height) self
     (with-field-values (x y font point-row indicator) self
       ;; measure text
@@ -318,8 +318,8 @@
 		    (+ y height)
 		    :color (find-color self))
 	;; draw text
-	(let* ((x0 (+ x *textbox-margin*))
-	       (y0 (+ y *textbox-margin*))
+	(let* ((x0 (+ x *text-margin*))
+	       (y0 (+ y *text-margin*))
 	       (lines (visible-lines self))
 	       (text-height (* line-height (length lines))))
 	  (dolist (line lines)
@@ -330,7 +330,7 @@
       ;; ;; possibly draw emblem
       ;; (draw-emblem self))))
 
-(define-method draw-focus textbox ()
+(define-method draw-focus text ()
   ;; draw cursor
   ;; TODO fix %point-row to be drawn relative pos in scrolling
   (with-fields (buffer width parent height) self
@@ -338,15 +338,15 @@
       (when (null %read-only)
 	(let* ((line-height (font-height font))
 	       (current-line (nth point-row buffer))
-	       (cursor-width *textbox-cursor-width*)
-	       (x1 (+ x *textbox-margin*
+	       (cursor-width *text-cursor-width*)
+	       (x1 (+ x *text-margin*
 		      (font-text-width (subseq current-line 0 %point-column)
 				       font)))
-	       (y1 (+ y *textbox-margin*
+	       (y1 (+ y *text-margin*
 		      (* point-row (font-height font)))))
 	  (draw-cursor-glyph self x1 y1 cursor-width line-height 
 			     :blink t))))))
 
-(define-method draw-hover textbox () nil)
+(define-method draw-hover text () nil)
 	  
 ;;; text.lisp ends here

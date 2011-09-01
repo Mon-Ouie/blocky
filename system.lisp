@@ -73,7 +73,7 @@
     (:label "Tools" 
      :inputs
      ((:label "Create a Lisp listener" :action :create-listener)
-      (:label "Create a text box" :action :create-textbox)
+      (:label "Create a text box" :action :create-text)
       (:label "Create a trash can" :action :create-trash)
       (:label "Version control" :action :version-control)))
     (:label "Workspace" :inputs
@@ -119,8 +119,8 @@
 (define-method create-trash system ()
   (add-block (shell) (new trash) 100 100))
 
-(define-method create-textbox system ()
-  (add-block (shell) (new textbox) 100 100))
+(define-method create-text system ()
+  (add-block (shell) (new text) 100 100))
 
 (define-method initialize system ()
   (setf *system* (find-uuid self)))
@@ -139,7 +139,7 @@
   (save-project :force))
 
 (define-method show-copyright-notice system ()
-  (let ((box (new textbox *copyright-notice*)))
+  (let ((box (new text *copyright-notice*)))
     (add-block *shell* box 50 50) 
     (resize-to-scroll box :width 80 :height 24)
 ;    (set-font box *serif*)
