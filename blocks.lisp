@@ -151,23 +151,23 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
 
 ;;; Defining input events for blocks
 
-;; see below definition of (defblock closure... 
+;; see below definition of (defblock task... 
 
 (define-method initialize-events-table-maybe block (&optional force)
   (when (or force 
 	    (not (has-local-value :events self)))
     (setf %events (make-hash-table :test 'equal))))
 
-(define-method bind-event-to-closure block (event-name modifiers closure)
-  "Bind the described event to invoke the action of the CLOSURE.
+(define-method bind-event-to-task block (event-name modifiers task)
+  "Bind the described event to invoke the action of the TASK.
 EVENT-NAME is either a keyword symbol identifying the keyboard key, or
 a string giving the Unicode character to be bound. MODIFIERS is a list
 of keywords like :control, :alt, and so on."
-  (assert (find-object closure))
+  (assert (find-object task))
   (initialize-events-table-maybe self)
   (let ((event (make-event event-name modifiers)))
     (setf (gethash event %events)
-	  closure)))
+	  task)))
 
 (define-method unbind-event block (event-name modifiers)
   "Remove the described event binding."
@@ -175,13 +175,13 @@ of keywords like :control, :alt, and so on."
 	   %events))
 
 (define-method on-event block (event)
-  "Look up and invoke the block closure (if any) bound to
-EVENT. Return the closure if a binding was found, nil otherwise. The
-second value returned is the return value of the evaluated closure (if
+  "Look up and invoke the block task (if any) bound to
+EVENT. Return the task if a binding was found, nil otherwise. The
+second value returned is the return value of the evaluated task (if
 any)."
   (with-fields (events) self
     (when events
-      (let ((closure 
+      (let ((task 
 	      ;; unpack event
 	      (destructuring-bind (head &rest modifiers) event
 		;; if head is a cons, check for symbol binding first,
@@ -198,8 +198,8 @@ any)."
 		    ;; it's not a cons. 
 		    ;; just search event as-is
 		    (gethash event events)))))
-	(if closure
-	    (prog1 (values closure (evaluate closure))
+	(if task
+	    (prog1 (values task (evaluate task))
 	      (invalidate-layout self))
 	    (values nil nil))))))
 
@@ -219,10 +219,10 @@ as Unicode characters via the `insert' function."
 whenever the event (EVENT-NAME . MODIFIERS) is received."
   (destructuring-bind (key . mods) 
       (make-event event-name modifiers)
-    (bind-event-to-closure block 
+    (bind-event-to-task block 
 			   key
 			   mods
-			   (new closure method-name block))))
+			   (new task method-name block))))
 
 (define-method bind-event block (event binding)
   (destructuring-bind (name &rest modifiers) event
@@ -230,11 +230,11 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
       (symbol (bind-event-to-method self name modifiers binding))
       (list 
        ;; create a method call 
-       (let ((closure (new closure
+       (let ((task (new task
 			   (make-keyword (first binding))
 			   self
 			   :arguments (rest binding))))
-	 (bind-event-to-closure self name modifiers closure))))))
+	 (bind-event-to-task self name modifiers task))))))
 
 (define-method bind-any-default-events block ()
   (with-fields (default-events) self
@@ -244,8 +244,8 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 	(apply #'bind-event self entry)))))
 
 (defun bind-event-to-text-insertion (self key mods text)
-  (bind-event-to-closure self key mods 
-			 (new closure :insert self (list text))))
+  (bind-event-to-task self key mods 
+			 (new task :insert self (list text))))
     
 (define-method insert block (string)
   (declare (ignore string))
@@ -345,13 +345,26 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
   "Prepare a deserialized block for running."
   (register-uuid self))
 
-(define-method on-update block ()
-  "Update the simulation one step forward in time.
-By default, just update each child block."
-  (mapc #'on-update %inputs))
+;;; Tasks and updating
 
-(define-method change-image block (image)
-  (setf %image image))
+(define-method add-task block (task)
+  (assert (blockyp task))
+  (pushnew (find-uuid task) %tasks :test 'equal))
+
+(define-method remove-task block (task)
+  (assert (blockyp task))
+  (setf %tasks (delete task %tasks :test 'equal)))
+
+(define-method run-tasks block ()
+  ;; run tasks while they return non-nil 
+  (setf %tasks (delete-if-not #'update %tasks)))
+
+(define-method on-update block ()
+  "Update the simulation one step forward in time."
+  (run-tasks self)
+  (mapc #'on-update %inputs))
+  
+;;; Locking the layout
 
 (define-method pin block ()
   "Prevent dragging and moving of this block."
@@ -387,21 +400,9 @@ By default, just update each child block."
 	:test 'eq
 	:key #'find-object))
 
-(defun input-position (self input)
+(define-method input-position block (input)
   (assert (not (null input)))
-  (with-fields (schema inputs) self
-    (etypecase input
-      (blocky:object (position input inputs :key #'find-object :test 'eq))
-      (string (position (find-object input) inputs :key #'find-object :test 'eq))
-      (integer
-       (if (< input (length inputs))
-	   input
-	   (error "No such input index ~S" input)))
-      (keyword 
-       (let ((index (position input schema :key #'first)))
-	 (if (numberp index)
-	     index
-	     (error "No such input named ~S" input)))))))
+  (position (find-uuid input) %inputs :key #'find-uuid :test 'equal))
 
 (defun input (self name)
   (with-fields (inputs) self
@@ -654,7 +655,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     (list :label method-string
 	  :method method
 	  :target target
-	  :action (new closure method target))))
+	  :action (new task method target))))
 
 (define-method drop block (other-block)
   (add-block *buffer* other-block %x %y))
@@ -1485,9 +1486,9 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 
 ;;; Simple scheduling mechanisms
 
-(define-block closure method target arguments clock subtasks finished)
+(define-block task method target arguments clock subtasks finished)
 
-(define-method initialize closure 
+(define-method initialize task 
     (method target 
 	    &key arguments clock subtasks)
   (assert method)
@@ -1503,13 +1504,13 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 	%subtasks subtasks
 	%clock clock))
 
-(define-method finish closure ()
+(define-method finish task ()
   (setf %finished t))
 
-(define-method evaluate closure ()
+(define-method evaluate task ()
   (apply #'send %method %target %arguments))
 
-(define-method update closure ()
+(define-method update task ()
   (with-fields (method target arguments clock finished) self
     (cond 
       ;; if finished, quit now.
@@ -1536,7 +1537,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
       ((null clock)
        (prog1 t (evaluate self)))
       ;; shouldn't reach here
-      (t (error "Invalid closure.")))))
+      (t (error "Invalid task.")))))
 
 (defun seconds->frames (seconds)
   (truncate (* seconds blocky:*frame-rate*)))
@@ -1555,11 +1556,11 @@ and MOUSE-Y identify a point inside the block (or input block.)"
     (let ((target-sym (gensym)))
       `(let ((,target-sym ,target))
 	 (add-task ,target-sym
-		   (new closure 
+		   (new task 
 			,(make-keyword method)
-			,target
+			,target-sym
 			:subtasks (list ,@(make-tasks delay subexpressions))
-			:arguments ,arguments
+			:arguments (list ,@arguments)
 			:clock ,delay))))))
 
 (defun make-tasks (delay forms)
@@ -1570,13 +1571,12 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 (defmacro later (delay &rest forms)
   (assert (every #'consp forms))
   (let ((clock (time-as-frames delay))) 
-    `(progn ,(make-tasks delay forms))))
+    `(progn ,@(make-tasks clock forms))))
 
 (defmacro later-at (absolute-time &body forms)
   `(later ,(time-until absolute-time) ,@forms))
 
 (defmacro later-while (test-expression &body subtask-expressions)
-  `(progn ,(make-task-form t test-expression
-			   (make-tasks t subtask-expressions))))
+  `(progn ,(make-task-form t test-expression subtask-expressions)))
 
 ;;; blocks.lisp ends here
