@@ -1510,6 +1510,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 (define-method evaluate task ()
   (apply #'send %method %target %arguments))
 
+;; see also #'RUN-TASKS%%BLOCK
 (define-method running task ()
   (with-fields (method target arguments clock finished) self
     (cond 

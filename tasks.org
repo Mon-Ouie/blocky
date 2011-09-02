@@ -1,15 +1,7 @@
-* TODO Lightning Talk video 2
-** TODO textbox
-** TODO references
-
-* TODO Review syntax and visual design
-
-** TODO 
-
 * BETA RELEASE EXECUTION PLAN
-
 ** TODO [#B] simple schedulers: later-do, later-when, later-until
-*** TODO later-do and do-at-time macros evolve to a closure block that sends the supplied method
+*** DONE later-do and do-at-time macros evolve to a closure block that sends the supplied method
+    CLOSED: [2011-09-02 Fri 17:23]
 *** TODO later-when checks a condition (whether some other method returns non-nil)
 ** TODO Revise and simplify menus, more like Squeak
 ** TODO define-block PALETTE
