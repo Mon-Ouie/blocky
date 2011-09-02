@@ -1450,11 +1450,11 @@ and MOUSE-Y identify a point inside the block (or input block.)"
     (delete-input self block)
     (append-input self block)))
 
-(define-method on-update block ()
-  (with-buffer self 
-    (dolist (each %inputs)
-      (on-update each))
-    (update-layout self)))
+;; (define-method on-update block ()
+;;   (with-buffer self 
+;;     (dolist (each %inputs)
+;;       (on-update each))
+;;     (update-layout self)))
 
 (define-method update-layout block (&optional force)
   (with-fields (inputs needs-layout) self
@@ -1520,12 +1520,12 @@ and MOUSE-Y identify a point inside the block (or input block.)"
       ((and (integerp clock)
 	    (zerop clock))
        (prog1 nil (evaluate self)))
-      ;; countdown not finished. tell manager to keep running.
+      ;; countdown not finished. tell manager to keep running, 
+      ;; but don't evaluate at this time
       ((and (integerp clock)
 	    (plusp clock))
        (prog1 t 
-	 (decf clock) 
-	 (evaluate self)))
+	 (decf clock)))
       ;; no countdown, but we should test the output.
       ;; if non-nil, manager keeps us running.
       ((eq t clock)
@@ -1578,6 +1578,6 @@ and MOUSE-Y identify a point inside the block (or input block.)"
   `(later ,(time-until absolute-time) ,@forms))
 
 (defmacro later-while (test-expression &body subtask-expressions)
-  `(progn ,(make-task-form t test-expression subtask-expressions)))
+  `(later ,(make-task-form t test-expression subtask-expressions)))
 
 ;;; blocks.lisp ends here

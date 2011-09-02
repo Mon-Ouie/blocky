@@ -261,7 +261,7 @@ inputs are evaluated."
 
 (define-block color 
   :pinned nil
-  :methods '(:set-color :flip)
+  :methods '(:set-color)
   :name "gray50"
   :width (dash 20) :height (dash 20))
 
@@ -280,9 +280,6 @@ inputs are evaluated."
 (define-method initialize color (&optional (name "gray50"))
   (super%initialize self)
   (setf %name name))
-
-(define-method flip color ()
-  (later 2.0 (set-color self "red")))
 
 ;;; A reference to another block
 
@@ -398,7 +395,6 @@ inputs are evaluated."
 ;;   (type :initform :sound)
 ;;   (schema :initform '(:string))
 ;;   (inputs :initform '("boing")))
-
 
 ;; ;; (define-block joystick-button
 ;; ;;   (type :initform :sensing)
