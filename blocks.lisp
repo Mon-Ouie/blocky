@@ -1536,7 +1536,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
       ((null clock)
        (prog1 t (evaluate self)))
       ;; shouldn't reach here
-      (t (error "Invalid delay in closure.")))))
+      (t (error "Invalid closure.")))))
 
 (defun seconds->frames (seconds)
   (truncate (* seconds blocky:*frame-rate*)))
