@@ -357,7 +357,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 
 (define-method run-tasks block ()
   ;; run tasks while they return non-nil 
-  (setf %tasks (delete-if-not #'update %tasks)))
+  (setf %tasks (delete-if-not #'running %tasks)))
 
 (define-method on-update block ()
   "Update the simulation one step forward in time."
@@ -1510,7 +1510,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 (define-method evaluate task ()
   (apply #'send %method %target %arguments))
 
-(define-method update task ()
+(define-method running task ()
   (with-fields (method target arguments clock finished) self
     (cond 
       ;; if finished, quit now.
@@ -1531,7 +1531,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
        (let ((result (evaluate self)))
 	 (prog1 result
 	   (if result
-	       (mapc #'update %subtasks)
+	       (mapc #'running %subtasks)
 	       (mapc #'finish %subtasks)))))
       ;; no countdown or testing. just keep running.
       ((null clock)
