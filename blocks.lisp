@@ -151,22 +151,7 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
 
 ;;; Defining input events for blocks
 
-;; Typical lambdas aren't serializable, so I use these blocks.
-
-(define-block closure method target arguments)
-
-(define-method initialize closure (method target &optional arguments)
-  (assert (and method 
-	       (listp arguments)
-	       (find-uuid target)))
-  (setf %method (make-keyword method)
-	%arguments arguments
-	%target (find-uuid target)))
-
-(define-method evaluate closure ()
-  (apply #'send %method %target %arguments))
-
-;;; Using closures to respond to events
+;; see below definition of (defblock closure... 
 
 (define-method initialize-events-table-maybe block (&optional force)
   (when (or force 
@@ -248,7 +233,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
        (let ((closure (new closure
 			   (make-keyword (first binding))
 			   self
-			   (rest binding))))
+			   :arguments (rest binding))))
 	 (bind-event-to-closure self name modifiers closure))))))
 
 (define-method bind-any-default-events block ()
@@ -1460,7 +1445,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 
 (define-method bring-to-front block (block)
   (with-fields (inputs block) self
-    (assert (contains buffer block))
+    (assert (contains self block))
     (delete-input self block)
     (append-input self block)))
 
@@ -1500,18 +1485,98 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 
 ;;; Simple scheduling mechanisms
 
-(define-block task 
+(define-block closure method target arguments clock subtasks finished)
 
-(define-method do-until task
-(define-method do-at-time
+(define-method initialize closure 
+    (method target 
+	    &key arguments clock subtasks)
+  (assert method)
+  (assert (listp arguments))
+  (assert (blockyp target))
+  (assert (or (eq t clock)
+	      (null clock)
+	      (and (integerp clock)
+		   (plusp clock))))
+  (setf %method (make-keyword method)
+	%arguments arguments
+	%target (find-uuid target)
+	%subtasks subtasks
+	%clock clock))
 
-(define-method later-do block (delay method &rest arguments)
-  (
+(define-method finish closure ()
+  (setf %finished t))
 
-(define-method later-when block (delay method 
+(define-method evaluate closure ()
+  (apply #'send %method %target %arguments))
 
+(define-method update closure ()
+  (with-fields (method target arguments clock finished) self
+    (cond 
+      ;; if finished, quit now.
+      (finished nil)
+      ;; countdown exists and is finished.
+      ((and (integerp clock)
+	    (zerop clock))
+       (prog1 nil (evaluate self)))
+      ;; countdown not finished. tell manager to keep running.
+      ((and (integerp clock)
+	    (plusp clock))
+       (prog1 t 
+	 (decf clock) 
+	 (evaluate self)))
+      ;; no countdown, but we should test the output.
+      ;; if non-nil, manager keeps us running.
+      ((eq t clock)
+       (let ((result (evaluate self)))
+	 (prog1 result
+	   (if result
+	       (mapc #'update %subtasks)
+	       (mapc #'finish %subtasks)))))
+      ;; no countdown or testing. just keep running.
+      ((null clock)
+       (prog1 t (evaluate self)))
+      ;; shouldn't reach here
+      (t (error "Invalid delay in closure.")))))
 
-(defmacro do-at-time (self
+(defun seconds->frames (seconds)
+  (truncate (* seconds blocky:*frame-rate*)))
 
+(defun time-until (updates)
+  (assert (>= updates *updates*))
+  (- updates *updates*))
+  
+(defun time-as-frames (value)
+  (etypecase value
+    (integer value)
+    (float (seconds->frames value))))
+
+(defun make-task-form (delay expression &optional subexpressions)
+  (destructuring-bind (method target &rest arguments) expression
+    (let ((target-sym (gensym)))
+      `(let ((,target-sym ,target))
+	 (add-task ,target-sym
+		   (new closure 
+			,(make-keyword method)
+			,target
+			:subtasks (list ,@(make-tasks delay subexpressions))
+			:arguments ,arguments
+			:clock ,delay))))))
+
+(defun make-tasks (delay forms)
+  (mapcar #'(lambda (form)
+	      (make-task-form delay form))
+	  forms))
+
+(defmacro later (delay &rest forms)
+  (assert (every #'consp forms))
+  (let ((clock (time-as-frames delay))) 
+    `(progn ,(make-tasks delay forms))))
+
+(defmacro later-at (absolute-time &body forms)
+  `(later ,(time-until absolute-time) ,@forms))
+
+(defmacro later-while (test-expression &body subtask-expressions)
+  `(progn ,(make-task-form t test-expression
+			   (make-tasks t subtask-expressions))))
 
 ;;; blocks.lisp ends here
