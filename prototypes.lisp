@@ -1152,6 +1152,10 @@ OPTIONS is a property list of field options. Valid keys are:
 initializer. The new object is created with fields for which INITFORMS
 were specified (if any; see `define-prototype'); the INITFORMS are
 evaluated, then any applicable initializer is triggered."
+  ;; navigate to parent if a non-prototype is passed
+  (when (not (object-name (find-object prototype)))
+    (setf prototype (find-super prototype)))
+  ;; now clone it
   (let ((uuid (make-uuid)))
     (let ((new-object (make-object :super (find-object prototype)
 				   :uuid uuid

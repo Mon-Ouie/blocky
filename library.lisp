@@ -22,63 +22,336 @@
 
 (in-package :blocky)
 
-;; (define-block sprite-id :sprite-uuid nil :category :structure)
+;;; Vertically stacked list of blocks
 
-;; (define-method initialize sprite-id (thing)
-;;   (with-fields (sprite-uuid) self
-;;     (super%initialize self)
-;;     (setf sprite-uuid (etypecase thing
-;; 			(string thing)
-;; 			(object (field-value :uuid thing))))))
+(define-block list
+  (dash :initform 2)
+  (frozen :initform nil)
+  (orientation :initform :vertical)
+  (operation :initform :empty-list)
+  (category :initform :structure))
 
-;; (define-method header-height sprite-id ()
-;;   (dash 1 (font-height *font*)))
+(defun make-visual-list ()
+  (clone "BLOCKY:LIST"))
 
-;; (define-method get-sprite sprite-id ()
-;;   (get-object-by-uuid %sprite-uuid))
+(define-method is-frozen list () %frozen)
 
-;; (define-method layout sprite-id ()
-;;   (with-fields (height width) self
-;;     (let ((sprite (get-sprite self)))
-;;       (setf height (dash 1 (header-height self)
-;; 			 (field-value :height sprite)))
-;;       (setf width (dash 1 (field-value :width sprite))))))
+(define-method freeze list ()
+  (setf %frozen t)
+  (mapc #'pin %inputs))
 
-;; (define-method draw sprite-id ()
-;;   (with-fields (inputs x y) self
-;;     (let ((sprite (get-sprite self)))
-;;       (draw-background self)
-;;       (let ((header (header-height self)))
-;; 	(draw-string (get-some-object-name sprite)
-;; 		     (dash 1 x)
-;; 		     header
-;; 		     :color (find-color self :foreground))
-;; 	(draw-image (field-value :image sprite)
-;; 		    (dash 1 x)
-;; 		    (dash 1 y))))))
+(define-method unfreeze list ()
+  (setf %frozen nil)
+  (mapc #'unpin %inputs))
 
-;; ;;; Sending to an ID
+(define-method evaluate list () self)
 
-;; (define-prototype send (:super "BLOCKY:LIST")
-;;   (category :initform :message)
-;;   (schema :initform  '((:target :block)
-;; 		       (:body :list))))
+(define-method recompile list () 
+  (mapcar #'recompile %inputs))
+  "Return the computed result of this block.  By default, all the
+inputs are evaluated."
+  ;; (prog1 self
+  ;;   (evaluate-inputs self)))
 
-;; (define-method header-height send ()
-;;   (let ((id (input self :target)))
-;;     (layout id)
-;;     (dash 2 (field-value :height id))))
+(defparameter *null-display-string* "...")
 
-;; (define-method layout send () 
-;;   (with-fields (height width x y) self
-;;     (layout-vertically self)))
+(define-method set-orientation list (orientation)
+  (assert (member orientation '(:horizontal :vertical)))
+  (setf %orientation orientation))
 
-;; (define-method evaluate send ()
-;;   (with-fields (inputs) self
-;;     (destructuring-bind (id body) inputs
-;; 	(with-target (get-sprite id)
-;; 	  (evaluate body)))))
+;; (define-method on-tap list (x y)
+;;   (dolist (block %inputs)
+;;     (evaluate block)))
 
+(define-method accept list (input &optional prepend)
+  (assert (blockyp input))
+  (when (not %frozen)
+    (prog1 t
+      (invalidate-layout self)
+      (with-fields (inputs) self
+	(if inputs
+	    ;; we've got inputs. add it to the list (prepending or not)
+	    (progn 
+	      (assert (is-valid-connection self input))
+	      ;; set parent if necessary 
+	      (when (get-parent input)
+		(unplug-from-parent input))
+	      (set-parent input self)
+	      (setf inputs 
+		    (if prepend
+			(append (list input) inputs)
+			(append inputs (list input)))))
+	    ;; no inputs yet. make a single-element inputs list
+	    (progn
+	      (setf inputs (list input))
+	      (set-parent input self)))))))
+
+(define-method take-first list ()
+  (with-fields (inputs) self
+    (let ((block (first inputs)))
+      (prog1 block
+	(unplug self block)))))
+
+(define-method get-length list ()
+  (length %inputs))
+
+(define-method header-height list () 0)
+
+(define-method label-width list ()
+  (+ (* 2 *dash*)
+     (expression-width *null-display-string*)))
+
+(define-method layout-as-null list ()
+  (with-fields (height width) self
+    (setf width (+ (* 4 *dash*)
+		   (font-text-width *null-display-string*
+				      *font*))
+	  height (+ (font-height *font*) (* 4 *dash*)))))
+
+(define-method layout-vertically list ()
+  (with-fields (x y height width inputs dash) self
+    (flet ((ldash (&rest args)
+	     (apply #'dash 1 args)))
+    (let* ((header-height (ldash (header-height self)))
+	   (y0 (ldash y header-height))
+	   (line-height (font-height *font*)))
+      (setf height (ldash line-height))
+      (setf width (dash 8))
+      (dolist (element inputs)
+	(move-to element (ldash x) y0)
+	(layout element)
+	(incf height (field-value :height element))
+	(incf y0 (field-value :height element))
+	(setf width (max width (field-value :width element))))
+      (incf height (dash 1))
+      (incf width (dash 3))))))
+
+(define-method layout-horizontally list ()
+  (with-fields (x y height width inputs dash) self
+    (flet ((ldash (&rest args)
+	     (apply #'dash 1 args)))
+    (let* ((header-height (ldash (header-height self)))
+	   (x0 (ldash x))
+	   (y0 (ldash y))
+	   (line-height (font-height *font*)))
+      (setf height (ldash line-height))
+      (setf width (dash 8))
+      (dolist (element inputs)
+	(move-to element (ldash x0) y0)
+	(layout element)
+	(setf height (max height (+ (ldash) (field-value :height element))))
+	(incf x0 (field-value :width element)))
+      (incf height (dash 1))
+      (incf width (dash 10))))))
+
+(define-method layout list ()
+  (with-fields (inputs) self
+    (if (null inputs)
+	(layout-as-null self)
+	(ecase %orientation
+	  (:horizontal (layout-horizontally self))
+	  (:vertical (layout-vertically self))))))
+
+(define-method draw-header list () 0)
+
+(define-method draw list ()
+  (with-fields (inputs) self
+    (draw-background self)
+    (if (null inputs)
+	(draw-label-string self *null-display-string*)
+	(dolist (each inputs)
+	  (draw each)))))
+
+(define-method initialize list (&rest blocks)
+  (apply #'super%initialize self blocks)
+  ;; allow them to be freely removed
+  (unfreeze self))
+
+(defmacro deflist (name &rest body)
+  `(define-block (,name :super :list) ,@body))
+
+(defun null-block () (new list))
+
+(deflist empty-socket)
+
+(define-method accept empty-socket (other-block)
+  "Replace this empty socket with OTHER-BLOCK."
+  (accept %parent other-block))
+
+;;; Sending to a particular target
+
+(defvar *target* nil)
+
+(defmacro with-target (target &rest body)
+  `(let ((*target* ,target))
+     ,@body))
+
+;;; Generic method invocation block. The bread and butter of doing stuff.
+
+(define-block send prototype method schema target label active-on-click)
+
+(define-method recompile send ()
+  ;; devolve into argument values
+  (mapcar #'recompile %inputs))
+
+(define-method evaluate send ()
+  (apply #'send %method 
+	 (or *target* %target) ;; with-target will override
+	 (mapcar #'evaluate %inputs)))
+
+(define-method on-tap send (x y)
+  (declare (ignore x y))
+  (when %active-on-click
+    (evaluate self)))
+
+(define-method accept send (block)
+  ;; make these click-align instead
+  (assert (blockyp block))
+  nil)
+
+(defun-memo pretty-symbol-string (thing)
+    (:key #'first :test 'equal :validator #'identity)
+  (let ((name (etypecase thing
+		(symbol (symbol-name thing))
+		(string thing))))
+    (string-downcase 
+     (substitute #\Space #\- name))))
+
+(define-method initialize send (&key prototype method label target (active-on-click t))
+  (super%initialize self)
+  (setf %target target)
+  (setf %active-on-click active-on-click)
+  (let* ((schema (method-schema (find-prototype prototype) method))
+	 (inputs nil)
+	 (proto (or prototype (object-name (find-super target)))))
+    (dolist (entry schema)
+      (push (clone (if (eq 'string (schema-type entry))
+		       "BLOCKY:STRING" "BLOCKY:ENTRY")
+		   :value (schema-option entry :default)
+		   :parent (find-uuid self)
+		   :type-specifier (schema-type entry)
+		   :options (schema-options entry)
+		   :label (concatenate 'string
+				    ":" ;; mimic the keyword arguments visually
+				    (string-downcase (symbol-name (schema-name entry)))))
+	    inputs))
+    (when inputs 
+      (setf %inputs (nreverse inputs)))
+    (let ((category (method-option (find-prototype proto)
+				   method :category)))
+      (when category (setf %category category))
+      (setf %schema schema
+	    %prototype proto
+	    %method method
+	    %label (or label (pretty-symbol-string method))))))
+
+(define-method draw send ()
+  (with-fields (x y width height label inputs) self
+    (when %active-on-click
+      (draw-patch self x y (+ x width) (+ y height)))
+    (let ((*text-base-y* (+ y (dash 1))))
+      (draw-label-string self label "white")
+      (dolist (each inputs)
+	(draw each)))))
+
+(define-method draw-hover send ()
+  nil)
+
+;;; A generic color swatch
+
+(define-block color 
+  :pinned nil
+  :methods '(:set-color)
+  :name "gray50"
+  :width (dash 20) :height (dash 20))
+
+(define-method (set-color :category :looks) color
+    ((name string :default "gray50"))
+  (setf %name name))
+
+(define-method draw color ()
+  (with-fields (x y width height red green blue) self
+    (with-style :rounded
+      (draw-patch self x y (+ x width) (+ y height)
+		  :color %name))))
+
+(define-method layout color ())
+
+(define-method initialize color (&optional (name "gray50"))
+  (super%initialize self)
+  (setf %name name))
+
+;;; A reference to another block
+
+(define-block reference
+  (target :initform nil)
+  (iwidth :initform 0)
+  (category :initform :data))
+
+(define-method evaluate reference () 
+  %target)
+
+(define-method recompile reference ()
+  (recompile %target))
+
+(define-method set-target reference (target)
+  (setf %target 
+	(cond 
+	  ((stringp target)
+	   (prog1 target
+	     (assert (find-object target))))
+	  ((blockyp target)
+	   (find-uuid target)))))
+
+(define-method initialize reference (&optional target)
+  (when target
+    (set-target self target)))
+
+(define-method accept reference (new-block)
+  (prog1 nil ;; signal not accepting
+    (set-target self new-block)))
+
+(defun-memo make-reference-name (target)
+    (:key #'first :test 'equal :validator #'identity)
+  (concatenate 'string
+	       (get-some-object-name target)
+	       " "
+	       (object-address-string target)))
+
+(defparameter *null-reference-string* "(null reference)")
+
+(define-method layout reference () 
+  (with-fields (target x y iwidth width height) self
+    (if target
+	(let ((image (field-value :image target))
+	      (name (make-reference-name target)))
+	  (setf iwidth (if image (image-width image) 0))
+	  (setf width (dash 8 iwidth (font-text-width name *font*)
+			    (* *handle-scale* (indicator-size))))
+	  (setf height (dash 2 (font-height *font*)
+			     (if image (image-height image) 0))))
+	(setf width (dash 8 iwidth (font-text-width *null-reference-string* *font*))
+	      height (dash 4 (font-height *font*))))))
+
+(define-method draw reference ()
+  (with-fields (target x y width height iwidth) self
+;    (draw-background self)
+    (let ((offset (* *handle-scale* (indicator-size))))
+      (if (null target)
+	  (draw-string *null-reference-string* 
+		       (+ offset x) y)
+	(let ((image (field-value :image target))
+	      (name (make-reference-name target)))
+	  (when image
+	    (draw-image image 
+			(dash 1 x)
+			(dash 1 y)))
+	  (draw-string name (dash 1 x offset iwidth) (dash 1 y))))
+      (draw-indicator :asterisk 
+		      x y
+		      :scale *handle-scale*
+		      :background "purple"
+		      :color "cyan"))))
 ;; (define-block +
 ;;   (type :initform :operators))
 

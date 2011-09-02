@@ -23,7 +23,7 @@
 ;;; Sending to a referenced object 
 
 (defmacro define-visual-macro ((name super &rest fields)
-		     &rest body)
+		     &body body)
   "Define a visual block element called NAME.
 The argument SUPER should be the name of the base prototype of the
 resulting block. FIELDS should be a list of field descriptors as given
@@ -131,7 +131,7 @@ recompilation."
 ;;; Defining methods
 
 (define-visual-macro 
-    (method list
+    (define-method list
 	    (header :initform nil))
     ;; create a define-method form 
     (let ((inputs (mapcar #'recompile %inputs)))
@@ -152,7 +152,7 @@ recompilation."
 	     :target self))
   (initialize%%list self %header)
   (pin %header))
-
+  
 (define-method (do-define-method :category :system) define-method
     ((name string :default "") 
      (prototype string :default "" :label "for block:")))

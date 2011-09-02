@@ -39,9 +39,9 @@
 	       (:file "listener" :depends-on ("blocks"))
 	       (:file "system" :depends-on ("blocks"))
 	       (:file "worlds" :depends-on ("blocks"))
-	       (:file "shell" :depends-on ("trees" "windows" "listener" "system" "text" "halo"))
+	       (:file "shell" :depends-on ("trees" "windows" "listener" "system" "text" "halo" "library"))
 	       (:file "meta" :depends-on ("trees" "listener" "system" "shell"))
-	       (:file "library" :depends-on ("worlds" "shell" "meta"))))
+	       (:file "library" :depends-on ("blocks"))))
 ;;	       (:file "path")
 	       
 	       
