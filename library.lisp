@@ -186,25 +186,25 @@ inputs are evaluated."
   `(let ((*target* ,target))
      ,@body))
 
-;;; Generic method invocation block. The bread and butter of doing stuff.
+;;; Generic message block. 
 
-(define-block send prototype method schema target label active-on-click)
+(define-block message prototype method schema target label clickable)
 
-(define-method recompile send ()
+(define-method recompile message ()
   ;; devolve into argument values
   (mapcar #'recompile %inputs))
 
-(define-method evaluate send ()
+(define-method evaluate message ()
   (apply #'send %method 
 	 (or *target* %target) ;; with-target will override
 	 (mapcar #'evaluate %inputs)))
 
-(define-method on-tap send (x y)
+(define-method on-tap message (x y)
   (declare (ignore x y))
-  (when %active-on-click
+  (when %clickable
     (evaluate self)))
 
-(define-method accept send (block)
+(define-method accept message (block)
   ;; make these click-align instead
   (assert (blockyp block))
   nil)
@@ -217,11 +217,13 @@ inputs are evaluated."
     (string-downcase 
      (substitute #\Space #\- name))))
 
-(define-method initialize send (&key prototype method label target (active-on-click t))
+(define-method initialize message (&key prototype schema0 method label target (clickable t))
   (super%initialize self)
   (setf %target target)
-  (setf %active-on-click active-on-click)
-  (let* ((schema (method-schema (find-prototype prototype) method))
+  (setf %clickable clickable)
+  (let* ((schema 
+	   (or schema0
+	       (method-schema (find-prototype prototype) method)))
 	 (inputs nil)
 	 (proto (or prototype (object-name (find-super target)))))
     (dolist (entry schema)
@@ -245,16 +247,16 @@ inputs are evaluated."
 	    %method method
 	    %label (or label (pretty-symbol-string method))))))
 
-(define-method draw send ()
+(define-method draw message ()
   (with-fields (x y width height label inputs) self
-    (when %active-on-click
+    (when %clickable
       (draw-patch self x y (+ x width) (+ y height)))
     (let ((*text-base-y* (+ y (dash 1))))
       (draw-label-string self label "white")
       (dolist (each inputs)
 	(draw each)))))
 
-(define-method draw-hover send ()
+(define-method draw-hover message ()
   nil)
 
 ;;; A generic color swatch

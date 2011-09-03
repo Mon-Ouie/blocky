@@ -258,7 +258,7 @@
 
 (define-method pick menu ()
   (if (or (keywordp %action) (blockyp %action))
-      (let ((send (new send 
+      (let ((send (new message 
 		       :prototype (find-super-prototype-name %target)
 		       :method %method
 		       :target %target

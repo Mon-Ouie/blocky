@@ -24,7 +24,7 @@
 
 (defmacro define-visual-macro ((name super &rest fields)
 		     &body body)
-  "Define a visual block element called NAME.
+  "Define a new block called NAME.
 The argument SUPER should be the name of the base prototype of the
 resulting block. FIELDS should be a list of field descriptors as given
 to `define-prototype'. The BODY forms are evaluated when the resulting
@@ -79,8 +79,8 @@ recompilation."
 
 (define-method initialize define-block ()
   (setf %header
-	(new send 
-	     :active-on-click nil
+	(new message 
+	     :clickable nil
 	     :prototype (object-name (find-super self))
 	     :method :do-define-block
 	     :label "define block"
@@ -144,8 +144,8 @@ recompilation."
 	     
 (define-method initialize define-method ()
   (setf %header
-	(new send 
-	     :active-on-click nil
+	(new message 
+	     :clickable nil
 	     :prototype (object-name (find-super self))
 	     :method :do-define-method
 	     :label "define method"

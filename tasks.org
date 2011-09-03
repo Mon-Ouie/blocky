@@ -3,7 +3,6 @@
 ** TODO [#A] Dialog abstraction
 ** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
 ** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
-** TODO [#A] dialog boxes for project save/load!
 ** TODO [#A] Dialogs for all basic project save/load stuff
 ** TODO [#A] Restore basic collision detection functionality
 ** TODO [#A] define-block PALETTE
