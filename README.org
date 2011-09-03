@@ -68,6 +68,7 @@ Here is a quick index of the various files:
 - blocky.asd: ASDF system definition
 - blocky-init.lisp: user-specific startup configuration file for blocky
 - tasks.org: current task list and plans, in org-mode format
+- blocky.org: write-up of some future plans for Blocky
 - standard.blocky: directory with included fonts/images
 - example1.blocky: hello world example
 - example2.blocky: second example
