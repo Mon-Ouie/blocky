@@ -89,6 +89,13 @@ areas.")
 ;;; Defining blocks
 
 (defmacro define-block (spec &body args)
+  "Define a new block prototype. The first argument SPEC is either a
+symbol naming the new block, or a list of the form
+ (SYMBOL . PROPERTIES) Where SYMBOL is similarly a name symbol but
+PROPERTIES is a keyword property list whose valid keys
+are :SUPER (specifying which prototype the newly defined block will
+inherit behavior from) and :DOCUMENTATION (a documentation string.)
+The arguments ARGS are field specifiers. See also prototypes.lisp"
   (let ((name0 nil)
 	(super0 "BLOCKY:BLOCK"))
     (etypecase spec
