@@ -34,10 +34,9 @@ For more information on the design of Blocky, see
 http://blocky.io/design.html
 
 For a quick start to getting familiar with Blocky internals, see the
-included file GUIDE.ORG (or read the web version at
-http://blocky.io/guide.html ) to get an overview of the language
-syntax. Then look through BLOCKS.LISP and branch out from there. I've
-placed cross references wherever possible. 
+included file GUIDE.ORG (or read the [[http://blocky.io/guide.html][web version]]) to get an overview
+of the language syntax. Then look through BLOCKS.LISP and branch out
+from there. I've placed cross references wherever possible.
 
 Emacs users may find BLOCKY.EL useful in making Emacs behave better
 while editing Blocky sources and game modules.
