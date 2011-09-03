@@ -95,7 +95,9 @@ symbol naming the new block, or a list of the form
 PROPERTIES is a keyword property list whose valid keys
 are :SUPER (specifying which prototype the newly defined block will
 inherit behavior from) and :DOCUMENTATION (a documentation string.)
-The arguments ARGS are field specifiers. See also prototypes.lisp"
+The arguments ARGS are field specifiers, each of which is either a
+symbol naming the field, or a list of the form (SYMBOL . PROPERTIES) 
+with :INITFORM and :DOCUMENTATION as valid keys."
   (let ((name0 nil)
 	(super0 "BLOCKY:BLOCK"))
     (etypecase spec
