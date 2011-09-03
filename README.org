@@ -1,7 +1,7 @@
 This is the README.ORG file for the Blocky programming language. It
 contains general information about the project as well as an index of
 important files in this source distribution. More information about
-Blocky can be found at our website, http://blocky.io
+Blocky can be found at our website, [[http://blocky.io][blocky.io]].
 
 The included file "COPYING" contains full licensing information,
 including the text of the GNU General Public License, Version 3.
