@@ -70,6 +70,9 @@ Some functions in the file logic.lisp are based on code written by
 Peter Norvig in his book 'Paradigms of Artificial Intelligence
 Programming'. See logic.lisp for details.
 
+Some of the OpenGL functions in console.lisp are derived from code in
+Bart Botta's CL-OPENGL tutorials; see http://3bb.cc/tutorials/cl-opengl/
+
 This program includes the free DejaVu fonts family in the subdirectory
 ./standard.blocky/. For more information, see the file named
 DEJAVU-FONTS-LICENSE in that subdirectory.
