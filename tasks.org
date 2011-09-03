@@ -1,6 +1,7 @@
 * BETA RELEASE EXECUTION PLAN
 ** TODO later-when checks a condition (whether some other method returns non-nil) (also later-until)
-** TODO [#B] Revise and simplify menus, more like Squeak
+** DONE [#B] Revise and simplify menus, more like Squeak
+   CLOSED: [2011-09-03 Sat 02:47]
 ** TODO define-block PALETTE
 ** TODO buttons on palette
 ** TODO [#A] Complete the core language model (define blocks and methods visually)
