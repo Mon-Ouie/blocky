@@ -1,12 +1,16 @@
 * BETA RELEASE EXECUTION PLAN
-** TODO [#B] Tree-based window abstraction holds any widget
+** TODO in "initialize send" allow specifying schema without dummy method
 ** TODO [#A] Dialog abstraction
+** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
+** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
+** TODO [#A] dialog boxes for project save/load!
 ** TODO [#A] Dialogs for all basic project save/load stuff
 ** TODO [#A] Restore basic collision detection functionality
 ** TODO [#A] define-block PALETTE
 ** TODO [#A] complete and test define-method block
 ** TODO [#A] Implement basic blocks library
 ** TODO [#A] Fix as much of the buglist as possible
+** TODO [#B] Tree-based window abstraction holds any widget
 ** TODO [#B] later-when checks a condition (whether some other method returns non-nil) (also later-until)
 ** TODO [#B] System browser for choosing what to define methods on 
 ** TODO [#B] Ensure full and proper functioning of halos
@@ -44,19 +48,14 @@
 ** TODO [#C] Fix not traversing line break with C-f and C-b
 ** TODO [#C] Get rid of example1/2 and renumber
 
-
 * FEATURES
 ** TODO collapsible windows a-la-squeak
-** TODO make a list derivative whose first element is pinned for eval (VISUAL LAMBDA LIST?)
 ** TODO [#B] Refactor collision detection to enable various types.
 *** delegate actual collision detection to method
 *** in cell/move and sprite/move , compute whether a move would cause a collision
 *** and then only allow the move to go a certain distance. return number moved
 *** then "resting contact" will work; the object won't try to move anymore (if gravity.)
 *** implement AABB-quadtree? http://en.wikipedia.org/wiki/Quadtree http://hectorgon.blogspot.com/2006/08/regular-grids-vs-aabb-trees-in-games.html
-** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
-** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
-** TODO [#A] dialog boxes for project save/load!
 ** TODO color code syntax, not semantics?
 ** TODO GUI for closures
 ** TODO [#B] PRINTer blocks
