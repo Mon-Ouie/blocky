@@ -885,11 +885,10 @@ display."
 ;;; IOF resource interchange files
 
 (defparameter *iof-file-extension* ".iof"
-"IOF is a simple Lisp data interchange file format readable and
-writable by both Emacs Lisp and Common Lisp. An IOF file can contain
-one or more data resources. A 'resource' is an image, sound, text,
-font, lisp program, or other data whose interpretation is up to the
-client.
+"IOF is a simple Lisp data interchange file format. An IOF file can
+contain one or more data resources. A 'resource' is an image, sound,
+text, font, lisp program, or other data whose interpretation is up to
+the client.
 
 An IOF resource can be either self-contained, or point to an
 external file for its data.
