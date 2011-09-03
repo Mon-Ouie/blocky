@@ -133,11 +133,11 @@ initialized with BLOCKS as inputs."
   (remove-block *world* self)
   (discard self))
 
-(define-method deep-copy block () 
-  nil) ;; not defined for generic blocks
+(define-method make-duplicate block ()
+  nil) ;; deep copy
 
-(define-method duplicate block ()
-  (clone (find-super self)))
+(define-method make-clone block ()
+  (find-uuid (clone (find-super self))))
 
 (define-method register-uuid block ()
   (add-object-to-database self))

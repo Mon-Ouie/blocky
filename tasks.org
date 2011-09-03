@@ -1,10 +1,12 @@
 * BETA RELEASE EXECUTION PLAN
+** TODO [#B] Tree-based window abstraction holds any widget
+** TODO [#A] Dialog abstraction
+** TODO [#A] Dialogs for all basic project save/load stuff
 ** TODO [#A] Restore basic collision detection functionality
 ** TODO [#A] define-block PALETTE
 ** TODO [#A] complete and test define-method block
 ** TODO [#A] Implement basic blocks library
 ** TODO [#A] Fix as much of the buglist as possible
-** TODO [#A] Menus/dialogs for all basic project save/load stuff
 ** TODO [#B] later-when checks a condition (whether some other method returns non-nil) (also later-until)
 ** TODO [#B] System browser for choosing what to define methods on 
 ** TODO [#B] Ensure full and proper functioning of halos
@@ -42,15 +44,7 @@
 ** TODO [#C] Fix not traversing line break with C-f and C-b
 ** TODO [#C] Get rid of example1/2 and renumber
 
-** TODO [#C] Change submenu ellipsis to a nice triangle
-* THOUGHTS
-** TODO universal (row,column) ref interface for buffers/blocks
-** TODO unified buffer abstraction for any content type (rename *SCRIPT* to *BUFFER*)
-** TODO basic buffer is a free-roaming space a la squeak
-** TODO generic proportional and table layouts  
-** TODO world implements buffer interface its own way, with grid
-** TODO generic buffer similarly 
-** TODO general widget embed layout thing. =formatter= --> but instead of rich text, it's all widgets (textboxes + img)
+
 * FEATURES
 ** TODO collapsible windows a-la-squeak
 ** TODO make a list derivative whose first element is pinned for eval (VISUAL LAMBDA LIST?)
@@ -189,24 +183,20 @@ add "." and "%CD%" to cffi's foreign directory search list...
 ** TODO [#B] button to add arguments to + etc (just drop onto block list)
 ** TODO [#C] add generic xbox controller support for analog bumpers (emulate buttons)
 ** TODO [#C] introduce with-font macro and stop using *block-font* explicitly
-** TODO [#C] draw standard svg or bitmap icons for errors, informations, questions, and TREE ARROWS
 ** TODO [#C] defface with bold, italic, etc
 ** TODO [#C] "evaluate" and "evaluate and show" buttons
-** TODO [#C] update fontlocking rules
-** TODO [#C] "render as text lisp" option?
-** TODO [#C] data entries have methods, such as 
-***  script or page as terminology? script sounds scarily active, page sounds passive
-***  one file per script
-***  script modes
+** TODO [#C] Change submenu ellipsis to a nice triangle
+** TODO universal (row,column) ref interface for buffers/blocks
+** TODO basic buffer is a free-roaming space a la squeak
+** TODO generic proportional and table layouts  
+** TODO world implements buffer interface its own way, with grid
+** TODO generic buffer similarly 
+** TODO general widget embed layout thing. =formatter= --> but instead of rich text, it's all widgets (textboxes + img)
 ** TODO [#C] duplicate objects / selection 
 ** TODO [#C] defblock selection 
 ** TODO [#C] send message to all blocks in selection
 ** TODO [#C] use turtle to program polygon vertices and stuff, like in fluxus
-** TODO [#C] block colors/backgrounds in a list subprogram could disappear, making it look like text source code?
-** TODO [#C] add more information to method+prototype databases
-** TODO [#C] text cursor should negate underlying letter, not overpaint
 ** TODO [#C] general svg image support
-** TODO [#C] make thing to search for duplicate method defs
 ** TODO [#C] ALPHA issues for PNG images
 <|3b|> you want 'save color values from transparent pixels', and need to make
        sure the pixels are white with 0 alpha

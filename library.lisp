@@ -335,7 +335,7 @@ inputs are evaluated."
 
 (define-method draw reference ()
   (with-fields (target x y width height iwidth) self
-;    (draw-background self)
+    ;; (draw-background self)
     (let ((offset (* *handle-scale* (indicator-size))))
       (if (null target)
 	  (draw-string *null-reference-string* 
@@ -351,6 +351,26 @@ inputs are evaluated."
 		      x y
 		      :scale *handle-scale*
 		      :background "purple"
-		      :color "cyan"))))  
+		      :color "cyan"))))
+
+;;; Palettes to tear cloned objects off of 
+
+(define-block (palette :super :list) 
+  source
+  (style :initform :rounded)
+  (height :initform 100)
+  (width :initform 100))
+
+(define-method hit palette (x y)
+  (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
+    (labels ((hit-it (ob)
+	       (hit ob x y)))
+      (setf %source (some #'hit-it %inputs)))))
+
+;; (define-method pick palette ()
+;;   (if %source
+;;       (make-clone %source)
+;;       self))
+
 
 ;;; library.lisp ends here
