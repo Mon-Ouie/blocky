@@ -1,26 +1,23 @@
 * BETA RELEASE EXECUTION PLAN
-** TODO later-when checks a condition (whether some other method returns non-nil) (also later-until)
-** DONE [#B] Revise and simplify menus, more like Squeak
-   CLOSED: [2011-09-03 Sat 02:47]
-** TODO define-block PALETTE
-** TODO buttons on palette
-** TODO [#A] Complete the core language model (define blocks and methods visually)
-*** TODO complete and test define-method block
+** TODO [#A] Restore basic collision detection functionality
+** TODO [#A] define-block PALETTE
+** TODO [#A] complete and test define-method block
 ** TODO [#A] Implement basic blocks library
-*** TODO [#A] Test sprites with worlds
-*** TODO [#B] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
-** TODO [#A] Ensure full and proper functioning of halos
-*** TODO [#A] collapsed windows
-** TODO [#C] DEFINITION indicator (three dots in a triangle like Therefore, or an EQUAL?)
-** TODO [#B] Merge windows.lisp with shell code 
-** TODO [#B] Restore basic collision detection functionality
-** TODO [#B] Fix as much of the buglist as possible
-** TODO [#B] Menus/dialogs for all basic project save/load stuff
+** TODO [#A] Fix as much of the buglist as possible
+** TODO [#A] Menus/dialogs for all basic project save/load stuff
+** TODO [#B] later-when checks a condition (whether some other method returns non-nil) (also later-until)
+** TODO [#B] System browser for choosing what to define methods on 
+** TODO [#B] Ensure full and proper functioning of halos
+** TODO [#B] collapsed windows
 ** TODO [#B] Default location for new dialogs/widgets from menu: the command-line listener
 *** TODO "empty trash before save?" dialog
 *** TODO "quit without saving?" dialog
 ** TODO [#B] Better language tutorial projects
 ** TODO [#B] Audio test widget ("left, right")
+** TODO [#C] buttons on palette
+** TODO [#C] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
+** TODO [#C] DEFINITION indicator (three dots in a triangle like Therefore, or an EQUAL?)
+** TODO [#C] Turn windows-lisp into a cool window widget
 ** TODO [#C] Basic context-sensitive help
 *** TODO explanatory tooltips
 ** TODO [#C] System browser
@@ -714,6 +711,15 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_TIME: 2011-09-03 Sat 00:41
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: BETA RELEASE EXECUTION PLAN/simple schedulers: later-do, later-when, later-until
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE [#B] Revise and simplify menus, more like Squeak
+   CLOSED: [2011-09-03 Sat 02:47]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-09-03 Sat 02:48
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BETA RELEASE EXECUTION PLAN
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: DONE
    :END:
