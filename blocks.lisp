@@ -20,7 +20,8 @@
 
 ;;; Commentary:
 
-;; Please see the included file README.org for an overview.
+;; Please see the included files README.org and guide.org for an
+;; overview.
 
 ;;; Code:
 
@@ -35,59 +36,11 @@
   "List of keywords used to group blocks into different functionality
 areas.")
 
-(defparameter *background-color* "white"
-  "The default background color of the BLOCKY user interface.")
-
-(defparameter *socket-color* "gray80"
-  "The default background color of block sockets.")
-
-(defparameter *block-font* "sans-11"
-  "Name of the font used in drawing block labels and input data.")
-
-(defparameter *font* *block-font*)
-
-(defmacro with-font (font &rest body)
-  `(let ((*font* ,font))
-     ,@body))
-
-(defparameter *sans* "sans-11"
-  "Name of the default sans-serif font.")
-
-(defparameter *serif* "serif-11"
-  "Name of the default serif font.")
-
-(defparameter *monospace* "sans-mono-10"
-  "Name of the default monospace (fixed-width) font.")
-
-(defvar *dash* 3
-  "Size in pseudo-pixels of (roughly) the size of the space between
-two words. This is used as a unit for various layout operations.
-See also `*style'.")
-
-(defun dash (&optional (n 1) &rest terms)
-  "Return the number of pixels in N dashes. Add any remaining
-arguments. Uses `*dash*' which may be configured by `*style*'."
-  (apply #'+ (* n *dash*) terms))
-
-(defvar *pseudo-pixel-size* 1.0
-  "Size in pixels of a pseudo-pixel.")
-
-(defvar *text-base-y* nil)
-
-(defparameter *cursor-blink-time* 8 
-  "The number of frames the cursor displays each color while blinking.")
-
-(defparameter *cursor-color* "magenta" 
-  "The color of the cursor when not blinking.")
-
-(defparameter *cursor-blink-color* "cyan"
-  "The color of the cursor when blinking.")
-
 (define-prototype block 
     (:documentation
      "This is the base prototype for all objects in the Blocky system."
      )
-  (cursor-clock :initform *cursor-blink-time*)
+  (cursor-clock :initform 0)
   ;; general information
   (inputs :initform nil :documentation 
 	  "List of input (or `child') blocks.")
@@ -133,7 +86,7 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
   (tasks :initform nil)
   (image :initform nil :documentation "Texture to be displayed, if any."))
 
-;;; Standard means of defining blocks
+;;; Defining blocks
 
 (defmacro define-block (spec &body args)
   (let ((name0 nil)
@@ -149,9 +102,220 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
 	  (plist-to-descriptors args)
 	  args))))
 
+;;; Block lifecycle
+
+(define-method initialize block (&rest blocks)
+  "Prepare an empty block, or if BLOCKS is non-empty, a block
+initialized with BLOCKS as inputs."
+  (setf %inputs 
+	(or blocks (default-inputs self)))
+  (update-parent-links self)
+  (update-result-lists self)
+  (bind-any-default-events self)
+  (register-uuid self))
+
+(define-method discard block ()
+  (mapc #'discard %inputs)
+  (when %parent 
+    (unplug-from-parent self))
+  (push self (symbol-value '*trash*)))
+
+(define-method destroy block ()
+  (remove-block *world* self)
+  (discard self))
+
+(define-method deep-copy block () 
+  nil) ;; not defined for generic blocks
+
+(define-method duplicate block ()
+  (clone (find-super self)))
+
+(define-method register-uuid block ()
+  (add-object-to-database self))
+
+;;; Block tags, used for categorizing blocks
+
+(define-method has-tag block (tag)
+  "Return non-nil if this block has the specified TAG.
+
+Blocks may be marked with tags that influence their processing by the
+engine. The field `%tags' is a set of keyword symbols; if a symbol
+`:foo' is in the list, then the block is in the tag `:foo'.
+
+Although a game built on BLOCKY can define whatever tags are
+needed, certain base tags are built-in and have a fixed
+interpretation:
+
+ -    :obstacle --- Blocks movement and causes collisions
+ -    :temporary --- This block is not preserved when exiting a world.
+ -    :light-source --- This object casts light. 
+ -    :opaque --- Blocks line-of-sight, casts shadows. 
+"
+  (member tag %tags))
+
+(define-method add-tag block (tag)
+  "Add the specified TAG to this block."
+  (pushnew tag %tags))
+
+(define-method remove-tag block (tag)
+  "Remove the specified TAG  from this block."
+  (setf %tags (remove tag %tags)))
+
+;;; Serialization hooks
+
+(define-method before-serialize block ())
+
+(define-method after-deserialize block ()
+  "Prepare a deserialized block for running."
+  (register-uuid self))
+
+;;; Expression structure (blocks composed into trees)
+
+(define-method adopt block (child)
+  (when (get-parent child)
+    (unplug-from-parent child))
+  (set-parent child self))
+
+(define-method update-parent-links block ()
+  (dolist (each %inputs)
+    (set-parent each self)))
+
+(define-method count-inputs block ()
+  (length %inputs))
+
+(defun is-temporary (thing)
+  (and (has-field :temporary thing)
+       (field-value :temporary thing)))
+
+(define-method count-top-level-blocks block ()
+  (with-field-values (inputs) self
+    (- (length inputs)
+       (count-if #'is-temporary inputs))))
+
+(define-method accept block (other-block)
+  "Try to accept OTHER-BLOCK as a drag-and-dropped input. Return
+non-nil to indicate that the block was accepted, nil otherwise."
+  nil)
+
+(define-method parent-is-buffer block ()
+  (assert (not (null *buffer*)))
+  (object-eq %parent *buffer*))
+
+(define-method top-level-blocks block ()
+  (with-field-values (inputs) self
+    (remove-if #'is-temporary inputs)))
+  
+(define-method contains block (block)
+  (find (find-object block)
+	%inputs
+	:test 'eq
+	:key #'find-object))
+
+(define-method input-position block (input)
+  (assert (not (null input)))
+  (position (find-uuid input) %inputs :key #'find-uuid :test 'equal))
+
+(defun input (self name)
+  (with-fields (inputs) self
+    (assert (not (null inputs)))
+    (nth (input-position self name) inputs)))
+
+(defun (setf input) (self name block)
+  (with-fields (inputs) self
+;    (assert (not (object-p name)))
+    (assert (not (null inputs)))
+    (set-parent block self)
+    (setf (nth (input-position self name) inputs)
+	  ;; store the real link
+  	  (find-object block))))
+
+(define-method position-within-parent block ()
+  (input-position %parent self))
+
+(defun named-input-type (self name)
+  (with-fields (schema) self
+    (let ((index (position name schema :key #'first)))
+      (if (numberp index)
+	  (cdr (assoc name schema))
+	  (error "No such input ~S" name)))))
+
+(define-method set-parent block (parent)
+  "Store a UUID link to the enclosing block PARENT."
+  (assert (not (null parent)))
+  (assert (is-valid-connection parent self))
+  (setf %parent (when parent 
+		  ;; always store uuid to prevent circularity
+		  (find-uuid parent))))
+	       
+(define-method get-parent block ()
+  %parent)
+
+(define-method find-parent block ()
+  (find-uuid %parent))
+
+(defun is-valid-connection (sink source)
+  (assert (or sink source))
+  ;; make sure source is not actually sink's parent somewhere
+  (block checking
+    (prog1 t
+      (let ((pointer sink))
+	(loop while pointer do
+	  (if (eq (find-object pointer)
+		  (find-object source))
+	      (return-from checking nil)
+	      (setf pointer (find-parent pointer))))))))
+
+(define-method update-result-lists block ()
+  (let ((len (length %inputs)))
+    (setf %input-widths (make-list len :initial-element 0))
+    (setf %results (make-list len))))
+
+(define-method delete-input block (block)
+  (with-fields (inputs) self
+    (prog1 t
+      (assert (contains self block))
+      (setf inputs (remove block inputs
+			   :key #'find-object
+			   :test 'eq))
+      (assert (not (contains self block))))))
+
+(define-method default-inputs block ()
+  nil)
+
+(define-method this-position block ()
+  (with-fields (parent) self
+    (when parent
+      (input-position parent self))))
+
+(define-method plug block (thing n)
+  "Connect the block THING as the value of the Nth input."
+  (set-parent thing self)
+  (setf (input self n) thing))
+
+(define-method unplug block (input)
+  "Disconnect the block INPUT from this block."
+  (with-fields (inputs parent) self
+    (assert (contains self input))
+    (prog1 input
+      (setf inputs 
+	    (delete input inputs 
+		    :test 'eq :key #'find-object)))))
+
+(define-method unplug-from-parent block ()
+  (prog1 t
+    (with-fields (parent) self
+      (assert (not (null parent)))
+      (assert (contains parent self))
+      (unplug parent self)
+      (assert (not (contains parent self)))
+      (setf parent nil))))
+
+(define-method drop block (other-block)
+  (add-block *buffer* other-block %x %y))
+
 ;;; Defining input events for blocks
 
-;; see below definition of (defblock task... 
+;; see also definition of "task" blocks below.
 
 (define-method initialize-events-table-maybe block (&optional force)
   (when (or force 
@@ -307,7 +471,43 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 	  (keyword (bind-event-to-method self key mods result))
 	  (string (bind-event-to-text-insertion self key mods result)))))))
 
-;;; Each object has a Squeak-style pop-up halo
+;;; Pointer events (see also shell.lisp)
+
+(define-method on-select block () nil)
+
+(define-method on-tap block (x y)
+  (declare (ignore x y))
+  nil)
+
+(define-method on-alternate-tap block (x y)
+  (toggle-halo self))
+
+(define-method on-point block (x y)
+  (declare (ignore x y)))
+
+(define-method on-press block (x y button)
+  (declare (ignore x y button)))
+
+(define-method on-release block (x y button)
+  (declare (ignore x y button)))
+
+(define-method can-pick block ()
+  (not %pinned))
+
+(define-method pick block ()
+  self) ;; Possibly return a child, or a new object 
+
+
+;;; Focus events (see also shell.lisp)
+
+(define-method on-focus block () nil)
+
+(define-method on-lose-focus block () nil)
+
+(define-method grab-focus block () 
+  (send :focus-on (symbol-value '*shell*) self))
+
+;;; Squeak-style pop-up halo with action handles
 
 ;; see also halo.lisp
 
@@ -331,21 +531,9 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 (define-method can-escape block ()
   t)
 
-(define-method discard block ()
-  (mapc #'discard %inputs)
-  (when %parent 
-    (unplug-from-parent self))
-  (push self (symbol-value '*trash*)))
-
-;;; Serialization hooks
-
-(define-method before-serialize block ())
-
-(define-method after-deserialize block ()
-  "Prepare a deserialized block for running."
-  (register-uuid self))
-
 ;;; Tasks and updating
+
+;; See also definition of "task" blocks below.
 
 (define-method add-task block (task)
   (assert (blockyp task))
@@ -363,133 +551,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
   "Update the simulation one step forward in time."
   (run-tasks self)
   (mapc #'on-update %inputs))
-  
-;;; Locking the layout
-
-(define-method pin block ()
-  "Prevent dragging and moving of this block."
-  (setf %pinned t))
-
-(define-method unpin block () 
-  "Allow dragging and moving of this block."
-  (setf %pinned nil))
-
-(define-method is-pinned block ()
-  "When non-nil, dragging and moving are disallowed for this block."
-  %pinned)
-
-(define-method count-inputs block ()
-  (length %inputs))
-
-(defun is-temporary (thing)
-  (and (has-field :temporary thing)
-       (field-value :temporary thing)))
-
-(define-method count-top-level-blocks block ()
-  (with-field-values (inputs) self
-    (- (length inputs)
-       (count-if #'is-temporary inputs))))
-
-(define-method top-level-blocks block ()
-  (with-field-values (inputs) self
-    (remove-if #'is-temporary inputs)))
-  
-(define-method contains block (block)
-  (find (find-object block)
-	%inputs
-	:test 'eq
-	:key #'find-object))
-
-(define-method input-position block (input)
-  (assert (not (null input)))
-  (position (find-uuid input) %inputs :key #'find-uuid :test 'equal))
-
-(defun input (self name)
-  (with-fields (inputs) self
-    (assert (not (null inputs)))
-    (nth (input-position self name) inputs)))
-
-(defun (setf input) (self name block)
-  (with-fields (inputs) self
-;    (assert (not (object-p name)))
-    (assert (not (null inputs)))
-    (set-parent block self)
-    (setf (nth (input-position self name) inputs)
-	  ;; store the real link
-  	  (find-object block))))
-
-(define-method position-within-parent block ()
-  (input-position %parent self))
-
-(defun named-input-type (self name)
-  (with-fields (schema) self
-    (let ((index (position name schema :key #'first)))
-      (if (numberp index)
-	  (cdr (assoc name schema))
-	  (error "No such input ~S" name)))))
-
-(define-method set-parent block (parent)
-  "Store a UUID link to the enclosing block PARENT."
-  (assert (not (null parent)))
-  (assert (is-valid-connection parent self))
-  (setf %parent (when parent 
-		  ;; always store uuid to prevent circularity
-		  (find-uuid parent))))
-	       
-(define-method get-parent block ()
-  %parent)
-
-(define-method find-parent block ()
-  (find-uuid %parent))
-
-(defun is-valid-connection (sink source)
-  (assert (or sink source))
-  ;; make sure source is not actually sink's parent somewhere
-  (block checking
-    (prog1 t
-      (let ((pointer sink))
-	(loop while pointer do
-	  (if (eq (find-object pointer)
-		  (find-object source))
-	      (return-from checking nil)
-	      (setf pointer (find-parent pointer))))))))
-
-(define-method register-uuid block ()
-  (add-object-to-database self))
-
-(define-method update-result-lists block ()
-  (let ((len (length %inputs)))
-    (setf %input-widths (make-list len :initial-element 0))
-    (setf %results (make-list len))))
-
-(define-method delete-input block (block)
-  (with-fields (inputs) self
-    (prog1 t
-      (assert (contains self block))
-      (setf inputs (remove block inputs
-			   :key #'find-object
-			   :test 'eq))
-      (assert (not (contains self block))))))
-
-(define-method default-inputs block ()
-  nil)
- 
-(define-method deep-copy block () 
-  nil) ;; not defined for generic blocks
-
-(define-method duplicate block ()
-  (clone (find-super self)))
-  
-(define-method initialize block (&rest blocks)
-  "Prepare an empty block, or if BLOCKS is non-empty, a block
-initialized with BLOCKS as inputs."
-  (setf %inputs 
-	(or blocks (default-inputs self)))
-  (update-parent-links self)
-  (update-result-lists self)
-  (bind-any-default-events self)
-  (register-uuid self))
-
+   
 ;;; Creating blocks from S-expressions
  
 (defun is-action-spec (spec)
@@ -506,6 +568,8 @@ initialized with BLOCKS as inputs."
        (= 1 (length spec))
        (null (first spec))))
 
+;; see also the definition of "entry" blocks in listener.lisp
+
 (defparameter *builtin-entry-types* 
   '(integer float string symbol number))
  
@@ -519,6 +583,7 @@ initialized with BLOCKS as inputs."
 			     head-type data-type)))
     ;; see also terminal.lisp for more on data entry blocks
     (typecase datum
+      ;; see also the definition of "string" blocks in listener.lisp
       (string (new string :value datum))
       (symbol (new symbol :value datum))
       (otherwise (new entry :value datum :type-specifier type-specifier)))))
@@ -563,11 +628,6 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	   (list-block sexp))
 	  ((not (null sexp)) (data-block sexp)))))
 
-(define-method resize block (&key height width)
-  (setf %height height)
-  (setf %width width)
-  (invalidate-layout self))
-
 ;;; Block movement
 
 (define-method move-to block (x y &optional z)
@@ -584,6 +644,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
       (setf x x0)
       (setf y y0))))
 
+;;; Visibility
+
 (define-method show block ()
   (setf %visible t))
 
@@ -598,56 +660,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method is-visible block ()
   %visible)
 
-(define-method get-image block ()
-  %image)
-
-(define-method on-select block () nil)
-
-(define-method on-tap block (x y)
-  (declare (ignore x y))
-  nil)
-
-(define-method on-alternate-tap block (x y)
-  (toggle-halo self))
-
-(define-method on-point block (x y)
-  (declare (ignore x y)))
-
-(define-method on-press block (x y button)
-  (declare (ignore x y button)))
-
-(define-method on-release block (x y button)
-  (declare (ignore x y button)))
-
-;;; Connecting blocks
-
-(define-method this-position block ()
-  (with-fields (parent) self
-    (when parent
-      (input-position parent self))))
-
-(define-method plug block (thing n)
-  "Connect the block THING as the value of the Nth input."
-  (set-parent thing self)
-  (setf (input self n) thing))
-
-(define-method unplug block (input)
-  "Disconnect the block INPUT from this block."
-  (with-fields (inputs parent) self
-    (assert (contains self input))
-    (prog1 input
-      (setf inputs 
-	    (delete input inputs 
-		    :test 'eq :key #'find-object)))))
-
-(define-method unplug-from-parent block ()
-  (prog1 t
-    (with-fields (parent) self
-      (assert (not (null parent)))
-      (assert (contains parent self))
-      (unplug parent self)
-      (assert (not (contains parent self)))
-      (setf parent nil))))
+;;; Menus
 
 (define-method make-method-menu-item block (method target)
   (assert (and target (keywordp method)))
@@ -656,9 +669,6 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	  :method method
 	  :target target
 	  :action (new task method target))))
-
-(define-method drop block (other-block)
-  (add-block *buffer* other-block %x %y))
 
 (define-method context-menu block ()
   (let ((methods nil)
@@ -709,25 +719,9 @@ all the time."
 (define-method evaluate block () 
   (eval (recompile self)))
 
-;; (define-method evaluate block () 
-;;   "Return the computed result of this block.  By default, all the
-;; inputs are evaluated."
-;;   (prog1 self
-;;     (evaluate-inputs self)))
-
 (define-method recompile block ()
   `(progn 
      ,@(mapcar #'recompile %inputs)))
-
-;;; Context-sensitive user help
-
-;; (define-method describe block ()
-;;   "Show name and comprehensive help for this block."
-;;   nil)
-
-;; (define-method after-deserialize block ()
-;;   "Make sure the block is ready after loading."
-;;   nil)
 
 (defun count-tree (tree)
   "Return the number of blocks enclosed in this block, including the
@@ -740,7 +734,57 @@ current block. Used for taking a count of all the nodes in a tree."
 		  (mapcar #'count-tree 
 			  (field-value :inputs tree))))))
 
-;;; Drawing blocks
+;;; Drawing blocks with complete theme customization
+
+;; Very important for individuals with colorblindness.
+
+(defparameter *background-color* "white"
+  "The default background color of the BLOCKY user interface.")
+
+(defparameter *socket-color* "gray80"
+  "The default background color of block sockets.")
+
+(defparameter *block-font* "sans-11"
+  "Name of the font used in drawing block labels and input data.")
+
+(defparameter *font* *block-font*)
+
+(defmacro with-font (font &rest body)
+  `(let ((*font* ,font))
+     ,@body))
+
+(defparameter *sans* "sans-11"
+  "Name of the default sans-serif font.")
+
+(defparameter *serif* "serif-11"
+  "Name of the default serif font.")
+
+(defparameter *monospace* "sans-mono-10"
+  "Name of the default monospace (fixed-width) font.")
+
+(defvar *dash* 3
+  "Size in pseudo-pixels of (roughly) the size of the space between
+two words. This is used as a unit for various layout operations.
+See also `*style'.")
+
+(defun dash (&optional (n 1) &rest terms)
+  "Return the number of pixels in N dashes. Add any remaining
+arguments. Uses `*dash*' which may be configured by `*style*'."
+  (apply #'+ (* n *dash*) terms))
+
+(defvar *pseudo-pixel-size* 1.0
+  "Size in pixels of a pseudo-pixel.")
+
+(defvar *text-base-y* nil)
+
+(defparameter *cursor-blink-time* 8 
+  "The number of frames the cursor displays each color while blinking.")
+
+(defparameter *cursor-color* "magenta" 
+  "The color of the cursor when not blinking.")
+
+(defparameter *cursor-blink-color* "cyan"
+  "The color of the cursor when blinking.")
 
 (defparameter *block-colors*
   '(:motion "cornflower blue"
@@ -837,7 +881,7 @@ of block."
 (defparameter *selection-color* "red")
 
 (defparameter *styles* '((:rounded :dash 3)
-		   (:flat :dash 1)))
+			 (:flat :dash 1)))
 
 (defvar *style* :flat)
 
@@ -848,7 +892,7 @@ of block."
 	  (*dash* (or (getf *styles* ,st)
 		      *dash*)))
      ,@body)))
-     
+
 (defmacro with-block-drawing (&body body)
   "Run BODY forms with drawing primitives.
 The primitives are CIRCLE, DISC, LINE, BOX, and TEXT. These are used
@@ -989,15 +1033,6 @@ area is drawn. If DARK is non-nil, paint a darker region."
 (define-method draw-socket block (x0 y0 x1 y1)
   (draw-patch self x0 y0 x1 y1 :depressed t :socket t))
 
-;; (define-method draw-emblem block (&optional force)
-;;   (with-fields (emblem x y) self
-;;     (when (or force emblem)
-;;       (draw-indicator emblem (- x (dash 3)) y 
-;; 		      :color "red" :background "white"
-;; 		      :scale 3))))
-
-;;; Blinking cursor
-
 (define-method update-cursor-clock block ()
   ;; keep the cursor blinking
   (with-fields (cursor-clock) self
@@ -1020,174 +1055,15 @@ area is drawn. If DARK is non-nil, paint a darker region."
 
 (define-method draw-cursor block (&rest ignore) nil)
 
-(define-method draw-border block (&optional (color *selection-color*))
-  (let ((dash *dash*))
-    (with-fields (x y height width) self
-      (draw-patch self (- x dash) (- y dash)
-		   (+ x width dash)
-		   (+ y height dash)
-		   :color color))))
-
-(define-method draw-background block ()
-  (with-fields (x y width height) self
-    (draw-patch self x y (+ x width) (+ y height))))
-
-(define-method draw-ghost block ()
-  (with-fields (x y width height) self
-    (draw-patch self x y (+ x width) (+ y height)
-		 :depressed t :socket t)))
-
-;; (define-method label-width block ()
-;;   (+ (* 2 *dash*)
-;;      (expression-width %operation)))
-
-(define-method header-height block () 0)
-
-(define-method header-width block () %width)
-
-(defparameter *socket-width* (* 18 *dash*))
-
-(defun print-expression (expression)
-  (assert (not (object-p expression)))
-  (string-downcase
-   (typecase expression
-     (symbol
-	(substitute #\Space #\- (symbol-name expression)))
-     (otherwise (format nil "~s" expression)))))
-
-(defun expression-width (expression &optional (font *font*))
-  (if (blocky:object-p expression)
-      *socket-width*
-      (font-text-width (print-expression expression) font)))
-
-;; (define-method layout block () 
-;;   (with-fields (x y width height inputs) self
-;;     (setf width (dash 2))
-;;     (setf height (dash 2))
-;;     (let ((left (+ x (dash 1)))
-;; 	  (top (+ y (dash 1))))
-;;       (dolist (input inputs)
-;; 	(layout input)
-;; 	(move-to input left top)
-;; 	(let ((width0 (field-value :width input)))
-;; 	  (incf left (+ (dash 2) width0))
-;; 	  (incf width (+ width0 (dash 2)))
-;; 	  (setf height (max height (field-value :height input))))))
-;;     (incf height (dash 2))
-;;     (incf width (dash 2))))
-
-(define-method layout-as-image block ()
-  (with-fields (height width image) self
-    (setf height (image-height image))
-    (setf width (image-width image))))
-
-(define-method layout block () 
-  (if %image 
-      (layout-as-image self)
-      (with-fields (height width label) self
-	(with-field-values (x y inputs) self
-	  (let* ((left (+ x (label-width self)))
-		 (max-height (font-height *font*))
-		 (dash (dash 1)))
-	    (dolist (input inputs)
-	      (move-to input (+ left dash) y)
-	      (layout input)
-	      (setf max-height (max max-height (field-value :height input)))
-	      (incf left (dash 1 (field-value :width input))))
-	    ;; now update own dimensions
-	    (setf width (dash 1 (- left x)))
-	    (setf height (+  (if (null inputs)
-				     dash 0) max-height)))))))
-  
-(define-method draw-expression block (x0 y0 segment type)
-  (with-fields (height input-widths) self
-    (let ((dash *dash*)
-	  (width *socket-width*))
-      (if (eq type :block)
-	  ;; draw a socket if there's no block; otherwise wait
-	  ;; until later to draw.
-	  (when (null segment)
-	    (draw-socket self (+ x0 dash) (+ y0 dash)
-			 (+ x0 *socket-width*)
-			 (+ y0 (- height dash))))
-	  (progn
-	    (with-block-drawing 
-	      (text x0 (+ y0 dash 1)
-		  (print-expression segment))
-	      (setf width (expression-width segment)))))
-      width)))
-
-(define-method draw-inputs block ()
-  (mapc #'draw %inputs))
-
-(define-method draw-contents block ()
-  (with-fields (operation inputs) self
-    ;; (draw-label self operation)
-    (dolist (each inputs)
-      (draw each))))
-
-(define-method update-parent-links block ()
-  (dolist (each %inputs)
-    (set-parent each self)))
-
-;;; Labels for blocks
-
-(define-method set-label-string block (label)
-  (assert (stringp label))
-  (setf %label label))
-
-(define-method label-string block ()
-  %label)
-
-(define-method label-width block ()
-  (if (null %label)
-      0
-      (+ (dash 2)
-	 (font-text-width %label *font*))))
-    
-(define-method draw-label-string block (string &optional color)
-  (with-block-drawing 
-    (with-field-values (x y) self
-      (let* ((dash *dash*)
-	     (left (+ x (* 2 dash)))
-	     (y0 (+ y dash 1)))
-	(text left y0 string color)))))
-
-(define-method draw-label block (expression)
-  (draw-label-string self (print-expression expression)))
-
-;;; Sound 
-
-(define-method play-sound block (sample-name)
-  (play-sample sample-name))
-
-;;; General block drawing
-
-(define-method draw block ()
-  (with-fields (image x y width height blend opacity) self
-    (if image 
-	(progn (set-blending-mode blend)
-	       (draw-image image x y))
-	(progn (draw-patch self x y (+ x width) (+ y height))
-	       (draw-contents self)))))
-
 (defparameter *highlight-background-color* "gray80")
+
 (defparameter *highlight-foreground-color* "gray20")
-
-(define-method on-focus block () nil)
-
-(define-method on-lose-focus block () nil)
-
-(define-method grab-focus block () 
-  (send :focus-on (symbol-value '*shell*) self))
 
 (define-method draw-focus block () nil)
 
 (define-method draw-highlight block () nil)
 
 (defparameter *hover-color* "red")
-
-;; (define-method draw-hover block ())
 
 (define-method draw-hover block ()
   (with-fields (x y width height inputs) self
@@ -1217,59 +1093,152 @@ area is drawn. If DARK is non-nil, paint a darker region."
   (assert (stringp image))
   (setf %image image)
   (update-image-dimensions self))
+  
+(define-method draw-expression block (x0 y0 segment type)
+  (with-fields (height input-widths) self
+    (let ((dash *dash*)
+	  (width *socket-width*))
+      (if (eq type :block)
+	  ;; draw a socket if there's no block; otherwise wait
+	  ;; until later to draw.
+	  (when (null segment)
+	    (draw-socket self (+ x0 dash) (+ y0 dash)
+			 (+ x0 *socket-width*)
+			 (+ y0 (- height dash))))
+	  (progn
+	    (with-block-drawing 
+	      (text x0 (+ y0 dash 1)
+		  (print-expression segment))
+	      (setf width (expression-width segment)))))
+      width)))
 
-(define-method adopt block (child)
-  (when (get-parent child)
-    (unplug-from-parent child))
-  (set-parent child self))
+(define-method draw-inputs block ()
+  (mapc #'draw %inputs))
 
-(define-method can-pick block ()
-  (not %pinned))
+(define-method draw block ()
+  (with-fields (image x y width height blend opacity) self
+    (if image 
+	(progn (set-blending-mode blend)
+	       (draw-image image x y))
+	(progn (draw-patch self x y (+ x width) (+ y height))
+	       (draw-contents self)))))
 
-(define-method pick block ()
-  self) ;; Possibly return a child, or a new object 
+(define-method draw-contents block ()
+  (with-fields (operation inputs) self
+    ;; (draw-label self operation)
+    (dolist (each inputs)
+      (draw each))))
 
-(define-method accept block (other-block)
-  "Try to accept OTHER-BLOCK as a drag-and-dropped input. Return
-non-nil to indicate that the block was accepted, nil otherwise."
-  nil)
+(define-method draw-border block (&optional (color *selection-color*))
+  (let ((dash *dash*))
+    (with-fields (x y height width) self
+      (draw-patch self (- x dash) (- y dash)
+		   (+ x width dash)
+		   (+ y height dash)
+		   :color color))))
 
-(define-method parent-is-buffer block ()
-  (assert (not (null *buffer*)))
-  (object-eq %parent *buffer*))
+(define-method draw-background block ()
+  (with-fields (x y width height) self
+    (draw-patch self x y (+ x width) (+ y height))))
 
-(define-method is-top-level block ()
-  (object-eq %parent *buffer*))
+(define-method draw-ghost block ()
+  (with-fields (x y width height) self
+    (draw-patch self x y (+ x width) (+ y height)
+		 :depressed t :socket t)))
 
-;;; Block tags
+(define-method header-height block () 0)
 
-(define-method has-tag block (tag)
-  "Return non-nil if this block has the specified TAG.
+(define-method header-width block () %width)
 
-Blocks may be marked with tags that influence their processing by the
-engine. The field `%tags' is a set of keyword symbols; if a symbol
-`:foo' is in the list, then the block is in the tag `:foo'.
+(defparameter *socket-width* (* 18 *dash*))
 
-Although a game built on BLOCKY can define whatever tags are
-needed, certain base tags are built-in and have a fixed
-interpretation:
+(defun print-expression (expression)
+  (assert (not (object-p expression)))
+  (string-downcase
+   (typecase expression
+     (symbol
+	(substitute #\Space #\- (symbol-name expression)))
+     (otherwise (format nil "~s" expression)))))
 
- -    :obstacle --- Blocks movement and causes collisions
- -    :temporary --- This block is not preserved when exiting a world.
- -    :light-source --- This object casts light. 
- -    :opaque --- Blocks line-of-sight, casts shadows. 
-"
-  (member tag %tags))
+(defun expression-width (expression &optional (font *font*))
+  (if (blocky:object-p expression)
+      *socket-width*
+      (font-text-width (print-expression expression) font)))
 
-(define-method add-tag block (tag)
-  "Add the specified TAG to this block."
-  (pushnew tag %tags))
+(define-method set-label-string block (label)
+  (assert (stringp label))
+  (setf %label label))
 
-(define-method remove-tag block (tag)
-  "Remove the specified TAG  from this block."
-  (setf %tags (remove tag %tags)))
+(define-method label-string block ()
+  %label)
 
-;;; Collision detection
+(define-method label-width block ()
+  (if (null %label)
+      0
+      (+ (dash 2)
+	 (font-text-width %label *font*))))
+    
+(define-method draw-label-string block (string &optional color)
+  (with-block-drawing 
+    (with-field-values (x y) self
+      (let* ((dash *dash*)
+	     (left (+ x (* 2 dash)))
+	     (y0 (+ y dash 1)))
+	(text left y0 string color)))))
+
+(define-method draw-label block (expression)
+  (draw-label-string self (print-expression expression)))
+
+;;; Layout management
+
+(define-method pin block ()
+  "Prevent dragging and moving of this block."
+  (setf %pinned t))
+
+(define-method unpin block () 
+  "Allow dragging and moving of this block."
+  (setf %pinned nil))
+
+(define-method is-pinned block ()
+  "When non-nil, dragging and moving are disallowed for this block."
+  %pinned)
+
+(define-method resize block (&key height width)
+  (setf %height height)
+  (setf %width width)
+  (invalidate-layout self))
+
+(define-method layout-as-image block ()
+  (with-fields (height width image) self
+    (setf height (image-height image))
+    (setf width (image-width image))))
+
+(define-method layout block () 
+  (if %image 
+      (layout-as-image self)
+      (with-fields (height width label) self
+	(with-field-values (x y inputs) self
+	  (let* ((left (+ x (label-width self)))
+		 (max-height (font-height *font*))
+		 (dash (dash 1)))
+	    (dolist (input inputs)
+	      (move-to input (+ left dash) y)
+	      (layout input)
+	      (setf max-height (max max-height (field-value :height input)))
+	      (incf left (dash 1 (field-value :width input))))
+	    ;; now update own dimensions
+	    (setf width (dash 1 (- left x)))
+	    (setf height (+  (if (null inputs)
+				     dash 0) max-height)))))))
+
+;;; Sound 
+
+(define-method play-sound block (sample-name)
+  (play-sample sample-name))
+
+;;; Collision detection and UI hit testing
+
+;; Still under construction...
 
 (define-method hit block (mouse-x mouse-y)
   "Return this block (or child input block) if the coordinates MOUSE-X
@@ -1283,23 +1252,14 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 	    self)))))
 
 (define-method bounding-box block ()
-  (multiple-value-bind (x y)
-      (xy-coordinates self)
-    (let ((size (field-value :grid-size *world*)))
-      (values x y size size))))
+  (when (null %height)
+    (update-image-dimensions self))
+  (values %x %y %width %height))
 
 (define-method collide block (object)
   (declare (ignore object))
   "Respond to a collision detected with OBJECT."
   nil)
-
-(define-method destroy block ()
-  (remove-block *world* self)
-  (discard self))
-
-(define-method move-to-grid block (row column)
-  (with-field-values (grid-size) *world*
-    (move-to self (* grid-size row) (* grid-size column))))
 
 (defun point-in-rectangle-p (x y width height o-top o-left o-width o-height)
   (let ((o-right (+ o-left o-width))
@@ -1313,11 +1273,6 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 	  (< (+ x width) o-left)
 	  ;; is left to right of other right?
 	  (< o-right x)))))
-
-(define-method bounding-box block ()
-  (when (null %height)
-    (update-image-dimensions self))
-  (values %x %y %width %height))
 
 (define-method colliding-with-rectangle block (o-top o-left o-width o-height)
   ;; you must pass arguments in Y X order since this is TOP then LEFT
@@ -1579,5 +1534,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 
 (defmacro later-while (test-expression &body subtask-expressions)
   `(later ,(make-task-form t test-expression subtask-expressions)))
+
+;; see also library.lisp for more block examples and many basic blocks
 
 ;;; blocks.lisp ends here

@@ -1,10 +1,6 @@
 * BETA RELEASE EXECUTION PLAN
-** TODO [#C] W
-** TODO [#B] simple schedulers: later-do, later-when, later-until
-*** DONE later-do and do-at-time macros evolve to a closure block that sends the supplied method
-    CLOSED: [2011-09-02 Fri 17:23]
-*** TODO later-when checks a condition (whether some other method returns non-nil)
-** TODO Revise and simplify menus, more like Squeak
+** TODO later-when checks a condition (whether some other method returns non-nil) (also later-until)
+** TODO [#B] Revise and simplify menus, more like Squeak
 ** TODO define-block PALETTE
 ** TODO buttons on palette
 ** TODO [#A] Complete the core language model (define blocks and methods visually)
@@ -36,6 +32,7 @@
 
 * BUGS
 ** TODO [#B] Fix crash on wrong color names
+** TODO [#B] Fix can't grab define-block via the labels
 ** TODO [#A] Fix halo handles not working after first move of object w/halo
 *** TODO Halo is in front after pickup/putdown? it should hit-test its children
 ** TODO [#B] Fix bad halo layout on small objects (establish a minimum size)
@@ -707,6 +704,15 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_TIME: 2011-09-01 Thu 20:42
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: BETA RELEASE EXECUTION PLAN/Complete the core language model (define blocks and methods visually)
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE later-do and do-at-time macros evolve to a closure block that sends the supplied method
+   CLOSED: [2011-09-02 Fri 17:23]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-09-03 Sat 00:41
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BETA RELEASE EXECUTION PLAN/simple schedulers: later-do, later-when, later-until
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: DONE
    :END:
