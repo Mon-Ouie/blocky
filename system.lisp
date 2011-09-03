@@ -32,14 +32,15 @@
      ((:label "Create a new project" :action :create-project)
       (:label "Open an existing project" :action :open-existing-project)
       (:label "Save current changes" :action :save-changes)
-      (:label "Show current changes without saving" :action :show-changes)
-      (:label "Export as archive" :action :export-archive)
-      (:label "Export as application" :action :export-application)
-      (:label "Publish to web" :action :publish-web)
-      (:label "Publish to community site" :action :publish-community)
-      (:label "Publish to FTP" :action :publish-ftp)
-      (:label "Edit preferences" :action :edit-preferences)
-      (:label "Quit BLOCKY" :action :quit-blocky)))
+      (:label "Save as new project" :action :save-new)
+      ;; (:label "Show current changes without saving" :action :show-changes)
+      ;; (:label "Export as archive" :action :export-archive)
+      ;; (:label "Export as application" :action :export-application)
+      ;; (:label "Publish to web" :action :publish-web)
+      ;; (:label "Publish to community site" :action :publish-community)
+      ;; (:label "Publish to FTP" :action :publish-ftp)
+      ;;(:label "Edit preferences" :action :edit-preferences)
+      (:label "Quit Blocky" :action :quit-blocky)))
     (:label "Edit"
      :inputs
      ((:label "Cut" :action :cut)
@@ -50,57 +51,48 @@
       (:label "Clear selection" :action :clear-selection)))
     (:label "Blocks"
      :inputs
-     ((:label "Define block" :action :open-define-block-dialog)
-      (:label "Extend this block" :action :open-extend-block-dialog)
+     ((:label "Define a block" :action :open-define-block-dialog)
       (:label "Inspect" :action :inspect)
-      (:label "Copy" :action :copy)
-      (:label "Destroy" :action :destroy)))
+      (:label "Clone" :action :do-clone)
+      (:label "Copy" :action :do-copy)
+      (:label "Discard" :action :destroy)))
     (:label "Resources"
      :inputs
      ((:label "Import new resource" :action :import-resources)
       (:label "Edit resource" :action :edit-resource)
       (:label "Search resources" :action :search-resources)
       (:label "Export resource(s)" :action :export-resources)
-      (:label "Browse resources"
-       :inputs
-       ((:label "Browse objects" :action :browse-objects)
-	(:label "Browse blocks" :action :browse-code)
-	(:label "Browse images" :action :browse-images)
-	(:label "Browse sounds" :action :browse-sounds)
-	(:label "Browse music" :action :browse-music)
-	(:label "Browse fonts" :action :browse-fonts)
-	(:label "Browse code" :action :browse-code)))))
+      (:label "Browse resources" :action :browse-resources)))
     (:label "Tools" 
      :inputs
      ((:label "Create a Lisp listener" :action :create-listener)
       (:label "Create a text box" :action :create-text)
-      (:label "Create a trash can" :action :create-trash)
-      (:label "Version control" :action :version-control)))
-    (:label "Workspace" :inputs
-     ((:label "Switch to workspace" :inputs
-	      ((:label "Workspace 1" :action :workspace-1)
-	       (:label "Workspace 2" :action :workspace-2)
-	       (:label "Workspace 3" :action :workspace-3)
-	       (:label "Workspace 4" :action :workspace-4)))
-      (:label "Go back to the previous workspace" :action :previous-workspace)
-      (:label "Create a new workspace" :action :create-workspace)
-      (:label "Rename this workspace" :action :rename-workspace)
-      (:label "Delete this workspace" :action :delete-workspace)
-      (:label "Workspace settings" :action :configure-workspaces)))
-    (:label "Windows"
-     :inputs
-     ((:label "Create a new window" :action :create-window)
-      (:label "Switch to the next window" :action :next-window)
-      (:label "Switch to window" :action :switch-window)
-      (:label "Close this window" :action :close-window)))
-    (:label "Devices"
-     :inputs
-     ((:label "Browse available devices" :action :browse-devices)
-      (:label "Scan for devices" :action :scan-devices)
-      (:label "Configure joystick" :action :configure-joystick)
-      (:label "Configure camera" :action :configure-camera)
-      (:label "Configure microphone" :action :configure-microphone)
-      (:label "Configure dance pad" :action :configure-dance-pad)))
+      (:label "Create a trash can" :action :create-trash)))
+    ;; (:label "Workspace" :inputs
+    ;;  ((:label "Switch to workspace" :inputs
+    ;; 	      ((:label "Workspace 1" :action :workspace-1)
+    ;; 	       (:label "Workspace 2" :action :workspace-2)
+    ;; 	       (:label "Workspace 3" :action :workspace-3)
+    ;; 	       (:label "Workspace 4" :action :workspace-4)))
+    ;;   (:label "Go back to the previous workspace" :action :previous-workspace)
+    ;;   (:label "Create a new workspace" :action :create-workspace)
+    ;;   (:label "Rename this workspace" :action :rename-workspace)
+    ;;   (:label "Delete this workspace" :action :delete-workspace)
+    ;;   (:label "Workspace settings" :action :configure-workspaces)))
+    ;; (:label "Windows"
+    ;;  :inputs
+    ;;  ((:label "Create a new window" :action :create-window)
+    ;;   (:label "Switch to the next window" :action :next-window)
+    ;;   (:label "Switch to window" :action :switch-window)
+    ;;   (:label "Close this window" :action :close-window)))
+    ;; (:label "Devices"
+    ;;  :inputs
+    ;;  ((:label "Browse available devices" :action :browse-devices)
+    ;;   (:label "Scan for devices" :action :scan-devices)
+    ;;   (:label "Configure joystick" :action :configure-joystick)
+    ;;   (:label "Configure camera" :action :configure-camera)
+    ;;   (:label "Configure microphone" :action :configure-microphone)
+    ;;   (:label "Configure dance pad" :action :configure-dance-pad)))
     (:label "Help"
      :inputs
      ((:label "Copyright notice" :action :show-copyright-notice)
