@@ -1,4 +1,5 @@
 * BETA RELEASE EXECUTION PLAN
+** TODO [#C] W
 ** TODO [#B] simple schedulers: later-do, later-when, later-until
 *** DONE later-do and do-at-time macros evolve to a closure block that sends the supplied method
     CLOSED: [2011-09-02 Fri 17:23]
