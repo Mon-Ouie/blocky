@@ -80,17 +80,16 @@ recompilation."
 (define-method initialize define-block ()
   (setf %header
 	(new message 
-	     :clickable nil
-	     :prototype (object-name (find-super self))
-	     :method :do-define-block
+	     :button-p nil
+	     :schema '((name string :default "my-block") 
+		       (super string :default "block"))
+	     ;; :prototype (object-name (find-super self))
+	     ;; :method :do-define-block
 	     :label "define block"
 	     :target self))
   (initialize%%list self %header)
   (pin %header))
 
-(define-method (do-define-block :category :system) define-block
-    ((name string :default "my-block") 
-     (super string :default "block")))
 
 ;;; Defining fields 
 
@@ -145,7 +144,7 @@ recompilation."
 (define-method initialize define-method ()
   (setf %header
 	(new message 
-	     :clickable nil
+	     :button-p nil
 	     :prototype (object-name (find-super self))
 	     :method :do-define-method
 	     :label "define method"

@@ -188,7 +188,7 @@ inputs are evaluated."
 
 ;;; Generic message block. 
 
-(define-block message prototype method schema target label clickable)
+(define-block message prototype method schema target label button-p)
 
 (define-method recompile message ()
   ;; devolve into argument values
@@ -201,7 +201,7 @@ inputs are evaluated."
 
 (define-method on-tap message (x y)
   (declare (ignore x y))
-  (when %clickable
+  (when %button-p
     (evaluate self)))
 
 (define-method accept message (block)
@@ -217,15 +217,16 @@ inputs are evaluated."
     (string-downcase 
      (substitute #\Space #\- name))))
 
-(define-method initialize message (&key prototype schema0 method label target (clickable t))
+(define-method initialize message (&key prototype schema0 method label target (button-p t))
   (super%initialize self)
   (setf %target target)
-  (setf %clickable clickable)
-  (let* ((schema 
+  (setf %button-p button-p)
+  (let* ((schema
 	   (or schema0
 	       (method-schema (find-prototype prototype) method)))
 	 (inputs nil)
-	 (proto (or prototype (object-name (find-super target)))))
+	 (proto (or prototype (when target
+				(object-name (find-super target))))))
     (dolist (entry schema)
       (push (clone (if (eq 'string (schema-type entry))
 		       "BLOCKY:STRING" "BLOCKY:ENTRY")
@@ -239,8 +240,9 @@ inputs are evaluated."
 	    inputs))
     (when inputs 
       (setf %inputs (nreverse inputs)))
-    (let ((category (method-option (find-prototype proto)
-				   method :category)))
+    (let ((category (when proto
+		      (method-option (find-prototype proto)
+				     method :category))))
       (when category (setf %category category))
       (setf %schema schema
 	    %prototype proto
@@ -249,7 +251,7 @@ inputs are evaluated."
 
 (define-method draw message ()
   (with-fields (x y width height label inputs) self
-    (when %clickable
+    (when %button-p
       (draw-patch self x y (+ x width) (+ y height)))
     (let ((*text-base-y* (+ y (dash 1))))
       (draw-label-string self label "white")
