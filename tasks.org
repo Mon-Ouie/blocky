@@ -1,9 +1,8 @@
 * BETA RELEASE EXECUTION PLAN
-** TODO [#A] dialog boxes are fancy SEND blocks that send to *system* or whatever
-*** TODO revise visual-macro stuff to all use these dialogs
+** TODO [#A] use visual macros to define dialog boxes for menu
 *** TODO auto mapping between elements of initial-inputs spec, and results vars
-** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
 ** TODO [#A] Dialogs for all basic project save/load stuff
+** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
 ** TODO [#A] Restore basic collision detection functionality
 ** TODO [#A] define-block PALETTE
 ** TODO [#A] Implement basic blocks library
@@ -19,6 +18,7 @@
 *** TODO "quit without saving?" dialog
 ** TODO [#B] Better language tutorial projects
 ** TODO [#B] Audio test widget ("left, right")
+** TODO [#B] Explicit menu option to turn off debug handling and get a backtrace
 ** TODO [#C] buttons on palette
 ** TODO [#C] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
 ** TODO [#C] DEFINITION indicator (three dots in a triangle like Therefore, or an EQUAL?)
@@ -34,6 +34,7 @@
 ** TODO [#C] debug halo handle
 
 * BUGS
+** TODO [#B] Fix custom schema entry labels not being used in 
 ** TODO [#A] Fix halo handles not working after first move of object w/halo
 *** TODO Halo is in front after pickup/putdown? it should hit-test its children
 ** TODO [#B] Fix bad halo layout on small objects (establish a minimum size)

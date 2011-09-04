@@ -20,13 +20,17 @@
 
 (in-package :blocky)
 
+;; This file implements a visual layer on top of prototypes.lisp, so
+;; that OOP can occur visually. Understanding the terms used in
+;; prototypes.lisp will help in reading the present file.
+
 (defmacro define-visual-macro (name 
      (&key (super "BLOCKY:BLOCK") fields documentation inputs initforms)
      &body body)
   "Define a new block called NAME according to the given options.
 
 The argument SUPER should be the name (a symbol or string) of the base
-prototype to inherit behavior from. 
+prototype to inherit behavior from. The default is BLOCK.
 
 The argument FIELDS should be a list of field descriptors, the same as
 would be given to `define-prototype'.
@@ -64,28 +68,6 @@ macro. "
 	 (eval (recompile self)))
        (define-method recompile ,name () ,@body)))
 
-;;; Use quote to prevent evaluation
-
-(define-visual-macro quote
-  (:super list
-   :fields ((category :initform :operators)))
-   `(quote (,@(field-value :inputs self))))
-
-;;; Send the messages in a list to the referent of the first element
-
-(define-visual-macro prog0 
-  (:super list
-   :fields ((category :initform :structure))
-   :inputs ((new reference target))
-   :initforms ((pin (first %inputs))))
-  (error "Recompilation not yet defined for prog0."))
-
-(define-method evaluate prog0 ()
-  (destructuring-bind (target &rest body) %inputs
-    (mapcar #'evaluate (rest %inputs))
-      (with-target (evaluate target)
-	(mapcar #'evaluate body))))
-
 ;;; Defining blocks visually
 
 (define-visual-macro define-block 
@@ -110,7 +92,7 @@ macro. "
 ;;; Defining fields 
 
 (define-visual-macro field 
-  (:fields (category :initform :variables)
+  (:fields ((category :initform :variables))
    :inputs ((new string :label "field")
 	    (new socket :label ":default")))
   ;; grab args
@@ -156,5 +138,31 @@ macro. "
 	    (prototype-id (make-prototype-id prototype))
 	    (lambda-list (mapcar #'first arguments)))
 	`(define-method ,method-name ,prototype-id lambda-list ,@body)))))
+
+;;; Use quote to prevent evaluation
+
+(define-visual-macro quote
+  (:super list
+   :fields ((category :initform :operators)))
+   `(quote (,@(field-value :inputs self))))
+
+;;; Send the messages in a list to the referent of the first element
+
+(define-visual-macro prog0 
+  (:super list
+   :fields ((category :initform :structure))
+   :initforms ((pin (first %inputs))))
+  (error "Recompilation not yet defined for prog0."))
+
+(define-method initialize prog0 (target)
+  (setf %inputs (new reference target))
+  (super%initialize self))
+
+(define-method evaluate prog0 ()
+  (destructuring-bind (target &rest body) %inputs
+    (mapcar #'evaluate (rest %inputs))
+      (with-target (evaluate target)
+	(mapcar #'evaluate body))))
+
 	     
 ;;; meta.lisp ends here
