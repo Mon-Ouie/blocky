@@ -85,8 +85,7 @@ recompilation."
 		       (super string :default "block"))
 	     ;; :prototype (object-name (find-super self))
 	     ;; :method :do-define-block
-	     :label "define block"
-	     :target self))
+	     :label "define block"))
   (initialize%%list self %header)
   (pin %header))
 

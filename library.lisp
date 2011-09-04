@@ -204,6 +204,11 @@ inputs are evaluated."
   (when %button-p
     (evaluate self)))
 
+(define-method can-pick message () t)
+
+(define-method pick message ()
+  (if %button-p self %parent))
+
 (define-method accept message (block)
   ;; make these click-align instead
   (assert (blockyp block))
@@ -217,17 +222,17 @@ inputs are evaluated."
     (string-downcase 
      (substitute #\Space #\- name))))
 
-(define-method initialize message (&key prototype schema0 method label target (button-p t))
+(define-method initialize message (&key prototype schema method label target (button-p t))
   (super%initialize self)
   (setf %target target)
   (setf %button-p button-p)
-  (let* ((schema
-	   (or schema0
+  (let* ((schema0
+	   (or schema
 	       (method-schema (find-prototype prototype) method)))
 	 (inputs nil)
 	 (proto (or prototype (when target
 				(object-name (find-super target))))))
-    (dolist (entry schema)
+    (dolist (entry schema0)
       (push (clone (if (eq 'string (schema-type entry))
 		       "BLOCKY:STRING" "BLOCKY:ENTRY")
 		   :value (schema-option entry :default)
@@ -244,7 +249,7 @@ inputs are evaluated."
 		      (method-option (find-prototype proto)
 				     method :category))))
       (when category (setf %category category))
-      (setf %schema schema
+      (setf %schema schema0
 	    %prototype proto
 	    %method method
 	    %label (or label (pretty-symbol-string method))))))
