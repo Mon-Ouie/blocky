@@ -1,5 +1,5 @@
 * BETA RELEASE EXECUTION PLAN
-** TODO [#A] use visual macros to define dialog boxes for menu
+** TODO [#A] use visual macros to define dialog boxes for stuff in main menu
 *** TODO auto mapping between elements of initial-inputs spec, and results vars
 ** TODO [#A] Dialogs for all basic project save/load stuff
 ** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
