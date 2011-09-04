@@ -20,33 +20,65 @@
 
 (in-package :blocky)
 
-;;; Sending to a referenced object 
+(defmacro define-visual-macro (name 
+     (&key (super "BLOCKY:BLOCK") fields documentation inputs initforms)
+     &body body)
+  "Define a new block called NAME according to the given options.
 
-(defmacro define-visual-macro ((name super &rest fields)
-		     &body body)
-  "Define a new block called NAME.
-The argument SUPER should be the name of the base prototype of the
-resulting block. FIELDS should be a list of field descriptors as given
-to `define-prototype'. The BODY forms are evaluated when the resulting
-block is recompiled; therefore the BODY forms define the output of the
-recompilation."
+The argument SUPER should be the name (a symbol or string) of the base
+prototype to inherit behavior from. 
+
+The argument FIELDS should be a list of field descriptors, the same as
+would be given to `define-prototype'.
+
+The BODY forms are evaluated when the resulting block is recompiled;
+they operate by invoking `recompile' in various ways on the INPUTS,
+then emitting Lisp code forms using those compiled code streams as a
+basis. Therefore the BODY forms define the output of the
+recompilation for the new block type being defined.
+
+The INPUTS argument is a list of forms evaluated to produce argument
+blocks. 
+
+The argument INITFORMS contains Lisp code to be executed after
+initialization.
+
+By default, the resulting block's `initialize' method will invoke
+`initialize-inputs', which creates the UI that had been specified in
+INPUTS. If you replace `initialize' with your own implementation, be
+sure to invoke `initialize-inputs' in your implementation. 
+
+DOCUMENTATION is an optional documentation string for the entire
+macro. "
     `(progn 
-       (define-block (,name :super ,super) ,@fields)
-       (define-method recompile ,name () ,@body)
+       (define-block (,name :super ,super) 
+	 (label :initform ,(pretty-symbol-string name))
+	 ,@fields)
+       (define-method initialize-inputs ,name ()
+	 (setf %inputs (list ,@inputs)))
+       (define-method initialize ,name ()
+	 (initialize-inputs self)
+	 (apply #'initialize%%block self %inputs)
+	 ,@initforms)
        (define-method evaluate ,name ()
-	 (eval (recompile self)))))
+	 (eval (recompile self)))
+       (define-method recompile ,name () ,@body)))
 
 ;;; Use quote to prevent evaluation
 
-(define-visual-macro (quote list
-			    (category :initform :operators))
-		     ;; i think this is wrong
-		     `(quote ,(mapcar #'recompile %inputs)))
+(define-visual-macro quote
+  (:super list
+   :fields ((category :initform :operators)))
+   `(quote (,@(field-value :inputs self))))
 
 ;;; Send the messages in a list to the referent of the first element
 
-(define-visual-macro (prog0 list
-  (category :initform :structure)))
+(define-visual-macro prog0 
+  (:super list
+   :fields ((category :initform :structure))
+   :inputs ((new reference target))
+   :initforms ((pin (first %inputs))))
+  (error "Recompilation not yet defined for prog0."))
 
 (define-method evaluate prog0 ()
   (destructuring-bind (target &rest body) %inputs
@@ -54,55 +86,42 @@ recompilation."
       (with-target (evaluate target)
 	(mapcar #'evaluate body))))
 
-(define-method initialize prog0 (&key target inputs)
-  ;; (assert (blockyp target))
-  ;; (assert (consp inputs))
-  (super%initialize self)
-  (let ((ref (new reference target)))
-    (pin ref) ;; don't allow ref to be removed
-    (setf %inputs (cons ref inputs))))
-
 ;;; Defining blocks visually
 
-(define-visual-macro 
-    (define-block list
-      (header :initform nil))
-    ;; spit out a define-block
-    (assert (blockyp (first %inputs)))
-    (let ((fields (mapcar #'recompile (rest %inputs))))
-      (destructuring-bind (name super)
-	  (recompile (first %inputs))
-        (append (list 'define-block
-		      (list (make-non-keyword name)
-			    :super (make-prototype-id super)))
-		fields))))
-
-(define-method initialize define-block ()
-  (setf %header
-	(new message 
-	     :label "define block"
-	     :schema '((name string :default "my-block") 
-		       (super string :default "block"))
-	     :button-p nil))
-  (initialize%%list self %header)
-  (pin %header))
+(define-visual-macro define-block 
+  (:super list
+   :fields (header :initform nil)
+   :inputs ((new message 
+		  :label "define block"
+		  :schema '((name string :default "my-block") 
+			    (super string :default "block"))
+		  :button-p nil)))
+  ;; grab field specifiers
+  (let ((specs (mapcar #'recompile (rest %inputs))))
+    ;; grab parameters from message entry block
+    (destructuring-bind (name super)
+	(recompile (first %inputs))
+      ;; build up the compiled form
+      (append (list 'define-block
+		    (list (make-non-keyword name)
+			  :super (make-prototype-id super)))
+	      specs))))
 
 ;;; Defining fields 
 
-(define-visual-macro (field block
-	    (category :initform :variables))
-	   (destructuring-bind (name value) 
-	       (mapcar #'recompile %inputs)
-	     (list name :initform value)))
+(define-visual-macro field 
+  (:fields (category :initform :variables)
+   :inputs ((new string :label "field")
+	    (new socket :label ":default")))
+  ;; grab args
+  (destructuring-bind (name value) 
+      (mapcar #'recompile %inputs)
+    ;; build field spec
+    (list name :initform value)))
 
 (define-method draw field ()
   (let ((*text-base-y* (+ %y (dash 1))))
     (super%draw self)))
-
-(define-method initialize field ()
-  (super%initialize self 
-		    (new string :label "field")
-		    (new socket :label ":default")))
 
 (define-method accept field (thing)
   (declare (ignore thing))
@@ -110,46 +129,32 @@ recompilation."
 
 ;;; Arguments
 
-(define-visual-macro 
-    (argument block
-	      (category :initform :variables))
-    (destructuring-bind (name type default) 
-	(mapcar #'recompile %inputs)
-      (list (make-symbol name) type :default default)))
-
-(define-method initialize argument ()
-  (initialize%%block self
-   (new string :label "name")
-   (new entry :label "type")
-   (new string :label "default")))
+(define-visual-macro argument
+  (:fields ((category :initform :variables))
+   :inputs ((new string :label "name")
+	    (new entry :label "type")
+	    (new string :label "default")))
+  (destructuring-bind (name type default) 
+      (mapcar #'recompile %inputs)
+    (list (make-symbol name) type :default default)))
 
 ;;; Defining methods
 
-(define-visual-macro 
-    (define-method list
-	    (header :initform nil))
-    ;; create a define-method form 
-    (let ((inputs (mapcar #'recompile %inputs)))
-      ;; grab contents of send entry block
-      (destructuring-bind ((name prototype) arguments body) inputs
-	(let ((method-name (make-symbol name))
-	      (prototype-id (make-prototype-id prototype))
-	      (lambda-list (mapcar #'first arguments)))
-	    `(define-method ,method-name ,prototype-id lambda-list ,@body)))))
+(define-visual-macro define-method 
+  (:super list
+   :fields ((header :initform nil))
+   :inputs ((new message 
+		 :button-p nil
+		 :schema '((name string :default "") 
+			   (prototype string :default "" :label "for block:"))
+		 :label "define method")))
+  ;; create a define-method form 
+  (let ((inputs (mapcar #'recompile %inputs)))
+    ;; grab contents of send entry block
+    (destructuring-bind ((name prototype) arguments body) inputs
+      (let ((method-name (make-symbol name))
+	    (prototype-id (make-prototype-id prototype))
+	    (lambda-list (mapcar #'first arguments)))
+	`(define-method ,method-name ,prototype-id lambda-list ,@body)))))
 	     
-(define-method initialize define-method ()
-  (setf %header
-	(new message 
-	     :button-p nil
-	     :prototype (object-name (find-super self))
-	     :method :do-define-method
-	     :label "define method"
-	     :target self))
-  (initialize%%list self %header)
-  (pin %header))
-  
-(define-method (do-define-method :category :system) define-method
-    ((name string :default "") 
-     (prototype string :default "" :label "for block:")))
-
 ;;; meta.lisp ends here

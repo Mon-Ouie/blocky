@@ -105,6 +105,12 @@ arglists.
        (listp (first lambda-list))
        (not (null (first lambda-list)))))
 
+(defun schemap (datum)
+  (and (consp datum)
+       (every #'consp datum)
+       (every #'symbolp
+	      (mapcar #'first datum))))
+
 (defun schema-name (schema)
   (first schema))
 

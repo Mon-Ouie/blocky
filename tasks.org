@@ -8,6 +8,7 @@
 ** TODO [#A] define-block PALETTE
 ** TODO [#A] Implement basic blocks library
 ** TODO [#A] Fix as much of the buglist as possible
+** TODO [#B] visually indicate lists that can accept
 ** TODO [#B] Tree-based window abstraction holds any widget
 ** TODO [#B] later-when checks a condition (whether some other method returns non-nil) (also later-until)
 ** TODO [#B] System browser for choosing what to define methods on 
