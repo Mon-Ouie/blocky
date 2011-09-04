@@ -52,7 +52,7 @@ recompilation."
   (destructuring-bind (target &rest body) %inputs
     (mapcar #'evaluate (rest %inputs))
       (with-target (evaluate target)
-	(mapc #'evaluate body))))
+	(mapcar #'evaluate body))))
 
 (define-method initialize prog0 (&key target inputs)
   ;; (assert (blockyp target))
@@ -80,15 +80,12 @@ recompilation."
 (define-method initialize define-block ()
   (setf %header
 	(new message 
-	     :button-p nil
+	     :label "define block"
 	     :schema '((name string :default "my-block") 
 		       (super string :default "block"))
-	     ;; :prototype (object-name (find-super self))
-	     ;; :method :do-define-block
-	     :label "define block"))
+	     :button-p nil))
   (initialize%%list self %header)
   (pin %header))
-
 
 ;;; Defining fields 
 

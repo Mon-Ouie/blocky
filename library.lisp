@@ -191,7 +191,7 @@ inputs are evaluated."
 (define-block message prototype method schema target label button-p)
 
 (define-method recompile message ()
-  ;; devolve into argument values
+  ;; grab argument values from all the input widgets
   (mapcar #'recompile %inputs))
 
 (define-method evaluate message ()
@@ -207,6 +207,7 @@ inputs are evaluated."
 (define-method can-pick message () t)
 
 (define-method pick message ()
+  ;; allow to move parent block by the labels of this message block
   (if %button-p self %parent))
 
 (define-method accept message (block)
