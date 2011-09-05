@@ -28,10 +28,10 @@
 
 (defparameter *indicator-positions* 
   '(:asterisk (0 1)
-    :bang (0 1/5)
+    :bang (0 1/4)
     :top-left-triangle (0 0)
-    :menu (1/5 0)
-    :collapse (0 2/5)
+    :menu (1/4 0)
+    :collapse (0 2/4)
     :move (1 0)
     :resize (1 1)
     :reference (0 1)

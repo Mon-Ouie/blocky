@@ -29,7 +29,7 @@
 (defparameter *text-minimum-width* 80) 
 
 (define-block text
-  (methods :initform '(:page-up :page-down :auto-center :resize-to-fit :view-messages))
+  (methods :initform '(:page-up :page-down :center :resize-to-fit :view-messages))
   (font :initform *monospace*)
   (buffer :initform nil)
   (category :initform :comment)
@@ -82,14 +82,6 @@
       (setf %point-row (min (- (length %buffer) max-displayed-lines)
 			     (+ %point-row (- max-displayed-lines
 					     *next-screen-context-lines*)))))))
-
-(define-method auto-center text ()
-  "Automatically center the text on the screen."
-  (with-field-values (x y width height) self
-    (let ((center-x (truncate (/ *screen-width* 2)))
-	  (center-y (truncate (/ *screen-height* 2))))
-      (setf %x (- center-x (truncate (/ width 2)))
-	    %y (- center-y (truncate (/ height 2)))))))
 
 (define-method resize-to-scroll text (&key width height)
   "Resize the text to WIDTH * HEIGHT and enable scrolling of contents."

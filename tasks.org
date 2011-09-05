@@ -2,21 +2,18 @@
 ** TODO [#A] define-block PALETTE so that there's a place to pull useful objects from 
 *** TODO Hotkey to toggle palette
 ** TODO [#A] use visual macros to define dialog boxes for stuff in main menu
-*** TODO auto mapping between elements of initial-inputs spec, and results vars
-** TODO [#A] Dialogs for all basic project save/load stuff
+** DONE [#A] visually indicate lists that can accept
+   CLOSED: [2011-09-05 Mon 00:03]
 ** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
+** TODO [#A] Dialogs for all basic project save/load stuff
 ** TODO [#A] Restore basic collision detection functionality
 ** TODO [#A] Implement basic blocks library
 ** TODO [#A] Fix as much of the buglist as possible
-** TODO [#B] visually indicate lists that can accept
-** TODO [#B] Tree-based window abstraction holds any widget
 ** TODO [#B] later-when checks a condition (whether some other method returns non-nil) (also later-until)
 ** TODO [#B] System browser for choosing what to define methods on 
-** TODO [#B] Ensure full and proper functioning of halos
-** TODO [#B] collapsed windows
-** TODO [#B] Default location for new dialogs/widgets from menu: the command-line listener
-*** TODO "empty trash before save?" dialog
-*** TODO "quit without saving?" dialog
+** TODO [#C] Default location for new dialogs/widgets from menu: the command-line listener
+** TODO [#B] "empty trash before save?" dialog
+** TODO [#B] "quit without saving?" dialog
 ** TODO [#B] Better language tutorial projects
 ** TODO [#B] Audio test widget ("left, right")
 ** TODO [#B] Explicit menu option to turn off debug handling and get a backtrace
@@ -24,9 +21,9 @@
 ** TODO [#C] incorporate turtle graphics code into base block prototype (for implementing move/turn/point-in-direction 
 ** TODO [#C] DEFINITION indicator (three dots in a triangle like Therefore, or an EQUAL?)
 ** TODO [#C] Turn windows-lisp into a cool window widget
-** TODO [#C] Basic context-sensitive help
-*** TODO explanatory tooltips
-** TODO [#C] System browser
+** TODO [#A] Basic context-sensitive help
+** TODO [#B] explanatory tooltips
+** TODO [#B] System browser
 ** TODO [#C] Make textbox recompile as multi-line string so that defmethod docstrings work naturally
 ** TODO [#B] collapse halo handle
 ** TODO [#B] duplicate halo handle
@@ -35,7 +32,6 @@
 ** TODO [#C] debug halo handle
 
 * BUGS
-** TODO [#B] Fix window resize issues with disappearing text on MacOSX
 ** TODO [#B] Fix bad circle artifacts on rounded corner patches on OSX
 ** TODO [#B] Fix custom schema entry labels not being used in 
 ** TODO [#A] Fix halo handles not working after first move of object w/halo
@@ -729,5 +725,14 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_OLPATH: BUGS
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
+   :END:
+** DONE [#B] Fix window resize issues with disappearing text on MacOSX
+   CLOSED: [2011-09-04 Sun 23:09]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-09-05 Mon 00:16
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BUGS
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
    :END:
 

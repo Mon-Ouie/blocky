@@ -53,7 +53,7 @@ inputs are evaluated."
   ;; (prog1 self
   ;;   (evaluate-inputs self)))
 
-(defparameter *null-display-string* "...")
+(defparameter *null-display-string* "   ")
 
 (define-method set-orientation list (orientation)
   (assert (member orientation '(:horizontal :vertical)))
@@ -62,6 +62,9 @@ inputs are evaluated."
 ;; (define-method on-tap list (x y)
 ;;   (dolist (block %inputs)
 ;;     (evaluate block)))
+
+(define-method can-accept block () 
+  (not %frozen))
 
 (define-method accept list (input &optional prepend)
   (assert (blockyp input))
@@ -160,7 +163,13 @@ inputs are evaluated."
     (if (null inputs)
 	(draw-label-string self *null-display-string*)
 	(dolist (each inputs)
-	  (draw each)))))
+	  (draw each))))
+  (when (not %frozen)
+    (draw-indicator :bottom-right-triangle 
+		    (+ %x %width (dash -4))
+		    (+ %y %height (dash -4))
+		    :color "white"
+		    :scale 1.5)))
 
 (define-method initialize list (&rest blocks)
   (apply #'super%initialize self blocks)
@@ -258,7 +267,8 @@ inputs are evaluated."
 (define-method draw message ()
   (with-fields (x y width height label inputs) self
     (when %button-p
-      (draw-patch self x y (+ x width) (+ y height)))
+      (with-style :flat
+	(draw-patch self x y (+ x width) (+ y height))))
     (let ((*text-base-y* (+ y (dash 1))))
       (draw-label-string self label "white")
       (dolist (each inputs)
@@ -377,6 +387,8 @@ inputs are evaluated."
 	       (hit ob x y)))
       (setf %source (some #'hit-it %inputs))
       (or %source self))))
+
+(define-method can-pick palette () t)
 
 (define-method pick palette ()
   (if %source

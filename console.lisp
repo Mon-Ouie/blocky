@@ -794,7 +794,8 @@ display."
 			   (sdl:resize-window w h :title-caption *window-title*
 				       :flags (logior sdl:SDL-OPENGL sdl:SDL-RESIZABLE))
 			   (do-orthographic-projection)
-			   ;; handle any blitzed textures
+			   ;; handle any blitzed textures. on some platforms/drivers
+			   ;; the textures become invalidated after resize
 			   (when *clear-cached-images-on-resize*
 			     (clear-cached-images)
 			     (clear-cached-text-images))

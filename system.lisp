@@ -26,6 +26,58 @@
 
 (defvar *system* nil)
 
+(define-block system
+  (type :initform :system)
+  (shell :initform nil)
+  (running :initform nil))
+
+(define-method show-copyright-notice system ()
+  (let ((box (new text *copyright-notice*)))
+    (add-block *shell* box)
+    (center box)
+    (resize-to-scroll box :width 80 :height 24)
+    (end-of-line box)))
+
+(define-method save-before-exit system ())
+
+;; Creating a project
+
+;; (define-visual-macro create-project 
+;;     (:super list
+
+(define-method create-project system ())
+
+;; (define-method open-existing-project system ((project-name string :default " "))
+
+	     
+(define-method save-changes system ()
+  (save-project))
+
+(define-method save-everything system ()
+  (save-project :force))
+
+(defun shell ()
+  (symbol-value '*shell*))
+
+(define-method initialize system ()
+  (setf *system* (find-uuid self)))
+
+(define-method create-trash system ()
+  (add-block (shell) (new trash) 100 100))
+
+(define-method create-text system ()
+  (add-block (shell) (new text) 100 100))
+
+(define-method create-listener system ()
+  (add-block (shell) (new listener) 100 100))
+
+(define-method ticks system ()
+  (get-ticks))
+
+(define-method quit-blocky system ()
+  ;; TODO destroy textures
+  (blocky:quit t))
+
 (defparameter *system-menu*
   '((:label "Project"
      :inputs
@@ -100,104 +152,5 @@
       (:label "Examples" :action :show-examples)
       (:label "Language Reference" :action :language-reference)))))
     
-(define-block system
-  (type :initform :system)
-  (shell :initform nil)
-  (running :initform nil))
-
-(defun shell ()
-  (symbol-value '*shell*))
-
-(define-method create-trash system ()
-  (add-block (shell) (new trash) 100 100))
-
-(define-method create-text system ()
-  (add-block (shell) (new text) 100 100))
-
-(define-method initialize system ()
-  (setf *system* (find-uuid self)))
-
-(define-method create-listener system ()
-  (add-block (shell) (new listener) 100 100))
-
-(define-method create-project system ())
-
-(define-method open-existing-project system ())
-	     
-(define-method save-changes system ()
-  (save-project))
-
-(define-method save-everything system ()
-  (save-project :force))
-
-(define-method show-copyright-notice system ()
-  (let ((box (new text *copyright-notice*)))
-    (add-block *shell* box 50 50) 
-    (resize-to-scroll box :width 80 :height 24)
-;    (set-font box *serif*)
-    (end-of-line box)))
-
-;; (define-method enter-command-line system ()
-;;   (enter-command-line *shell*))
-
-;; (define-method exit-command-line system ()
-;;   (exit-command-line *shell*))
-
-(define-method ticks system ()
-  (get-ticks))
-
-(define-method quit-blocky system ()
-  ;; TODO destroy textures
-  (blocky:quit t))
-
-;;; Sending a series of messages to the sender
-
-
-;; (define-method get-blocks system ()
-;;   %children)
-
-;; (define-method count-blocks system ()
-;;   (with-fields (children) self
-;;     (apply #'+ (mapcar #'/count children))))
-
-;; (define-method start system ()
-;;   (setf %running t))
-
-;; (define-method stop system ()
-;;   (setf %running nil))
-
-;; (define-method tick system (&rest args)
-;;   (with-fields (running children shell) self
-;;     (when running
-;;       (dolist (block children)
-;; 	(apply #'tick block args)))))
-
-;; (define-method resize system (&key height width))
-
-;; (define-method initialize system (&rest args)
-  ;; (enable-classic-key-repeat 100 100)
-  ;; (labels ((do-resize ()
-  ;; 	     (resize *system* 
-  ;; 		     :width *screen-width* 
-  ;; 		     :height *screen-height*)))
-  ;;   (add-hook '*resize-hook* #'do-resize))
-  ;; (blocky:install-blocks self))
-
-;; (define-method new system (project)
-;;   (assert (stringp project))
-;;   (let ((dir (find-project-path project)))
-;;     (when (directory-is-project-p dir)
-;;       (error "Project ~S aready exists." project))
-;;     (make-directory-maybe dir)
-;;     (open-project self project)))
-	
-;; (define-method run system ()
-;;   (run-project *project*)
-;;   (run-main-loop))
-
-
-;; (define-method draw system (destination)
-;;   FIXME)
-
 ;;; system.lisp ends here
 
