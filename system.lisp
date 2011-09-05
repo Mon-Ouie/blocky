@@ -33,8 +33,8 @@
 
 (define-method show-copyright-notice system ()
   (let ((box (new text *copyright-notice*)))
-    (add-block *shell* box)
-    (center box)
+    (add-block *shell* box 80 80)
+    ;; (center box)
     (resize-to-scroll box :width 80 :height 24)
     (end-of-line box)))
 
