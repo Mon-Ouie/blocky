@@ -49,8 +49,10 @@ initialization.
 
 By default, the resulting block's `initialize' method will invoke
 `initialize-inputs', which creates the UI that had been specified in
-INPUTS. If you replace `initialize' with your own implementation, be
-sure to invoke `initialize-inputs' in your implementation. 
+INPUTS. If you replace `initialize' with your own method, be sure to
+invoke `initialize-inputs' in your implementation if you want the
+INPUTS argument to be respected. Likewise, the INITFORMS are not run
+if you use your own INITIALIZE method.
 
 DOCUMENTATION is an optional documentation string for the entire
 macro. "
