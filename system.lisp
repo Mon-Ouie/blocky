@@ -104,6 +104,7 @@
     (:label "Blocks"
      :inputs
      ((:label "Define a block" :action :open-define-block-dialog)
+      (:label "Define a method" :action :open-define-method-dialog)
       (:label "Inspect" :action :inspect)
       (:label "Clone" :action :do-clone)
       (:label "Copy" :action :do-copy)
