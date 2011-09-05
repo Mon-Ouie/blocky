@@ -43,9 +43,8 @@
 
 (defvar *copyright-notice*
 "Welcome to the Blocky programming language.
-Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 by David T O'Toole
+Copyright (C) 2006-2011 by David T O'Toole <dto@ioforms.org>
 http://blocky.io/
-<dto@ioforms.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1150,7 +1149,7 @@ OPTIONS is a property list of field options. Valid keys are:
 	 ;; return the uuid and object
 	 (values uuid prototype)))))
 
-;;; Cloning objects
+;;; Cloning and duplicating objects
 
 (defmacro new (prototype-name &rest initargs)
   `(clone ,(make-prototype-id prototype-name)
@@ -1175,6 +1174,18 @@ evaluated, then any applicable initializer is triggered."
       (if (has-field :initialize new-object)
 	  (apply #'send :initialize new-object initargs))
       (add-object-to-database new-object)))))
+
+(defun duplicate (thing)
+  (let ((object (find-object thing))
+	(uuid (make-uuid)))
+    (assert (null (object-name object)))
+    (let ((new-object 
+	    (make-object :super (find-super object)
+			 :uuid uuid
+			 :fields (copy-tree (object-fields object)))))
+      (prog1 uuid
+	(initialize-method-cache new-object)
+	(add-object-to-database new-object)))))
 
 ;;; Serialization support
 
