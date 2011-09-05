@@ -793,7 +793,12 @@ display."
 ;			   (run-hook '*resize-hook*)
 			   (sdl:resize-window w h :title-caption *window-title*
 				       :flags (logior sdl:SDL-OPENGL sdl:SDL-RESIZABLE))
-			   (do-orthographic-projection))
+			   (do-orthographic-projection)
+			   ;; handle any blitzed textures
+			   (when *clear-cached-images-on-resize*
+			     (clear-cached-images)
+			     (clear-cached-text-images))
+			   )
       (:mouse-motion-event (:x x :y y)
 			   (setf *pointer-x* x *pointer-y* y)
 			   (let ((block (hit-blocks x y *blocks*)))
@@ -1852,6 +1857,23 @@ found."
 		 (:sample (sdl-mixer:free object)))))
 	   (initialize-resource-table)))
 	   
+(defun clear-cached-images ()
+  (loop for resource being the hash-values in *resources*
+	do (let ((object (resource-object resource)))
+	     (when (and object 
+			(eq :image (resource-type resource)))
+	       (sdl:free object)
+	       (setf (resource-object resource) nil))))
+  (delete-all-textures))
+
+(defun clear-cached-text-images ()
+  (maphash #'(lambda (key value)
+	       (gl:delete-textures (list value)))
+	   (get-memo-table 'find-text-image))
+  (clear-memoize 'find-text-image))
+
+(defvar *clear-cached-images-on-resize* nil)
+
 ;;; Custom audio generation
 
 (defvar *frequency* 44100)

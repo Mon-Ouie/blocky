@@ -126,7 +126,6 @@ macro. "
 
 (define-visual-macro define-method 
   (:super list
-   :fields ((header :initform nil))
    :inputs ((new message 
 		 :button-p nil
 		 :schema '((name string :default "") 
@@ -134,11 +133,12 @@ macro. "
 		 :label "define method")))
   ;; create a define-method form 
   (let ((inputs (mapcar #'recompile %inputs)))
-    ;; grab contents of send entry block
+    ;; grab contents of message block
     (destructuring-bind ((name prototype) arguments body) inputs
       (let ((method-name (make-symbol name))
 	    (prototype-id (make-prototype-id prototype))
 	    (lambda-list (mapcar #'first arguments)))
+	;; now produce a plain lisp method definition
 	`(define-method ,method-name ,prototype-id lambda-list ,@body)))))
 
 ;;; Use quote to prevent evaluation

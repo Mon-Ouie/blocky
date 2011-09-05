@@ -1,10 +1,11 @@
 * BETA RELEASE EXECUTION PLAN
+** TODO [#A] define-block PALETTE so that there's a place to pull useful objects from 
+*** TODO Hotkey to toggle palette
 ** TODO [#A] use visual macros to define dialog boxes for stuff in main menu
 *** TODO auto mapping between elements of initial-inputs spec, and results vars
 ** TODO [#A] Dialogs for all basic project save/load stuff
 ** TODO [#A] project settings dialog for configuring *screen-width* and *resizable* etc
 ** TODO [#A] Restore basic collision detection functionality
-** TODO [#A] define-block PALETTE
 ** TODO [#A] Implement basic blocks library
 ** TODO [#A] Fix as much of the buglist as possible
 ** TODO [#B] visually indicate lists that can accept
@@ -34,6 +35,8 @@
 ** TODO [#C] debug halo handle
 
 * BUGS
+** TODO [#B] Fix window resize issues with disappearing text on MacOSX
+** TODO [#B] Fix bad circle artifacts on rounded corner patches on OSX
 ** TODO [#B] Fix custom schema entry labels not being used in 
 ** TODO [#A] Fix halo handles not working after first move of object w/halo
 *** TODO Halo is in front after pickup/putdown? it should hit-test its children

@@ -375,12 +375,13 @@ inputs are evaluated."
   (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
     (labels ((hit-it (ob)
 	       (hit ob x y)))
-      (setf %source (some #'hit-it %inputs)))))
+      (setf %source (some #'hit-it %inputs))
+      (or %source self))))
 
-;; (define-method pick palette ()
-;;   (if %source
-;;       (make-clone %source)
-;;       self))
+(define-method pick palette ()
+  (if %source
+      (make-clone %source)
+      self))
 
 
 ;;; library.lisp ends here

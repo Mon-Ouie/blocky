@@ -113,7 +113,7 @@
 (define-handle program :reference)
 
 (define-method pick program ()
-  (let ((ref (new prog0 :target %target)))
+  (let ((ref (new prog0 %target)))
     (prog1 ref
       (move-to ref *pointer-x* *pointer-y*))))
 

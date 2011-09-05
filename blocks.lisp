@@ -892,7 +892,7 @@ of block."
 (defparameter *styles* '((:rounded :dash 3)
 			 (:flat :dash 1)))
 
-(defvar *style* :flat)
+(defvar *style* :rounded)
 
 (defmacro with-style (style &rest body)
   (let ((st (gensym)))
