@@ -1645,12 +1645,12 @@ control the size of the individual frames or subimages."
 ;;; Loading/saving variables
 
 (defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
-*buffers* *screen-height* *world* *blocks* *dt* *pointer-x*
+*buffers* *screen-height* *world* *blocks* *dt* *pointer-x* *author*
 *pointer-y* *trash* *resizable* *window-title* *buffer* *system*
 *persistent-variables*))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
-*buffers* *screen-height* *world* *blocks* *dt* *pointer-x*
+*buffers* *screen-height* *world* *blocks* *dt* *pointer-x* *author*
 *pointer-y* *trash* *resizable* *window-title* *buffer* *system*
 				 ;; notice that THIS variable is also
 				 ;; persistent!  this is to avoid
