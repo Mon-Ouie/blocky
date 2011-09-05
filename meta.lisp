@@ -25,6 +25,54 @@
 ;; prototypes.lisp will help in reading the present file. See also 
 ;; the macro `define-visual-macro' in blocks.lisp.
 
+;;; Defining composite blocks more simply
+
+(defmacro define-visual-macro (name 
+     (&key (super "BLOCKY:BLOCK") fields documentation inputs initforms)
+     &body body)
+  "Define a new block called NAME according to the given options.
+
+The argument SUPER should be the name (a symbol or string) of the base
+prototype to inherit behavior from. The default is BLOCK.
+
+The argument FIELDS should be a list of field descriptors, the same as
+would be given to `define-prototype'.
+
+The BODY forms are evaluated when the resulting block is recompiled;
+they operate by invoking `recompile' in various ways on the INPUTS,
+then emitting Lisp code forms using those compiled code streams as a
+basis. Therefore the BODY forms define the output of the
+recompilation for the new block type being defined.
+
+The INPUTS argument is a list of forms evaluated to produce argument
+blocks. 
+
+The argument INITFORMS contains Lisp code to be executed after
+initialization.
+
+By default, the resulting block's `initialize' method will invoke
+`initialize-inputs', which creates the UI that had been specified in
+INPUTS. If you replace `initialize' with your own method, be sure to
+invoke `initialize-inputs' in your implementation if you want the
+INPUTS argument to be respected. Likewise, the INITFORMS are not run
+if you use your own INITIALIZE method.
+
+DOCUMENTATION is an optional documentation string for the entire
+macro. "
+    `(progn 
+       (define-block (,name :super ,super) 
+	 (label :initform ,(pretty-symbol-string name))
+	 ,@fields)
+       (define-method initialize-inputs ,name ()
+	 (setf %inputs (list ,@inputs)))
+       (define-method initialize ,name ()
+	 (initialize-inputs self)
+	 (apply #'initialize%%block self %inputs)
+	 ,@initforms)
+       (define-method evaluate ,name ()
+	 (eval (recompile self)))
+       (define-method recompile ,name () ,@body)))
+
 ;;; Defining blocks visually
 
 (define-visual-macro define-block 
