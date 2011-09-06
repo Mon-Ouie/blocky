@@ -508,7 +508,6 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 (define-method pick block ()
   self) ;; Possibly return a child, or a new object 
 
-
 ;;; Focus events (see also shell.lisp)
 
 (define-method on-focus block () nil)
@@ -592,7 +591,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 	 (type-specifier 
 	   (if (member head-type *builtin-entry-types* :test 'equal)
 			     head-type data-type)))
-    ;; see also terminal.lisp for more on data entry blocks
+    ;; see also listener.lisp for more on data entry blocks
     (typecase datum
       ;; see also the definition of "string" blocks in listener.lisp
       (string (new string :value datum))
