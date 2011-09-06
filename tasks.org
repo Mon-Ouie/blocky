@@ -1,5 +1,6 @@
 * BETA RELEASE EXECUTION PLAN
 ** TODO [#A] Implement basic blocks library (see list below)
+** TODO discard halos when object loses focus
 ** TODO [#A] System browser for choosing what to define methods on (or blocks from)
 ** TODO [#A] Language tutorial project
 ** TODO [#A] Basic context-sensitive help

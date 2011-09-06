@@ -527,8 +527,9 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
     (drop self %halo)))
 
 (define-method discard-halo block ()
-  (discard %halo)
-  (setf %halo nil))
+  (when %halo 
+    (discard %halo)
+    (setf %halo nil)))
 
 (define-method toggle-halo block ()
   (if %halo
