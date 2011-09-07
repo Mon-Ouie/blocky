@@ -1,7 +1,6 @@
 * BETA RELEASE EXECUTION PLAN
 ** TODO [#A] Implement basic blocks library (see list below)
-** TODO discard halos when object loses focus
-** TODO [#A] System browser for choosing what to define methods on (or blocks from)
+** TODO [#A] System Browser for choosing what to define methods on (or blocks from)
 ** TODO [#A] Language tutorial project
 ** TODO [#A] Basic context-sensitive help
 ** TODO [#A] define-block PALETTE so that there's a place to pull useful objects from 
@@ -725,6 +724,15 @@ But the graph doesn't yet actually work, so we must continue.
    CLOSED: [2011-09-05 Mon 00:03]
    :PROPERTIES:
    :ARCHIVE_TIME: 2011-09-05 Mon 01:11
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BETA RELEASE EXECUTION PLAN
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE discard halos when object loses focus
+   CLOSED: [2011-09-07 Wed 01:18]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-09-07 Wed 01:18
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: BETA RELEASE EXECUTION PLAN
    :ARCHIVE_CATEGORY: tasks

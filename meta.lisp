@@ -159,8 +159,9 @@ macro. "
    :initforms ((pin (first %inputs))))
   (error "Recompilation not yet defined for prog0."))
 
-(define-method initialize-inputs prog0 (target)
-  (setf %inputs (list (new reference target))))
+(define-method initialize prog0 (target)
+  (initialize%%block self (list (new reference target)))
+  (pin (first %inputs)))
 
 (define-method evaluate prog0 ()
   (destructuring-bind (target &rest body) %inputs
