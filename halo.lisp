@@ -107,8 +107,8 @@
 (define-method on-drag resize (x0 y0)
   (with-fields (x y width height) %target
     (resize %target 
-	    :width (- x0 x)
-	    :height (- y0 y))))
+	    (- x0 x)
+	    (- y0 y))))
 
 (define-handle program :reference)
 

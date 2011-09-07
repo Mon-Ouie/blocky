@@ -86,7 +86,7 @@
 (define-method resize-to-scroll text (&key width height)
   "Resize the text to WIDTH * HEIGHT and enable scrolling of contents."
   (assert (and (numberp width) (numberp height)))
-  (resize self :height height :width width)
+  (resize self width height)
   (setf %max-displayed-lines (truncate (/ height (font-height %font)))))
 
 (define-method resize-to-fit text ()
@@ -109,7 +109,7 @@
 		      (* line-height (max 1 (length buffer))))))
       (when (or (< %width width0)
 		(< %height height0))
-	(resize self :height height0 :width width0)))))
+	(resize self width0 height0)))))
 
 (define-method view-messages text ()
   (setf %auto-fit nil)

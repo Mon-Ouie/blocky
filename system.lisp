@@ -35,7 +35,7 @@
   (let ((box (new text *copyright-notice*)))
     (add-block *shell* box 80 80)
     ;; (center box)
-    (resize-to-scroll box :width 80 :height 24)
+    (resize-to-scroll box 80 24)
     (end-of-line box)))
 
 (define-method save-before-exit system ())

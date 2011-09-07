@@ -265,11 +265,9 @@
 (define-method update-layout-maybe prompt ()
   (with-fields (line) self
     (resize self 
-	    :width  
 	    (+ 12 (* 5 *dash*)
 	       (font-text-width line *font*)
 	       (font-text-width *default-prompt-string* *font*))
-	    :height 
 	    (+ (* 2 *default-prompt-margin*) (font-height *font*)))))
 
 (define-method draw-input-area prompt (state)
