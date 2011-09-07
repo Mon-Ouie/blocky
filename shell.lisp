@@ -398,7 +398,7 @@ block found, or nil if none is found."
       ;; sanity check
       (assert (or (null focused-block)
 		  (blockyp focused-block)))
-      ;; now tell the block it has focus
+      ;; now tell the block it has focus, but only if not the same
       (when (and focused-block
 		 (not (object-eq last-focus focused-block)))
 	(on-focus block))))))
