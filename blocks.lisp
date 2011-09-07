@@ -49,13 +49,13 @@ areas.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (tags :initform nil)
   (temporary :initform nil)
-  (methods :initform '(:make-reference :duplicate :make-sibling))
+  (methods :initform '(:make-reference :duplicate :make-sibling :move :move-to :play-sound :show :hide :is-visible))
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
   (description :initform nil :documentation "A description of the block.") 
   (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
-  (excluded-fields :initform nil) ;; Yay!
+  (excluded-fields :initform nil) 
   ;; visual layout
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
@@ -145,7 +145,8 @@ initialized with BLOCKS as inputs."
 
 ;;; Block tags, used for categorizing blocks
 
-(define-method has-tag block (tag)
+(define-method (has-tag :category :motion) block 
+    ((tag symbol :default nil :label ""))
   "Return non-nil if this block has the specified TAG.
 
 Blocks may be marked with tags that influence their processing by the
@@ -163,11 +164,13 @@ interpretation:
 "
   (member tag %tags))
 
-(define-method add-tag block (tag)
+(define-method (add-tag :category :motion) block 
+    ((tag symbol :default nil :label ""))
   "Add the specified TAG to this block."
   (pushnew tag %tags))
 
-(define-method remove-tag block (tag)
+(define-method (remove-tag :category :motion) block 
+    ((tag symbol :default nil :label ""))
   "Remove the specified TAG  from this block."
   (setf %tags (remove tag %tags)))
 
@@ -642,14 +645,24 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 ;;; Block movement
 
-(define-method move-to block (x y &optional z)
+(define-method (move-to :category :motion) block 
+    ((x number :default 0) (y number :default 0))
+  "Move the block to a new (X Y) location."
+  (setf %x x)
+  (setf %y y))
+
+(define-method (move-to-xyz :category :motion) block
+    ((x number :default 0) 
+     (y number :default 0)
+     (z number :default 0))
   "Move the block to a new (X Y) location."
   (setf %x x)
   (setf %y y)
   (when z 
     (setf %z z)))
 
-(define-method move-toward block (direction &optional (steps 1))
+(define-method (move-toward :category :motion) block 
+    ((direction symbol :default :north) (steps number :initform 1))
   (with-field-values (y x) self
     (multiple-value-bind (y0 x0)
 	(step-in-direction y x direction steps)
@@ -658,18 +671,18 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 ;;; Visibility
 
-(define-method show block ()
+(define-method (show :category :looks) block ()
   (setf %visible t))
 
-(define-method hide block ()
+(define-method (hide :category :looks) block ()
   (setf %visible nil))
 
-(define-method toggle-visibility block ()
+(define-method (toggle-visibility :category :looks) block ()
   (if %visible
       (hide self)
       (show self)))
 
-(define-method is-visible block ()
+(define-method (is-visible :category :looks) block ()
   %visible)
 
 ;;; Menus
@@ -695,7 +708,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
       while pointer)
     ;; 
     (let (inputs)
-      (dolist (method methods)
+      (dolist (method (sort methods #'string<))
 	(push (make-method-menu-item self method (find-uuid self)) inputs))
       (make-menu
        (list :label (concatenate 'string 
@@ -1101,10 +1114,11 @@ area is drawn. If DARK is non-nil, paint a darker region."
 			    :scale-x scale-x
 			    :scale-y scale-y))))
 
-(define-method change-image block (image)
-  (assert (stringp image))
-  (setf %image image)
-  (update-image-dimensions self))
+(define-method (change-image :category :looks) block 
+    ((image string :default nil))
+  (when image
+    (setf %image image)
+    (update-image-dimensions self)))
   
 (define-method draw-expression block (x0 y0 segment type)
   (with-fields (height input-widths) self
@@ -1203,7 +1217,7 @@ area is drawn. If DARK is non-nil, paint a darker region."
 
 ;;; Layout management
 
-(define-method center block ()
+(define-method (center :category :motion) block ()
   "Automatically center the block on the screen."
   (with-field-values (x y width height) self
     (let ((center-x (/ *screen-width* 2))
@@ -1211,19 +1225,21 @@ area is drawn. If DARK is non-nil, paint a darker region."
       (setf x (- center-x (/ width 2))
 	    y (- center-y (/ height 2))))))
 
-(define-method pin block ()
+(define-method (pin :category :motion) block ()
   "Prevent dragging and moving of this block."
   (setf %pinned t))
 
-(define-method unpin block () 
+(define-method (unpin :category :motion) block () 
   "Allow dragging and moving of this block."
   (setf %pinned nil))
 
-(define-method is-pinned block ()
+(define-method (is-pinned :category :motion) block ()
   "When non-nil, dragging and moving are disallowed for this block."
   %pinned)
 
-(define-method resize block (&key height width)
+(define-method (resize :category :motion) block 
+    ((height number :default 100)
+     (width number :default 100))
   (setf %height height)
   (setf %width width)
   (invalidate-layout self))
@@ -1253,8 +1269,9 @@ area is drawn. If DARK is non-nil, paint a darker region."
 
 ;;; Sound 
 
-(define-method play-sound block (sample-name)
-  (play-sample sample-name))
+(define-method (play-sound :category :sound) block 
+    ((name string :default "beep"))
+  (play-sample name))
 
 ;;; Collision detection and UI hit testing
 

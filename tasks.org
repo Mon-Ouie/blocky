@@ -1,4 +1,5 @@
 * BETA RELEASE EXECUTION PLAN
+** TODO [#A] Show result somewhere when clicking eval bang handle
 ** TODO [#A] Implement basic blocks library (see list below)
 ** TODO [#A] System Browser for choosing what to define methods on (or blocks from)
 ** TODO [#A] Language tutorial project
