@@ -49,7 +49,7 @@ areas.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (tags :initform nil)
   (temporary :initform nil)
-  (methods :initform '(:make-reference :duplicate :make-sibling :move :move-to :play-sound :show :hide :is-visible))
+  (methods :initform '(:make-reference :move-toward :add-tag :remove-tag :duplicate :make-sibling :move :move-to :play-sound :show :hide :is-visible))
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any.")
   (default-events :initform nil)
@@ -145,7 +145,7 @@ initialized with BLOCKS as inputs."
 
 ;;; Block tags, used for categorizing blocks
 
-(define-method (has-tag :category :motion) block 
+(define-method has-tag block 
     ((tag symbol :default nil :label ""))
   "Return non-nil if this block has the specified TAG.
 
@@ -164,12 +164,12 @@ interpretation:
 "
   (member tag %tags))
 
-(define-method (add-tag :category :motion) block 
+(define-method add-tag block 
     ((tag symbol :default nil :label ""))
   "Add the specified TAG to this block."
   (pushnew tag %tags))
 
-(define-method (remove-tag :category :motion) block 
+(define-method remove-tag block 
     ((tag symbol :default nil :label ""))
   "Remove the specified TAG  from this block."
   (setf %tags (remove tag %tags)))
@@ -506,11 +506,11 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 (define-method on-release block (x y button)
   (declare (ignore x y button)))
 
-(define-method can-pick block ()
-  (not %pinned))
+(define-method can-pick block () t)
+;  (not %pinned))
 
 (define-method pick block ()
-  self) ;; Possibly return a child, or a new object 
+  (if %pinned %parent self)) ;; Possibly return a child, or a new object 
 
 ;;; Focus events (see also shell.lisp)
 
@@ -542,6 +542,10 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 
 (define-method on-drag block (x y)
   (move-to self x y))
+
+(define-method pick-drag block (x y)
+  (declare (ignore x y)) 
+  self)
 
 (define-method can-escape block ()
   t)
@@ -645,13 +649,13 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 ;;; Block movement
 
-(define-method (move-to :category :motion) block 
+(define-method move-to block 
     ((x number :default 0) (y number :default 0))
   "Move the block to a new (X Y) location."
   (setf %x x)
   (setf %y y))
 
-(define-method (move-to-xyz :category :motion) block
+(define-method move-to-xyz block
     ((x number :default 0) 
      (y number :default 0)
      (z number :default 0))
@@ -661,7 +665,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (when z 
     (setf %z z)))
 
-(define-method (move-toward :category :motion) block 
+(define-method move-toward block 
     ((direction symbol :default :north) (steps number :initform 1))
   (with-field-values (y x) self
     (multiple-value-bind (y0 x0)
@@ -671,18 +675,18 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 ;;; Visibility
 
-(define-method (show :category :looks) block ()
+(define-method show block ()
   (setf %visible t))
 
-(define-method (hide :category :looks) block ()
+(define-method hide block ()
   (setf %visible nil))
 
-(define-method (toggle-visibility :category :looks) block ()
+(define-method toggle-visibility block ()
   (if %visible
       (hide self)
       (show self)))
 
-(define-method (is-visible :category :looks) block ()
+(define-method is-visible block ()
   %visible)
 
 ;;; Menus
@@ -1114,7 +1118,7 @@ area is drawn. If DARK is non-nil, paint a darker region."
 			    :scale-x scale-x
 			    :scale-y scale-y))))
 
-(define-method (change-image :category :looks) block 
+(define-method change-image block 
     ((image string :default nil))
   (when image
     (setf %image image)
@@ -1217,7 +1221,7 @@ area is drawn. If DARK is non-nil, paint a darker region."
 
 ;;; Layout management
 
-(define-method (center :category :motion) block ()
+(define-method center block ()
   "Automatically center the block on the screen."
   (with-field-values (x y width height) self
     (let ((center-x (/ *screen-width* 2))
@@ -1225,21 +1229,21 @@ area is drawn. If DARK is non-nil, paint a darker region."
       (setf x (- center-x (/ width 2))
 	    y (- center-y (/ height 2))))))
 
-(define-method (pin :category :motion) block ()
+(define-method pin block ()
   "Prevent dragging and moving of this block."
   (setf %pinned t))
 
-(define-method (unpin :category :motion) block () 
+(define-method unpin block () 
   "Allow dragging and moving of this block."
   (setf %pinned nil))
 
-(define-method (is-pinned :category :motion) block ()
+(define-method is-pinned block ()
   "When non-nil, dragging and moving are disallowed for this block."
   %pinned)
 
-(define-method (resize :category :motion) block 
-    ((height number :default 100)
-     (width number :default 100))
+(define-method resize block 
+    ((width number :default 100)
+     (height number :default 100))
   (setf %height height)
   (setf %width width)
   (invalidate-layout self))
@@ -1269,7 +1273,7 @@ area is drawn. If DARK is non-nil, paint a darker region."
 
 ;;; Sound 
 
-(define-method (play-sound :category :sound) block 
+(define-method play-sound block 
     ((name string :default "beep"))
   (play-sample name))
 

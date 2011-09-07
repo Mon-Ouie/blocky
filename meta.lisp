@@ -160,7 +160,7 @@ macro. "
   (error "Recompilation not yet defined for prog0."))
 
 (define-method initialize prog0 (target)
-  (initialize%%block self (list (new reference target)))
+  (initialize%%block self (new reference target))
   (pin (first %inputs)))
 
 (define-method evaluate prog0 ()

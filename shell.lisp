@@ -406,11 +406,11 @@ block found, or nil if none is found."
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag drag-origin inputs buffer drag-start ghost drag-offset) self
     (with-buffer buffer
-      ;; save the block, possibly producing a new one
-      (setf drag (find-uuid block))
-      (when (find-parent drag)
-	(setf drag-origin (find-parent drag))
-      	(unplug-from-parent block))
+      (setf drag (pick-drag block mouse-x mouse-y))
+      (setf drag-origin (find-parent drag))
+      (when drag-origin
+	  ;; parent might produce a new object
+	(unplug-from-parent block))
       (let ((dx (field-value :x block))
 	    (dy (field-value :y block))
 	    (dw (field-value :width block))
@@ -438,9 +438,6 @@ block found, or nil if none is found."
 			*minimum-drag-distance*)
 		     (can-pick click-start-block))
 	    (let ((drag (pick click-start-block)))
-	      ;; we want to make sure new objects aren't dragged off the screen.
-	      ;; (when (not (object-eq drag click-start-block))
-	      ;; 	(move-to drag x y))
 	      (begin-drag self x y drag)
 	      ;; clear click data
 	      (setf click-start nil)
@@ -508,7 +505,8 @@ block found, or nil if none is found."
 		(drop-y (- y y0)))
 	    (if (not (can-escape drag))
 		;; put back in halo or wherever
-		(add-block drag-origin drag drop-x drop-y)
+		(when drag-origin 
+		  (add-block drag-origin drag drop-x drop-y))
 		;; ok, drop. where are we dropping?
 		(progn 
 		  (when drag-parent

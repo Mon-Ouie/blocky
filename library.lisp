@@ -285,7 +285,7 @@ inputs are evaluated."
   :name "gray50"
   :width (dash 20) :height (dash 20))
 
-(define-method (set-color :category :looks) color
+(define-method set-color color
     ((name string :default "gray50"))
   (setf %name name))
 
@@ -383,17 +383,22 @@ inputs are evaluated."
 
 (define-method hit palette (x y)
   (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
-    (labels ((hit-it (ob)
-	       (hit ob x y)))
-      (setf %source (some #'hit-it %inputs))
-      (or %source self))))
+    self))
 
 (define-method can-pick palette () t)
 
-(define-method pick palette ()
-  (if %source
-      (make-clone %source)
-      self))
+(define-method pick-drag palette (x y)
+  (labels ((hit-it (ob)
+	     (hit ob x y)))
+    (setf %source (some #'hit-it %inputs))
+    (if %source
+	(make-clone %source)
+	self)))
+
+;;; If and when
+
+;; (define-block if 
+
 
 
 ;;; library.lisp ends here
