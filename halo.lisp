@@ -71,7 +71,7 @@
 		
 (defmacro define-handle (name indicator &key (color "gray20"))
   (assert (symbolp name))
-  (assert (string color))
+  (assert (stringp color))
   `(define-block (,name :super :handle)
      (indicator :initform ,indicator)
      (color :initform ,color)))
