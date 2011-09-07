@@ -123,8 +123,10 @@
 (define-handle discard :close)
 
 (define-method on-tap discard (x y)
+  (assert %target)
   (discard %target)
-  (discard %parent))
+  (when %parent
+    (discard %parent)))
      
 (define-handle collapse :collapse)
 
@@ -158,10 +160,6 @@
 
 (define-method draw halo ()
   (draw-inputs self))
-
-(define-method on-lose-focus halo ()
-  (setf (field-value :halo %target) nil)
-  (discard self))
 
 (define-method can-pick halo ()
   (can-pick %target))

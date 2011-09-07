@@ -391,6 +391,7 @@ block found, or nil if none is found."
 	(when (and last-focus
 		   ;; don't do this for same block
 		   (not (object-eq last-focus block)))
+	  (discard-halo last-focus)
 	  (on-lose-focus last-focus))
       ;; now set up the new focus (possibly nil)
       (setf focused-block (when block (find-uuid block)))
