@@ -385,19 +385,22 @@ block found, or nil if none is found."
   ;; possible to pass nil
   (with-fields (buffer focused-block self) self
     (with-buffer buffer
-      ;; there's going to be a new focused block. 
-      ;; tell the current one it's no longer focused.
-      (when focused-block
-	(on-lose-focus focused-block))
+      (let ((last-focus focused-block))
+	;; there's going to be a new focused block. 
+	;; tell the current one it's no longer focused.
+	(when (and last-focus
+		   ;; don't do this for same block
+		   (not (object-eq last-focus block)))
+	  (on-lose-focus last-focus))
       ;; now set up the new focus (possibly nil)
-      (setf focused-block 
-	    (when block (find-uuid block)))
+      (setf focused-block (when block (find-uuid block)))
       ;; sanity check
       (assert (or (null focused-block)
 		  (blockyp focused-block)))
       ;; now tell the block it has focus
-      (when block 
-	(on-focus block)))))
+      (when (and focused-block
+		 (not (object-eq last-focus focused-block)))
+	(on-focus block))))))
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag drag-origin inputs buffer drag-start ghost drag-offset) self
