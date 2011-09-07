@@ -159,6 +159,10 @@
 (define-method draw halo ()
   (draw-inputs self))
 
+(define-method on-lose-focus halo ()
+  (setf (field-value :halo %target) nil)
+  (discard self))
+
 (define-method can-pick halo ()
   (can-pick %target))
 

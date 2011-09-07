@@ -125,6 +125,7 @@ initialized with BLOCKS as inputs."
 
 (define-method discard block ()
   (mapc #'discard %inputs)
+  (when %halo (discard %halo))
   (when %parent 
     (unplug-from-parent self))
   (push self (symbol-value '*trash*)))

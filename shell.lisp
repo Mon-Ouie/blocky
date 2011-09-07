@@ -388,7 +388,6 @@ block found, or nil if none is found."
       ;; there's going to be a new focused block. 
       ;; tell the current one it's no longer focused.
       (when focused-block
-	(discard-halo focused-block)
 	(on-lose-focus focused-block))
       ;; now set up the new focus (possibly nil)
       (setf focused-block 
