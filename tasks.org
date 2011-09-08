@@ -1,4 +1,8 @@
 * BETA RELEASE EXECUTION PLAN
+
+** (let ((documentation-template:*target* #P"~/blocky.html")) (documentation-template:create-template :blocky))
+** TODO [#B] Try to write a description of Blocky/morphic model
+** TODO [#B] Show lisp implementation name etc
 ** TODO [#A] Show result somewhere when clicking eval bang handle
 ** TODO [#A] Implement basic blocks library (see list below)
 ** TODO [#A] System Browser for choosing what to define methods on (or blocks from)
