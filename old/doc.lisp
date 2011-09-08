@@ -1,8 +1,8 @@
-;;; ldoc.lisp --- extract and format documentation from lisp files
+;;; ldoc.lisp --- extract blocky docs into orgmode format
 
 ;; Copyright (C) 2009, 2011  David O'Toole
 
-;; Author: David O'Toole ^dto@gnu.org
+;; Author: David O'Toole dto@ioforms.org
 ;; Keywords: lisp, tools
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -20,53 +20,18 @@
 
 (in-package :ioforms)
 
-;; todo show parent name if any
-
-(defun clon-prototype-p (form)
-  (when (symbolp form)
-    (let* ((name (symbol-name form))
-	   (len (length name)))
-      (and (string= "=" (subseq name 0 1))
-	   (string= "=" (subseq name (- len 1) len))))))
-
-(defun clon-method-p (form)
-  (when (symbolp form)
-    (let* ((delimiter ">>")
-	   (name (symbol-name form))
-	   (len (length name))
-	   (delimiter-pos (search delimiter name)))
-      (when (numberp delimiter-pos)
-	(values (subseq name 0 delimiter-pos)
-		(subseq name (+ 2 delimiter-pos)))))))
-
-(defun clon-parent-name (form)
-  (when (and (symbolp form) (boundp form))
-    (assert (symbol-value form))
-    (let ((parent (object-parent (symbol-value form))))
-      (when parent 
-	(object-name parent)))))
-    
-(defun remove-delimiters (form)
-  (let* ((name (symbol-name form))
-	 (len (length name)))
-    (subseq name 1 (- len 1))))
-
 (defun document-symbol (symbol stream)
-  "Documentation string."
-  (let* ((type (if (clon-prototype-p symbol)
-		   'variable
-		   (if (fboundp symbol) 
-		       (if (macro-function symbol) 
-			   'function 
-			   'function)
-		       'variable)))
-	 (type-name (if (clon-method-p symbol)
-			"method" (if (clon-prototype-p symbol)
-				     "prototype"
-				     (if (fboundp symbol)
-					 (if (macro-function symbol)
-					     "macro" "function")
-					 "variable"))))
+  (let* ((type  (if (fboundp symbol) 
+		    (if (macro-function symbol) 
+			'function 
+			'function)
+		    'variable)))
+	 (type-name (if (get symbol 'is-method)
+			"method" 
+			(if (fboundp symbol)
+			    (if (macro-function symbol)
+				"macro" "function")
+			    "variable")))
 	 (doc (if (clon-prototype-p symbol)
 		  (field-value :documentation (symbol-value symbol))
 		  (documentation symbol type)))

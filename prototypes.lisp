@@ -982,6 +982,8 @@ was invoked."
 	   (export ',defun-symbol)
 	   (let ((,name ,(make-keyword method-name)))
 	     (unless (fboundp ',method-symbol)
+	       ;; tag the symbol as a method
+	       (setf (get ',method-symbol 'is-method) t)
 	       (defun ,method-symbol (self &rest args)
 		 ,@(when documentation (list documentation))
 		 (apply #'send ,name self args))
