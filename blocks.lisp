@@ -29,33 +29,39 @@
 
 (define-prototype block 
     (:documentation
-     "This is the base prototype for all objects in the Blocky system.
-In the Blocky visual language, everything is a Block, meaning that all
-objects in the language inherit certain features from a common base,
-whether they are in-game entities such as monsters or bullets, or
-whether they are menus and buttons used to implement the user
-interface, or still yet, animations to be shown or musical cues to be
-played.
+     "Blocks are the visual programming elements that programs in the
+blocky language are built up from. This BLOCK prototype establishes
+the default properties and behaviors of blocks.
+
+Any object defined with `define-block' will inherit certain fields and
+methods from this common base. All the blocks in a Blocky program are
+therefore visually accessible, whether they are in-game entities such
+as monsters or bullets, or menus and buttons used to implement the
+user interface, or still yet, animations to be shown or musical cues
+to be played. Whether or not these capabilities are being used at a
+given time, all Blocks know how to draw themselves, interact with the
+mouse, respond to keystrokes and other input events, and so on.
 
 The purpose of this everything-is-a-Blockness is to mimic the
-Lisp-nature, in which everything is a symbolic expression. 
+Lisp-nature, in which everything is a symbolic expression. Like Lisp
+expressions, all blocks have a computed value---some piece of Lisp
+data considered as the result of the entire block. This value is
+returned by the block method \"EVALUATE\", and different blocks can
+override these methods to control evaluation. 
 
-Like Lisp expressions, all blocks have a computed value---some piece
-of Lisp data considered as the result of the entire block. This value
-is returned by the block method \"EVALUATE\". Also like Lisp
-expressions, Blocks are designed to be composed with each other in a
-tree-structure of arbitrary depth. A block's \"child nodes\" are stored
-in a list called %INPUTS. (As in the prototypes example above, the
-percent-sign prefix refers to a field value of the current object.)
-The choice of the word \"inputs\" for the name of this field reflects
-the idea of Blocks as nodes in a data-flow tree where each node
-controls the computation of the results it needs from its child
-blocks. Accordingly the computed values of the child blocks (if any)
-are stored in a similar list called %RESULTS, and by default this
-field is filled with the values of calling EVALUATE on the
-corresponding child blocks in %INPUTS. How a given object implements
-the EVALUATE method will influence whether and when that object's
-%INPUTS are themselves evaluated, as with a Lisp macro.
+Also like Lisp expressions, Blocks are designed to be composed with
+each other in a tree-structure of arbitrary depth. A block's \"child
+nodes\" are stored in a list called %INPUTS. (As in the prototypes
+example above, the percent-sign prefix refers to a field value of the
+current object.)  The choice of the word \"inputs\" for the name of
+this field reflects the idea of Blocks as nodes in a data-flow tree
+where each node controls the computation of the results it needs from
+its child blocks. Accordingly the computed values of the child
+blocks (if any) are stored in a similar list called %RESULTS, and by
+default this field is filled with the values of calling EVALUATE on
+the corresponding child blocks in %INPUTS. How a given object
+implements the EVALUATE method will influence whether and when that
+object's %INPUTS are themselves evaluated, as with a Lisp macro.
 
 Similarly, methods like DRAW can decide how, whether, and when to draw
 a block's children; the method LAYOUT controls the placement and
