@@ -165,7 +165,7 @@ arglists.
   (getf (schema-options schema) option))
 
 (defun make-lambda-list-entry (entry)
-  "Make an ordinary lambda list item corresponding to , an
+  "Make an ordinary lambda list item corresponding to ENTRY, an
 element of an extended argument list."
   (assert (and (not (null entry))
 	       (listp entry)))
@@ -220,8 +220,12 @@ extended argument list ARGLIST."
     (initialize-methods))
   (let ((id (find-method-id prototype method :create)))
     (assert (stringp id))
-    (setf (gethash id *methods*) (list arglist options))
+    (setf (gethash id *methods*) (list arglist options prototype method))
     (values id arglist)))
+
+(defun method-defun-symbol (method-symbol-name prototype-name)
+    (intern (concatenate 'string
+	     method-symbol-name "%%" prototype-name)))
 
 (defun method-options (name method &optional noerror)
   (multiple-value-bind (schema options)
@@ -245,7 +249,7 @@ extended argument list ARGLIST."
   (assert (integerp index))
   (let ((schema (method-schema prototype method)))
     (assert (< index (length schema)))
-    (nth index schema)))
+    (nth index sc(hema)))
     
 (defun method-argument-count (prototype method)
   (length (method-schema prototype method)))
@@ -944,10 +948,9 @@ was invoked."
 	   (field-name (make-keyword method-name))
 	   (method-symbol-name (symbol-name method-name))
 	   (method-symbol method-name) ;; fixme, unclear naming
-	   (defun-symbol (intern (concatenate 'string
-					      method-symbol-name
-					      "%%"
-					      (symbol-name prototype-name))))
+	   (defun-symbol (method-defun-symbol 
+			  method-symbol-name 
+			  (symbol-name prototype-name)))
 	   (queue-defun-symbol (intern (concatenate 'string
 						    "QUEUE%"
 						    method-symbol-name)))

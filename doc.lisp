@@ -1,6 +1,6 @@
-;;; ldoc.lisp --- extract blocky docs into orgmode format
+;;; doc.lisp --- extract blocky docs into orgmode format
 
-;; Copyright (C) 2009, 2011  David O'Toole
+;; Copyright (C) 2009-2011  David O'Toole
 
 ;; Author: David O'Toole dto@ioforms.org
 ;; Keywords: lisp, tools
@@ -18,65 +18,72 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see ^http://www.gnu.org/licenses/.
 
-(in-package :ioforms)
+(in-package :blocky)
 
-(defun document-symbol (symbol stream)
-  (let* ((type  (if (fboundp symbol) 
-		    (if (macro-function symbol) 
-			'function 
-			'function)
-		    'variable)))
-	 (type-name (if (get symbol 'is-method)
-			"method" 
-			(if (fboundp symbol)
-			    (if (macro-function symbol)
-				"macro" "function")
-			    "variable")))
-	 (doc (if (clon-prototype-p symbol)
-		  (field-value :documentation (symbol-value symbol))
-		  (documentation symbol type)))
-	 (name (if (clon-prototype-p symbol)
-		   (remove-delimiters symbol)
-		   (if (clon-method-p symbol)
-		       (multiple-value-bind (method-name prototype-name) (clon-method-p symbol)
-			 (format nil "~A (~A)" method-name prototype-name))
-		       (symbol-name symbol))))
-	 (args (when (fboundp symbol) (sb-introspect:function-lambda-list (fdefinition symbol)))))
-    (format stream "** ~A (~A)" name type-name)
-    (fresh-line stream)
-    (when args
-      (format stream "*** Arguments")
-      (fresh-line stream)
-      (format stream "~A" (if (clon-method-p symbol)
-			      (cdr args) args))
-      (fresh-line stream))
-    (when doc
-      (format stream "*** Documentation")
-      (fresh-line stream)
-      (format stream "~A" doc))
-    (fresh-line stream)))
+(defun is-method (symbol)
+  (and (fboundp symbol)
+       (get 'symbol 'is-method)))
 
-(defun do-heading (name stream)
-  (fresh-line stream)
-  (format stream "* ~A" name)
+(defun document-extended-argument (entry stream)
+  (format stream "~A" entry))
+
+(defun heading (level text stream)
+  (fresh-line stream) 
+  (format stream "~A ~A" 
+   (make-string level :initial-element (character "*"))
+   text)
   (fresh-line stream))
 
-(defun document-package (package-name stream &optional preamble-file)
-  (let (syms protos methods proto-hashes preamble-lines)
-    (when preamble-file 
+(defun document-method (prototype method stream)
+  (let ((symbol (intern (make-method-id prototype method))))
+    (destructuring-bind (arglist options prototype method)
+	(find-method-data prototype method)
+      (heading 2 (format nil "~A /(method)/" (make-non-keyword method))
+	       stream)
+      (heading 3 "Arguments" stream)
+      (dolist (arg arglist)
+	(document-extended-argument arg stream)
+	(fresh-line stream))
+      (heading 3 "Documentation" stream)
+      (format stream "~A" (documentation symbol 'function))
+      (fresh-line stream))))
+
+(defun document-function (symbol stream)
+  (heading 2 (format nil "** ~A /(function)/" symbol)
+	   stream)
+  (heading 3 "Arguments" stream)
+  (format stream "~S" (sb-introspect:function-lambda-list (fdefinition symbol)))
+  (heading 3 "Documentation" stream)
+  (format stream "~A" (documentation symbol 'function))
+  (fresh-line stream))
+
+(defun document-prototype (name stream)
+  (heading 1 (format nil "~A /(prototype)/" name)
+	   stream))
+
+
+
+
+
+
+    (do-external-symbols (sym package-name)
+      (when (< 3 (length (symbol-name sym)))
+	(push sym syms)))
+    (setf syms (sort syms #'string<))
+
+    ;; print preamble
+    (dolist (line preamble-lines)
+      (format stream "~A" line)
+      (fresh-line stream))
+
+(when preamble-file 
       (setf preamble-lines (with-open-file (file preamble-file
 						 :direction :input
 						 :if-does-not-exist nil)
 			     (loop for line = (read-line file nil)
 				   while line collect line))))
-    (do-external-symbols (sym package-name)
-      (when (< 3 (length (symbol-name sym)))
-	(push sym syms)))
-    (setf syms (sort syms #'string<))
-    ;; print preamble
-    (dolist (line preamble-lines)
-      (format stream "~A" line)
-      (fresh-line stream))
+
+
     ;; sort symbols
     (setf syms (remove-if #'(lambda (s)
     			       (when (clon-prototype-p s)
@@ -152,4 +159,4 @@
 ;; (document-package-to-file :ioforms #P"/home/dto/notebook/ioforms-reference.org" #P"/home/dto/ioforms/doc-preamble.org")
 ;; (document-package :ioforms t #P"/home/dto/ioforms/doc-preamble.org")
 
-;;; ldoc.lisp ends here
+;;; doc.lisp ends here
