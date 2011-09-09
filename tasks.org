@@ -1,6 +1,5 @@
 * BETA RELEASE EXECUTION PLAN
 
-** TODO [#B] Revise doc.lisp extractor tool
 ** TODO [#B] Try to write a description of Blocky/morphic model
 ** TODO [#B] Show lisp implementation name etc
 ** TODO [#A] Show result somewhere when clicking eval bang handle
@@ -744,3 +743,11 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_TODO: DONE
    :END:
 
+** TODO [#B] Revise doc.lisp extractor tool
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-09-09 Fri 03:12
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BETA RELEASE EXECUTION PLAN
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
