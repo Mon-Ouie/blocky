@@ -64,7 +64,7 @@
   (heading 2 (format nil "~A (variable)" symbol)
 	   stream)
   (heading 3 "Documentation" stream)
-  (format stream "~A" (documentation symbol 'function))
+  (format stream "~A" (documentation symbol 'variable))
   (fresh-line stream))
 
 (defun find-prototype-methods (prototype)
