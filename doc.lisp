@@ -36,7 +36,7 @@
 
 (defun document-method (prototype method stream)
   (let ((symbol (intern (make-method-id prototype method))))
-    (destructuring-bind (arglist options prototype method)
+    (multiple-value-bind (arglist options prototype method)
 	(find-method-data prototype method)
       (heading 2 (format nil "~A /(method)/" (make-non-keyword method))
 	       stream)
@@ -49,10 +49,20 @@
       (fresh-line stream))))
 
 (defun document-function (symbol stream)
-  (heading 2 (format nil "** ~A /(function)/" symbol)
+  (let ((type (cond 
+		((macro-function symbol) 'macro)
+		((fboundp symbol) 'function))))
+    (heading 2 (format nil "** ~A /(~A)/" symbol type)
+	     stream)
+    (heading 3 "Arguments" stream)
+    (format stream "~S" (sb-introspect:function-lambda-list (fdefinition symbol)))
+    (heading 3 "Documentation" stream)
+    (format stream "~A" (documentation symbol 'function))
+    (fresh-line stream)))
+
+(defun document-variable (symbol stream)
+  (heading 2 (format nil "** ~A /(variable)/" symbol)
 	   stream)
-  (heading 3 "Arguments" stream)
-  (format stream "~S" (sb-introspect:function-lambda-list (fdefinition symbol)))
   (heading 3 "Documentation" stream)
   (format stream "~A" (documentation symbol 'function))
   (fresh-line stream))
@@ -71,13 +81,13 @@
 (defun document-prototype (name stream)
   (heading 1 (format nil "~A /(prototype)/" name)
 	   stream)
-  (let* ((proto (find-prototype name))
+  (let* ((proto (gethash name *prototypes*))
 	 (field-descriptors 
 	   (field-value :field-descriptors (find-object proto)))
 	 (parent-name (find-super-prototype-name proto))
 	 (methods (find-prototype-methods proto)))
     (when parent-name
-      (heading 3 (format nil "Parent name: ~A" parent-name)) stream)
+      (heading 3 (format nil "Parent name: ~A" parent-name) stream))
     (let ((doc (field-value :documentation proto)))
       (when (stringp doc)
 	(heading 2 "Documentation" stream)
@@ -90,19 +100,16 @@
 	(destructuring-bind (name (&key documentation initform &allow-other-keys)) d
 	  (when name (format stream "*** ~A (field)" name))
 	  (when documentation 
-	    (fresh-line stream)
-	    (format stream "**** Documentation")
-	    (fresh-line stream)
+	    (heading 4 "Documentation" stream)
 	    (format stream "~A" documentation)
 	    (fresh-line stream)
 	    (when initform 
-	      (format stream "**** Initialization form")
-	      (fresh-line stream)
-	      (format stream ": ~S" initform))))))
+	      (heading 4 "Initialization form" stream)
+	      (format stream "~S" initform))))))
     (fresh-line stream)
     ;; methods
     (dolist (m methods)
-      (document-method m stream)
+      (document-method name m stream))))
 
 (defun preamble-file-lines (preamble-file)
   (with-open-file (file preamble-file
@@ -134,25 +141,25 @@
 	  (fresh-line stream))))
     ;; document prototypes and their respective methods
     (let (prototypes)
-      (loop for prototype being the hash-keys in *prototypes*
+      (loop for prototype being the hash-keys in *prototypes* do
 	    (push prototype prototypes))
       (setf prototypes 
 	    (mapcar #'(lambda (name)
 			(subseq name (1+ (position (character ":") name))))
 		    prototypes))
       (dolist (prototype (sort prototypes #'string<))
-	(document-prototype prototype stream)))
+	(document-prototype (concatenate 'string "BLOCKY:" prototype) stream)))
     ;; document syms
     (heading 1 "Functions, Macros, and Variables" stream)
     (dolist (sym symbols)
-      (document-symbol sym stream))))
+      (if (fboundp sym)
+	  (document-function sym stream)
+	  (document-variable sym stream)))))
 
 (defun document-package-to-file (package-name output-file &optional preamble-file)
   (with-open-file (stream output-file :direction :output :if-exists :supersede)
     (document-package package-name :stream stream :preamble-file preamble-file)))
-			    
-;; (document-package :clon t)
-;; (document-package-to-file :ioforms #P"/home/dto/notebook/ioforms-reference.org" #P"/home/dto/ioforms/doc-preamble.org")
-;; (document-package :ioforms t #P"/home/dto/ioforms/doc-preamble.org")
+
+;; (document-package-to-file :blocky #P"/home/dto/ioweb/reference.org")
 
 ;;; doc.lisp ends here

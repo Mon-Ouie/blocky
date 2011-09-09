@@ -196,6 +196,8 @@ extended argument list ARGLIST."
 		 "%%" (symbol-name method))))
 
 (defun find-method-id (prototype method &optional create)
+  (assert prototype)
+  (assert method)
   (let ((pointer prototype))
     (block searching
       (loop while pointer do
