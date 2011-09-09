@@ -249,7 +249,7 @@ extended argument list ARGLIST."
   (assert (integerp index))
   (let ((schema (method-schema prototype method)))
     (assert (< index (length schema)))
-    (nth index sc(hema)))
+    (nth index schema)))
     
 (defun method-argument-count (prototype method)
   (length (method-schema prototype method)))
