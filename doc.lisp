@@ -110,7 +110,8 @@
 	(fresh-line stream)
 	;; methods
 	(dolist (m methods)
-	  (document-method name m stream))))))
+	  (document-method name m stream))
+	methods))))
 
 (defun preamble-file-lines (preamble-file)
   (with-open-file (file preamble-file
@@ -155,7 +156,10 @@
 			(subseq name (1+ (position (character ":") name))))
 		    prototypes))
       (dolist (prototype (sort prototypes #'string<))
-	(document-prototype (concatenate 'string "BLOCKY:" prototype) stream)))
+	(let ((methods (document-prototype (concatenate 'string "BLOCKY:" prototype) stream)))
+	  (dolist (method methods)
+	    (setf symbols (remove (make-non-keyword method) symbols :test 'eq)))
+	  )))
     ;; document syms
     (heading 1 "Functions, Macros, and Variables" stream)
     (dolist (sym symbols)
