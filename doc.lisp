@@ -38,7 +38,7 @@
   (let ((symbol (intern (make-method-id prototype method))))
     (multiple-value-bind (arglist options prototype method)
 	(find-method-data prototype method)
-      (heading 2 (format nil "~A /(method)/" (make-non-keyword method))
+      (heading 2 (format nil "~A (method)" (make-non-keyword method))
 	       stream)
       (heading 3 "Arguments" stream)
       (dolist (arg arglist)
@@ -52,7 +52,7 @@
   (let ((type (cond 
 		((macro-function symbol) 'macro)
 		((fboundp symbol) 'function))))
-    (heading 2 (format nil "** ~A /(~A)/" symbol type)
+    (heading 2 (format nil "~A (~A)" symbol (string-downcase (symbol-name type)))
 	     stream)
     (heading 3 "Arguments" stream)
     (format stream "~S" (sb-introspect:function-lambda-list (fdefinition symbol)))
@@ -61,7 +61,7 @@
     (fresh-line stream)))
 
 (defun document-variable (symbol stream)
-  (heading 2 (format nil "** ~A /(variable)/" symbol)
+  (heading 2 (format nil "~A (variable)" symbol)
 	   stream)
   (heading 3 "Documentation" stream)
   (format stream "~A" (documentation symbol 'function))
@@ -79,37 +79,38 @@
     (sort methods #'string<)))
 
 (defun document-prototype (name stream)
-  (heading 1 (format nil "~A /(prototype)/" name)
+  (heading 1 (format nil "~A (prototype)" (subseq name (1+ (position (character ":") name))))
 	   stream)
-  (let* ((proto (gethash name *prototypes*))
-	 (field-descriptors 
-	   (field-value :field-descriptors (find-object proto)))
-	 (parent-name (find-super-prototype-name proto))
-	 (methods (find-prototype-methods proto)))
-    (when parent-name
-      (heading 3 (format nil "Parent name: ~A" parent-name) stream))
-    (let ((doc (field-value :documentation proto)))
-      (when (stringp doc)
-	(heading 2 "Documentation" stream)
-	(format stream "~A" doc)
-	(fresh-line stream)))
-    (when field-descriptors
-      (heading 2 "Fields" stream)
-      (dolist (d field-descriptors)
-	(fresh-line stream)
-	(destructuring-bind (name (&key documentation initform &allow-other-keys)) d
-	  (when name (format stream "*** ~A (field)" name))
-	  (when documentation 
-	    (heading 4 "Documentation" stream)
-	    (format stream "~A" documentation)
+  (let ((proto (gethash name *prototypes*)))
+    (when proto
+      (let* ((field-descriptors 
+	       (field-value :field-descriptors proto))
+	     (parent-name (find-super-prototype-name proto))
+	     (methods (find-prototype-methods proto)))
+	(when parent-name
+	  (heading 3 (format nil "Parent name: ~A" parent-name) stream))
+	(let ((doc (field-value :documentation proto)))
+	  (when (stringp doc)
+	    (heading 2 "Documentation" stream)
+	    (format stream "~A" doc)
+	    (fresh-line stream)))
+	(when field-descriptors
+	  (heading 2 "Fields" stream)
+	  (dolist (d field-descriptors)
 	    (fresh-line stream)
-	    (when initform 
-	      (heading 4 "Initialization form" stream)
-	      (format stream "~S" initform))))))
-    (fresh-line stream)
-    ;; methods
-    (dolist (m methods)
-      (document-method name m stream))))
+	    (destructuring-bind (name (&key documentation initform &allow-other-keys)) d
+	      (when name (format stream "*** ~A (field)" name))
+	      (when documentation 
+		(heading 4 "Documentation" stream)
+		(format stream "~A" documentation)
+		(fresh-line stream)
+		(when initform 
+		  (heading 4 "Initialization form" stream)
+		  (format stream "~S" initform))))))
+	(fresh-line stream)
+	;; methods
+	(dolist (m methods)
+	  (document-method name m stream))))))
 
 (defun preamble-file-lines (preamble-file)
   (with-open-file (file preamble-file
@@ -118,9 +119,15 @@
     (loop for line = (read-line file nil)
 	  while line collect line)))
 
-(defun document-package (package-name &key (stream t) preamble-file)
+(defun document-package (package-name &key (stream t) preamble-file title)
   (let ((package (find-package package-name))
 	symbols functions variables) 
+    ;; header
+    (when title 
+      (format stream "#+TITLE: ~A" title)
+      (fresh-line stream))
+    (format stream "#+OPTIONS: toc:2 *:nil")
+    (fresh-line stream)
     (do-external-symbols (symbol package)
       (push symbol symbols))
     ;; remove method symbols and method defun symbols
@@ -156,10 +163,10 @@
 	  (document-function sym stream)
 	  (document-variable sym stream)))))
 
-(defun document-package-to-file (package-name output-file &optional preamble-file)
+(defun document-package-to-file (package-name output-file &key preamble-file title)
   (with-open-file (stream output-file :direction :output :if-exists :supersede)
-    (document-package package-name :stream stream :preamble-file preamble-file)))
+    (document-package package-name :title title :stream stream :preamble-file preamble-file)))
 
-;; (document-package-to-file :blocky #P"/home/dto/ioweb/reference.org")
+;; (document-package-to-file :blocky #P"/home/dto/ioweb/reference.org" :title "Blocky reference manual")
 
 ;;; doc.lisp ends here

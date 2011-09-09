@@ -192,8 +192,8 @@ extended argument list ARGLIST."
 (defun make-method-id (prototype method)
   (let ((name (object-name (find-object prototype))))
     (assert (stringp name))
-    (concatenate 'string name
-		 "%%" (symbol-name method))))
+    (concatenate 'string (symbol-name method)
+		 "%%" (subseq name (1+ (position (character ":") name))))))
 
 (defun find-method-id (prototype method &optional create)
   (assert prototype)
@@ -226,8 +226,8 @@ extended argument list ARGLIST."
     (values id arglist)))
 
 (defun method-defun-symbol (method-symbol-name prototype-name)
-    (intern (concatenate 'string
-	     method-symbol-name "%%" prototype-name)))
+  (intern (concatenate 'string
+		       method-symbol-name "%%" prototype-name)))
 
 (defun method-options (name method &optional noerror)
   (multiple-value-bind (schema options)
@@ -350,9 +350,8 @@ extended argument list ARGLIST."
   (object-super (find-object object)))
 
 (defun find-super-prototype-name (object)
-  (object-name
-   (find-object
-    (object-super (find-object object)))))
+  (let ((super (object-super (find-object object))))
+    (when super (object-name (find-object super)))))
 
 (defun object-eq (a b)
   (when (and a b)
