@@ -57,103 +57,99 @@
   (format stream "~A" (documentation symbol 'function))
   (fresh-line stream))
 
+(defun find-prototype-methods (prototype)
+  (let ((proto (find-object prototype))
+	(methods '()))
+    (labels ((extract (k v)
+	       (when (and (symbolp v)
+			  (fboundp v))
+		 (push k methods))))
+      (maphash #'extract 
+	       (object-fields proto)))
+    (sort methods #'string<)))
+
 (defun document-prototype (name stream)
   (heading 1 (format nil "~A /(prototype)/" name)
-	   stream))
+	   stream)
+  (let* ((proto (find-prototype name))
+	 (field-descriptors 
+	   (field-value :field-descriptors (find-object proto)))
+	 (parent-name (find-super-prototype-name proto))
+	 (methods (find-prototype-methods proto)))
+    (when parent-name
+      (heading 3 (format nil "Parent name: ~A" parent-name)) stream)
+    (let ((doc (field-value :documentation proto)))
+      (when (stringp doc)
+	(heading 2 "Documentation" stream)
+	(format stream "~A" doc)
+	(fresh-line stream)))
+    (when field-descriptors
+      (heading 2 "Fields" stream)
+      (dolist (d field-descriptors)
+	(fresh-line stream)
+	(destructuring-bind (name (&key documentation initform &allow-other-keys)) d
+	  (when name (format stream "*** ~A (field)" name))
+	  (when documentation 
+	    (fresh-line stream)
+	    (format stream "**** Documentation")
+	    (fresh-line stream)
+	    (format stream "~A" documentation)
+	    (fresh-line stream)
+	    (when initform 
+	      (format stream "**** Initialization form")
+	      (fresh-line stream)
+	      (format stream ": ~S" initform))))))
+    (fresh-line stream)
+    ;; methods
+    (dolist (m methods)
+      (document-method m stream)
 
+(defun preamble-file-lines (preamble-file)
+  (with-open-file (file preamble-file
+			:direction :input
+			:if-does-not-exist nil)
+    (loop for line = (read-line file nil)
+	  while line collect line)))
 
-
-
-
-
-    (do-external-symbols (sym package-name)
-      (when (< 3 (length (symbol-name sym)))
-	(push sym syms)))
-    (setf syms (sort syms #'string<))
-
+(defun document-package (package-name &key (stream t) preamble-file)
+  (let ((package (find-package package-name))
+	symbols functions variables) 
+    (do-external-symbols (symbol package)
+      (push symbol symbols))
+    ;; remove method symbols and method defun symbols
+    (setf symbols 
+	  (sort 
+	   (remove-if #'(lambda (s)
+			  (or (search "%" (symbol-name s))
+			      (is-method s)))
+		      symbols)
+	   #'string<))
     ;; print preamble
-    (dolist (line preamble-lines)
-      (format stream "~A" line)
-      (fresh-line stream))
-
-(when preamble-file 
-      (setf preamble-lines (with-open-file (file preamble-file
-						 :direction :input
-						 :if-does-not-exist nil)
-			     (loop for line = (read-line file nil)
-				   while line collect line))))
-
-
-    ;; sort symbols
-    (setf syms (remove-if #'(lambda (s)
-    			       (when (clon-prototype-p s)
-    				 (push s protos)))
-    			   syms))
-    (setf syms (remove-if #'(lambda (s)
-    			       (when (clon-method-p s)
-    				 (push s methods)))
-    			   syms))
-    ;; document prototypes
-    (setf protos (nreverse protos))
-    (dolist (p protos)
-      (let (pile
-	    (field-descriptors (when (and (clon-prototype-p p) (boundp p))
-				 (field-value :field-descriptors (symbol-value p))))
-	    (parent-name (clon-parent-name p)))
-	(dolist (m methods)
-	  (multiple-value-bind (method-name proto-name) 
-	      (clon-method-p m)
-	    (fresh-line t)
-	    (when (string= proto-name (remove-delimiters p))
-	      (push m pile))))
-	(setf pile (sort pile #'(lambda (s z)
-				  (multiple-value-bind (method-name1 proto-name1)
-				      (clon-method-p s)
-				    (multiple-value-bind (method-name2 proto-name2)
-					(clon-method-p z)
-				      (string> method-name1 method-name2))))))
-	(when pile
-	  (do-heading (format nil "~A (prototype)" (symbol-name p)) stream)
-	  (when parent-name
-	    (fresh-line stream)
-	    (format stream "** Parent prototype")
-	    (fresh-line stream)
-	    (format stream ": ~A" parent-name)
-	    (fresh-line stream))
-	  (let ((doc (field-value :documentation (symbol-value p))))
-	    (when (stringp doc)
-	      (format stream "** Documentation")
-	      (fresh-line stream)
-	      (format stream "~A" doc)
-	      (fresh-line stream)))
-	  (when field-descriptors
-	    (format stream "*** Fields")
-	    (fresh-line stream)
-	    (dolist (d field-descriptors)
-	      (fresh-line stream)
-	      (destructuring-bind (name (&key documentation initform &allow-other-keys)) d
-		(when name (format stream "**** ~A (field)" name))
-		(when documentation 
-		  (fresh-line stream)
-		  (format stream "***** Documentation")
-		  (fresh-line stream)
-		  (format stream "~A" documentation)
-		  (fresh-line stream)
-		  (when initform 
-		    (format stream "***** Initialization form")
-		    (fresh-line stream)
-		    (format stream ": ~S" initform))))))
-	  (fresh-line stream)
-	  (dolist (proto (reverse pile))
-	    (document-symbol proto stream)))))
+    (let ((preamble-lines 
+	    (when preamble-file
+	      (preamble-file-lines preamble-file))))
+      (when preamble-file 
+	(dolist (line preamble-lines)
+	  (format stream "~A" line)
+	  (fresh-line stream))))
+    ;; document prototypes and their respective methods
+    (let (prototypes)
+      (loop for prototype being the hash-keys in *prototypes*
+	    (push prototype prototypes))
+      (setf prototypes 
+	    (mapcar #'(lambda (name)
+			(subseq name (1+ (position (character ":") name))))
+		    prototypes))
+      (dolist (prototype (sort prototypes #'string<))
+	(document-prototype prototype stream)))
     ;; document syms
-    (do-heading "Symbols" stream)
-    (dolist (sym syms)
+    (heading 1 "Functions, Macros, and Variables" stream)
+    (dolist (sym symbols)
       (document-symbol sym stream))))
 
 (defun document-package-to-file (package-name output-file &optional preamble-file)
   (with-open-file (stream output-file :direction :output :if-exists :supersede)
-    (document-package package-name stream preamble-file)))
+    (document-package package-name :stream stream :preamble-file preamble-file)))
 			    
 ;; (document-package :clon t)
 ;; (document-package-to-file :ioforms #P"/home/dto/notebook/ioforms-reference.org" #P"/home/dto/ioforms/doc-preamble.org")
