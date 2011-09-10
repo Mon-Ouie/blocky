@@ -54,7 +54,7 @@ respond to keyboard input and other events. But these trees have a
 double role as computation structures wherein arbitrary Lisp data can
 flow from block to block---typically from leaf nodes upward to the
 root. In this way Blocky expressions also mimic abstract syntax trees,
-which makes visual macros possible.
+and this makes it possible to create 'visual macros'.
 
 With very few exceptions, all the properties and behaviors of blocks
 may be changed via the prototypal inheritance mechanism (also called
@@ -1697,3 +1697,4 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 ;; see also library.lisp for more block examples and many basic blocks
 
 ;;; blocks.lisp ends here
+ 
