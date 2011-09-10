@@ -1,7 +1,7 @@
 * BETA RELEASE EXECUTION PLAN
 
-** TODO [#B] Try to write a description of Blocky/morphic model
-** TODO [#B] Show lisp implementation name etc
+** TODO [#B] Xong
+** TODO [#C] Show lisp implementation name etc
 ** TODO [#A] Show result somewhere when clicking eval bang handle
 ** TODO [#A] Implement basic blocks library (see list below)
 ** TODO [#A] System Browser for choosing what to define methods on (or blocks from)
@@ -15,7 +15,7 @@
 *** "quit without saving?" dialog
 *** "empty trash before save?" dialog
 ** TODO [#A] Refactor collision detection to enable various types.
-*** delegate actual collision detection to method
+*** delegate actual collision detection to method of the object that is moving (not collidee, who hasn't been identified)
 *** in cell/move and sprite/move , compute whether a move would cause a collision
 *** and then only allow the move to go a certain distance. return number moved
 *** then "resting contact" will work; the object won't try to move anymore (if gravity.)
@@ -45,6 +45,8 @@
 ** TODO [#C] pick up halo handle
 ** TODO [#C] debug halo handle
 ** TODO [#C] "evaluate" and "evaluate and show" buttons
+
+* TODO  tigtesters: cpw, tacoxtreme 
 
 * BUGS
 ** TODO [#B] Fix bad circle artifacts on rounded corner patches on OSX
@@ -750,4 +752,14 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_OLPATH: BETA RELEASE EXECUTION PLAN
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
+   :END:
+
+** DONE [#B] Write a description of Blocky/morphic model
+   CLOSED: [2011-09-10 Sat 14:26]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2011-09-10 Sat 14:26
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: BETA RELEASE EXECUTION PLAN
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
    :END:

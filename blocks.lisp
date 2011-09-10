@@ -34,20 +34,6 @@ Blocky language are built up from. The prototypal block defined here
 establishes the default properties and behaviors of blocks, and the
 default means of composing individual blocks into larger programs.
 
-Blocky is built on an alternative view of object-orientation called
-`Prototype-based' programming. Instead of partitioning the objects in
-your program into classes that share inheritance relationships, the
-objects in a prototype-based system inherit behavior and data directly
-from each other through cloning. The cloning process takes an existing
-object and creates a new object with a link to the original, now
-called a `superobject' from which it will inherit methods and data
-fields. When a method is invoked (or a field is referenced) and no
-local value is found, the superobject is checked for a value, and then
-its superobject if any, and so on. Methods are stored in fields, so if
-you want to replace a clone's method definition with something else,
-just define the new method on the clone, and the superobject's version
-will be hidden.
-
 Blocky programs have some aspects of display trees, in that all blocks
 know how to draw themselves, track the mouse or touchscreen, and
 respond to keyboard input and other events. But these trees have a

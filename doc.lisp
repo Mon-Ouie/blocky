@@ -171,6 +171,6 @@
   (with-open-file (stream output-file :direction :output :if-exists :supersede)
     (document-package package-name :title title :stream stream :preamble-file preamble-file)))
 
-;; (document-package-to-file :blocky #P"/home/dto/ioweb/reference.org" :title "Blocky reference manual")
+;; (document-package-to-file :blocky #P"/home/dto/ioweb/reference.org" :title "Blocky reference manual" :preamble-file #P"~/blocky/doc-preamble.org")
 
 ;;; doc.lisp ends here
