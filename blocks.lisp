@@ -30,30 +30,57 @@
 (define-prototype block 
     (:documentation
      "Blocks are the visual programming elements that programs in the
-blocky language are built up from. This BLOCK prototype establishes
-the default properties and behaviors of blocks.
+Blocky language are built up from. The prototypal block defined here
+establishes the default properties and behaviors of blocks, and the
+default means of composing individual blocks into larger programs.
+
+Blocky is built on an alternative view of object-orientation called
+`Prototype-based' programming. Instead of partitioning the objects in
+your program into classes that share inheritance relationships, the
+objects in a prototype-based system inherit behavior and data directly
+from each other through cloning. The cloning process takes an existing
+object and creates a new object with a link to the original, now
+called a `superobject' from which it will inherit methods and data
+fields. When a method is invoked (or a field is referenced) and no
+local value is found, the superobject is checked for a value, and then
+its superobject if any, and so on. Methods are stored in fields, so if
+you want to replace a clone's method definition with something else,
+just define the new method on the clone, and the superobject's version
+will be hidden.
+
+Blocky programs have some aspects of display trees, in that all blocks
+know how to draw themselves, track the mouse or touchscreen, and
+respond to keyboard input and other events. But these trees have a
+double role as computation structures wherein arbitrary Lisp data can
+flow from block to block---typically from leaf nodes upward to the
+root. In this way Blocky expressions also mimic abstract syntax trees,
+which makes visual macros possible.
+
+With very few exceptions, all the properties and behaviors of blocks
+may be changed via the prototypal inheritance mechanism (also called
+Traits inheritance) implemented in prototypes.lisp. These changes can
+be made for each prototype that blocks will be `cloned' from. (See
+also the function `clone'.)
 
 Any object defined with `define-block' will inherit certain fields and
 methods from this common base. All the blocks in a Blocky program are
 therefore visually accessible, whether they are in-game entities such
 as monsters or bullets, or menus and buttons used to implement the
 user interface, or still yet, animations to be shown or musical cues
-to be played. Whether or not these capabilities are being used at a
-given time, all Blocks know how to draw themselves, interact with the
-mouse, respond to keystrokes and other input events, and so on.
+to be played. 
 
 The purpose of this everything-is-a-Blockness is to mimic the
 Lisp-nature, in which everything is a symbolic expression. Like Lisp
 expressions, all blocks have a computed value---some piece of Lisp
 data considered as the result of the entire block. This value is
-returned by the block method \"EVALUATE\", and different blocks can
+returned by the block method `evaluate' and different blocks can
 override these methods to control evaluation. 
 
 Also like Lisp expressions, Blocks are designed to be composed with
-each other in a tree-structure of arbitrary depth. A block's \"child
-nodes\" are stored in a list called %INPUTS. (As in the prototypes
+each other in a tree-structure of arbitrary depth. A block's 'child
+nodes' are stored in a list called %INPUTS. (As in the prototypes
 example above, the percent-sign prefix refers to a field value of the
-current object.)  The choice of the word \"inputs\" for the name of
+current object.)  The choice of the word `inputs' for the name of
 this field reflects the idea of Blocks as nodes in a data-flow tree
 where each node controls the computation of the results it needs from
 its child blocks. Accordingly the computed values of the child
@@ -67,15 +94,61 @@ Similarly, methods like DRAW can decide how, whether, and when to draw
 a block's children; the method LAYOUT controls the placement and
 sizing of a Block and its children, and HIT enables customization of
 the way mouse movements and clicks are assigned to individual objects.
-Input events (usually from the keyboard or joysticks) are handled by
-the method ON-EVENT, and the choice of how to propagate events down
-the tree may be determined dynamically at each and every node of the
-tree, with full polymorphism available at all times to influence
-dataflow, event handling, layout, positioning, graphical rendering,
-and hit-testing. In other words, despite Blocks all having many
-universal methods and properties in common, nothing is sacred;
-everything can be redefined at every step, since the blocks themselves
-control the computation.")
+
+Mouse response (drag-and-drop) and analog joystick support are
+controlled by `on-point', `on-press', `on-release', `on-tap', and many
+other methods. Other input events (usually from the keyboard or other
+controllers) are bound with `bind-event' and simliar methods, and
+handled by the method `on-event' when triggered. The choice of how to
+propagate events down the tree may be determined dynamically at each
+and every node of the tree, with full polymorphism available at all
+times to influence dataflow, event handling, layout, positioning,
+graphical rendering, and hit-testing. In other words, despite Blocks
+all having many universal methods and properties in common, nothing is
+sacred; everything can be redefined at every step, since the blocks
+themselves control the computation. See also shell.lisp.
+
+Blocky programs also have the quality of `liveness'; everything can be
+interacted with, and objects are always ready to react to events and
+display information to the user. (In fact, all blocks can behave as
+sprites in Blocky.) Processes that occur over time may be implemented
+as repeated computations whose updating occurs during the method
+`update' at some user-requested frequency. A simple event scheduler
+is also built in to the base block; see `add-task', `remove-task'
+`later', `later-at', `later-while'.
+
+For more on the topic of `liveness' and directness, see this research
+paper about Self Morphic:
+
+http://selflanguage.org/documentation/published/directness.html
+
+Where applicable, Blocky programs may be compiled into equivalent Lisp
+programs with fewer blocks (or even without blocks at all.) The method
+`recompile' is a counterpart to `evaluate', and allows each block
+to control how the Blockyness can be compiled away.
+
+Blocks are easily serializable with the functions `serialize' and
+`deserialize'. (Hash tables and arbitrary Blocky objects are
+supported, but otherwise all field values must print readably.)  Every
+block has a UUID (univerally unique identifier) which survives the
+deep freeze of serialization.
+
+The `halo' is a feature borrowed from Squeak Morphic; an array of
+pop-up interactive `handles' that surround a given onscreen object,
+allowing the user to inspect or resize or delete or otherwise interact
+with the object. See also halo.lisp.
+
+Block appearance may be defined with arbitrary OpenGL. Hardware
+acceleration is strongly recommended for using Blocky.
+
+Blocks are user-programmable, in that visual `message' blocks allow
+any block method to be invoked interactively, with point-and-click
+control over its argument values as well as being able to choose the
+recipient of the message.
+
+Messages and lists are among a number of basic utility blocks defined
+in library.lisp and listener.lisp.
+")
   (cursor-clock :initform 0)
   ;; general information
   (inputs :initform nil :documentation 
