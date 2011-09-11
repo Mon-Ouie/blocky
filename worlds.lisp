@@ -82,9 +82,8 @@ At the moment, only 0=off and 1=on are supported.")
   (setf %window-scale-y window-scale-y))
 
 (define-method project world ()
-  (with-fields (window-scale-x window-scale-y window-x window-y) self
-    (do-orthographic-projection)
-    (do-window window-x window-y window-scale-x window-scale-y)))
+  (do-orthographic-projection)
+  (do-window %window-x %window-y %window-scale-x %window-scale-y))
 
 (define-method initialize world (&key grid-size grid-height grid-width name)
   (setf %grid-size (or grid-size *default-grid-size*))
@@ -100,10 +99,12 @@ At the moment, only 0=off and 1=on are supported.")
 	(on-event player event)))))
 
 (define-method make world (&rest parameters)
-  (apply #'/initialize self parameters))
+  (apply #'initialize self parameters))
 
 (define-method make-with-parameters world (parameters)
   (apply #'send self :make self parameters))
+
+;;; World-local variables
 
 (define-method setvar world (var value)
   (setf (gethash var %variables) value))
@@ -125,6 +126,8 @@ At the moment, only 0=off and 1=on are supported.")
     (let* ((symbols (mapcar #'make-non-keyword vars))
 	   (clauses (mapcar #'make-clause symbols)))
       `(symbol-macrolet ,clauses ,@body))))
+
+;;; Working with the grid and its locations
 
 (define-method grid-location world (row column)
   "Return the vector of cells at ROW, COLUMN in the world SELF."
@@ -161,19 +164,19 @@ initialize the arrays for a world of the size specified there."
       (create-grid self :grid-width %grid-width :grid-height %grid-height)
       (error "Cannot create default grid without grid-height and grid-width set.")))
 
-(define-method category-at-p world (row column category)
-  "Returns non-nil if there is any cell in CATEGORY at ROW, COLUMN.
-CATEGORY may be a list of keyword symbols or one keyword symbol."
-;;  (declare (optimize (speed 3)))
-  (let ((catlist (etypecase category
-		   (keyword (list category))
-		   (list category)))
+(define-method tag-at-p world (row column tag)
+  "Returns the grid location at ROW,COLUMN if there is any cell with
+TAG at ROW, COLUMN. TAG may be a list of keyword symbols or one
+keyword symbol."
+  (let ((catlist (etypecase tag
+		   (keyword (list tag))
+		   (list tag)))
 	(grid %grid))
     (declare (type (simple-array vector (* *)) grid))
     (and (array-in-bounds-p grid row column)
 	 (some #'(lambda (cell)
 		   (when (intersection catlist
-				       (field-value :categories cell))
+				       (field-value :tags cell))
 		     cell))
 	       (aref grid row column)))))
 
@@ -191,6 +194,7 @@ CATEGORY may be a list of keyword symbols or one keyword symbol."
 
 (define-method drop-cell world (cell row column)
   (vector-push-extend cell (aref %grid row column))
+  (setf (field-value :on-grid cell) t)
   (setf (field-value :row cell) row)
   (setf (field-value :column cell) column))
 
@@ -244,15 +248,15 @@ replacing them with the single cell (or vector of cells) DATA."
     (delete-cell self cell old-row old-column)
     (drop-cell self cell row column)))
 
-(define-method delete-category-at world (row column category)
-  "Delete all cells in CATEGORY at ROW, COLUMN in the grid.
+(define-method delete-tag-at world (row column tag)
+  "Delete all cells in TAG at ROW, COLUMN in the grid.
 The cells' :destroy method is invoked."
   (let* ((grid %grid))
     ;; (declare (type (simple-array vector (* *)) grid)
     ;; 	     (optimize (speed 3)))
     (when (array-in-bounds-p grid row column)
       (setf (aref grid row column)
-	    (delete-if #'(lambda (c) (when (in-category c category)
+	    (delete-if #'(lambda (c) (when (has-tag c tag)
 				       (prog1 t (destroy c))))
 		       (aref grid row column))))))
  

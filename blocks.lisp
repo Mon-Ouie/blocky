@@ -156,6 +156,8 @@ in library.lisp and listener.lisp.
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
   (z :initform 0 :documentation "Integer Z coordinate of this block's position.")
   ;; possible grid location
+  (on-grid :initform nil
+	   :documentation "When non-nil, this block is located on a world's cell-grid.")
   (row :documentation "When non-nil, the current row location of the block.")
   (column :documentation "When non-nil, the current column of the block.")
   ;; scaling/blending
@@ -776,6 +778,27 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	(step-in-direction y x direction steps)
       (setf x x0)
       (setf y y0))))
+
+;;; Grid block movement
+
+(defun world-grid-size ()
+  (field-value :grid-size *world*))
+
+(define-method move-to-grid block 
+    ((row integer :default 0) (column integer :default 0))
+  "Move the block to a new (ROW COLUMN) location."
+  (let ((size (world-grid-size)))
+    ;; update local coordinates
+    (move-to self (* size column) (* size row))
+    ;; update world grid 
+    (funcall (if %on-grid #'move-cell #'drop-cell)
+	     *world* self row column)))
+
+(define-method move-toward-grid block 
+    ((direction symbol :default :north) (steps number :initform 1))
+  (multiple-value-bind (row column)
+      (step-in-direction %row %column direction steps)
+    (move-to-grid self row column)))
 
 ;;; Visibility
 
