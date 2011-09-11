@@ -839,7 +839,7 @@ display."
 			 (if *held-keys*
 			     (hold-event event)
 			     (send-event event))))
-      (:key-up-event (:key key :mod-key mod)
+      (:key-up-event (:key key :mod-key mod :unicode unicode)
 		     ;; is this "held keys" code obsolete? it was useful for CONS control
 		     (when *held-keys*
 		       (let* ((event (make-event (cons key nil) mod))
@@ -1647,15 +1647,17 @@ control the size of the individual frames or subimages."
 (defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
 *buffers* *screen-height* *world* *blocks* *dt* *pointer-x* *author*
 *pointer-y* *trash* *resizable* *window-title* *buffer* *system*
-*persistent-variables*))
+*use-nominal-screen-size* *persistent-variables*))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
 *buffers* *screen-height* *world* *blocks* *dt* *pointer-x* *author*
-*pointer-y* *trash* *resizable* *window-title* *buffer* *system*
+*use-nominal-screen-size* *pointer-y* *trash* *resizable*
+*window-title* *buffer* *system*
 				 ;; notice that THIS variable is also
 				 ;; persistent!  this is to avoid
 				 ;; unwanted behavior changes in
-				 ;; modules
+				 ;; modules when the default value
+				 ;; changes.
 				 *persistent-variables*))
 
 (defparameter *persistent-variables-file-name* "variables.iof")
