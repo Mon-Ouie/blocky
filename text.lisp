@@ -83,7 +83,7 @@
 			     (+ %point-row (- max-displayed-lines
 					     *next-screen-context-lines*)))))))
 
-(define-method resize-to-scroll text (&key width height)
+(define-method resize-to-scroll text (width height)
   "Resize the text to WIDTH * HEIGHT and enable scrolling of contents."
   (assert (and (numberp width) (numberp height)))
   (resize self width height)
