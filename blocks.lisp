@@ -99,7 +99,7 @@ interacted with, and objects are always ready to react to events and
 display information to the user. (In fact, all blocks can behave as
 sprites in Blocky.) Processes that occur over time may be implemented
 as repeated computations whose updating occurs during the method
-`update' at some user-requested frequency. A simple event scheduler
+`on-update' at some user-requested frequency. A simple event scheduler
 is also built in to the base block; see `add-task', `remove-task'
 `later', `later-at', `later-while'.
 
@@ -1405,8 +1405,6 @@ area is drawn. If DARK is non-nil, paint a darker region."
   (play-sample name))
 
 ;;; Collision detection and UI hit testing
-
-;; Still under construction...
 
 (define-method hit block (mouse-x mouse-y)
   "Return this block (or child input block) if the coordinates MOUSE-X
