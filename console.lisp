@@ -1174,8 +1174,11 @@ resource is stored; see also `find-resource'."
 (defmacro defresource (&rest entries)
   (assert (every #'listp entries))
   (let ((each (gensym)))
-  `(dolist (,each ',entries)
-     (index-resource (apply #'make-resource ,each)))))
+    (let ((names (mapcar #'(lambda (x)
+			     (getf x :name)))))
+      `(prog1 ',names
+	 (dolist (,each ',entries)
+	   (index-resource (apply #'make-resource ,each)))))))
 
 (defun find-project-path (project-name)
   "Return the current project path."

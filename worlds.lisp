@@ -263,7 +263,11 @@ keyword symbol."
       (resize cell size size)
       (setf (field-value :on-grid cell) t))))
 
-(define-method drop-block world (block row column)
+(define-method drop-block world (block x y)
+  (add-sprite self block)
+  (move-to block x y))
+
+(define-method drop-block-on-grid world (block row column)
   (let ((grid %grid)
 	(grid-size %grid-size))
     ;; (declare (optimize (speed 3)) 
@@ -271,7 +275,7 @@ keyword symbol."
     ;; 	     (fixnum grid-size row column))
     (when (array-in-bounds-p grid row column)
       (if (field-value :on-grid block)
-	  (prog1 t
+	  (prog1 t 
 	    (vector-push-extend block (aref grid row column))
 	    (setf (field-value :row block) row)
 	    (setf (field-value :column block) column))
@@ -386,7 +390,6 @@ most user command messages. (See also the method `forward'.)"
   ;; (declare (ignore args))
   (with-field-values (grid sprites collisions grid-height grid-width player) self
     (declare (type (simple-array vector (* *)) grid))
-    ;; (update player)
     ;; update the grid
     (dotimes (i grid-height)
       (dotimes (j grid-width)
@@ -396,26 +399,16 @@ most user command messages. (See also the method `forward'.)"
     ;; run the sprites
     (dolist (sprite sprites)
       (on-update sprite))
-    ;; do collisions
-    (collide-sprites self)
-    (when %collisions
-      (clear-sprite-grid self)
-      (send-collision-events self))))
+    ;; map out possible collisions
+    (update-sprite-grid self)
+    (collide-sprites self)))
 
 ;;; Collision detection
 
-(define-method send-collision-events world ()
-  (loop for c across %collisions
-	do (destructuring-bind (a . b) c
-	     (collide a b))))
-
-(define-method collide-sprite world (sprite)
+(define-method map-grid-under-sprite world (sprite function)
   ;; figure out which grid squares we really need to scan
   (let ((grid-size %grid-size)
-	(grid %grid)
-	(collisions '()))
-    (labels ((store (c)
-	       (pushnew (find-object c) collisions :key #'find-object)))
+	(grid %grid))
       (multiple-value-bind (x y width height)
 	  (bounding-box sprite)
 	(let* ((left (1- (floor (/ x grid-size))))
@@ -432,59 +425,47 @@ most user command messages. (See also the method `forward'.)"
 						  (* i0 grid-size) 
 						  (* j0 grid-size)
 						  grid-size grid-size)
+		    (funcall function i0 j0))))))))))
 		    
+(define-method update-sprite-grid world (&optional sprites)
+  ;; (declare (optimize (speed 3)))
+  (clear-sprite-grid self)
+  (with-field-values (grid-width grid-height grid-size sprite-grid grid) self
+    (dolist (sprite (or sprites %sprites))
+      (when (field-value :collision-type sprite)
+	(map-grid-under-sprite 
+	 self 
+	 #'(lambda (i j)
+	     ;; record which sprites intersect which squares
+	     (let ((other-sprites (aref sprite-grid i j)))
+	       (when (not (find sprite other-sprites))
+		 (vector-push-extend sprite other-sprites)))))))))
 
-(define-method collide-sprites world (&optional sprites)
-  "Perform collision detection between sprites, and between sprites and the grid."
-  ;; first empty the collisions vector (used to detect redundant collisions)
-  (declare (optimize (speed 3)))
-  (with-field-values (grid-width grid-height grid-size sprite-grid collisions grid) self
-    (setf (fill-pointer collisions) 0)
-    (labels ((save-collision-maybe (&rest pair)
-	       (labels ((same-pair (&rest pair0)
-			  (destructuring-bind (a b) pair
-			    (destructuring-bind (a0 b0) pair0
-			      (or (and (object-eq a a0)
-				       (object-eq b b0))
-				  (and (object-eq b a0)
-				       (object-eq a b0)))))))
-		 (unless (find-if #'same-pair collisions)
-		   (vector-push-extend pair collisions)))))
-      ;; first we test sprites for collisions with cells, and then we
-      ;; use the sprite-grid to store data for collisions between
-      ;; sprites (the grid itself serves to partition the space and
-      ;; reduce redundant comparisons.)
-      (dolist (sprite (or sprites %sprites))
-	;; don't bother if not marked for collision
+(define-method collide-sprites world ()
+  ;; now find collisions with other sprites
+  ;; we can re-use the sprite-grid data from earlier.
+  (with-field-values (sprite-grid grid) self
+    (let (collisions cells)
+      (dolist (sprite %sprites)
 	(when (field-value :collision-type sprite)
-
-
-			;; save this intersection information in the sprite grid
-			(vector-push-extend sprite (aref sprite-grid i0 j0))
-			;; collide the sprite with the cells on this square
-			(do-cells (cell (aref grid i0 j0))
-			  (when (or (in-category cell :target)
-				    (in-category cell :obstacle))
-			    (save-collision-maybe sprite cell))))))))))))
-      ;; now find collisions with other sprites
-      ;; we can re-use the sprite-grid data from earlier.
-      (let (collision num-sprites ix)
-	;; iterate over grid, reporting collisions
-	(dotimes (i grid-height)
-	  (dotimes (j grid-width)
-	    (setf collision (aref sprite-grid i j))
-	    (setf num-sprites (length collision))
-	    (when (< 1 num-sprites)
-	      (dotimes (i (- num-sprites 1))
-		(setf ix (1+ i))
-		(loop do (let ((a (aref collision i))
-			       (b (aref collision ix)))
-			   (incf ix)
-			   (assert (and (object-p a) (object-p b)))
-			   (when (and (not (eq a b)) 
-				      (colliding-with a b))
-			     (save-collision-maybe a b)))
-		      while (< ix num-sprites))))))))))
+	  (labels ((save-collision-maybe (thing)
+		     ;; collide only once per object
+		     (when (and (not (find (find-object thing) collisions 
+					   :key #'find-object :test 'eq))
+				(colliding-with sprite thing))
+		       (push thing collisions))))
+	    (map-grid-under-sprite 
+	     self
+	     #'(lambda (i j)
+		 ;; collect list of cells colliding with sprite
+		 (loop for cell across (aref grid i j) do
+		   (save-collision-maybe cell))
+		 ;; collect list of sprites colliding with sprite
+		 (loop for sp across (aref sprite-grid i j) do
+		   (save-collision-maybe sp))))
+	    ;; send collision events
+	    (dolist (other collisions)
+	      (on-collide sprite other))))))))
 
 ;;; Lighting and line-of-sight
 
