@@ -1175,7 +1175,8 @@ resource is stored; see also `find-resource'."
   (assert (every #'listp entries))
   (let ((each (gensym)))
     (let ((names (mapcar #'(lambda (x)
-			     (getf x :name)))))
+			     (getf x :name))
+			 entries)))
       `(prog1 ',names
 	 (dolist (,each ',entries)
 	   (index-resource (apply #'make-resource ,each)))))))

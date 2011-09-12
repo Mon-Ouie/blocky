@@ -156,6 +156,8 @@ in library.lisp and listener.lisp.
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
   (z :initform 0 :documentation "Integer Z coordinate of this block's position.")
   (direction :initform :north)
+  ;; 
+  last-x last-y last-z
   ;; possible grid location
   (on-grid :initform nil
 	   :documentation "When non-nil, this block is located on a world's cell-grid.")
@@ -756,9 +758,20 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 ;;; Block movement
 
+(define-method save-location block ()
+  (setf %last-x %x
+	%last-y %y
+	%last-z %z))
+
+(define-method restore-location block ()
+  (setf %x %last-x
+	%y %last-y
+	%z %last-z))
+
 (define-method move-to block 
     ((x number :default 0) (y number :default 0))
   "Move the block to a new (X Y) location."
+  (save-location self)
   (setf %x x)
   (setf %y y))
 
@@ -767,6 +780,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
      (y number :default 0)
      (z number :default 0))
   "Move the block to a new (X Y) location."
+  (save-location self)
   (setf %x x %y y %z z))
 
 (define-method move-toward block 
@@ -1415,7 +1429,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
     (update-image-dimensions self))
   (values %x %y %width %height))
 
-(define-method collide block (object)
+(define-method on-collide block (object)
   (declare (ignore object))
   "Respond to a collision detected with OBJECT."
   nil)

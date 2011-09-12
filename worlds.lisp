@@ -434,7 +434,7 @@ most user command messages. (See also the method `forward'.)"
     (dolist (sprite (or sprites %sprites))
       (when (field-value :collision-type sprite)
 	(map-grid-under-sprite 
-	 self 
+	 self sprite
 	 #'(lambda (i j)
 	     ;; record which sprites intersect which squares
 	     (let ((other-sprites (aref sprite-grid i j)))
@@ -455,7 +455,7 @@ most user command messages. (See also the method `forward'.)"
 				(colliding-with sprite thing))
 		       (push thing collisions))))
 	    (map-grid-under-sprite 
-	     self
+	     self sprite
 	     #'(lambda (i j)
 		 ;; collect list of cells colliding with sprite
 		 (loop for cell across (aref grid i j) do
@@ -636,6 +636,9 @@ by symbol name. This enables them to be used as hash keys."
 	 :documentation "When non-nil, this vector of worlds
 represents the z-axis of a euclidean 3-D space."))
 
+(define-method on-update universe ()
+  (on-update %world))
+
 (defun make-universe ()
   (new universe))
 
@@ -728,9 +731,7 @@ represents the z-axis of a euclidean 3-D space."))
 PLAYER as the player."
   (setf *universe* self)
   (when world 
-    (setf %world world)
-    (setf *world* world)
-    (setf *buffer* world))
+    (setf %world world))
   (when player (setf %player player))
   (when %player (add-player world %player)
 	(add-sprite world %player))
