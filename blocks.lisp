@@ -1446,8 +1446,6 @@ and MOUSE-Y identify a point inside the block (or input block.)"
       (bounding-box thing)
     (colliding-with-rectangle self y x width height)))
 
-(define-method collide block (thing))
-
 ;;; Analog gamepad control
 
 (define-method aim block (direction)

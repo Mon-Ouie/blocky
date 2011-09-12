@@ -91,7 +91,7 @@ At the moment, only 0=off and 1=on are supported.")
   (do-window %window-x %window-y %window-scale-x %window-scale-y))
 
 (define-method initialize world (&key grid-size grid-height grid-width name)
-  (setf %grid-size (or grid-size *default-grid-size*))
+  ;(setf %grid-size (or grid-size *default-grid-size*))
   (setf %grid-height (or grid-height (truncate (/ *screen-height* %grid-size))))
   (setf %grid-width (or grid-width (truncate (/ *screen-width* %grid-size))))
   (setf %variables (make-hash-table :test 'equal))
