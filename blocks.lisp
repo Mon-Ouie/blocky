@@ -157,7 +157,9 @@ in library.lisp and listener.lisp.
   (z :initform 0 :documentation "Integer Z coordinate of this block's position.")
   (direction :initform :north)
   ;; 
-  last-x last-y last-z
+  (last-x :initform 0)
+  (last-y :initform 0)
+  (last-z :initform 0)
   ;; possible grid location
   (on-grid :initform nil
 	   :documentation "When non-nil, this block is located on a world's cell-grid.")
@@ -237,7 +239,9 @@ initialized with BLOCKS as inputs."
   (push self (symbol-value '*trash*)))
 
 (define-method destroy block ()
-  (remove-block *world* self)
+  (if %on-grid 
+      (delete-cell *world* %row %column)
+      (remove-block *world* self))
   (discard self))
 
 (define-method make-duplicate block ()
@@ -795,10 +799,16 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (defun world-grid-size ()
   (field-value :grid-size *world*))
 
+(define-method enter-grid block ()
+  (setf %on-grid t))
+
+(define-method exit-grid block ()
+  (setf %on-grid nil))
+
 (define-method move-to-grid block 
     ((row integer :default 0) (column integer :default 0))
   "Move the block to a new (ROW COLUMN) location."
-  (funcall (if %on-grid #'move-cell #'drop-cell)
+  (funcall (if %on-grid #'move-cell #'move-sprite-to-grid)
 	   *world* self row column))
 
 (define-method move-toward-grid block 

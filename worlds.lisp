@@ -248,6 +248,10 @@ keyword symbol."
     (:sprite
        (remove-sprite self cell))))
     
+(define-method move-sprite-to-grid world (sprite row column)
+  (let ((size %grid-size))
+    (move-to sprite (* size column) (* size row))))
+
 (define-method move-cell world (cell row column)
   "Move CELL to ROW, COLUMN."
   (let* ((old-row (field-value :row cell))
@@ -459,10 +463,12 @@ most user command messages. (See also the method `forward'.)"
 	     #'(lambda (i j)
 		 ;; collect list of cells colliding with sprite
 		 (loop for cell across (aref grid i j) do
-		   (save-collision-maybe cell))
+		   (when (not (object-eq cell sprite))
+		     (save-collision-maybe cell)))
 		 ;; collect list of sprites colliding with sprite
 		 (loop for sp across (aref sprite-grid i j) do
-		   (save-collision-maybe sp))))
+		   (when (not (object-eq sprite sp))
+			      (save-collision-maybe sp)))))
 	    ;; send collision events
 	    (dolist (other collisions)
 	      (on-collide sprite other))))))))
@@ -731,7 +737,9 @@ represents the z-axis of a euclidean 3-D space."))
 PLAYER as the player."
   (setf *universe* self)
   (when world 
-    (setf %world world))
+    (setf %world world)
+    (setf *world* world)
+    (setf *buffer* world))
   (when player (setf %player player))
   (when %player (add-player world %player)
 	(add-sprite world %player))
