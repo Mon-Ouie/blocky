@@ -62,7 +62,7 @@ transform-field-reference define-block *screen-height*
 formatted-line-width *last-event* formatted-line-height
 formatted-string-height formatted-string-width get-color create-image
 draw-image blocky edit define-prototype has-field *target* with-target
-defcell defworld *choose-direction-menu* set-field-options
+defcell define-world *choose-direction-menu* set-field-options
 field-option-value index-resource find-project-path index-project
 load-image-resource load-lisp-resource *executable* *function-buttons*
 *corner-buttons* *dance-arrows* *punctuation* *screen-height*

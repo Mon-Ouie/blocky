@@ -70,6 +70,10 @@ At the moment, only 0=off and 1=on are supported.")
   (excluded-fields :initform
   '(:stack :sprite-grid :collisions :grid :player)))
 
+(defmacro define-world (name &body body)
+  `(define-block (,name :super "BLOCKY:WORLD")
+     ,@body))
+
 (define-method move-window-to world (x y)
   (setf %window-x x 
 	%window-y y))
@@ -249,9 +253,12 @@ keyword symbol."
     (drop-cell self cell row column)))
 
 (define-method drop-cell world (cell row column)
-  (when (array-in-bounds-p grid row column)
-    (vector-push-extend cell (aref %grid row column))
-    (setf (field-value :on-grid cell) t)))
+  (let ((size %grid-size))
+    (when (array-in-bounds-p %grid row column)
+      (vector-push-extend cell (aref %grid row column))
+      (move-to cell (* size column) (* size row))
+      (resize cell size size)
+      (setf (field-value :on-grid cell) t))))
 
 (define-method drop-block world (block row column)
   (let ((grid %grid)
@@ -381,7 +388,7 @@ most user command messages. (See also the method `forward'.)"
     (dolist (sprite sprites)
       (on-update sprite))
     ;; do collisions
-    (colliding-sprites self)
+    (collide-sprites self)
     (when %collisions
       (clear-sprite-grid self)
       (send-collision-events self))))
@@ -393,7 +400,7 @@ most user command messages. (See also the method `forward'.)"
 	do (destructuring-bind (a . b) c
 	     (collide a b))))
 
-(define-method colliding-sprites world (&optional sprites)
+(define-method collide-sprites world (&optional sprites)
   "Perform collision detection between sprites, and between sprites and the grid."
   ;; first empty the collisions vector (used to detect redundant collisions)
   (declare (optimize (speed 3)))
@@ -722,7 +729,8 @@ PLAYER as the player."
   (setf *universe* self)
   (when world 
     (setf %world world)
-    (setf *world* world))
+    (setf *world* world)
+    (setf *buffer* world))
   (when player (setf %player player))
   (when %player (add-player world %player)
 	(add-sprite world %player))

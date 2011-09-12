@@ -2460,6 +2460,8 @@ of the music."
   (delete-all-resources)
   (sdl-mixer:halt-music)
   (sdl-mixer:close-audio t)
+  (setf *buffer* nil)
+  (setf *world* nil)
   (sdl:quit-sdl))
 
 (defmacro with-session (&rest body)

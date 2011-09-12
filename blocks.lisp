@@ -431,8 +431,8 @@ non-nil to indicate that the block was accepted, nil otherwise."
       (assert (not (contains parent self)))
       (setf parent nil))))
 
-(define-method drop block (other-block)
-  (add-block *buffer* other-block %x %y))
+(define-method drop block (other-block &optional (dx 0) (dy 0))
+  (add-block *buffer* other-block (+ %x dx) (+ %y dy)))
 
 ;;; Defining input events for blocks
 
@@ -787,12 +787,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method move-to-grid block 
     ((row integer :default 0) (column integer :default 0))
   "Move the block to a new (ROW COLUMN) location."
-  (let ((size (world-grid-size)))
-    ;; update local coordinates
-    (move-to self (* size column) (* size row))
-    ;; update world grid 
-    (funcall (if %on-grid #'move-cell #'drop-cell)
-	     *world* self row column)))
+  (funcall (if %on-grid #'move-cell #'drop-cell)
+	   *world* self row column))
 
 (define-method move-toward-grid block 
     ((direction symbol :default :north) (steps number :initform 1))
