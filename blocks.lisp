@@ -155,6 +155,7 @@ in library.lisp and listener.lisp.
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
   (z :initform 0 :documentation "Integer Z coordinate of this block's position.")
+  (direction :north)
   ;; possible grid location
   (on-grid :initform nil
 	   :documentation "When non-nil, this block is located on a world's cell-grid.")
@@ -766,19 +767,15 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
      (y number :default 0)
      (z number :default 0))
   "Move the block to a new (X Y) location."
-  (setf %x x)
-  (setf %y y)
-  (when z 
-    (setf %z z)))
+  (setf %x x %y y %z z))
 
 (define-method move-toward block 
     ((direction symbol :default :north) (steps number :initform 1))
   (with-field-values (y x) self
     (multiple-value-bind (y0 x0)
 	(step-in-direction y x direction steps)
-      (setf x x0)
-      (setf y y0))))
-
+      (move-to self x0 y0))))
+      
 ;;; Grid block movement
 
 (defun world-grid-size ()

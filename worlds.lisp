@@ -44,6 +44,7 @@
   ;;
   (player :documentation "The player cell (or sprite).")
   (background :initform nil)
+  (background-color :initform "black")
   ;; sprite cells
   (sprites :initform nil :documentation "A list of sprites.")
   (sprite-grid :initform nil :documentation "Grid for collecting sprite collision information.")
@@ -73,6 +74,8 @@ At the moment, only 0=off and 1=on are supported.")
 (defmacro define-world (name &body body)
   `(define-block (,name :super "BLOCKY:WORLD")
      ,@body))
+
+(define-method layout world ())
 
 (define-method move-window-to world (x y)
   (setf %window-x x 
@@ -357,10 +360,16 @@ most user command messages. (See also the method `forward'.)"
 
 (define-method draw world ()
   (project self) ;; set up camera
-  (with-field-values (sprites grid grid-height grid-width background) self
+  (with-field-values (sprites grid-size grid grid-height grid-width
+			      background background-color) self
     (declare (type (simple-array vector (* *)) grid))
-    (when background
-      (draw-image background 0 0))
+    (if background
+	(draw-image background 0 0)
+	(when background-color
+	  (draw-box 0 0
+		    (* grid-size grid-width) 
+		    (* grid-size grid-height)
+		    :color background-color)))
     (dotimes (i grid-height)
       (dotimes (j grid-width)
     	(let ((cells (aref grid i j)))
@@ -400,6 +409,31 @@ most user command messages. (See also the method `forward'.)"
 	do (destructuring-bind (a . b) c
 	     (collide a b))))
 
+(define-method collide-sprite world (sprite)
+  ;; figure out which grid squares we really need to scan
+  (let ((grid-size %grid-size)
+	(grid %grid)
+	(collisions '()))
+    (labels ((store (c)
+	       (pushnew (find-object c) collisions :key #'find-object)))
+      (multiple-value-bind (x y width height)
+	  (bounding-box sprite)
+	(let* ((left (1- (floor (/ x grid-size))))
+	       (right (1+ (floor (/ (+ x width) grid-size))))
+	       (top (1- (floor (/ y grid-size))))
+	       (bottom (1+ (floor (/ (+ y height) grid-size)))))
+	  ;; find out which scanned squares actually intersect the sprite
+	  (dotimes (i (max 0 (- bottom top)))
+	    (dotimes (j (max 0 (- right left)))
+	      (let ((i0 (+ i top))
+		    (j0 (+ j left)))
+		(when (array-in-bounds-p grid i0 j0)
+		  (when (colliding-with-rectangle sprite 
+						  (* i0 grid-size) 
+						  (* j0 grid-size)
+						  grid-size grid-size)
+		    
+
 (define-method collide-sprites world (&optional sprites)
   "Perform collision detection between sprites, and between sprites and the grid."
   ;; first empty the collisions vector (used to detect redundant collisions)
@@ -423,23 +457,8 @@ most user command messages. (See also the method `forward'.)"
       (dolist (sprite (or sprites %sprites))
 	;; don't bother if not marked for collision
 	(when (field-value :collision-type sprite)
-	  ;; figure out which grid squares we really need to scan
-	  (multiple-value-bind (x y width height)
-	      (bounding-box sprite)
-	    (let* ((left (1- (floor (/ x grid-size))))
-		   (right (1+ (floor (/ (+ x width) grid-size))))
-		   (top (1- (floor (/ y grid-size))))
-		   (bottom (1+ (floor (/ (+ y height) grid-size)))))
-	      ;; find out which scanned squares actually intersect the sprite
-	      (dotimes (i (max 0 (- bottom top)))
-		(dotimes (j (max 0 (- right left)))
-		  (let ((i0 (+ i top))
-			(j0 (+ j left)))
-		    (when (array-in-bounds-p grid i0 j0)
-		      (when (colliding-with-rectangle sprite 
-						      (* i0 grid-size) 
-						      (* j0 grid-size)
-						      grid-size grid-size)
+
+
 			;; save this intersection information in the sprite grid
 			(vector-push-extend sprite (aref sprite-grid i0 j0))
 			;; collide the sprite with the cells on this square
