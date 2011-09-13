@@ -24,6 +24,8 @@
 
 (defvar *quadtree* nil)
 
+(defvar *quadtree-here-p* nil)
+
 (defvar *quadtree-depth* 0)
  
 (defvar *max-quadtree-depth* 8)
@@ -52,27 +54,32 @@
     (assert (< top bottom))))
 
 (defun northeast-quadrant (bounding-box)
+  (assert (valid-bounding-box bounding-box))
   (destructuring-bind (top left right bottom) bounding-box
     (list top (float (/ (+ left right) 2))
 	  right (float (/ (+ top bottom) 2)))))
 
 (defun southeast-quadrant (bounding-box)
+  (assert (valid-bounding-box bounding-box))
   (destructuring-bind (top left right bottom) bounding-box
     (list (float (/ (+ top bottom) 2)) (float (/ (+ left right) 2))
 	  right bottom)))
 
 (defun northwest-quadrant (bounding-box)
+  (assert (valid-bounding-box bounding-box))
   (destructuring-bind (top left right bottom) bounding-box
     (list top left
 	  (float (/ (+ left right) 2)) (float (/ (+ top bottom) 2)))))
 
 (defun southwest-quadrant (bounding-box)
+  (assert (valid-bounding-box bounding-box))
   (destructuring-bind (top left right bottom) bounding-box
     (list (float (/ (+ top bottom) 2)) left
 	  (float (/ (+ left right) 2)) bottom)))
 
 (defun build-quadtree (bounding-box &optional (depth 4))
   (assert (plusp depth))
+  (assert (valid-bounding-box bounding-box))
   (decf depth)
   (if (zerop depth)
       (make-quadtree :bounding-box bounding-box)
@@ -131,11 +138,11 @@
 			 (>= right center-x))
 		(setf found t)
 		(quadtree-map (quadtree-southeast tree)
-			      bounding-box function)))
-	    ;; process the present node.
-	    ;; see also `quadtree-map-objects'
-	    (let ((*quadtree-here-p* (not found)))
-	      (funcall function tree)))))))
+			      bounding-box function))
+	      ;; process the present node.
+	      ;; see also `quadtree-map-objects'
+	      (let ((*quadtree-here-p* (not found)))
+		(funcall function tree))))))))
 	
 (defun quadtree-insert (tree object)
   (quadtree-map tree (multiple-value-list (bounding-box object))
@@ -180,7 +187,7 @@
 		      (<= t0 bottom) (<= top b0))))))
     (quadtree-map-objects 
      tree
-     (multiple-value-list (bounding-box object))
+     bounding-box
      #'(lambda (object)
 	 (when (colliding object)
 	   (funcall function object))))))
