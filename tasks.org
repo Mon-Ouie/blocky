@@ -63,7 +63,7 @@
 ** TODO [#C] debug halo handle
 ** TODO [#C] "evaluate" and "evaluate and show" buttons
 
-* TODO  tigtesters: cpw, tacoxtreme 
+* TODO  tigtesters: cpw, tacoxtreme, increpare
 
 * BUGS
 ** TODO [#B] Fix bad circle artifacts on rounded corner patches on OSX

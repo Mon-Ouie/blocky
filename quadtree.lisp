@@ -174,8 +174,10 @@
   (labels ((colliding (object)
 	     (multiple-value-bind (t0 l0 r0 b0) 
 		 (bounding-box object)
-	       (and (<= l0 right) (<= left r0)
-		    (<= t0 bottom) (<= top b0)))))
+	       (destructuring-bind (top left right bottom)
+		   bounding-box
+		 (and (<= l0 right) (<= left r0)
+		      (<= t0 bottom) (<= top b0))))))
     (quadtree-map-objects 
      tree
      (multiple-value-list (bounding-box object))
