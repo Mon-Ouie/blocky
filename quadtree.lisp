@@ -125,54 +125,55 @@
 	   (top (thing) (field-value :y thing))
 	   (bottom (thing) (+ (field-value :y thing)
 			      (field-value :height thing))))
-    (if (= 1 depth)
+    ;; let's find the bounding box.
+    (destructuring-bind (top left right bottom)
+	;; use supplied bounding box?
+	(or bounding-box 
+	    ;; no. find bounding box instead
+	    (list (apply #'min (mapcar #'left objects))
+		  (apply #'max (mapcar #'right objects))
+		  (apply #'min (mapcar #'top objects))
+		  (apply #'max (mapcar #'bottom objects))))
+      ;; find center of this node's space
+      (let ((center-x (* 0.5 (+ left right)))
+	    (center-y (* 0.5 (+ top bottom))))
 	;; if we've reached the maximum depth, 
-	;; just collect everything at this node.
-	(make-quadtree :objects objects)
-	;; we may need to subdivide. 
-	;; let's find the bounding box.
-	(destructuring-bind (top left right bottom)
-	    ;; use supplied bounding box?
-	    (or bounding-box 
-		;; no. find bounding box instead
-		(list (apply #'min (mapcar #'left objects))
-		      (apply #'max (mapcar #'right objects))
-		      (apply #'min (mapcar #'top objects))
-		      (apply #'max (mapcar #'bottom objects))))
-	  ;; ensure next level of recursion
-	  (decf depth)
-	  ;; find center of this node's space
-	  (let ((center-x (* 0.5 (+ left right)))
-		(center-y (* 0.5 (+ top bottom))))
-	    ;; build functions for sorting objects into quadrants
-	    (labels ((in-northwest (object)
-		       (and (< (right object) center-x)
-			    (< (bottom object) center-y)))
-		     (in-northeast (object)
-		       (and (> (left object) center-x)
-			    (< (bottom object) center-y)))
-		     (in-southwest (object)
-		       (and (< (right object) center-x)
-			    (> (top object) center-y)))
-		     (in-southeast (object)
-		       (and (> (left object) center-x)
-			    (> (top object) center-y)))
-		     ;; if object bounding box is not entirely
-		     ;; contained in one of the quadrants, leave it at
-		     ;; this tree level
-		     (in-here (object)
-		       (and (not (in-northwest object))
-			    (not (in-northeast object))
-			    (not (in-southwest object))
-			    (not (in-southeast object)))))
-	      ;; assign all objects to new subtrees by filtering
-	      (make-quadtree 
-	       :center-x center-x
-	       :center-y center-y
-	       :objects (remove-if-not #'in-here objects)
-	       :southwest (build-quadtree (remove-if-not #'in-southwest objects) :depth depth)
-	       :southeast (build-quadtree (remove-if-not #'in-southeast objects) :depth depth)
-	       :northwest (build-quadtree (remove-if-not #'in-northwest objects) :depth depth)
-	       :northeast (build-quadtree (remove-if-not #'in-northeast objects) :depth depth))))))))
+	(if (= 1 depth)
+	    ;; just collect everything at this node.
+	    (make-quadtree :objects objects :center-x center-x :center-y center-y)
+	    ;; we may need to subdivide. 
+	    (progn
+	      ;; ensure next level of recursion
+	      (decf depth)
+	      ;; build functions for sorting objects into quadrants
+	      (labels ((in-northwest (object)
+			 (and (< (right object) center-x)
+			      (< (bottom object) center-y)))
+		       (in-northeast (object)
+			 (and (> (left object) center-x)
+			      (< (bottom object) center-y)))
+		       (in-southwest (object)
+			 (and (< (right object) center-x)
+			      (> (top object) center-y)))
+		       (in-southeast (object)
+			 (and (> (left object) center-x)
+			      (> (top object) center-y)))
+		       ;; if object bounding box is not entirely
+		       ;; contained in one of the quadrants, leave it at
+		       ;; this tree level
+		       (in-here (object)
+			 (and (not (in-northwest object))
+			      (not (in-northeast object))
+			      (not (in-southwest object))
+			      (not (in-southeast object)))))
+		;; assign all objects to new subtrees by filtering
+		(make-quadtree 
+		 :center-x center-x
+		 :center-y center-y
+		 :objects (remove-if-not #'in-here objects)
+		 :southwest (build-quadtree (remove-if-not #'in-southwest objects) :depth depth)
+		 :southeast (build-quadtree (remove-if-not #'in-southeast objects) :depth depth)
+		 :northwest (build-quadtree (remove-if-not #'in-northwest objects) :depth depth)
+		 :northeast (build-quadtree (remove-if-not #'in-northeast objects) :depth depth)))))))))
 
 ;;; quadtree.lisp ends here
