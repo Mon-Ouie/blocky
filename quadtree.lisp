@@ -50,8 +50,7 @@
 
 (defun valid-bounding-box (box)
   (destructuring-bind (top left right bottom) box
-    (assert (< left right))
-    (assert (< top bottom))))
+    (and (< left right) (< top bottom))))
 
 (defun northeast-quadrant (bounding-box)
   (assert (valid-bounding-box bounding-box))
@@ -171,8 +170,6 @@
      #'(lambda (x)
 	 (push x result)))
     (nreverse result)))
-
-;(defun draw-quadtree (tree)
 
 (defun quadtree-count (tree)
   (length (quadtree-find-objects tree)))
