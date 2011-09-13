@@ -24,8 +24,6 @@
 
 (defvar *quadtree* nil)
 
-(defvar *quadtree-depth* 0)
-
 (defstruct quadtree 
   objects bounding-box
   southwest northeast northwest southeast)
@@ -52,61 +50,75 @@
 	  (if (null objects)
 	      null-box
 	      (objects-bounding-box objects))))))
- 
-(defun quadtree-map (tree bounding-box function &optional object)
-  (unless (null tree)
-    (destructuring-bind (top left right bottom)
-	  ;; use supplied bounding box?
-	(or bounding-box (find-bounding-box tree))
-			    ;; no. compute the bounding box instead
-	;; compute the center point of this node
-	(let ((center-x (* 0.5 (+ left right)))
-	      (center-y (* 0.5 (+ top bottom)))
-	      (found nil))
-	  ;; see if box is contained entirely within any one of the
-	  ;; quadrants. 
-	  ;;
-	  ;; northwest
-	  (when (and (<= bottom center-y)
-		     (<= right center-x))
-	    (setf found t)
-	    (when (null (quadtree-northwest tree))
-	      (setf (quadtree-northwest tree)
-		    (make-quadtree)))
-	    (quadtree-map (quadtree-northwest tree)
-			  top left right bottom function object))
-	  ;; northeast
-	  (when (and (<= bottom center-y)
-		     (>= left center-x))
-	    (setf found t)
-	    (when (null (quadtree-northeast tree))
-	      (setf (quadtree-northeast tree)
-		    (make-quadtree)))
-	    (quadtree-map (quadtree-northeast tree)
-			  top left right bottom function object))
-	  ;; southwest
-	  (when (and (>= top center-y)
-		     (<= right center-x))
-	    (setf found t)
-	    (when (null (quadtree-southwest tree))
-	      (setf (quadtree-southwest tree)
-		    (make-quadtree)))
-	    (quadtree-map (quadtree-southwest tree)
-			  top left right bottom function object))
-	  ;; southeast
-	  (when (and (>= bottom center-y)
-		     (>= right center-x))
-	    (setf found t)
-	    (when (null (quadtree-southeast tree))
-	      (setf (quadtree-southeast tree)
-		    (make-quadtree)))
-	    (quadtree-map (quadtree-southeast tree)
-			  top left right bottom function object))
-	  ;; process the present node.
-	  ;; see also `quadtree-map-objects'
-	  (let ((*quadtree-bottom-p* (not found)))
-	    (funcall function tree)))))
 
+(defvar *quadtree-depth* 0)
+ 
+(defvar *max-quadtree-depth* 8)
+
+(defun valid-bounding-box (box)
+  (destructuring-bind (top left right bottom) box
+    (assert (< left right))
+    (assert (< top bottom))))
+
+(defun quadtree-map (tree bounding-box function)
+  ;; valid box?
+  (assert (or (null bounding-box)
+	      (valid-bounding-box bounding-box)))
+  (if (null tree)
+      ;; empty tree. create a node and process it
+      (let ((new-tree (make-quadtree :bounding-box bounding-box)))
+	(prog1 new-tree
+	  (assert bounding-box)
+	  (funcall function new-tree)))
+      ;; search subtrees
+      (prog1 tree
+	(let ((*quadtree-depth* (1+ *quadtree-depth*)))
+	  (destructuring-bind (top left right bottom)
+	      ;; use supplied bounding box?
+	      (or bounding-box
+		  ;; no. use the whole region bounding box instead, so
+		  ;; we'll end up doing the subtrees
+		  (quadtree-bounding-box tree))
+	    ;; compute the center point of this node
+	    (let ((center-x (* 0.5 (+ left right)))
+		  (center-y (* 0.5 (+ top bottom)))
+		  (found nil))
+	      ;; see if box is contained entirely within any one of the
+	      ;; quadrants. 
+	      ;;
+	      ;; northwest
+	      (when (and (<= bottom center-y)
+			 (<= right center-x))
+		(setf found t)
+		(setf (quadtree-northwest tree)
+		      (quadtree-map (quadtree-northwest tree) 
+				    bounding-box function)))
+	      ;; northeast
+	      (when (and (<= bottom center-y)
+			 (>= left center-x))
+		(setf found t)
+		(setf (quadtree-northeast tree)
+		      (quadtree-map (quadtree-northeast tree) 
+				    bounding-box function)))
+	      ;; southwest
+	      (when (and (>= top center-y)
+			 (<= right center-x))
+		(setf found t)
+		(setf (quadtree-southwest tree)
+		      (quadtree-map (quadtree-southwest tree)
+				    bounding-box function)))
+	      ;; southeast
+	      (when (and (>= bottom center-y)
+			 (>= right center-x))
+		(setf found t)
+		(setf (quadtree-southeast tree)
+		      (quadtree-map (quadtree-southeast tree)
+				    bounding-box function)))
+	      ;; process the present node.
+	      ;; see also `quadtree-map-objects'
+	      (let ((*quadtree-bottom-p* (not found)))
+		(funcall function tree))))))))
+	
 (defun quadtree-insert (tree object)
   (quadtree-map tree (multiple-value-list (bounding-box object))
 		#'(lambda (node)
