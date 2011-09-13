@@ -499,8 +499,9 @@ rectangles, or NIL if they would be smaller than one pixel."
 	     (setf (aref grid (second M) (first M)) V))))
     grid))
 
-;;; Cellular automata
+;;; Quadtrees for spatial indexing
 
+;(defstruct quadtree 
 
 
 ;;; math.lisp ends here

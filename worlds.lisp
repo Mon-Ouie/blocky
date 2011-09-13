@@ -454,10 +454,10 @@ most user command messages. (See also the method `forward'.)"
 	(when (field-value :collision-type sprite)
 	  (labels ((save-collision-maybe (thing)
 		     ;; collide only once per object
-		     (when (and (not (find (find-object thing) collisions 
-					   :key #'find-object :test 'eq))
+		     (when (and (not (find (find-object thing)
+					   collisions :test 'eq))
 				(colliding-with sprite thing))
-		       (push thing collisions))))
+		       (push (find-object thing) collisions))))
 	    (map-grid-under-sprite 
 	     self sprite
 	     #'(lambda (i j)

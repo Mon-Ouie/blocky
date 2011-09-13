@@ -163,8 +163,8 @@ in library.lisp and listener.lisp.
   ;; possible grid location
   (on-grid :initform nil
 	   :documentation "When non-nil, this block is located on a world's cell-grid.")
-  (row :documentation "When non-nil, the current row location of the block.")
-  (column :documentation "When non-nil, the current column of the block.")
+  (row :initform 0 :documentation "When non-nil, the current row location of the block.")
+  (column :initform 0 :documentation "When non-nil, the current column of the block.")
   ;; scaling/blending
   (scale-x :initform 1)
   (scale-y :initform 1)

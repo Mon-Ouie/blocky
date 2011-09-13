@@ -1,3 +1,5 @@
+** TODO Fix update-image-dimensions
+
 * SUPER XONG
 
 ** TODO create moving player w arrows and skeletal room, spacebar to shoot
