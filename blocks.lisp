@@ -776,16 +776,17 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     ((x number :default 0) (y number :default 0))
   "Move the block to a new (X Y) location."
   (save-location self)
-  (setf %x x)
-  (setf %y y))
+  (when *quadtree* (quadtree-delete *quadtree* self))
+  (setf %x x %y y)
+  (when *quadtree* (quadtree-insert *quadtree* self)))
 
 (define-method move-to-xyz block
     ((x number :default 0) 
      (y number :default 0)
      (z number :default 0))
   "Move the block to a new (X Y) location."
-  (save-location self)
-  (setf %x x %y y %z z))
+  (move-to self x y)
+  (setf %z z))
 
 (define-method move-toward block 
     ((direction symbol :default :north) (steps number :initform 1))

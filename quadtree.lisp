@@ -22,6 +22,8 @@
 
 (in-package :blocky)
 
+(defvar *quadtree* nil)
+
 (defvar *quadtree-bottom-p* nil)
 
 (defstruct quadtree 
@@ -29,37 +31,38 @@
   southwest northeast northwest southeast)
 
 (defun quadtree-map (tree top left right bottom function)
-  (let ((center-x (quadtree-center-x tree))
-	(center-y (quadtree-center-y tree))
-	(found nil))
-    ;; process northwest
-    (when (and (<= top center-y)
-	       (<= left center-x))
-      (setf found t)
-      (quadtree-map (quadtree-northwest tree)
-		    top left right bottom function))
-    ;; northeast
-    (when (and (<= top center-y)
-	       (>= right center-x))
-      (setf found t)
-      (quadtree-map (quadtree-northeast tree)
-		    top left right bottom function))
-    ;; southwest
-    (when (and (>= bottom center-y)
-	       (<= left center-x))
-      (setf found t)
-      (quadtree-map (quadtree-southwest tree)
-		    top left right bottom function))
-    ;; southeast
-    (when (and (>= bottom center-y)
-	       (>= right center-x))
-      (setf found t)
-      (quadtree-map (quadtree-southeast tree)
-		    top left right bottom function))
-    ;; process the present node.
-    ;; see also `quadtree-map-objects'
-    (let ((*quadtree-bottom-p* (not found)))
-      (funcall function tree))))
+  (unless (null tree)
+    (let ((center-x (quadtree-center-x tree))
+	  (center-y (quadtree-center-y tree))
+	  (found nil))
+      ;; process northwest
+      (when (and (<= top center-y)
+		 (<= left center-x))
+	(setf found t)
+	(quadtree-map (quadtree-northwest tree)
+		      top left right bottom function))
+      ;; northeast
+      (when (and (<= top center-y)
+		 (>= right center-x))
+	(setf found t)
+	(quadtree-map (quadtree-northeast tree)
+		      top left right bottom function))
+      ;; southwest
+      (when (and (>= bottom center-y)
+		 (<= left center-x))
+	(setf found t)
+	(quadtree-map (quadtree-southwest tree)
+		      top left right bottom function))
+      ;; southeast
+      (when (and (>= bottom center-y)
+		 (>= right center-x))
+	(setf found t)
+	(quadtree-map (quadtree-southeast tree)
+		      top left right bottom function))
+      ;; process the present node.
+      ;; see also `quadtree-map-objects'
+      (let ((*quadtree-bottom-p* (not found)))
+	(funcall function tree)))))
 
 (defun quadtree-insert (tree object)
   (multiple-value-bind (top left right bottom) (bounding-box object)
@@ -78,11 +81,6 @@
 			  (setf (quadtree-objects node)
 				(delete object (quadtree-objects node) :test 'eq))))))))
 
-(defun quadtree-move-to (tree object x y)
-  (quadtree-delete tree object)
-  (move-to object x y)
-  (quadtree-insert tree object))
-
 (defun quadtree-map-objects (tree top left right bottom function)
   (quadtree-map tree top left right bottom
 		#'(lambda (node)
@@ -94,6 +92,15 @@
 			  #'(lambda (x)
 			      (push x result)))
     (nreverse result)))
+
+(defun quadtree-count (tree)
+  (if (null tree)
+      0
+      (+ (length (quadtree-objects tree))
+	 (quadtree-count (quadtree-northwest tree))
+	 (quadtree-count (quadtree-northeast tree))
+	 (quadtree-count (quadtree-southwest tree))
+	 (quadtree-count (quadtree-southeast tree)))))
 	  
 (defun quadtree-map-collisions (tree top left right bottom function)
   (labels ((colliding (object)
@@ -167,13 +174,22 @@
 			      (not (in-southwest object))
 			      (not (in-southeast object)))))
 		;; assign all objects to new subtrees by filtering
-		(make-quadtree 
-		 :center-x center-x
-		 :center-y center-y
-		 :objects (remove-if-not #'in-here objects)
-		 :southwest (build-quadtree (remove-if-not #'in-southwest objects) :depth depth)
-		 :southeast (build-quadtree (remove-if-not #'in-southeast objects) :depth depth)
-		 :northwest (build-quadtree (remove-if-not #'in-northwest objects) :depth depth)
-		 :northeast (build-quadtree (remove-if-not #'in-northeast objects) :depth depth)))))))))
+		(let ((box (list top left bottom right))) 
+		  (make-quadtree 
+		   :center-x center-x
+		   :center-y center-y
+		   :objects (remove-if-not #'in-here objects)
+		   :southwest (build-quadtree 
+			       (remove-if-not #'in-southwest objects) 
+			       :depth depth :bounding-box box)
+		   :southeast (build-quadtree 
+			       (remove-if-not #'in-southeast objects)
+			       :depth depth :bounding-box box)
+		   :northwest (build-quadtree 
+			       (remove-if-not #'in-northwest objects) 
+			       :depth depth :bounding-box box)
+		   :northeast (build-quadtree 
+			       (remove-if-not #'in-northeast objects) 
+			       :depth depth :bounding-box box))))))))))
 
 ;;; quadtree.lisp ends here

@@ -1,4 +1,4 @@
-;;; worlds.lisp --- places where gameplay happens
+;; worlds.lisp --- places where gameplay happens
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
@@ -49,7 +49,7 @@
   (sprites :initform nil :documentation "A list of sprites.")
   (sprite-grid :initform nil :documentation "Grid for collecting sprite collision information.")
 
-  (collisions :initform (make-array 256 :element-type 'list :fill-pointer 0) :documentation "Vector of collisions.")
+  (quadtree :initform nil)
   ;; lighting 
   (automapped :initform nil :documentation "Show all previously lit squares.")
   (light-grid 
@@ -98,13 +98,18 @@ At the moment, only 0=off and 1=on are supported.")
   (setf %grid-height (or grid-height (truncate (/ *screen-height* %grid-size))))
   (setf %grid-width (or grid-width (truncate (/ *screen-width* %grid-size))))
   (setf %variables (make-hash-table :test 'equal))
+  (setf %quadtree (build-quadtree nil :bounding-box 
+				  (list 0 0
+					(* %grid-size %grid-width)
+					(* %grid-size %grid-height))))
   (create-default-grid self))
   
 (define-method on-event world (event)
-  (with-fields (player) self
+  (with-fields (player quadtree) self
     (when player 
       (prog1 t
-	(on-event player event)))))
+	(let ((*quadtree* quadtree))
+	  (on-event player event))))))
 
 (define-method make world (&rest parameters)
   (apply #'initialize self parameters))
@@ -262,7 +267,6 @@ keyword symbol."
 (define-method drop-cell world (cell row column)
   (let ((size %grid-size))
     (when (array-in-bounds-p %grid row column)
-      (vector-push-extend cell (aref %grid row column))
       (move-to cell (* size column) (* size row))
       (resize cell size size)
       (setf (field-value :on-grid cell) t))))
@@ -392,8 +396,9 @@ most user command messages. (See also the method `forward'.)"
 (define-method on-update world (&rest args)
   ;; (declare (optimize (speed 3)))
   ;; (declare (ignore args))
-  (with-field-values (grid sprites collisions grid-height grid-width player) self
-    (declare (type (simple-array vector (* *)) grid))
+  (with-field-values (grid sprites quadtree grid-height grid-width player) self
+;    (quadtree-count quadtree)
+;    (declare (type (simple-array vector (* *)) grid))
     ;; update the grid
     (dotimes (i grid-height)
       (dotimes (j grid-width)
@@ -401,13 +406,14 @@ most user command messages. (See also the method `forward'.)"
     	  (dotimes (z (fill-pointer cells))
     	    (on-update (aref cells z))))))
     ;; run the sprites
-    (dolist (sprite sprites)
-      (on-update sprite))
-    ;; map out possible collisions
-    (update-sprite-grid self)
-    (collide-sprites self)))
-
-;;; Collision detection
+    (let ((*quadtree* quadtree))
+      (dolist (sprite sprites)
+	(on-update sprite))
+      ;; do collisions
+      (dolist (sprite sprites)
+	(quadtree-collide quadtree sprite)))))
+    
+;;; Collision detection (OBSOLETE VERSION)
 
 (define-method map-grid-under-sprite world (sprite function)
   ;; figure out which grid squares we really need to scan
