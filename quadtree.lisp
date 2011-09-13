@@ -1,4 +1,4 @@
-;;; quadtree.lisp --- for spatial indexing
+;;; quadtree.lisp --- for spatial indexing and stuff
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -29,8 +29,9 @@
 (defun quadtree-map (tree top left right bottom function)
   (let ((center-x (quadtree-center-x tree))
 	(center-y (quadtree-center-y tree)))
-    ;; process the objects in this zone
-    (mapc function (quadtree-objects tree))
+    ;; process the tree.
+    ;; see also `quadtree-map-objects'
+    (funcall function tree)
     ;; process northwest
     (when (and (<= top center-y)
 	       (<= left center-x))
@@ -52,30 +53,40 @@
       (quadtree-map (quadtree-southeast tree)
 		    top left right bottom function))))
 
-(defun quadtree-list (tree top left right bottom)
+(defun quadtree-map-objects (tree top left right bottom function)
+  (quadtree-map tree top left right bottom
+		#'(lambda (node)
+		    (mapc function (quadtree-objects node)))))
+
+(defun quadtree-find-objects (tree top left right bottom)
   (let (result)
-    (quadtree-map tree top left right bottom
-		  #'(lambda (x)
-		      (push x result)))
+    (quadtree-map-objects tree top left right bottom
+			  #'(lambda (x)
+			      (push x result)))
     (nreverse result)))
 	  
-(defun quadtree-find-collisions (tree top left right bottom)
+(defun quadtree-map-collisions (tree top left right bottom function)
   (labels ((colliding (object)
 	     (multiple-value-bind (t0 l0 r0 b0) 
 		 (bounding-box object)
 	       (and (<= l0 right) (<= left r0)
 		    (<= t0 bottom) (<= top b0)))))
-    (let ((center-x (quadtree-center-x tree))
-	  (center-y (quadtree-center-y tree)))
-      (remove-if-not 
-       #'colliding
-       (append 
-	;; check here
-	(quadtree-objects tree)
+    (quadtree-map-objects
+     tree top left right bottom
+     #'(lambda (object)
+	 (when (colliding object)
+	   (funcall function object))))))
 
-(defun quadtree-delete (tree object)
-
-(defun quadtree-insert (tree object)
+(defun quadtree-collide (tree object)
+  (assert (blockyp object))
+  (multiple-value-bind (top left right bottom)
+      (bounding-box object)
+    (quadtree-map-collisions 
+     tree top left right bottom
+     #'(lambda (thing)
+	 (when (colliding-with object thing)
+	   (on-collide object thing))))))
+    
 (defun build-quadtree (objects &key (depth 8) bounding-box)
   (labels ((left (thing) (field-value :x thing))
 	   (right (thing) (+ (field-value :x thing)

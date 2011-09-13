@@ -1463,10 +1463,15 @@ and MOUSE-Y identify a point inside the block (or input block.)"
     (point-in-rectangle-p x y width height o-top o-left o-width o-height)))
 
 (define-method colliding-with block (thing)
-  (multiple-value-bind (x y width height) 
-      (bounding-box thing)
-    (colliding-with-rectangle self y x width height)))
-
+  (multiple-value-bind (top left right bottom)
+      (bounding-box self)
+    (multiple-value-bind (top0 left0 right0 bottom0)
+	(bounding-box thing)
+      (and (<= bottom0 top)
+	   (<= bottom top0)
+	   (<= right left0)
+	   (<= right0 left)))))
+    
 ;;; Analog gamepad control
 
 (define-method aim block (direction)
