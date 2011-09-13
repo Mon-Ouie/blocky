@@ -93,6 +93,8 @@
 			      (push x result)))
     (nreverse result)))
 
+;(defun draw-quadtree (tree)
+
 (defun quadtree-count (tree)
   (if (null tree)
       0
