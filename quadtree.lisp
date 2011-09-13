@@ -22,36 +22,66 @@
 
 (in-package :blocky)
 
+(defvar *quadtree-bottom-p* nil)
+
 (defstruct quadtree 
   objects center-x center-y
   southwest northeast northwest southeast)
 
 (defun quadtree-map (tree top left right bottom function)
   (let ((center-x (quadtree-center-x tree))
-	(center-y (quadtree-center-y tree)))
-    ;; process the tree.
-    ;; see also `quadtree-map-objects'
-    (funcall function tree)
+	(center-y (quadtree-center-y tree))
+	(found nil))
     ;; process northwest
     (when (and (<= top center-y)
 	       (<= left center-x))
+      (setf found t)
       (quadtree-map (quadtree-northwest tree)
 		    top left right bottom function))
     ;; northeast
     (when (and (<= top center-y)
 	       (>= right center-x))
+      (setf found t)
       (quadtree-map (quadtree-northeast tree)
 		    top left right bottom function))
     ;; southwest
     (when (and (>= bottom center-y)
 	       (<= left center-x))
+      (setf found t)
       (quadtree-map (quadtree-southwest tree)
 		    top left right bottom function))
     ;; southeast
     (when (and (>= bottom center-y)
 	       (>= right center-x))
+      (setf found t)
       (quadtree-map (quadtree-southeast tree)
-		    top left right bottom function))))
+		    top left right bottom function))
+    ;; process the present node.
+    ;; see also `quadtree-map-objects'
+    (let ((*quadtree-bottom-p* (not found)))
+      (funcall function tree))))
+
+(defun quadtree-insert (tree object)
+  (multiple-value-bind (top left right bottom) (bounding-box object)
+    (quadtree-map tree top left right bottom 
+		  #'(lambda (node)
+		      (when *quadtree-bottom-p*
+			(push (find-object object)
+			      (quadtree-objects node)))))))
+
+(defun quadtree-delete (tree object0)
+  (let ((object (find-object object0)))
+    (multiple-value-bind (top left right bottom) (bounding-box object)
+      (quadtree-map tree top left right bottom 
+		    #'(lambda (node)
+			(when *quadtree-bottom-p*
+			  (setf (quadtree-objects node)
+				(delete object (quadtree-objects node) :test 'eq))))))))
+
+(defun quadtree-move-to (tree object x y)
+  (quadtree-delete tree object)
+  (move-to object x y)
+  (quadtree-insert tree object))
 
 (defun quadtree-map-objects (tree top left right bottom function)
   (quadtree-map tree top left right bottom
@@ -84,7 +114,8 @@
     (quadtree-map-collisions 
      tree top left right bottom
      #'(lambda (thing)
-	 (when (colliding-with object thing)
+	 (when (and (colliding-with object thing)
+		    (not (object-eq object thing)))
 	   (on-collide object thing))))))
     
 (defun build-quadtree (objects &key (depth 8) bounding-box)
@@ -115,24 +146,25 @@
 		(center-y (* 0.5 (+ top bottom))))
 	    ;; build functions for sorting objects into quadrants
 	    (labels ((in-northwest (object)
-		       (and (<= (left object) center-x)
-			    (<= (top object) center-y)))
+		       (and (< (right object) center-x)
+			    (< (bottom object) center-y)))
 		     (in-northeast (object)
-		       (and (>= (right object) center-x)
-			    (<= (top object) center-y)))
+		       (and (> (left object) center-x)
+			    (< (bottom object) center-y)))
 		     (in-southwest (object)
-		       (and (<= (left object) center-x)
-			    (>= (bottom object) center-y)))
+		       (and (< (right object) center-x)
+			    (> (top object) center-y)))
 		     (in-southeast (object)
-		       (and (>= (right object) center-x)
-			    (>= (bottom object) center-y)))
-		     ;; if object bounding box contains the center
-		     ;; of this node, it is in all four quadrants.
-		     (in-here (object) 
-		       (and (in-northwest object)
-			    (in-northeast object)
-			    (in-southwest object)
-			    (in-southeast object))))
+		       (and (> (left object) center-x)
+			    (> (top object) center-y)))
+		     ;; if object bounding box is not entirely
+		     ;; contained in one of the quadrants, leave it at
+		     ;; this tree level
+		     (in-here (object)
+		       (and (not (in-northwest object))
+			    (not (in-northeast object))
+			    (not (in-southwest object))
+			    (not (in-southeast object)))))
 	      ;; assign all objects to new subtrees by filtering
 	      (make-quadtree 
 	       :center-x center-x
@@ -142,5 +174,5 @@
 	       :southeast (build-quadtree (remove-if-not #'in-southeast objects) :depth depth)
 	       :northwest (build-quadtree (remove-if-not #'in-northwest objects) :depth depth)
 	       :northeast (build-quadtree (remove-if-not #'in-northeast objects) :depth depth))))))))
-      
+
 ;;; quadtree.lisp ends here
