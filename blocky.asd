@@ -33,6 +33,7 @@
 	       (:file "console" :depends-on ("prototypes"))
 	       (:file "blocks" :depends-on ("console"))
 	       (:file "library" :depends-on ("blocks"))
+	       (:file "quadtree" :depends-on ("blocks"))
 	       (:file "halo" :depends-on ("library"))
 	       (:file "text" :depends-on ("library"))
 	       (:file "windows" :depends-on ("library"))

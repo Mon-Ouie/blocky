@@ -1437,7 +1437,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 (define-method bounding-box block ()
   (when (null %height)
     (update-image-dimensions self))
-  (values %x %y %width %height))
+  (values %x %y (+ %x %width) (+ %y %height)))
 
 (define-method on-collide block (object)
   (declare (ignore object))
@@ -1449,13 +1449,13 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 	(o-bottom (+ o-top o-height)))
     (not (or 
 	  ;; is the top below the other bottom?
-	  (< o-bottom y)
+	  (<= o-bottom y)
 	  ;; is bottom above other top?
-	  (< (+ y height) o-top)
+	  (<= (+ y height) o-top)
 	  ;; is right to left of other left?
-	  (< (+ x width) o-left)
+	  (<= (+ x width) o-left)
 	  ;; is left to right of other right?
-	  (< o-right x)))))
+	  (<= o-right x)))))
 
 (define-method colliding-with-rectangle block (o-top o-left o-width o-height)
   ;; you must pass arguments in Y X order since this is TOP then LEFT
