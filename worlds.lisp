@@ -360,6 +360,7 @@ most user command messages. (See also the method `forward'.)"
 		    (* grid-size grid-width) 
 		    (* grid-size grid-height)
 		    :color background-color)))
+    ;; draw the grid first
     (dotimes (i grid-height)
       (dotimes (j grid-width)
     	(let ((cells (aref grid i j)))
@@ -369,7 +370,6 @@ most user command messages. (See also the method `forward'.)"
     (dolist (sprite sprites)
       (draw sprite))
     (quadtree-show %quadtree)))
-
 
 ;;; Simulation update
 
@@ -388,12 +388,12 @@ most user command messages. (See also the method `forward'.)"
       ;; run the sprites
       (dolist (sprite sprites)
 	(on-update sprite))
-      ;; do collisions
+      ;; do collisions for both sprites and grid
       (dolist (sprite sprites)
 	(grid-collide self sprite)
 	(quadtree-collide quadtree sprite)))))
     
-;;; Collision detection 
+;;; Collision detection for the grid objects
 
 (define-method map-grid world (sprite function)
   ;; figure out which grid squares we really need to scan
@@ -473,7 +473,7 @@ sources and ray casting."
 		   (if flipped
 		       (setf line (nreverse line))
 		       ;; Furthermore, when a non-flipped line is drawn, the endpoint 
-		       ;; isn't actually visited, so we append it to the list. (Maybe this 
+		       ;; isn't actually visited, so we append it to the line. (Maybe this 
 		       ;; is a bug in my implementation?)
 		       ;;
 		       ;; Make sure endpoint of ray is traced.

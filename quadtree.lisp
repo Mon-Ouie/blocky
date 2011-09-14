@@ -28,8 +28,6 @@
 
 (defvar *quadtree-depth* 0)
  
-(defvar *max-quadtree-depth* 8)
-
 (defstruct quadtree 
   objects bounding-box
   southwest northeast northwest southeast)
@@ -47,6 +45,14 @@
 	  (apply #'max (mapcar #'right objects))
 	  (apply #'min (mapcar #'top objects))
 	  (apply #'max (mapcar #'bottom objects)))))
+
+(defun colliding-bounding-boxes (box1 box2)
+  (destructuring-bind (top left right bottom) box1
+    (destructuring-bind (top0 left0 right0 bottom0) box2
+      (and (<= bottom0 top)
+	   (<= bottom top0)
+	   (<= right left0)
+	   (<= right0 left)))))
 
 (defun valid-bounding-box (box)
   (and (listp box)
@@ -121,7 +127,6 @@
 		      (quadtree-map (quadtree-northwest tree) 
 				    bounding-box function)))
 		(when result (return-from mapping result))))
-	    
 	    ;; northeast
 	    (when (and (<= bottom center-y)
 		       (>= left center-x))
@@ -156,19 +161,17 @@
   (list 10 20 30 40 50 60 70 80 90))
 
 (defun quadtree-show (tree &optional bounding-box0)
-  (let ((bounding-box (or bounding-box0 
-			  (quadtree-bounding-box tree))))
-    (quadtree-map 
-     tree bounding-box
-     #'(lambda (node)
-	 (destructuring-bind (top left right bottom) 
-	     (quadtree-bounding-box node)
-	   (prog1 nil
-	     (draw-box left top (- right left) (- bottom top)
-		       :color (percent-gray (nth *quadtree-depth*
-						 *quadtree-depth-colors*))
-		       :alpha 0.3)))))))
-	
+  (when tree
+    (destructuring-bind (top left right bottom) 
+	(quadtree-bounding-box tree)
+      (draw-box left top (- right left) (- bottom top)
+		:color (random-choose '("red" "blue" "orange" "green" "yellow" "white"))
+		:alpha 0.3)
+      (quadtree-show (quadtree-northeast tree))
+      (quadtree-show (quadtree-northwest tree))
+      (quadtree-show (quadtree-southeast tree))
+      (quadtree-show (quadtree-southwest tree)))))
+
 (defun quadtree-insert (tree object)
   (quadtree-map tree (multiple-value-list (bounding-box object))
 		#'(lambda (node)
