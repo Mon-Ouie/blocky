@@ -90,8 +90,8 @@
 
 (defun quadtree-map (tree bounding-box function)
   ;; valid box?
-  (assert (or (null bounding-box)
-	      (valid-bounding-box bounding-box)))
+  (unless (null bounding-box)
+    (assert (valid-bounding-box bounding-box)))
   (if (null tree)
       ;; empty tree. create a node and process it
       (let ((new-tree (make-quadtree :bounding-box bounding-box)))

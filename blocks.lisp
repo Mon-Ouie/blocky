@@ -1438,7 +1438,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 (define-method bounding-box block ()
   (when (null %height)
     (update-image-dimensions self))
-  (values %x %y (+ %x %width) (+ %y %height)))
+  (values %y %x (+ %x %width) (+ %y %height)))
 
 (define-method on-collide block (object)
   (declare (ignore object))

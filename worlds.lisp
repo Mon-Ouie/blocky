@@ -98,8 +98,7 @@ At the moment, only 0=off and 1=on are supported.")
   (setf %grid-height (or grid-height (truncate (/ *screen-height* %grid-size))))
   (setf %grid-width (or grid-width (truncate (/ *screen-width* %grid-size))))
   (setf %variables (make-hash-table :test 'equal))
-  (setf %quadtree (build-quadtree nil :bounding-box 
-				  (list 0 0
+  (setf %quadtree (build-quadtree (list 0 0
 					(* %grid-size %grid-width)
 					(* %grid-size %grid-height))))
   (create-default-grid self))
@@ -120,7 +119,9 @@ At the moment, only 0=off and 1=on are supported.")
 ;;; The sprite layer. 
 
 (define-method add-sprite world (sprite)
-  (push sprite %sprites))
+  (pushnew (find-uuid sprite)
+	   %sprites
+	   :test 'equal))
 
 (define-method remove-sprite world (sprite)
   (setf %sprites (delete sprite %sprites)))
@@ -267,6 +268,7 @@ keyword symbol."
 (define-method drop-cell world (cell row column)
   (let ((size %grid-size))
     (when (array-in-bounds-p %grid row column)
+      (add-sprite self cell)
       (move-to cell (* size column) (* size row))
       (resize cell size size)
       (setf (field-value :on-grid cell) t))))
