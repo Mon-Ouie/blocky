@@ -60,10 +60,10 @@ At the moment, only 0=off and 1=on are supported.")
   (edge-condition :initform :exit
 		  :documentation "Either :block the player, :exit the world, or :wrap around.")
   ;; Obsolete fields
-  (exited :initform nil
-	  :documentation "Non-nil when the player has exited. See also `forward'.")
-  (player-exit-row :initform 0)
-  (player-exit-column :initform 0)
+  ;; (exited :initform nil
+  ;; 	  :documentation "Non-nil when the player has exited. See also `forward'.")
+  ;; (player-exit-row :initform 0)
+  ;; (player-exit-column :initform 0)
   ;; serialization
   (serialized-grid :documentation "When non-nil, a serialized sexp version of the grid.")
   (excluded-fields :initform
@@ -259,20 +259,18 @@ keyword symbol."
   (move-to block x y))
 
 (define-method drop-cell world (block row column)
-  (let ((grid %grid)
-	(grid-size %grid-size))
-    ;; (declare (optimize (speed 3)) 
-    ;; 	     (type (simple-array vector (* *)) grid)
-    ;; 	     (fixnum grid-size row column))
-    (when (array-in-bounds-p grid row column)
-      (setf (field-value :on-grid block) t)
-      (vector-push-extend block (aref grid row column))
-      (setf (field-value :row block) row)
-      (setf (field-value :column block) column))
-    (let ((*quadtree* %quadtree))
-      (move-to block 
-	       (* column grid-size)
-	       (* row grid-size)))))
+  (let ((*world* self))
+    (let ((grid %grid))
+      ;; (declare (optimize (speed 3)) 
+      ;; 	     (type (simple-array vector (* *)) grid)
+      ;; 	     (fixnum grid-size row column))
+      (when (array-in-bounds-p grid row column)
+	(setf (field-value :on-grid block) t)
+	(vector-push-extend block (aref grid row column))
+	(setf (field-value :y block) (* %grid-size row))
+	(setf (field-value :x block) (* %grid-size column))
+	(setf (field-value :row block) row)
+	(setf (field-value :column block) row)))))
 
 ;;; Handling serialization
  
@@ -369,61 +367,70 @@ most user command messages. (See also the method `forward'.)"
     	    (draw (aref cells z))))))
     ;; draw the sprites
     (dolist (sprite sprites)
-      (draw sprite))))
+      (draw sprite))
+    (quadtree-show %quadtree)))
+
 
 ;;; Simulation update
 
 (define-method on-update world (&rest args)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (declare (ignore args))
   (with-field-values (grid sprites quadtree grid-height grid-width player) self
-    (declare (type (simple-array vector (* *)) grid))
     (let ((*quadtree* quadtree))
       ;; update the grid
       (dotimes (i grid-height)
 	(dotimes (j grid-width)
+	  (declare (type (simple-array vector (* *)) grid))
 	  (let ((cells (aref grid i j)))
 	    (dotimes (z (fill-pointer cells))
 	      (on-update (aref cells z))))))
       ;; run the sprites
       (dolist (sprite sprites)
 	(on-update sprite))
-      ;; ;; collide the squares
-      ;; (dotimes (i grid-height)
-      ;; 	(dotimes (j grid-width)
-      ;; 	  (let ((cells (aref grid i j)))
-      ;; 	    (dotimes (z (fill-pointer cells))
-      ;; 	      (let ((cell (aref cells z)))
-      ;; 		(when cell
-      ;; 		  (quadtree-collide quadtree cell)))))))
       ;; do collisions
       (dolist (sprite sprites)
+	(grid-collide self sprite)
 	(quadtree-collide quadtree sprite)))))
     
-;;; Collision detection (OBSOLETE VERSION)
+;;; Collision detection 
 
-(define-method map-grid-under-sprite world (sprite function)
+(define-method map-grid world (sprite function)
   ;; figure out which grid squares we really need to scan
   (let ((grid-size %grid-size)
 	(grid %grid))
-      (multiple-value-bind (x y width height)
-	  (bounding-box sprite)
-	(let* ((left (1- (floor (/ x grid-size))))
-	       (right (1+ (floor (/ (+ x width) grid-size))))
-	       (top (1- (floor (/ y grid-size))))
-	       (bottom (1+ (floor (/ (+ y height) grid-size)))))
-	  ;; find out which scanned squares actually intersect the sprite
-	  (dotimes (i (max 0 (- bottom top)))
-	    (dotimes (j (max 0 (- right left)))
-	      (let ((i0 (+ i top))
-		    (j0 (+ j left)))
-		(when (array-in-bounds-p grid i0 j0)
-		  (when (colliding-with-rectangle sprite 
-						  (* i0 grid-size) 
-						  (* j0 grid-size)
-						  grid-size grid-size)
-		    (funcall function i0 j0))))))))))
-		    
+    (declare (type (simple-array vector (* *)) grid) 
+	     (optimize (speed 3)))
+    (multiple-value-bind (x y width height)
+	(bounding-box sprite)
+      (let* ((left (1- (floor (/ x grid-size))))
+	     (right (1+ (floor (/ (+ x width) grid-size))))
+	     (top (1- (floor (/ y grid-size))))
+	     (bottom (1+ (floor (/ (+ y height) grid-size)))))
+	;; find out which scanned squares actually intersect the sprite
+	(dotimes (i (max 0 (- bottom top)))
+	  (dotimes (j (max 0 (- right left)))
+	    (let ((i0 (+ i top))
+		  (j0 (+ j left)))
+	      (when (array-in-bounds-p grid i0 j0)
+		(when (colliding-with-rectangle sprite 
+						(* i0 grid-size) 
+						(* j0 grid-size)
+						grid-size grid-size)
+		  (funcall function i0 j0))))))))))
+
+(define-method map-grid-objects world (sprite function)
+  (let ((grid %grid))
+    (map-grid self sprite
+	      #'(lambda (i j)
+		  (map nil function (aref grid i j))))))
+
+(define-method grid-collide world (sprite)
+  (map-grid-objects
+   self sprite 
+   #'(lambda (object)
+       (on-collide sprite object))))
+
 ;;; Lighting and line-of-sight
 
 (defvar *lighting-hack-function* nil)

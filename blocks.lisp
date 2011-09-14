@@ -809,8 +809,10 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method move-to-grid block 
     ((row integer :default 0) (column integer :default 0))
   "Move the block to a new (ROW COLUMN) location."
-  (funcall (if %on-grid #'move-cell #'move-sprite-to-grid)
-	   *world* self row column))
+  (save-location self)
+  (setf %x (* column (world-grid-size)))
+  (setf %y (* row (world-grid-size)))
+  (move-cell *world* self row column))
 
 (define-method move-toward-grid block 
     ((direction symbol :default :north) (steps number :initform 1))

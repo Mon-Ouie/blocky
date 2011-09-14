@@ -2286,11 +2286,11 @@ of the music."
 		(/ integer 255.0))
 	    (resource-data color))))
 
-(defun set-vertex-color (color)
+(defun set-vertex-color (color &optional (alpha 1))
   (assert (stringp color))
   (destructuring-bind (red green blue) 
       (gl-color-values color)
-    (gl:color red green blue 1)))
+    (gl:color red green blue alpha)))
 
 (defun draw-string (string x y &key (color "black")
 				    (font *default-font*)
@@ -2312,8 +2312,8 @@ of the music."
     (gl:vertex x1 (+ y1))))
 
 (defun draw-box (x y width height		
- 		 &key (color "black"))
-  (set-vertex-color color)
+ 		 &key (color "black") (alpha 1))
+  (set-vertex-color color alpha)
   (gl:disable :texture-2d)
   (gl:with-primitive :quads
     (let ((x1 (+ x width))

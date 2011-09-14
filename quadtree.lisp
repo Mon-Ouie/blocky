@@ -127,7 +127,7 @@
 		       (>= left center-x))
 	      (setf found t)
 	      (let ((result
-		      (quadtree-map (quadtree-northwest tree) 
+		      (quadtree-map (quadtree-northeast tree) 
 				    bounding-box function)))
 		(when result (return-from mapping result))))
 
@@ -136,7 +136,7 @@
 		       (<= right center-x))
 	      (setf found t)
 	      (let ((result
-		      (quadtree-map (quadtree-northwest tree) 
+		      (quadtree-map (quadtree-southwest tree) 
 				    bounding-box function)))
 		(when result (return-from mapping result))))
 	    ;; southeast
@@ -144,13 +144,25 @@
 		       (>= right center-x))
 	      (setf found t)
 	      (let ((result
-		      (quadtree-map (quadtree-northwest tree) 
+		      (quadtree-map (quadtree-southeast tree) 
 				    bounding-box function)))
 		(when result (return-from mapping result)))))
 	  ;; process the present node.
 	  ;; see also `quadtree-map-objects'
 	  (let ((*quadtree-here-p* (not found)))
 	    (funcall function tree)))))))
+
+(defun quadtree-show (tree &optional bounding-box0)
+  (let ((bounding-box (or bounding-box0 
+			  (quadtree-bounding-box tree))))
+    (quadtree-map 
+     tree bounding-box
+     #'(lambda (node)
+	 (destructuring-bind (top left right bottom) 
+	     (quadtree-bounding-box node)
+	   (prog1 nil
+	     (draw-box left top (- right left) (- bottom top)
+		       :color "magenta" :alpha 0.3)))))))
 	
 (defun quadtree-insert (tree object)
   (quadtree-map tree (multiple-value-list (bounding-box object))
