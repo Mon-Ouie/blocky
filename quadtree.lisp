@@ -140,8 +140,8 @@
 				    bounding-box function)))
 		(when result (return-from mapping result))))
 	    ;; southeast
-	    (when (and (>= bottom center-y)
-		       (>= right center-x))
+	    (when (and (>= top center-y)
+		       (>= left center-x))
 	      (setf found t)
 	      (let ((result
 		      (quadtree-map (quadtree-southeast tree) 
@@ -150,7 +150,10 @@
 	  ;; process the present node.
 	  ;; see also `quadtree-map-objects'
 	  (let ((*quadtree-here-p* (not found)))
-	    (funcall function tree)))))))
+	    (return-from mapping (funcall function tree))))))))
+
+(defparameter *quadtree-depth-colors* 
+  (list 10 20 30 40 50 60 70 80 90))
 
 (defun quadtree-show (tree &optional bounding-box0)
   (let ((bounding-box (or bounding-box0 
@@ -162,7 +165,9 @@
 	     (quadtree-bounding-box node)
 	   (prog1 nil
 	     (draw-box left top (- right left) (- bottom top)
-		       :color "magenta" :alpha 0.3)))))))
+		       :color (percent-gray (nth *quadtree-depth*
+						 *quadtree-depth-colors*))
+		       :alpha 0.3)))))))
 	
 (defun quadtree-insert (tree object)
   (quadtree-map tree (multiple-value-list (bounding-box object))
@@ -217,24 +222,5 @@
 	 (when (and (colliding-with object thing)
 		    (not (object-eq object thing)))
 	   (on-collide object thing)))))
-
-;; ;; assign all objects to new subtrees by filtering
-;; (let ((box (list top left bottom right))) 
-;;   (make-quadtree 
-;;    :center-x center-x
-;;    :center-y center-y
-;;    :objects (remove-if-not #'in-here objects)
-;;    :southwest (build-quadtree 
-;; 	       (remove-if-not #'in-southwest objects) 
-;; 	       :depth depth :bounding-box box)
-;;    :southeast (build-quadtree 
-;; 	       (remove-if-not #'in-southeast objects)
-;; 	       :depth depth :bounding-box box)
-;;    :northwest (build-quadtree 
-;; 	       (remove-if-not #'in-northwest objects) 
-;; 	       :depth depth :bounding-box box)
-;;    :northeast (build-quadtree 
-;; 	       (remove-if-not #'in-northeast objects) 
-;; 	       :depth depth :bounding-box box))))))))))
 
 ;;; quadtree.lisp ends here

@@ -20,7 +20,7 @@
 
 (in-package :blocky)
 
-(defparameter *default-grid-size* 64)
+(defparameter *default-grid-size* 16)
 (defparameter *default-world-axis-size* 10)
 
 (define-block world
@@ -33,8 +33,8 @@
   ;; the invisible graph paper underlying our world of sprites
   (grid :documentation "A two-dimensional array of adjustable vectors of cells.")
   (grid-size :initform *default-grid-size* :documentation "Size of a grid tile in GL units; either height or width (they must be equal.)")
-  (grid-width :initform nil :documentation "The width of the world map, measured in tiles.")
-  (grid-height :initform nil :documentation "The height of the world map, measured in tiles.")
+  (grid-width :initform 16 :documentation "The width of the world map, measured in tiles.")
+  (grid-height :initform 16 :documentation "The height of the world map, measured in tiles.")
   ;; 
   ;; a world-local dictionary
   (variables :initform nil :documentation "Hash table mapping values to values, local to the current world.")
@@ -93,8 +93,8 @@ At the moment, only 0=off and 1=on are supported.")
 
 (define-method initialize world (&key grid-size grid-height grid-width name)
   ;(setf %grid-size (or grid-size *default-grid-size*))
-  (setf %grid-height (or grid-height (truncate (/ *screen-height* %grid-size))))
-  (setf %grid-width (or grid-width (truncate (/ *screen-width* %grid-size))))
+  ;; (setf %grid-height (or grid-height (truncate (/ *screen-height* %grid-size))))
+  ;; (setf %grid-width (or grid-width (truncate (/ *screen-width* %grid-size))))
   (setf %variables (make-hash-table :test 'equal))
   (setf %quadtree (build-quadtree (list 0 0
 					(* %grid-size %grid-width)
