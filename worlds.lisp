@@ -374,11 +374,10 @@ most user command messages. (See also the method `forward'.)"
 ;;; Simulation update
 
 (define-method on-update world (&rest args)
-  ;; (declare (optimize (speed 3)))
-  ;; (declare (ignore args))
+  (declare (optimize (speed 3)))
+  (declare (ignore args))
   (with-field-values (grid sprites quadtree grid-height grid-width player) self
-;    (quadtree-count quadtree)
-;    (declare (type (simple-array vector (* *)) grid))
+    (declare (type (simple-array vector (* *)) grid))
     (let ((*quadtree* quadtree))
       ;; update the grid
       (dotimes (i grid-height)

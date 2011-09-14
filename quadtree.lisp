@@ -91,54 +91,66 @@
 		     :southeast (build-quadtree (southeast-quadrant bounding-box) depth))))
 
 (defun quadtree-map (tree bounding-box function)
-  (assert (quadtree-p tree))
-  (assert (functionp function))
-  (unless (null bounding-box)
-    (assert (valid-bounding-box bounding-box)))
-  (let ((*quadtree-depth* (1+ *quadtree-depth*)))
-    (destructuring-bind (top left right bottom)
-	;; use supplied bounding box?
-	(or bounding-box
-	    ;; no. use the whole region bounding box instead, so
-	    ;; we'll end up doing the subtrees
-	    (quadtree-bounding-box tree))
-      ;; compute the center point of this node
-      (let ((center-x (* 0.5 (+ left right)))
-	    (center-y (* 0.5 (+ top bottom)))
-	    (found nil))
-	;; are there any child nodes?
-	;; any quadrant will suffice to test.
-	(when (quadtree-northwest tree)
-	  ;; see if box is contained entirely within any one of
-	  ;; the quadrants.
-	  ;; northwest
-	  (when (and (<= bottom center-y)
-		     (<= right center-x))
-	    (setf found t)
-	    (quadtree-map (quadtree-northwest tree) 
-			  bounding-box function))
-	  ;; northeast
-	  (when (and (<= bottom center-y)
-		     (>= left center-x))
-	    (setf found t)
-	    (quadtree-map (quadtree-northeast tree) 
-			  bounding-box function))
-	  ;; southwest
-	  (when (and (>= top center-y)
-		     (<= right center-x))
-	    (setf found t)
-	    (quadtree-map (quadtree-southwest tree)
-			  bounding-box function))
-	  ;; southeast
-	  (when (and (>= bottom center-y)
-		     (>= right center-x))
-	    (setf found t)
-	    (quadtree-map (quadtree-southeast tree)
-			  bounding-box function)))
-	;; process the present node.
-	;; see also `quadtree-map-objects'
-	(let ((*quadtree-here-p* (not found)))
-	  (funcall function tree))))))
+  (block mapping
+    ;; if function returns non-nil, early return
+    (assert (quadtree-p tree))
+    (assert (functionp function))
+    (unless (null bounding-box)
+      (assert (valid-bounding-box bounding-box)))
+    (let ((*quadtree-depth* (1+ *quadtree-depth*)))
+      (destructuring-bind (top left right bottom)
+	  ;; use supplied bounding box?
+	  (or bounding-box
+	      ;; no. use the whole region bounding box instead, so
+	      ;; we'll end up doing the subtrees
+	      (quadtree-bounding-box tree))
+	;; compute the center point of this node
+	(let ((center-x (* 0.5 (+ left right)))
+	      (center-y (* 0.5 (+ top bottom)))
+	      (found nil))
+	  ;; are there any child nodes?
+	  ;; any quadrant will suffice to test.
+	  (when (quadtree-northwest tree)
+	    ;; see if box is contained entirely within any one of
+	    ;; the quadrants.
+	    ;; northwest
+	    (when (and (<= bottom center-y)
+		       (<= right center-x))
+	      (setf found t)
+	      (let ((result
+		      (quadtree-map (quadtree-northwest tree) 
+				    bounding-box function)))
+		(when result (return-from mapping result))))
+	    
+	    ;; northeast
+	    (when (and (<= bottom center-y)
+		       (>= left center-x))
+	      (setf found t)
+	      (let ((result
+		      (quadtree-map (quadtree-northwest tree) 
+				    bounding-box function)))
+		(when result (return-from mapping result))))
+
+	    ;; southwest
+	    (when (and (>= top center-y)
+		       (<= right center-x))
+	      (setf found t)
+	      (let ((result
+		      (quadtree-map (quadtree-northwest tree) 
+				    bounding-box function)))
+		(when result (return-from mapping result))))
+	    ;; southeast
+	    (when (and (>= bottom center-y)
+		       (>= right center-x))
+	      (setf found t)
+	      (let ((result
+		      (quadtree-map (quadtree-northwest tree) 
+				    bounding-box function)))
+		(when result (return-from mapping result)))))
+	  ;; process the present node.
+	  ;; see also `quadtree-map-objects'
+	  (let ((*quadtree-here-p* (not found)))
+	    (funcall function tree)))))))
 	
 (defun quadtree-insert (tree object)
   (quadtree-map tree (multiple-value-list (bounding-box object))
@@ -152,8 +164,9 @@
     (quadtree-map tree (multiple-value-list (bounding-box object))
 		  #'(lambda (node)
 		      (when *quadtree-here-p*
-			(setf (quadtree-objects node)
-			      (delete object (quadtree-objects node) :test 'eq)))))))
+			(prog1 t
+			  (setf (quadtree-objects node)
+				(delete object (quadtree-objects node) :test 'eq))))))))
 
 (defun quadtree-map-objects (tree bounding-box function)
   (quadtree-map tree bounding-box
@@ -172,18 +185,15 @@
   (length (quadtree-find-objects tree)))
  
 (defun quadtree-map-collisions (tree bounding-box function)
-  (labels ((colliding (object)
-	     (multiple-value-bind (t0 l0 r0 b0) 
-		 (bounding-box object)
-	       (destructuring-bind (top left right bottom)
-		   bounding-box
-		 (and (<= l0 right) (<= left r0)
-		      (<= t0 bottom) (<= top b0))))))
+  (destructuring-bind (top left right bottom) bounding-box
     (quadtree-map-objects 
      tree
      bounding-box
      #'(lambda (object)
-	 (when (colliding object)
+	 (when (multiple-value-bind (t0 l0 r0 b0) 
+		   (bounding-box object)
+		 (and (<= l0 right) (<= left r0)
+		      (<= t0 bottom) (<= top b0)))
 	   (funcall function object))))))
 
 (defun quadtree-collide (tree object)
@@ -196,35 +206,23 @@
 		    (not (object-eq object thing)))
 	   (on-collide object thing)))))
 
-    
-		;; ;; assign all objects to new subtrees by filtering
-		;; (let ((box (list top left bottom right))) 
-		;;   (make-quadtree 
-		;;    :center-x center-x
-		;;    :center-y center-y
-		;;    :objects (remove-if-not #'in-here objects)
-		;;    :southwest (build-quadtree 
-		;; 	       (remove-if-not #'in-southwest objects) 
-		;; 	       :depth depth :bounding-box box)
-		;;    :southeast (build-quadtree 
-		;; 	       (remove-if-not #'in-southeast objects)
-		;; 	       :depth depth :bounding-box box)
-		;;    :northwest (build-quadtree 
-		;; 	       (remove-if-not #'in-northwest objects) 
-		;; 	       :depth depth :bounding-box box)
-		;;    :northeast (build-quadtree 
-		;; 	       (remove-if-not #'in-northeast objects) 
-		;; 	       :depth depth :bounding-box box))))))))))
-
-
-
-;; (defun find-bounding-box (tree)
-;;   (let ((null-box (list 0 0 1000 1000)))
-;;     (if (null tree)
-;; 	null-box
-;; 	(let ((objects (quadtree-objects tree)))
-;; 	  (if (null objects)
-;; 	      null-box
-;; 	      (objects-bounding-box objects))))))
+;; ;; assign all objects to new subtrees by filtering
+;; (let ((box (list top left bottom right))) 
+;;   (make-quadtree 
+;;    :center-x center-x
+;;    :center-y center-y
+;;    :objects (remove-if-not #'in-here objects)
+;;    :southwest (build-quadtree 
+;; 	       (remove-if-not #'in-southwest objects) 
+;; 	       :depth depth :bounding-box box)
+;;    :southeast (build-quadtree 
+;; 	       (remove-if-not #'in-southeast objects)
+;; 	       :depth depth :bounding-box box)
+;;    :northwest (build-quadtree 
+;; 	       (remove-if-not #'in-northwest objects) 
+;; 	       :depth depth :bounding-box box)
+;;    :northeast (build-quadtree 
+;; 	       (remove-if-not #'in-northeast objects) 
+;; 	       :depth depth :bounding-box box))))))))))
 
 ;;; quadtree.lisp ends here
