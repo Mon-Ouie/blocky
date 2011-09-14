@@ -47,8 +47,6 @@
   (background-color :initform "black")
   ;; sprite cells
   (sprites :initform nil :documentation "A list of sprites.")
-  (sprite-grid :initform nil :documentation "Grid for collecting sprite collision information.")
-
   (quadtree :initform nil)
   ;; lighting 
   (automapped :initform nil :documentation "Show all previously lit squares.")
@@ -69,7 +67,7 @@ At the moment, only 0=off and 1=on are supported.")
   ;; serialization
   (serialized-grid :documentation "When non-nil, a serialized sexp version of the grid.")
   (excluded-fields :initform
-  '(:stack :sprite-grid :collisions :grid :player)))
+  '(:grid :player)))
 
 (defmacro define-world (name &body body)
   `(define-block (,name :super "BLOCKY:WORLD")
@@ -124,13 +122,7 @@ At the moment, only 0=off and 1=on are supported.")
 	   :test 'equal))
 
 (define-method remove-sprite world (sprite)
-  (setf %sprites (delete sprite %sprites)))
-
-(define-method clear-sprite-grid world ()
-  (let ((grid %sprite-grid))
-    (dotimes (i %grid-height)
-      (dotimes (j %grid-width)
-	(setf (fill-pointer (aref grid i j)) 0)))))
+  (setf %sprites (delete (find-uuid sprite) %sprites :test 'equal )))
 
 ;;; World-local variables
 
@@ -173,21 +165,15 @@ At the moment, only 0=off and 1=on are supported.")
   (let ((dims (list grid-height grid-width)))
     (let ((grid (make-array dims 
 		 :element-type 'vector :adjustable nil))
-	  (light-grid (make-array dims :element-type 'integer))
-	  (sprite-grid (make-array dims :element-type 'vector)))
+	  (light-grid (make-array dims :element-type 'integer)))
       (dotimes (i grid-height)
 	(dotimes (j grid-width)
 	  ;; now put a vector in each square to represent the z-axis
 	  (setf (aref grid i j)
 		(make-array *default-grid-depth* 
 			    :adjustable t
-			    :fill-pointer 0))
-	  (setf (aref sprite-grid i j)
-		(make-array *default-grid-depth*
-			    :adjustable t
 			    :fill-pointer 0))))
       (setf %grid grid
-	    %sprite-grid sprite-grid
 	    %grid-height grid-height
 	    %grid-width grid-width))))
 
@@ -241,22 +227,14 @@ keyword symbol."
 
 (define-method delete-cell world (cell row column)
   "Delete CELL from the grid at ROW, COLUMN."
-  (ecase (field-value :type cell)
-    (:cell
-       (let* ((grid %grid)
-	      (square (aref grid row column))
-	      (start (position cell square :test #'eq)))
-	 ;; (declare (type (simple-array vector (* *)) grid) 
-	 ;; 	  (optimize (speed 3)))
-	 (when start
-	   (replace square square :start1 start :start2 (1+ start))
-	   (decf (fill-pointer square)))))
-    (:sprite
-       (remove-sprite self cell))))
-    
-(define-method move-sprite-to-grid world (sprite row column)
-  (let ((size %grid-size))
-    (move-to sprite (* size column) (* size row))))
+  (let* ((grid %grid)
+	 (square (aref grid row column))
+	 (start (position cell square :test #'eq)))
+    ;; (declare (type (simple-array vector (* *)) grid) 
+    ;; 	  (optimize (speed 3)))
+    (when start
+      (replace square square :start1 start :start2 (1+ start))
+      (decf (fill-pointer square)))))
 
 (define-method move-cell world (cell row column)
   "Move CELL to ROW, COLUMN."
@@ -265,36 +243,36 @@ keyword symbol."
     (delete-cell self cell old-row old-column)
     (drop-cell self cell row column)))
 
-(define-method drop-cell world (cell row column)
-  (let ((size %grid-size))
-    (when (array-in-bounds-p %grid row column)
-      (add-sprite self cell)
-      (move-to cell (* size column) (* size row))
-      (resize cell size size)
-      (setf (field-value :on-grid cell) t))))
+(defparameter *grid-layer-z* -100)
+
+;; (define-method drop-cell world (cell row column)
+  ;; (let ((size %grid-size))
+  ;;   (when (array-in-bounds-p %grid row column)
+  ;;     ;; (add-sprite self cell)
+  ;;     (let ((*quadtree* %quadtree))
+  ;; 	(move-to cell (* size column) (* size row))
+  ;; 	(resize cell size size)
+  ;; 	(setf (field-value :on-grid cell) t)))))
 
 (define-method drop-block world (block x y)
   (add-sprite self block)
   (move-to block x y))
 
-(define-method drop-block-on-grid world (block row column)
+(define-method drop-cell world (block row column)
   (let ((grid %grid)
 	(grid-size %grid-size))
     ;; (declare (optimize (speed 3)) 
     ;; 	     (type (simple-array vector (* *)) grid)
     ;; 	     (fixnum grid-size row column))
     (when (array-in-bounds-p grid row column)
-      (if (field-value :on-grid block)
-	  (prog1 t 
-	    (vector-push-extend block (aref grid row column))
-	    (setf (field-value :row block) row)
-	    (setf (field-value :column block) column))
-	;; handle sprites
-	  (prog1 t
-	    (add-sprite self block)
-	    (move-to block 
-		     (* column grid-size)
-		     (* row grid-size)))))))
+      (setf (field-value :on-grid block) t)
+      (vector-push-extend block (aref grid row column))
+      (setf (field-value :row block) row)
+      (setf (field-value :column block) column))
+    (let ((*quadtree* %quadtree))
+      (move-to block 
+	       (* column grid-size)
+	       (* row grid-size)))))
 
 ;;; Handling serialization
  
@@ -401,16 +379,24 @@ most user command messages. (See also the method `forward'.)"
   (with-field-values (grid sprites quadtree grid-height grid-width player) self
 ;    (quadtree-count quadtree)
 ;    (declare (type (simple-array vector (* *)) grid))
-    ;; update the grid
-    (dotimes (i grid-height)
-      (dotimes (j grid-width)
-    	(let ((cells (aref grid i j)))
-    	  (dotimes (z (fill-pointer cells))
-    	    (on-update (aref cells z))))))
-    ;; run the sprites
     (let ((*quadtree* quadtree))
+      ;; update the grid
+      (dotimes (i grid-height)
+	(dotimes (j grid-width)
+	  (let ((cells (aref grid i j)))
+	    (dotimes (z (fill-pointer cells))
+	      (on-update (aref cells z))))))
+      ;; run the sprites
       (dolist (sprite sprites)
 	(on-update sprite))
+      ;; ;; collide the squares
+      ;; (dotimes (i grid-height)
+      ;; 	(dotimes (j grid-width)
+      ;; 	  (let ((cells (aref grid i j)))
+      ;; 	    (dotimes (z (fill-pointer cells))
+      ;; 	      (let ((cell (aref cells z)))
+      ;; 		(when cell
+      ;; 		  (quadtree-collide quadtree cell)))))))
       ;; do collisions
       (dolist (sprite sprites)
 	(quadtree-collide quadtree sprite)))))
@@ -439,48 +425,6 @@ most user command messages. (See also the method `forward'.)"
 						  grid-size grid-size)
 		    (funcall function i0 j0))))))))))
 		    
-(define-method update-sprite-grid world (&optional sprites)
-  ;; (declare (optimize (speed 3)))
-  (clear-sprite-grid self)
-  (with-field-values (grid-width grid-height grid-size sprite-grid grid) self
-    (dolist (sprite (or sprites %sprites))
-      (when (field-value :collision-type sprite)
-	(map-grid-under-sprite 
-	 self sprite
-	 #'(lambda (i j)
-	     ;; record which sprites intersect which squares
-	     (let ((other-sprites (aref sprite-grid i j)))
-	       (when (not (find sprite other-sprites))
-		 (vector-push-extend sprite other-sprites)))))))))
-
-(define-method collide-sprites world ()
-  ;; now find collisions with other sprites
-  ;; we can re-use the sprite-grid data from earlier.
-  (with-field-values (sprite-grid grid) self
-    (let (collisions cells)
-      (dolist (sprite %sprites)
-	(when (field-value :collision-type sprite)
-	  (labels ((save-collision-maybe (thing)
-		     ;; collide only once per object
-		     (when (and (not (find (find-object thing)
-					   collisions :test 'eq))
-				(colliding-with sprite thing))
-		       (push (find-object thing) collisions))))
-	    (map-grid-under-sprite 
-	     self sprite
-	     #'(lambda (i j)
-		 ;; collect list of cells colliding with sprite
-		 (loop for cell across (aref grid i j) do
-		   (when (not (object-eq cell sprite))
-		     (save-collision-maybe cell)))
-		 ;; collect list of sprites colliding with sprite
-		 (loop for sp across (aref sprite-grid i j) do
-		   (when (not (object-eq sprite sp))
-			      (save-collision-maybe sp)))))
-	    ;; send collision events
-	    (dolist (other collisions)
-	      (on-collide sprite other))))))))
-
 ;;; Lighting and line-of-sight
 
 (defvar *lighting-hack-function* nil)

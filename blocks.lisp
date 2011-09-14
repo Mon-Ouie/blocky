@@ -780,7 +780,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (setf %x x %y y)
   (when *quadtree* (quadtree-insert *quadtree* self)))
 
-(define-method move-to-xyz block
+(define-method move-to-* block
     ((x number :default 0) 
      (y number :default 0)
      (z number :default 0))
