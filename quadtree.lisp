@@ -24,8 +24,6 @@
 
 (defvar *quadtree* nil)
 
-(defvar *quadtree-here-p* nil)
-
 (defvar *quadtree-depth* 0)
  
 (defstruct quadtree 
@@ -100,8 +98,21 @@
 		     :southwest (build-quadtree (southwest-quadrant bounding-box) depth)
 		     :southeast (build-quadtree (southeast-quadrant bounding-box) depth))))
 
-(defun search-quadrant (node bounding-box)
-  "Search the quadtree NODE for the smallest quadrant enclosing BOUNDING-BOX, if any."
+(defun process-quadrant (node bounding-box processor)
+  (assert (quadtree-p node))
+  (assert (valid-bounding-box bounding-box))
+  (assert (functionp processor))
+  (when (bounding-box-contains (quadtree-bounding-box node) bounding-box)
+    (let ((*quadtree-depth* (1+ *quadtree-depth*)))
+     (traverse-quadrant (quadtree-northwest node) bounding-box)
+     (traverse-quadrant (quadtree-northeast node) bounding-box)
+     (traverse-quadrant (quadtree-southwest node) bounding-box)
+     (traverse-quadrant (quadtree-southeast node) bounding-box))
+    (funcall processor node)))
+
+(defun quadtree-search (node bounding-box)
+  "Return the smallest quadrant enclosing BOUNDING-BOX at or below
+NODE, if any."
   (assert (quadtree-p node))
   (assert (valid-bounding-box bounding-box))
   ;; (message "Searching quadrant ~S ~S" *quadtree-depth* (quadtree-bounding-box quadrant))
@@ -111,81 +122,49 @@
 	node
 	;; search the quadrants.
 	(let ((*quadtree-depth* (1+ *quadtree-depth*)))
-	  (or (search-quadrant (quadtree-northwest node) bounding-box)
-	      (search-quadrant (quadtree-northeast node) bounding-box)
-	      (search-quadrant (quadtree-southwest node) bounding-box)
-	      (search-quadrant (quadtree-southeast node) bounding-box))))))
-
-(defun traverse-quadrant (node bounding-box processor)
-  (assert (quadtree-p node))
-  (assert (valid-bounding-box bounding-box))
-  (assert (functionp processor))
-  (when (bounding-box-contains (quadtree-bounding-box node) bounding-box)
-    (let ((result t))
-      (let ((*quadtree-depth* (1+ *quadtree-depth*)))
-	(setf result (traverse-quadrant (quadtree-northwest node) bounding-box))
-	(setf result (traverse-quadrant (quadtree-northeast node) bounding-box))
-	(setf result (traverse-quadrant (quadtree-southwest node) bounding-box))
-	(setf result (traverse-quadrant (quadtree-southeast node) bounding-box))
-      ;; recurse. 
-
-
-(defun traverse-quadrant (quadrant bounding-box function)
-  (search-quadrant quadrant bounding-box function nil))
-
-;; (defun quadtree-find-leaf (node)
-
-
-;; (defun quadtree-map (node bounding-box function &optional early-return)
-;;   (assert (quadtree-p node))
-;;   (assert (functionp function))
-;;   (assert (valid-bounding-box bounding-box))
-;;   ;; signal whether bounding-box would be assigned to this node
-;;   ;; (that is, NOT assigned to any of its sub quadrants.)
-;;   (let ((*quadtree-here-p*     
-;; 	  ;; are there any child nodes?
-;; 	  (when (not (is-leaf node))
-;; 		  ;; see if box is contained entirely within any one of
-;; 		  ;; the quadrants.
-;;       ;; process the present node, indicating whether the search
-;;       ;; terminated here. see also `quadtree-map-objects'
-;; 	(when (not early-return)
-;; 	  (funcall function node))))))
+	  (or (quadtree-search (quadtree-northwest node) bounding-box)
+	      (quadtree-search (quadtree-northeast node) bounding-box)
+	      (quadtree-search (quadtree-southwest node) bounding-box)
+	      (quadtree-search (quadtree-southeast node) bounding-box)
+	      ;; none of them are suitable. stay here.
+	      node)))))
 
 (defun quadtree-insert (tree object)
-  (quadtree-map tree (multiple-value-list (bounding-box object))
-		#'(lambda (node)
-		    (when *quadtree-here-p*
-		      (prog1 t
-			(message "Inserting ~S at level ~S"
-				 (get-some-object-name object)
-				 *quadtree-depth*)
-			(assert (not (find (find-object object)
-					   (quadtree-objects node)
-					   :test 'eq)))
-			(push (find-object object)
-			      (quadtree-objects node))
-			(assert (find (find-object object)
-				      (quadtree-objects node)
-				      :test 'eq)))))))
+  (let ((node 
+	  (search-quadrant 
+	   tree
+	   (multiple-value-list 
+	    (bounding-box object)))))
+    (message "Inserting ~S at level ~S"
+	     (get-some-object-name object)
+	     *quadtree-depth*)
+    (assert (not (find (find-object object)
+		       (quadtree-objects node)
+		       :test 'eq)))
+    (push (find-object object)
+	  (quadtree-objects node))
+    (assert (find (find-object object)
+		  (quadtree-objects node)
+		  :test 'eq))))
 
 (defun quadtree-delete (tree object0)
   (let ((object (find-object object0)))
-    (quadtree-map tree (multiple-value-list (bounding-box object))
-		  #'(lambda (node)
-		      (when *quadtree-here-p*
-			(prog1 nil
-			  (message "Deleting ~S from level ~S"
-			  	   (get-some-object-name object)
-			  	   *quadtree-depth*)
-			  ;; (assert (find object
-			  ;; 		(quadtree-objects node)
-			  ;; 		:test 'eq))
-			  (setf (quadtree-objects node)
-				(delete object (quadtree-objects node) :test 'eq))
-			  (assert (not (find object
-					     (quadtree-objects node)
-					     :test 'eq)))))))))
+    (let ((node 
+	    (search-quadrant 
+	     tree
+	     (multiple-value-list 
+	      (bounding-box object)))))
+      (message "Deleting ~S from level ~S"
+	       (get-some-object-name object)
+	       *quadtree-depth*)
+      (assert (find object
+      		(quadtree-objects node)
+      		:test 'eq))
+      (setf (quadtree-objects node)
+	    (delete object (quadtree-objects node) :test 'eq))
+      (assert (not (find object
+			 (quadtree-objects node)
+			 :test 'eq))))))
 
 (defun quadtree-map-objects (tree bounding-box function)
   (quadtree-map tree bounding-box
