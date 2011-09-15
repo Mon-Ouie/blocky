@@ -372,7 +372,6 @@ most user command messages. (See also the method `forward'.)"
       (draw sprite))
     (quadtree-show %quadtree %player)))
 
-
 ;;; Simulation update
 
 (define-method on-update world (&rest args)

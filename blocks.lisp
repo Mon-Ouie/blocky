@@ -1391,9 +1391,10 @@ area is drawn. If DARK is non-nil, paint a darker region."
 (define-method resize block 
     ((width number :default 100)
      (height number :default 100))
+  (when *quadtree* (quadtree-delete *quadtree* self))
   (setf %height height)
   (setf %width width)
-  (move-to self %x %y)
+  (when *quadtree* (quadtree-insert *quadtree* self))
   (invalidate-layout self))
 
 (define-method layout-as-image block ()

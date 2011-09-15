@@ -84,7 +84,7 @@
     (list (float (/ (+ top bottom) 2)) left
 	  (float (/ (+ left right) 2)) bottom)))
 
-(defun build-quadtree (bounding-box &optional (depth 6))
+(defun build-quadtree (bounding-box &optional (depth 4))
   (assert (plusp depth))
   (assert (valid-bounding-box bounding-box))
   (decf depth)
@@ -97,63 +97,47 @@
 		     :southeast (build-quadtree (southeast-quadrant bounding-box) depth))))
 
 (defun quadtree-map (tree bounding-box function)
-  (block searching
-    (assert (quadtree-p tree))
-    (assert (functionp function))
-    (assert (valid-bounding-box bounding-box))
-    (let ((*quadtree-depth* (1+ *quadtree-depth*))
-	  (found nil))
-      (labels ((search-quadrant (quadrant)
-		 (when (bounding-box-contains
-			(quadtree-bounding-box quadrant)
-			bounding-box)
-		   ;; quadrant wholly contains bounding box
-		   ;; set the flag. 
-		   (setf found t)
-		   ;; recurse. 
-		   (let ((result (quadtree-map 
-				  quadrant bounding-box function)))
-		     ;; if function returns non-nil, early return
-		     (when result (return-from searching result))))))
-	;; are there any child nodes?
-	;; any quadrant will suffice to test.
-	(when (quadtree-northwest tree)
-	  ;; see if box is contained entirely within any one of
-	  ;; the quadrants.
-	  (search-quadrant (quadtree-northwest tree))
-	  (search-quadrant (quadtree-northeast tree))
-	  (search-quadrant (quadtree-southwest tree))
-	  (search-quadrant (quadtree-southeast tree)))
-	;; process the present node, indicating whether the search
-	;; terminated here. see also `quadtree-map-objects'
-	(let ((*quadtree-here-p* (not found)))
-	  (return-from searching (funcall function tree)))))))
-
-(defparameter *quadtree-depth-colors* 
-  (list 10 20 30 40 50 60 70 80 90))
-
-(defun quadtree-show (tree &optional object)
-  (when tree
-    (let ((bounding-box (quadtree-bounding-box tree)))
-      (destructuring-bind (top left right bottom) bounding-box
-	(if (null object)
-	    (draw-box (+ left 10) (+ top 10) (- right left 10) (- bottom top 10)
-		      :color "magenta"
-		      :alpha 0.1)
-	    (when (colliding-with-rectangle 
-		   object top left (- right left) (- bottom top))
-		(draw-box left top (- right left) (- bottom top)
-			  :color "cyan"
-			  :alpha 0.1)))))
-      (quadtree-show (quadtree-northeast tree) object)
-      (quadtree-show (quadtree-northwest tree) object)
-      (quadtree-show (quadtree-southeast tree) object)
-      (quadtree-show (quadtree-southwest tree) object)))
+  (let ((*quadtree-depth* (1+ *quadtree-depth*)))
+    (let ((search-result 
+	    (block searching
+	      (assert (quadtree-p tree))
+	      (assert (functionp function))
+	      (assert (valid-bounding-box bounding-box))
+	      (let ((found nil))
+		(labels ((search-quadrant (quadrant)
+			   (when (bounding-box-contains
+				  (quadtree-bounding-box quadrant)
+				  bounding-box)
+			     ;; quadrant wholly contains bounding box
+			     ;; set the flag. 
+			     (setf found t)
+			     ;; recurse. 
+			     (let ((result (quadtree-map 
+					    quadrant bounding-box function)))
+			       ;; if function returns non-nil, early return
+			       (when result (return-from searching result))))))
+		  ;; are there any child nodes?
+		  ;; any quadrant will suffice to test.
+		  (when (quadtree-northwest tree)
+		    ;; see if box is contained entirely within any one of
+		    ;; the quadrants.
+		    (search-quadrant (quadtree-northwest tree))
+		    (search-quadrant (quadtree-northeast tree))
+		    (search-quadrant (quadtree-southwest tree))
+		    (search-quadrant (quadtree-southeast tree))))
+		found))))
+      ;; process the present node, indicating whether the search
+      ;; terminated here. see also `quadtree-map-objects'
+      (let ((*quadtree-here-p* (not search-result)))
+	(funcall function tree)))))
 
 (defun quadtree-insert (tree object)
   (quadtree-map tree (multiple-value-list (bounding-box object))
 		#'(lambda (node)
 		    (when *quadtree-here-p*
+		      ;; (message "Inserted ~S at level ~S"
+		      ;; 	       (get-some-object-name object)
+		      ;; 	       *quadtree-depth*)
 		      (pushnew (find-object object)
 			       (quadtree-objects node) :test 'eq)))))
 
@@ -199,5 +183,30 @@
        (when (and (colliding-with object thing)
 		  (not (object-eq object thing)))
 	 (prog1 nil (on-collide object thing))))))
+
+(defun quadtree-show (tree &optional object)
+  (when tree
+    (let ((*quadtree-depth* (1+ *quadtree-depth*)))
+      ;; (dolist (ob (quadtree-objects tree))
+      ;; 	(multiple-value-bind (top left right bottom) 
+      ;; 	    (bounding-box ob)
+      ;; 	  (draw-string (prin1-to-string *quadtree-depth*)
+      ;; 		       left top
+      ;; 		       :color "red")))
+      (let ((bounding-box (quadtree-bounding-box tree)))
+	(destructuring-bind (top left right bottom) bounding-box
+	  (if (null object)
+	      (draw-box (+ left 10) (+ top 10) (- right left 10) (- bottom top 10)
+			:color "magenta"
+			:alpha 0.1)
+	      (when (colliding-with-rectangle 
+		     object top left (- right left) (- bottom top))
+		(draw-box left top (- right left) (- bottom top)
+			  :color "cyan"
+			  :alpha 0.1)))))
+      (quadtree-show (quadtree-northeast tree) object)
+      (quadtree-show (quadtree-northwest tree) object)
+      (quadtree-show (quadtree-southeast tree) object)
+      (quadtree-show (quadtree-southwest tree) object))))
 
 ;;; quadtree.lisp ends here
