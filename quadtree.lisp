@@ -84,7 +84,7 @@
     (list (float (/ (+ top bottom) 2)) left
 	  (float (/ (+ left right) 2)) bottom)))
 
-(defun build-quadtree (bounding-box &optional (depth 4))
+(defun build-quadtree (bounding-box &optional (depth 6))
   (assert (plusp depth))
   (assert (valid-bounding-box bounding-box))
   (decf depth)
@@ -132,19 +132,23 @@
 (defparameter *quadtree-depth-colors* 
   (list 10 20 30 40 50 60 70 80 90))
 
-(defun quadtree-show (tree &optional bounding-box0)
+(defun quadtree-show (tree &optional object)
   (when tree
     (let ((bounding-box (quadtree-bounding-box tree)))
       (destructuring-bind (top left right bottom) bounding-box
-	(when (and bounding-box0
-		   (bounding-box-contains bounding-box bounding-box0))
-	  (draw-box (+ left 10) (+ top 10) (- right left 10) (- bottom top 10)
-		    :color "magenta"
-		    :alpha 0.1)))
-      (quadtree-show (quadtree-northeast tree) bounding-box0)
-      (quadtree-show (quadtree-northwest tree) bounding-box0)
-      (quadtree-show (quadtree-southeast tree) bounding-box0)
-      (quadtree-show (quadtree-southwest tree) bounding-box0))))
+	(if (null object)
+	    (draw-box (+ left 10) (+ top 10) (- right left 10) (- bottom top 10)
+		      :color "magenta"
+		      :alpha 0.1)
+	    (when (colliding-with-rectangle 
+		   object top left (- right left) (- bottom top))
+		(draw-box left top (- right left) (- bottom top)
+			  :color "cyan"
+			  :alpha 0.1)))))
+      (quadtree-show (quadtree-northeast tree) object)
+      (quadtree-show (quadtree-northwest tree) object)
+      (quadtree-show (quadtree-southeast tree) object)
+      (quadtree-show (quadtree-southwest tree) object)))
 
 (defun quadtree-insert (tree object)
   (quadtree-map tree (multiple-value-list (bounding-box object))
@@ -198,6 +202,6 @@
    #'(lambda (thing)
        (when (and (colliding-with object thing)
 		  (not (object-eq object thing)))
-	 (on-collide object thing)))))
+	 (prog1 nil (on-collide object thing))))))
 
 ;;; quadtree.lisp ends here

@@ -369,7 +369,9 @@ most user command messages. (See also the method `forward'.)"
     	    (draw (aref cells z))))))
     ;; draw the sprites
     (dolist (sprite sprites)
-      (draw sprite))))
+      (draw sprite))
+    (quadtree-show %quadtree %player)))
+
 
 ;;; Simulation update
 
@@ -391,8 +393,7 @@ most user command messages. (See also the method `forward'.)"
       ;; do collisions for both sprites and grid
       (dolist (sprite sprites)
 ;	(grid-collide self sprite)
-	(quadtree-collide quadtree sprite))
-      (quadtree-show quadtree))))
+	(quadtree-collide quadtree sprite)))))
     
 ;;; Collision detection for the grid objects
 

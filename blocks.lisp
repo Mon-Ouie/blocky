@@ -1393,6 +1393,7 @@ area is drawn. If DARK is non-nil, paint a darker region."
      (height number :default 100))
   (setf %height height)
   (setf %width width)
+  (move-to self %x %y)
   (invalidate-layout self))
 
 (define-method layout-as-image block ()
