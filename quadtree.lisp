@@ -98,16 +98,16 @@
 		     :southwest (build-quadtree (southwest-quadrant bounding-box) depth)
 		     :southeast (build-quadtree (southeast-quadrant bounding-box) depth))))
 
-(defun process-quadrant (node bounding-box processor)
+(defun quadtree-process (node bounding-box processor)
   (assert (quadtree-p node))
   (assert (valid-bounding-box bounding-box))
   (assert (functionp processor))
   (when (bounding-box-contains (quadtree-bounding-box node) bounding-box)
     (let ((*quadtree-depth* (1+ *quadtree-depth*)))
-     (traverse-quadrant (quadtree-northwest node) bounding-box)
-     (traverse-quadrant (quadtree-northeast node) bounding-box)
-     (traverse-quadrant (quadtree-southwest node) bounding-box)
-     (traverse-quadrant (quadtree-southeast node) bounding-box))
+     (quadtree-process (quadtree-northwest node) bounding-box processor)
+     (quadtree-process (quadtree-northeast node) bounding-box processor)
+     (quadtree-process (quadtree-southwest node) bounding-box processor)
+     (quadtree-process (quadtree-southeast node) bounding-box processor))
     (funcall processor node)))
 
 (defun quadtree-search (node bounding-box)
@@ -166,29 +166,16 @@ NODE, if any."
 			 (quadtree-objects node)
 			 :test 'eq))))))
 
-(defun quadtree-map-objects (tree bounding-box function)
-  (quadtree-map tree bounding-box
-		#'(lambda (node)
-		    (mapc function (quadtree-objects node)))))
-
-(defun quadtree-find-objects (tree)
-  (let (result)
-    (quadtree-map-objects 
-     tree nil
-     #'(lambda (x)
-	 (push x result)))
-    (nreverse result)))
-
-(defun quadtree-count (tree)
-  (length (quadtree-find-objects tree)))
- 
-(defun quadtree-map-collisions (tree bounding-box function)
-  (quadtree-map-objects 
+(defun quadtree-map-collisions (tree bounding-box processor)
+  (assert (functionp processor))
+  (assert (valid-bounding-box bounding-box))
+  (quadtree-process
    tree
    bounding-box
-   #'(lambda (object)
-       (when (colliding-with-bounding-box object bounding-box)
-	   (funcall function object)))))
+   #'(lambda (node)
+       (dolist (object (quadtree-objects node))
+	 (when (colliding-with-bounding-box object bounding-box)
+	   (funcall processor object))))))
 
 (defun quadtree-collide (tree object)
   (assert (blockyp object))
@@ -224,5 +211,22 @@ NODE, if any."
       (quadtree-show (quadtree-northwest tree) object)
       (quadtree-show (quadtree-southeast tree) object)
       (quadtree-show (quadtree-southwest tree) object))))
+
+;; (defun quadtree-map-objects (tree bounding-box function)
+;;   (quadtree-map tree bounding-box
+;; 		#'(lambda (node)
+;; 		    (mapc function (quadtree-objects node)))))
+
+;; (defun quadtree-find-objects (tree)
+;;   (let (result)
+;;     (quadtree-map-objects 
+;;      tree nil
+;;      #'(lambda (x)
+;; 	 (push x result)))
+;;     (nreverse result)))
+
+;; (defun quadtree-count (tree)
+;;   (length (quadtree-find-objects tree)))
+ 
 
 ;;; quadtree.lisp ends here
