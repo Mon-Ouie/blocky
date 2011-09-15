@@ -116,8 +116,8 @@
 NODE, if any."
   (assert (quadtree-p node))
   (assert (valid-bounding-box bounding-box))
-  (message "Searching quadrant ~S ~S, object ~S" 
-	   *quadtree-depth* (quadtree-bounding-box node) bounding-box)
+  ;; (message "Searching quadrant ~S ~S, object ~S" 
+  ;; 	   *quadtree-depth* (quadtree-bounding-box node) bounding-box)
   (when (bounding-box-contains (quadtree-bounding-box node) bounding-box)
     (if (is-leaf node)
 	;; there aren't any quadrants to search.
@@ -138,9 +138,9 @@ NODE, if any."
 	   (multiple-value-list 
 	    (bounding-box object)))))
     (let ((node (or node0 tree)))
-      (message "Inserting ~S at level ~S"
-	       (get-some-object-name object)
-	       (quadtree-level node))
+      ;; (message "Inserting ~S at level ~S"
+      ;; 	       (get-some-object-name object)
+      ;; 	       (quadtree-level node))
       (assert (not (find (find-object object)
 			 (quadtree-objects node)
 			 :test 'eq)))
@@ -158,9 +158,9 @@ NODE, if any."
 	     (multiple-value-list 
 	      (bounding-box object)))))
       (let ((node (or node0 tree)))
-	(message "Deleting ~S from level ~S"
-		 (get-some-object-name object)
-	       (quadtree-level node))
+	;; (message "Deleting ~S from level ~S"
+	;; 	 (get-some-object-name object)
+	;;        (quadtree-level node))
 	;; (assert (find object
 	;; 	      (quadtree-objects node)
 	;; 	      :test 'eq))
@@ -189,7 +189,7 @@ NODE, if any."
    #'(lambda (thing)
        (when (and (colliding-with object thing)
 		  (not (object-eq object thing)))
-	 (prog1 nil (on-collide object thing))))))
+	 (on-collide object thing)))))
 
 (defun quadtree-show (tree &optional object)
   (when tree

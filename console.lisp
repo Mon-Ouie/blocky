@@ -2029,7 +2029,7 @@ found."
 ;; ;;   (assert (functionp func))
 ;; ;;   (setf *music-callback* func))
 
-(defvar *channels* 128 "Number of audio mixer channels to use.")
+(defvar *channels* 256 "Number of audio mixer channels to use.")
 
 (defun set-music-volume (number)
   "Set the mixer music volume between 0 (silent) and 255 (full volume)."
@@ -2074,7 +2074,7 @@ of the music."
   ;; try opening sound
   (when (null (sdl-mixer:open-audio :frequency *frequency*
 				    :chunksize *output-chunksize*
-				    :enable-callbacks t
+;				    :enable-callbacks t
 				    :format *sample-format*
 				    :channels *output-channels*))
     ;; if that didn't work, disable effects/music
