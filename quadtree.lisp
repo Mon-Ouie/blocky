@@ -170,6 +170,14 @@ NODE, if any."
 			   (quadtree-objects node)
 			   :test 'eq)))))))
 
+(defun quadtree-purge (tree object)
+  (quadtree-process tree (quadtree-bounding-box tree)
+		    #'(lambda (node)
+			(setf (quadtree-objects node)
+			      (delete (find-object object)
+				      (quadtree-objects node)
+				      :test 'eq)))))
+
 (defun quadtree-map-collisions (tree bounding-box processor)
   (assert (functionp processor))
   (assert (valid-bounding-box bounding-box))
