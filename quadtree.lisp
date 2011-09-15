@@ -84,7 +84,7 @@
     (list (float (/ (+ top bottom) 2)) left
 	  (float (/ (+ left right) 2)) bottom)))
 
-(defun build-quadtree (bounding-box &optional (depth 4))
+(defun build-quadtree (bounding-box &optional (depth 6))
   (assert (plusp depth))
   (assert (valid-bounding-box bounding-box))
   (decf depth)
@@ -103,7 +103,7 @@
 	(assert (functionp function))
 	(assert (valid-bounding-box bounding-box))
 	(labels ((search-quadrant (quadrant)
-;;		   (message "Searching quadrant ~S ~S" *quadtree-depth* (quadtree-bounding-box quadrant))
+;		   (message "Searching quadrant ~S ~S" *quadtree-depth* (quadtree-bounding-box quadrant))
 		   (when (bounding-box-contains
 			  (quadtree-bounding-box quadrant)
 			  bounding-box)
@@ -135,9 +135,9 @@
 		#'(lambda (node)
 		    (when *quadtree-here-p*
 		      (prog1 t
-			(message "Inserting ~S at level ~S"
-				 (get-some-object-name object)
-				 *quadtree-depth*)
+			;; (message "Inserting ~S at level ~S"
+			;; 	 (get-some-object-name object)
+			;; 	 *quadtree-depth*)
 			(assert (not (find (find-object object)
 					   (quadtree-objects node)
 					   :test 'eq)))
@@ -152,16 +152,16 @@
     (quadtree-map tree (multiple-value-list (bounding-box object))
 		  #'(lambda (node)
 		      (when *quadtree-here-p*
-			(prog1 t
-			  (message "Deleting ~S from level ~S"
-				   (get-some-object-name object)
-				   *quadtree-depth*)
-			  (assert (find (find-object object)
-					(quadtree-objects node)
-					:test 'eq))
+			(prog1 nil
+			  ;; (message "Deleting ~S from level ~S"
+			  ;; 	   (get-some-object-name object)
+			  ;; 	   *quadtree-depth*)
+			  ;; (assert (find object
+			  ;; 		(quadtree-objects node)
+			  ;; 		:test 'eq))
 			  (setf (quadtree-objects node)
 				(delete object (quadtree-objects node) :test 'eq))
-			  (assert (not (find (find-object object)
+			  (assert (not (find object
 					     (quadtree-objects node)
 					     :test 'eq)))))))))
 

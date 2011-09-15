@@ -1446,6 +1446,12 @@ and MOUSE-Y identify a point inside the block (or input block.)"
     (update-image-dimensions self))
   (values %y %x (+ %x %width) (+ %y %height)))
 
+(define-method center-point block ()
+  (multiple-value-bind (top left right bottom)
+      (bounding-box self)
+    (values (* 0.5 (+ left right))
+	    (* 0.5 (+ top bottom)))))
+
 (define-method on-collide block (object)
   (declare (ignore object))
   "Respond to a collision detected with OBJECT."
