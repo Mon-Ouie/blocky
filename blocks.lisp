@@ -768,9 +768,11 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	%last-z %z))
 
 (define-method restore-location block ()
+  (when *quadtree* (quadtree-delete *quadtree* self))
   (setf %x %last-x
 	%y %last-y
-	%z %last-z))
+	%z %last-z)
+  (when *quadtree* (quadtree-insert *quadtree* self)))
 
 (define-method move-to block 
     ((x number :default 0) (y number :default 0))

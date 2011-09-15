@@ -97,49 +97,55 @@
 		     :southeast (build-quadtree (southeast-quadrant bounding-box) depth))))
 
 (defun quadtree-map (tree bounding-box function)
-  (let ((*quadtree-depth* (1+ *quadtree-depth*)))
-    (let ((search-result 
-	    (block searching
-	      (assert (quadtree-p tree))
-	      (assert (functionp function))
-	      (assert (valid-bounding-box bounding-box))
-	      (let ((found nil))
-		(labels ((search-quadrant (quadrant)
-			   (when (bounding-box-contains
-				  (quadtree-bounding-box quadrant)
-				  bounding-box)
-			     ;; quadrant wholly contains bounding box
-			     ;; set the flag. 
-			     (setf found t)
-			     ;; recurse. 
-			     (let ((result (quadtree-map 
-					    quadrant bounding-box function)))
-			       ;; if function returns non-nil, early return
-			       (when result (return-from searching result))))))
-		  ;; are there any child nodes?
-		  ;; any quadrant will suffice to test.
-		  (when (quadtree-northwest tree)
-		    ;; see if box is contained entirely within any one of
-		    ;; the quadrants.
-		    (search-quadrant (quadtree-northwest tree))
-		    (search-quadrant (quadtree-northeast tree))
-		    (search-quadrant (quadtree-southwest tree))
-		    (search-quadrant (quadtree-southeast tree))))
-		found))))
-      ;; process the present node, indicating whether the search
-      ;; terminated here. see also `quadtree-map-objects'
-      (let ((*quadtree-here-p* (not search-result)))
-	(funcall function tree)))))
+    (let ((found nil))
+      (block searching
+	(assert (quadtree-p tree))
+	(assert (functionp function))
+	(assert (valid-bounding-box bounding-box))
+	(labels ((search-quadrant (quadrant)
+;;		   (message "Searching quadrant ~S ~S" *quadtree-depth* (quadtree-bounding-box quadrant))
+		   (when (bounding-box-contains
+			  (quadtree-bounding-box quadrant)
+			  bounding-box)
+		     ;; quadrant wholly contains bounding box
+		     ;; set the flag. 
+		     (setf found t)
+		     ;; recurse. 
+		     (let ((*quadtree-depth* (1+ *quadtree-depth*)))
+		       (let ((result (quadtree-map 
+				      quadrant bounding-box function)))
+			 ;; if function returns non-nil, early return
+			 (when result (return-from searching result)))))))
+	  ;; are there any child nodes?
+	  ;; any quadrant will suffice to test.
+	  (when (quadtree-northwest tree)
+	    ;; see if box is contained entirely within any one of
+	    ;; the quadrants.
+	    (search-quadrant (quadtree-northwest tree))
+	    (search-quadrant (quadtree-northeast tree))
+	    (search-quadrant (quadtree-southwest tree))
+	    (search-quadrant (quadtree-southeast tree)))
+	  ;; process the present node, indicating whether the search
+	  ;; terminated here. see also `quadtree-map-objects'
+	  (let ((*quadtree-here-p* (not found)))
+	    (funcall function tree))))))
 
 (defun quadtree-insert (tree object)
   (quadtree-map tree (multiple-value-list (bounding-box object))
 		#'(lambda (node)
 		    (when *quadtree-here-p*
-		      ;; (message "Inserted ~S at level ~S"
-		      ;; 	       (get-some-object-name object)
-		      ;; 	       *quadtree-depth*)
-		      (pushnew (find-object object)
-			       (quadtree-objects node) :test 'eq)))))
+		      (prog1 t
+			(message "Inserting ~S at level ~S"
+				 (get-some-object-name object)
+				 *quadtree-depth*)
+			(assert (not (find (find-object object)
+					   (quadtree-objects node)
+					   :test 'eq)))
+			(push (find-object object)
+			      (quadtree-objects node))
+			(assert (find (find-object object)
+				      (quadtree-objects node)
+				      :test 'eq)))))))
 
 (defun quadtree-delete (tree object0)
   (let ((object (find-object object0)))
@@ -147,8 +153,17 @@
 		  #'(lambda (node)
 		      (when *quadtree-here-p*
 			(prog1 t
+			  (message "Deleting ~S from level ~S"
+				   (get-some-object-name object)
+				   *quadtree-depth*)
+			  (assert (find (find-object object)
+					(quadtree-objects node)
+					:test 'eq))
 			  (setf (quadtree-objects node)
-				(delete object (quadtree-objects node) :test 'eq))))))))
+				(delete object (quadtree-objects node) :test 'eq))
+			  (assert (not (find (find-object object)
+					     (quadtree-objects node)
+					     :test 'eq)))))))))
 
 (defun quadtree-map-objects (tree bounding-box function)
   (quadtree-map tree bounding-box

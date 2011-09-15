@@ -117,12 +117,14 @@ At the moment, only 0=off and 1=on are supported.")
 ;;; The sprite layer. 
 
 (define-method add-block world (sprite &optional x y)
-  (pushnew (find-uuid sprite)
-	   %sprites
-	   :test 'equal)
-  (quadtree-insert %quadtree sprite)
-  (when (and (numberp x) (numberp y))
-    (move-to sprite x y)))
+  (let ((*quadtree* %quadtree))
+    (assert (not (find (find-uuid sprite) 
+		       %sprites
+		       :test 'equal)))
+    (push (find-uuid sprite) %sprites)
+    (quadtree-insert %quadtree sprite)
+    (when (and (numberp x) (numberp y))
+      (move-to sprite x y))))
 
 (define-method remove-block world (sprite)
   (setf %sprites (delete (find-uuid sprite) %sprites :test 'equal))
@@ -372,8 +374,8 @@ most user command messages. (See also the method `forward'.)"
     	    (draw (aref cells z))))))
     ;; draw the sprites
     (dolist (sprite sprites)
-      (draw sprite))))
-;    (quadtree-show %quadtree %player)))
+      (draw sprite))
+    (quadtree-show %quadtree %player)))
 
 ;;; Simulation update
 
@@ -703,8 +705,8 @@ PLAYER as the player."
     (setf *world* world)
     (setf *buffer* world))
   (when player (setf %player player))
-  (when %player (add-player world %player)
-	(add-block world %player))
+  (when %player 
+    (add-player world %player))
   (install-blocks self))
 
 (define-method exit universe (&key player)
