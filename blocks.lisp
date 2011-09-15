@@ -229,7 +229,8 @@ initialized with BLOCKS as inputs."
   (update-parent-links self)
   (update-result-lists self)
   (bind-any-default-events self)
-  (register-uuid self))
+  (register-uuid self)
+  (setf %x 0 %y 0))
 
 (define-method discard block ()
   (mapc #'discard %inputs)
