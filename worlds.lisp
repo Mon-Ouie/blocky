@@ -116,14 +116,17 @@ At the moment, only 0=off and 1=on are supported.")
 
 ;;; The sprite layer. 
 
-(define-method add-sprite world (sprite)
+(define-method add-block world (sprite &optional x y)
   (pushnew (find-uuid sprite)
 	   %sprites
 	   :test 'equal)
-  (quadtree-insert %quadtree sprite))
+  (quadtree-insert %quadtree sprite)
+  (when (and (numberp x) (numberp y))
+    (move-to sprite x y)))
 
-(define-method remove-sprite world (sprite)
-  (setf %sprites (delete (find-uuid sprite) %sprites :test 'equal )))
+(define-method remove-block world (sprite)
+  (setf %sprites (delete (find-uuid sprite) %sprites :test 'equal))
+  (quadtree-delete %quadtree sprite))
 
 ;;; World-local variables
 
@@ -256,7 +259,7 @@ keyword symbol."
   ;; 	(setf (field-value :on-grid cell) t)))))
 
 (define-method drop-block world (block x y)
-  (add-sprite self block)
+  (add-block self block)
   (move-to block x y))
 
 (define-method drop-cell world (block row column)
@@ -345,7 +348,7 @@ there."
   "Set PLAYER as the player object to which the World will forward
 most user command messages. (See also the method `forward'.)"
   (setf %player player)
-  (add-sprite self player))
+  (add-block self player))
 
 ;;; Draw the world
 
@@ -369,8 +372,8 @@ most user command messages. (See also the method `forward'.)"
     	    (draw (aref cells z))))))
     ;; draw the sprites
     (dolist (sprite sprites)
-      (draw sprite))
-    (quadtree-show %quadtree %player)))
+      (draw sprite))))
+;    (quadtree-show %quadtree %player)))
 
 ;;; Simulation update
 
@@ -701,7 +704,7 @@ PLAYER as the player."
     (setf *buffer* world))
   (when player (setf %player player))
   (when %player (add-player world %player)
-	(add-sprite world %player))
+	(add-block world %player))
   (install-blocks self))
 
 (define-method exit universe (&key player)
