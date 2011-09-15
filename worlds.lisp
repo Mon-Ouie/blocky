@@ -384,6 +384,7 @@ most user command messages. (See also the method `forward'.)"
   (declare (ignore args))
   (with-field-values (grid sprites quadtree grid-height grid-width player) self
     (let ((*quadtree* quadtree))
+      (assert (zerop *quadtree-depth*))
       ;; update the grid
       (dotimes (i grid-height)
 	(dotimes (j grid-width)
