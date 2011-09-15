@@ -1466,6 +1466,12 @@ and MOUSE-Y identify a point inside the block (or input block.)"
   (with-fields (x y width height) self
     (point-in-rectangle-p x y width height o-top o-left o-width o-height)))
 
+(define-method colliding-with-bounding-box block (bounding-box)
+  ;; you must pass arguments in Y X order since this is TOP then LEFT
+  (with-fields (x y width height) self
+    (destructuring-bind (top left right bottom) bounding-box
+      (point-in-rectangle-p x y width height top left (- right left) (- bottom top)))))
+
 (define-method colliding-with block (thing)
   (multiple-value-bind (top left right bottom)
       (bounding-box self)

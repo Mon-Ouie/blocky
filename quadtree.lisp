@@ -183,16 +183,12 @@
   (length (quadtree-find-objects tree)))
  
 (defun quadtree-map-collisions (tree bounding-box function)
-  (destructuring-bind (top left right bottom) bounding-box
-    (quadtree-map-objects 
-     tree
-     bounding-box
-     #'(lambda (object)
-	 (when (multiple-value-bind (t0 l0 r0 b0) 
-		   (bounding-box object)
-		 (and (<= l0 right) (<= left r0)
-		      (<= t0 bottom) (<= top b0)))
-	   (funcall function object))))))
+  (quadtree-map-objects 
+   tree
+   bounding-box
+   #'(lambda (object)
+       (when (colliding-with-bounding-box object bounding-box)
+	   (funcall function object)))))
 
 (defun quadtree-collide (tree object)
   (assert (blockyp object))
