@@ -46,13 +46,13 @@
 	  (apply #'min (mapcar #'top objects))
 	  (apply #'max (mapcar #'bottom objects)))))
 
-(defun colliding-bounding-boxes (box1 box2)
+(defun bounding-box-contains (box1 box2)
   (destructuring-bind (top left right bottom) box1
     (destructuring-bind (top0 left0 right0 bottom0) box2
-      (and (<= bottom0 top)
-	   (<= bottom top0)
-	   (<= right left0)
-	   (<= right0 left)))))
+      (and (< top top0)
+	   (< left left0)
+	   (> right right0)
+	   (> bottom bottom0)))))
 
 (defun valid-bounding-box (box)
   (and (listp box)
@@ -97,65 +97,37 @@
 		     :southeast (build-quadtree (southeast-quadrant bounding-box) depth))))
 
 (defun quadtree-map (tree bounding-box function)
-  (block mapping
-    ;; if function returns non-nil, early return
+  (block searching
     (assert (quadtree-p tree))
     (assert (functionp function))
-    (unless (null bounding-box)
-      (assert (valid-bounding-box bounding-box)))
-    (let ((*quadtree-depth* (1+ *quadtree-depth*)))
-      (destructuring-bind (top left right bottom)
-	  ;; use supplied bounding box?
-	  (or bounding-box
-	      ;; no. use the whole region bounding box instead, so
-	      ;; we'll end up doing the subtrees
-	      (quadtree-bounding-box tree))
-	;; compute the center point of this node
-	(let ((center-x (* 0.5 (+ left right)))
-	      (center-y (* 0.5 (+ top bottom)))
-	      (found nil))
-	  ;; are there any child nodes?
-	  ;; any quadrant will suffice to test.
-	  (when (quadtree-northwest tree)
-	    ;; see if box is contained entirely within any one of
-	    ;; the quadrants.
-	    ;; northwest
-	    (when (and (<= bottom center-y)
-		       (<= right center-x))
-	      (setf found t)
-	      (let ((result
-		      (quadtree-map (quadtree-northwest tree) 
-				    bounding-box function)))
-		(when result (return-from mapping result))))
-	    ;; northeast
-	    (when (and (<= bottom center-y)
-		       (>= left center-x))
-	      (setf found t)
-	      (let ((result
-		      (quadtree-map (quadtree-northeast tree) 
-				    bounding-box function)))
-		(when result (return-from mapping result))))
-
-	    ;; southwest
-	    (when (and (>= top center-y)
-		       (<= right center-x))
-	      (setf found t)
-	      (let ((result
-		      (quadtree-map (quadtree-southwest tree) 
-				    bounding-box function)))
-		(when result (return-from mapping result))))
-	    ;; southeast
-	    (when (and (>= top center-y)
-		       (>= left center-x))
-	      (setf found t)
-	      (let ((result
-		      (quadtree-map (quadtree-southeast tree) 
-				    bounding-box function)))
-		(when result (return-from mapping result)))))
-	  ;; process the present node.
-	  ;; see also `quadtree-map-objects'
-	  (let ((*quadtree-here-p* (not found)))
-	    (return-from mapping (funcall function tree))))))))
+    (assert (valid-bounding-box bounding-box))
+    (let ((*quadtree-depth* (1+ *quadtree-depth*))
+	  (found nil))
+      (labels ((search-quadrant (quadrant)
+		 (when (bounding-box-contains
+			(quadtree-bounding-box quadrant)
+			bounding-box)
+		   ;; quadrant wholly contains bounding box
+		   ;; set the flag. 
+		   (setf found t)
+		   ;; recurse. 
+		   (let ((result (quadtree-map 
+				  quadrant bounding-box function)))
+		     ;; if function returns non-nil, early return
+		     (when result (return-from searching result))))))
+	;; are there any child nodes?
+	;; any quadrant will suffice to test.
+	(when (quadtree-northwest tree)
+	  ;; see if box is contained entirely within any one of
+	  ;; the quadrants.
+	  (search-quadrant (quadtree-northwest tree))
+	  (search-quadrant (quadtree-northeast tree))
+	  (search-quadrant (quadtree-southwest tree))
+	  (search-quadrant (quadtree-southeast tree)))
+	;; process the present node, indicating whether the search
+	;; terminated here. see also `quadtree-map-objects'
+	(let ((*quadtree-here-p* (not found)))
+	  (return-from searching (funcall function tree)))))))
 
 (defparameter *quadtree-depth-colors* 
   (list 10 20 30 40 50 60 70 80 90))
@@ -164,9 +136,9 @@
   (when tree
     (destructuring-bind (top left right bottom) 
 	(quadtree-bounding-box tree)
-      (draw-box left top (- right left) (- bottom top)
-		:color (random-choose '("red" "blue" "orange" "green" "yellow" "white"))
-		:alpha 0.3)
+      (draw-box (+ left 10) (+ top 10) (- right left 10) (- bottom top 10)
+		:color "magenta"
+		:alpha 0.1)
       (quadtree-show (quadtree-northeast tree))
       (quadtree-show (quadtree-northwest tree))
       (quadtree-show (quadtree-southeast tree))

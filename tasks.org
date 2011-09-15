@@ -17,7 +17,6 @@
 * BETA RELEASE EXECUTION PLAN
 
 ** TODO Fix key release handling
-** TODO [#B] Xong
 ** TODO [#C] Show lisp implementation name etc
 ** TODO [#A] Show result somewhere when clicking eval bang handle
 ** TODO [#A] Implement basic blocks library (see list below)
