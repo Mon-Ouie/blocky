@@ -134,22 +134,24 @@
 
 (defun quadtree-show (tree &optional bounding-box0)
   (when tree
-    (destructuring-bind (top left right bottom) 
-	(quadtree-bounding-box tree)
-      (draw-box (+ left 10) (+ top 10) (- right left 10) (- bottom top 10)
-		:color "magenta"
-		:alpha 0.1)
-      (quadtree-show (quadtree-northeast tree))
-      (quadtree-show (quadtree-northwest tree))
-      (quadtree-show (quadtree-southeast tree))
-      (quadtree-show (quadtree-southwest tree)))))
+    (let ((bounding-box (quadtree-bounding-box tree)))
+      (destructuring-bind (top left right bottom) bounding-box
+	(when (and bounding-box0
+		   (bounding-box-contains bounding-box bounding-box0))
+	  (draw-box (+ left 10) (+ top 10) (- right left 10) (- bottom top 10)
+		    :color "magenta"
+		    :alpha 0.1)))
+      (quadtree-show (quadtree-northeast tree) bounding-box0)
+      (quadtree-show (quadtree-northwest tree) bounding-box0)
+      (quadtree-show (quadtree-southeast tree) bounding-box0)
+      (quadtree-show (quadtree-southwest tree) bounding-box0))))
 
 (defun quadtree-insert (tree object)
   (quadtree-map tree (multiple-value-list (bounding-box object))
 		#'(lambda (node)
 		    (when *quadtree-here-p*
-		      (push (find-object object)
-			    (quadtree-objects node))))))
+		      (pushnew (find-object object)
+			       (quadtree-objects node) :test 'eq)))))
 
 (defun quadtree-delete (tree object0)
   (let ((object (find-object object0)))
@@ -190,12 +192,12 @@
 
 (defun quadtree-collide (tree object)
   (assert (blockyp object))
-    (quadtree-map-collisions 
-     tree
-     (multiple-value-list (bounding-box object))
-     #'(lambda (thing)
-	 (when (and (colliding-with object thing)
-		    (not (object-eq object thing)))
-	   (on-collide object thing)))))
+  (quadtree-map-collisions 
+   tree
+   (multiple-value-list (bounding-box object))
+   #'(lambda (thing)
+       (when (and (colliding-with object thing)
+		  (not (object-eq object thing)))
+	 (on-collide object thing)))))
 
 ;;; quadtree.lisp ends here

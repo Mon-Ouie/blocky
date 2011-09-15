@@ -1470,11 +1470,11 @@ and MOUSE-Y identify a point inside the block (or input block.)"
       (bounding-box self)
     (multiple-value-bind (top0 left0 right0 bottom0)
 	(bounding-box thing)
-      (and (<= bottom0 top)
-	   (<= bottom top0)
-	   (<= right left0)
-	   (<= right0 left)))))
-    
+      (and (<= left right0)
+	   (>= right left0)
+	   (<= top bottom0)
+	   (>= bottom top0)))))
+
 ;;; Analog gamepad control
 
 (define-method aim block (direction)

@@ -119,7 +119,8 @@ At the moment, only 0=off and 1=on are supported.")
 (define-method add-sprite world (sprite)
   (pushnew (find-uuid sprite)
 	   %sprites
-	   :test 'equal))
+	   :test 'equal)
+  (quadtree-insert %quadtree sprite))
 
 (define-method remove-sprite world (sprite)
   (setf %sprites (delete (find-uuid sprite) %sprites :test 'equal )))
@@ -368,8 +369,7 @@ most user command messages. (See also the method `forward'.)"
     	    (draw (aref cells z))))))
     ;; draw the sprites
     (dolist (sprite sprites)
-      (draw sprite))
-    (quadtree-show %quadtree)))
+      (draw sprite))))
 
 ;;; Simulation update
 
@@ -390,8 +390,9 @@ most user command messages. (See also the method `forward'.)"
 	(on-update sprite))
       ;; do collisions for both sprites and grid
       (dolist (sprite sprites)
-	(grid-collide self sprite)
-	(quadtree-collide quadtree sprite)))))
+;	(grid-collide self sprite)
+	(quadtree-collide quadtree sprite))
+      (quadtree-show quadtree))))
     
 ;;; Collision detection for the grid objects
 
