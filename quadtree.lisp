@@ -131,10 +131,11 @@ NODE, if any."
 
 (defun quadtree-insert (tree object)
   (let ((node 
-	  (search-quadrant 
+	  (quadtree-search 
 	   tree
 	   (multiple-value-list 
 	    (bounding-box object)))))
+    (assert (not (null node)))
     (message "Inserting ~S at level ~S"
 	     (get-some-object-name object)
 	     *quadtree-depth*)
@@ -150,10 +151,11 @@ NODE, if any."
 (defun quadtree-delete (tree object0)
   (let ((object (find-object object0)))
     (let ((node 
-	    (search-quadrant 
+	    (quadtree-search 
 	     tree
 	     (multiple-value-list 
 	      (bounding-box object)))))
+      (assert (not (null node)))
       (message "Deleting ~S from level ~S"
 	       (get-some-object-name object)
 	       *quadtree-depth*)
