@@ -161,9 +161,9 @@ NODE, if any."
 	;; (message "Deleting ~S from level ~S"
 	;; 	 (get-some-object-name object)
 	;;        (quadtree-level node))
-	;; (assert (find object
-	;; 	      (quadtree-objects node)
-	;; 	      :test 'eq))
+	(assert (find object
+		      (quadtree-objects node)
+		      :test 'eq))
 	(setf (quadtree-objects node)
 	      (delete object (quadtree-objects node) :test 'eq))
 	(assert (not (find object
