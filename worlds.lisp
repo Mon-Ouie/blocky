@@ -275,9 +275,10 @@ keyword symbol."
       ;; 	     (fixnum grid-size row column))
       (when (array-in-bounds-p grid row column)
 	(setf (field-value :on-grid block) t)
-	(vector-push-extend block (aref grid row column))
+;	(vector-push-extend block (aref grid row column))
 	(setf (field-value :y block) (* %grid-size row))
 	(setf (field-value :x block) (* %grid-size column))
+	(quadtree-insert %quadtree block)
 	(setf (field-value :row block) row)
 	(setf (field-value :column block) row)))))
 
@@ -377,8 +378,8 @@ most user command messages. (See also the method `forward'.)"
     	    (draw (aref cells z))))))
     ;; draw the sprites
     (dolist (sprite sprites)
-      (draw sprite))
-    (quadtree-show %quadtree %player)))
+      (draw sprite))))
+;    (quadtree-show %quadtree %player)))
 
 ;;; Simulation update
 

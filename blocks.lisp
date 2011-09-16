@@ -230,6 +230,8 @@ initialized with BLOCKS as inputs."
   (update-result-lists self)
   (bind-any-default-events self)
   (register-uuid self)
+  (when %image
+    (update-image-dimensions self))
   (setf %x 0 %y 0))
 
 (define-method discard block ()
@@ -1491,6 +1493,10 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 	   (>= right left0)
 	   (<= top bottom0)
 	   (>= bottom top0)))))
+
+(define-method direction-to-thing block (thing)
+  (with-fields (x y) thing
+    (direction-to %y %x y x)))
 
 ;;; Analog gamepad control
 

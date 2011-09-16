@@ -4,7 +4,6 @@
 
 ** TODO the particles behave (mostly) deterministically and leave trails
 ** TODO some levels are ring shape with impassable center area (like xong)
-
 ** TODO 5200esque gameplay with analog stick and one button (allow any joystick button). bullets activate doors etc
 ** TODO create moving player w arrows and skeletal room, spacebar to shoot
 ** TODO subtle background color changes indicate difficulty
