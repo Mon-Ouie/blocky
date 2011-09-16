@@ -140,9 +140,9 @@ NODE, if any."
 	   (multiple-value-list 
 	    (bounding-box object)))))
     (let ((node (or node0 tree)))
-      (message "Inserting ~S at level ~S"
-      	       (get-some-object-name object)
-      	       (quadtree-level node))
+      ;; (message "Inserting ~S at level ~S"
+      ;; 	       (get-some-object-name object)
+      ;; 	       (quadtree-level node))
       (assert (not (find (find-object object)
 			 (quadtree-objects node)
 			 :test 'eq)))
@@ -160,9 +160,9 @@ NODE, if any."
 	     (multiple-value-list 
 	      (bounding-box object)))))
       (let ((node (or node0 tree)))
-	(message "Deleting ~S from level ~S"
-		 (get-some-object-name object)
-	       (quadtree-level node))
+	;; (message "Deleting ~S from level ~S"
+	;; 	 (get-some-object-name object)
+	;;        (quadtree-level node))
  	(assert (find object
 		      (quadtree-objects node)
 		      :test 'eq))
