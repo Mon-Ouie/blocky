@@ -1,6 +1,6 @@
 ** TODO Fix update-image-dimensions
 
-* SUPER XONG
+* MICRO XONG
 
 ** TODO speech bubbles
 
