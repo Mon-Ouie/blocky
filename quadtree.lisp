@@ -25,6 +25,8 @@
 (defvar *quadtree* nil)
 
 (defvar *quadtree-depth* 0)
+
+(defvar *default-quadtree-depth* 4)
  
 (defstruct quadtree 
   objects bounding-box level
@@ -86,18 +88,6 @@
     (list (float (/ (+ top bottom) 2)) left
 	  (float (/ (+ left right) 2)) bottom)))
 
-(defun build-quadtree (bounding-box &optional (depth 6))
-  (assert (plusp depth))
-  (assert (valid-bounding-box bounding-box))
-  (decf depth)
-  (if (zerop depth)
-      (make-quadtree :bounding-box bounding-box :level 0)
-      (make-quadtree :bounding-box bounding-box :level depth
-		     :northwest (build-quadtree (northwest-quadrant bounding-box) depth)
-		     :northeast (build-quadtree (northeast-quadrant bounding-box) depth)
-		     :southwest (build-quadtree (southwest-quadrant bounding-box) depth)
-		     :southeast (build-quadtree (southeast-quadrant bounding-box) depth))))
-
 (defun quadtree-process (node bounding-box processor)
   (assert (quadtree-p node))
   (assert (valid-bounding-box bounding-box))
@@ -110,6 +100,18 @@
 	(quadtree-process (quadtree-southwest node) bounding-box processor)
 	(quadtree-process (quadtree-southeast node) bounding-box processor)))
     (funcall processor node)))
+
+(defun build-quadtree (bounding-box &optional (depth *default-quadtree-depth*))
+  (assert (plusp depth))
+  (assert (valid-bounding-box bounding-box))
+  (decf depth)
+  (if (zerop depth)
+      (make-quadtree :bounding-box bounding-box)
+      (make-quadtree :bounding-box bounding-box
+		     :northwest (build-quadtree (northwest-quadrant bounding-box) depth)
+		     :northeast (build-quadtree (northeast-quadrant bounding-box) depth)
+		     :southwest (build-quadtree (southwest-quadrant bounding-box) depth)
+		     :southeast (build-quadtree (southeast-quadrant bounding-box) depth))))
 
 (defun quadtree-search (node bounding-box)
   "Return the smallest quadrant enclosing BOUNDING-BOX at or below
@@ -138,9 +140,9 @@ NODE, if any."
 	   (multiple-value-list 
 	    (bounding-box object)))))
     (let ((node (or node0 tree)))
-      ;; (message "Inserting ~S at level ~S"
-      ;; 	       (get-some-object-name object)
-      ;; 	       (quadtree-level node))
+      (message "Inserting ~S at level ~S"
+      	       (get-some-object-name object)
+      	       (quadtree-level node))
       (assert (not (find (find-object object)
 			 (quadtree-objects node)
 			 :test 'eq)))
@@ -158,12 +160,16 @@ NODE, if any."
 	     (multiple-value-list 
 	      (bounding-box object)))))
       (let ((node (or node0 tree)))
-	;; (message "Deleting ~S from level ~S"
-	;; 	 (get-some-object-name object)
-	;;        (quadtree-level node))
-	(assert (find object
+	(message "Deleting ~S from level ~S"
+		 (get-some-object-name object)
+	       (quadtree-level node))
+ 	(assert (find object
 		      (quadtree-objects node)
 		      :test 'eq))
+ 	;; (unless (find object
+	;; 	      (quadtree-objects node)
+	;; 	      :test 'eq)
+	;;   (message "WARNING: Quadtree delete failed.")) 
 	(setf (quadtree-objects node)
 	      (delete object (quadtree-objects node) :test 'eq))
 	(assert (not (find object
