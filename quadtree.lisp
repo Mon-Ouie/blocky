@@ -45,18 +45,18 @@
 	   (bottom (thing) (+ (field-value :y thing)
 			      (field-value :height thing))))
     ;; let's find the bounding box.
-    (list (apply #'min (mapcar #'left objects))
-	  (apply #'max (mapcar #'right objects))
-	  (apply #'min (mapcar #'top objects))
-	  (apply #'max (mapcar #'bottom objects)))))
+    (list (reduce #'min (mapcar #'left objects))
+	  (reduce #'max (mapcar #'right objects))
+	  (reduce #'min (mapcar #'top objects))
+	  (reduce #'max (mapcar #'bottom objects)))))
 
-(defun bounding-box-contains (box1 box2)
-  (destructuring-bind (top left right bottom) box1
-    (destructuring-bind (top0 left0 right0 bottom0) box2
-      (and (< top top0)
-	   (< left left0)
-	   (>= right right0)
-	   (>= bottom bottom0)))))
+(defun bounding-box-contains (box0 box1)
+  (destructuring-bind (top0 left0 right0 bottom0) box0
+    (destructuring-bind (top1 left1 right1 bottom1) box1
+      (and (< top0 top1)
+	   (< left0 left1)
+	   (>= right0 right1)
+	   (>= bottom0 bottom1)))))
 
 (defun valid-bounding-box (box)
   (and (listp box)
@@ -119,13 +119,13 @@
 NODE, if any."
   (assert (quadtree-p node))
   (assert (valid-bounding-box bounding-box))
-  (message "Searching quadrant ~S ~S, object ~S" 
-  	   *quadtree-depth* (quadtree-bounding-box node) bounding-box)
+  ;; (message "Searching quadrant ~S ~S, object ~S" 
+  ;; 	   *quadtree-depth* (quadtree-bounding-box node) bounding-box)
   (if (bounding-box-contains (quadtree-bounding-box node) bounding-box)
       ;; ok, it's in the overall bounding-box.
       (if (is-leaf node)
 	  ;; there aren't any quadrants to search.
-	  (values node *quadtree-depth*)
+	  node
 	  (or
 	   ;; search the quadrants.
 	   (let ((*quadtree-depth* (1+ *quadtree-depth*)))
@@ -134,18 +134,17 @@ NODE, if any."
 		 (quadtree-search (quadtree-southwest node) bounding-box)
 		 (quadtree-search (quadtree-southeast node) bounding-box)))
 	   ;; none of them are suitable. stay here
-	   (values node *quadtree-depth*)))
-      (values nil 0)))
+	   node))))
 
 (defun quadtree-insert (tree object)
-  (multiple-value-bind (node0 depth)
-      (quadtree-search 
-       tree
-       (multiple-value-list 
-	(bounding-box object)))
+  (let ((node0
+	  (quadtree-search 
+	   tree
+	   (multiple-value-list 
+	    (bounding-box object)))))
     (let ((node (or node0 tree)))
-      (message "Inserting ~S at level ~S"
-      	       (get-some-object-name object) depth)
+      ;; (message "Inserting ~S at level ~S"
+      ;; 	       (get-some-object-name object) depth)
       (assert (not (find (find-object object)
 			 (quadtree-objects node)
 			 :test 'eq)))
@@ -157,21 +156,21 @@ NODE, if any."
 
 (defun quadtree-delete (tree object0)
   (let ((object (find-object object0)))
-    (multiple-value-bind (node0 depth)
-	(quadtree-search 
-	 tree
-	 (multiple-value-list 
-	  (bounding-box object)))
+    (let ((node0
+	    (quadtree-search 
+	     tree
+	     (multiple-value-list 
+	      (bounding-box object)))))
       (let ((node (or node0 tree)))
-	(message "Deleting ~S from level ~S"
-		 (get-some-object-name object) depth)
- 	(assert (find object
-		      (quadtree-objects node)
-		      :test 'eq))
- 	;; (unless (find object
+	;; (message "Deleting ~S from level ~S"
+	;; 	 (get-some-object-name object) depth)
+ 	;; (assert (find object
 	;; 	      (quadtree-objects node)
-	;; 	      :test 'eq)
-	;;   (message "WARNING: Quadtree delete failed.")) 
+	;; 	      :test 'eq))
+ 	(unless (find object
+		      (quadtree-objects node)
+		      :test 'eq)
+	  (message "WARNING: Quadtree delete failed.")) 
 	(setf (quadtree-objects node)
 	      (delete object (quadtree-objects node) :test 'eq))
 	(assert (not (find object
@@ -235,13 +234,12 @@ NODE, if any."
 (defun quadtree-test ()
   (let ((*quadtree* (build-quadtree '(0 0 1024 1024)))
 	things)
-    (dotimes (i 32)
-      (dotimes (j 32)
-	(let ((thing (new block)))
-	  (quadtree-insert *quadtree* thing)
-	  (resize thing 18 18)
-	  (move-to thing (* i 16) (* j 16))
-	  (push thing things))))
+    (dotimes (i 200)
+      (let ((thing (new block)))
+	(quadtree-insert *quadtree* thing)
+	(resize thing 18 18)
+	(move-to thing i i)
+	(push thing things)))
     (dolist (thing things)
       (quadtree-delete *quadtree* thing))))
     
