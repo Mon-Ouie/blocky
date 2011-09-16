@@ -26,7 +26,7 @@
 
 (defvar *quadtree-depth* 0)
 
-(defvar *default-quadtree-depth* 4)
+(defparameter *default-quadtree-depth* 5)
  
 (defstruct quadtree 
   objects bounding-box level
@@ -163,13 +163,13 @@ NODE, if any."
 	;; (message "Deleting ~S from level ~S"
 	;; 	 (get-some-object-name object)
 	;;        (quadtree-level node))
- 	(assert (find object
-		      (quadtree-objects node)
-		      :test 'eq))
- 	;; (unless (find object
+ 	;; (assert (find object
 	;; 	      (quadtree-objects node)
-	;; 	      :test 'eq)
-	;;   (message "WARNING: Quadtree delete failed.")) 
+	;; 	      :test 'eq))
+ 	(unless (find object
+		      (quadtree-objects node)
+		      :test 'eq)
+	  (message "WARNING: Quadtree delete failed.")) 
 	(setf (quadtree-objects node)
 	      (delete object (quadtree-objects node) :test 'eq))
 	(assert (not (find object
@@ -207,13 +207,12 @@ NODE, if any."
 
 (defun quadtree-show (tree &optional object)
   (when tree
-    (let ((*quadtree-depth* (1+ *quadtree-depth*)))
-      ;; (dolist (ob (quadtree-objects tree))
-      ;; 	(multiple-value-bind (top left right bottom) 
-      ;; 	    (bounding-box ob)
-      ;; 	  (draw-string (prin1-to-string *quadtree-depth*)
-      ;; 		       left top
-      ;; 		       :color "red")))
+      (dolist (ob (quadtree-objects tree))
+      	(multiple-value-bind (top left right bottom) 
+      	    (bounding-box ob)
+      	  (draw-string (prin1-to-string *quadtree-depth*)
+      		       left top
+      		       :color "yellow")))
       (let ((bounding-box (quadtree-bounding-box tree)))
 	(destructuring-bind (top left right bottom) bounding-box
 	  (if (null object)
@@ -225,10 +224,11 @@ NODE, if any."
 		(draw-box left top (- right left) (- bottom top)
 			  :color "cyan"
 			  :alpha 0.1)))))
-      (quadtree-show (quadtree-northeast tree) object)
-      (quadtree-show (quadtree-northwest tree) object)
-      (quadtree-show (quadtree-southeast tree) object)
-      (quadtree-show (quadtree-southwest tree) object))))
+      (let ((*quadtree-depth* (1+ *quadtree-depth*)))
+	(quadtree-show (quadtree-northeast tree) object)
+	(quadtree-show (quadtree-northwest tree) object)
+	(quadtree-show (quadtree-southeast tree) object)
+	(quadtree-show (quadtree-southwest tree) object))))
 
 ;; (defun quadtree-map-objects (tree bounding-box function)
 ;;   (quadtree-map tree bounding-box
