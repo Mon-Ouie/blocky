@@ -70,7 +70,7 @@ load-lisp-resource *executable* *function-buttons* *corner-buttons*
 *dance-arrows* *punctuation* *screen-height* *screen-width* blockyp
 *nominal-screen-width* *nominal-screen-height* *gl-screen-width*
 *gl-screen-height* *dance-phrase-symbols* *dance-keybindings*
-*energy-dance-pad-mapping* *message-function*
+*energy-dance-pad-mapping* *message-function* dash
 *dark-target-arrow-images* get-button-index arrow-image
 message-to-standard-output reset-message-function
 *make-prototype-id-package* arrow-formatted-string ticks-per-beat

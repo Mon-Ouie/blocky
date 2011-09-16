@@ -38,7 +38,7 @@
   (indicator :initform nil)
   (max-displayed-lines :initform 16 :documentation "An integer when scrolling is enabled.")
   (max-displayed-columns :initform nil)
-  (background-color :initform "gray30")
+  (background-color :initform nil)
   (foreground-color :initform "black")
   (cursor-color :initform "red")
   (point-row :initform 0)
@@ -66,6 +66,14 @@
   (assert (stringp font))
   (assert (eq :font (resource-type (find-resource font))))
   (setf %font font))
+
+(define-method set-background-color text (color)
+  (assert (stringp color))
+  (assert (eq :color (resource-type (find-resource color))))
+  (setf %background-color color))
+
+;; (define-method on-update text ()
+;;   (layout self))
 
 (define-method page-up text ()
   "Scroll up one page, only when %max-displayed-lines is set."
@@ -308,7 +316,7 @@
 	(draw-patch self x y 
 		    (+ x width)
 		    (+ y height)
-		    :color (find-color self))
+		    :color (or %background-color (find-color self)))
 	;; draw text
 	(let* ((x0 (+ x *text-margin*))
 	       (y0 (+ y *text-margin*))
