@@ -185,7 +185,8 @@ At the moment, only 0=off and 1=on are supported.")
     (assert (not (find (find-uuid sprite) 
 		       %sprites
 		       :test 'equal)))
-    (push (find-uuid sprite) %sprites)
+    (setf %sprites
+	  (append %sprites (list (find-uuid sprite))))
     (when (and (numberp x) (numberp y))
       (setf (field-value :x sprite) x
 	    (field-value :y sprite) y))
