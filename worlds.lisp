@@ -28,6 +28,9 @@
   (description :initform "Unknown area." :documentation "Brief description of area.")
   (window-x :initform 0)
   (window-y :initform 0)
+  (window-x0 :initform nil)
+  (window-y0 :initform nil)
+  (window-speed :initform 1)
   (window-scale-x :initform 1)
   (window-scale-y :initform 1)
   ;; the invisible graph paper underlying our world of sprites
@@ -82,6 +85,67 @@ At the moment, only 0=off and 1=on are supported.")
 (define-method move-window world (dx dy)
   (incf %window-x dx)
   (incf %window-y dy))
+
+(define-method glide-window-to world (x y)
+  (setf %window-x0 x)
+  (setf %window-y0 y))
+
+(define-method glide-window-to-object world (object)
+  (multiple-value-bind (top left right bottom) 
+      (bounding-box object)
+    (glide-window-to 
+     self 
+     (max 0 (- left (/ *gl-screen-width* 2)))
+     (max 0 (- top (/ *gl-screen-width* 2))))))
+
+(define-method glide-follow world (object)
+  (with-fields (window-x window-y) self
+    (let ((margin-x (* 1/3 *gl-screen-width*))
+	  (margin-y (* 1/3 *gl-screen-height*))
+	  (world-width (* %grid-size %grid-width))
+	  (world-height (* %grid-size %grid-height))
+	  (object-x (field-value :x object))
+	  (object-y (field-value :y object)))
+    ;; are we outside the "comfort zone"?
+    (if (or 
+	 ;; too far left
+	 (> (+ window-x margin-x) 
+	    object-x)
+	 ;; too far right
+	 (> object-x
+	    (- (+ window-x *gl-screen-width*)
+	       margin-x))
+	 ;; too far up
+	 (> (+ window-y margin-y) 
+	    object-y)
+	 ;; too far down 
+	 (> object-y 
+	    (- (+ window-y *gl-screen-height*)
+	       margin-y)))
+	;; yes. recenter.
+	(glide-window-to self
+			 (max 0
+			      (min (- world-width *gl-screen-width*)
+				   (- object-x 
+				      (truncate (/ *gl-screen-width* 2)))))
+			 (max 0 
+			      (min (- world-height *gl-screen-height*)
+				   (- object-y 
+				      (truncate (/ *gl-screen-height* 2))))))))))
+
+(define-method update-window-glide world ()
+  (with-fields (window-x window-x0 window-y window-y0 window-speed) self
+    (labels ((nearby (a b)
+	       (> window-speed (abs (- a b))))
+	     (jump (a b)
+	       (if (< a b) window-speed (- window-speed))))
+      (when (and window-x0 window-y0)
+	(if (nearby window-x window-x0)
+	    (setf window-x0 nil)
+	    (incf window-x (jump window-x window-x0)))
+	(if (nearby window-y window-y0)
+	    (setf window-y0 nil)
+	    (incf window-y (jump window-y window-y0)))))))
 
 (define-method scale-window world (&optional (window-scale-x 1.0) (window-scale-y 1.0))
   (setf %window-scale-x window-scale-x)
@@ -399,6 +463,9 @@ most user command messages. (See also the method `forward'.)"
       ;; run the sprites
       (dolist (sprite sprites)
 	(on-update sprite))
+      ;; update window movement
+      (glide-follow self %player)
+      (update-window-glide self)
       ;; do collisions for both sprites and grid
       (dolist (sprite sprites)
 ;	(grid-collide self sprite)
