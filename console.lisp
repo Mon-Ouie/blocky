@@ -2074,7 +2074,7 @@ of the music."
   ;; try opening sound
   (when (null (sdl-mixer:open-audio :frequency *frequency*
 				    :chunksize *output-chunksize*
-;				    :enable-callbacks t
+				    ;; :enable-callbacks t
 				    :format *sample-format*
 				    :channels *output-channels*))
     ;; if that didn't work, disable effects/music
