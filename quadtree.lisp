@@ -119,8 +119,8 @@
 NODE, if any."
   (assert (quadtree-p node))
   (assert (valid-bounding-box bounding-box))
-  ;; (message "Searching quadrant ~S ~S, object ~S" 
-  ;; 	   *quadtree-depth* (quadtree-bounding-box node) bounding-box)
+  (message "Searching quadrant ~S ~S, object ~S" 
+  	   *quadtree-depth* (quadtree-bounding-box node) bounding-box)
   (if (bounding-box-contains (quadtree-bounding-box node) bounding-box)
       ;; ok, it's in the overall bounding-box.
       (if (is-leaf node)
