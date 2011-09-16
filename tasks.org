@@ -2,8 +2,6 @@
 
 * MICRO XONG
 
-** TODO speech bubbles
-
 ** TODO create moving player w arrows and skeletal room, spacebar to shoot
 ** TODO the particles behave (mostly) deterministically and leave trails
 ** TODO some levels are ring shape with impassable center area (like xong)
