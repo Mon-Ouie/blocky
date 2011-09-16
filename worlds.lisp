@@ -122,9 +122,12 @@ At the moment, only 0=off and 1=on are supported.")
 		       %sprites
 		       :test 'equal)))
     (push (find-uuid sprite) %sprites)
-    (quadtree-insert %quadtree sprite)
     (when (and (numberp x) (numberp y))
-      (move-to sprite x y))))
+      (setf (field-value :x sprite) x
+	    (field-value :y sprite) y))
+    (quadtree-insert %quadtree sprite)))
+      
+;      (move-to sprite x y))))
 
 (define-method remove-block world (sprite)
   (setf %sprites (delete (find-uuid sprite) %sprites :test 'equal))

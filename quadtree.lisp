@@ -26,7 +26,7 @@
 
 (defvar *quadtree-depth* 0)
 
-(defparameter *default-quadtree-depth* 4)
+(defparameter *default-quadtree-depth* 6)
  
 (defstruct quadtree 
   objects bounding-box level
@@ -119,22 +119,23 @@
 NODE, if any."
   (assert (quadtree-p node))
   (assert (valid-bounding-box bounding-box))
-  (message "Searching quadrant ~S ~S, object ~S" 
-  	   *quadtree-depth* (quadtree-bounding-box node) bounding-box)
-  (if (bounding-box-contains (quadtree-bounding-box node) bounding-box)
-      ;; ok, it's in the overall bounding-box.
-      (if (is-leaf node)
-	  ;; there aren't any quadrants to search.
-	  node
-	  (or
-	   ;; search the quadrants.
-	   (let ((*quadtree-depth* (1+ *quadtree-depth*)))
-	     (or (quadtree-search (quadtree-northwest node) bounding-box)
-		 (quadtree-search (quadtree-northeast node) bounding-box)
-		 (quadtree-search (quadtree-southwest node) bounding-box)
-		 (quadtree-search (quadtree-southeast node) bounding-box)))
-	   ;; none of them are suitable. stay here
-	   node))))
+  ;; (message "~A ~A Searching quadrant ~S for bounding box ~S" 
+  ;; 	   *quadtree-depth* (make-string (1+ *quadtree-depth*) :initial-element (character "."))
+  ;; 	   (quadtree-bounding-box node) bounding-box)
+  (when (bounding-box-contains (quadtree-bounding-box node) bounding-box)
+    ;; ok, it's in the overall bounding-box.
+    (if (is-leaf node)
+	;; there aren't any quadrants to search.
+	node
+	(or
+	 ;; search the quadrants.
+	 (let ((*quadtree-depth* (1+ *quadtree-depth*)))
+	   (or (quadtree-search (quadtree-northwest node) bounding-box)
+	       (quadtree-search (quadtree-northeast node) bounding-box)
+	       (quadtree-search (quadtree-southwest node) bounding-box)
+	       (quadtree-search (quadtree-southeast node) bounding-box)))
+	 ;; none of them are suitable. stay here
+	 node))))
 
 (defun quadtree-insert (tree object)
   (let ((node0
@@ -143,8 +144,9 @@ NODE, if any."
 	   (multiple-value-list 
 	    (bounding-box object)))))
     (let ((node (or node0 tree)))
-      ;; (message "Inserting ~S at level ~S"
-      ;; 	       (get-some-object-name object) depth)
+      ;; (message "Inserting ~S ~S"
+      ;; 	       (get-some-object-name object) 
+      ;; 	       (object-address-string object))
       (assert (not (find (find-object object)
 			 (quadtree-objects node)
 			 :test 'eq)))
@@ -162,28 +164,21 @@ NODE, if any."
 	     (multiple-value-list 
 	      (bounding-box object)))))
       (let ((node (or node0 tree)))
-	;; (message "Deleting ~S from level ~S"
-	;; 	 (get-some-object-name object) depth)
- 	;; (assert (find object
-	;; 	      (quadtree-objects node)
-	;; 	      :test 'eq))
- 	(unless (find object
+      ;; (message "Deleting ~S ~S"
+      ;; 	       (get-some-object-name object) 
+      ;; 	       (object-address-string object))
+ 	(assert (find object
 		      (quadtree-objects node)
-		      :test 'eq)
-	  (message "WARNING: Quadtree delete failed.")) 
+		      :test 'eq))
+ 	;; (unless (find object
+	;; 	      (quadtree-objects node)
+	;; 	      :test 'eq)
+	;;   (message "WARNING: Quadtree delete failed.")) 
 	(setf (quadtree-objects node)
 	      (delete object (quadtree-objects node) :test 'eq))
 	(assert (not (find object
 			   (quadtree-objects node)
 			   :test 'eq)))))))
-
-(defun quadtree-purge (tree object)
-  (quadtree-process tree (quadtree-bounding-box tree)
-		    #'(lambda (node)
-			(setf (quadtree-objects node)
-			      (delete (find-object object)
-				      (quadtree-objects node)
-				      :test 'eq)))))
 
 (defun quadtree-map-collisions (tree bounding-box processor)
   (assert (functionp processor))
@@ -208,12 +203,12 @@ NODE, if any."
 
 (defun quadtree-show (tree &optional object)
   (when tree
-      (dolist (ob (quadtree-objects tree))
-      	(multiple-value-bind (top left right bottom) 
-      	    (bounding-box ob)
-      	  (draw-string (prin1-to-string *quadtree-depth*)
-      		       left top
-      		       :color "yellow")))
+      ;; (dolist (ob (quadtree-objects tree))
+      ;; 	(multiple-value-bind (top left right bottom) 
+      ;; 	    (bounding-box ob)
+      ;; 	  (draw-string (prin1-to-string *quadtree-depth*)
+      ;; 		       left top
+      ;; 		       :color "yellow")))
       (let ((bounding-box (quadtree-bounding-box tree)))
 	(destructuring-bind (top left right bottom) bounding-box
 	  (if (null object)
@@ -237,7 +232,7 @@ NODE, if any."
     (dotimes (i 200)
       (let ((thing (new block)))
 	(quadtree-insert *quadtree* thing)
-	(resize thing 18 18)
+;	(resize thing 18 18)
 	(move-to thing i i)
 	(push thing things)))
     (dolist (thing things)
