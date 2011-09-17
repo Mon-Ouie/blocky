@@ -779,7 +779,9 @@ display."
     ;; cl-opengl needs platform specific support to be able to load GL
     ;; extensions, so we need to tell it how to do so in lispbuilder-sdl
     (setf cl-opengl-bindings:*gl-get-proc-address* #'sdl-cffi::sdl-gl-get-proc-address)
-    ;;
+    ;; get rid of any bogus textures
+    (delete-all-textures)
+    ;; move along
     (message "Creating OpenGL window... Done.")
     (message "SDL driver name: ~A" (sdl:video-driver-name))
     (set-frame-rate *frame-rate*)
@@ -1472,8 +1474,11 @@ also the documentation for DESERIALIZE."
     (setf *textures* (make-hash-table :test 'equal))))
 
 (defun delete-all-textures ()
-  (loop for texture being the hash-values in *textures*
-	do (gl:delete-textures (list texture)))
+  (maphash #'(lambda (name texture)
+	       (let ((resource (find-resource name)))
+		 (setf (resource-object resource) nil))
+	       (gl:delete-textures (list texture)))
+	   *textures*)
   (initialize-textures-maybe :force))
 
 (defun find-texture (name)
