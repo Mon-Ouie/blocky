@@ -230,8 +230,9 @@ initialized with BLOCKS as inputs."
   (update-result-lists self)
   (bind-any-default-events self)
   (register-uuid self)
-  (when %image
-    (update-image-dimensions self))
+  ;; don't do this here, it will cause textures to be accessed
+  ;; (when %image
+  ;;   (update-image-dimensions self))
   (setf %x 0 %y 0))
 
 (define-method discard block ()

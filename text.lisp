@@ -72,6 +72,11 @@
   (assert (eq :color (resource-type (find-resource color))))
   (setf %background-color color))
 
+(define-method set-foreground-color text (color)
+  (assert (stringp color))
+  (assert (eq :color (resource-type (find-resource color))))
+  (setf %foreground-color color))
+
 ;; (define-method on-update text ()
 ;;   (layout self))
 

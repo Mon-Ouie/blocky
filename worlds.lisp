@@ -78,6 +78,12 @@ At the moment, only 0=off and 1=on are supported.")
 
 (define-method layout world ())
 
+(define-method window-bounding-box world ()
+  (values %window-y 
+	  %window-x
+	  (+ %window-x *gl-screen-width*)
+	  (+ %window-y *gl-screen-height*)))
+
 (define-method move-window-to world (x y)
   (setf %window-x x 
 	%window-y y))

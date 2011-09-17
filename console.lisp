@@ -135,6 +135,10 @@ the object when the method is run.")
   (or (keyboard-modifier-down-p :lctrl)
       (keyboard-modifier-down-p :rctrl)))
 
+(defun holding-shift ()
+  (or (keyboard-modifier-down-p :lshift)
+      (keyboard-modifier-down-p :rshift)))
+
 ;;; Logging messages to the standard output
 
 (defparameter *message-logging* t)
@@ -1491,11 +1495,17 @@ also the documentation for DESERIALIZE."
 	 (name (resource-name resource)))
     (prog1 surface
       (let ((old-texture (gethash name *textures*)))
+	;; cache height and width
+	(setf (resource-properties resource)
+	      (append (list :height (sdl:height surface)
+			    :width (sdl:width surface))
+		      (resource-properties resource)))
+	;; delete old texture if needed
 	(when old-texture
 	  (gl:delete-textures (list old-texture))
 	  (remhash name *textures*))
-	(progn 
-	  (setf (gethash name *textures*) texture))))))
+	;; store the new texture
+	(setf (gethash name *textures*) texture)))))
 
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
@@ -2118,17 +2128,11 @@ of the music."
 
 (defun image-height (image)
   "Return the height in pixels of IMAGE."
-  (let ((img (if (stringp image)
-		 (find-resource-object image)
-		 image)))
-    (sdl:height img)))
+  (find-resource-property image :height))
 
 (defun image-width (image)
   "Return the width in pixels of IMAGE."
-  (let ((img (if (stringp image)
-		 (find-resource-object image)
-		 image)))
-    (sdl:width img)))
+  (find-resource-property image :width))
 
 ;; &optional (u1 0) (v1 0) (u2 1) (v2 1))
 (defun draw-textured-rectangle (x y z width height texture 
