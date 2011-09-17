@@ -198,7 +198,8 @@ NODE, if any."
    (multiple-value-list (bounding-box object))
    #'(lambda (thing)
        (when (and (colliding-with object thing)
-		  (not (object-eq object thing)))
+		  (not (object-eq object thing))
+		  (field-value :collision-type thing))
 	 (on-collide object thing)))))
 
 (defun quadtree-show (tree &optional object)

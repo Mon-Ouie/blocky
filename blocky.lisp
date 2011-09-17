@@ -47,7 +47,7 @@ draw-filled-circle draw-aa-circle get-keys *project-package-name*
 project-package-name make-block *form-command-handler-function*
 add-block remove-block *initialization-hook* initialize-engine
 hit-blocks quadtree-delete quadtree-insert build-quadtree
-quadtree-collide split-string-on-lines message
+quadtree-collide quadtree-show *quadtree* split-string-on-lines message
 *prompt-sweden-keybindings* *prompt-qwerty-keybindings* *screen-width*
 transform-method-body *edit* roll-under make-stat make-universe
 initialize-colors *style* create-project *standard-categories*
