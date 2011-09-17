@@ -170,10 +170,6 @@ NODE, if any."
  	(assert (find object
 		      (quadtree-objects node)
 		      :test 'eq))
- 	;; (unless (find object
-	;; 	      (quadtree-objects node)
-	;; 	      :test 'eq)
-	;;   (message "WARNING: Quadtree delete failed.")) 
 	(setf (quadtree-objects node)
 	      (delete object (quadtree-objects node) :test 'eq))
 	(assert (not (find object
@@ -239,21 +235,4 @@ NODE, if any."
     (dolist (thing things)
       (quadtree-delete *quadtree* thing))))
     
-    ;; (defun quadtree-map-objects (tree bounding-box function)
-;;   (quadtree-map tree bounding-box
-;; 		#'(lambda (node)
-;; 		    (mapc function (quadtree-objects node)))))
-
-;; (defun quadtree-find-objects (tree)
-;;   (let (result)
-;;     (quadtree-map-objects 
-;;      tree nil
-;;      #'(lambda (x)
-;; 	 (push x result)))
-;;     (nreverse result)))
-
-;; (defun quadtree-count (tree)
-;;   (length (quadtree-find-objects tree)))
- 
-
 ;;; quadtree.lisp ends here
