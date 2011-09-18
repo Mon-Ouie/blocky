@@ -1177,27 +1177,19 @@ resource is stored; see also `find-resource'."
 		   *resources*) 
 	  val)))
 
-(defmacro defresource-ex (&rest parameters0)
-  (assert (keywordp (first parameters0)))
-  (let ((parameters (gensym)))
-    `(let ((,parameters (list ,@parameters0)))
-       (prog1 (getf ,parameters :name)
-	 (index-resource (apply #'make-resource ,parameters))))))
+(defun defresource-ex (parameters)
+  (assert (keywordp (first parameters)))
+  `(prog1 ,(getf parameters :name)
+     (index-resource (apply #'make-resource ',parameters))))
 
 (defmacro defresource (&rest entries)
   (etypecase (first entries)
     ;; it's a single resource.
-    (keyword `(defresource-ex ,entries))
+    (keyword `(defresource-ex ',entries))
     ;; multiple resources are included.
-    (labels ((build-form (entry)
-	       `(defresource-ex ,entry)))
-      `(list ,@(mapcar #'build-form entries)))))
-
-  (assert (every #'listp entries))
-  (labels ((def (entry)
-	     `(defresource
-  `(list ,
-	      
+    (list
+     ;; return a list of strings
+     `(list ,@(mapcar #'defresource-ex entries))))))
 
 (defun find-project-path (project-name)
   "Return the current project path."
