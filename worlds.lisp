@@ -188,13 +188,15 @@ At the moment, only 0=off and 1=on are supported.")
 
 ;;; The sprite layer. 
 
-(define-method add-block world (sprite &optional x y)
+(define-method add-block world (sprite &optional x y append)
   (let ((*quadtree* %quadtree))
     (assert (not (find (find-uuid sprite) 
 		       %sprites
 		       :test 'equal)))
-    (setf %sprites
-	  (append %sprites (list (find-uuid sprite))))
+    (if append 
+	(setf %sprites
+	      (append %sprites (list (find-uuid sprite))))
+	(push sprite %sprites))
     (when (and (numberp x) (numberp y))
       (setf (field-value :x sprite) x
 	    (field-value :y sprite) y))

@@ -1,13 +1,11 @@
-** TODO Fix update-image-dimensions
-
 * XONG 2.0 
 
 ** TODO Basic walled off room. draw barrier around level
 ** TODO Barrier around interior, possibly with rooms/items inside
-** TODO Bouncing ball mechanics
 ** TODO Catch ball to recover energy
 ** TODO Deflect ball with trail
 ** TODO Break bricks to find items
+** TODO Biclops
 ** TODO Monitor enemy from XONG 1.4
 ** TODO Absorb enemy bullet with trail
 ** TODO 2nd enemy
