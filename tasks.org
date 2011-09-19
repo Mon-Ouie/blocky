@@ -1,5 +1,6 @@
 * XONG 2.0 
 
+** TODO fix monitors don't collide with walls
 ** TODO level builder concepts---LOGO again? 
 ** TODO Basic walled off room. draw barrier around level
 ** TODO Barrier around interior, possibly with rooms/items inside

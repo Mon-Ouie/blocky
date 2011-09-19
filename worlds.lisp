@@ -208,6 +208,10 @@ At the moment, only 0=off and 1=on are supported.")
   (setf %sprites (delete (find-uuid sprite) %sprites :test 'equal))
   (quadtree-delete %quadtree sprite))
 
+(define-method discard-block world (sprite)
+  (setf %sprites (delete (find-uuid sprite) %sprites :test 'equal)))
+
+
 ;;; World-local variables
 
 (define-method setvar world (var value)

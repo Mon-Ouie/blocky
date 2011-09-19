@@ -155,6 +155,8 @@ in library.lisp and listener.lisp.
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
   (z :initform 0 :documentation "Integer Z coordinate of this block's position.")
+  (drawing :initform nil) ;; 
+  (heading :initform 0.0) ;; in radians
   (direction :initform :north)
   ;; 
   (last-x :initform 0)
@@ -246,6 +248,9 @@ initialized with BLOCKS as inputs."
       (delete-cell *world* %row %column)
       (remove-block *world* self))
   (discard self))
+
+(define-method exit block ()
+  (discard-block *world* self))
 
 (define-method make-duplicate block ()
   nil) ;; deep copy
@@ -799,7 +804,51 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     (multiple-value-bind (y0 x0)
 	(step-in-direction y x direction steps)
       (move-to self x0 y0))))
-      
+
+;;; Turtle movement
+
+(defun radian-angle (degrees)
+  "Convert DEGREES to radians."
+  (* degrees (float (/ pi 180))))
+
+(define-method (turn-left :category :motion) block ((degrees number :default 90))
+  (decf %heading (radian-angle degrees)))
+
+(define-method (turn-right :category :motion) block ((degrees number :default 90))
+  (incf %heading (radian-angle degrees)))
+
+(define-method (pen-down :category :looks) block ()
+  (setf %drawing t))
+
+(define-method (pen-up :category :looks) block ()
+  (setf %drawing nil))
+
+(define-method (move-forward :category :motion) block ((distance number :default 40))
+  (with-fields (x y heading height width drawing color) self
+    (let ((x0 (+ x (/ width 2)))
+	  (y0 (+ y (/ width 2))))
+      (let ((dx (* distance (cos heading)))
+	    (dy (* distance (sin heading))))
+	(incf x dx)
+	(incf y dy))
+      (when drawing 
+	(draw-turtle-line self x0 y0 x y)))))
+
+(define-method draw-turtle-line block (x0 y0 x1 y1)
+  nil)
+
+(defun find-heading (x0 y0 x1 y1)
+  (atan (- y1 y0) 
+	(- x1 x0)))
+
+(define-method heading-to-thing block (thing)
+  (multiple-value-bind (x1 y1) (center-point thing)
+    (multiple-value-bind (x0 y0) (center-point self)
+      (find-heading x0 y0 x1 y1))))
+
+(define-method heading-to-player block ()
+  (heading-to-thing self (get-player *world*)))
+
 ;;; Grid block movement
 
 (defun world-grid-size ()
@@ -1655,6 +1704,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
   (when (and (integerp x)
 	     (integerp y))
     (move-to block x y))
+  (save-location block)
   (invalidate-layout self))
 
 (define-method delete-block block (block)

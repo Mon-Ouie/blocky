@@ -75,7 +75,7 @@ holding-shift *dark-target-arrow-images* get-button-index arrow-image
 message-to-standard-output reset-message-function *orthogonal-arrows*
 *diagonal-arrows* *function-buttons* *punctuation* *dance-arrows*
 *dance-pad-symbols* *make-prototype-id-package* arrow-formatted-string
-lturn rturn ticks-per-beat event-time event-arrow
+lturn rturn ticks-per-beat event-time event-arrow radian-angle
 default-project-directories *step-tolerance* *resource-handlers*
 load-resource find-resource find-resource-object *colors* *world*
 make-directory-maybe load-user-init-file *project-directories*
