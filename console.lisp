@@ -1185,11 +1185,11 @@ resource is stored; see also `find-resource'."
 (defmacro defresource (&rest entries)
   (etypecase (first entries)
     ;; it's a single resource.
-    (keyword `(defresource-ex ',entries))
+    (keyword (defresource-ex entries))
     ;; multiple resources are included.
     (list
      ;; return a list of strings
-     `(list ,@(mapcar #'defresource-ex entries))))))
+     `(list ,@(mapcar #'defresource-ex entries)))))
 
 (defun find-project-path (project-name)
   "Return the current project path."

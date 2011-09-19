@@ -47,38 +47,40 @@ draw-filled-circle draw-aa-circle get-keys *project-package-name*
 project-package-name make-block *form-command-handler-function*
 add-block remove-block *initialization-hook* initialize-engine
 hit-blocks quadtree-delete quadtree-insert build-quadtree
-quadtree-collide quadtree-show *quadtree* split-string-on-lines message
-*prompt-sweden-keybindings* *prompt-qwerty-keybindings* *screen-width*
-transform-method-body *edit* roll-under make-stat make-universe
-initialize-colors *style* create-project *standard-categories*
-*left-turn* bind-event *right-turn* *default-action-points* left-turn
-right-turn roll bind-event-to-method *colors* enable-key-repeat
-disable-key-repeat get-color define-method *default-font* field-value
-set-field-value object-fields dispatch-event run-project
-*user-init-file-name* distance icon-resource icon-image
-*compass-directions* *clear-cached-images-on-resize*
-*compass-opposites* find-resource-property compose-blank-fields
-font-width font-height *browser* browser set-browser find-object
-*windows* edit create transform-field-reference define-block
-*screen-height* formatted-line-width *last-event*
-formatted-line-height formatted-string-height formatted-string-width
-get-color create-image draw-image blocky edit define-prototype
-has-field *target* with-target defcell define-world
-*choose-direction-menu* set-field-options field-option-value
-index-resource find-project-path index-project load-image-resource
-load-lisp-resource *executable* *function-buttons* *corner-buttons*
-*dance-arrows* *punctuation* *screen-height* *screen-width* blockyp
-*nominal-screen-width* *nominal-screen-height* *gl-screen-width*
-*gl-screen-height* *dance-phrase-symbols* *dance-keybindings*
-*energy-dance-pad-mapping* *message-function* dash holding-shift 
-*dark-target-arrow-images* get-button-index arrow-image
-message-to-standard-output reset-message-function
-*make-prototype-id-package* arrow-formatted-string ticks-per-beat
-event-time event-arrow default-project-directories *step-tolerance*
-*resource-handlers* load-resource find-resource find-resource-object
-*colors* *world* make-directory-maybe load-user-init-file
-*project-directories* resource-to-plist *osx* *linux* make-resource
-make-object-resource make-event *blocks* bind-event-to-text-insertion
+quadtree-collide quadtree-show *quadtree* split-string-on-lines
+message *prompt-sweden-keybindings* *prompt-qwerty-keybindings*
+*screen-width* transform-method-body *edit* roll-under make-stat
+make-universe initialize-colors *style* create-project
+*standard-categories* *left-turn* bind-event *right-turn*
+*default-action-points* left-turn right-turn roll bind-event-to-method
+*colors* enable-key-repeat disable-key-repeat get-color define-method
+*default-font* field-value set-field-value object-fields
+dispatch-event run-project *user-init-file-name* distance
+icon-resource icon-image *compass-directions*
+*clear-cached-images-on-resize* *compass-opposites*
+find-resource-property compose-blank-fields font-width font-height
+*browser* browser set-browser find-object *windows* edit create
+transform-field-reference define-block *screen-height*
+formatted-line-width *last-event* formatted-line-height
+formatted-string-height formatted-string-width get-color create-image
+draw-image blocky edit define-prototype has-field *target* with-target
+defcell define-world *choose-direction-menu* set-field-options
+field-option-value index-resource find-project-path index-project
+load-image-resource load-lisp-resource *executable* *function-buttons*
+*corner-buttons* *dance-arrows* *punctuation* *screen-height*
+*screen-width* blockyp *nominal-screen-width* *nominal-screen-height*
+*gl-screen-width* *gl-screen-height* *dance-phrase-symbols*
+*dance-keybindings* *energy-dance-pad-mapping* *message-function* dash
+holding-shift *dark-target-arrow-images* get-button-index arrow-image
+message-to-standard-output reset-message-function *orthogonal-arrows*
+*diagonal-arrows* *function-buttons* *punctuation* *dance-arrows*
+*dance-pad-symbols* *make-prototype-id-package* arrow-formatted-string
+lturn rturn ticks-per-beat event-time event-arrow
+default-project-directories *step-tolerance* *resource-handlers*
+load-resource find-resource find-resource-object *colors* *world*
+make-directory-maybe load-user-init-file *project-directories*
+resource-to-plist *osx* *linux* make-resource make-object-resource
+make-event *blocks* bind-event-to-text-insertion
 make-field-initializer clone make-field-initializer-body
 make-key-modifier-symbol make-key-string normalize-event make-keyword
 make-object queue-head queue-max queue-count *sender*

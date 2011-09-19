@@ -1,5 +1,6 @@
 * XONG 2.0 
 
+** TODO level builder concepts---LOGO again? 
 ** TODO Basic walled off room. draw barrier around level
 ** TODO Barrier around interior, possibly with rooms/items inside
 ** TODO Catch ball to recover energy
@@ -70,6 +71,7 @@
 * TODO  tigtesters: cpw, tacoxtreme, increpare
 
 * BUGS
+** TODO [#A] Fix Quadtree deletion crash (seems to happen if obj deleted during on-update)
 ** TODO [#B] Fix bad circle artifacts on rounded corner patches on OSX
 ** TODO [#B] Fix custom schema entry labels not being used in 
 ** TODO [#A] Fix halo handles not working after first move of object w/halo

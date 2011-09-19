@@ -1498,6 +1498,17 @@ and MOUSE-Y identify a point inside the block (or input block.)"
   (with-fields (x y) thing
     (direction-to %y %x y x)))
 
+(define-method direction-to-player block ()
+  (direction-to-thing self (get-player *world*)))
+
+(define-method distance-to-thing block (thing)
+  (multiple-value-bind (x0 y0) (center-point self)
+    (multiple-value-bind (x y) (center-point thing)
+      (distance x0 y0 x y))))
+
+(define-method distance-to-player block ()
+  (distance-to-thing self (get-player *world*)))
+
 ;;; Analog gamepad control
 
 (define-method aim block (direction)

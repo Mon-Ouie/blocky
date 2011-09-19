@@ -34,6 +34,7 @@
 	       (:file "console" :depends-on ("prototypes" "quadtree"))
 	       (:file "blocks" :depends-on ("console"))
 	       (:file "library" :depends-on ("blocks"))
+	       (:file "dance" :depends-on ("blocks"))
 	       (:file "halo" :depends-on ("library"))
 	       (:file "text" :depends-on ("library"))
 	       (:file "windows" :depends-on ("library"))
