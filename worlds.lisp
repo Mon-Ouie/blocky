@@ -168,10 +168,12 @@ At the moment, only 0=off and 1=on are supported.")
   ;; (setf %grid-height (or grid-height (truncate (/ *screen-height* %grid-size))))
   ;; (setf %grid-width (or grid-width (truncate (/ *screen-width* %grid-size))))
   (setf %variables (make-hash-table :test 'equal))
-  (setf %quadtree (build-quadtree (list 0 0
-					(* %grid-size %grid-width)
-					(* %grid-size %grid-height))))
-  (create-default-grid self))
+  (let ((world-bounds (list 0 0
+			    (* %grid-size %grid-width)
+			    (* %grid-size %grid-height))))
+    (setf %quadtree 
+	  (build-quadtree (scale-bounding-box world-bounds 1.2)))
+    (create-default-grid self)))
   
 (define-method on-event world (event)
   (with-fields (player quadtree) self

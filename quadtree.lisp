@@ -58,6 +58,17 @@
 	   (>= right0 right1)
 	   (>= bottom0 bottom1)))))
 
+(defun scale-bounding-box (box factor)
+  (destructuring-bind (top left right bottom) box
+    (let ((margin-x (* (- right left)
+		       (- factor 1.0)))
+	  (margin-y (* (- bottom top)
+		       (- factor 1.0))))
+      (list (- top margin-y)
+	    (- left margin-x)
+	    (+ right margin-x)
+	    (+ bottom margin-y)))))
+
 (defun valid-bounding-box (box)
   (and (listp box)
        (= 4 (length box))

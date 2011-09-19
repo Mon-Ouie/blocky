@@ -1,6 +1,6 @@
 * XONG 2.0 
 
-** TODO fix monitors don't collide with walls
+** TODO fix monitors don't collide properly with walls
 ** TODO level builder concepts---LOGO again? 
 ** TODO Basic walled off room. draw barrier around level
 ** TODO Barrier around interior, possibly with rooms/items inside
@@ -22,6 +22,7 @@
 
 * BETA RELEASE EXECUTION PLAN
 
+** TODO sexy black gradient system menu (gradient patch) pops up from corner---not a menu bar
 ** TODO Disallow objects leaving space
 ** TODO Fix key release handling
 ** TODO [#C] Show lisp implementation name etc
