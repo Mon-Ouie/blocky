@@ -689,7 +689,6 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 
 (define-method on-update block ()
   "Update the simulation one step forward in time."
-  (run-tasks self)
   (mapc #'on-update %inputs))
    
 ;;; Creating blocks from S-expressions
@@ -802,7 +801,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     ((direction symbol :default :north) (steps number :initform 1))
   (with-field-values (y x) self
     (multiple-value-bind (y0 x0)
-	(step-in-direction y x direction steps)
+	(step-in-direction y x (or direction :north) steps)
       (move-to self x0 y0))))
 
 ;;; Turtle movement

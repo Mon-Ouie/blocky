@@ -211,7 +211,6 @@ At the moment, only 0=off and 1=on are supported.")
 (define-method discard-block world (sprite)
   (setf %sprites (delete (find-uuid sprite) %sprites :test 'equal)))
 
-
 ;;; World-local variables
 
 (define-method setvar world (var value)
@@ -477,6 +476,7 @@ most user command messages. (See also the method `forward'.)"
 	      (on-update (aref cells z))))))
       ;; run the sprites
       (dolist (sprite sprites)
+	(run-tasks sprite)
 	(on-update sprite))
       ;; update window movement
       (glide-follow self %player)
