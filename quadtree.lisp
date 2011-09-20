@@ -26,7 +26,7 @@
 
 (defvar *quadtree-depth* 0)
 
-(defparameter *default-quadtree-depth* 8)
+(defparameter *default-quadtree-depth* 8) 
  
 (defstruct quadtree 
   objects bounding-box level
@@ -35,20 +35,6 @@
 (defun is-leaf (node)
   ;; testing any quadrant will suffice
   (null (quadtree-southwest node)))
-
-(defun objects-bounding-box (objects)
-  ;; some functions for calculating the bounding box
-  (labels ((left (thing) (field-value :x thing))
-	   (right (thing) (+ (field-value :x thing)
-			     (field-value :width thing)))
-	   (top (thing) (field-value :y thing))
-	   (bottom (thing) (+ (field-value :y thing)
-			      (field-value :height thing))))
-    ;; let's find the bounding box.
-    (list (reduce #'min (mapcar #'left objects))
-	  (reduce #'max (mapcar #'right objects))
-	  (reduce #'min (mapcar #'top objects))
-	  (reduce #'max (mapcar #'bottom objects)))))
 
 (defun bounding-box-contains (box0 box1)
   (destructuring-bind (top0 left0 right0 bottom0) box0
@@ -234,16 +220,30 @@ NODE, if any."
 	(quadtree-show (quadtree-southeast tree) object)
 	(quadtree-show (quadtree-southwest tree) object))))
 
-(defun quadtree-test ()
-  (let ((*quadtree* (build-quadtree '(0 0 1024 1024)))
-	things)
-    (dotimes (i 200)
-      (let ((thing (new block)))
-	(quadtree-insert *quadtree* thing)
-;	(resize thing 18 18)
-	(move-to thing i i)
-	(push thing things)))
-    (dolist (thing things)
-      (quadtree-delete *quadtree* thing))))
+(defun objects-bounding-box (objects)
+  ;; some functions for calculating the bounding box
+  (labels ((left (thing) (field-value :x thing))
+	   (right (thing) (+ (field-value :x thing)
+			     (field-value :width thing)))
+	   (top (thing) (field-value :y thing))
+	   (bottom (thing) (+ (field-value :y thing)
+			      (field-value :height thing))))
+    ;; let's find the bounding box.
+    (list (reduce #'min (mapcar #'left objects))
+	  (reduce #'max (mapcar #'right objects))
+	  (reduce #'min (mapcar #'top objects))
+	  (reduce #'max (mapcar #'bottom objects)))))
+
+;; (defun quadtree-test ()
+;;   (let ((*quadtree* (build-quadtree '(0 0 1024 1024)))
+;; 	things)
+;;     (dotimes (i 200)
+;;       (let ((thing (new block)))
+;; 	(quadtree-insert *quadtree* thing)
+;; ;	(resize thing 18 18)
+;; 	(move-to thing i i)
+;; 	(push thing things)))
+;;     (dolist (thing things)
+;;       (quadtree-delete *quadtree* thing))))
     
 ;;; quadtree.lisp ends here
