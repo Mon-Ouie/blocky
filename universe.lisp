@@ -22,6 +22,8 @@
 
 ;;; Universes are composed of connected worlds.
 
+(in-package :blocky)
+
 (defvar *universe* nil)
 
 (defun normalize-address (address)
@@ -53,39 +55,13 @@ by symbol name. This enables them to be used as hash keys."
   prompt
   (current-address :initform nil)
   (player :initform nil)
-  (stack :initform '())
-  (space :initform nil 
-	 :documentation "When non-nil, this vector of worlds
-represents the z-axis of a euclidean 3-D space."))
-
+  (stack :initform '()))
+ 
 (define-method on-update universe ()
   (on-update %world))
 
 (defun make-universe ()
   (new universe))
-
-(define-method make-euclidean universe ()
-  (setf %space (make-array *default-space-size* 
-			    :adjustable t
-			    :fill-pointer 0)))
-
-(define-method get-space-at universe (index)
-  (aref %space index))
-
-(define-method set-space-at universe (index world)
-  (setf (aref %space index) world))
-
-(define-method get-next-space universe (index)
-  (incf index)
-  (when (and (<= 0 index)
-	     (< index (fill-pointer %space)))
-    (aref %space index)))
-
-(define-method get-previous-space universe (index)
-  (decf index)
-  (when (and (<= 0 index)
-	     (< index (fill-pointer %space)))
-    (aref %space index)))
 
 (define-method add-world universe (address world)
   (setf (gethash (normalize-address address) %worlds) world))
@@ -103,7 +79,7 @@ represents the z-axis of a euclidean 3-D space."))
   (setf %player player))
 
 (define-method get-current-world universe ()
-  (car %stack))
+  (first %stack))
 
 (define-method get-current-address universe ()
   %current-address)
@@ -113,13 +89,13 @@ represents the z-axis of a euclidean 3-D space."))
   (setf %stack nil)
   (setf %current-address nil))
 
-(define-method generate-world universe (address)
+(define-method generate universe (address)
   (destructuring-bind (prototype &rest parameters) address
     (let ((world (clone (symbol-value prototype))))
       (prog1 world
 	;; make sure any loadouts or intializers get run with the proper world
 	(let ((*world* world)) 
-	  (generate-with world parameters))))))
+	  (build world parameters))))))
 
 (define-method find-world universe (address)
   (assert address)
@@ -130,12 +106,6 @@ represents the z-axis of a euclidean 3-D space."))
 		       (find-resource-object address)
 		       (generate-world self address)))
 	candidate)))
-
-(define-method configure universe (&key address player prompt narrator)
-  (when address (setf %current-address address))
-  (when player (setf %player player))
-  (when prompt (setf %prompt prompt))
-  (when narrator (setf %narrator narrator)))
 
 (define-method update universe ()
   (when %world (update %world)))
@@ -160,25 +130,6 @@ PLAYER as the player."
   (when %player 
     (add-player world %player))
   (install-blocks self))
-
-(define-method exit universe (&key player)
-  "Return the player to the previous world on the stack."
-  (when player (setf %player player))
-  (with-fields (stack) self
-    ;; exit and discard current world
-    (exit (pop stack))
-    ;; 
-    (let ((world (car stack)))
-      (if world
-	  (progn (setf *world* world)
-		 (setf *universe* self)
-		 ;; resume at previous play coordinates
-		 (drop-player-at-last-location world %player)
-;		 (start world)
-		 (set-receiver %prompt world)
-		 (set-narrator world %narrator)
-		 (add-player world %player))
-	  (error "No world.")))))
 
 ;;; Missions and Goals
 

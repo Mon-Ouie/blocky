@@ -26,7 +26,7 @@
 
 (defvar *quadtree-depth* 0)
 
-(defparameter *default-quadtree-depth* 6)
+(defparameter *default-quadtree-depth* 8)
  
 (defstruct quadtree 
   objects bounding-box level
@@ -154,9 +154,6 @@ NODE, if any."
 	   tree
 	   (multiple-value-list 
 	    (bounding-box object)))))
-    ;; (when (null node0)
-    ;;   ;; object has left the quadtree's assigned space.
-    ;;   (exit object))
     (let ((node (or node0 tree)))
       ;; (message "Inserting ~S ~S"
       ;; 	       (get-some-object-name object) 
@@ -177,9 +174,6 @@ NODE, if any."
 	     tree
 	     (multiple-value-list 
 	      (bounding-box object)))))
-      ;; (when (null node0)
-      ;; 	;; object has left the quadtree's assigned space.
-      ;; 	(exit object))
       (let ((node (or node0 tree)))
       ;; (message "Deleting ~S ~S"
       ;; 	       (get-some-object-name object) 

@@ -42,6 +42,7 @@
 	       (:file "listener" :depends-on ("library"))
 	       (:file "system" :depends-on ("library"))
 	       (:file "worlds" :depends-on ("library"))
+	       (:file "universe" :depends-on ("worlds"))
 	       (:file "shell" :depends-on ("library"))
 	       (:file "meta" :depends-on ("library"))))
 

@@ -1,11 +1,13 @@
 * XONG 2.0 
 
-** TODO fix monitors don't collide properly with walls
+** TODO universe = quadtree turtle based world gen/management 
+** TODO very simple level 1 with improved tandy colors
+** TODO biclops jump/stomp with big boom sound
+** TODO fix monitors don't always collide properly with walls
+** TODO get line-of-sight working again
 ** TODO level builder concepts---LOGO again? 
 ** TODO Basic walled off room. draw barrier around level
 ** TODO Barrier around interior, possibly with rooms/items inside
-** TODO Catch ball to recover energy
-** TODO Deflect ball with trail
 ** TODO Break bricks to find items
 ** TODO Biclops
 ** TODO Monitor enemy from XONG 1.4
@@ -13,15 +15,12 @@
 ** TODO 2nd enemy
 ** TODO ESCAPE to restart/regenerate
 ** TODO fictional emails
-
-** TODO [#B] Collide any object that leaves the outermost bounding box
-** TODO the particles behave (mostly) deterministically and leave trails
-** TODO some levels are ring shape with impassable center area (like xong)
 ** TODO 5200esque gameplay with analog stick and one button (allow any joystick button). bullets activate doors etc
 ** TODO can push objects like bombs into place to be shot to destroy bricks
 
 * BETA RELEASE EXECUTION PLAN
 
+** TODO GLSL https://github.com/jtza8/interact/blob/master/src/filter.lisp http://www.swiftless.com/glsltuts.html
 ** TODO sexy black gradient system menu (gradient patch) pops up from corner---not a menu bar
 ** TODO Disallow objects leaving space
 ** TODO Fix key release handling
