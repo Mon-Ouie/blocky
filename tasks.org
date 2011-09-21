@@ -1,6 +1,7 @@
 * XONG 2.0 
 
-*** TODO try implementing %sprites field as hash
+** TODO try caching quadtree node as a shortcut to delete
+** TODO Fix enemies that shoot before moving disappearing after shot
 ** TODO symmetrical monadic procedural turtle designed aliens with png pieces laid down by turtles.
 ** TODO behavior tokens evolve too
 ** TODO fences red/magenta flash
