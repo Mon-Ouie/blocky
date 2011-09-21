@@ -1,25 +1,23 @@
 * XONG 2.0 
 
-** TODO try caching quadtree node as a shortcut to delete
-** TODO Fix enemies that shoot before moving disappearing after shot
-** TODO symmetrical monadic procedural turtle designed aliens with png pieces laid down by turtles.
-** TODO behavior tokens evolve too
-** TODO fences red/magenta flash
-** TODO Make objects that spawn enemies. 
-** TODO Growing mismunch corruption clouds
-** TODO pick up chips as pac pellets
-** TODO bombs in the level that blow up stuff
-** TODO drag an item behind you 
-** TODO chip = currency as XP to pick up after kills
-** TODO universe = quadtree turtle based world gen/management 
-** TODO very simple level 1 with improved tandy colors
-** TODO biclops jump/stomp with big boom sound
-** TODO fix monitors don't always collide properly with walls
-** TODO get line-of-sight working again
-** TODO level builder concepts---LOGO again? 
-** TODO Basic walled off room. draw barrier around level
-** TODO Barrier around interior, possibly with rooms/items inside
-** TODO Break bricks to find items
+
+** TODO Four level types each with an integer difficulty parameter
+** TODO 
+
+** TODO [#B] more themes
+** TODO [#B] Fix enemies that shoot before moving disappearing after shot
+** TODO [#C] symmetrical monadic procedural turtle designed aliens with png pieces laid down by turtles.
+** TODO [#C] behavior tokens evolve too
+** TODO [#B] fences red/magenta flash
+** TODO [#A] Make objects that spawn enemies. 
+** TODO [#C] Growing mismunch corruption clouds
+** TODO [#B] pick up chips as pac pellets
+*** TODO chip = currency as XP to pick up after kills
+** TODO [#B] bombs in the level that blow up stuff
+** TODO [#C] universe = quadtree turtle based world gen/management 
+** TODO [#A] get line-of-sight working again
+** TODO [#C] Vaults with special layouts
+** TODO [#B] Break bricks to find items
 ** TODO Biclops
 ** TODO Monitor enemy from XONG 1.4
 ** TODO Absorb enemy bullet with trail
