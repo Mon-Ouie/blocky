@@ -208,7 +208,8 @@ At the moment, only 0=off and 1=on are supported.")
 
 (define-method remove-block world (sprite)
   (remhash (find-uuid sprite) %sprites)
-  (quadtree-delete %quadtree sprite))
+  (when (field-value :quadtree-node sprite)
+    (quadtree-delete %quadtree sprite)))
 
 (define-method discard-block world (sprite)
   (remhash (find-uuid sprite) %sprites))

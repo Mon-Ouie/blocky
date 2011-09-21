@@ -150,7 +150,7 @@ in library.lisp and listener.lisp.
   (default-events :initform nil)
   (description :initform nil :documentation "A description of the block.") 
   (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
-  (excluded-fields :initform nil) 
+  (excluded-fields :initform '(:quadtree-node))
   ;; visual layout
   (x :initform 0 :documentation "Integer X coordinate of this block's position.")
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
@@ -158,6 +158,7 @@ in library.lisp and listener.lisp.
   (drawing :initform nil) ;; 
   (heading :initform 0.0) ;; in radians
   (direction :initform :north)
+  (quadtree-node :initform nil)
   ;; 
   (last-x :initform 0)
   (last-y :initform 0)
@@ -246,8 +247,8 @@ initialized with BLOCKS as inputs."
 (define-method destroy block ()
   (if %on-grid 
       (delete-cell *world* %row %column)
-      (remove-block *world* self))
-  (discard self))
+      (remove-block *world* self)))
+;  (discard self))
 
 (define-method exit block ()
   (discard-block *world* self))

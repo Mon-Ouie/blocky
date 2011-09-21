@@ -149,29 +149,27 @@ NODE, if any."
 			 :test 'eq)))
       (push (find-object object)
 	    (quadtree-objects node))
+      ;; save pointer to node so we can avoid searching when it's time
+      ;; to delete (i.e. move) the object later.
+      (blocky:set-field-value :quadtree-node object node)
       (assert (find (find-object object)
 		    (quadtree-objects node)
 		    :test 'eq)))))
 
 (defun quadtree-delete (tree object0)
   (let ((object (find-object object0)))
-    (let ((node0
-	    (quadtree-search 
-	     tree
-	     (multiple-value-list 
-	      (bounding-box object)))))
-      (let ((node (or node0 tree)))
-      ;; (message "Deleting ~S ~S"
-      ;; 	       (get-some-object-name object) 
-      ;; 	       (object-address-string object))
- 	(assert (find object
-		      (quadtree-objects node)
-		      :test 'eq))
-	(setf (quadtree-objects node)
-	      (delete object (quadtree-objects node) :test 'eq))
-	(assert (not (find object
-			   (quadtree-objects node)
-			   :test 'eq)))))))
+    ;; grab the cached quadtree node
+    (let ((node (field-value :quadtree-node object)))
+      (assert node)
+      ;; (assert (find object
+      ;; 		    (quadtree-objects node)
+      ;; 		    :test 'eq))
+      (setf (quadtree-objects node)
+	    (delete object (quadtree-objects node) :test 'eq))
+      (set-field-value :quadtree-node object nil)
+      (assert (not (find object
+			 (quadtree-objects node)
+			 :test 'eq))))))
 
 (defun quadtree-map-collisions (tree bounding-box processor)
   (assert (functionp processor))
