@@ -26,7 +26,7 @@
 
 (defvar *quadtree-depth* 0)
 
-(defparameter *default-quadtree-depth* 6) 
+(defparameter *default-quadtree-depth* 8) 
  
 (defstruct quadtree 
   objects bounding-box level
