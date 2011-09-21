@@ -781,6 +781,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	%z %last-z)
   (when *quadtree* (quadtree-insert *quadtree* self)))
 
+(define-method set-location block (x y)
+  (setf %x x %y y))
+
 (define-method move-to block 
     ((x number :default 0) (y number :default 0))
   "Move the block to a new (X Y) location."

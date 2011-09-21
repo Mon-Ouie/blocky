@@ -176,11 +176,12 @@ At the moment, only 0=off and 1=on are supported.")
     (create-default-grid self)))
   
 (define-method on-event world (event)
-  (with-fields (player quadtree) self
-    (when player 
-      (prog1 t
-	(let ((*quadtree* quadtree))
-	  (on-event player event))))))
+  (or (on-event%%block self event)
+      (with-fields (player quadtree) self
+	(when player 
+	  (prog1 t
+	    (let ((*quadtree* quadtree))
+	      (on-event player event)))))))
 
 (define-method make world (&rest parameters)
   (apply #'initialize self parameters))

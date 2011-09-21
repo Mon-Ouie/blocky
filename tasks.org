@@ -1,3 +1,32 @@
+* XONG 2.0 
+
+** TODO symmetrical monadic procedural turtle designed aliens with png pieces laid down by turtles.
+** TODO behavior tokens evolve too
+** TODO fences red/magenta flash
+** TODO Make objects that spawn enemies. 
+** TODO Growing mismunch corruption clouds
+** TODO pick up chips as pac pellets
+** TODO bombs in the level that blow up stuff
+** TODO drag an item behind you 
+** TODO chip = currency as XP to pick up after kills
+** TODO universe = quadtree turtle based world gen/management 
+** TODO very simple level 1 with improved tandy colors
+** TODO biclops jump/stomp with big boom sound
+** TODO fix monitors don't always collide properly with walls
+** TODO get line-of-sight working again
+** TODO level builder concepts---LOGO again? 
+** TODO Basic walled off room. draw barrier around level
+** TODO Barrier around interior, possibly with rooms/items inside
+** TODO Break bricks to find items
+** TODO Biclops
+** TODO Monitor enemy from XONG 1.4
+** TODO Absorb enemy bullet with trail
+** TODO 2nd enemy
+** TODO ESCAPE to restart/regenerate
+** TODO fictional emails
+** TODO 5200esque gameplay with analog stick and one button (allow any joystick button). bullets activate doors etc
+** TODO can push objects like bombs into place to be shot to destroy bricks
+
 * BETA RELEASE EXECUTION PLAN
 
 ** TODO [#A] AAAA script wiki database (like the file system)
@@ -99,35 +128,6 @@
 ** TODO [#C] use turtle to program polygon vertices and stuff, like in fluxus
 ** TODO [#C] general svg image support
 
-
-* XONG 2.0 
-
-** TODO symmetrical monadic procedural turtle designed aliens with png pieces laid down by turtles.
-** TODO behavior tokens evolve too
-** TODO fences red/magenta flash
-** TODO Make objects that spawn enemies. 
-** TODO Growing mismunch corruption clouds
-** TODO pick up chips as pac pellets
-** TODO bombs in the level that blow up stuff
-** TODO drag an item behind you 
-** TODO chip = currency as XP to pick up after kills
-** TODO universe = quadtree turtle based world gen/management 
-** TODO very simple level 1 with improved tandy colors
-** TODO biclops jump/stomp with big boom sound
-** TODO fix monitors don't always collide properly with walls
-** TODO get line-of-sight working again
-** TODO level builder concepts---LOGO again? 
-** TODO Basic walled off room. draw barrier around level
-** TODO Barrier around interior, possibly with rooms/items inside
-** TODO Break bricks to find items
-** TODO Biclops
-** TODO Monitor enemy from XONG 1.4
-** TODO Absorb enemy bullet with trail
-** TODO 2nd enemy
-** TODO ESCAPE to restart/regenerate
-** TODO fictional emails
-** TODO 5200esque gameplay with analog stick and one button (allow any joystick button). bullets activate doors etc
-** TODO can push objects like bombs into place to be shot to destroy bricks
 
 * TODO  tigtesters: cpw, tacoxtreme, increpare
 

@@ -76,11 +76,11 @@ message-to-standard-output reset-message-function *orthogonal-arrows*
 *diagonal-arrows* *function-buttons* *punctuation* *dance-arrows*
 *dance-pad-symbols* *make-prototype-id-package* arrow-formatted-string
 lturn rturn ticks-per-beat event-time event-arrow radian-angle
-default-project-directories *step-tolerance* *resource-handlers*
-load-resource find-resource find-resource-object *colors* *world*
-make-directory-maybe load-user-init-file *project-directories*
-resource-to-plist *osx* *linux* make-resource make-object-resource
-make-event *blocks* bind-event-to-text-insertion
+draw-textured-rectangle default-project-directories *step-tolerance*
+*resource-handlers* load-resource find-resource find-resource-object
+*colors* *world* make-directory-maybe load-user-init-file
+*project-directories* resource-to-plist *osx* *linux* make-resource
+make-object-resource make-event *blocks* bind-event-to-text-insertion
 make-field-initializer clone make-field-initializer-body
 make-key-modifier-symbol make-key-string normalize-event make-keyword
 make-object queue-head queue-max queue-count *sender*
@@ -155,7 +155,7 @@ define-prototype new object-p self percent-gray percent-grey
 transform-declaration-field-descriptor is-a compose-blank-fields
 make-field-initializer initialize initialize-prototypes
 initialize-blocky object-address-string draw-string make-tree
-draw-string-blended make-menu find-text-image make-text-image
+draw-string-blended make-menu find-text-image make-text-image find-texture
 *default-super* clear-text-image-cache *token-types* verify *serif*
 *sans* *monospace* toggle-debug *debug-on-error* *block-categories*
 *block-colors* input load-variable-resource save-variable-resource

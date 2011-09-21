@@ -31,7 +31,7 @@
 by symbol name. This enables them to be used as hash keys."
   (etypecase address
     (string address)
-    (list (assert (and (symbolp (first address))
+    (list (assert (and (stringp (first address))
 		       (or (null (rest address))
 			   (keywordp (second address)))))
        (labels ((all-keys (plist)
@@ -97,13 +97,15 @@ by symbol name. This enables them to be used as hash keys."
 	(let ((*world* world)) 
 	  (build world parameters))))))
 
-(define-method find-world universe (address)
+(define-method visit-address universe (address)
   (assert address)
   (let ((candidate (get-world self address)))
     (if (null candidate)
-	(add-world self (normalize-address address)
+	(add-world self address
 		   (if (stringp address)
+		       ;; possibly load object from disk
 		       (find-resource-object address)
+		       ;; synthesize
 		       (generate-world self address)))
 	candidate)))
 

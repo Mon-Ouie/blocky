@@ -164,9 +164,9 @@ NODE, if any."
       ;; (message "Deleting ~S ~S"
       ;; 	       (get-some-object-name object) 
       ;; 	       (object-address-string object))
- 	(assert (find object
-		      (quadtree-objects node)
-		      :test 'eq))
+ 	;; (assert (find object
+	;; 	      (quadtree-objects node)
+	;; 	      :test 'eq))
 	(setf (quadtree-objects node)
 	      (delete object (quadtree-objects node) :test 'eq))
 	(assert (not (find object
