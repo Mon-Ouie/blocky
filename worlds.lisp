@@ -30,7 +30,7 @@
   (window-y :initform 0)
   (window-x0 :initform nil)
   (window-y0 :initform nil)
-  (window-speed :initform 1)
+  (window-speed :initform 2)
   (window-scale-x :initform 1)
   (window-scale-y :initform 1)
   ;; the invisible graph paper underlying our world of sprites
