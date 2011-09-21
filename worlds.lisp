@@ -49,7 +49,7 @@
   (background :initform nil)
   (background-color :initform "black")
   ;; sprite cells
-  (sprites :initform nil :documentation "A list of sprites.")
+  (sprites :initform nil :documentation "A hash table of sprites.")
   (quadtree :initform nil)
   ;; lighting 
   (automapped :initform nil :documentation "Show all previously lit squares.")
@@ -168,6 +168,7 @@ At the moment, only 0=off and 1=on are supported.")
   ;; (setf %grid-height (or grid-height (truncate (/ *screen-height* %grid-size))))
   ;; (setf %grid-width (or grid-width (truncate (/ *screen-width* %grid-size))))
   (setf %variables (make-hash-table :test 'equal))
+  (setf %sprites (make-hash-table :test 'equal))
   (let ((world-bounds (list 0 0
 			    (* %grid-size %grid-width)
 			    (* %grid-size %grid-height))))
@@ -193,13 +194,11 @@ At the moment, only 0=off and 1=on are supported.")
 
 (define-method add-block world (sprite &optional x y append)
   (let ((*quadtree* %quadtree))
-    (assert (not (find (find-uuid sprite) 
-		       %sprites
-		       :test 'equal)))
-    (if append 
-	(setf %sprites
-	      (append %sprites (list (find-uuid sprite))))
-	(push sprite %sprites))
+    (assert (not (gethash (find-uuid sprite) 
+			  %sprites)))
+    (setf (gethash (find-uuid sprite)
+		   %sprites)
+	  t)
     (when (and (numberp x) (numberp y))
       (setf (field-value :x sprite) x
 	    (field-value :y sprite) y))
@@ -208,11 +207,11 @@ At the moment, only 0=off and 1=on are supported.")
 ;      (move-to sprite x y))))
 
 (define-method remove-block world (sprite)
-  (setf %sprites (delete (find-uuid sprite) %sprites :test 'equal))
+  (remhash (find-uuid sprite) %sprites)
   (quadtree-delete %quadtree sprite))
 
 (define-method discard-block world (sprite)
-  (setf %sprites (delete (find-uuid sprite) %sprites :test 'equal)))
+  (remhash (find-uuid sprite) %sprites))
 
 ;;; World-local variables
 
@@ -458,7 +457,7 @@ most user command messages. (See also the method `forward'.)"
     	  (dotimes (z (fill-pointer cells))
     	    (draw (aref cells z))))))
     ;; draw the sprites
-    (dolist (sprite sprites)
+    (loop for sprite being the hash-keys in %sprites do
       (draw sprite))))
 ;    (quadtree-show %quadtree %player)))
 
@@ -478,15 +477,15 @@ most user command messages. (See also the method `forward'.)"
 	    (dotimes (z (fill-pointer cells))
 	      (on-update (aref cells z))))))
       ;; run the sprites
-      (dolist (sprite sprites)
+      (loop for sprite being the hash-keys in %sprites do
 	(run-tasks sprite)
 	(on-update sprite))
       ;; update window movement
       (glide-follow self %player)
       (update-window-glide self)
       ;; do collisions for both sprites and grid
-      (dolist (sprite sprites)
-;	(grid-collide self sprite)
+      (loop for sprite being the hash-keys in %sprites do
+	;; (grid-collide self sprite)
 	(quadtree-collide quadtree sprite)))))
     
 ;;; Collision detection for the grid objects
