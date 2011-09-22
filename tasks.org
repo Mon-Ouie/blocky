@@ -1,3 +1,7 @@
+* API concerns
+
+** TODO uniform x y ordering for all math funcs. 
+
 * XONG 2.0 
 
 ** TODO [#A] Define level generators
