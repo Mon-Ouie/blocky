@@ -2,7 +2,8 @@
 
 
 ** TODO Four level types each with an integer difficulty parameter
-** TODO 
+** TODO Each level type has a theme plus unique layout and twists
+** TODO Three music tracks per type. 
 
 ** TODO [#B] more themes
 ** TODO [#B] Fix enemies that shoot before moving disappearing after shot

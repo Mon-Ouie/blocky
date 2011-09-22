@@ -2260,18 +2260,23 @@ of the music."
       (:ttf (values (font-text-width string font)
 		    (font-height font))))))
 
+(defparameter *use-antialiased-text* t)
+
 (defun make-text-image (font string)
   (assert (and (not (null string))
 	       (plusp (length string))))
   (multiple-value-bind (width height)
       (font-text-extents string font)
     (let ((surface (sdl:create-surface width height :bpp 8))
-	  (texture (first (gl:gen-textures 1))))
+	  (texture (first (gl:gen-textures 1)))
+	  (renderer (if *use-antialiased-text*
+			#'sdl:draw-string-blended-*
+			#'sdl:draw-string-solid-*)))
       (prog1 texture
-	(sdl:draw-string-blended-* string 0 0 
-				   :color (find-resource-object "white")
-				   :font (find-resource-object font)
-				   :surface surface)
+	(funcall renderer string 0 0 
+		 :color (find-resource-object "white")
+		 :font (find-resource-object font)
+		 :surface surface)
 	(gl:bind-texture :texture-2d texture)
 	(gl:tex-parameter :texture-2d :texture-min-filter :linear)
 	(gl:tex-parameter :texture-2d :texture-mag-filter :linear)

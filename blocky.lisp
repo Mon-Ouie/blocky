@@ -155,10 +155,11 @@ define-prototype new object-p self percent-gray percent-grey
 transform-declaration-field-descriptor is-a compose-blank-fields
 make-field-initializer initialize initialize-prototypes
 initialize-blocky object-address-string draw-string make-tree
-draw-string-blended make-menu find-text-image make-text-image find-texture
-*default-super* clear-text-image-cache *token-types* verify *serif*
-*sans* *monospace* toggle-debug *debug-on-error* *block-categories*
-*block-colors* input load-variable-resource save-variable-resource
-*persistent-variables* *persistent-variables-file-name* duplicate
-persistent-variables-file *shell* save-variables load-variables
-*block-text-colors* defblock define-visual-macro))
+draw-string-blended make-menu find-text-image make-text-image
+find-texture *default-super* clear-text-image-cache *token-types*
+verify *serif* *use-antialiased-text* *sans* *monospace* toggle-debug
+*debug-on-error* *block-categories* *block-colors* input
+load-variable-resource save-variable-resource *persistent-variables*
+*persistent-variables-file-name* duplicate persistent-variables-file
+*shell* save-variables load-variables *block-text-colors* defblock
+define-visual-macro))
