@@ -202,6 +202,7 @@ At the moment, only 0=off and 1=on are supported.")
     (when (and (numberp x) (numberp y))
       (setf (field-value :x sprite) x
 	    (field-value :y sprite) y))
+    (clear-saved-location sprite)
     (quadtree-insert %quadtree sprite)))
       
 ;      (move-to sprite x y))))

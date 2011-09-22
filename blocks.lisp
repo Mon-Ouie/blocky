@@ -160,9 +160,9 @@ in library.lisp and listener.lisp.
   (direction :initform :north)
   (quadtree-node :initform nil)
   ;; 
-  (last-x :initform 0)
-  (last-y :initform 0)
-  (last-z :initform 0)
+  (last-x :initform nil)
+  (last-y :initform nil)
+  (last-z :initform nil)
   ;; possible grid location
   (on-grid :initform nil
 	   :documentation "When non-nil, this block is located on a world's cell-grid.")
@@ -775,12 +775,19 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	%last-y %y
 	%last-z %z))
 
+(define-method clear-saved-location block ()
+  (setf %last-x nil
+	%last-y nil
+	%last-z nil))
+
 (define-method restore-location block ()
-  (when *quadtree* (quadtree-delete *quadtree* self))
-  (setf %x %last-x
-	%y %last-y
-	%z %last-z)
-  (when *quadtree* (quadtree-insert *quadtree* self)))
+  ;; is there a location to restore? 
+  (when %last-x
+    (when *quadtree* (quadtree-delete *quadtree* self))
+    (setf %x %last-x
+	  %y %last-y
+	  %z %last-z)
+    (when *quadtree* (quadtree-insert *quadtree* self))))
 
 (define-method set-location block (x y)
   (setf %x x %y y))
