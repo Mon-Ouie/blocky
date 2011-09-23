@@ -1,16 +1,14 @@
 * API Beta checklist 
 
-** TODO [#A] uniform x y ordering for all math funcs.
-*** TODO change *compass-directions* to just *directions*, up down upright downleft... as in dance.lisp
-** TODO [#A] proper doc strings and half decent overview 
-*** TODO use M-x checkdoc on blocks.lisp and probably worlds.lisp
-*** TODO show both ways of writing define-block
-*** TODO deprecate :keyword value short style of specifying
-** TODO [#B] Revise reference preamble to not refer to define-prototype
-** TODO [#B] Consider moving long Blocky overview into preamble and making it more comprehensive
-** TODO [#B] later-when checks a condition (whether some other method returns non-nil) (also later-until)
+** TODO [#A] simple example, something to copy and tweak
+*** TODO show both ways of writing define-block (with super and without)
+** TODO [#A] change *compass-directions* to just *directions*, up down upright downleft... as in dance.lisp
+** TODO add more docstrings for world.lisp
+** TODO [#A] uniform x y ordering for all math funcs
+** TODO [#B] Pathfinding and line-of-sight
 ** TODO [#B] one or two game skeletons in addition to microxong 
 *** pre set up for simple 2600 controls and graphics
+** TODO [#C] later-when checks a condition (whether some other method returns non-nil) (also later-until)
 ** TODO [#C] Fix key release handling
 ** TODO [#C] "later" macros should evaluate the timer forms
 ** TODO [#C] remove obsolete functions in blocks.lisp

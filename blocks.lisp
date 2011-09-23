@@ -61,8 +61,8 @@ Web at:
   (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
   (z :initform 0 :documentation "Integer Z coordinate of this block's position.")
   (drawing :initform nil) ;; 
-  (heading :initform 0.0) ;; in radians
-  (direction :initform :north)
+  (heading :initform 0.0 :documentation "Heading angle of this block, in radians.")
+  (direction :initform :north :documentation "Keyword direction angle.")
   (quadtree-node :initform nil
 		 :documentation "A pointer to the current quadtree node, if any. See also quadtree.lisp")
   ;; 
