@@ -4,9 +4,9 @@
 *** TODO show both ways of writing define-block (with super and without)
 ** TODO [#A] change *compass-directions* to just *directions*, up down upright downleft... as in dance.lisp
 ** TODO add more docstrings for world.lisp
-** TODO [#A] uniform x y ordering for all math funcs
-** TODO [#B] Pathfinding and line-of-sight
-** TODO [#B] one or two game skeletons in addition to microxong 
+** TODO [#A] ensure uniform x y ordering for all math funcs (some old ones use row/col)
+** TODO [#B] Make sure pathfinding and line-of-sight work properly 
+** TODO [#B] Release one or two game skeletons in addition to microxong 
 *** pre set up for simple 2600 controls and graphics
 ** TODO [#C] later-when checks a condition (whether some other method returns non-nil) (also later-until)
 ** TODO [#C] Fix key release handling
@@ -36,7 +36,7 @@
 ** TODO [#C] fictional emails
 ** TODO [#C] can push objects like bombs into place to be shot to destroy bricks
 
-* BETA RELEASE EXECUTION PLAN
+* GUI BETA (LATER OCTOBER)
 
 ** TODO [#A] AAAA script wiki database (like the file system)
 *** TODO defblock link <--- to another wikipage or something
