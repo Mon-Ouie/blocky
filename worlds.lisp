@@ -62,11 +62,6 @@ At the moment, only 0=off and 1=on are supported.")
   ;; What happens when you hit the edge?
   (edge-condition :initform :exit
 		  :documentation "Either :block the player, :exit the world, or :wrap around.")
-  ;; Obsolete fields
-  ;; (exited :initform nil
-  ;; 	  :documentation "Non-nil when the player has exited. See also `forward'.")
-  ;; (player-exit-row :initform 0)
-  ;; (player-exit-column :initform 0)
   ;; serialization
   (serialized-grid :documentation "When non-nil, a serialized sexp version of the grid.")
   (excluded-fields :initform

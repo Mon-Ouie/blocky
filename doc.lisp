@@ -117,8 +117,12 @@
   (with-open-file (file preamble-file
 			:direction :input
 			:if-does-not-exist nil)
-    (loop for line = (read-line file nil)
-	  while line collect line)))
+    (let* ((len (file-length file))
+           (string (make-string len)))
+      (read-sequence string file)
+      (split-string-on-lines string))))
+    ;; (loop for line = (read-line file nil)
+    ;; 	  while line collect line)))
 
 (defun document-package (package-name &key (stream t) preamble-file title)
   (let ((package (find-package package-name))
@@ -145,7 +149,7 @@
 	      (preamble-file-lines preamble-file))))
       (when preamble-file 
 	(dolist (line preamble-lines)
-	  (format stream "~A" line)
+	  (format stream "~A " line)
 	  (fresh-line stream))))
     ;; document prototypes and their respective methods
     (let (prototypes)

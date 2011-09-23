@@ -33,10 +33,11 @@ the clone, and the superobject's version will be hidden.
 
 * An overview of the blocks model
 
-Blocks are the visual programming elements that programs in the
-Blocky language are built up from. The prototypal block defined here
-establishes the default properties and behaviors of blocks, and the
-default means of composing individual blocks into larger programs.
+Blocks are the visual programming elements that programs in the Blocky
+language are built up from. The prototypal block defined in
+BLOCKS.LISP establishes the default properties and behaviors of
+blocks, and the default means of composing individual blocks into
+larger programs.
 
 Blocky programs have some aspects of display trees, in that all blocks
 know how to draw themselves, track the mouse or touchscreen, and
