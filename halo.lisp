@@ -159,7 +159,7 @@
       (setf %height (+ height (* 2 size))))))
 
 (define-method draw halo ()
-  (draw-inputs self))
+  (mapc #'draw %inputs))
 
 (define-method can-pick halo ()
   (can-pick %target))

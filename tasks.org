@@ -1,6 +1,19 @@
-* API concerns
+* API Beta checklist 
 
-** TODO uniform x y ordering for all math funcs. 
+** TODO [#A] uniform x y ordering for all math funcs.
+*** TODO change *compass-directions* to just *directions*, up down upright downleft... as in dance.lisp
+** TODO [#A] proper doc strings and half decent overview 
+*** TODO use M-x checkdoc on blocks.lisp and probably worlds.lisp
+*** TODO show both ways of writing define-block
+*** TODO deprecate :keyword value short style of specifying
+** TODO [#B] Revise reference preamble to not refer to define-prototype
+** TODO [#B] Consider moving long Blocky overview into preamble and making it more comprehensive
+** TODO [#B] later-when checks a condition (whether some other method returns non-nil) (also later-until)
+** TODO [#B] one or two game skeletons in addition to microxong 
+*** pre set up for simple 2600 controls and graphics
+** TODO [#C] Fix key release handling
+** TODO [#C] "later" macros should evaluate the timer forms
+** TODO [#C] remove obsolete functions in blocks.lisp
 
 * XONG 2.0 
 
@@ -48,7 +61,6 @@
 *** and then only allow the move to go a certain distance. return number moved
 *** then "resting contact" will work; the object won't try to move anymore (if gravity.)
 ** TODO [#A] Fix as much of the buglist as possible
-** TODO [#B] Fix key release handling
 ** TODO [#B] Pretty sexy black rounded corner notifications
 ** TODO [#B] Improve error handling in shell
 *** isolate/trap all block errors and display them grayed out with an inspectable error
@@ -57,7 +69,6 @@
 *** define-method warning shell
 *** redirect messages to message bar. optionally fading notifications with widgets in them** TODO [#A] Restore basic collision detection functionality
 ** TODO [#B] Undo framework: https://github.com/smithzvk/modf
-** TODO [#B] later-when checks a condition (whether some other method returns non-nil) (also later-until)
 ** TODO [#B] Audio test widget ("left, right")
 ** TODO [#B] duplicate halo handle
 ** TODO [#B] PRINTer blocks
@@ -68,7 +79,6 @@
 ** TODO [#B] UUID filenames for some objects
 ** TODO [#B] general purpose resizer/scroller decorator thinger
 ** TODO [#B] Allow user to move entries easier via yellow triangle tab
-** TODO [#B] general process/statemachine thing for distributing moves over many frames, smooth rubberbanding etc
 ** desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
 ** COOL FEATURE: gnome-do/anything.el style search/operate, for quick access to everything
 ** TODO [#B] file selector dialog (only choosing from project dir at first)

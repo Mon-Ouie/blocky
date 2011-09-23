@@ -438,8 +438,6 @@
 (define-method enter entry ()
   (super%enter self :no-clear))
 
-(define-method draw-contents entry ())
-
 (define-method layout entry ()
   (with-fields (height width value line) self
     (setf height (+ (* 2 *dash*) (font-height *font*)))

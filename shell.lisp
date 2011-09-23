@@ -303,9 +303,6 @@
 		      ;; only one block selected. use that.
 		      ((= 1 (length selection))
 		       (first selection))
-		      ;; nothing selected, only 1 top-level block.
-		      ((= 1 (count-top-level-blocks buffer))
-		       (first (top-level-blocks buffer)))
 		      ;; fall back to command-line
 		      (t command-line))))
 	    (when block 

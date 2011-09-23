@@ -27,6 +27,7 @@
 
 (setf *screen-width* 640)
 (setf *screen-height* 480)
+(setf *use-antialiased-text* t)
 (setf *window-title* "example3.blocky")
 (setf *resizable* t)
 (enable-key-repeat 9 2)

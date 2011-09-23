@@ -158,7 +158,8 @@ in library.lisp and listener.lisp.
   (drawing :initform nil) ;; 
   (heading :initform 0.0) ;; in radians
   (direction :initform :north)
-  (quadtree-node :initform nil)
+  (quadtree-node :initform nil
+		 :documentation "A pointer to the current quadtree node, if any. See also quadtree.lisp")
   ;; 
   (last-x :initform nil)
   (last-y :initform nil)
@@ -194,7 +195,8 @@ in library.lisp and listener.lisp.
 ;;; Defining blocks
 
 (defmacro define-block (spec &body args)
-  "Define a new block prototype. The first argument SPEC is either a
+  "Define a new block prototype.
+The first argument SPEC is either a
 symbol naming the new block, or a list of the form
  (SYMBOL . PROPERTIES) Where SYMBOL is similarly a name symbol but
 PROPERTIES is a keyword property list whose valid keys
@@ -202,7 +204,8 @@ are :SUPER (specifying which prototype the newly defined block will
 inherit behavior from) and :DOCUMENTATION (a documentation string.)
 The arguments ARGS are field specifiers, each of which is either a
 symbol naming the field, or a list of the form (SYMBOL . PROPERTIES) 
-with :INITFORM and :DOCUMENTATION as valid keys."
+with :INITFORM and :DOCUMENTATION as valid keys.
+Argument &BODY difuhy]."
   (let ((name0 nil)
 	(super0 "BLOCKY:BLOCK"))
     (etypecase spec
@@ -277,7 +280,6 @@ needed, certain base tags are built-in and have a fixed
 interpretation:
 
  -    :obstacle --- Blocks movement and causes collisions
- -    :temporary --- This block is not preserved when exiting a world.
  -    :light-source --- This object casts light. 
  -    :opaque --- Blocks line-of-sight, casts shadows. 
 "
@@ -312,18 +314,6 @@ interpretation:
   (dolist (each %inputs)
     (set-parent each self)))
 
-(define-method count-inputs block ()
-  (length %inputs))
-
-(defun is-temporary (thing)
-  (and (has-field :temporary thing)
-       (field-value :temporary thing)))
-
-(define-method count-top-level-blocks block ()
-  (with-field-values (inputs) self
-    (- (length inputs)
-       (count-if #'is-temporary inputs))))
-
 (define-method can-accept block () nil)
 
 (define-method accept block (other-block)
@@ -334,14 +324,6 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (defvar *buffer* nil
   "When non-nil, the UUID of the current buffer object.")
 
-(define-method parent-is-buffer block ()
-  (assert (not (null *buffer*)))
-  (object-eq %parent *buffer*))
-
-(define-method top-level-blocks block ()
-  (with-field-values (inputs) self
-    (remove-if #'is-temporary inputs)))
-  
 (define-method contains block (block)
   (find (find-object block)
 	%inputs
@@ -359,7 +341,6 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (defun (setf input) (self name block)
   (with-fields (inputs) self
-;    (assert (not (object-p name)))
     (assert (not (null inputs)))
     (set-parent block self)
     (setf (nth (input-position self name) inputs)
@@ -368,13 +349,6 @@ non-nil to indicate that the block was accepted, nil otherwise."
 
 (define-method position-within-parent block ()
   (input-position %parent self))
-
-(defun named-input-type (self name)
-  (with-fields (schema) self
-    (let ((index (position name schema :key #'first)))
-      (if (numberp index)
-	  (cdr (assoc name schema))
-	  (error "No such input ~S" name)))))
 
 (define-method set-parent block (parent)
   "Store a UUID link to the enclosing block PARENT."
@@ -900,7 +874,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method is-visible block ()
   %visible)
 
-;;; Menus
+;;; Menus and programming-blocks
+
+;; See also library.lisp for the Message blocks.
 
 (define-method make-method-menu-item block (method target)
   (assert (and target (keywordp method)))
@@ -939,7 +915,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method make-reference block ()
   (new reference self))
 
-;;; evaluation and recompilation: compiling block diagrams into equivalent sexps
+;;; Evaluation and recompilation: compiling block diagrams into equivalent sexps
 
 (define-method evaluate-inputs block ()
   "Evaluate all blocks in %INPUTS from left-to-right. Results are
@@ -987,7 +963,8 @@ current block. Used for taking a count of all the nodes in a tree."
 (defparameter *block-font* "sans-11"
   "Name of the font used in drawing block labels and input data.")
 
-(defparameter *font* *block-font*)
+(defparameter *font* *block-font*
+  "Name of the current font used for drawing.")
 
 (defmacro with-font (font &rest body)
   `(let ((*font* ,font))
@@ -1012,19 +989,10 @@ See also `*style'.")
 arguments. Uses `*dash*' which may be configured by `*style*'."
   (apply #'+ (* n *dash*) terms))
 
-(defvar *pseudo-pixel-size* 1.0
-  "Size in pixels of a pseudo-pixel.")
-
-(defvar *text-base-y* nil)
-
-(defparameter *cursor-blink-time* 8 
-  "The number of frames the cursor displays each color while blinking.")
-
-(defparameter *cursor-color* "magenta" 
-  "The color of the cursor when not blinking.")
-
-(defparameter *cursor-blink-color* "cyan"
-  "The color of the cursor when blinking.")
+(defvar *text-base-y* nil 
+"Screen Y-coordinate for text baseline.
+This is used to override layout-determined baselines in cases where
+you want to align a group of text items across layouts.")
 
 (defparameter *block-colors*
   '(:motion "cornflower blue"
@@ -1103,10 +1071,10 @@ arguments. Uses `*dash*' which may be configured by `*style*'."
   "X11 color names of the text used for different block categories.")
 
 (define-method find-color block (&optional (part :background))
-  "Return the X11 color name of this block's category as a string.
+  "Return the X11 color name of this block's PART as a string.
 If PART is provided, return the color for the corresponding
-part (:BACKGROUND, :SHADOW, :FOREGROUND, or :HIGHLIGHT) of this category
-of block."
+part (:BACKGROUND, :SHADOW, :FOREGROUND, or :HIGHLIGHT) of this
+category of block."
   (let* ((colors (ecase part
 		  (:background *block-colors*)
 		  (:highlight *block-highlight-colors*)
@@ -1118,14 +1086,17 @@ of block."
 	(assert category)
 	(assert result))))
 
-(defparameter *selection-color* "red")
+(defparameter *selection-color* "red" 
+  "Name of the color used for highlighting objects in the selection.")
 
 (defparameter *styles* '((:rounded :dash 3)
-			 (:flat :dash 1)))
+			 (:flat :dash 1))
+  "Graphical style parameters for block drawing.")
 
-(defvar *style* :rounded)
+(defvar *style* :rounded "The default style setting; must be a keyword.")
 
 (defmacro with-style (style &rest body)
+  "Evaluate the forms in BODY with `*style*' bound to STYLE."
   (let ((st (gensym)))
   `(let* ((,st ,style)
 	  (*style* ,st)
@@ -1167,12 +1138,13 @@ blocks."
 
 (define-method draw-rounded-patch block (x0 y0 x1 y1
 				    &key depressed dark socket color)
-  "Draw a standard BLOCKY block notation patch.
-Top left corner at (X0 Y0), bottom right at (X1 Y1). If DEPRESSED is
-non-nil, draw an indentation; otherwise a raised area is drawn. If
-DARK is non-nil, paint a darker region. If SOCKET is non-nil, cut a hole
-in the block where the background shows through. If COLOR is non-nil,
-override all colors."
+  "Draw a standard BLOCKY block notation patch with rounded corners.
+Places the top left corner at (X0 Y0), bottom right at (X1 Y1). If
+DEPRESSED is non-nil, draw an indentation; otherwise a raised area is
+drawn. If DARK is non-nil, paint a darker region. If SOCKET is
+non-nil, cut a hole in the block where the background shows
+through. If COLOR is non-nil, its value will override all other
+arguments."
   (with-block-drawing 
     (let ((bevel (or color (if depressed shadow highlight)))
 	  (chisel (or color (if depressed highlight shadow)))
@@ -1229,9 +1201,10 @@ override all colors."
 
 (define-method draw-flat-patch block (x0 y0 x1 y1
 				    &key depressed dark socket color)
-  "Draw a panel with top left corner at (X0 Y0), bottom right at (X1
-Y1). If DEPRESSED is non-nil, draw an indentation; otherwise a raised
-area is drawn. If DARK is non-nil, paint a darker region."
+  "Draw a square-cornered Blocky notation patch. 
+Places its top left corner at (X0 Y0), bottom right at (X1 Y1). If
+DEPRESSED is non-nil, draw an indentation; otherwise a raised area is
+drawn. If DARK is non-nil, paint a darker region."
   (with-block-drawing 
     (let ((bevel (or color (if depressed shadow highlight)))
 	  (chisel (or color (if depressed highlight shadow)))
@@ -1262,6 +1235,8 @@ area is drawn. If DARK is non-nil, paint a darker region."
 
 (define-method draw-patch block (x0 y0 x1 y1 
 				    &key depressed dark socket color)
+  "Draw a Blocky notation patch in the current `*style*'.
+Places its top left corner at (X0 Y0), bottom right at (X1 Y1)."
   (let ((draw-function (ecase *style*
 			 (:rounded #'draw-rounded-patch)
 			 (:flat #'draw-flat-patch))))
@@ -1270,19 +1245,30 @@ area is drawn. If DARK is non-nil, paint a darker region."
 	     :depressed depressed :dark dark 
 	     :socket socket :color color)))
 
-(define-method draw-socket block (x0 y0 x1 y1)
-  (draw-patch self x0 y0 x1 y1 :depressed t :socket t))
+;;; Standard ways of blinking a cursor
+
+(defparameter *cursor-blink-time* 8 
+  "The number of frames the cursor displays each color while blinking.")
+
+(defparameter *cursor-color* "magenta" 
+  "The color of the cursor when not blinking.")
+
+(defparameter *cursor-blink-color* "cyan"
+  "The color of the cursor when blinking.")
 
 (define-method update-cursor-clock block ()
-  ;; keep the cursor blinking
+  "Update blink timers for any blinking cursor indicators.
+This method allows for configuring blinking items on a system-wide
+scale. See also "
   (with-fields (cursor-clock) self
     (decf cursor-clock)
     (when (> (- 0 *cursor-blink-time*) cursor-clock)
       (setf cursor-clock *cursor-blink-time*))))
 
-(define-method draw-cursor-glyph block 
+(define-method draw-cursor-glyph block
     (&optional (x 0) (y 0) (width 2) (height (font-height *font*))
 	       &key color blink)
+  "Draw a graphical cursor at point X, Y of dimensions WIDTH x HEIGHT."
   (with-fields (cursor-clock) self
     (update-cursor-clock self)
     (let ((color2
@@ -1293,19 +1279,28 @@ area is drawn. If DARK is non-nil, paint a darker region."
 		*cursor-color*)))
       (draw-box x y width height :color (or color color2)))))
 
-(define-method draw-cursor block (&rest ignore) nil)
+(define-method draw-cursor block (&rest args)
+  "Draw the cursor. By default, it is not drawn at all."
+  (declare (ignore args))
+  nil)
 
 (defparameter *highlight-background-color* "gray80")
 
 (defparameter *highlight-foreground-color* "gray20")
 
-(define-method draw-focus block () nil)
+(define-method draw-focus block ()
+  "Draw any additional indications of input focus." nil)
 
-(define-method draw-highlight block () nil)
+(define-method draw-highlight block () 
+  "Draw any additional indications of mouseover." nil)
 
-(defparameter *hover-color* "red")
+(defparameter *hover-color* "red" 
+  "Name of the color used to indicate areas where objects can be
+dropped.")
 
 (define-method draw-hover block ()
+  "Draw something to indicate that this object can recieve a drop.
+See shell.lisp for more on the implementation of drag-and-drop."
   (with-fields (x y width height inputs) self
     (draw-patch self x y (+ x *dash* width) (+ y *dash* height)
 	      :color *hover-color*)
@@ -1313,12 +1308,30 @@ area is drawn. If DARK is non-nil, paint a darker region."
       (draw input))))
 
 (define-method update-image-dimensions block ()
+  "Resize this block to fit its %IMAGE, possibly with scaling factors.
+This is often invoked by the system when a block changes its image or
+scaling factors. See also the documentation for the fields %SCALE-X
+and %SCALE-Y."
   (with-fields (image height width scale-x scale-y) self
     (when image
       (setf width (* scale-x (image-width image)))
       (setf height (* scale-y (image-height image))))))
 
 (define-method draw-as-sprite block ()
+  "Draw this block as a sprite. By default only %IMAGE is drawn.
+The following block fields will control sprite drawing:
+
+   %OPACITY  Number in the range 0.0-1.0 with 0.0 being fully transparent
+             and 1.0 being fully opaque.
+
+   %BLEND    Blending mode for OpenGL compositing.
+             See the function `set-blending-mode' for a list of modes.
+
+   %SCALE-X   Non-negative number giving a scaling factor for the
+              horizontal axis.
+
+   %SCALE-Y   Non-negative number giving a scaling factor for the
+              vertical axis."
   (with-fields (image x y z height opacity blend scale-x scale-y) self
     (when image
       (when (null height)
@@ -1331,44 +1344,20 @@ area is drawn. If DARK is non-nil, paint a darker region."
 
 (define-method change-image block 
     ((image string :default nil))
+  "Change this sprite's currently displayed image to IMAGE.
+Scaling factors and image sizes are applied."
   (when image
     (setf %image image)
     (update-image-dimensions self)))
   
-(define-method draw-expression block (x0 y0 segment type)
-  (with-fields (height input-widths) self
-    (let ((dash *dash*)
-	  (width *socket-width*))
-      (if (eq type :block)
-	  ;; draw a socket if there's no block; otherwise wait
-	  ;; until later to draw.
-	  (when (null segment)
-	    (draw-socket self (+ x0 dash) (+ y0 dash)
-			 (+ x0 *socket-width*)
-			 (+ y0 (- height dash))))
-	  (progn
-	    (with-block-drawing 
-	      (text x0 (+ y0 dash 1)
-		  (print-expression segment))
-	      (setf width (expression-width segment)))))
-      width)))
-
-(define-method draw-inputs block ()
-  (mapc #'draw %inputs))
-
 (define-method draw block ()
+  "Draw this block via OpenGL."
   (with-fields (image x y width height blend opacity) self
     (if image 
 	(progn (set-blending-mode blend)
 	       (draw-image image x y))
 	(progn (draw-patch self x y (+ x width) (+ y height))
-	       (draw-contents self)))))
-
-(define-method draw-contents block ()
-  (with-fields (operation inputs) self
-    ;; (draw-label self operation)
-    (dolist (each inputs)
-      (draw each))))
+	       (mapc #'draw %inputs)))))
 
 (define-method draw-border block (&optional (color *selection-color*))
   (let ((dash *dash*))
@@ -1455,20 +1444,16 @@ area is drawn. If DARK is non-nil, paint a darker region."
 (define-method resize block 
     ((width number :default 100)
      (height number :default 100))
+  "Change this object's size to WIDTH by HEIGHT units."
   (when *quadtree* (quadtree-delete *quadtree* self))
   (setf %height height)
   (setf %width width)
   (when *quadtree* (quadtree-insert *quadtree* self))
   (invalidate-layout self))
 
-(define-method layout-as-image block ()
-  (with-fields (height width image) self
-    (setf height (image-height image))
-    (setf width (image-width image))))
-
 (define-method layout block () 
   (if %image 
-      (layout-as-image self)
+      (update-image-dimensions self)
       (with-fields (height width label) self
 	(with-field-values (x y inputs) self
 	  (let* ((left (+ x (label-width self)))
@@ -1504,11 +1489,14 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 	    self)))))
 
 (define-method bounding-box block ()
+  "Return this object's bounding box as multiple values.
+The order is (TOP LEFT RIGHT BOTTOM)."
   (when (null %height)
     (update-image-dimensions self))
   (values %y %x (+ %x %width) (+ %y %height)))
 
 (define-method center-point block ()
+  "Return this object's center point as multiple values X and Y."
   (multiple-value-bind (top left right bottom)
       (bounding-box self)
     (values (* 0.5 (+ left right))
@@ -1544,6 +1532,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
       (point-in-rectangle-p x y width height top left (- right left) (- bottom top)))))
 
 (define-method colliding-with block (thing)
+  "Return non-nil if this block collides with THING."
   (multiple-value-bind (top left right bottom)
       (bounding-box self)
     (multiple-value-bind (top0 left0 right0 bottom0)
@@ -1554,18 +1543,23 @@ and MOUSE-Y identify a point inside the block (or input block.)"
 	   (>= bottom top0)))))
 
 (define-method direction-to-thing block (thing)
+  "Return a direction keyword approximating the direction to THING."
   (with-fields (x y) thing
     (direction-to %y %x y x)))
 
 (define-method direction-to-player block ()
+  "Return the direction the player is in from here."
   (direction-to-thing self (get-player *world*)))
 
 (define-method distance-to-thing block (thing)
+  "Return the straight-line distance between here and THING.
+Note that the center-points of the objects are used for comparison."
   (multiple-value-bind (x0 y0) (center-point self)
     (multiple-value-bind (x y) (center-point thing)
       (distance x0 y0 x y))))
 
 (define-method distance-to-player block ()
+  "Return the straight-line distance to the player."
   (distance-to-thing self (get-player *world*)))
 
 ;;; Analog gamepad control
