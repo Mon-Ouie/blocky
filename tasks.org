@@ -2,16 +2,22 @@
 
 ** TODO [#A] simple example, something to copy and tweak
 *** TODO show both ways of writing define-block (with super and without)
+** TODO [#B] Finish MicroXONG
+*** TODO add documentation in game source
+*** TODO use bouncing ball and glass bricks
+*** TODO finish level generation scheme
+*** TODO replace glass sound with something better
+*** TODO get line-of-sight working again
+*** TODO 
 ** TODO [#A] change *compass-directions* to just *directions*, up down upright downleft... as in dance.lisp
 ** TODO add more docstrings for world.lisp
 ** TODO [#A] ensure uniform x y ordering for all math funcs (some old ones use row/col)
 ** TODO [#B] Make sure pathfinding and line-of-sight work properly 
 ** TODO [#B] Release one or two game skeletons in addition to microxong 
-*** pre set up for simple 2600 controls and graphics
-** TODO [#C] later-when checks a condition (whether some other method returns non-nil) (also later-until)
 ** TODO [#C] Fix key release handling
+** TODO [#C] later-when checks a condition (whether some other method returns non-nil) (also later-until)
 ** TODO [#C] "later" macros should evaluate the timer forms
-** TODO [#C] remove obsolete functions in blocks.lisp
+** TODO [#C] Don't require .blocky suffix for project dir
 
 * XONG 2.0 
 
@@ -20,7 +26,6 @@
 *** TODO Each level type has a theme plus unique layout and twists
 *** TODO Three music tracks per type. 
 ** TODO [#A] Make objects that spawn enemies. 
-** TODO [#A] get line-of-sight working again
 ** TODO [#B] Fix enemies that shoot before moving disappearing after shot
 ** TODO [#B] fences red/magenta flash
 ** TODO [#B] pick up chips as pac pellets
