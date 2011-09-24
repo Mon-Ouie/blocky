@@ -8,7 +8,6 @@
 *** TODO finish level generation scheme
 *** TODO replace glass sound with something better
 *** TODO get line-of-sight working again
-*** TODO 
 ** TODO [#A] change *compass-directions* to just *directions*, up down upright downleft... as in dance.lisp
 ** TODO add more docstrings for world.lisp
 ** TODO [#A] ensure uniform x y ordering for all math funcs (some old ones use row/col)
