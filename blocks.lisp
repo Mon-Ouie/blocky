@@ -62,7 +62,7 @@ Web at:
   (z :initform 0 :documentation "Integer Z coordinate of this block's position.")
   (drawing :initform nil) ;; 
   (heading :initform 0.0 :documentation "Heading angle of this block, in radians.")
-  (direction :initform :north :documentation "Keyword direction angle.")
+  (direction :initform :up :documentation "Keyword direction angle.")
   (quadtree-node :initform nil
 		 :documentation "A pointer to the current quadtree node, if any. See also quadtree.lisp")
   ;; 
@@ -688,10 +688,10 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (setf %z z))
 
 (define-method move-toward block 
-    ((direction symbol :default :north) (steps number :initform 1))
-  (with-field-values (y x) self
-    (multiple-value-bind (y0 x0)
-	(step-in-direction y x (or direction :north) steps)
+    ((direction symbol :default :up) (steps number :initform 1))
+  (with-field-values (x y) self
+    (multiple-value-bind (x0 y0)
+	(step-in-direction x y (or direction :up) steps)
       (move-to self x0 y0))))
 
 ;;; Turtle movement
@@ -758,9 +758,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (move-cell *world* self row column))
 
 (define-method move-toward-grid block 
-    ((direction symbol :default :north) (steps number :initform 1))
-  (multiple-value-bind (row column)
-      (step-in-direction %row %column direction steps)
+    ((direction symbol :default :up) (steps number :initform 1))
+  (multiple-value-bind (column row)
+      (step-in-direction %column %row direction steps)
     (move-to-grid self row column)))
 
 ;;; Visibility
@@ -1482,17 +1482,17 @@ Note that the center-points of the objects are used for comparison."
 		((and (axis-pressed-p horizontal) (axis-pressed-p vertical))
 		 (if (minusp y) 
 		     (if (minusp x)
-			 :northwest
-			 :northeast)
+			 :upleft
+			 :upright)
 		     (if (minusp x)
-			 :southwest
-			 :southeast)))
+			 :downleft
+			 :downright)))
 		;; horizontal 
 		((axis-pressed-p horizontal)
-		 (if (minusp x) :west :east))
+		 (if (minusp x) :left :right))
 		;; vertical 
 		((axis-pressed-p vertical)
-		 (if (minusp y) :north :south)))))
+		 (if (minusp y) :up :down)))))
 	(when direction 
 	  ;; if the player pushed a direction, move in that direction.
 	  (prog1 t 
@@ -1515,15 +1515,15 @@ Note that the center-points of the objects are used for comparison."
 	(cond ((and (axis-pressed-p horizontal) (axis-pressed-p vertical))
 	       (aim self (if (minusp y) 
 			     (if (minusp x)
-				 :northwest
-				 :northeast)
+				 :upleft
+				 :upright)
 			     (if (minusp x)
-				 :southwest
-				 :southeast))))
+				 :downleft
+				 :downright))))
 	      ((axis-pressed-p horizontal)
-	       (aim self (if (minusp x) :west :east)))
+	       (aim self (if (minusp x) :left :right)))
 	      ((axis-pressed-p vertical)
-	       (aim self (if (minusp y) :north :south))))))))
+	       (aim self (if (minusp y) :up :down))))))))
 
 ;;; Grouping blocks into buffers with buffer-local variables
 

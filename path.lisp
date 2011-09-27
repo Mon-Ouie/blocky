@@ -241,8 +241,8 @@
 		  (path-map (path-map path))
 		  (new-G (+ 1 (node-G node)))
 		  (step (step-in-direction 
-			(node-row node)
 			(node-column node)
+			(node-row node)
 			direction))
 		  (r (first step))
 		  (c (second step))
@@ -269,7 +269,7 @@
 			 successor)
 		     nil))
 	       nil)))
-	 *compass-directions*)))
+	 *directions*)))
 	
 ;; Now we come to the pathfinding algorithm itself. 
 

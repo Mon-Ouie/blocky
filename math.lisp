@@ -50,42 +50,42 @@ So 2d6+2 would be (roll 2 6 2)."
 	(delta-y (- y2 y1)))
     (sqrt (+ (* delta-x delta-x) (* delta-y delta-y)))))
 
-(defvar *compass-directions* (list :north :south :east :west
-				   :northeast :southeast
-				   :northwest :southwest)
+(defvar *directions* (list :up :down :right :left
+				   :upright :downright
+				   :upleft :downleft)
   "List of keywords representing the eight compass directions.")
 
-(defvar *compass-opposites* (list :north :south
-				  :south :north
-				  :east :west
-				  :west :east
-				  :northeast :southwest
-				  :southwest :northeast
-				  :southeast :northwest
-				  :northwest :southeast
-				  :here :here)
+(defvar *opposites* (list :up :down
+			  :down :up
+			  :right :left
+			  :left :right
+			  :upright :downleft
+			  :downleft :upright
+			  :downright :upleft
+			  :upleft :downright
+			  :here :here)
   "Property list mapping direction keywords to their 180-degree
 opposites.")
 
 (defparameter *left-turn* 
-  '(:north :northwest
-    :northwest :west
-    :west :southwest
-    :southwest :south
-    :south :southeast
-    :southeast :east
-    :east :northeast
-    :northeast :north))
+  '(:up :upleft
+    :upleft :left
+    :left :downleft
+    :downleft :down
+    :down :downright
+    :downright :right
+    :right :upright
+    :upright :up))
 
 (defparameter *right-turn*
-  '(:north :northeast
-    :northeast :east
-    :east :southeast
-    :southeast :south
-    :south :southwest
-    :southwest :west
-    :west :northwest
-    :northwest :north))
+  '(:up :upright
+    :upright :right
+    :right :downright
+    :downright :down
+    :down :downleft
+    :downleft :left
+    :left :upleft
+    :upleft :up))
 
 (defun left-turn (direction)
   (getf *left-turn* direction))
@@ -96,49 +96,46 @@ opposites.")
 (defun opposite-direction (direction)
   "Return the direction keyword that is the opposite direction from
 DIRECTION."
-  (getf *compass-opposites* direction))
+  (getf *opposites* direction))
 
 (defun random-direction ()
-  (nth (random (length *compass-directions*))
-       *compass-directions*))
+  (nth (random (length *directions*))
+       *directions*))
 
-(defun step-in-direction (row column direction &optional (n 1))
-  "Return the point ROW, COLUMN moved by n squares in DIRECTION."
-  ;; (when (minusp n)
-  ;;   (setf n (abs n))
-  ;;   (setf direction (opposite-direction direction)))
+(defun step-in-direction (x y direction &optional (n 1))
+  "Return the point X Y moved by n squares in DIRECTION."
   (ecase direction
-    (:here (values row column))
-    (:north (values (- row n) column))
-    (:south (values (+ row n) column))
-    (:east  (values row (+ column n)))
-    (:west  (values row (- column n)))
-    (:northeast (values (- row n) (+ column n)))
-    (:northwest (values (- row n) (- column n)))
-    (:southeast (values (+ row n) (+ column n)))
-    (:southwest (values (+ row n) (- column n)))))
+    (:here (values x y))
+    (:up (values x (- y n)))
+    (:down (values x (+ y n)))
+    (:right  (values (+ x n) y))
+    (:left  (values (- x n) y))
+    (:upright (values (+ x n) (- y n)))
+    (:upleft (values (- x n) (- y n)))
+    (:downright (values (+ x n) (+ y n)))
+    (:downleft (values (- x n) (+ y n)))))
 
-(defun direction-to (r1 c1 r2 c2)
-  "Return general direction of the ray from R1,C1 to R2,C2."
-  (if (or (some #'null (list r1 c1 r2 c2))
-	  (and (= r1 r2) (= c1 c2)))
+(defun direction-to (x1 y1 x2 y2)
+  "Return general direction of the ray from Y1,X1 to Y2,X2."
+  (if (or (some #'null (list y1 x1 y2 x2))
+	  (and (= y1 y2) (= x1 x2)))
       :here
-      (if (< r1 r2) ; definitely to the south
-	  (if (< c1 c2)
-	      :southeast
-	      (if (> c1 c2)
-		  :southwest
-		  :south))
-	  (if (> r1 r2) ;; definitely to the north
-	      (if (< c1 c2)
-		  :northeast
-		  (if (> c1 c2)
-		      :northwest
-		      :north))
-	      ;; rows are equal; it's either east or west
-	      (if (< c1 c2)
-		  :east
-		  :west)))))
+      (if (< y1 y2) ; definitely to the down
+	  (if (< x1 x2)
+	      :downright
+	      (if (> x1 x2)
+		  :downleft
+		  :down))
+	  (if (> y1 y2) ;; definitely to the up
+	      (if (< x1 x2)
+		  :upright
+		  (if (> x1 x2)
+		      :upleft
+		      :up))
+	      ;; rows are equal; it's either right or left
+	      (if (< x1 x2)
+		  :right
+		  :left)))))
 
 (defun within-extents (x y x0 y0 x1 y1)
   (and (>= x x0) 

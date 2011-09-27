@@ -56,8 +56,8 @@ make-universe initialize-colors *style* create-project
 *colors* enable-key-repeat disable-key-repeat get-color define-method
 *default-font* field-value set-field-value object-fields
 dispatch-event run-project *user-init-file-name* distance
-icon-resource icon-image *compass-directions*
-*clear-cached-images-on-resize* *compass-opposites*
+icon-resource icon-image *directions*
+*clear-cached-images-on-resize* *opposites*
 find-resource-property compose-blank-fields font-width font-height
 *browser* browser set-browser find-object *windows* edit create
 transform-field-reference define-block *screen-height*
