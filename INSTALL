@@ -85,8 +85,8 @@ More instructions for Mac and Windows will be available soon.
    By default, new projects are created in ~/.blocky 
 
    The distribution contains a text configuration file called
-   BLOCKY.INI; by default Blocky looks for it in the same directory as
-   the executable.
+   BLOCKY-INIT.LISP; by default Blocky looks for it in the same
+   directory as the executable.
 
    To run projects, Blocky needs a line like this added to the INI
    file so that it will know where to find them.
@@ -98,6 +98,10 @@ More instructions for Mac and Windows will be available soon.
    if you don't set it. NOTE: These must be pathnames (prefixed with
    #P) and must contain a trailing slash.
 
+   To use your home directory, 
+
+   (setf *project-directories* (list #P"~/blocky/" #P"~/.blocky/" #P"~/"))
+   
 7. At the shell, 
 
      cd ~/src/blocky    # or wherever you installed it...
