@@ -780,7 +780,7 @@ display."
     ;; extensions, so we need to tell it how to do so in lispbuilder-sdl
     (setf cl-opengl-bindings:*gl-get-proc-address* #'sdl-cffi::sdl-gl-get-proc-address)
     ;; get rid of any bogus textures
-    (delete-all-textures)
+    (when *textures* (delete-all-textures))
     ;; move along
     (message "Creating OpenGL window... Done.")
     (message "SDL driver name: ~A" (sdl:video-driver-name))
@@ -2516,6 +2516,11 @@ of the music."
       (when force-shell
 	(start (new shell (new block))))
       (start-session))))
+
+(defun blocky ()
+  (new system)
+  (start (new shell (new block)))
+  (start-session))
 
 ;; (defun share (project) ...
 

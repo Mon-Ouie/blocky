@@ -1,4 +1,4 @@
-;;; example3.lisp --- turtle graphics example
+;;; turtle.lisp --- turtle graphics example
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -20,15 +20,15 @@
 
 ;;; Preamble
 
-(defpackage :example3 
+(defpackage :turtle 
     (:use :blocky :common-lisp))
   
-(in-package :example3)
+(in-package :turtle)
 
 (setf *screen-width* 640)
 (setf *screen-height* 480)
 (setf *use-antialiased-text* t)
-(setf *window-title* "example3.blocky")
+(setf *window-title* "turtle.blocky")
 (setf *resizable* t)
 (enable-key-repeat 9 2)
 
@@ -164,8 +164,8 @@
 (define-block meadow :image "meadow")
 (define-method accept meadow (other) nil)
 
-(defun example3 ()
+(defun turtle ()
   (new system)
   (start (new shell (new block))))
 
-;;; example3.lisp ends here
+;;; turtle.lisp ends here
