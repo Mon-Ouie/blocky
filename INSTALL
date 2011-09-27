@@ -117,7 +117,6 @@ More instructions for Mac and Windows will be available soon.
       ;; run an example
       (blocky:play "turtle")  ;; A GUI tutorial, with turtle and ladybug
 
-
 7a.   The remixable XONG example can be downloaded via git:
 
       	  git clone git@github.com:dto/xong.blocky.git
@@ -128,7 +127,7 @@ More instructions for Mac and Windows will be available soon.
       
       Then in SBCL:
 
-            (blocky:play "xong")
+          (blocky:play "xong")
 
 8. Getting help and reporting bugs 
 
