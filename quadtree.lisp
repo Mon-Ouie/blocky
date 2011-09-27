@@ -232,16 +232,4 @@ NODE, if any."
 	  (reduce #'min (mapcar #'top objects))
 	  (reduce #'max (mapcar #'bottom objects)))))
 
-;; (defun quadtree-test ()
-;;   (let ((*quadtree* (build-quadtree '(0 0 1024 1024)))
-;; 	things)
-;;     (dotimes (i 200)
-;;       (let ((thing (new block)))
-;; 	(quadtree-insert *quadtree* thing)
-;; ;	(resize thing 18 18)
-;; 	(move-to thing i i)
-;; 	(push thing things)))
-;;     (dolist (thing things)
-;;       (quadtree-delete *quadtree* thing))))
-    
 ;;; quadtree.lisp ends here
