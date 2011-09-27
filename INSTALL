@@ -1,9 +1,8 @@
 This is the INSTALL file for Blocky.
 
 This file gives you instructions on how to download Blocky and compile
-it from the source code. 
-
-Blocky works on Windows and Mac, but compiling Blocky on those
+it from the source code. This should be straightforward on Linux;
+Blocky also works on Windows and Mac, but compiling Blocky on those
 platforms may require additional steps (such as installing the
 included SDL binary DLL's in the included win32/ subfolder of the
 Blocky source directory.)
@@ -54,13 +53,13 @@ More instructions for Mac and Windows will be available soon.
    cd ~/src
    git clone git://github.com/dto/blocky.git 
    
-   (Optional) If you need to use the development branch of Blocky, do
+   (OPTIONAL) If you need to use the development branch of Blocky, do
    this:
   
    cd ~/src/blocky
    git checkout -b develop
 
-   Similarly, if you need a release, use this:
+   (OPTIONAL) Similarly, if you need a release, use this:
 
    git checkout -b release/0.989  
      # replace 0.989 with desired version
@@ -110,24 +109,26 @@ More instructions for Mac and Windows will be available soon.
       ;; load dependencies via Quicklisp
       (ql:quickload 
     	 '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx 
-	 :lispbuilder-sdl-image :uuid :buildapp :cl-opengl :cl-fad))
+	 :lispbuilder-sdl-image :uuid :cl-opengl :cl-fad))
 
       ;; compile and load Blocky
-      (asdf:load-system 'blocky)
+      (asdf:load-system :blocky)
 
       ;; run an example
       (blocky:play "turtle")  ;; A GUI tutorial, with turtle and ladybug
 
-      ;; run a bigger example
-      (blocky:play "xong")
 
-      The XONG example can be downloaded via git:
+7a.   The remixable XONG example can be downloaded via git:
 
-      git clone git@github.com:dto/xong.blocky.git
+      	  git clone git@github.com:dto/xong.blocky.git
 
       You should put the example somewhere where Blocky's
       *project-directories* setting will find it; your home directory
       is a good candidate if you don't want to change the setup.
+      
+      Then in SBCL:
+
+            (blocky:play "xong")
 
 8. Getting help and reporting bugs 
 
