@@ -362,16 +362,16 @@ inputs are evaluated."
 		       (+ offset x) y)
 	(let ((image (field-value :image target))
 	      (name (make-reference-name target)))
-	  (when image
-	    (draw-image image 
-			(dash 1 x)
-			(dash 1 y)))
-	  (draw-string name (dash 1 x offset iwidth) (dash 1 y))))
-      (draw-indicator :asterisk 
-		      x y
-		      :scale *handle-scale*
-		      :background "purple"
-		      :color "cyan"))))
+	  (if image
+	      (draw-image image 
+			  (dash 1 x)
+			  (dash 1 y))
+	      (draw-indicator :asterisk 
+			      x y
+			      :scale *handle-scale*
+			      :background "purple"
+			      :color "cyan"))
+	  (draw-string name (dash 1 x offset iwidth) (dash 1 y)))))))
 
 ;;; Palettes to tear cloned objects off of 
 
