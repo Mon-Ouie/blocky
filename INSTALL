@@ -88,10 +88,10 @@ More instructions for Mac and Windows will be available soon.
    BLOCKY-INIT.LISP; by default Blocky looks for it in the same
    directory as the executable.
 
-   To run projects, Blocky needs a line like this added to the INI
+   To run projects, Blocky needs a line like this added to the init
    file so that it will know where to find them.
 
-   (setf blocky:*project-directories* '(#P"~/blocky/" #P"~/projects/"))
+   (setf blocky:*project-directories* '(#P"~/src/blocky/" #P"~/projects/"))
 
    The first item should be the pathname of wherever you installed the
    Blocky source tree. This is auto-detected as the current directory
@@ -100,7 +100,7 @@ More instructions for Mac and Windows will be available soon.
 
    To use your home directory, 
 
-   (setf *project-directories* (list #P"~/blocky/" #P"~/.blocky/" #P"~/"))
+   (setf *project-directories* (list #P"~/src/blocky/" #P"~/.blocky/" #P"~/"))
    
 7. At the shell, 
 
