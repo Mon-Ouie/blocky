@@ -1,5 +1,6 @@
 * API Beta checklist 
 
+** TODO Fix shell not responding to window resize properly
 ** TODO [#A] simple example, something to copy and tweak
 *** TODO show both ways of writing define-block (with super and without)
 ** TODO [#B] Finish MicroXONG
