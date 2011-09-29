@@ -141,8 +141,9 @@ initialized with BLOCKS as inputs."
   (update-result-lists self)
   (bind-any-default-events self)
   (register-uuid self)
-  (when %image
-    (update-image-dimensions self))
+  ;; textures loaded here may be bogus; do this later
+  ;; (when %image
+  ;;   (update-image-dimensions self))
   (setf %x 0 %y 0))
 
 (define-method discard block ()
