@@ -1451,7 +1451,7 @@ The order is (TOP LEFT RIGHT BOTTOM)."
 (define-method direction-to-thing block (thing)
   "Return a direction keyword approximating the direction to THING."
   (with-fields (x y) thing
-    (direction-to %y %x y x)))
+    (direction-to %x %y x y)))
 
 (define-method direction-to-player block ()
   "Return the direction the player is in from here."
