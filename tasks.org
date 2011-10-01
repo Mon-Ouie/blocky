@@ -1,9 +1,11 @@
 * API Beta checklist 
 
-
-** TODO Fix memory faults on startup after crash? or stale game fasl?
-** TODO [#A] Adapt line-of-sight code to new collision system
-** TODO [#A] Adapt pathfinding code to new collision system
+** TODO [#A] Fix memory faults on startup after crash? or stale game fasl?
+** TODO [#A] Fix occasional quadtree deletion search assertion failure
+** TODO [#A] Don't require .blocky suffix for project dir
+** TODO [#A] Don't require particular name for project folder
+** TODO [#B] Adapt line-of-sight code to new collision system
+** TODO [#B] Adapt pathfinding code to new collision system
 ** TODO [#B] Fix shell not responding to window resize properly
 ** TODO [#B] Finish MicroXONG
 *** TODO add documentation in game source
@@ -16,7 +18,6 @@
 ** TODO [#C] Fix key release handling
 ** TODO [#C] later-when checks a condition (whether some other method returns non-nil) (also later-until)
 ** TODO [#C] "later" macros should evaluate the timer forms
-** TODO [#C] Don't require .blocky suffix for project dir
 
 * XONG 2.0 
 
