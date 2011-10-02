@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2010  David O'Toole
 
-;; Author: David O'Toole %dto1138@gmail.com
+;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
