@@ -59,7 +59,7 @@ inputs are evaluated."
   (assert (member orientation '(:horizontal :vertical)))
   (setf %orientation orientation))
 
-;; (define-method on-tap list (x y)
+;; (define-method tap list (x y)
 ;;   (dolist (block %inputs)
 ;;     (evaluate block)))
 
@@ -208,7 +208,7 @@ inputs are evaluated."
 	 (or *target* %target) ;; with-target will override
 	 (mapcar #'evaluate %inputs)))
 
-(define-method on-tap message (x y)
+(define-method tap message (x y)
   (declare (ignore x y))
   (when %button-p
     (evaluate self)))

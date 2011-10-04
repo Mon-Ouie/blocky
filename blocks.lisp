@@ -355,7 +355,7 @@ of keywords like :control, :alt, and so on."
   (remhash (normalize-event (cons event-name modifiers))
 	   %events))
 
-(define-method on-event block (event)
+(define-method handle-event block (event)
   "Look up and invoke the block task (if any) bound to
 EVENT. Return the task if a binding was found, nil otherwise. The
 second value returned is the return value of the evaluated task (if
@@ -384,12 +384,12 @@ any)."
 	      (invalidate-layout self))
 	    (values nil nil))))))
 
-(define-method on-text-event block (event)
-  "Look up events as with `on-event', but insert unhandled keypresses
+(define-method handle-text-event block (event)
+  "Look up events as with `handle-event', but insert unhandled keypresses
 as Unicode characters via the `insert' function."
   (with-fields (events) self
     (destructuring-bind (key . unicode) (first event)
-      (when (or (on-event%%block self (cons key (rest event)))
+      (when (or (handle-event%%block self (cons key (rest event)))
 		;; treat Unicode characters as self-inserting
 		(when unicode
 		  (send :insert self unicode)))
@@ -490,22 +490,22 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 
 ;;; Pointer events (see also shell.lisp)
 
-(define-method on-select block () nil)
+(define-method select block () nil)
 
-(define-method on-tap block (x y)
+(define-method tap block (x y)
   (declare (ignore x y))
   nil)
 
-(define-method on-alternate-tap block (x y)
+(define-method alternate-tap block (x y)
   (toggle-halo self))
 
-(define-method on-point block (x y)
+(define-method handle-point-motion block (x y)
   (declare (ignore x y)))
 
-(define-method on-press block (x y button)
+(define-method press block (x y button)
   (declare (ignore x y button)))
 
-(define-method on-release block (x y button)
+(define-method release block (x y button)
   (declare (ignore x y button)))
 
 (define-method can-pick block () t)
@@ -516,9 +516,9 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 
 ;;; Focus events (see also shell.lisp)
 
-(define-method on-focus block () nil)
+(define-method focus block () nil)
 
-(define-method on-lose-focus block () nil)
+(define-method lose-focus block () nil)
 
 (define-method grab-focus block () 
   (send :focus-on (symbol-value '*shell*) self))
@@ -542,7 +542,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
       (discard-halo self)
       (make-halo self)))
 
-(define-method on-drag block (x y)
+(define-method drag block (x y)
   (move-to self x y))
 
 (define-method pick-drag block (x y)
@@ -568,9 +568,9 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
   ;; run tasks while they return non-nil 
   (setf %tasks (delete-if-not #'running %tasks)))
 
-(define-method on-update block ()
+(define-method update block ()
   "Update the simulation one step forward in time."
-  (mapc #'on-update %inputs))
+  (mapc #'update %inputs))
    
 ;;; Creating blocks from S-expressions
  
@@ -1408,7 +1408,7 @@ The order is (TOP LEFT RIGHT BOTTOM)."
     (values (* 0.5 (+ left right))
 	    (* 0.5 (+ top bottom)))))
 
-(define-method on-collide block (object)
+(define-method collide block (object)
   (declare (ignore object))
   "Respond to a collision detected with OBJECT."
   nil)
@@ -1587,10 +1587,10 @@ Note that the center-points of the objects are used for comparison."
     (delete-input self block)
     (append-input self block)))
 
-;; (define-method on-update block ()
+;; (define-method update block ()
 ;;   (with-buffer self 
 ;;     (dolist (each %inputs)
-;;       (on-update each))
+;;       (update each))
 ;;     (update-layout self)))
 
 (define-method update-layout block (&optional force)

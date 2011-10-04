@@ -93,7 +93,7 @@
     (setf %expanded nil)
     (invalidate-layout self)))
 
-(define-method on-tap tree (x y)
+(define-method tap tree (x y)
   (declare (ignore x y))
   (toggle-expanded self))
 
@@ -268,7 +268,7 @@
 	    (setf x %x y %y))))
       self))
 
-(define-method on-tap menu (x y)
+(define-method tap menu (x y)
   (declare (ignore x y))
   (with-fields (action target) self
     (typecase action 
@@ -280,7 +280,7 @@
        ;; we're a submenu, not an individual menu command.
        (toggle-expanded self)))))
 
-;; (define-method on-alternate-tap menu (x y)
+;; (define-method alternate-tap menu (x y)
 ;;   (when (keywordp %action)
 ;;     (add-block *buffer* (context-menu self) x y)))
 

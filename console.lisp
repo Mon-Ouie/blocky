@@ -327,7 +327,7 @@ for backward-compatibility."
 
 (defun send-to-blocks (event &optional (blocks *blocks*))
   (labels ((try (block)
-	     (send :on-event block event)))
+	     (send :handle-event block event)))
     (some #'try blocks)))
 
 (defvar *event-handler-function* #'send-to-blocks
@@ -621,7 +621,7 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
       (declare (ignore symbol))
       (update-joystick button (poll-joystick-button button)))))
 
-(defun generate-button-events ()
+(defun generate-butthandle-events ()
   (let ((button 0) state sym)
     (loop while (< button (length *joystick-buttons*))
 	  do (setf state (aref *joystick-buttons* button))
@@ -658,7 +658,7 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 
 (defun update-blocks ()
   (dolist (block *blocks*)
-    (send :on-update block)))
+    (send :update block)))
 
 (defvar *update-function* #'update-blocks)
 
@@ -810,15 +810,15 @@ display."
 			   (setf *pointer-x* x *pointer-y* y)
 			   (let ((block (hit-blocks x y *blocks*)))
 			     (when block
-			       (send :on-point block x y))))
+			       (send :handle-point-motion block x y))))
       (:mouse-button-down-event (:button button :x x :y y)
 				(let ((block (hit-blocks x y *blocks*)))
 				  (when block
-				    (send :on-press block x y button))))
+				    (send :press block x y button))))
       (:mouse-button-up-event (:button button :x x :y y)
 			      (let ((block (hit-blocks x y *blocks*)))
 				(when block
-				  (send :on-release block x y button))))
+				  (send :release block x y button))))
       (:joy-button-down-event (:button button :state state)
 			      (when (assoc button *joystick-mapping*)
 				(update-joystick button state)

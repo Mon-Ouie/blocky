@@ -36,7 +36,7 @@
 
 (define-method evaluate trash ())
 
-(define-method on-update trash ())
+(define-method update trash ())
 
 (define-method empty trash ()
   (setf *trash* nil))
@@ -142,7 +142,7 @@
     (when (some #'is-expanded inputs)
       (mapc #'unexpand %inputs))))
 
-(define-method on-tap menubar (x y)
+(define-method tap menubar (x y)
   (declare (ignore x y))
   (close-menus self))
 
@@ -246,11 +246,11 @@
     ;;
     (update-layout %buffer t)))
 
-(define-method on-update shell ()
+(define-method update shell ()
   ;; run buffer blocks every frame
   (with-buffer %buffer
-    (on-update %buffer)
-    (on-update %command-line)))
+    (update %buffer)
+    (update %command-line)))
     
 (define-method initialize shell (buffer)
   (assert (blockyp buffer))
@@ -275,7 +275,7 @@
 	  (progn 
 	    (pushnew block selection 
 		     :test 'eq :key #'find-parent)
-	    (on-select block))))))
+	    (select block))))))
   
 (define-method select-if shell (predicate)
   (with-buffer %buffer
@@ -290,9 +290,9 @@
       (setf selection (delete block selection 
 			      :test 'eq :key #'find-parent)))))
   
-(define-method on-event shell (event)
+(define-method handle-event shell (event)
   (with-buffer %buffer
-    (or (super%on-event self event)
+    (or (super%handle-event self event)
 	(with-field-values (focused-block selection menubar command-line buffer) self
 	  (let ((block
 		    (cond
@@ -306,7 +306,7 @@
 		      ;; fall back to command-line
 		      (t command-line))))
 	    (when block 
-	      (on-event block event)))))))
+	      (handle-event block event)))))))
 
 ;;; Hit testing
 
@@ -389,7 +389,7 @@ block found, or nil if none is found."
 		   ;; don't do this for same block
 		   (not (object-eq last-focus block)))
 	  (discard-halo last-focus)
-	  (on-lose-focus last-focus))
+	  (lose-focus last-focus))
       ;; now set up the new focus (possibly nil)
       (setf focused-block (when block (find-uuid block)))
       ;; sanity check
@@ -398,7 +398,7 @@ block found, or nil if none is found."
       ;; now tell the block it has focus, but only if not the same
       (when (and focused-block
 		 (not (object-eq last-focus focused-block)))
-	(on-focus block))))))
+	(focus block))))))
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag drag-origin inputs buffer drag-start ghost drag-offset) self
@@ -440,7 +440,7 @@ block found, or nil if none is found."
 	      (setf click-start nil)
 	      (setf click-start-block nil))))))))
 
-(define-method on-point shell (mouse-x mouse-y)
+(define-method handle-point-motion shell (mouse-x mouse-y)
   (with-fields (inputs hover highlight click-start drag-offset
 		       drag-start drag) self
     (setf hover nil)
@@ -455,7 +455,7 @@ block found, or nil if none is found."
 	      (setf hover (if (object-eq drag candidate) nil
 			      (find-uuid candidate)))
 	      ;; keep moving along with the mouse
-	      (on-drag drag target-x target-y))))
+	      (drag drag target-x target-y))))
 	;; not dragging, just moving
 	(progn
 	  (setf highlight (find-uuid (hit-buffer self mouse-x mouse-y)))
@@ -463,7 +463,7 @@ block found, or nil if none is found."
 	    (when %menubar
 	      (with-buffer %buffer (close-menus %menubar))))))))
 
-(define-method on-press shell (x y &optional button)
+(define-method press shell (x y &optional button)
   (declare (ignore button))
   (with-fields (click-start click-start-block focused-block) self
     ;; now find what we're touching
@@ -490,7 +490,7 @@ block found, or nil if none is found."
 	;; %click-start-block nil
 	;; %click-start nil))
   
-(define-method on-release shell (x y &optional button)
+(define-method release shell (x y &optional button)
   (with-fields 
       (drag-offset drag-start hover buffer selection drag click-start
 	      click-start-block drag-origin focused-block modified) self
@@ -531,8 +531,8 @@ block found, or nil if none is found."
 	       ;; right click and control click are interpreted the same
 	       (or (holding-control)
 		   (= button 3))
-	       (on-alternate-tap focused-block x y)
-	       (on-tap focused-block x y))
+	       (alternate-tap focused-block x y)
+	       (tap focused-block x y))
 	      (select self focused-block))
 	    (setf click-start nil))))
     (clear-drag-data self)

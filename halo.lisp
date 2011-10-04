@@ -78,19 +78,19 @@
 
 (define-handle evaluate :bang)
 
-(define-method on-tap evaluate (x y)
+(define-method tap evaluate (x y)
   (evaluate %target))
 
 (define-handle open-menu :menu)
 
-(define-method on-tap open-menu (x y)
+(define-method tap open-menu (x y)
   (let ((menu (context-menu %target)))
     (drop self menu)
     (move-to menu x y)))
 
 (define-handle move :move)
 
-(define-method on-drag move (x0 y0)
+(define-method drag move (x0 y0)
   (with-fields (x y) %target
     (let ((dx (- %x x))
 	  (dy (- %y y)))
@@ -104,7 +104,7 @@
 
 (define-method pick resize () self)
 
-(define-method on-drag resize (x0 y0)
+(define-method drag resize (x0 y0)
   (with-fields (x y width height) %target
     (resize %target 
 	    (- x0 x)
@@ -117,12 +117,12 @@
     (prog1 ref
       (move-to ref *pointer-x* *pointer-y*))))
 
-(define-method on-tap program (x y)
+(define-method tap program (x y)
   (drop self (pick self)))
 
 (define-handle discard :close)
 
-(define-method on-tap discard (x y)
+(define-method tap discard (x y)
   (assert %target)
   (discard %target)
   (when %parent
@@ -167,7 +167,7 @@
 (define-method pick halo ()
   (pick %target))
 
-(define-method on-alternate-tap halo (x y)
+(define-method alternate-tap halo (x y)
   (toggle-halo %target))
 	  
 (define-method draw-hover halo ())

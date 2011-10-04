@@ -191,7 +191,7 @@ NODE, if any."
        (when (and (colliding-with object thing)
 		  (not (object-eq object thing))
 		  (field-value :collision-type thing))
-	 (on-collide object thing)))))
+	 (collide object thing)))))
 
 (defun quadtree-show (tree &optional object)
   (when tree

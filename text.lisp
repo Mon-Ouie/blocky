@@ -51,8 +51,8 @@
 (define-method enter text ()
   (newline self))
 
-(define-method on-event text (event)
-  (on-text-event self event))
+(define-method handle-event text (event)
+  (handle-text-event self event))
 
 (define-method set-buffer text (buffer)
   (setf %buffer buffer))
@@ -77,7 +77,7 @@
   (assert (eq :color (resource-type (find-resource color))))
   (setf %foreground-color color))
 
-;; (define-method on-update text ()
+;; (define-method update text ()
 ;;   (layout self))
 
 (define-method page-up text ()

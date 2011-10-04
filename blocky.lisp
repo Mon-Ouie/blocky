@@ -52,7 +52,7 @@ message *prompt-sweden-keybindings* *prompt-qwerty-keybindings*
 *screen-width* transform-method-body *edit* roll-under make-stat
 make-universe initialize-colors *style* create-project
 *standard-categories* *left-turn* bind-event *right-turn*
-*default-action-points* left-turn right-turn roll bind-event-to-method
+*default-actihandle-point-motions* left-turn right-turn roll bind-event-to-method
 *colors* enable-key-repeat disable-key-repeat get-color define-method
 *default-font* field-value set-field-value object-fields
 dispatch-event run-project *user-init-file-name* distance

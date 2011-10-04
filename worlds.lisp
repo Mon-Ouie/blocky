@@ -171,13 +171,13 @@ At the moment, only 0=off and 1=on are supported.")
 	  (build-quadtree (scale-bounding-box world-bounds 1.2)))
     (create-default-grid self)))
   
-(define-method on-event world (event)
-  (or (on-event%%block self event)
+(define-method handle-event world (event)
+  (or (handle-event%%block self event)
       (with-fields (player quadtree) self
 	(when player 
 	  (prog1 t
 	    (let ((*quadtree* quadtree))
-	      (on-event player event)))))))
+	      (handle-event player event)))))))
 
 (define-method make world (&rest parameters)
   (apply #'initialize self parameters))
@@ -462,7 +462,7 @@ most user command messages. (See also the method `forward'.)"
 
 ;;; Simulation update
 
-(define-method on-update world (&rest args)
+(define-method update world (&rest args)
   ;; (declare (optimize (speed 3)))
   (declare (ignore args))
   (with-field-values (grid sprites quadtree grid-height grid-width player) self
@@ -474,11 +474,11 @@ most user command messages. (See also the method `forward'.)"
 	  (declare (type (simple-array vector (* *)) grid))
 	  (let ((cells (aref grid i j)))
 	    (dotimes (z (fill-pointer cells))
-	      (on-update (aref cells z))))))
+	      (update (aref cells z))))))
       ;; run the sprites
       (loop for sprite being the hash-keys in %sprites do
 	(run-tasks sprite)
-	(on-update sprite))
+	(update sprite))
       ;; update window movement
       (glide-follow self %player)
       (update-window-glide self)
@@ -523,7 +523,7 @@ most user command messages. (See also the method `forward'.)"
   (map-grid-objects
    self sprite 
    #'(lambda (object)
-       (on-collide sprite object))))
+       (collide sprite object))))
 
 ;;; Lighting and line-of-sight
 

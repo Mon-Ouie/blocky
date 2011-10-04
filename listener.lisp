@@ -74,8 +74,8 @@
     (setf %history (make-queue :max *default-prompt-history-size*)))
   (install-text-keybindings self))
 
-(define-method on-event prompt (event)
-  (on-text-event self event))
+(define-method handle-event prompt (event)
+  (handle-text-event self event))
 
 (define-method forward-char prompt ()
   (setf %point (min (1+ %point)
@@ -242,7 +242,7 @@
 
 (define-method draw-hover prompt ())
 
-(define-method on-tap prompt (mouse-x mouse-y)
+(define-method tap prompt (mouse-x mouse-y)
   (declare (ignore mouse-y))
   (with-fields (x y width height clock point parent background
 		  line) self
@@ -446,7 +446,7 @@
 		   (max *minimum-entry-line-width*
 			(font-text-width line *font*))))))
 
-(define-method on-lose-focus entry ()
+(define-method lose-focus entry ()
   ;; update the entry value if the user mouses away
   (enter self))
 
@@ -534,7 +534,7 @@
 
 (define-method draw-focus socket ())
 
-(define-method on-event socket (event)
+(define-method handle-event socket (event)
   (declare (ignore event))
   nil)
 
@@ -547,7 +547,7 @@
 (define-method hit socket (x y)
   (hit%%block self x y))
 
-(define-method on-lose-focus socket ())
+(define-method lose-focus socket ())
 (define-method enter socket ())
 
 (define-method draw-label socket ()
@@ -666,7 +666,7 @@
 (define-method evaluate listener ()
   (evaluate (get-prompt self)))
 
-(define-method on-focus listener ()
+(define-method focus listener ()
   (grab-focus (get-prompt self)))
 
 (define-method debug-on-error listener ()
@@ -676,9 +676,9 @@
   (print-on-error (get-prompt self)))
 
 ;; forward keypresses to prompt for convenience
-;; (define-method on-event listener (event)
+;; (define-method handle-event listener (event)
 ;;   (message "ON EVENT LISTENER")
-;;   (on-event (get-prompt self) event))
+;;   (handle-event (get-prompt self) event))
 
 (define-method accept listener (input &optional prepend)
   (declare (ignore prepend))
@@ -717,7 +717,7 @@
     (move-to self x (- (+ y height)
 		       %height))))
 
-(define-method on-lose-focus command-line ()
+(define-method lose-focus command-line ()
   (clear-line (get-prompt self)))
 
 ;; ;;; Browser for inspecting objects

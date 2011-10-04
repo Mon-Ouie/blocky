@@ -57,8 +57,8 @@ by symbol name. This enables them to be used as hash keys."
   (player :initform nil)
   (stack :initform '()))
  
-(define-method on-update universe ()
-  (on-update %world))
+(define-method update universe ()
+  (update %world))
 
 (defun make-universe ()
   (new universe))
@@ -115,10 +115,10 @@ by symbol name. This enables them to be used as hash keys."
 (define-method draw universe ()
   (when %world (draw %world)))
 
-(define-method on-event universe (event)
+(define-method handle-event universe (event)
   (with-fields (world) self
     (when world
-      (on-event world event))))
+      (handle-event world event))))
 
 (define-method initialize universe (&key address player world)
   "Prepare a universe for play at the world identified by ADDRESS with

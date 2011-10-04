@@ -169,7 +169,7 @@ See also CREATE-BUFFER."
 (defparameter *even-columns-format* '(:background "gray50" :foreground "gray10"))
 (defparameter *odd-columns-format* '(:background "gray45" :foreground "gray10"))
 
-(define-method on-event window (event)
+(define-method handle-event window (event)
   ;; possibly forward event to current cell. used for the event cell, see below.
   (prog1
       (if (or (and (equal "RETURN" (first event))
