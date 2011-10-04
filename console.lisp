@@ -39,6 +39,8 @@
 
 (in-package :blocky) 
 
+(defvar *gl-window-open-p* nil)
+
 (defvar *buffers* nil)
 
 (defun initialize-buffers ()
@@ -783,6 +785,7 @@ display."
     (when *textures* (delete-all-textures))
     ;; move along
     (message "Creating OpenGL window... Done.")
+    (setf *gl-window-open-p* t)
     (message "SDL driver name: ~A" (sdl:video-driver-name))
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
@@ -1444,32 +1447,34 @@ also the documentation for DESERIALIZE."
 (defun load-texture 
     (surface &key source-format (internal-format :rgba)
 		  (filter :mipmap))
-  (let ((texture (car (gl:gen-textures 1))))
-    (gl:bind-texture :texture-2d texture)
-    ;; set filtering parameters
-    (ecase filter 
-      (:linear (gl:tex-parameter :texture-2d :texture-min-filter :linear)
-		(gl:tex-parameter :texture-2d :texture-mag-filter :linear))
-      (:mipmap (gl:tex-parameter :texture-2d :generate-mipmap t) 
-       (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear)))
-    ;; set wrapping parameters
-    (gl:tex-parameter :texture-2d :texture-wrap-r :clamp-to-edge)
-    (gl:tex-parameter :texture-2d :texture-wrap-s :clamp-to-edge)
-    ;; convert image data from SDL surface to GL texture
-    (sdl-base::with-pixel (pix (sdl:fp surface))
-      (let ((texture-format (ecase (sdl-base::pixel-bpp pix)
-                              (1 :luminance)
-                              (2 :luminance-alpha)
-                              (3 :rgb)
-                              (4 :rgba))))
-        (assert (and (= (sdl-base::pixel-pitch pix)
-                        (* (sdl:width surface) (sdl-base::pixel-bpp pix)))
-                     (zerop (rem (sdl-base::pixel-pitch pix) 4))))
-        (gl:tex-image-2d :texture-2d 0 internal-format
-                         (sdl:width surface) (sdl:height surface)
-                         0 (or source-format texture-format)
-                         :unsigned-byte (sdl-base::pixel-data pix))))
-    texture))
+  ;; don't make any bogus textures
+  (when *gl-window-open-p*
+    (let ((texture (car (gl:gen-textures 1))))
+      (gl:bind-texture :texture-2d texture)
+      ;; set filtering parameters
+      (ecase filter 
+	(:linear (gl:tex-parameter :texture-2d :texture-min-filter :linear)
+	 (gl:tex-parameter :texture-2d :texture-mag-filter :linear))
+	(:mipmap (gl:tex-parameter :texture-2d :generate-mipmap t) 
+	 (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear)))
+      ;; set wrapping parameters
+      (gl:tex-parameter :texture-2d :texture-wrap-r :clamp-to-edge)
+      (gl:tex-parameter :texture-2d :texture-wrap-s :clamp-to-edge)
+      ;; convert image data from SDL surface to GL texture
+      (sdl-base::with-pixel (pix (sdl:fp surface))
+	(let ((texture-format (ecase (sdl-base::pixel-bpp pix)
+				(1 :luminance)
+				(2 :luminance-alpha)
+				(3 :rgb)
+				(4 :rgba))))
+	  (assert (and (= (sdl-base::pixel-pitch pix)
+			  (* (sdl:width surface) (sdl-base::pixel-bpp pix)))
+		       (zerop (rem (sdl-base::pixel-pitch pix) 4))))
+	  (gl:tex-image-2d :texture-2d 0 internal-format
+			   (sdl:width surface) (sdl:height surface)
+			   0 (or source-format texture-format)
+			   :unsigned-byte (sdl-base::pixel-data pix))))
+      texture)))
 
 (defvar *textures* nil)
 
@@ -1485,36 +1490,46 @@ also the documentation for DESERIALIZE."
 	   *textures*)
   (initialize-textures-maybe :force))
 
-(defun find-texture (name)
-  (assert (stringp name))
+(defun cache-image-texture (name)
   (initialize-textures-maybe)
-  (find-resource name)
-  (gethash name *textures*))
-
-(defun load-image-resource (resource)
-  "Loads an :IMAGE-type iof resource from a :FILE on disk."
-  (initialize-textures-maybe)
-  (let* ((source-format (getf (resource-properties resource) :format))
-	 (surface (sdl-image:load-image (namestring (resource-file resource))
-				       :alpha 255))
+  (let* ((resource (find-resource name))
+	 (surface (resource-object resource))
+	 (source-format (getf (resource-properties resource) :format))
 	 (internal-format :rgba)
 	 (texture (load-texture surface
 				:source-format source-format
 				:internal-format internal-format))
-	 (name (resource-name resource)))
-    (prog1 surface
-      (let ((old-texture (gethash name *textures*)))
-	;; cache height and width
-	(setf (resource-properties resource)
-	      (append (list :height (sdl:height surface)
-			    :width (sdl:width surface))
-		      (resource-properties resource)))
+	 (old-texture (gethash name *textures*)))
+    (when texture
+      (prog1 texture
 	;; delete old texture if needed
 	(when old-texture
 	  (gl:delete-textures (list old-texture))
-	  (remhash name *textures*))
-	;; store the new texture
-	(setf (gethash name *textures*) texture)))))
+	  (remhash name *textures*))))))
+
+(defun find-texture (name)
+  (assert (stringp name))
+  (initialize-textures-maybe)
+  ;; make sure underlying image is loaded by SDL
+  (find-resource name) 
+  ;; see if we need to pump it to the video card
+  (or (gethash name *textures*)
+      ;; store the new texture and return it
+      (setf (gethash name *textures*) 
+	    (cache-image-texture name))))
+  
+(defun load-image-resource (resource)
+  "Loads an :IMAGE-type iof resource from a :FILE on disk."
+  (initialize-textures-maybe)
+  (let ((surface (sdl-image:load-image (namestring (resource-file resource))
+				       :alpha 255))
+	(name (resource-name resource)))
+    (prog1 surface
+      ;; cache height and width as properties
+      (setf (resource-properties resource)
+	    (append (list :height (sdl:height surface)
+			  :width (sdl:width surface))
+		    (resource-properties resource))))))
 
 (defun load-sprite-sheet-resource (resource)
   "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
@@ -1692,6 +1707,7 @@ control the size of the individual frames or subimages."
   (assert (and (symbolp name)
 	       (boundp name)))
   (assert (member name *safe-variables*))
+  (assert (not (eq name '*safe-variables*))) 
   (make-resource :name name
 		 :type :variable
 		 :data (serialize (symbol-value name))))
@@ -2484,7 +2500,8 @@ of the music."
   (sdl-mixer:close-audio t)
   (setf *buffer* nil)
   (setf *world* nil)
-  (sdl:quit-sdl))
+  (sdl:quit-sdl)
+  (setf *gl-window-open-p* nil))
 
 (defmacro with-session (&rest body)
   `(progn 
