@@ -1692,13 +1692,15 @@ Note that the center-points of the objects are used for comparison."
 
 (defun make-task-form (delay expression &optional subexpressions)
   (destructuring-bind (method target &rest arguments) expression
-    (let ((target-sym (gensym)))
-      `(let ((,target-sym ,target))
+    (let ((target-sym (gensym))
+	  (delay-sym (gensym)))
+      `(let ((,target-sym ,target)
+	     (,delay-sym ,delay))
 	 (add-task ,target-sym
 		   (new task 
 			,(make-keyword method)
 			,target-sym
-			:subtasks (list ,@(make-tasks delay subexpressions))
+			:subtasks (list ,@(make-tasks delay-sym subexpressions))
 			:arguments (list ,@arguments)
 			:clock ,delay))))))
 
