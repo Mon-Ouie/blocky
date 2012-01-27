@@ -719,10 +719,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	  (y0 (+ y (/ width 2))))
       (let ((dx (* distance (cos heading)))
 	    (dy (* distance (sin heading))))
-	(incf x dx)
-	(incf y dy))
-      (when drawing 
-	(draw-turtle-line self x0 y0 x y)))))
+	(move-to self (+ x dx) (+ y dy))
+	(when drawing 
+	  (draw-turtle-line self x0 y0 x y))))))
 
 (define-method draw-turtle-line block (x0 y0 x1 y1)
   nil)
