@@ -705,7 +705,7 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 (defparameter *gl-screen-width* nil "Width of the window expressed in OpenGL coordinates.")
 (defparameter *gl-screen-height* nil "Height of the window expressed in OpenGL coordinates.")
 
-(defparameter *use-nominal-screen-size* nil
+(defparameter *scale-output-to-window* nil
   "When non-nil, always show a fixed amount of the world when changing
 window size. Otherwise (the default) one onscreen pixel equals one
 unit of world space, so that more of the world shows if the window
@@ -720,7 +720,7 @@ becomes larger.")
   (gl:matrix-mode :projection)
   (gl:load-identity)
   (gl:viewport 0 0 *screen-width* *screen-height*)
-  (if *use-nominal-screen-size*
+  (if *scale-output-to-window*
       (setf *gl-screen-width* *nominal-screen-width*
 	    *gl-screen-height* *nominal-screen-height*)
       (setf *gl-screen-width* *screen-width*
@@ -1685,11 +1685,11 @@ control the size of the individual frames or subimages."
 (defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
 *buffers* *screen-height* *world* *blocks* *dt* *pointer-x* *author*
 *pointer-y* *trash* *resizable* *window-title* *buffer* *system*
-*use-nominal-screen-size* *persistent-variables*))
+*scale-output-to-window* *persistent-variables*))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
 *buffers* *screen-height* *world* *blocks* *dt* *pointer-x* *author*
-*use-nominal-screen-size* *pointer-y* *trash* *resizable*
+*scale-output-to-window* *pointer-y* *trash* *resizable*
 *window-title* *buffer* *system*
 				 ;; notice that THIS variable is also
 				 ;; persistent!  this is to avoid

@@ -1329,7 +1329,7 @@ Scaling factors and image sizes are applied."
 
 (define-method center block ()
   "Automatically center the block on the screen."
-  (with-field-values (x y width height) self
+  (with-fields (x y width height) self
     (let ((center-x (/ *screen-width* 2))
 	  (center-y (/ *screen-height* 2)))
       (setf x (- center-x (/ width 2))
