@@ -470,46 +470,40 @@ or,
 (defun poll-joystick-axis (axis)
   (aref *joystick-axis-values* axis))
 
-(defparameter *default-joystick-mapping*
-  '((0 . :button-0)
-    (1 . :button-1)
-    (2 . :button-2)
-    (3 . :button-3)
-    (4 . :button-4)
-    (5 . :button-5)
-    (6 . :button-6)
-    (7 . :button-7)
-    (8 . :button-8)
-    (9 . :button-9)
-    (10 . :button-10)
-    (11 . :button-11)
-    (12 . :button-12)
-    (13 . :button-13)
-    (14 . :button-14)
-    (15 . :button-15)
-    (16 . :button-16)
-    (17 . :button-17)
-    (18 . :button-18)
-    (19 . :button-19)
-    (20 . :button-20)))
+(defparameter *default-joystick-profile*
+  '("Unknown Joystick"
+    :name "Unknown Joystick"
+    :type :joystick
+    :buttons ((0 . :button-0)
+	      (1 . :button-1)
+	      (2 . :button-2)
+	      (3 . :button-3)
+	      (4 . :button-4)
+	      (5 . :button-5)
+	      (6 . :button-6)
+	      (7 . :button-7)
+	      (8 . :button-8)
+	      (9 . :button-9)
+	      (10 . :button-10)
+	      (11 . :button-11)
+	      (12 . :button-12)
+	      (13 . :button-13)
+	      (14 . :button-14)
+	      (15 . :button-15)
+	      (16 . :button-16)
+	      (17 . :button-17)
+	      (18 . :button-18)
+	      (19 . :button-19)
+	      (20 . :button-20))))
 
-(defun button-to-symbol (button)
-  (cdr (assoc button *joystick-mapping*)))
-
-(defun symbol-to-button (sym)
-  (let ((entry (some #'(lambda (entry)
-			 (when (eq sym (cdr entry))
-			   entry))
-		     *joystick-mapping*)))
-    (when entry 
-      (car entry))))
-
-(defvar *joystick-profile* nil)
+(defvar *joystick-profile* *default-joystick-profile*)
 
 (defparameter *joystick-profiles* 
   '(("DragonRise Inc.   Generic   USB  Joystick  " 
      :name "Generic USB Gamepad (DragonRise)" :type :joystick
-     :map ((2 . :a)
+     :left-stick (0 1)
+     :right-stick (3 2)
+     :buttons ((2 . :a)
 	   (1 . :b)
 	   (3 . :x)
 	   (0 . :y)
@@ -521,7 +515,7 @@ or,
 	   (5 . :right-trigger)))
     ("USB Dance Pa" 
      :name "Generic USB Dance Pad" :type :dance 
-     :map  ((12 . :up)
+     :buttons  ((12 . :up)
 	    (15 . :left)
 	    (13 . :right)
 	    (14 . :down)
@@ -533,7 +527,7 @@ or,
 	    (9 . :start)))
     ("GASIA CORP. PS(R) Gamepad Adaptor" 
      :name "Generic PS2->USB Gamepad Adaptor (GASIA Corp.)" :type :joystick
-     :map ((4 . :up)
+     :buttons ((4 . :up)
 	   (7 . :left)
 	   (5 . :right)
 	   (6 . :down)
@@ -544,8 +538,8 @@ or,
 	   (0 . :select)
 	   (3 . :start)))))
 
-(defun find-joystick-profile-by-name (joystick-name)
-  (let ((entry (assoc joystick-name *joystick-profiles* :test 'equal)))
+(defun find-joystick-profile-by-name (name)
+  (let ((entry (assoc name *joystick-profiles* :test 'equal)))
     (when entry (cdr entry))))
 
 (defun find-joystick-profile (indicator)
@@ -553,25 +547,42 @@ or,
     (string (find-joystick-profile-by-name indicator))
     (list indicator)))
 
-(defun joystick-profile-name (&optional (profile *joystick-profile*))
+(defun joystick-name (&optional (profile *joystick-profile*))
   (getf (find-joystick-profile profile) :name))
 
-(defun joystick-profile-type (&optional (profile *joystick-profile*)) 
+(defun joystick-type (&optional (profile *joystick-profile*)) 
   (getf (find-joystick-profile profile) :type))
 
-(defun joystick-profile-map (&optional (profile *joystick-profile*))
-  (getf (find-joystick-profile profile) :map))
-    
+(defun joystick-buttons (&optional (profile *joystick-profile*))
+  (getf (find-joystick-profile profile) :buttons))
+
+(defun joystick-left-stick (&optional (profile *joystick-profile*))
+  (getf (find-joystick-profile profile) :left-stick))
+
+(defun joystick-right-stick (&optional (profile *joystick-profile*))
+  (getf (find-joystick-profile profile) :right-stick))
+
+(defun button-to-symbol (button)
+  (cdr (assoc button (joystick-buttons))))
+
+(defun symbol-to-button (sym)
+  (let ((entry (some #'(lambda (entry)
+			 (when (eq sym (cdr entry))
+			   entry))
+		     (joystick-buttons))))
+    (when entry 
+      (car entry))))
+
 (defvar *joystick-device* nil 
   "The SDL device id of the current joystick.")
 
-(defvar *joystick-buttons* nil
+(defvar *joystick-button-states* nil
   "The nth element is non-nil when the nth button is pressed.")
 
 (defun reset-joysticks ()
   "Re-open the joystick device and re-initialize the state."
   (setf *joystick-device* (sdl-cffi::sdl-joystick-open 0))
-  (setf *joystick-buttons* (make-array 100 :initial-element nil)))
+  (setf *joystick-button-states* (make-array 100 :initial-element nil)))
 
 (defun scan-for-joysticks ()
   (message "Scanning for connected joysticks...")
@@ -586,51 +597,27 @@ or,
 		(message "Found joystick profile ~S for ~S." type name)
 		(setf *joystick-profile* profile))))))))
 
-(defun update-joystick (button state)
-  "Update the table in `*joystick-buttons*' to reflect the STATE of
-the BUTTON. STATE should be either 1 (on) or 0 (off)."
-  (setf (aref *joystick-buttons* button) (ecase state
-					   (1 t)
-					   (0 nil)))
-  (let ((sym (button-to-symbol button)))
-    (declare (ignore sym))
-    (labels ((pressed (button-name) 
-	       (let ((index (symbol-to-button button-name)))
-		 (when (integerp index)
-		   (aref *joystick-buttons* index)))))
-      (setf *joystick-position* 
-	    (or (cond ((and (pressed :up) (pressed :right))
-		       :upright)
-		      ((and (pressed :up) (pressed :left))
-		       :upleft)
-		      ((and (pressed :down) (pressed :right))
-		       :downright)
-		      ((and (pressed :down) (pressed :left))
-		       :downleft)
-		      ((pressed :up)
-		       :up)
-		      ((pressed :down)
-		       :down)
-		      ((pressed :right)
-		       :right)
-		      ((pressed :left)
-		       :left))
-		:here)))))
-
 (defun poll-joystick-button (button)
   "Return 1 if the button numbered BUTTON is pressed, otherwise 0."
   (sdl-cffi::sdl-joystick-get-button *joystick-device* button))
 
+(defun update-joystick-button (button state)
+  "Update the table in `*joystick-button-states*' to reflect the STATE of
+the BUTTON. STATE should be either 1 (on) or 0 (off)."
+  (setf (aref *joystick-button-states* button) (ecase state
+						 (1 t)
+						 (0 nil))))
+
 (defun update-all-buttons ()
-  (dolist (entry (joystick-profile-map))
+  (dolist (entry (joystick-buttons))
     (destructuring-bind (button . symbol) entry
       (declare (ignore symbol))
-      (update-joystick button (poll-joystick-button button)))))
+      (update-joystick-button button (poll-joystick-button button)))))
 
 (defun generate-button-events ()
   (let ((button 0) state sym)
-    (loop while (< button (length *joystick-buttons*))
-	  do (setf state (aref *joystick-buttons* button))
+    (loop while (< button (length *joystick-button-states*))
+	  do (setf state (aref *joystick-button-states* button))
 	     (setf sym (button-to-symbol button))
 	     (when (and state sym)
 	       (send-event (make-event :joystick sym)))
@@ -852,13 +839,13 @@ display."
 				(when block
 				  (send :release block x y button))))
       (:joy-button-down-event (:button button :state state)
-			      (when (assoc button (joystick-profile-map))
+			      (when (assoc button (joystick-buttons))
 				(update-joystick button state)
 				(send-event (make-event :joystick
 							(list (button-to-symbol button) 
 							      :button-down)))))
       (:joy-button-up-event (:button button :state state)  
-			    (when (assoc button (joystick-profile-map))
+			    (when (assoc button (joystick-buttons))
 			      (update-joystick button state)
 			      (send-event (make-event :joystick
 						      (list (button-to-symbol button) 
@@ -1396,13 +1383,12 @@ OBJECT as the resource data."
 
 (defun save-object-resource (resource &optional (project *project*))
   "Save an object resource to disk as {PROJECT-NAME}/{RESOURCE-NAME}.IOF."
-  (let ((name (resource-name resource)))
     (setf (resource-data resource) (serialize (resource-object resource)))
     (write-iof (find-project-file project 
 				 (concatenate 'string (resource-name resource)
 					      *iof-file-extension*))
 	       (list resource))
-    (setf (resource-data resource) nil)))
+    (setf (resource-data resource) nil))
 
 (defun is-special-resource (resource)
   (string= "*" (string (aref (resource-name resource) 0))))
@@ -1551,8 +1537,7 @@ also the documentation for DESERIALIZE."
   "Loads an :IMAGE-type iof resource from a :FILE on disk."
   (initialize-textures-maybe)
   (let ((surface (sdl-image:load-image (namestring (resource-file resource))
-				       :alpha 255))
-	(name (resource-name resource)))
+				       :alpha 255)))
     (prog1 surface
       ;; cache height and width as properties
       (setf (resource-properties resource)
@@ -1890,7 +1875,7 @@ when NAME cannot be found."
 						   (make-keyword operation)))
 				    (source-res (find-resource source-name))
 				    (source-type (resource-type source-res))
-				    (source (resource-object source-res))
+				    ;; (source (resource-object source-res))
 				    (xformed-resource (apply xformer source-res
 							     arguments)))
 			       (make-resource :name name 
@@ -1939,6 +1924,7 @@ found."
 
 (defun clear-cached-text-images ()
   (maphash #'(lambda (key value)
+	       (declare (ignore key))
 	       (gl:delete-textures (list value)))
 	   (get-memo-table 'find-text-image))
   (clear-memoize 'find-text-image))
@@ -2198,7 +2184,7 @@ of the music."
   (gl:bind-texture :texture-2d texture)
   (set-vertex-color vertex-color)
   (gl:with-primitive :quads
-    (let ((x1 x)
+    (let (;;(x1 x)
 	  (x2 (+ x width))
 	  (y1 y)
 	  (y2 (+ y height)))
