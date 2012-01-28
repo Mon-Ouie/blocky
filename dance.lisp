@@ -173,10 +173,10 @@
 
 ;; TODO (defparameter *konami-ps3-pad-mapping* )
 
-(setf blocky:*joystick-mapping* *hyperkin-adapter-mapping*)
+;; (setf blocky:*joystick-mapping* *hyperkin-adapter-mapping*)
 
-(defun get-button-index (arrow)
-  (first (find arrow *joystick-mapping* :key #'cdr)))
+;; (defun get-button-index (arrow)
+;;   (first (find arrow *joystick-mapping* :key #'cdr)))
 
 ;;; Displaying arrows as images
 

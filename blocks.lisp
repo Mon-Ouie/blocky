@@ -726,10 +726,6 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method draw-turtle-line block (x0 y0 x1 y1)
   nil)
 
-(defun find-heading (x0 y0 x1 y1)
-  (atan (- y1 y0) 
-	(- x1 x0)))
-
 (define-method heading-to-thing block (thing)
   (multiple-value-bind (x1 y1) (center-point thing)
     (multiple-value-bind (x0 y0) (center-point self)
@@ -1466,64 +1462,6 @@ Note that the center-points of the objects are used for comparison."
 (define-method distance-to-player block ()
   "Return the straight-line distance to the player."
   (distance-to-thing self (get-player *world*)))
-
-;;; Analog gamepad control
-
-(define-method aim block (direction)
-  (setf %direction direction))
-
-(define-method stick-move block (&optional multiplier)
-  (destructuring-bind (horizontal vertical) *joystick-motion-axes*
-    (let* ((x (poll-joystick-axis horizontal))
-	   (y (poll-joystick-axis vertical)))
-      (let ((direction 
-	      (cond 
-		;; diagonal 
-		((and (axis-pressed-p horizontal) (axis-pressed-p vertical))
-		 (if (minusp y) 
-		     (if (minusp x)
-			 :upleft
-			 :upright)
-		     (if (minusp x)
-			 :downleft
-			 :downright)))
-		;; horizontal 
-		((axis-pressed-p horizontal)
-		 (if (minusp x) :left :right))
-		;; vertical 
-		((axis-pressed-p vertical)
-		 (if (minusp y) :up :down)))))
-	(when direction 
-	  ;; if the player pushed a direction, move in that direction.
-	  (prog1 t 
-	    (if multiplier
-		(move-to self 
-			 (+ %x (* multiplier (axis-as-float horizontal)))
-			 (+ %y (* multiplier (axis-as-float vertical))))
-		(move self direction multiplier))
-	    ;; if the player is NOT pressing on the right stick, ALSO aim in this direction.
-	    (destructuring-bind (aim-horz aim-vert) *joystick-aiming-axes*
-	      (when (not (or (axis-pressed-p aim-horz)
-			     (axis-pressed-p aim-vert)))
-		(aim self direction)))))))))
-
-(define-method stick-aim block ()
-  (with-fields (direction) self
-    (destructuring-bind (horizontal vertical) *joystick-aiming-axes*
-      (let ((x (poll-joystick-axis horizontal))
-	    (y (poll-joystick-axis vertical)))
-	(cond ((and (axis-pressed-p horizontal) (axis-pressed-p vertical))
-	       (aim self (if (minusp y) 
-			     (if (minusp x)
-				 :upleft
-				 :upright)
-			     (if (minusp x)
-				 :downleft
-				 :downright))))
-	      ((axis-pressed-p horizontal)
-	       (aim self (if (minusp x) :left :right)))
-	      ((axis-pressed-p vertical)
-	       (aim self (if (minusp y) :up :down))))))))
 
 ;;; Grouping blocks into buffers with buffer-local variables
 

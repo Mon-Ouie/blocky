@@ -357,7 +357,7 @@ Please set the variable blocky:*event-handler-function*")
 	(sort (remove-duplicates (delete nil (rest event)))
 	      #'string< :key #'symbol-name)))
 
-;;; Translating SDL input events into BLOCKY event lists
+;;; Input events for keyboard and joystick etc
 
 (defvar *joystick-button-symbols*
   '(:a :b :x :y ;; face buttons
@@ -365,7 +365,7 @@ Please set the variable blocky:*event-handler-function*")
     :select :start ;; menu buttons
     :left-bumper :left-trigger :right-bumper :right-trigger)) ;; shoulder buttons
 
-(defparameter *other-modifier-symbols* '(:button-down :button-up :axis))
+(defparameter *other-modifier-symbols* '(:button-down :button-up))
 
 (defun make-key-modifier-symbol (sdl-mod)
   "Translate from the SDL key modifier symbol SDL-MOD to our own
@@ -444,9 +444,33 @@ or,
 		 ((eql 0 modifiers)
 		  nil))))))
 
-;;; Joystick support
+(defun find-heading (x0 y0 x1 y1)
+  (atan (- y1 y0) 
+	(- x1 x0)))
 
-(defparameter *generic-joystick-mapping*
+(defparameter *joystick-axis-size* 32768.0)
+
+(defparameter *joystick-dead-zone* 6000)
+
+(defun axis-as-float (axis)
+  (/ (poll-joystick-axis axis)
+     *joystick-axis-size*))
+
+(defun axis-pressed-p (axis) 
+  (< *joystick-dead-zone* (abs (poll-joystick-axis axis))))
+
+(defvar *joystick-axis-values* (make-array 100 :initial-element 0))
+	
+(defun update-joystick-axis (axis value)
+  (let ((state (if (< (abs value) *joystick-dead-zone*)
+		   :button-up :button-down)))
+    (declare (ignore state))
+    (setf (aref *joystick-axis-values* axis) value)))
+
+(defun poll-joystick-axis (axis)
+  (aref *joystick-axis-values* axis))
+
+(defparameter *default-joystick-mapping*
   '((0 . :button-0)
     (1 . :button-1)
     (2 . :button-2)
@@ -469,38 +493,7 @@ or,
     (19 . :button-19)
     (20 . :button-20)))
 
-(defvar *joystick-dead-zone* 2000)
-
-(defvar *joystick-axis-mapping* '((0 :left :right)
-				  (1 :up :down)))
-
-(defun axis-value-to-direction (axis value)
-  (let ((entry (assoc axis *joystick-axis-mapping*)))
-    (if entry 
-	(if (plusp value)
-	    (second (cdr entry))
-	    (when (minusp value)
-	      (first (cdr entry)))))))
-
-(defvar *joystick-axis-values* (make-array 100 :initial-element 0))
-
-(defun do-joystick-axis-event (axis value state)
-  (send-event (make-event :axis 
-			  (list (axis-value-to-direction axis value)
-				state))))
-	
-(defun update-joystick-axis (axis value)
-  (let ((state (if (< (abs value) *joystick-dead-zone*)
-		   :button-up :button-down)))
-    (declare (ignore state))
-    (setf (aref *joystick-axis-values* axis) value)))
-
-(defun poll-joystick-axis (axis)
-  (aref *joystick-axis-values* axis))
-
-(defvar *joystick-mapping* *generic-joystick-mapping*)
-
-(defun translate-joystick-button (button)
+(defun button-to-symbol (button)
   (cdr (assoc button *joystick-mapping*)))
 
 (defun symbol-to-button (sym)
@@ -511,76 +504,87 @@ or,
     (when entry 
       (car entry))))
 
-(defparameter *energy-dance-pad-mapping*
-  '((12 . :up)
-    (15 . :left)
-    (13 . :right)
-    (14 . :down)
-    (0 . :downleft)
-    (3 . :downright)
-    (2 . :upleft)
-    (1 . :upright)
-    (8 . :select)
-    (9 . :start)))
+(defvar *joystick-profile* nil)
 
-(defparameter *hyperkin-adapter-mapping* 
-  '((4 . :up)
-    (7 . :left)
-    (5 . :right)
-    (6 . :down)
-    (12 . :downleft)
-    (16 . :downright)
-    (14 . :upleft)
-    (13 . :upright)
-    (0 . :select)
-    (3 . :start)))
+(defparameter *joystick-profiles* 
+  '(("DragonRise Inc.   Generic   USB  Joystick  " 
+     :name "Generic USB Gamepad (DragonRise)" :type :joystick
+     :map ((2 . :a)
+	   (1 . :b)
+	   (3 . :x)
+	   (0 . :y)
+	   (6 . :left-bumper)
+	   (7 . :right-bumper)
+	   (8 . :select)
+	   (9 . :start)
+	   (4 . :left-trigger)
+	   (5 . :right-trigger)))
+    ("USB Dance Pa" 
+     :name "Generic USB Dance Pad" :type :dance 
+     :map  ((12 . :up)
+	    (15 . :left)
+	    (13 . :right)
+	    (14 . :down)
+	    (0 . :downleft)
+	    (3 . :downright)
+	    (2 . :upleft)
+	    (1 . :upright)
+	    (8 . :select)
+	    (9 . :start)))
+    ("GASIA CORP. PS(R) Gamepad Adaptor" 
+     :name "Generic PS2->USB Gamepad Adaptor (GASIA Corp.)" :type :joystick
+     :map ((4 . :up)
+	   (7 . :left)
+	   (5 . :right)
+	   (6 . :down)
+	   (12 . :downleft)
+	   (16 . :downright)
+	   (14 . :upleft)
+	   (13 . :upright)
+	   (0 . :select)
+	   (3 . :start)))))
 
-(defparameter *dragon-usb-joystick-mapping*
-  '((2 . :a)
-    (1 . :b)
-    (3 . :x)
-    (0 . :y)
-    (6 . :left-bumper)
-    (7 . :right-bumper)
-    (8 . :select)
-    (9 . :start)
-    (4 . :left-trigger)
-    (5 . :right-trigger)))
+(defun find-joystick-profile-by-name (joystick-name)
+  (let ((entry (assoc joystick-name *joystick-profiles* :test 'equal)))
+    (when entry (cdr entry))))
 
-(defparameter *device-profiles* 
-  '(("DragonRise Inc.   Generic   USB  Joystick  " :type :joystick :name "Generic USB Gamepad (DragonRise)" :mapping *dragon-usb-joystick-mapping*)
-    ("USB Dance Pa" :name "Generic USB Dance Pad" :type :dance :mapping *energy-dance-pad-mapping*)
-    ("GASIA CORP. PS(R) Gamepad Adaptor" :type :joystick :name "Generic PS2->USB Gamepad Adaptor (GASIA Corp.)" :mapping *hyperkin-adapter-mapping*)))
+(defun find-joystick-profile (indicator)
+  (etypecase indicator
+    (string (find-joystick-profile-by-name indicator))
+    (list indicator)))
 
-(defvar *joystick-device* nil)
+(defun joystick-profile-name (&optional (profile *joystick-profile*))
+  (getf (find-joystick-profile profile) :name))
+
+(defun joystick-profile-type (&optional (profile *joystick-profile*)) 
+  (getf (find-joystick-profile profile) :type))
+
+(defun joystick-profile-map (&optional (profile *joystick-profile*))
+  (getf (find-joystick-profile profile) :map))
+    
+(defvar *joystick-device* nil 
+  "The SDL device id of the current joystick.")
 
 (defvar *joystick-buttons* nil
   "The nth element is non-nil when the nth button is pressed.")
 
-(defvar *joystick-position* nil "Current position of the joystick, as a direction keyword.")
-
 (defun reset-joysticks ()
   "Re-open the joystick device and re-initialize the state."
   (setf *joystick-device* (sdl-cffi::sdl-joystick-open 0))
-  (setf *joystick-buttons* (make-array 100 :initial-element nil))
-  (setf *joystick-position* :here))
+  (setf *joystick-buttons* (make-array 100 :initial-element nil)))
 
-(defun find-device-profile (device-name)
-  (let ((entry (assoc device-name *device-profiles* :test 'equal)))
-    (when entry (cdr entry))))
-
-(defun scan-for-devices ()
-  (message "Scanning for connected devices...")
+(defun scan-for-joysticks ()
+  (message "Scanning for connected joysticks...")
   (block scanning
     (dotimes (index (sdl:num-joysticks))
-      (let ((device (sdl:sdl-joystick-name index)))
-	(message "Checking joystick ~S, device name: ~S" index device)
-	(let ((profile (find-device-profile device)))
+      (let ((joystick (sdl:sdl-joystick-name index)))
+	(message "Checking joystick ~S, device name: ~S" index joystick)
+	(let ((profile (find-joystick-profile joystick)))
 	  (if (null profile)
-	      (message "Could not find device profile for ~S. Continuing..." device)
-	      (destructuring-bind (&key name mapping type) profile
-		(message "Found device profile ~S for ~S." type name)
-		(setf *joystick-mapping* mapping))))))))
+	      (message "Could not find joystick profile for ~S. Continuing..." joystick)
+	      (destructuring-bind (&key name type &allow-other-keys) profile
+		(message "Found joystick profile ~S for ~S." type name)
+		(setf *joystick-profile* profile))))))))
 
 (defun update-joystick (button state)
   "Update the table in `*joystick-buttons*' to reflect the STATE of
@@ -588,7 +592,7 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
   (setf (aref *joystick-buttons* button) (ecase state
 					   (1 t)
 					   (0 nil)))
-  (let ((sym (translate-joystick-button button)))
+  (let ((sym (button-to-symbol button)))
     (declare (ignore sym))
     (labels ((pressed (button-name) 
 	       (let ((index (symbol-to-button button-name)))
@@ -617,39 +621,64 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
   "Return 1 if the button numbered BUTTON is pressed, otherwise 0."
   (sdl-cffi::sdl-joystick-get-button *joystick-device* button))
 
-(defun poll-all-buttons ()
-  (dolist (entry *joystick-mapping*)
+(defun update-all-buttons ()
+  (dolist (entry (joystick-profile-map))
     (destructuring-bind (button . symbol) entry
       (declare (ignore symbol))
       (update-joystick button (poll-joystick-button button)))))
 
-(defun generate-butthandle-events ()
+(defun generate-button-events ()
   (let ((button 0) state sym)
     (loop while (< button (length *joystick-buttons*))
 	  do (setf state (aref *joystick-buttons* button))
-	     (setf sym (translate-joystick-button button))
+	     (setf sym (button-to-symbol button))
 	     (when (and state sym)
 	       (send-event (make-event :joystick sym)))
 	     (incf button))))
 
-(defparameter *joystick-motion-axes* '(0 1))
-(defparameter *joystick-aiming-axes* '(3 2))
-(defparameter *joystick-axis-size* 32768.0)
-(defparameter *joystick-dead-zone* 6000)
-(defparameter *joystick-motion-speed* 4.0)
+;;; Analog gamepad control
 
-(defun axis-as-float (axis)
-  (/ (poll-joystick-axis axis)
-     *joystick-axis-size*))
+;; (define-method aim block (heading)
+;;   (assert (numberp heading))
+;;   (setf %heading heading))
 
-(defun axis-pressed-p (axis) 
-  (< *joystick-dead-zone* (abs (poll-joystick-axis axis))))
+;; (define-method stick-heading block (&optional (stick *left-analog-stick*))
+;;   (destructuring-bind (horizontal vertical) stick
+;;     (let* ((x (poll-joystick-axis horizontal))
+;; 	   (y (poll-joystick-axis vertical)))
+;;       (values (find-heading 0 0 x y)
+;; 	      (distance 0 0 x y)))))
 
-(defparameter *trigger-buttons* 
-  '(:fire :extension :switch-weapons :boost))
+;; ;;(define-method 
 
-(defparameter *face-buttons*
-  '(:x :y))
+;; (define-method stick-move block (&optional multiplier)
+;;   (multiple-value-bind (heading distance) 
+;;       (stick-heading self *left-analog-stick*)
+;;     (aim self heading)
+;;     (move-forward self 5)
+;;     ;; if the player is NOT pressing on the right stick, ALSO aim in this direction.
+;;     (destructuring-bind (horizontal vertical) *joystick-aiming-axes*
+;;       (when (not (or (axis-pressed-p horizontal)
+;; 		     (axis-pressed-p vertical)))
+;; 	(aim self direction)))))))
+
+;; (define-method stick-aim block ()
+;;   (with-fields (direction) self
+;;     (destructuring-bind (horizontal vertical) *joystick-aiming-axes*
+;;       (let ((x (poll-joystick-axis horizontal))
+;; 	    (y (poll-joystick-axis vertical)))
+;; 	(cond ((and (axis-pressed-p horizontal) (axis-pressed-p vertical))
+;; 	       (aim self (if (minusp y) 
+;; 			     (if (minusp x)
+;; 				 :upleft
+;; 				 :upright)
+;; 			     (if (minusp x)
+;; 				 :downleft
+;; 				 :downright))))
+;; 	      ((axis-pressed-p horizontal)
+;; 	       (aim self (if (minusp x) :left :right)))
+;; 	      ((axis-pressed-p vertical)
+;; 	       (aim self (if (minusp y) :up :down))))))))
 
 ;;; Timing
 
@@ -789,7 +818,7 @@ display."
     (message "SDL driver name: ~A" (sdl:video-driver-name))
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
-    (scan-for-devices)
+    (scan-for-joysticks)
     (do-orthographic-projection)
     (load-project-lisp "STANDARD")
     (run-hook '*after-startup-hook*)
@@ -823,16 +852,16 @@ display."
 				(when block
 				  (send :release block x y button))))
       (:joy-button-down-event (:button button :state state)
-			      (when (assoc button *joystick-mapping*)
+			      (when (assoc button (joystick-profile-map))
 				(update-joystick button state)
 				(send-event (make-event :joystick
-							(list (translate-joystick-button button) 
+							(list (button-to-symbol button) 
 							      :button-down)))))
       (:joy-button-up-event (:button button :state state)  
-			    (when (assoc button *joystick-mapping*)
+			    (when (assoc button (joystick-profile-map))
 			      (update-joystick button state)
 			      (send-event (make-event :joystick
-						      (list (translate-joystick-button button) 
+						      (list (button-to-symbol button) 
 							    :button-up)))))
       (:joy-axis-motion-event (:axis axis :value value)
 			      (update-joystick-axis axis value))
