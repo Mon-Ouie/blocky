@@ -120,7 +120,7 @@ open-project field-options world set-frame-rate *frame-rate*
 *project* *project-path* *window-title* *window-position* restartably
 *default-shell-width* *default-shell-height* *system*
 set-timer-interval defgcell *message-logging* overlay
-initialize-console poll-joystick-axis poll-joystick-button
+initialize-console joystick-axis-value poll-joystick-button
 reset-joysticks *device-profiles* find-device-profile set-screen-width
 *universe* *play-args* set-screen-height genseq *zoom-factor*
 zoom-image is-zoomed-resource *timer-interval* save-objects

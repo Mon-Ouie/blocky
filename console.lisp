@@ -453,21 +453,18 @@ or,
 (defparameter *joystick-dead-zone* 6000)
 
 (defun axis-as-float (axis)
-  (/ (poll-joystick-axis axis)
+  (/ (joystick-axis-value axis)
      *joystick-axis-size*))
 
 (defun axis-pressed-p (axis) 
-  (< *joystick-dead-zone* (abs (poll-joystick-axis axis))))
+  (< *joystick-dead-zone* (abs (joystick-axis-value axis))))
 
 (defvar *joystick-axis-values* (make-array 100 :initial-element 0))
 	
 (defun update-joystick-axis (axis value)
-  (let ((state (if (< (abs value) *joystick-dead-zone*)
-		   :button-up :button-down)))
-    (declare (ignore state))
-    (setf (aref *joystick-axis-values* axis) value)))
+  (setf (aref *joystick-axis-values* axis) value))
 
-(defun poll-joystick-axis (axis)
+(defun joystick-axis-value (axis)
   (aref *joystick-axis-values* axis))
 
 (defparameter *default-joystick-profile*
@@ -594,10 +591,10 @@ or,
 	(message "Checking joystick ~S, device name: ~S" index joystick)
 	(let ((profile (find-joystick-profile joystick)))
 	  (if (null profile)
-	      (message "Could not find joystick profile for ~S. Continuing..." joystick)
+	      (message "Could not find joystick profile for ~S. Continuing with default profile..." joystick)
 	      (destructuring-bind (&key name type &allow-other-keys) profile
-		(message "Found joystick profile ~S for ~S." type name)
-		(setf *joystick-profile* profile))))))))
+		(setf *joystick-profile* profile)
+		(message "Found joystick profile ~S for ~S." type name))))))))
 
 (defun poll-joystick-button (button)
   "Return 1 if the button numbered BUTTON is pressed, otherwise 0."
@@ -633,8 +630,8 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 
 ;; (define-method stick-heading block (&optional (stick *left-analog-stick*))
 ;;   (destructuring-bind (horizontal vertical) stick
-;;     (let* ((x (poll-joystick-axis horizontal))
-;; 	   (y (poll-joystick-axis vertical)))
+;;     (let* ((x (joystick-axis-value horizontal))
+;; 	   (y (joystick-axis-value vertical)))
 ;;       (values (find-heading 0 0 x y)
 ;; 	      (distance 0 0 x y)))))
 
@@ -654,8 +651,8 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 ;; (define-method stick-aim block ()
 ;;   (with-fields (direction) self
 ;;     (destructuring-bind (horizontal vertical) *joystick-aiming-axes*
-;;       (let ((x (poll-joystick-axis horizontal))
-;; 	    (y (poll-joystick-axis vertical)))
+;;       (let ((x (joystick-axis-value horizontal))
+;; 	    (y (joystick-axis-value vertical)))
 ;; 	(cond ((and (axis-pressed-p horizontal) (axis-pressed-p vertical))
 ;; 	       (aim self (if (minusp y) 
 ;; 			     (if (minusp x)
@@ -842,13 +839,13 @@ display."
 				  (send :release block x y button))))
       (:joy-button-down-event (:button button :state state)
 			      (when (assoc button (joystick-buttons))
-				(update-joystick button state)
+				(update-joystick-button button state)
 				(send-event (make-event :joystick
 							(list (button-to-symbol button) 
 							      :button-down)))))
       (:joy-button-up-event (:button button :state state)  
 			    (when (assoc button (joystick-buttons))
-			      (update-joystick button state)
+			      (update-joystick-button button state)
 			      (send-event (make-event :joystick
 						      (list (button-to-symbol button) 
 							    :button-up)))))
