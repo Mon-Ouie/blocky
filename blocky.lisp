@@ -52,14 +52,14 @@ message *prompt-sweden-keybindings* *prompt-qwerty-keybindings*
 *screen-width* transform-method-body *edit* roll-under make-stat
 make-universe initialize-colors *style* create-project
 *standard-categories* *left-turn* bind-event *right-turn*
-*default-actihandle-point-motions* left-turn right-turn roll bind-event-to-method
-*colors* enable-key-repeat disable-key-repeat get-color define-method
-*default-font* field-value set-field-value object-fields
-dispatch-event run-project *user-init-file-name* distance
-icon-resource icon-image *directions*
-*clear-cached-images-on-resize* *opposites*
-find-resource-property compose-blank-fields font-width font-height
-*browser* browser set-browser find-object *windows* edit create
+*default-actihandle-point-motions* left-turn right-turn roll
+bind-event-to-method *colors* enable-key-repeat disable-key-repeat
+get-color define-method *default-font* field-value set-field-value
+object-fields dispatch-event run-project *user-init-file-name*
+distance icon-resource icon-image *directions*
+*clear-cached-images-on-resize* *opposites* find-resource-property
+compose-blank-fields font-width font-height *browser* browser
+set-browser find-object *windows* edit create
 transform-field-reference define-block *screen-height*
 formatted-line-width *last-event* formatted-line-height
 formatted-string-height formatted-string-width get-color create-image
@@ -120,21 +120,26 @@ open-project field-options world set-frame-rate *frame-rate*
 *project* *project-path* *window-title* *window-position* restartably
 *default-shell-width* *default-shell-height* *system*
 set-timer-interval defgcell *message-logging* overlay
-initialize-console joystick-axis-value poll-joystick-button
-reset-joysticks *device-profiles* find-device-profile set-screen-width
-*universe* *play-args* set-screen-height genseq *zoom-factor*
-zoom-image is-zoomed-resource *timer-interval* save-objects
-enable-timer disable-timer while defmission send-to-blocks
-enable-held-keys disable-held-keys do-cells draw-box *resizable*
-achieve *resize-hook* draw-rectangle *quitting*
-*after-open-project-hook* *mission* mission-variable
-set-mission-variable with-mission-locals *background-color*
-set-sample-callback set-music-callback cffi-chunk-buffer
-convert-cffi-sample get-sample-buffer register-sample-generator
-register-voice unregister-voice register-voice-mixer mix-voices
-convert-cffi-sample-to-internal *block* *buffer*
-convert-internal-sample-to-cffi get-ticks block-variable
-with-block-variables set-block-variable with-blocks
+joystick-axis-pressed-p joystick-axis-value joystick-axis-raw-value
+analog-stick-heading find-heading analog-stick-pressure
+left-analog-stick-heading left-analog-stick-pressure
+right-analog-stick-heading joystick-button-pressed-p analog-stick-pressed-p
+left-analog-stick-pressed-p right-analog-stick-pressed-p
+right-analog-stick-pressure initialize-console joystick-axis-value
+poll-joystick-button joystick-button-state reset-joysticks
+*device-profiles* find-device-profile set-screen-width *universe*
+*play-args* set-screen-height genseq *zoom-factor* zoom-image
+is-zoomed-resource *timer-interval* save-objects enable-timer
+disable-timer while defmission send-to-blocks enable-held-keys
+disable-held-keys do-cells draw-box *resizable* achieve *resize-hook*
+draw-rectangle *quitting* *after-open-project-hook* *mission*
+mission-variable set-mission-variable with-mission-locals
+*background-color* set-sample-callback set-music-callback
+cffi-chunk-buffer convert-cffi-sample get-sample-buffer
+register-sample-generator register-voice unregister-voice
+register-voice-mixer mix-voices convert-cffi-sample-to-internal
+*block* *buffer* convert-internal-sample-to-cffi get-ticks
+block-variable with-block-variables set-block-variable with-blocks
 with-mission-locals *project* quit reset seek-music make-keyword
 object field-value make-queue find-parent set-field-value find-super
 *font* set-field-options field-options field-documentation

@@ -322,7 +322,7 @@ for backward-compatibility."
 	       (remhash event2 *key-table*))))
     (maphash #'break-it *key-table*)))
 
-;;; Event handling and blocks
+;;; Parceling out events to blocks
 
 (defvar *pointer-x* 0)
 (defvar *pointer-y* 0)
@@ -363,7 +363,8 @@ Please set the variable blocky:*event-handler-function*")
   '(:a :b :x :y ;; face buttons
     :left :right :up :down ;; directional pad
     :select :start ;; menu buttons
-    :left-bumper :left-trigger :right-bumper :right-trigger)) ;; shoulder buttons
+    :l1 :l2 :r1 :r2  ;; shoulder buttons
+    :l3 :r3)) ;; clicking the analog sticks
 
 (defparameter *other-modifier-symbols* '(:button-down :button-up))
 
@@ -444,35 +445,12 @@ or,
 		 ((eql 0 modifiers)
 		  nil))))))
 
-(defun find-heading (x0 y0 x1 y1)
-  (atan (- y1 y0) 
-	(- x1 x0)))
-
-(defparameter *joystick-axis-size* 32768.0)
-
-(defparameter *joystick-dead-zone* 6000)
-
-(defun axis-as-float (axis)
-  (/ (joystick-axis-value axis)
-     *joystick-axis-size*))
-
-(defun axis-pressed-p (axis) 
-  (< *joystick-dead-zone* (abs (joystick-axis-value axis))))
-
-(defvar *joystick-axis-values* (make-array 100 :initial-element 0))
-	
-(defun update-joystick-axis (axis value)
-  (setf (aref *joystick-axis-values* axis) value))
-
-(defun joystick-axis-value (axis)
-  (aref *joystick-axis-values* axis))
-
 (defparameter *default-joystick-profile*
   '("Unknown Joystick"
     :name "Unknown Joystick"
     :type :joystick
-    :left-stick (0 1)
-    :right-stick (3 2)
+    :left-analog-stick (0 1)
+    :right-analog-stick (3 2)
     :buttons ((0 . :button-0)
 	      (1 . :button-1)
 	      (2 . :button-2)
@@ -497,21 +475,38 @@ or,
 
 (defvar *joystick-profile* *default-joystick-profile*)
 
+(defvar *joystick-device* nil 
+  "The SDL device id of the current joystick.")
+
 (defparameter *joystick-profiles* 
   '(("DragonRise Inc.   Generic   USB  Joystick  " 
-     :name "Generic USB Gamepad (DragonRise)" :type :joystick
-     :left-stick (0 1)
-     :right-stick (3 2)
+     :name "Generic USB Gamepad" :type :joystick
+     :left-analog-stick (0 1)
+     :right-analog-stick (3 2)
      :buttons ((2 . :a)
 	       (1 . :b)
 	       (3 . :x)
 	       (0 . :y)
-	       (6 . :left-bumper)
-	       (7 . :right-bumper)
+	       (6 . :l2)
+	       (7 . :r2)
 	       (8 . :select)
 	       (9 . :start)
-	       (4 . :left-trigger)
-	       (5 . :right-trigger)))
+	       (4 . :l1)
+	       (5 . :r1)))
+    ("GreenAsia Inc.    USB Joystick     "
+     :name "Generic USB Gamepad" :type :joystick
+     :left-analog-stick (0 1)
+     :right-analog-stick (3 2)
+     :buttons ((2 . :a)
+	       (1 . :b)
+	       (3 . :x)
+	       (0 . :y)
+	       (4 . :l2)
+	       (5 . :r2)
+	       (8 . :select)
+	       (9 . :start)
+	       (6 . :l1)
+	       (7 . :r1)))
     ("USB Dance Pa" 
      :name "Generic USB Dance Pad" :type :dance 
      :buttons  ((12 . :up)
@@ -525,7 +520,7 @@ or,
 		(8 . :select)
 		(9 . :start)))
     ("GASIA CORP. PS(R) Gamepad Adaptor" 
-     :name "Generic PS2->USB Gamepad Adaptor (GASIA Corp.)" :type :joystick
+     :name "Generic USB Gamepad" :type :joystick
      :buttons ((4 . :up)
 	       (7 . :left)
 	       (5 . :right)
@@ -555,11 +550,11 @@ or,
 (defun joystick-buttons (&optional (profile *joystick-profile*))
   (getf (find-joystick-profile profile) :buttons))
 
-(defun joystick-left-stick (&optional (profile *joystick-profile*))
-  (getf (find-joystick-profile profile) :left-stick))
+(defun joystick-left-analog-stick (&optional (profile *joystick-profile*))
+  (getf (find-joystick-profile profile) :left-analog-stick))
 
-(defun joystick-right-stick (&optional (profile *joystick-profile*))
-  (getf (find-joystick-profile profile) :right-stick))
+(defun joystick-right-analog-stick (&optional (profile *joystick-profile*))
+  (getf (find-joystick-profile profile) :right-analog-stick))
 
 (defun button-to-symbol (button)
   (cdr (assoc button (joystick-buttons))))
@@ -572,11 +567,90 @@ or,
     (when entry 
       (car entry))))
 
-(defvar *joystick-device* nil 
-  "The SDL device id of the current joystick.")
+;; Analog sticks
 
-(defvar *joystick-button-states* nil
-  "The nth element is non-nil when the nth button is pressed.")
+(defparameter *joystick-axis-size* 32768.0)
+
+(defparameter *joystick-dead-zone* 6000)
+
+(defvar *joystick-axis-values* (make-array 100 :initial-element 0))
+
+(defun update-joystick-axis (axis value)
+  (setf (aref *joystick-axis-values* axis) value))
+
+(defun joystick-axis-raw-value (axis)
+  (aref *joystick-axis-values* axis))
+
+(defun joystick-axis-pressed-p (axis) 
+  (< *joystick-dead-zone* (abs (joystick-axis-raw-value axis))))
+
+(defun joystick-axis-value (axis)
+  (/ (joystick-axis-raw-value axis)
+     *joystick-axis-size*))
+
+(defun find-heading (x0 y0 x1 y1)
+  (atan (- y1 y0) 
+	(- x1 x0)))
+
+(defun analog-stick-pressed-p (&optional (stick (joystick-left-analog-stick)))
+  (destructuring-bind (horizontal vertical) stick
+    (or (joystick-axis-pressed-p horizontal)
+	(joystick-axis-pressed-p vertical))))
+
+(defun left-analog-stick-pressed-p ()
+  (analog-stick-pressed-p (joystick-left-analog-stick)))
+
+(defun right-analog-stick-pressed-p ()
+  (analog-stick-pressed-p (joystick-right-analog-stick)))
+
+(defun analog-stick-heading (&optional (stick (joystick-left-analog-stick)))
+  (destructuring-bind (horizontal vertical) stick
+    (when (analog-stick-pressed-p stick)
+      (find-heading 0 0 
+		    (joystick-axis-raw-value horizontal)
+		    (joystick-axis-raw-value vertical)))))
+      
+(defun analog-stick-pressure (&optional (stick (joystick-left-analog-stick)))
+  (destructuring-bind (horizontal vertical) stick
+    (if (or (joystick-axis-pressed-p horizontal)
+	    (joystick-axis-pressed-p vertical))
+	(/ (distance 0 0
+		     (joystick-axis-value horizontal)
+		     (joystick-axis-value vertical))
+	   ;; scale to [0.0, 1.0]
+	   (sqrt 2))
+	0.0)))
+
+(defun left-analog-stick-heading ()
+  (analog-stick-heading (joystick-left-analog-stick)))
+
+(defun right-analog-stick-heading ()
+  (analog-stick-heading (joystick-right-analog-stick)))
+
+(defun left-analog-stick-pressure ()
+  (analog-stick-pressure (joystick-left-analog-stick)))
+
+(defun right-analog-stick-pressure ()
+  (analog-stick-pressure (joystick-right-analog-stick)))
+
+;; Joystick buttons
+	
+(defvar *joystick-button-states* nil)
+
+(defun poll-joystick-button (button)
+  "Return 1 if the button numbered BUTTON is pressed, otherwise 0."
+  (sdl-cffi::sdl-joystick-get-button *joystick-device* button))
+
+(defun update-joystick-button (button state)
+  "Update the table in `*joystick-button-states*' to reflect the STATE of
+the BUTTON. STATE should be either 1 (on) or 0 (off)."
+  (setf (aref *joystick-button-states* button) state))
+
+(defun joystick-button-state (button)
+  (aref *joystick-button-states* button))
+
+(defun joystick-button-pressed-p (button)
+  (= 1 (joystick-button-state button)))
 
 (defun reset-joysticks ()
   "Re-open the joystick device and re-initialize the state."
@@ -595,76 +669,6 @@ or,
 	      (destructuring-bind (&key name type &allow-other-keys) profile
 		(setf *joystick-profile* profile)
 		(message "Found joystick profile ~S for ~S." type name))))))))
-
-(defun poll-joystick-button (button)
-  "Return 1 if the button numbered BUTTON is pressed, otherwise 0."
-  (sdl-cffi::sdl-joystick-get-button *joystick-device* button))
-
-(defun update-joystick-button (button state)
-  "Update the table in `*joystick-button-states*' to reflect the STATE of
-the BUTTON. STATE should be either 1 (on) or 0 (off)."
-  (setf (aref *joystick-button-states* button) (ecase state
-						 (1 t)
-						 (0 nil))))
-
-(defun update-all-buttons ()
-  (dolist (entry (joystick-buttons))
-    (destructuring-bind (button . symbol) entry
-      (declare (ignore symbol))
-      (update-joystick-button button (poll-joystick-button button)))))
-
-(defun generate-button-events ()
-  (let ((button 0) state sym)
-    (loop while (< button (length *joystick-button-states*))
-	  do (setf state (aref *joystick-button-states* button))
-	     (setf sym (button-to-symbol button))
-	     (when (and state sym)
-	       (send-event (make-event :joystick sym)))
-	     (incf button))))
-
-;;; Analog gamepad control
-
-;; (define-method aim block (heading)
-;;   (assert (numberp heading))
-;;   (setf %heading heading))
-
-;; (define-method stick-heading block (&optional (stick *left-analog-stick*))
-;;   (destructuring-bind (horizontal vertical) stick
-;;     (let* ((x (joystick-axis-value horizontal))
-;; 	   (y (joystick-axis-value vertical)))
-;;       (values (find-heading 0 0 x y)
-;; 	      (distance 0 0 x y)))))
-
-;; ;;(define-method 
-
-;; (define-method stick-move block (&optional multiplier)
-;;   (multiple-value-bind (heading distance) 
-;;       (stick-heading self *left-analog-stick*)
-;;     (aim self heading)
-;;     (move-forward self 5)
-;;     ;; if the player is NOT pressing on the right stick, ALSO aim in this direction.
-;;     (destructuring-bind (horizontal vertical) *joystick-aiming-axes*
-;;       (when (not (or (axis-pressed-p horizontal)
-;; 		     (axis-pressed-p vertical)))
-;; 	(aim self direction)))))))
-
-;; (define-method stick-aim block ()
-;;   (with-fields (direction) self
-;;     (destructuring-bind (horizontal vertical) *joystick-aiming-axes*
-;;       (let ((x (joystick-axis-value horizontal))
-;; 	    (y (joystick-axis-value vertical)))
-;; 	(cond ((and (axis-pressed-p horizontal) (axis-pressed-p vertical))
-;; 	       (aim self (if (minusp y) 
-;; 			     (if (minusp x)
-;; 				 :upleft
-;; 				 :upright)
-;; 			     (if (minusp x)
-;; 				 :downleft
-;; 				 :downright))))
-;; 	      ((axis-pressed-p horizontal)
-;; 	       (aim self (if (minusp x) :left :right)))
-;; 	      ((axis-pressed-p vertical)
-;; 	       (aim self (if (minusp y) :up :down))))))))
 
 ;;; Timing
 
@@ -1064,7 +1068,7 @@ This is where all saved objects are stored.")
 (defvar *executable* nil "Non-nil when running Blocky from a saved
 binary image.")
 
-(defparameter *untitled-project-name* "--untitled--")
+(defparameter *untitled-project-name* "untitled")
 
 ;;; Project packages
 
@@ -2559,5 +2563,21 @@ of the music."
 ;;   `(defun ,name (&optional project)
 ;;      (start-up)
 ;;      (
+
+
+;; (defun update-all-buttons ()
+;;   (dolist (entry (joystick-buttons))
+;;     (destructuring-bind (button . symbol) entry
+;;       (declare (ignore symbol))
+;;       (update-joystick-button button (poll-joystick-button button)))))
+
+;; (defun generate-button-events ()
+;;   (let ((button 0) state sym)
+;;     (loop while (< button (length *joystick-button-states*))
+;; 	  do (setf state (aref *joystick-button-states* button))
+;; 	     (setf sym (button-to-symbol button))
+;; 	     (when (and state sym)
+;; 	       (send-event (make-event :joystick sym)))
+;; 	     (incf button))))
 
 ;;; console.lisp ends here
