@@ -1452,6 +1452,17 @@ The order is (TOP LEFT RIGHT BOTTOM)."
   "Return the direction the player is in from here."
   (direction-to-thing self (get-player *world*)))
 
+(define-method heading-to-thing block (thing)
+  "Return a heading (in radians) to THING."
+  (with-fields (x y) thing
+    (find-heading %x %y x y)))
+
+(define-method heading-to-player block ()
+  (heading-to-thing self (get-player *world*)))
+
+(define-method point-at-thing block (thing)
+  (setf %heading (heading-to-thing self thing)))
+
 (define-method distance-to-thing block (thing)
   "Return the straight-line distance between here and THING.
 Note that the center-points of the objects are used for comparison."

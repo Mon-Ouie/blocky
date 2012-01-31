@@ -135,11 +135,11 @@ At the moment, only 0=off and 1=on are supported.")
 				      (truncate (/ *gl-screen-height* 2))))))))))
 
 (define-method update-window-glide world ()
-  (with-fields (window-x window-x0 window-y window-y0 window-speed) self
+  (with-fields (window-x window-x0 window-y window-y0 window-scrolling-speed) self
     (labels ((nearby (a b)
-	       (> window-speed (abs (- a b))))
+	       (> window-scrolling-speed (abs (- a b))))
 	     (jump (a b)
-	       (if (< a b) window-speed (- window-speed))))
+	       (if (< a b) window-scrolling-speed (- window-scrolling-speed))))
       (when (and window-x0 window-y0)
 	(if (nearby window-x window-x0)
 	    (setf window-x0 nil)
@@ -396,6 +396,9 @@ keyword symbol."
   
 (define-method get-player world ()
   %player)
+
+(defun player ()
+  (get-player *world*))
 
 (define-method player-row world ()
   "Return the grid row the player is on."

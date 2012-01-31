@@ -67,7 +67,7 @@ draw-image blocky edit define-prototype has-field *target* with-target
 defcell define-world *choose-direction-menu* set-field-options
 field-option-value index-resource find-project-path index-project
 load-image-resource load-lisp-resource *executable* *function-buttons*
-*corner-buttons* *dance-arrows* *punctuation* *screen-height*
+*corner-buttons* *dance-arrows* *punctuation* *screen-height* player
 *screen-width* blockyp *nominal-screen-width* *nominal-screen-height*
 *gl-screen-width* *gl-screen-height* *dance-phrase-symbols*
 *dance-keybindings* *energy-dance-pad-mapping* *message-function* dash
