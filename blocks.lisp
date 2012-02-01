@@ -157,6 +157,9 @@ initialized with BLOCKS as inputs."
       (remove-block *world* self)))
 ;  (discard self))
 
+(define-method damage block (points)
+  (declare (ignore points)))
+
 (define-method exit block ()
   (discard-block *world* self))
 
