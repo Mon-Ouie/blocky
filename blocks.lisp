@@ -74,9 +74,7 @@ Web at:
 	   :documentation "When non-nil, this block is located on a world's cell-grid.")
   (row :initform 0 :documentation "When non-nil, the current row location of the block.")
   (column :initform 0 :documentation "When non-nil, the current column of the block.")
-  ;; scaling/blending
-  (scale-x :initform 1)
-  (scale-y :initform 1)
+  ;; blending
   (blend :initform :alpha)
   (opacity :initform 1.0)
   ;; collisions
@@ -142,8 +140,8 @@ initialized with BLOCKS as inputs."
   (bind-any-default-events self)
   (register-uuid self)
   ;; textures loaded here may be bogus; do this later
-  ;; (when %image
-  ;;   (update-image-dimensions self))
+  (when %image
+    (resize-to-image self))
   (setf %x 0 %y 0))
 
 (define-method discard block ()
@@ -1208,55 +1206,49 @@ See shell.lisp for more on the implementation of drag-and-drop."
     (dolist (input inputs)
       (draw input))))
 
-(define-method update-image-dimensions block ()
-  "Resize this block to fit its %IMAGE, possibly with scaling factors.
-This is often invoked by the system when a block changes its image or
-scaling factors. See also the documentation for the fields %SCALE-X
-and %SCALE-Y."
-  (with-fields (image height width scale-x scale-y) self
+(define-method resize-to-image block ()
+  (with-fields (image height width) self
     (when image
-      (setf width (* scale-x (image-width image)))
-      (setf height (* scale-y (image-height image))))))
+      (setf width (image-width image)))
+      (setf height (image-height image))))
 
-(define-method draw-as-sprite block ()
-  "Draw this block as a sprite. By default only %IMAGE is drawn.
-The following block fields will control sprite drawing:
+;; (define-method draw-as-sprite block ()
+;;   "Draw this block as a sprite. By default only %IMAGE is drawn.
+;; The following block fields will control sprite drawing:
 
-   %OPACITY  Number in the range 0.0-1.0 with 0.0 being fully transparent
-             and 1.0 being fully opaque.
+;;    %OPACITY  Number in the range 0.0-1.0 with 0.0 being fully transparent
+;;              and 1.0 being fully opaque.
 
-   %BLEND    Blending mode for OpenGL compositing.
-             See the function `set-blending-mode' for a list of modes.
+;;    %BLEND    Blending mode for OpenGL compositing.
+;;              See the function `set-blending-mode' for a list of modes."
+;;   (with-fields (image x y z height opacity blend) self
+;;     (when image
+;;       (when (null height)
+;; 	(resize-to-image self))
+;;       (draw-image image x y :z z 
+;; 			    :opacity opacity 
+;; 			    :blend blend))))
 
-   %SCALE-X   Non-negative number giving a scaling factor for the
-              horizontal axis.
-
-   %SCALE-Y   Non-negative number giving a scaling factor for the
-              vertical axis."
-  (with-fields (image x y z height opacity blend scale-x scale-y) self
-    (when image
-      (when (null height)
-	(update-image-dimensions self))
-      (draw-image image x y :z z 
-			    :opacity opacity 
-			    :blend blend 
-			    :scale-x scale-x
-			    :scale-y scale-y))))
+(define-method scale block (x-factor &optional y-factor)
+  (let ((image (find-resource-object %image)))
+    (resize self 
+	    (* (sdl:width image) x-factor)
+	    (* (sdl:height image) (or y-factor x-factor)))))
 
 (define-method change-image block 
     ((image string :default nil))
-  "Change this sprite's currently displayed image to IMAGE.
-Scaling factors and image sizes are applied."
+  "Change this sprite's currently displayed image to IMAGE."
   (when image
     (setf %image image)
-    (update-image-dimensions self)))
+    (resize-to-image self)))
   
 (define-method draw block ()
   "Draw this block via OpenGL."
   (with-fields (image x y width height blend opacity) self
     (if image 
-	(progn (set-blending-mode blend)
-	       (draw-image image x y))
+	(draw-image image x y 
+		    :blend blend :opacity opacity
+		    :height height :width width)
 	(progn (draw-patch self x y (+ x width) (+ y height))
 	       (mapc #'draw %inputs)))))
 
@@ -1354,7 +1346,7 @@ Scaling factors and image sizes are applied."
 
 (define-method layout block () 
   (if %image 
-      (update-image-dimensions self)
+      (resize-to-image self)
       (with-fields (height width label) self
 	(with-field-values (x y inputs) self
 	  (let* ((left (+ x (label-width self)))
@@ -1393,7 +1385,7 @@ and MOUSE-Y identify a point inside the block (or input block.)"
   "Return this object's bounding box as multiple values.
 The order is (TOP LEFT RIGHT BOTTOM)."
   (when (null %height)
-    (update-image-dimensions self))
+    (resize-to-image self))
   (values %y %x (+ %x %width) (+ %y %height)))
 
 (define-method center-point block ()

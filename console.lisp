@@ -2185,7 +2185,7 @@ of the music."
       (progn (gl:enable :texture-2d :blend)	
 	     (set-blending-mode blend)))
   (gl:bind-texture :texture-2d texture)
-  (set-vertex-color vertex-color)
+  (set-vertex-color vertex-color opacity)
   (gl:with-primitive :quads
     (let (;;(x1 x)
 	  (x2 (+ x width))
@@ -2200,12 +2200,14 @@ of the music."
       (gl:tex-coord 0 0)
       (gl:vertex x y (- 0 z))))) ;; z
 
-(defun draw-image (name x y &key (z 0.0) (blend :alpha) (opacity 1.0) (scale-x 1) (scale-y 1))
-  (let* ((image (find-resource-object name))
-	 (height (* scale-y (sdl:height image)))
-	 (width (* scale-x (sdl:width image))))
-    (let ((texture (find-texture name)))
-      (draw-textured-rectangle x y z width height texture :blend blend :opacity opacity))))
+(defun draw-image (name x y &key (z 0.0) (blend :alpha) (opacity 1.0) height width)
+  (let ((image (find-resource-object name)))
+    (draw-textured-rectangle
+     x y z 
+     (or width (sdl:width image))
+     (or height (sdl:height image))
+     (find-texture name)
+     :blend blend :opacity opacity)))
 
 ;;; Indicators
 

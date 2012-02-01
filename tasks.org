@@ -4,7 +4,6 @@
 *** TODO weaving of spell tapestries relies on the secrets of the weaving guild, who thereby control all magic and society
 *** TODO threat of machines that can weave... punched cards, information age 
 ** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
-** TODO [#A] Fix memory faults on startup after crash? or stale game fasl?
 ** TODO [#A] Fix occasional quadtree deletion search assertion failure
 ** TODO [#A] Don't require .blocky suffix for project dir
 ** TODO [#A] Don't require particular name for project folder

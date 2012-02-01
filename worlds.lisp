@@ -198,8 +198,8 @@ At the moment, only 0=off and 1=on are supported.")
       (setf (field-value :x sprite) x
 	    (field-value :y sprite) y))
     (clear-saved-location sprite)
-    (when (field-value :image sprite)
-      (update-image-dimensions sprite))
+    ;; (when (field-value :image sprite)
+    ;;   (resize-to-image sprite))
     (quadtree-insert %quadtree sprite)))
       
 ;      (move-to sprite x y))))
