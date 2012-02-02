@@ -46,6 +46,7 @@
 
 * GUI BETA (LATER OCTOBER)
 
+** TODO shortcut macros for defresource foo foo.png auto-typed
 ** TODO [#A] AAAA script wiki database (like the file system)
 *** TODO defblock link <--- to another wikipage or something
 ** TODO [#A] Start unit-testing

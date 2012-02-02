@@ -1322,8 +1322,8 @@ See shell.lisp for more on the implementation of drag-and-drop."
   (with-fields (x y width height) self
     (let ((center-x (/ *screen-width* 2))
 	  (center-y (/ *screen-height* 2)))
-      (setf x (- center-x (/ width 2))
-	    y (- center-y (/ height 2))))))
+      (setf x (+ (- center-x (/ width 2))))
+      (setf y (+ (- center-y (/ width 2)))))))
 
 (define-method pin block ()
   "Prevent dragging and moving of this block."

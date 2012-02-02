@@ -592,6 +592,9 @@ or,
   (atan (- y1 y0) 
 	(- x1 x0)))
 
+(defun opposite-heading (heading)
+  (- pi heading))
+
 (defun analog-stick-pressed-p (&optional (stick (joystick-left-analog-stick)))
   (destructuring-bind (horizontal vertical) stick
     (or (joystick-axis-pressed-p horizontal)
