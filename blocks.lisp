@@ -715,7 +715,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (setf %drawing nil))
 
 (define-method (move-forward :category :motion) block ((distance number :default 40))
-  (with-fields (x y heading height width drawing color) self
+  (with-field-values (x y heading width drawing) self
     (let ((x0 (+ x (/ width 2)))
 	  (y0 (+ y (/ width 2))))
       (let ((dx (* distance (cos heading)))
@@ -723,6 +723,11 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	(move-to self (+ x dx) (+ y dy))
 	(when drawing 
 	  (draw-turtle-line self x0 y0 x y))))))
+
+(define-method step-toward-heading block (heading &optional (distance 1))
+  (multiple-value-bind (x y) (center-point self)
+    (values (+ x (* distance (cos heading)))
+	    (+ y (* distance (sin heading))))))
 
 (define-method draw-turtle-line block (x0 y0 x1 y1)
   nil)
@@ -1457,6 +1462,10 @@ The order is (TOP LEFT RIGHT BOTTOM)."
 
 (define-method point-at-thing block (thing)
   (setf %heading (heading-to-thing self thing)))
+
+(define-method aim block (heading)
+  (assert (numberp heading))
+  (setf %heading heading))
 
 (define-method distance-to-thing block (thing)
   "Return the straight-line distance between here and THING.
