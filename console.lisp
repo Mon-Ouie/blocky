@@ -560,9 +560,9 @@ or,
   (cdr (assoc button (joystick-buttons))))
 
 (defun symbol-to-button (sym)
-  (let ((entry (some #'(lambda (entry)
-			 (when (eq sym (cdr entry))
-			   entry))
+  (let ((entry (some #'(lambda (x)
+			 (when (eq sym (cdr x))
+			   x))
 		     (joystick-buttons))))
     (when entry 
       (car entry))))
@@ -650,10 +650,15 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
   (setf (aref *joystick-button-states* button) state))
 
 (defun joystick-button-state (button)
-  (aref *joystick-button-states* button))
+  (poll-joystick-button button))
+;;  (aref *joystick-button-states* button))
 
 (defun joystick-button-pressed-p (button)
-  (= 1 (joystick-button-state button)))
+  (joystick-button-state 
+     (if (integerp button)
+	 button
+	 (symbol-to-button button)
+	 )))
 
 (defun reset-joysticks ()
   "Re-open the joystick device and re-initialize the state."
