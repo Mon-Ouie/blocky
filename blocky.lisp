@@ -65,13 +65,14 @@ formatted-line-width *last-event* formatted-line-height
 formatted-string-height formatted-string-width get-color create-image
 draw-image blocky edit define-prototype has-field *target* with-target
 defcell define-world *choose-direction-menu* set-field-options
-field-option-value index-resource find-project-path index-project
-load-image-resource load-lisp-resource *executable* *function-buttons*
-*corner-buttons* *dance-arrows* *punctuation* *screen-height* player
-*screen-width* blockyp *nominal-screen-width* *nominal-screen-height*
-*gl-screen-width* *gl-screen-height* *dance-phrase-symbols*
-*dance-keybindings* *energy-dance-pad-mapping* *message-function* dash
-holding-shift *dark-target-arrow-images* get-button-index arrow-image
+*user-joystick-profile* field-option-value index-resource
+find-project-path index-project load-image-resource load-lisp-resource
+*executable* *function-buttons* *corner-buttons* *dance-arrows*
+*punctuation* *screen-height* player *screen-width* blockyp
+*nominal-screen-width* *nominal-screen-height* *gl-screen-width*
+*gl-screen-height* *dance-phrase-symbols* *dance-keybindings*
+*energy-dance-pad-mapping* *message-function* dash holding-shift
+*dark-target-arrow-images* get-button-index arrow-image
 message-to-standard-output reset-message-function *orthogonal-arrows*
 *diagonal-arrows* *function-buttons* *punctuation* *dance-arrows*
 *dance-pad-symbols* *make-prototype-id-package* arrow-formatted-string
@@ -123,23 +124,24 @@ set-timer-interval defgcell *message-logging* overlay
 joystick-axis-pressed-p joystick-axis-value joystick-axis-raw-value
 analog-stick-heading find-heading analog-stick-pressure
 left-analog-stick-heading left-analog-stick-pressure
-right-analog-stick-heading joystick-button-pressed-p analog-stick-pressed-p
-left-analog-stick-pressed-p right-analog-stick-pressed-p
-right-analog-stick-pressure initialize-console joystick-axis-value
-poll-joystick-button joystick-button-state reset-joysticks
-*device-profiles* find-device-profile set-screen-width *universe*
-*play-args* set-screen-height genseq *zoom-factor* zoom-image
-is-zoomed-resource *timer-interval* save-objects enable-timer
-disable-timer while defmission send-to-blocks enable-held-keys
-disable-held-keys do-cells draw-box *resizable* achieve *resize-hook*
-draw-rectangle *quitting* *after-open-project-hook* *mission*
-mission-variable set-mission-variable with-mission-locals
-*background-color* set-sample-callback set-music-callback
-cffi-chunk-buffer convert-cffi-sample get-sample-buffer
-register-sample-generator register-voice unregister-voice
-register-voice-mixer mix-voices convert-cffi-sample-to-internal
-*block* *buffer* convert-internal-sample-to-cffi get-ticks
-block-variable with-block-variables set-block-variable with-blocks
+right-analog-stick-heading joystick-button-pressed-p
+analog-stick-pressed-p left-analog-stick-pressed-p
+right-analog-stick-pressed-p right-analog-stick-pressure
+initialize-console joystick-axis-value poll-joystick-button
+joystick-button-state reset-joysticks *device-profiles*
+find-device-profile set-screen-width *universe* *play-args*
+set-screen-height genseq *zoom-factor* zoom-image is-zoomed-resource
+*timer-interval* save-objects enable-timer disable-timer while
+defmission send-to-blocks enable-held-keys disable-held-keys do-cells
+draw-box *resizable* achieve *resize-hook* draw-rectangle *quitting*
+*after-open-project-hook* *mission* mission-variable
+set-mission-variable with-mission-locals *background-color*
+set-sample-callback set-music-callback cffi-chunk-buffer
+convert-cffi-sample get-sample-buffer register-sample-generator
+register-voice unregister-voice register-voice-mixer mix-voices
+convert-cffi-sample-to-internal *block* *buffer*
+convert-internal-sample-to-cffi get-ticks block-variable
+with-block-variables set-block-variable with-blocks
 with-mission-locals *project* quit reset seek-music make-keyword
 object field-value make-queue find-parent set-field-value find-super
 *font* set-field-options field-options field-documentation

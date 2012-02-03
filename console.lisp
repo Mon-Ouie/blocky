@@ -475,6 +475,8 @@ or,
 
 (defvar *joystick-profile* *default-joystick-profile*)
 
+(defvar *user-joystick-profile* nil)
+
 (defvar *joystick-device* nil 
   "The SDL device id of the current joystick.")
 
@@ -541,19 +543,22 @@ or,
     (string (find-joystick-profile-by-name indicator))
     (list indicator)))
 
-(defun joystick-name (&optional (profile *joystick-profile*))
+(defun joystick-profile ()
+  (or *user-joystick-profile* *joystick-profile*))
+
+(defun joystick-name (&optional (profile (joystick-profile)))
   (getf (find-joystick-profile profile) :name))
 
-(defun joystick-type (&optional (profile *joystick-profile*)) 
+(defun joystick-type (&optional (profile (joystick-profile))) 
   (getf (find-joystick-profile profile) :type))
 
-(defun joystick-buttons (&optional (profile *joystick-profile*))
+(defun joystick-buttons (&optional (profile (joystick-profile)))
   (getf (find-joystick-profile profile) :buttons))
 
-(defun joystick-left-analog-stick (&optional (profile *joystick-profile*))
+(defun joystick-left-analog-stick (&optional (profile (joystick-profile)))
   (getf (find-joystick-profile profile) :left-analog-stick))
 
-(defun joystick-right-analog-stick (&optional (profile *joystick-profile*))
+(defun joystick-right-analog-stick (&optional (profile (joystick-profile)))
   (getf (find-joystick-profile profile) :right-analog-stick))
 
 (defun button-to-symbol (button)

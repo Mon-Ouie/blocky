@@ -1324,11 +1324,12 @@ See shell.lisp for more on the implementation of drag-and-drop."
 
 (define-method center block ()
   "Automatically center the block on the screen."
-  (with-fields (x y width height) self
-    (let ((center-x (/ *screen-width* 2))
-	  (center-y (/ *screen-height* 2)))
-      (setf x (+ (- center-x (/ width 2))))
-      (setf y (+ (- center-y (/ width 2)))))))
+  (with-fields (window-x window-y) *world*
+    (with-fields (x y width height) self
+      (let ((center-x (+ window-x (/ *screen-width* 2)))
+	    (center-y (+ window-y (/ *screen-height* 2))))
+	(setf x (+ (- center-x (/ width 2))))
+	(setf y (+ (- center-y (/ width 2))))))))
 
 (define-method pin block ()
   "Prevent dragging and moving of this block."
