@@ -654,11 +654,11 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 ;;  (aref *joystick-button-states* button))
 
 (defun joystick-button-pressed-p (button)
-  (joystick-button-state 
-     (if (integerp button)
-	 button
-	 (symbol-to-button button)
-	 )))
+  (= 1 (joystick-button-state 
+	(if (integerp button)
+	    button
+	    (symbol-to-button button)
+	    ))))
 
 (defun reset-joysticks ()
   "Re-open the joystick device and re-initialize the state."
