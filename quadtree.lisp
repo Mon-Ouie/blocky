@@ -1,4 +1,4 @@
-;;; quadtree.lisp --- for spatial indexing and stuff
+ ;;; quadtree.lisp --- for spatial indexing and stuff
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -37,7 +37,7 @@
   (null (quadtree-southwest node)))
 
 (defun bounding-box-contains (box0 box1)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (destructuring-bind (top0 left0 right0 bottom0) box0
     (destructuring-bind (top1 left1 right1 bottom1) box1
       (and (< top0 top1)
@@ -46,7 +46,7 @@
 	   (>= bottom0 bottom1)))))
 
 (defun scale-bounding-box (box factor)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (destructuring-bind (top left right bottom) box
     (let ((margin-x (* (- right left)
 		       (- factor 1.0)))
@@ -58,42 +58,42 @@
 	    (+ bottom margin-y)))))
 
 (defun valid-bounding-box (box)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (and (listp box)
        (= 4 (length box))
        (destructuring-bind (top left right bottom) box
 	 (and (< left right) (< top bottom)))))
 
 (defun northeast-quadrant (bounding-box)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (assert (valid-bounding-box bounding-box))
   (destructuring-bind (top left right bottom) bounding-box
     (list top (float (/ (+ left right) 2))
 	  right (float (/ (+ top bottom) 2)))))
 
 (defun southeast-quadrant (bounding-box)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (assert (valid-bounding-box bounding-box))
   (destructuring-bind (top left right bottom) bounding-box
     (list (float (/ (+ top bottom) 2)) (float (/ (+ left right) 2))
 	  right bottom)))
 
 (defun northwest-quadrant (bounding-box)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (assert (valid-bounding-box bounding-box))
   (destructuring-bind (top left right bottom) bounding-box
     (list top left
 	  (float (/ (+ left right) 2)) (float (/ (+ top bottom) 2)))))
 
 (defun southwest-quadrant (bounding-box)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (assert (valid-bounding-box bounding-box))
   (destructuring-bind (top left right bottom) bounding-box
     (list (float (/ (+ top bottom) 2)) left
 	  (float (/ (+ left right) 2)) bottom)))
 
 (defun quadtree-process (node bounding-box processor)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (assert (quadtree-p node))
   (assert (valid-bounding-box bounding-box))
   (assert (functionp processor))
@@ -107,7 +107,7 @@
     (funcall processor node)))
 
 (defun build-quadtree (bounding-box0 &optional (depth *default-quadtree-depth*))
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (assert (plusp depth))
   (assert (valid-bounding-box bounding-box0))
   (let ((bounding-box (mapcar #'float bounding-box0)))
@@ -121,7 +121,7 @@
 		       :southeast (build-quadtree (southeast-quadrant bounding-box) depth)))))
 
 (defun quadtree-search (node bounding-box)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   "Return the smallest quadrant enclosing BOUNDING-BOX at or below
 NODE, if any."
   (assert (quadtree-p node))
@@ -145,7 +145,7 @@ NODE, if any."
 	 node))))
 
 (defun quadtree-insert (tree object)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (let ((node0
 	  (quadtree-search 
 	   tree
@@ -168,7 +168,7 @@ NODE, if any."
 		    :test 'eq)))))
 
 (defun quadtree-delete (tree object0)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (let ((object (find-object object0)))
     ;; grab the cached quadtree node
     (let ((node (field-value :quadtree-node object)))
@@ -184,7 +184,7 @@ NODE, if any."
 			 :test 'eq))))))
 
 (defun quadtree-map-collisions (tree bounding-box processor)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (assert (functionp processor))
   (assert (valid-bounding-box bounding-box))
   (quadtree-process
@@ -196,7 +196,7 @@ NODE, if any."
 	   (funcall processor object))))))
 
 (defun quadtree-collide (tree object)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (assert (blockyp object))
   (quadtree-map-collisions 
    tree
@@ -208,7 +208,7 @@ NODE, if any."
 	 (collide object thing)))))
 
 (defun quadtree-show (tree &optional object)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (when tree
       ;; (dolist (ob (quadtree-objects tree))
       ;; 	(multiple-value-bind (top left right bottom) 
@@ -234,7 +234,7 @@ NODE, if any."
 	(quadtree-show (quadtree-southwest tree) object))))
 
 (defun objects-bounding-box (objects)
-  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   ;; some functions for calculating the bounding box
   (labels ((left (thing) (field-value :x thing))
 	   (right (thing) (+ (field-value :x thing)
