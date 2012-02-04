@@ -1,4 +1,4 @@
-;;; logic.lisp --- procedural content generation tools
+;;; logic.lisp --- some useful functions adapted from PAIP
 
 ;; Copyright (C) 2009, 2010, 2011  David O'Toole
 
