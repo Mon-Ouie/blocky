@@ -441,6 +441,7 @@ most user command messages. (See also the method `forward'.)"
 ;;; Draw the world
 
 (define-method draw world ()
+  (declare (optimize (speed 3)))
   (project self) ;; set up camera
   (with-field-values (sprites grid-size grid grid-height grid-width
 			      background background-color) self
@@ -466,7 +467,7 @@ most user command messages. (See also the method `forward'.)"
 ;;; Simulation update
 
 (define-method update world (&rest args)
-  ;; (declare (optimize (speed 3)))
+ (declare (optimize (speed 3)))
   (declare (ignore args))
   (with-field-values (grid sprites quadtree grid-height grid-width player) self
     (let ((*quadtree* quadtree))
