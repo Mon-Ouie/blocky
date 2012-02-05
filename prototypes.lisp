@@ -322,7 +322,6 @@ extended argument list ARGLIST."
     (let ((before-count (count-entries)))
       (message "Searching in ~A objects for externals..." before-count)
       (flet ((purge (id object)
-	       (declare (ignore key))
 	       (let ((name (object-name object)))
 		 (unless (and (stringp name)
 			      (search "BLOCKY:" name))
@@ -678,7 +677,10 @@ upon binding."
     (setf (car entry) method)
     (setf (cdr entry) func)))
 
-(defun cache-lookup (object method)
+(defun method-cache-lookup (object method)
+  (declare (optimize (speed 3))
+	   (inline object-cache)
+	   (type keyword method))
   (cdr (assoc method (object-cache object))))
 
 ;; Next comes the basic function for sending a message synchronously
@@ -705,14 +707,14 @@ If the method is not found, attempt to forward the message."
     (when (not (object-p object))
       (error "Cannot send message to non-object: ~A. Did you forget the `self' argument?" object))
     ;; check the cache
-    (let ((func (cache-lookup object method)))
+    (let ((func (method-cache-lookup object method)))
       (if func
 	  ;; cache hit. invoke the method and finish up.
 	  (apply func object args)
 	  ;; cache miss. look for a value.
 	  (progn (setf func (field-value method object :noerror))
 		 (if (not (eq *lookup-failure* func))
-		     ;; store in cache and then invoke the method
+		     ;; store in local cache and then invoke the method
 		     (progn 
 		       (cache-method object method func)
 		       (apply func object args))
