@@ -1,4 +1,4 @@
- ;;; quadtree.lisp --- for spatial indexing and stuff
+;;; quadtree.lisp --- for spatial indexing and stuff
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -173,9 +173,9 @@ NODE, if any."
     ;; grab the cached quadtree node
     (let ((node (field-value :quadtree-node object)))
       (assert node)
-      ;; (assert (find object
-      ;; 		    (quadtree-objects node)
-      ;; 		    :test 'eq))
+      (assert (find object
+      		    (quadtree-objects node)
+      		    :test 'eq))
       (setf (quadtree-objects node)
 	    (delete object (quadtree-objects node) :test 'eq))
       (set-field-value :quadtree-node object nil)
@@ -233,7 +233,7 @@ NODE, if any."
 	(quadtree-show (quadtree-southeast tree) object)
 	(quadtree-show (quadtree-southwest tree) object))))
 
-(defun objects-bounding-box (objects)
+(defun find-bounding-box (objects)
   ;; (declare (optimize (speed 3)))
   ;; some functions for calculating the bounding box
   (labels ((left (thing) (field-value :x thing))
@@ -243,9 +243,17 @@ NODE, if any."
 	   (bottom (thing) (+ (field-value :y thing)
 			      (field-value :height thing))))
     ;; let's find the bounding box.
-    (list (reduce #'min (mapcar #'left objects))
-	  (reduce #'max (mapcar #'right objects))
-	  (reduce #'min (mapcar #'top objects))
-	  (reduce #'max (mapcar #'bottom objects)))))
+    (values (reduce #'min (mapcar #'top objects))
+	    (reduce #'min (mapcar #'left objects))
+	    (reduce #'max (mapcar #'right objects))
+	    (reduce #'max (mapcar #'bottom objects)))))
+
+(defun quadtree-fill (quadtree set)
+  (let ((objects (etypecase set
+		   (list set)
+		   (hash-table (loop for object being the hash-keys in set collect object)))))
+    (dolist (object objects)
+      (set-field-value :quadtree-node object nil)
+      (quadtree-insert quadtree object))))
 
 ;;; quadtree.lisp ends here

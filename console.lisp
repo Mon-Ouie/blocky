@@ -2531,7 +2531,7 @@ of the music."
   (delete-all-resources)
   (sdl-mixer:halt-music)
   (sdl-mixer:close-audio t)
-  (setf *buffer* nil)
+;  (setf *buffer* nil)
   (setf *world* nil)
   (sdl:quit-sdl)
   (setf *gl-window-open-p* nil))

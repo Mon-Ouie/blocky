@@ -566,8 +566,10 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
   (setf %tasks (delete task %tasks :test 'equal)))
 
 (define-method run-tasks block ()
-  ;; run tasks while they return non-nil 
-  (setf %tasks (delete-if-not #'running %tasks)))
+  ;; don't run tasks on objects that got deleted during UPDATE
+  (when %quadtree-node
+    ;; run tasks while they return non-nil 
+    (setf %tasks (delete-if-not #'running %tasks))))
 
 (define-method update block ()
   "Update the simulation one step forward in time."

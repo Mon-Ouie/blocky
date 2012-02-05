@@ -134,7 +134,7 @@ set-screen-height genseq *zoom-factor* zoom-image is-zoomed-resource
 *timer-interval* save-objects enable-timer disable-timer while
 defmission send-to-blocks enable-held-keys disable-held-keys do-cells
 draw-box *resizable* achieve *resize-hook* draw-rectangle *quitting*
-*after-open-project-hook* *mission* mission-variable
+*after-open-project-hook* *mission* mission-variable find-bounding-box
 set-mission-variable with-mission-locals *background-color*
 set-sample-callback set-music-callback cffi-chunk-buffer
 convert-cffi-sample get-sample-buffer register-sample-generator

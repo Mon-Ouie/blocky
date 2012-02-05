@@ -37,7 +37,7 @@
 	       (:file "dance" :depends-on ("blocks"))
 	       (:file "halo" :depends-on ("library"))
 	       (:file "text" :depends-on ("library"))
-	       (:file "windows" :depends-on ("library"))
+;	       (:file "windows" :depends-on ("library"))
 	       (:file "trees" :depends-on ("library"))
 	       (:file "listener" :depends-on ("library"))
 	       (:file "system" :depends-on ("library"))

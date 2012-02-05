@@ -31,8 +31,6 @@
 
 ;; X Window System is a trademark of X Consortium, Inc.
 
-;; :. colors > 
-
 (in-package :blocky)
 
 (defvar *x11-color-data*

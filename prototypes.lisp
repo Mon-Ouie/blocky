@@ -344,7 +344,7 @@ extended argument list ARGLIST."
 	      (object thing))))
       (prog1 result
 	(unless no-error
-	  (assert (object-p result)))))))
+	  (assert result))))))
       
 (defun find-super (object)
   (object-super (find-object object)))
