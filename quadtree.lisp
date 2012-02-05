@@ -50,10 +50,10 @@
 		       (- factor 1.0)))
 	  (margin-y (* (- bottom top)
 		       (- factor 1.0))))
-      (list (- top margin-y)
-	    (- left margin-x)
-	    (+ right margin-x)
-	    (+ bottom margin-y)))))
+      (values (- top margin-y)
+	      (- left margin-x)
+	      (+ right margin-x)
+	      (+ bottom margin-y)))))
 
 (defun valid-bounding-box (box)
   (and (listp box)
@@ -219,7 +219,7 @@ NODE, if any."
 	(quadtree-show (quadtree-southwest tree) object))))
 
 (defun find-bounding-box (objects)
-  ;; some functions for calculating the bounding box
+  ;; calculate the bounding box of a bunch of objects
   (labels ((left (thing) (field-value :x thing))
 	   (right (thing) (+ (field-value :x thing)
 			     (field-value :width thing)))
