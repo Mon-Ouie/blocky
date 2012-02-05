@@ -46,6 +46,8 @@
 
 (define-method layout world ())
 
+(defparameter *world-bounding-box-scale* 1.01)
+
 (define-method resize world (new-height new-width)
   (assert (and (plusp new-height)
 	       (plusp new-width)))
@@ -54,19 +56,36 @@
     (setf width new-width)
     (setf quadtree 
 	  (build-quadtree 
-	   (multiple-value-list (bounding-box self))))
+	   (multiple-value-list 
+	    (scale-bounding-box 
+	     (multiple-value-list 
+	      (bounding-box self))
+	     *world-bounding-box-scale*))))
     (quadtree-fill quadtree objects)))
 
 (define-method resize-automatically world ()
   (let ((objects (loop for object being the hash-keys in %objects collect object)))
-    (setf %quadtree 
-	  (build-quadtree 
-	   (multiple-value-list 
-	    (if objects 
-		(find-bounding-box objects)
-		(bounding-box self)))))
-    (when objects
-      (quadtree-fill %quadtree objects))))
+    (with-fields (quadtree) self
+      (setf quadtree
+	    (if (null objects)
+		(build-quadtree (multiple-value-list (bounding-box self)))
+		;; adjust bounding box so that all objects have positive coordinates
+		(multiple-value-bind (top left right bottom)
+		    (find-bounding-box objects)
+		  (declare (ignore right bottom))
+		  ;; move all the objects
+		  (dolist (object objects)
+		    (with-fields (x y) object
+		      (decf x left)
+		      (decf y top)))
+		  (build-quadtree 
+		   ;; add a margin around the adjusted bounding box
+		   (multiple-value-list 
+		    (scale-bounding-box 
+		     (multiple-value-list (find-bounding-box objects))
+		     *world-bounding-box-scale*))))))
+      (when objects
+	(quadtree-fill quadtree objects)))))
 
 (define-method window-bounding-box world ()
   (values %window-y 
@@ -269,6 +288,8 @@ most user command messages. (See also the method `forward'.)"
 	;; update window movement
 	(glide-follow self player)
 	(update-window-glide self)
+	;; ;; FIXME
+	;; (message "OBJECTS: ~d" (hash-table-count %objects)) 
 	;; detect collisions
 	(loop for object being the hash-keys in %objects do
 	  (quadtree-collide *quadtree* object)))))
