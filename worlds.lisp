@@ -72,6 +72,7 @@
 (define-method glide-window-to-object world (object)
   (multiple-value-bind (top left right bottom) 
       (bounding-box object)
+    (declare (ignore right bottom))
     (glide-window-to 
      self 
      (max 0 (- left (/ *gl-screen-width* 2)))
@@ -132,7 +133,9 @@
   (do-orthographic-projection)
   (do-window %window-x %window-y %window-scale-x %window-scale-y))
 
-(define-method build world (&rest parameters))
+(define-method is-empty world ()
+  (or (null %objects)
+      (zerop (hash-table-count %objects))))
 
 (define-method initialize world ()
   (setf %variables (make-hash-table :test 'equal))
@@ -145,12 +148,6 @@
 	  (prog1 t
 	    (let ((*quadtree* quadtree))
 	      (handle-event player event)))))))
-
-(define-method make world (&rest parameters)
-  (apply #'initialize self parameters))
-
-(define-method make-with-parameters world (parameters)
-  (apply #'send self :make self parameters))
 
 ;;; The object layer. 
 
@@ -209,6 +206,8 @@
 (define-method get-player world ()
   %player)
 
+(defun world () *world*)
+
 (defun player ()
   (get-player *world*))
 
@@ -239,56 +238,139 @@ most user command messages. (See also the method `forward'.)"
 	     *world-bounding-box-scale*))))
     (quadtree-fill quadtree objects)))
 
-(define-method resize-automatically world ()
-  (let ((objects (get-objects self)))
-    (with-fields (quadtree) self
-      (setf quadtree
-	    (if (null objects)
-		(build-quadtree (multiple-value-list (bounding-box self)))
-		;; adjust bounding box so that all objects have positive coordinates
-		(multiple-value-bind (top left right bottom)
-		    (find-bounding-box objects)
-		  ;; update world dimensions
-		  (setf height (- bottom top))
-		  (setf width (- right left))
-		  ;; move all the objects
-		  (dolist (object objects)
-		    (with-fields (x y) object
-		      (decf x left)
-		      (decf y top)))
-		  ;; make a quadtree with a one-percent margin on all sides
-		  (build-quadtree 
-		   (multiple-value-list 
-		    (scale-bounding-box 
-		     (multiple-value-list (find-bounding-box objects))
-		     *world-bounding-box-scale*))))))
-      (when objects
-	(quadtree-fill quadtree objects)))))
+(define-method shrink-wrap world ()
+  (prog1 self
+    (let ((objects (get-objects self)))
+      (with-fields (quadtree height width) self
+	(setf quadtree
+	      (if (null objects)
+		  (build-quadtree (multiple-value-list (bounding-box self)))
+		  ;; adjust bounding box so that all objects have positive coordinates
+		  (multiple-value-bind (top left right bottom)
+		      (find-bounding-box objects)
+		    ;; update world dimensions
+		    (setf height (- bottom top))
+		    (setf width (- right left))
+		    ;; move all the objects
+		    (dolist (object objects)
+		      (with-fields (x y) object
+			(decf x left)
+			(decf y top)))
+		    ;; make a quadtree with a one-percent margin on all sides
+		    (build-quadtree 
+		     (multiple-value-list 
+		      (scale-bounding-box 
+		       (multiple-value-list (find-bounding-box objects))
+		       *world-bounding-box-scale*))))))
+	(when objects
+	  (quadtree-fill quadtree objects))))))
 
 ;; Algebraic operations on worlds and their contents
 
-(defun combine-worlds (&rest worlds)
-  (when worlds
-    (let ((world (new world)))
-      (prog1 world 
-	(dolist (object (mapcan #'get-objects worlds))
-	  (add-block world object))
-	(resize-automatically world)))))
+(defmacro with-new-world (&body body)
+  `(let ((*world* (new world)))
+     ,@body
+     (shrink-wrap (world))))
 
-(defun stack-worlds (&rest worlds)
-  (when worlds
-    (let ((new-world (new world)))
-      (prog1 new-world
-	(let ((y0 0))
-	  (dolist (world worlds)
-	    (let ((objects (get-objects world)))
-	      (multiple-value-bind (top left right bottom)
-		  (find-bounding-box objects)
-		(dolist (object objects)
-		  (with-fields (x y) object
-		    (add-block new-world object x (+ y y0))))
-		(incf y0 bottom)))))
-	(resize-automatically new-world)))))
+(define-block turtle :tags '(:turtle) :x 0 :y 0)
+
+(defun is-turtle (thing)
+  (has-tag thing :turtle))
+
+(defmacro define-turtle (name &rest args)
+  `(define-block (,name :super "BLOCKY:TURTLE") ,@args))
+
+(define-method make-world turtle (&rest parameters)
+  (with-new-world
+    (add-block (world) self)
+    (apply #'run self parameters)
+    (destroy self)))
+
+(define-method paste world (other-world &optional (dx 0) (dy 0))
+  (dolist (object (get-objects other-world))
+    (add-block self object)))
+
+(defun combine (world1 world2)
+  (with-new-world 
+    (when (and world1 world2)
+      (dolist (object (nconc (get-objects world1)
+			     (get-objects world2)))
+	(add-block (world) object)))))
+
+(define-method copy world ()
+  (with-new-world 
+    (dolist (object (mapcar #'duplicate (get-objects self)))
+      (add-block self object))))
+
+(defun translate (world dx dy)
+  (when world
+    (prog1 world
+      (let ((objects (get-objects world)))
+	(dolist (object objects)
+	  (with-fields (x y) object
+	    (move-to object (+ x dx) (+ y dy))))))))
+
+(defun vertical-extent (world)
+  (if (or (null world)
+	  (is-empty world))
+      0
+      (multiple-value-bind (top left right bottom)
+	  (find-bounding-box (get-objects world))
+	(declare (ignore left right))
+	(- bottom top))))
+
+(defun horizontal-extent (world)
+  (if (or (null world)
+	  (is-empty world))
+      0
+      (multiple-value-bind (top left right bottom)
+	  (find-bounding-box (get-objects world))
+	(declare (ignore top bottom))
+	(- right left))))
+  
+(defun arrange-below (&optional world1 world2)
+  (when (and world1 world2)
+    (combine world1
+	     (translate world2
+			0 
+			(vertical-extent world1)))))
+
+(defun arrange-beside (&optional world1 world2)
+  (when (and world1 world2)
+    (combine world1 
+	     (translate world2
+			(horizontal-extent world1)
+			0))))
+
+(defun stack-vertically (&rest worlds)
+  (reduce #'arrange-below worlds))
+
+(defun stack-horizontally (&rest worlds)
+  (reduce #'arrange-beside worlds))
+
+(define-method flip-horizontally world ()
+  (let ((objects (get-objects self)))
+    (dolist (object objects)
+      (with-fields (x y) object
+	(move-to object (- x) y))))
+  (shrink-wrap self))
+
+(define-method flip-vertically world ()
+  (let ((objects (get-objects self)))
+    (dolist (object objects)
+      (with-fields (x y) object
+	(move-to object x (- y)))))
+  (shrink-wrap self))
+
+(define-method mirror-horizontally world ()
+  (stack-worlds-horizontally 
+   self 
+   (flip-horizontally (duplicate self))))
+
+(define-method mirror-vertically world ()
+  (stack-worlds-vertically 
+   self 
+   (flip-vertically (duplicate self))))
 
 ;;; Draw the world
 
@@ -309,12 +391,12 @@ most user command messages. (See also the method `forward'.)"
 
 ;;; Simulation update
 
-(define-method update world (&rest args)
+(define-method update world (&optional no-collisions)
   (declare (optimize (speed 3)))
   (declare (ignore args))
     (with-field-values (objects height width player) self
       (when (null %quadtree)
-	(resize-automatically self))
+	(shrink-wrap self))
       (let ((*quadtree* %quadtree))
 	(assert (zerop *quadtree-depth*))
 	;; run the objects
@@ -325,8 +407,9 @@ most user command messages. (See also the method `forward'.)"
 	(glide-follow self player)
 	(update-window-glide self)
 	;; detect collisions
-	(loop for object being the hash-keys in %objects do
-	  (quadtree-collide *quadtree* object)))))
+	(unless no-collisions
+	  (loop for object being the hash-keys in %objects do
+	    (quadtree-collide *quadtree* object))))))
 
 ;; ;;; Lighting and line-of-sight
 
