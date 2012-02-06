@@ -15,12 +15,13 @@ More instructions for Mac and Windows will be available soon.
       platform-specific notes below for suggestions on SBCL; CLISP and
       CCL have also been reported to work.)
  
-      A recent release from sbcl.org is recommended. Please see:
-      http://sbcl.org/platform-table.html
+      A recent release of SBCL from sbcl.org is recommended. Please
+      see: http://sbcl.org/platform-table.html
 
     - A working OpenGL implementation. Hardware acceleration is
       strongly recommended. (Most fairly recent Mac and Windows
-      machines will have OpenGL drivers already.)
+      machines will have OpenGL drivers already, but GNU/Linux users
+      will need proper hardware drivers.
 
     - Git, a distributed version control system client.
       http://git-scm.com/
@@ -53,9 +54,10 @@ More instructions for Mac and Windows will be available soon.
    mkdir ~/src
    cd ~/src
    git clone git://github.com/dto/blocky.git 
-   
-   (OPTIONAL) If you need to use the development branch of Blocky, do
-   this:
+
+
+2a. (OPTIONAL) If you need to use the development branch of Blocky, do
+     this:
   
    cd ~/src/blocky
    git checkout -b develop
