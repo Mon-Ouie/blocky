@@ -329,7 +329,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
       (setf parent nil))))
 
 (define-method drop block (other-block &optional (dx 0) (dy 0))
-  (add-block *buffer* other-block (+ %x dx) (+ %y dy)))
+  (add-block (world) other-block (+ %x dx) (+ %y dy)))
 
 ;;; Defining input events for blocks
 
