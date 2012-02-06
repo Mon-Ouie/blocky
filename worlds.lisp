@@ -44,48 +44,12 @@
   `(define-block (,name :super "BLOCKY:WORLD")
      ,@body))
 
+(define-method get-objects world ()
+  (loop for object being the hash-keys in %objects collect object))
+
 (define-method layout world ())
 
-(defparameter *world-bounding-box-scale* 1.01)
-
-(define-method resize world (new-height new-width)
-  (assert (and (plusp new-height)
-	       (plusp new-width)))
-  (with-fields (height width quadtree objects) self
-    (setf height new-height)
-    (setf width new-width)
-    (setf quadtree 
-	  (build-quadtree 
-	   (multiple-value-list 
-	    (scale-bounding-box 
-	     (multiple-value-list 
-	      (bounding-box self))
-	     *world-bounding-box-scale*))))
-    (quadtree-fill quadtree objects)))
-
-(define-method resize-automatically world ()
-  (let ((objects (loop for object being the hash-keys in %objects collect object)))
-    (with-fields (quadtree) self
-      (setf quadtree
-	    (if (null objects)
-		(build-quadtree (multiple-value-list (bounding-box self)))
-		;; adjust bounding box so that all objects have positive coordinates
-		(multiple-value-bind (top left right bottom)
-		    (find-bounding-box objects)
-		  (declare (ignore right bottom))
-		  ;; move all the objects
-		  (dolist (object objects)
-		    (with-fields (x y) object
-		      (decf x left)
-		      (decf y top)))
-		  (build-quadtree 
-		   ;; add a margin around the adjusted bounding box
-		   (multiple-value-list 
-		    (scale-bounding-box 
-		     (multiple-value-list (find-bounding-box objects))
-		     *world-bounding-box-scale*))))))
-      (when objects
-	(quadtree-fill quadtree objects)))))
+;; Defining and scrolling the screen viewing window
 
 (define-method window-bounding-box world ()
   (values %window-y 
@@ -254,6 +218,78 @@ most user command messages. (See also the method `forward'.)"
   (setf %player player)
   (add-block self player))
 
+;;; Configuring the world's space and its quadtrees
+
+(defparameter *world-bounding-box-scale* 1.01)
+
+;; see also quadtree.lisp 
+
+(define-method resize world (new-height new-width)
+  (assert (and (plusp new-height)
+	       (plusp new-width)))
+  (with-fields (height width quadtree objects) self
+    (setf height new-height)
+    (setf width new-width)
+    (setf quadtree 
+	  (build-quadtree 
+	   (multiple-value-list 
+	    (scale-bounding-box 
+	     (multiple-value-list 
+	      (bounding-box self))
+	     *world-bounding-box-scale*))))
+    (quadtree-fill quadtree objects)))
+
+(define-method resize-automatically world ()
+  (let ((objects (get-objects self)))
+    (with-fields (quadtree) self
+      (setf quadtree
+	    (if (null objects)
+		(build-quadtree (multiple-value-list (bounding-box self)))
+		;; adjust bounding box so that all objects have positive coordinates
+		(multiple-value-bind (top left right bottom)
+		    (find-bounding-box objects)
+		  ;; update world dimensions
+		  (setf height (- bottom top))
+		  (setf width (- right left))
+		  ;; move all the objects
+		  (dolist (object objects)
+		    (with-fields (x y) object
+		      (decf x left)
+		      (decf y top)))
+		  ;; make a quadtree with a one-percent margin on all sides
+		  (build-quadtree 
+		   (multiple-value-list 
+		    (scale-bounding-box 
+		     (multiple-value-list (find-bounding-box objects))
+		     *world-bounding-box-scale*))))))
+      (when objects
+	(quadtree-fill quadtree objects)))))
+
+;; Algebraic operations on worlds and their contents
+
+(defun combine-worlds (&rest worlds)
+  (when worlds
+    (let ((world (new world)))
+      (prog1 world 
+	(dolist (object (mapcan #'get-objects worlds))
+	  (add-block world object))
+	(resize-automatically world)))))
+
+(defun stack-worlds (&rest worlds)
+  (when worlds
+    (let ((new-world (new world)))
+      (prog1 new-world
+	(let ((y0 0))
+	  (dolist (world worlds)
+	    (let ((objects (get-objects world)))
+	      (multiple-value-bind (top left right bottom)
+		  (find-bounding-box objects)
+		(dolist (object objects)
+		  (with-fields (x y) object
+		    (add-block new-world object x (+ y y0))))
+		(incf y0 bottom)))))
+	(resize-automatically new-world)))))
+
 ;;; Draw the world
 
 (define-method draw world ()
@@ -288,12 +324,10 @@ most user command messages. (See also the method `forward'.)"
 	;; update window movement
 	(glide-follow self player)
 	(update-window-glide self)
-	;; ;; FIXME
-	;; (message "OBJECTS: ~d" (hash-table-count %objects)) 
 	;; detect collisions
 	(loop for object being the hash-keys in %objects do
 	  (quadtree-collide *quadtree* object)))))
-    
+
 ;; ;;; Lighting and line-of-sight
 
 ;; (defvar *lighting-hack-function* nil)
