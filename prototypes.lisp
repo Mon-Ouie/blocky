@@ -1185,18 +1185,6 @@ evaluated, then any applicable initializer is triggered."
 	  (apply #'send :initialize new-object initargs))
       (add-object-to-database new-object)))))
 
-(defun duplicate (thing)
-  (let ((object (find-object thing))
-	(uuid (make-uuid)))
-    (assert (null (object-name object)))
-    (let ((new-object 
-	    (make-object :super (find-super object)
-			 :uuid uuid
-			 :fields (copy-tree (object-fields object)))))
-      (prog1 uuid
-	(initialize-method-cache new-object)
-	(add-object-to-database new-object)))))
-
 ;;; Serialization support
 
 ;; The functions SERIALIZE and DESERIALIZE convert
@@ -1313,6 +1301,12 @@ objects after reconstruction, wherever present."
 
 (defun queue%initialize (object &rest args)
   (apply #'send-queue :initialize object args))
+
+(defun duplicate (original)
+  (let ((duplicate (deserialize (serialize original))))
+    (setf (object-uuid (find-object duplicate))
+	  (make-uuid))
+    (add-object-to-database duplicate)))
 
 ;;; Printing objects
 
