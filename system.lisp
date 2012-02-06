@@ -48,7 +48,6 @@
 (define-method create-project system ())
 
 ;; (define-method open-existing-project system ((project-name string :default " "))
-
 	     
 (define-method save-changes system ()
   (save-project))
