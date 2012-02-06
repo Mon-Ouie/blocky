@@ -5,7 +5,7 @@
 
 (asdf:oos 'asdf:load-op 'blocky)
 
-(sb-ext:save-lisp-and-die "xalcyon"
+(sb-ext:save-lisp-and-die "xalcyon.app"
 			  :toplevel (lambda ()
 				      (sb-posix:putenv
 				       (format nil "SBCL_HOME=~A" 
