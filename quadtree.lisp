@@ -183,7 +183,7 @@ NODE, if any."
 	   (funcall processor object))))))
 
 (defun quadtree-collide (tree object)
-  (assert (blockyp object))
+  ;; (assert (blockyp object))
   (quadtree-map-collisions 
    tree
    (multiple-value-list (bounding-box object))
