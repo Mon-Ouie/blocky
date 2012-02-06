@@ -9,11 +9,14 @@ Blocky source directory.)
 
 More instructions for Mac and Windows will be available soon.
 
-1. System Requirements (All Platforms)
+1. System Requirements for building Blocky (All Platforms)
 
     - A Common Lisp implementation such as Steel Bank Common Lisp (see
       platform-specific notes below for suggestions on SBCL; CLISP and
       CCL have also been reported to work.)
+ 
+      A recent release from sbcl.org is recommended. Please see:
+      http://sbcl.org/platform-table.html
 
     - A working OpenGL implementation. Hardware acceleration is
       strongly recommended. (Most fairly recent Mac and Windows
@@ -29,11 +32,9 @@ More instructions for Mac and Windows will be available soon.
 
 1a. System Requirements (Linux)
 
-   You need a recent release of SBCL, such as 1.0.47.24. You must also
-   have the SDL (Simple Direct Media Layer) libraries installed on
-   your system. How to do this is beyond the scope of this
-   document. See http://www.libsdl.org for more information.
-
+   You must have the SDL (Simple Direct Media Layer) libraries
+   installed on your system. How to do this is beyond the scope of
+   this document. See http://www.libsdl.org for more information.
    Your Linux distribution will most likely have SDL packages for
    sbal, sdl, sdl-image, sdl-mixer, sdl-ttf, and sdl-gfx, all of which
    are required for to compile Blocky. You may also need to install
@@ -77,8 +78,9 @@ More instructions for Mac and Windows will be available soon.
     the Common Lisp libraries that Blocky depends on---automatically.
 
     After installing quicklisp you will see a notice about adding
-    Quicklisp to your Lisp startup file with (ql:add-to-init-file). 
-    Doing this will make Quicklisp load automatically.
+    Quicklisp to your Lisp startup file with (ql:add-to-init-file).
+    Doing this will make Quicklisp load automatically when you start
+    your Lisp implementation.
 
 6. (OPTIONAL) Configure project folders
 
@@ -121,9 +123,10 @@ More instructions for Mac and Windows will be available soon.
       ;; run an example
       (blocky:play "turtle")  ;; A GUI tutorial, with turtle and ladybug
 
-7a.   The remixable XONG example can be downloaded via git:
+7a.  The work-in-progress game XALCYON is written with Blocky, and can
+     be downloaded via git:
 
-      	  git clone git@github.com:dto/xong.blocky.git
+      	  git clone git@github.com:dto/xalcyon.blocky.git
 
       You should put the example somewhere where Blocky's
       *project-directories* setting will find it; your home directory
@@ -131,7 +134,7 @@ More instructions for Mac and Windows will be available soon.
       
       Then in SBCL:
 
-          (blocky:play "xong")
+          (blocky:play "xalcyon")
 
 8. Getting help and reporting bugs 
 
