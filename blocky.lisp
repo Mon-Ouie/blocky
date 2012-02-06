@@ -135,13 +135,13 @@ set-screen-height genseq *zoom-factor* zoom-image is-zoomed-resource
 defmission send-to-blocks enable-held-keys disable-held-keys do-cells
 draw-box *resizable* achieve *resize-hook* draw-rectangle *quitting*
 *after-open-project-hook* *mission* mission-variable find-bounding-box
-set-mission-variable with-mission-locals *background-color*
-set-sample-callback set-music-callback cffi-chunk-buffer
-convert-cffi-sample get-sample-buffer register-sample-generator
-register-voice unregister-voice register-voice-mixer mix-voices
-convert-cffi-sample-to-internal *block* *buffer*
-convert-internal-sample-to-cffi get-ticks block-variable
-with-block-variables set-block-variable with-blocks
+combine-worlds stack-worlds set-mission-variable with-mission-locals
+*background-color* set-sample-callback set-music-callback
+cffi-chunk-buffer convert-cffi-sample get-sample-buffer
+register-sample-generator register-voice unregister-voice
+register-voice-mixer mix-voices convert-cffi-sample-to-internal
+*block* *buffer* convert-internal-sample-to-cffi get-ticks
+block-variable with-block-variables set-block-variable with-blocks
 with-mission-locals *project* quit reset seek-music make-keyword
 object field-value make-queue find-parent set-field-value find-super
 *font* set-field-options field-options field-documentation
