@@ -138,8 +138,8 @@ draw-box *resizable* achieve *resize-hook* draw-rectangle *quitting*
 combine-worlds stack-vertically set-mission-variable horizontal-extent
 vertical-extent flip-horizontally flip-vertically mirror-horizontally
 mirror-vertically world with-mission-locals with-empty-world
-stack-horizontally *background-color* combine-beside combine-below
-set-sample-callback set-music-callback cffi-chunk-buffer
+define-turtle stack-horizontally *background-color* combine-beside
+combine-below set-sample-callback set-music-callback cffi-chunk-buffer
 convert-cffi-sample get-sample-buffer register-sample-generator
 register-voice unregister-voice register-voice-mixer mix-voices
 convert-cffi-sample-to-internal *block* *buffer* define-turtle
@@ -169,7 +169,8 @@ draw-string-blended make-menu find-text-image make-text-image
 find-texture *default-super* clear-text-image-cache *token-types*
 verify *serif* *use-antialiased-text* *sans* *monospace* toggle-debug
 *debug-on-error* *block-categories* *block-colors* input paste
-load-variable-resource save-variable-resource *persistent-variables*
+arrange-beside arrange-below load-variable-resource translate
+save-variable-resource *persistent-variables*
 *persistent-variables-file-name* duplicate persistent-variables-file
 combine *shell* save-variables load-variables *block-text-colors*
 defblock define-visual-macro))
