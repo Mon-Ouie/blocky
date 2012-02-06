@@ -254,8 +254,7 @@ most user command messages. (See also the method `forward'.)"
 		    ;; move all the objects
 		    (dolist (object objects)
 		      (with-fields (x y) object
-			(decf x left)
-			(decf y top)))
+			(move-to object (- x left) (- y top))))
 		    ;; make a quadtree with a one-percent margin on all sides
 		    (build-quadtree 
 		     (multiple-value-list 
@@ -269,8 +268,9 @@ most user command messages. (See also the method `forward'.)"
 
 (defmacro with-new-world (&body body)
   `(let ((*world* (new world)))
-     ,@body
-     (shrink-wrap (world))))
+     (prog1 *world*
+       ,@body)))
+;     (shrink-wrap (world))))
 
 (define-block turtle :tags '(:turtle) :x 0 :y 0)
 
@@ -287,8 +287,22 @@ most user command messages. (See also the method `forward'.)"
     (destroy self)))
 
 (define-method paste world (other-world &optional (dx 0) (dy 0))
+  (message "pasting at ~S" (list :dx dx :dy dy))
   (dolist (object (get-objects other-world))
-    (add-block self object)))
+    (with-fields (x y) object
+      (clear-saved-location object)
+      (message "pasting at ~S" (list :x x :y y :dx dx :dy dy))
+      (add-block self object)
+      (move-to object (+ x dx) (+ y dy))
+      (message "pasted at ~S" 
+	       (list :x (field-value :x object) 
+		     :y (field-value :y object))))))
+
+(defun translate (world dx dy)
+  (when world
+    (assert (and (numberp dx) (numberp dy)))
+    (with-new-world 
+      (paste (world) world dx dy))))
 
 (defun combine (world1 world2)
   (with-new-world 
@@ -301,14 +315,6 @@ most user command messages. (See also the method `forward'.)"
   (with-new-world 
     (dolist (object (mapcar #'duplicate (get-objects self)))
       (add-block self object))))
-
-(defun translate (world dx dy)
-  (when world
-    (prog1 world
-      (let ((objects (get-objects world)))
-	(dolist (object objects)
-	  (with-fields (x y) object
-	    (move-to object (+ x dx) (+ y dy))))))))
 
 (defun vertical-extent (world)
   (if (or (null world)
@@ -363,12 +369,12 @@ most user command messages. (See also the method `forward'.)"
   (shrink-wrap self))
 
 (define-method mirror-horizontally world ()
-  (stack-worlds-horizontally 
+  (stack-horizontally 
    self 
    (flip-horizontally (duplicate self))))
 
 (define-method mirror-vertically world ()
-  (stack-worlds-vertically 
+  (stack-vertically 
    self 
    (flip-vertically (duplicate self))))
 
@@ -396,7 +402,7 @@ most user command messages. (See also the method `forward'.)"
   (declare (ignore args))
     (with-field-values (objects height width player) self
       (when (null %quadtree)
-	(shrink-wrap self))
+      	(shrink-wrap self))
       (let ((*quadtree* %quadtree))
 	(assert (zerop *quadtree-depth*))
 	;; run the objects
