@@ -135,13 +135,16 @@ set-screen-height genseq *zoom-factor* zoom-image is-zoomed-resource
 defmission send-to-blocks enable-held-keys disable-held-keys do-cells
 draw-box *resizable* achieve *resize-hook* draw-rectangle *quitting*
 *after-open-project-hook* *mission* mission-variable find-bounding-box
-combine-worlds stack-worlds set-mission-variable with-mission-locals
-*background-color* set-sample-callback set-music-callback
-cffi-chunk-buffer convert-cffi-sample get-sample-buffer
-register-sample-generator register-voice unregister-voice
-register-voice-mixer mix-voices convert-cffi-sample-to-internal
-*block* *buffer* convert-internal-sample-to-cffi get-ticks
-block-variable with-block-variables set-block-variable with-blocks
+combine-worlds stack-vertically set-mission-variable horizontal-extent
+vertical-extent flip-horizontally flip-vertically mirror-horizontally
+mirror-vertically world with-mission-locals with-empty-world
+stack-horizontally *background-color* combine-beside combine-below
+set-sample-callback set-music-callback cffi-chunk-buffer
+convert-cffi-sample get-sample-buffer register-sample-generator
+register-voice unregister-voice register-voice-mixer mix-voices
+convert-cffi-sample-to-internal *block* *buffer* define-turtle
+convert-internal-sample-to-cffi get-ticks block-variable
+with-block-variables set-block-variable with-blocks
 with-mission-locals *project* quit reset seek-music make-keyword
 object field-value make-queue find-parent set-field-value find-super
 *font* set-field-options field-options field-documentation
@@ -165,8 +168,8 @@ initialize-blocky object-address-string draw-string make-tree
 draw-string-blended make-menu find-text-image make-text-image
 find-texture *default-super* clear-text-image-cache *token-types*
 verify *serif* *use-antialiased-text* *sans* *monospace* toggle-debug
-*debug-on-error* *block-categories* *block-colors* input
+*debug-on-error* *block-categories* *block-colors* input paste
 load-variable-resource save-variable-resource *persistent-variables*
 *persistent-variables-file-name* duplicate persistent-variables-file
-*shell* save-variables load-variables *block-text-colors* defblock
-define-visual-macro))
+combine *shell* save-variables load-variables *block-text-colors*
+defblock define-visual-macro))
