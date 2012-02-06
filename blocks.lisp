@@ -565,6 +565,8 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
   (assert (blockyp task))
   (setf %tasks (delete task %tasks :test 'equal)))
 
+(define-method run block ()) ;; stub for with-turtle
+
 (define-method run-tasks block ()
   ;; don't run tasks on objects that got deleted during UPDATE
   (when %quadtree-node
@@ -697,8 +699,6 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     (multiple-value-bind (x0 y0)
 	(step-in-direction x y (or direction :up) steps)
       (move-to self x0 y0))))
-
-;;; Turtle movement
 
 (defun radian-angle (degrees)
   "Convert DEGREES to radians."
@@ -1328,8 +1328,8 @@ See shell.lisp for more on the implementation of drag-and-drop."
   "Automatically center the block on the screen."
   (with-fields (window-x window-y) *world*
     (with-fields (x y width height) self
-      (let ((center-x (+ window-x (/ *screen-width* 2)))
-	    (center-y (+ window-y (/ *screen-height* 2))))
+      (let ((center-x (+ window-x (/ *gl-screen-width* 2)))
+	    (center-y (+ window-y (/ *gl-screen-height* 2))))
 	(setf x (+ (- center-x (/ width 2))))
 	(setf y (+ (- center-y (/ width 2))))))))
 
@@ -1405,6 +1405,40 @@ The order is (TOP LEFT RIGHT BOTTOM)."
       (bounding-box self)
     (values (* 0.5 (+ left right))
 	    (* 0.5 (+ top bottom)))))
+
+(define-method at block ()
+  (values %x %y))
+
+(define-method left-of block (&optional other)
+  (let ((width (field-value :width (or other self))))
+    (values (- %x width) %y)))
+  
+(define-method right-of block ()
+  (values (+ %x %width) %y))
+
+(define-method above block (&optional other)
+  (let ((height (field-value :height (or other self))))
+    (values (- %x %width) %y)))
+  
+(define-method below block ()
+  (values %x (+ %y %height)))
+
+(define-method left-of-center block (&optional other)
+  (multiple-value-bind (x y) (left-of self other)
+    (values x (+ y (/ %height 2)))))
+
+(define-method right-of-center block ()
+  (multiple-value-bind (x y) (left-of-center self)
+    (values (+ x %width) y)))
+
+(define-method above-center block (&optional other)
+  (multiple-value-bind (x y) (above self other)
+    (values (+ x (/ %width 2)) y)))
+
+(define-method below-center block ()
+  (multiple-value-bind (x y) 
+      (above-center self)
+    (values x (+ y %height))))
 
 (define-method collide block (object)
   (declare (ignore object))
