@@ -1306,7 +1306,7 @@ objects after reconstruction, wherever present."
   (let ((duplicate (deserialize (serialize original))))
     (setf (object-uuid (find-object duplicate))
 	  (make-uuid))
-    (add-object-to-database duplicate)))
+    (add-object-to-database (find-object duplicate))))
 
 ;;; Printing objects
 
