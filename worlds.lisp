@@ -29,8 +29,8 @@
   (x :initform 0)
   (y :initform 0)
   (heading :initform 0.0)
-  (height :initform 1000)
-  (width :initform 1000)
+  (height :initform 16)
+  (width :initform 16)
   ;; objects and collisions
   (objects :initform nil :documentation "A hash table with all the world's object.")
   (quadtree :initform nil)
@@ -280,8 +280,25 @@ most user command messages. (See also the method `forward'.)"
   `(let ((*world-prototype* (find-super ,world)))
      ,@body))
 
+(define-method adjust-bounding-box-maybe world ()
+  (if (is-empty self)
+      self
+      (let ((objects-bounding-box 
+	      (multiple-value-list 
+	       (find-bounding-box (get-objects self)))))
+	(destructuring-bind (top left right bottom)
+	    objects-bounding-box
+	  ;; are all the objects inside the existing box?
+	  (prog1 self
+	    (unless (bounding-box-contains 
+		     (multiple-value-list (bounding-box self))
+		     objects-bounding-box)
+	      (resize self bottom right)))))))
+
 (defmacro with-new-world (&body body)
-  `(with-world (clone *world-prototype*) ,@body))
+  `(with-world (clone *world-prototype*) 
+     ,@body
+     (adjust-bounding-box-maybe (world))))
 
 (define-method paste world (other-world &optional (dx 0) (dy 0))
   (dolist (object (get-objects other-world))
@@ -316,14 +333,14 @@ most user command messages. (See also the method `forward'.)"
 (define-method copy world ()
   (with-new-world 
     (dolist (object (mapcar #'duplicate (get-objects self)))
-      (add-block self object))))
+      (add-block (world) object))))
 
 (defun vertical-extent (world)
   (if (or (null world)
 	  (is-empty world))
       0
       (multiple-value-bind (top left right bottom)
-	  (find-bounding-box (get-objects world))
+	  (bounding-box world)
 	(declare (ignore left right))
 	(- bottom top))))
 
@@ -332,7 +349,7 @@ most user command messages. (See also the method `forward'.)"
 	  (is-empty world))
       0
       (multiple-value-bind (top left right bottom)
-	  (find-bounding-box (get-objects world))
+	  (bounding-box world)
 	(declare (ignore top bottom))
 	(- right left))))
   
@@ -341,13 +358,13 @@ most user command messages. (See also the method `forward'.)"
     (combine world1
 	     (translate world2
 			0 
-			(vertical-extent world1)))))
+			(field-value :height world1)))))
 
 (defun arrange-beside (&optional world1 world2)
   (when (and world1 world2)
     (combine world1 
 	     (translate world2
-			(horizontal-extent world1)
+			(field-value :width world1)
 			0))))
 
 (defun stack-vertically (&rest worlds)
@@ -361,6 +378,7 @@ most user command messages. (See also the method `forward'.)"
     (dolist (object objects)
       (with-fields (x y) object
 	(move-to object (- x) y))))
+  ;; get rid of negative coordinates
   (shrink-wrap self))
 
 (define-method flip-vertically world ()
@@ -379,6 +397,14 @@ most user command messages. (See also the method `forward'.)"
   (stack-vertically 
    self 
    (flip-vertically (duplicate self))))
+
+(defun border-around (world &optional (border 32))
+  (with-fields (height width) world
+    (with-new-world 
+      (paste (world) world border border) 
+      (resize (world)
+	      (+ height (* border 2))
+	      (+ width (* border 2))))))
 
 ;;; Draw the world
 
