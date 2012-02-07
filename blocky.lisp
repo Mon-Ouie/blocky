@@ -170,7 +170,8 @@ find-texture *default-super* clear-text-image-cache *token-types*
 verify *serif* *use-antialiased-text* *sans* *monospace* toggle-debug
 *debug-on-error* *block-categories* *block-colors* input paste
 arrange-beside arrange-below load-variable-resource translate
-save-variable-resource *persistent-variables*
+save-variable-resource *persistent-variables* with-new-world
+with-blank-world with-world-prototype with-world *world-prototype*
 *persistent-variables-file-name* duplicate persistent-variables-file
 combine *shell* save-variables load-variables *block-text-colors*
 defblock define-visual-macro))
