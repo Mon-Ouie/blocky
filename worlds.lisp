@@ -226,46 +226,41 @@ most user command messages. (See also the method `forward'.)"
 
 ;; see also quadtree.lisp 
 
+(define-method install-quadtree world ()
+  (unless (is-empty self)
+    ;; make a box with a one-percent margin on all sides.
+    ;; this margin helps edge objects not pile up in quadrants
+    (let ((box (multiple-value-list
+		(scale-bounding-box 
+		 (multiple-value-list (bounding-box self))
+		 *world-bounding-box-scale*))))
+      (destructuring-bind (top left right bottom) box
+	(with-fields (quadtree) self
+	  (setf quadtree (build-quadtree box))
+	  (quadtree-fill quadtree (get-objects self)))))))
+
 (define-method resize world (new-height new-width)
   (assert (and (plusp new-height)
 	       (plusp new-width)))
   (with-fields (height width quadtree objects) self
     (setf height new-height)
     (setf width new-width)
-    (setf quadtree 
-	  (build-quadtree 
-	   (multiple-value-list 
-	    (scale-bounding-box 
-	     (multiple-value-list 
-	      (bounding-box self))
-	     *world-bounding-box-scale*))))
-    (quadtree-fill quadtree objects)))
+    (when quadtree
+      (install-quadtree self))))
 
 (define-method shrink-wrap world ()
   (prog1 self
     (let ((objects (get-objects self)))
       (with-fields (quadtree height width) self
-	(setf quadtree
-	      (if (null objects)
-		  (build-quadtree (multiple-value-list (bounding-box self)))
-		  ;; adjust bounding box so that all objects have positive coordinates
-		  (multiple-value-bind (top left right bottom)
-		      (find-bounding-box objects)
-		    ;; update world dimensions
-		    (setf height (- bottom top))
-		    (setf width (- right left))
-		    ;; move all the objects
-		    (dolist (object objects)
-		      (with-fields (x y) object
-			(move-to object (- x left) (- y top))))
-		    ;; make a quadtree with a one-percent margin on all sides
-		    (build-quadtree 
-		     (multiple-value-list 
-		      (scale-bounding-box 
-		       (multiple-value-list (find-bounding-box objects))
-		       *world-bounding-box-scale*))))))
-	(when objects
-	  (quadtree-fill quadtree objects))))))
+	;; adjust bounding box so that all objects have positive coordinates
+	(multiple-value-bind (top left right bottom)
+	    (find-bounding-box objects)
+	  ;; move all the objects
+	  (dolist (object objects)
+	    (with-fields (x y) object
+	      (move-to object (- x left) (- y top))))
+	  ;; resize the world
+	  (resize self (- bottom top) (- right left)))))))
 
 ;; Algebraic operations on worlds and their contents
 
@@ -428,9 +423,10 @@ most user command messages. (See also the method `forward'.)"
 (define-method update world (&optional no-collisions)
   (declare (optimize (speed 3)))
   (declare (ignore args))
-    (with-field-values (objects height width player) self
-      (when (null %quadtree)
-      	(shrink-wrap self))
+    (with-field-values (quadtree objects height width player) self
+      ;; build quadtree if needed
+      (when (null quadtree)
+      	(install-quadtree self))
       (let ((*quadtree* %quadtree))
 	(assert (zerop *quadtree-depth*))
 	;; run the objects
