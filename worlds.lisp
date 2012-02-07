@@ -34,6 +34,7 @@
   ;; objects and collisions
   (objects :initform nil :documentation "A hash table with all the world's object.")
   (quadtree :initform nil)
+  (quadtree-depth :initform nil)
   ;; viewing window
   (window-x :initform 0)
   (window-y :initform 0)
@@ -236,7 +237,10 @@ most user command messages. (See also the method `forward'.)"
 		 *world-bounding-box-scale*))))
       (destructuring-bind (top left right bottom) box
 	(with-fields (quadtree) self
-	  (setf quadtree (build-quadtree box))
+	  (setf quadtree (build-quadtree 
+			  box 
+			  (or %quadtree-depth 
+			      *default-quadtree-depth*)))
 	  (quadtree-fill quadtree (get-objects self)))))))
 
 (define-method resize world (new-height new-width)
@@ -260,6 +264,7 @@ most user command messages. (See also the method `forward'.)"
 	    (with-fields (x y) object
 	      (move-to object (- x left) (- y top))))
 	  ;; resize the world
+	  (setf %x 0 %y 0)
 	  (resize self (- bottom top) (- right left)))))))
 
 ;; Algebraic operations on worlds and their contents

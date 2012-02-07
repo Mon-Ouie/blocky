@@ -716,20 +716,23 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method (pen-up :category :looks) block ()
   (setf %drawing nil))
 
-(define-method (move-forward :category :motion) block ((distance number :default 40))
-  (with-field-values (x y heading width drawing) self
-    (let ((x0 (+ x (/ width 2)))
-	  (y0 (+ y (/ width 2))))
-      (let ((dx (* distance (cos heading)))
-	    (dy (* distance (sin heading))))
-	(move-to self (+ x dx) (+ y dy))
-	(when drawing 
-	  (draw-turtle-line self x0 y0 x y))))))
+(defun step-coordinates (x y heading &optional (distance 1))
+  (values (+ x (* distance (cos heading)))
+	  (+ y (* distance (sin heading)))))
 
 (define-method step-toward-heading block (heading &optional (distance 1))
   (multiple-value-bind (x y) (center-point self)
-    (values (+ x (* distance (cos heading)))
-	    (+ y (* distance (sin heading))))))
+    (step-coordinates x y heading distance)))
+
+(define-method move-toward-heading block (heading &optional (distance 1))
+  (multiple-value-bind (x0 y0) (step-coordinates %x %y heading distance)
+    (move-to self x0 y0)))
+
+(define-method move-forward block (distance)
+  (move-toward-heading self %heading distance))
+
+(define-method move-backward block (distance)
+  (move-toward-heading self (- (* 2 pi) %heading distance)))
 
 (define-method draw-turtle-line block (x0 y0 x1 y1)
   nil)

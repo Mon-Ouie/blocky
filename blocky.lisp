@@ -172,7 +172,7 @@ verify *serif* *use-antialiased-text* *sans* *monospace* toggle-debug
 arrange-beside arrange-below load-variable-resource translate
 save-variable-resource *persistent-variables* with-new-world
 border-around with-blank-world with-world-prototype with-world
-remove-trailing-space *world-prototype*
+remove-trailing-space *world-prototype* step-coordinates
 *persistent-variables-file-name* duplicate persistent-variables-file
 combine *shell* save-variables load-variables *block-text-colors*
 defblock define-visual-macro))
