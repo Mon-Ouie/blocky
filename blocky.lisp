@@ -171,7 +171,8 @@ verify *serif* *use-antialiased-text* *sans* *monospace* toggle-debug
 *debug-on-error* *block-categories* *block-colors* input paste
 arrange-beside arrange-below load-variable-resource translate
 save-variable-resource *persistent-variables* with-new-world
-with-blank-world with-world-prototype with-world *world-prototype*
+border-around with-blank-world with-world-prototype with-world
+remove-trailing-space *world-prototype*
 *persistent-variables-file-name* duplicate persistent-variables-file
 combine *shell* save-variables load-variables *block-text-colors*
 defblock define-visual-macro))
