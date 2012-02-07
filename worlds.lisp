@@ -26,6 +26,9 @@
   (player :documentation "The player cell (or object).")
   (background :initform nil)
   (background-color :initform "black")
+  (x :initform 0)
+  (y :initform 0)
+  (heading :initform 0.0)
   (height :initform 1000)
   (width :initform 1000)
   ;; objects and collisions
