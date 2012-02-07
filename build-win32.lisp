@@ -36,6 +36,33 @@
 
 (sb-ext:save-lisp-and-die *executable* :toplevel #'main :executable t)
 
+;; #+sbcl
+;; (progn 
+;;   (if (member :sb-core-compression *features*)
+;;       (sb-ext:save-lisp-and-die 
+;;        "name.exe" 
+;;        :executable t :toplevel (function main-prog)
+;;        :compression t)
+;;       (sb-ext:save-lisp-and-die 
+;;        "name.exe" :executable t :toplevel (function main-prog))))
+
+;; (require 'sb-posix)
+
+;; (defun make-deployable-image ()
+;;   (let ((pid (sb-posix:fork)))
+;;     (cond
+;;       ((zerop pid) 
+;;        (sb-ext:save-lisp-and-die 
+;; 	*image-name* 
+;; 	:executable t :toplevel (function main-prog)))
+;;       ((plusp pid) 
+;;        (sleep *image-wait*)
+;;        (format t "~%~%~%~%") '()) 
+;;        ;need to wait until the image is created... Not the most robust..
+;;       (t (error "Didn't quite fork :-(")))))
+
+;; (make-deployable-image)
+
 ;; TODO try this to get rid of the kitten of death
 ;; (with-open-file (exe #p"path/to/game.exe" :direction :io :element-type '(unsigned-byte 8))
 ;;   (file-position exe #x3c)
