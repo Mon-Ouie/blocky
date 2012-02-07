@@ -269,37 +269,26 @@ most user command messages. (See also the method `forward'.)"
 
 ;; Algebraic operations on worlds and their contents
 
-(defmacro with-new-world (&body body)
-  `(let ((*world* (new world)))
+(defvar *world-prototype* "BLOCKY:WORLD")
+
+(defmacro with-world (world &rest body)
+  `(let ((*world* ,world))
      (prog1 *world*
        ,@body)))
-;     (shrink-wrap (world))))
 
-(define-block turtle :tags '(:turtle) :x 0 :y 0)
+(defmacro with-world-prototype (world &rest body)
+  `(let ((*world-prototype* (find-super ,world)))
+     ,@body))
 
-(defun is-turtle (thing)
-  (has-tag thing :turtle))
-
-(defmacro define-turtle (name &rest args)
-  `(define-block (,name :super "BLOCKY:TURTLE") ,@args))
-
-(define-method make-world turtle (&rest parameters)
-  (with-new-world
-    (add-block (world) self)
-    (apply #'run self parameters)
-    (destroy self)))
+(defmacro with-new-world (&body body)
+  `(with-world (clone *world-prototype*) ,@body))
 
 (define-method paste world (other-world &optional (dx 0) (dy 0))
-  (message "pasting at ~S" (list :dx dx :dy dy))
   (dolist (object (get-objects other-world))
     (with-fields (x y) object
       (clear-saved-location object)
-      (message "pasting at ~S" (list :x x :y y :dx dx :dy dy))
       (add-block self object)
-      (move-to object (+ x dx) (+ y dy))
-      (message "pasted at ~S" 
-	       (list :x (field-value :x object) 
-		     :y (field-value :y object))))))
+      (move-to object (+ x dx) (+ y dy)))))
 
 (defun translate (world dx dy)
   (when world
@@ -311,8 +300,18 @@ most user command messages. (See also the method `forward'.)"
   (with-new-world 
     (when (and world1 world2)
       (dolist (object (nconc (get-objects world1)
-			     (get-objects world2)))
+			     (mapcar #'duplicate (get-objects world2))))
 	(add-block (world) object)))))
+
+(define-method scale world (sx &optional sy)
+  (let ((objects (get-objects self)))
+    (dolist (object objects)
+      (with-fields (x y width height) object
+	(move-to object (* x sx) (* y (or sy sx)))
+	(resize object (* width sx) (* height (or sy sx))))))
+  (shrink-wrap self))
+
+(define-method destroy-region world (bounding-box))
 
 (define-method copy world ()
   (with-new-world 
