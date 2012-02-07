@@ -352,10 +352,10 @@ most user command messages. (See also the method `forward'.)"
 			0))))
 
 (defun stack-vertically (&rest worlds)
-  (reduce #'arrange-below worlds))
+  (reduce #'arrange-below worlds :initial-value (with-new-world)))
 
 (defun stack-horizontally (&rest worlds)
-  (reduce #'arrange-beside worlds))
+  (reduce #'arrange-beside worlds :initial-value (with-new-world)))
 
 (define-method flip-horizontally world ()
   (let ((objects (get-objects self)))
