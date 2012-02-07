@@ -903,7 +903,7 @@ display."
 					   (sb-sys:serve-all-events 0))	 
 	     (sdl:with-timestep (do-update))
 	     (restartably
-	       (gl:clear-color 1 1 1 1)
+	       (gl:clear-color 0 0 0 1)
 	       (gl:clear)
 	       (gl:disable :depth-test)
 	       (gl:clear :color-buffer-bit)
