@@ -1566,9 +1566,10 @@ Note that the center-points of the objects are used for comparison."
 (define-method queue-layout block ()
   (setf %needs-layout t))
 
-(define-method invalidate-layout block ()
-  (when *buffer*
-    (queue-layout *buffer*)))
+(define-method invalidate-layout block ())
+  ;; FIXME
+  ;; (when *buffer*
+  ;;   (queue-layout *buffer*)))
 
 (define-method bring-to-front block (block)
   (with-fields (inputs block) self
