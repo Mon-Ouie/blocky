@@ -737,6 +737,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method draw-turtle-line block (x0 y0 x1 y1)
   nil)
 
+;; (defmacro save-excursion (&body body)
+;;   (
+
 (define-method heading-to-thing block (thing)
   (multiple-value-bind (x1 y1) (center-point thing)
     (multiple-value-bind (x0 y0) (center-point self)
