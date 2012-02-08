@@ -2501,7 +2501,7 @@ of the music."
   (message "Starting Blocky...")
   (print-copyright-notice)
   (setf *project-package-name* nil
-        *project-directories* (default-project-directories)
+;        *project-directories* (default-project-directories)
 	*blocks* nil
 	*project* nil
 	*message-hook-functions* nil
