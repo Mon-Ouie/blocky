@@ -446,8 +446,7 @@ or,
 		  nil))))))
 
 (defparameter *default-joystick-profile*
-  '("Unknown Joystick"
-    :name "Unknown Joystick"
+  '(:name "Unknown Joystick"
     :type :joystick
     :left-analog-stick (0 1)
     :right-analog-stick (3 2)
