@@ -144,7 +144,7 @@
 ** TODO [#C] general svg image support
 
 
-* TODO  tigtesters: cpw, tacoxtreme, increpare
+* TODO notify tigtesters: cpw, tacoxtreme, increpare
 
 * BUGS
 ** TODO [#A] Fix Quadtree deletion crash (seems to happen if obj deleted during on-update)
