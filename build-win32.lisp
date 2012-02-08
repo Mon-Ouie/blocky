@@ -1,11 +1,15 @@
 ;;; Deliver the program using allegro common lisp on win32
 (in-package :cl-user)
 
-(require :asdf)
+;; (let ((quicklisp-init (merge-pathnames "quicklisp/setup.lisp"
+;;                                        (user-homedir-pathname))))
+;;   (when (probe-file quicklisp-init)
+;;     (load quicklisp-init)))
+;(require :asdf)
 
-(defvar *dll-pathname* #p"c:/Users/Sandy/xe2/")
-(defvar *game* "xiotank")
-(defvar *executable* #p"c:/Users/Sandy/xe2/app.exe")
+(defvar *dll-pathname* #p"z:/home/dto/blocky/win32/")
+(defvar *game* "xalcyon")
+(defvar *executable* #p"z:/home/dto/blocky/xalcyon.exe")
 (defvar *base-pathname* (make-pathname :name nil :type nil :defaults *load-pathname*))
 
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/cffi_0.10.3/") asdf:*central-registry*)
@@ -18,20 +22,25 @@
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/lispbuilder/lispbuilder-sdl-image/") asdf:*central-registry*)
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/lispbuilder/lispbuilder-sdl-mixer/") asdf:*central-registry*)
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/lispbuilder/lispbuilder-sdl-gfx/") asdf:*central-registry*)
+(pushnew (translate-pathname *base-pathname* "**/" "**/site/lispbuilder/lispbuilder-sdl-ttf/") asdf:*central-registry*)
 
-(pushnew (translate-pathname *base-pathname* "**/" "**/clon/") asdf:*central-registry*)
-(pushnew (translate-pathname *base-pathname* "**/" "**/xe2/") asdf:*central-registry*)
+(pushnew (translate-pathname *base-pathname* "**/" "**/blocky/") asdf:*central-registry*)
+;(pushnew (translate-pathname *base-pathname* "**/" "**/xe2/") asdf:*central-registry*)
 
 (asdf:oos 'asdf:load-op :cffi)
 (require 'sb-posix)
 (sb-posix:chdir *dll-pathname*)
 ;;(setf *default-pathname-defaults* (make-pathname :directory '(:relative)))
-(asdf:oos 'asdf:load-op :xe2)
+
+(map nil
+#'ql:quickload (list "lispbuilder-sdl-mixer" "lispbuilder-sdl-ttf" "lispbuilder-sdl-gfx" "lispbuilder-sdl-image" "cl-opengl" "cl-fad" "uuid")) (require :blocky)
+
+(asdf:oos 'asdf:load-op :blocky)
 (pop cffi:*foreign-library-directories*)
 
 (defun main ()
-  (setf xe2:*module-directories* (list (make-pathname :directory '(:relative))))
-  (xe2:play *game*)
+  (setf blocky:*project-directories* (list (make-pathname :directory '(:relative))))
+  (blocky:play *game*)
   0)
 
 (sb-ext:save-lisp-and-die *executable* :toplevel #'main :executable t)
