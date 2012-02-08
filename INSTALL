@@ -1,11 +1,24 @@
 This is the INSTALL file for Blocky.
 
-This file gives you instructions on how to download Blocky and compile
-it from the source code. This should be straightforward on Linux;
-Blocky also works on Windows and Mac, but compiling Blocky on those
-platforms may require additional steps (such as installing the
-included SDL binary DLL's in the included win32/ subfolder of the
-Blocky source directory.)
+This file contains help on getting Blocky (or an application built
+with it) to run on your system. 
+
+If you are a Windows user, there's no reason to read this file,
+because everything is self-contained.
+
+If you are on GNU/Linux, you must install certain libraries through
+your distributions' software installer: namely, sdl, sdl-image,
+sdl-mixer, sdl-ttf, and sdl-gfx. You may additionally need to install
+the corresponding *-dev versions of those packages.
+
+This file also gives you instructions on how to download Blocky and
+compile it from the source code. Unless you are planning to do this,
+you can safely ignore the rest of this file.
+
+This should be straightforward on Linux; Blocky also works on Windows
+and Mac, but compiling Blocky on those platforms may require
+additional steps (such as installing the included SDL binary DLL's in
+the included win32/ subfolder of the Blocky source directory.)
 
 More instructions for Mac and Windows will be available soon.
 
@@ -37,7 +50,7 @@ More instructions for Mac and Windows will be available soon.
    installed on your system. How to do this is beyond the scope of
    this document. See http://www.libsdl.org for more information.
    Your Linux distribution will most likely have SDL packages for
-   sbal, sdl, sdl-image, sdl-mixer, sdl-ttf, and sdl-gfx, all of which
+   sdl, sdl-image, sdl-mixer, sdl-ttf, and sdl-gfx, all of which
    are required for to compile Blocky. You may also need to install
    the sdl-*-dev packages corresponding to each.
 
