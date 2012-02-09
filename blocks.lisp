@@ -123,7 +123,7 @@ Argument &BODY difuhy]."
 	  args))))
 
 (defparameter *block-categories*
-  '(:system :motion :event :message :looks :sound :structure :data
+  '(:system :motion :event :message :looks :sound :structure :data :button
     :menu :hover :control :comment :sensing :operators :variables)
   "List of keywords used to group blocks into different functionality
 areas.")
@@ -390,14 +390,15 @@ any)."
 (define-method handle-text-event block (event)
   "Look up events as with `handle-event', but insert unhandled keypresses
 as Unicode characters via the `insert' function."
-  (with-fields (events) self
-    (destructuring-bind (key . unicode) (first event)
-      (when (or (handle-event%%block self (cons key (rest event)))
-		;; treat Unicode characters as self-inserting
-		(when unicode
-		  (send :insert self unicode)))
-	(invalidate-layout self)))))
-
+  (unless (is-joystick-event event)
+    (with-fields (events) self
+      (destructuring-bind (key . unicode) (first event)
+	(when (or (handle-event%%block self (cons key (rest event)))
+		  ;; treat Unicode characters as self-inserting
+		  (when unicode
+		    (send :insert self unicode)))
+	  (invalidate-layout self))))))
+  
 (defun bind-event-to-method (block event-name modifiers method-name)
   "Arrange for METHOD-NAME to be sent as a message to this object
 whenever the event (EVENT-NAME . MODIFIERS) is received."
@@ -883,6 +884,8 @@ current block. Used for taking a count of all the nodes in a tree."
 (defparameter *font* *block-font*
   "Name of the current font used for drawing.")
 
+(defparameter *block-bold* "sans-bold-11")
+
 (defmacro with-font (font &rest body)
   `(let ((*font* ,font))
      ,@body))
@@ -914,6 +917,8 @@ you want to align a group of text items across layouts.")
 (defparameter *block-colors*
   '(:motion "cornflower blue"
     :system "gray50"
+    :button "orange"
+    :terminal "gray12"
     :event "gray80"
     :menu "gray95"
     :hover "red"
@@ -934,8 +939,10 @@ you want to align a group of text items across layouts.")
   '(:motion "sky blue"
     :system "gray80"
     :hover "dark orange"
+    :button "gold"
     :event "gray90"
     :menu "gray80"
+    :terminal "gray16"
     :comment "gray88"
     :looks "medium orchid"
     :socket "gray80"
@@ -956,6 +963,8 @@ you want to align a group of text items across layouts.")
     :socket "gray90"
     :data "gray55"
     :menu "gray70"
+    :terminal "gray10"
+    :button "DarkOrange"
     :structure "gray35"
     :comment "gray70"
     :hover "orange red"
@@ -971,7 +980,9 @@ you want to align a group of text items across layouts.")
 (defparameter *block-foreground-colors*
   '(:motion "white"
     :system "white"
+    :button "yellow"
     :event "gray40"
+    :terminal "white"
     :comment "gray20"
     :socket "gray20"
     :hover "yellow"

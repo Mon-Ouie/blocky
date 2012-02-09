@@ -77,7 +77,7 @@ macro. "
 
 (define-visual-macro define-block 
   (:super list
-   :fields (header :initform nil)
+   :fields ((header :initform nil))
    :inputs ((new message 
 		  :label "define block"
 		  :schema '((name string :default "my-block") 

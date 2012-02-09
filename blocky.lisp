@@ -125,17 +125,19 @@ open-project field-options world set-frame-rate *frame-rate*
 set-timer-interval defgcell *message-logging* overlay
 joystick-axis-pressed-p joystick-axis-value joystick-axis-raw-value
 analog-stick-heading find-heading analog-stick-pressure
-left-analog-stick-heading left-analog-stick-pressure
+*joystick-axis-size* *joystick-axis-dead-zone* *event-hook*
+left-analog-stick-heading left-analog-stick-pressure *message-history*
 right-analog-stick-heading joystick-button-pressed-p
 analog-stick-pressed-p left-analog-stick-pressed-p
 right-analog-stick-pressed-p right-analog-stick-pressure
 initialize-console joystick-axis-value poll-joystick-button
 joystick-button-state reset-joysticks *device-profiles*
-find-device-profile set-screen-width *universe* *play-args*
-set-screen-height genseq *zoom-factor* zoom-image is-zoomed-resource
-*timer-interval* save-objects enable-timer disable-timer while
-defmission send-to-blocks enable-held-keys disable-held-keys do-cells
-draw-box *resizable* achieve *resize-hook* draw-rectangle *quitting*
+button-to-symbol symbol-to-button find-device-profile set-screen-width
+*universe* *play-args* set-screen-height genseq *zoom-factor*
+zoom-image is-zoomed-resource *timer-interval* save-objects
+enable-timer disable-timer while defmission send-to-blocks
+enable-held-keys disable-held-keys do-cells draw-box *resizable*
+achieve *resize-hook* draw-rectangle *quitting*
 *after-open-project-hook* *mission* mission-variable find-bounding-box
 combine-worlds stack-vertically set-mission-variable horizontal-extent
 vertical-extent flip-horizontally flip-vertically mirror-horizontally
@@ -145,7 +147,7 @@ combine-below set-sample-callback set-music-callback cffi-chunk-buffer
 convert-cffi-sample get-sample-buffer register-sample-generator
 register-voice unregister-voice register-voice-mixer mix-voices
 convert-cffi-sample-to-internal *block* *buffer* define-turtle
-convert-internal-sample-to-cffi get-ticks block-variable
+convert-internal-sample-to-cffi get-ticks block-variable *block-font*
 with-block-variables set-block-variable with-blocks
 with-mission-locals *project* quit reset seek-music make-keyword
 object field-value make-queue find-parent set-field-value find-super
@@ -176,5 +178,6 @@ save-variable-resource *persistent-variables* with-new-world
 border-around with-blank-world with-world-prototype with-world
 remove-trailing-space *world-prototype* step-coordinates
 save-excursion *persistent-variables-file-name* duplicate
-persistent-variables-file combine save-variables
-load-variables *block-text-colors* defblock define-visual-macro))
+persistent-variables-file combine save-variables indicator-size
+draw-indicator load-variables *block-text-colors* defblock
+*block-bold* *bold* *italic* *block-italic* define-visual-macro))

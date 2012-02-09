@@ -327,7 +327,11 @@ for backward-compatibility."
 (defvar *pointer-x* 0)
 (defvar *pointer-y* 0)
 
+(defvar *event-hook* nil)
+
 (defun send-to-blocks (event &optional (blocks *blocks*))
+  (dolist (hook *event-hook*)
+    (funcall hook event))
   (labels ((try (block)
 	     (send :handle-event block event)))
     (some #'try blocks)))
@@ -847,16 +851,16 @@ display."
 				(when block
 				  (send :release block x y button))))
       (:joy-button-down-event (:button button :state state)
-			      (when (assoc button (joystick-buttons))
-				(update-joystick-button button state)
-				(send-event (make-event :raw-joystick (list button :button-down)))
-				(send-event (make-event :joystick
-							(list (button-to-symbol button) 
-							      :button-down)))))
+		      (send-event (make-event :raw-joystick (list button :button-down)))
+		      (when (assoc button (joystick-buttons))
+			(update-joystick-button button state)
+			(send-event (make-event :joystick
+						(list (button-to-symbol button) 
+						      :button-down)))))
       (:joy-button-up-event (:button button :state state)  
+			    (send-event (make-event :raw-joystick (list button :button-up)))
 			    (when (assoc button (joystick-buttons))
 			      (update-joystick-button button state)
-			      (send-event (make-event :raw-joystick (list button :button-up)))
 			      (send-event (make-event :joystick
 						      (list (button-to-symbol button) 
 							    :button-up)))))

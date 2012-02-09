@@ -240,7 +240,7 @@ inputs are evaluated."
   (setf %button-p button-p)
   (let* ((schema0
 	   (or schema
-	       (method-schema (find-prototype prototype) method)))
+	       (method-schema (find-prototype (or prototype target)) method)))
 	 (inputs nil)
 	 (proto (or prototype (when target
 				(object-name (find-super target))))))

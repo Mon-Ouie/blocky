@@ -349,17 +349,21 @@
 
 (define-prototype entry (:super "BLOCKY:PROMPT")
   (category :initform :data)
+  (read-only :initform nil)
   (pinned :initform t)
   (text-color :initform *default-entry-text-color*)
   (label-color :initform *default-entry-label-color*)
   type-specifier value)
 
-(define-method initialize entry (&key value type-specifier options label label-color parent)
+(define-method initialize entry 
+    (&key value type-specifier options label label-color parent
+    read-only)
   (super%initialize self)
   ;(assert (and value type-specifier))
   (when parent (setf %parent parent))
   (setf %type-specifier type-specifier
 	%options options
+	%read-only read-only
 	%value value)
   ;; fill in the input box with the value
   (setf %line (if (null value)
@@ -377,7 +381,9 @@
   %value)
 
 (define-method set-value entry (value)
-  (setf %value value))
+  (setf %value value)
+  (clear-line self)
+  (insert self (prin1-to-string value)))
 
 (define-method get-value entry ()
   %value)
@@ -436,7 +442,8 @@
 		   type-specifier)))))
 
 (define-method enter entry ()
-  (super%enter self :no-clear))
+  (unless %read-only
+    (super%enter self :no-clear)))
 
 (define-method layout entry ()
   (with-fields (height width value line) self

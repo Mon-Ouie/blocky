@@ -129,8 +129,8 @@
   (add-to-list '*message-hook-functions* 
 	       #'(lambda (string)
 		   (insert-string self string)
-		   (newline self)))
-  (setf %buffer (reverse *message-history*)))
+		   (newline self))))
+  ;; (setf %buffer (reverse *message-history*)))
 
 (define-method end-of-line text ()
   (setf %point-column (length (nth %point-row %buffer))))
