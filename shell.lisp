@@ -154,9 +154,9 @@
   (declare (ignore thing))
   nil)
 
-;;; Interactive editor shell
+;;; Interactive editor shell is a special kind of world
 
-(define-block shell
+(define-world shell
   (selection :initform ()
   	     :documentation "List (subset) of selected blocks.")
   (buffer :initform nil 
@@ -168,7 +168,7 @@
 		    ((:g :control) :escape)
 		    ((:escape) :escape)))
   (menubar :initform nil
-	   :documentation "The menubar widget.")
+	   :documentation "Optional menubar widget.")
   (command-line :initform nil)
   (command-p :initform nil)
   (excluded-fields :initform 
@@ -220,8 +220,10 @@
 
 (define-method make-widgets shell ()
   (setf *shell* (find-uuid self))
-  (setf %menubar (make-menubar))
   (setf %command-line (make-command-line)))
+
+(define-method add-menubar shell ()
+  (setf %menubar (make-menubar)))
 
 (define-method after-deserialize shell ()
   (clear-drag-data self)
@@ -239,8 +241,9 @@
 	    width %width
 	    height %height))
     ;; run menubar across top
-    (with-style :rounded
-      (layout %menubar))
+    (when %menubar
+      (with-style :rounded
+	(layout %menubar)))
     ;; run command line across bottom
     (layout %command-line)
     ;;
@@ -254,7 +257,7 @@
     
 (define-method initialize shell (buffer)
   (assert (blockyp buffer))
-  (super%initialize self)
+  (initialize%%world self)
   (setf %buffer (find-uuid buffer))
   (make-widgets self))
 
@@ -293,7 +296,7 @@
 (define-method handle-event shell (event)
   (with-buffer %buffer
     (or (super%handle-event self event)
-	(with-field-values (focused-block selection menubar command-line buffer) self
+	(with-field-values (focused-block selection command-line buffer) self
 	  (let ((block
 		    (cond
 		      ;; we're focused. send the event there
@@ -331,7 +334,7 @@ block found, or nil if none is found."
       (or 
        (when %command-p 
 	 (try %command-line))
-       (try %menubar)
+       (when %menubar (try %menubar))
        (let ((parent 
 	       (find-if #'try 
 			(buffer-blocks self)
@@ -342,6 +345,8 @@ block found, or nil if none is found."
 (define-method draw shell ()
   (with-buffer %buffer
     (layout self)
+    (when %background-color
+      (draw-box 0 0 *gl-screen-width* *gl-screen-height* :color "white"))
     (with-fields (buffer drag-start selection inputs drag
 			 focused-block highlight menubar
 			 command-line command-p
@@ -371,8 +376,9 @@ block found, or nil if none is found."
 	    (when focused-block
 	      (assert (blockyp focused-block))
 	      (draw-focus focused-block)))
-	(with-style :rounded
-	  (draw menubar))
+	(when menubar
+	  (with-style :rounded
+	    (draw menubar)))
 	(when highlight
 	  (draw-highlight highlight))))))
   

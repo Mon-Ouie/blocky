@@ -69,7 +69,7 @@
   (apply #'message args))
 
 (define-method initialize prompt ()
-  (super%initialize self)
+  (initialize%%block self)
   (when (not (has-local-value :history self))
     (setf %history (make-queue :max *default-prompt-history-size*)))
   (install-text-keybindings self))
@@ -586,7 +586,7 @@
   (setf *debug-on-error* nil))
 
 (define-method initialize listener-prompt (&optional output)
-  (super%initialize self)
+  (initialize%%prompt self)
   (print-on-error self)
   (setf %output output))
 
@@ -632,7 +632,7 @@
 (define-method initialize listener ()
   (with-fields (image inputs) self
     (let ((prompt (new listener-prompt self)))
-      (super%initialize self)
+      (initialize%%list self)
       (set-output prompt prompt)
       (setf inputs (list prompt))
       (set-parent prompt self)

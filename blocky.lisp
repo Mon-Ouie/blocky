@@ -34,29 +34,30 @@
   (:use :common-lisp) 
   (:export *default-frame-width* *default-frame-height* null-block
 *frequency* *output-chunksize* *output-channels* halt-sample *dt*
-*author* *message-hook-functions* add-to-list defproject run start
-stop *update-function* *default-world-axis-size* defsprite *target*
-*blocks* *buffer* *default-world-z-size* install-blocks shut-down
-later later-at later-when start-up seconds->frames keyboard-held-p
-keyboard-pressed-p holding-control *scale-output-to-window*
-keyboard-released-p *edit* callf with-font *font* find-heading
-keyboard-time-in-current-state pretty-symbol-string *pointer-x*
-*pointer-y* keyboard-time-in-previous-state *updates* keyboard-down-p
-keyboard-keys-down keyboard-modifier-down-p keyboard-modifiers
-draw-filled-circle draw-aa-circle get-keys *project-package-name*
-project-package-name make-block *form-command-handler-function*
-add-block remove-block *initialization-hook* initialize-engine
-hit-blocks quadtree-delete quadtree-insert build-quadtree
-quadtree-collide quadtree-show *quadtree* split-string-on-lines
-message *prompt-sweden-keybindings* *prompt-qwerty-keybindings*
-*screen-width* transform-method-body *edit* roll-under make-stat
-make-universe initialize-colors *style* create-project
-*standard-categories* *left-turn* bind-event *right-turn*
-*default-actihandle-point-motions* left-turn right-turn roll
-bind-event-to-method *colors* enable-key-repeat disable-key-repeat
-get-color define-method *default-font* field-value set-field-value
-object-fields dispatch-event run-project *user-init-file-name*
-distance icon-resource icon-image *directions*
+*copyright-notice* *author* *message-hook-functions* add-to-list
+modify-joystick-profile defproject run start stop *update-function*
+*default-world-axis-size* defsprite *target* *blocks* *buffer*
+*default-world-z-size* install-blocks shut-down later later-at
+later-when start-up seconds->frames keyboard-held-p keyboard-pressed-p
+holding-control *scale-output-to-window* keyboard-released-p *edit*
+callf with-font *font* find-heading keyboard-time-in-current-state
+pretty-symbol-string *pointer-x* *pointer-y* is-joystick-event
+is-raw-joystick-event keyboard-time-in-previous-state *updates*
+keyboard-down-p keyboard-keys-down keyboard-modifier-down-p
+keyboard-modifiers draw-filled-circle draw-aa-circle get-keys
+*project-package-name* project-package-name make-block
+*form-command-handler-function* add-block remove-block
+*initialization-hook* initialize-engine hit-blocks quadtree-delete
+quadtree-insert build-quadtree quadtree-collide quadtree-show
+*quadtree* split-string-on-lines message *prompt-sweden-keybindings*
+*prompt-qwerty-keybindings* *screen-width* transform-method-body
+*edit* roll-under make-stat make-universe initialize-colors *style*
+create-project *standard-categories* *left-turn* bind-event
+*right-turn* *default-actihandle-point-motions* left-turn right-turn
+roll bind-event-to-method *colors* enable-key-repeat
+disable-key-repeat get-color define-method *default-font* field-value
+set-field-value object-fields dispatch-event run-project
+*user-init-file-name* distance icon-resource icon-image *directions*
 *clear-cached-images-on-resize* *opposites* find-resource-property
 compose-blank-fields font-width font-height *browser* browser
 set-browser find-object *windows* edit create
@@ -66,17 +67,18 @@ formatted-string-height formatted-string-width get-color create-image
 draw-image blocky edit define-prototype has-field *target* with-target
 defcell define-world *choose-direction-menu* set-field-options
 *user-joystick-profile* field-option-value index-resource
-find-project-path index-project load-image-resource load-lisp-resource
-*executable* *function-buttons* *corner-buttons* *dance-arrows*
-*punctuation* *screen-height* player *screen-width* blockyp
-*nominal-screen-width* *nominal-screen-height* *gl-screen-width*
-*gl-screen-height* *dance-phrase-symbols* *dance-keybindings*
-*energy-dance-pad-mapping* *message-function* dash holding-shift
-*dark-target-arrow-images* get-button-index arrow-image
-message-to-standard-output reset-message-function *orthogonal-arrows*
-*diagonal-arrows* *function-buttons* *punctuation* *dance-arrows*
-*dance-pad-symbols* *make-prototype-id-package* arrow-formatted-string
-lturn rturn ticks-per-beat event-time event-arrow radian-angle
+*default-joystick-profile* joystick-profile find-project-path
+index-project load-image-resource load-lisp-resource *executable*
+*function-buttons* *corner-buttons* *dance-arrows* *punctuation*
+*screen-height* player *screen-width* blockyp *nominal-screen-width*
+*nominal-screen-height* *gl-screen-width* *gl-screen-height*
+*dance-phrase-symbols* *dance-keybindings* *energy-dance-pad-mapping*
+*message-function* dash holding-shift *dark-target-arrow-images*
+get-button-index arrow-image message-to-standard-output
+reset-message-function *orthogonal-arrows* *diagonal-arrows*
+*function-buttons* *punctuation* *dance-arrows* *dance-pad-symbols*
+*make-prototype-id-package* arrow-formatted-string lturn rturn
+ticks-per-beat event-time event-arrow radian-angle
 draw-textured-rectangle default-project-directories *step-tolerance*
 *resource-handlers* load-resource find-resource find-resource-object
 *colors* *world* make-directory-maybe load-user-init-file

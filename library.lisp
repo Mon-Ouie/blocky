@@ -172,7 +172,7 @@ inputs are evaluated."
 		    :scale 1.5)))
 
 (define-method initialize list (&rest blocks)
-  (apply #'super%initialize self blocks)
+  (apply #'initialize%%block self blocks)
   ;; allow them to be freely removed
   (unfreeze self))
 
@@ -205,7 +205,9 @@ inputs are evaluated."
 
 (define-method evaluate message ()
   (apply #'send %method 
-	 (or *target* %target) ;; with-target will override
+	 ;; with-target will override,
+	 ;; also will fall back on parent
+	 (or *target* %target %parent)
 	 (mapcar #'evaluate %inputs)))
 
 (define-method tap message (x y)

@@ -43,7 +43,7 @@
 	       (:file "system" :depends-on ("library"))
 	       (:file "worlds" :depends-on ("library"))
 	       (:file "universe" :depends-on ("worlds"))
-	       (:file "shell" :depends-on ("library"))
+	       (:file "shell" :depends-on ("worlds"))
 	       (:file "meta" :depends-on ("library"))))
 
 ;;	       (:file "path")

@@ -760,11 +760,8 @@ If the method is not found, attempt to forward the message."
   "Invoke next version of METHOD on OBJECT, passing ARGUMENTS.  We do
 this by finding the current implementation (via slot lookup), then
 finding the next implementation after that."
-  ;; compare methods?
-  (let ((start (or *next-search-start* (find-object object))))
-    (let ((*next-search-start* (next-definer method start)))
-      (apply (next-definition method start)
-	     object arguments))))
+      (apply (next-definition method (find-object object))
+	     object arguments))
 
 ;;; Message queueing
 

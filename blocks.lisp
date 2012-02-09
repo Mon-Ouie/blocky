@@ -217,6 +217,8 @@ interpretation:
     (unplug-from-parent child))
   (set-parent child self))
 
+(define-method set-value block (value))
+
 (define-method update-parent-links block ()
   (dolist (each %inputs)
     (set-parent each self)))
@@ -1572,10 +1574,10 @@ Note that the center-points of the objects are used for comparison."
 (define-method queue-layout block ()
   (setf %needs-layout t))
 
-(define-method invalidate-layout block ())
-  ;; FIXME
-  ;; (when *buffer*
-  ;;   (queue-layout *buffer*)))
+(define-method invalidate-layout block ()
+  (let ((world (world)))
+    (when (and world (has-method :queue-layout world))
+      (queue-layout world))))
 
 (define-method bring-to-front block (block)
   (with-fields (inputs block) self

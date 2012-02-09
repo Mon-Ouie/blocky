@@ -351,11 +351,21 @@ equality with `equal' and used as hashtable keys.")
 Please set the variable blocky:*event-handler-function*")
       (funcall *event-handler-function* event)))
 
+(defun is-raw-joystick-event (event)
+  (eq :raw-joystick (first event)))
+
+(defun is-joystick-event (event)
+  (or (is-raw-joystick-event event)
+      (eq :joystick (first event))))
+
 (defun normalize-event (event)
   "Convert EVENT to a normal form suitable for `equal' comparisons."
-  (cons (first event)
-	(sort (remove-duplicates (delete nil (rest event)))
-	      #'string< :key #'symbol-name)))
+  ;; don't sort joystick event modifiers
+  (if (is-joystick-event event)
+      event
+      (cons (first event)
+	    (sort (remove-duplicates (delete nil (rest event)))
+		  #'string< :key #'symbol-name))))
 
 ;;; Input events for keyboard and joystick etc
 
@@ -363,8 +373,8 @@ Please set the variable blocky:*event-handler-function*")
   '(:a :b :x :y ;; face buttons
     :left :right :up :down ;; directional pad
     :select :start ;; menu buttons
-    :l1 :l2 :r1 :r2  ;; shoulder buttons
-    :l3 :r3)) ;; clicking the analog sticks
+    :left-trigger :left-bumper :right-trigger :right-bumper  ;; shoulder buttons
+    :left-click :right-click)) ;; clicking the analog sticks
 
 (defparameter *other-modifier-symbols* '(:button-down :button-up))
 
@@ -450,27 +460,7 @@ or,
     :type :joystick
     :left-analog-stick (0 1)
     :right-analog-stick (3 2)
-    :buttons ((0 . :a)
-	      (1 . :b)
-	      (2 . :x)
-	      (3 . :y)
-	      (4 . :l1)
-	      (5 . :r1)
-	      (6 . :l2)
-	      (7 . :r2)
-	      (8 . :select)
-	      (9 . :start))))
-	      ;; (10 . :button-10)
-	      ;; (11 . :button-11)
-	      ;; (12 . :button-12)
-	      ;; (13 . :button-13)
-	      ;; (14 . :button-14)
-	      ;; (15 . :button-15)
-	      ;; (16 . :button-16)
-	      ;; (17 . :button-17)
-	      ;; (18 . :button-18)
-	      ;; (19 . :button-19)
-	      ;; (20 . :button-20))))
+    :buttons ()))
 
 (defvar *joystick-profile* *default-joystick-profile*)
 
@@ -488,12 +478,12 @@ or,
 	       (1 . :b)
 	       (3 . :x)
 	       (0 . :y)
-	       (6 . :l2)
-	       (7 . :r2)
+	       (6 . :left-bumper)
+	       (7 . :right-bumper)
 	       (8 . :select)
 	       (9 . :start)
-	       (4 . :l1)
-	       (5 . :r1)))
+	       (4 . :left-trigger)
+	       (5 . :right-trigger)))
     ("GreenAsia Inc.    USB Joystick     "
      :name "Generic USB Gamepad" :type :joystick
      :left-analog-stick (0 1)
@@ -502,12 +492,12 @@ or,
 	       (1 . :b)
 	       (3 . :x)
 	       (0 . :y)
-	       (4 . :l2)
-	       (5 . :r2)
+	       (4 . :left-bumper)
+	       (5 . :right-bumper)
 	       (8 . :select)
 	       (9 . :start)
-	       (6 . :l1)
-	       (7 . :r1)))
+	       (6 . :left-trigger)
+	       (7 . :right-trigger)))
     ("USB Dance Pa" 
      :name "Generic USB Dance Pad" :type :dance 
      :buttons  ((12 . :up)
@@ -658,11 +648,11 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 ;;  (aref *joystick-button-states* button))
 
 (defun joystick-button-pressed-p (button)
-  (= 1 (joystick-button-state 
-	(if (integerp button)
-	    button
-	    (symbol-to-button button)
-	    ))))
+  (let ((button-number (if (integerp button) 
+			   button
+			   (symbol-to-button button))))
+    (when button-number 
+      (= 1 (joystick-button-state button-number)))))
 
 (defun reset-joysticks ()
   "Re-open the joystick device and re-initialize the state."
@@ -856,12 +846,14 @@ display."
       (:joy-button-down-event (:button button :state state)
 			      (when (assoc button (joystick-buttons))
 				(update-joystick-button button state)
+				(send-event (make-event :raw-joystick (button :button-down))) 
 				(send-event (make-event :joystick
 							(list (button-to-symbol button) 
 							      :button-down)))))
       (:joy-button-up-event (:button button :state state)  
 			    (when (assoc button (joystick-buttons))
 			      (update-joystick-button button state)
+				(send-event (make-event :raw-joystick (button :button-up))) 
 			      (send-event (make-event :joystick
 						      (list (button-to-symbol button) 
 							    :button-up)))))
