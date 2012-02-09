@@ -999,7 +999,7 @@ This prepares it for printing as part of a IOF file."
 (defun write-sexp-to-file (filename sexp)
   (message "Writing data to file ~S" filename)
   (with-open-file (file filename :direction :output 
-			:if-exists :overwrite
+			:if-exists :supersede
 			:if-does-not-exist :create)
     (let ((*package* *keyword-package*))
       (with-standard-io-syntax 
@@ -2506,6 +2506,7 @@ of the music."
 	*blocks* nil
 	*world* nil
 	*project* nil
+	*event-hook* nil
 	*message-hook-functions* nil
 	*window-title* "blocky"
 	*updates* 0
@@ -2534,6 +2535,8 @@ of the music."
   (sdl-mixer:close-audio t)
 ;  (setf *buffer* nil)
   (setf *world* nil)
+  (setf *blocks* nil)
+  (setf *event-hook* nil)
   (sdl:quit-sdl)
   (setf *gl-window-open-p* nil))
 

@@ -1328,7 +1328,7 @@ See shell.lisp for more on the implementation of drag-and-drop."
   (if (null %label)
       0
       (+ (dash 2)
-	 (font-text-width %label *font*))))
+	 (font-text-width %label *block-font*))))
     
 (define-method draw-label-string block (string &optional color)
   (with-block-drawing 

@@ -134,7 +134,7 @@ inputs are evaluated."
     (flet ((ldash (&rest args)
 	     (apply #'dash 1 args)))
     (let* ((header-height (ldash (header-height self)))
-	   (x0 (ldash x))
+	   (x0 (+ x (dash 1)))
 	   (y0 (ldash y))
 	   (line-height (font-height *font*)))
       (setf height (ldash line-height))
@@ -143,9 +143,10 @@ inputs are evaluated."
 	(move-to element (ldash x0) y0)
 	(layout element)
 	(setf height (max height (+ (ldash) (field-value :height element))))
-	(incf x0 (field-value :width element)))
+	(incf x0 (field-value :width element))
+	(incf width (field-value :width element)))
       (incf height (dash 1))
-      (incf width (dash 10))))))
+      (incf width (dash 3))))))
 
 (define-method layout list ()
   (with-fields (inputs) self
