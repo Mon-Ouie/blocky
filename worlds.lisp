@@ -412,7 +412,7 @@ most user command messages. (See also the method `forward'.)"
 
 (define-method draw world ()
 ;  (declare (optimize (speed 3)))
-  (let ((*world self))
+  (let ((*world* self))
     (project self) ;; set up camera
     (with-field-values (objects width height background background-color) self
       ;; draw background image (or color)
