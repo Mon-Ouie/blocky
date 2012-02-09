@@ -524,7 +524,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 (define-method lose-focus block () nil)
 
 (define-method grab-focus block () 
-  (send :focus-on (symbol-value '*shell*) self))
+  (send :focus-on (world) self))
 
 ;;; Squeak-style pop-up halo with action handles
 

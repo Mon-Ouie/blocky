@@ -155,6 +155,8 @@
 
 ;;; The object layer. 
 
+(define-method grab-focus world ())
+
 (define-method add-block world (object &optional x y append)
   (with-fields (quadtree) self
     (let ((*quadtree* quadtree))
@@ -215,7 +217,7 @@
 (defun player ()
   (get-player *world*))
 
-(define-method add-player world (player)
+(define-method set-player world (player)
   "Set PLAYER as the player object to which the World will forward
 most user command messages. (See also the method `forward'.)"
   (setf %player player)
@@ -410,24 +412,26 @@ most user command messages. (See also the method `forward'.)"
 
 (define-method draw world ()
 ;  (declare (optimize (speed 3)))
-  (project self) ;; set up camera
-  (with-field-values (objects width height background background-color) self
-    ;; draw background image (or color)
-    (if background
-	(draw-image background 0 0)
-	(when background-color
-	  (draw-box 0 0 width height
-		    :color background-color)))
-    ;; draw the objects
-    (loop for object being the hash-keys in %objects do
-      (draw object))))
-;    (quadtree-show %quadtree %player)))
-
+  (let ((*world self))
+    (project self) ;; set up camera
+    (with-field-values (objects width height background background-color) self
+      ;; draw background image (or color)
+      (if background
+	  (draw-image background 0 0)
+	  (when background-color
+	    (draw-box 0 0 width height
+		      :color background-color)))
+      ;; draw the objects
+      (loop for object being the hash-keys in %objects do
+	(draw object)))))
+					;    (quadtree-show %quadtree %player)))
+  
 ;;; Simulation update
 
 (define-method update world (&optional no-collisions)
   (declare (optimize (speed 3)))
   (declare (ignore args))
+  (let ((*world* self))
     (with-field-values (quadtree objects height width player) self
       ;; build quadtree if needed
       (when (null quadtree)
@@ -444,7 +448,7 @@ most user command messages. (See also the method `forward'.)"
 	;; detect collisions
 	(unless no-collisions
 	  (loop for object being the hash-keys in %objects do
-	    (quadtree-collide *quadtree* object))))))
+	    (quadtree-collide *quadtree* object)))))))
 
 ;; ;;; Lighting and line-of-sight
 

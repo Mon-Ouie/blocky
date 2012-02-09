@@ -437,23 +437,26 @@ or,
    - a cons of the form (key unicode) will be passed through
      unaltered." 
   (assert code)
-  (let ((head
-	  (etypecase code
-	    (integer (string (code-char code)))
-	    (string (prog1 code
-		      (assert (= 1 (length code)))))
-	    (keyword code)
-	    (cons code))))
-    (normalize-event
-     (cons head
-	   ;; modifiers
-	   (cond ((keywordp modifiers)
-		  (list modifiers))
-		 ((listp modifiers)
-		  modifiers)
-		 ;; catch apparent lispbuilder-sdl bug?
-		 ((eql 0 modifiers)
-		  nil))))))
+  ;; pass through joystick events unaltered
+  (if (is-joystick-event (cons code modifiers))
+      (cons code modifiers)
+      (let ((head
+	      (etypecase code
+		(integer (string (code-char code)))
+		(string (prog1 code
+			  (assert (= 1 (length code)))))
+		(keyword code)
+		(cons code))))
+	(normalize-event
+	 (cons head
+	       ;; modifiers
+	       (cond ((keywordp modifiers)
+		      (list modifiers))
+		     ((listp modifiers)
+		      modifiers)
+		     ;; catch apparent lispbuilder-sdl bug?
+		     ((eql 0 modifiers)
+		      nil)))))))
 
 (defparameter *default-joystick-profile*
   '(:name "Unknown Joystick"
@@ -846,14 +849,14 @@ display."
       (:joy-button-down-event (:button button :state state)
 			      (when (assoc button (joystick-buttons))
 				(update-joystick-button button state)
-				(send-event (make-event :raw-joystick (button :button-down))) 
+				(send-event (make-event :raw-joystick (list button :button-down)))
 				(send-event (make-event :joystick
 							(list (button-to-symbol button) 
 							      :button-down)))))
       (:joy-button-up-event (:button button :state state)  
 			    (when (assoc button (joystick-buttons))
 			      (update-joystick-button button state)
-				(send-event (make-event :raw-joystick (button :button-up))) 
+			      (send-event (make-event :raw-joystick (list button :button-up)))
 			      (send-event (make-event :joystick
 						      (list (button-to-symbol button) 
 							    :button-up)))))
@@ -2497,6 +2500,7 @@ of the music."
   (setf *project-package-name* nil
 ;        *project-directories* (default-project-directories)
 	*blocks* nil
+	*world* nil
 	*project* nil
 	*message-hook-functions* nil
 	*window-title* "blocky"

@@ -176,5 +176,5 @@ save-variable-resource *persistent-variables* with-new-world
 border-around with-blank-world with-world-prototype with-world
 remove-trailing-space *world-prototype* step-coordinates
 save-excursion *persistent-variables-file-name* duplicate
-persistent-variables-file combine *shell* save-variables
+persistent-variables-file combine save-variables
 load-variables *block-text-colors* defblock define-visual-macro))

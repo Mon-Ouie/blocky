@@ -25,9 +25,6 @@
 
 (in-package :blocky)
 
-(defvar *shell* nil
-  "When non-nil, the UUID of the currently active shell object.")
-
 (defvar *trash* nil)
 
 (define-block trash 
@@ -219,7 +216,7 @@
   (setf %last-focus nil))
 
 (define-method make-widgets shell ()
-  (setf *shell* (find-uuid self))
+;  (setf *shell* (find-uuid self))
   (setf %command-line (make-command-line)))
 
 (define-method add-menubar shell ()
