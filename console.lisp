@@ -1715,13 +1715,13 @@ control the size of the individual frames or subimages."
 *buffers* *screen-height* *world* *blocks* *dt* *pointer-x* *author*
 *joystick-profile* *user-joystick-profile* *joystick-axis-size*
 *joystick-dead-zone* *pointer-y* *trash* *resizable* *window-title*
-*buffer* *system* *scale-output-to-window* *persistent-variables*))
+*system* *scale-output-to-window* *persistent-variables*))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
 *buffers* *screen-height* *world* *blocks* *dt* *pointer-x* *author*
 *joystick-profile* *user-joystick-profile* *joystick-axis-size*
 *joystick-dead-zone* *scale-output-to-window* *pointer-y* *trash*
-*resizable* *window-title* *buffer* *system*
+*resizable* *window-title* *system*
 				 ;; notice that THIS variable is also
 				 ;; persistent!  this is to avoid
 				 ;; unwanted behavior changes in
