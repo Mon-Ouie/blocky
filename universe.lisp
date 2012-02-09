@@ -26,29 +26,6 @@
 
 (defvar *universe* nil)
 
-(defun normalize-address (address)
-  "Sort the plist ADDRESS so that its keys come in alphabetical order
-by symbol name. This enables them to be used as hash keys."
-  (etypecase address
-    (string address)
-    (list (assert (and (stringp (first address))
-		       (or (null (rest address))
-			   (keywordp (second address)))))
-       (labels ((all-keys (plist)
-		  (let (keys)
-		    (loop while (not (null plist))
-			  do (progn (push (pop plist) keys)
-				    (pop plist)))
-		    keys)))
-	 (let (address2)
-	   (dolist (key (sort (all-keys (cdr address)) #'string> :key #'symbol-name))
-	     ;; build sorted plist
-	     (push (getf (cdr address) key) address2)
-	     (push key address2))
-	   (cons (car address) address2))))))
-
-(defparameter *default-space-size* 10)
-
 (define-block universe 
   (worlds :initform (make-hash-table :test 'equal)
 	  :documentation "Address-to-world mapping.")
@@ -58,7 +35,27 @@ by symbol name. This enables them to be used as hash keys."
   (stack :initform '()))
  
 (define-method update universe ()
-  (update %world))
+  (when %world (update %world)))
+
+(define-method draw universe ()
+  (when %world (draw %world)))
+
+(define-method handle-event universe (event)
+  (with-fields (world) self
+    (when world
+      (handle-event world event))))
+
+(define-method initialize universe (&key address player world)
+  "Prepare a universe for play at the world identified by ADDRESS with
+PLAYER as the player."
+  (setf *universe* self)
+  (when world 
+    (setf %world world)
+    (setf *world* world)
+    (setf *buffer* world))
+  (when player (setf %player player))
+  (when %player 
+    (add-player world %player)))
 
 (defun make-universe ()
   (new universe))
@@ -109,29 +106,28 @@ by symbol name. This enables them to be used as hash keys."
 		       (generate-world self address)))
 	candidate)))
 
-(define-method update universe ()
-  (when %world (update %world)))
+(defun normalize-address (address)
+  "Sort the plist ADDRESS so that its keys come in alphabetical order
+by symbol name. This enables them to be used as hash keys."
+  (etypecase address
+    (string address)
+    (list (assert (and (stringp (first address))
+		       (or (null (rest address))
+			   (keywordp (second address)))))
+       (labels ((all-keys (plist)
+		  (let (keys)
+		    (loop while (not (null plist))
+			  do (progn (push (pop plist) keys)
+				    (pop plist)))
+		    keys)))
+	 (let (address2)
+	   (dolist (key (sort (all-keys (cdr address)) #'string> :key #'symbol-name))
+	     ;; build sorted plist
+	     (push (getf (cdr address) key) address2)
+	     (push key address2))
+	   (cons (car address) address2))))))
 
-(define-method draw universe ()
-  (when %world (draw %world)))
-
-(define-method handle-event universe (event)
-  (with-fields (world) self
-    (when world
-      (handle-event world event))))
-
-(define-method initialize universe (&key address player world)
-  "Prepare a universe for play at the world identified by ADDRESS with
-PLAYER as the player."
-  (setf *universe* self)
-  (when world 
-    (setf %world world)
-    (setf *world* world)
-    (setf *buffer* world))
-  (when player (setf %player player))
-  (when %player 
-    (add-player world %player))
-  (install-blocks self))
+(defparameter *default-space-size* 10)
 
 ;;; Missions and Goals
 
