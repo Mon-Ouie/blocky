@@ -53,6 +53,9 @@ inputs are evaluated."
   ;; (prog1 self
   ;;   (evaluate-inputs self)))
 
+(define-method can-pick list ()
+  (not %frozen))
+
 (defparameter *null-display-string* "   ")
 
 (define-method set-orientation list (orientation)
