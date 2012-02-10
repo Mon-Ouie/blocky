@@ -33,6 +33,7 @@ language is a human right.
 For more information on the design of Blocky, see
 http://blocky.io/design.html
 
+
 For a quick start to getting familiar with Blocky internals, see the
 included file GUIDE.ORG (or read the first parts of the
 [[http://blocky.io/reference.html][online Blocky reference manual]])
