@@ -44,7 +44,7 @@
 (defvar *author* nil)
 
 (defvar *copyright-notice*
-"Welcome to the Blocky programming language.
+"This is the Blocky programming language.
 Copyright (C) 2006-2011 by David T O'Toole <dto@ioforms.org>
 http://blocky.io/
 
