@@ -36,7 +36,7 @@
   (blocky:play *game*)
   0)
 
-(sb-ext:save-lisp-and-die *executable* :toplevel #'main :executable t)
+(sb-ext:save-lisp-and-die *executable* :toplevel #'main :executable t :compression t)
 
 ;; #+sbcl
 ;; (progn 
