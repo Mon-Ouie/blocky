@@ -344,7 +344,7 @@ block found, or nil if none is found."
     (layout self)
     (project self)
     (when %background-color
-      (draw-box 0 0 *gl-screen-width* *gl-screen-height* :color "white"))
+      (draw-box 0 0 *gl-screen-width* *gl-screen-height* :color %background-color))
     (with-fields (buffer drag-start selection inputs drag
 			 focused-block highlight menubar
 			 command-line command-p
