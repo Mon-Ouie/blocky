@@ -740,8 +740,19 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method draw-turtle-line block (x0 y0 x1 y1)
   nil)
 
-;; (defmacro save-excursion (&body body)
-;;   (
+(defmacro save-excursion (expression &body body)
+  (let ((x (gensym))
+	(y (gensym))
+	(heading (gensym))
+	(turtle (gensym)))
+    `(let* ((,turtle ,expression)
+	    (,x (field-value :x ,turtle))
+	    (,y (field-value :y ,turtle))
+	    (,heading (field-value :heading ,turtle)))
+       ,@body
+       (move-to ,turtle ,x ,y)
+       (setf (field-value :heading ,turtle) ,heading)
+       (values ,x ,y ,heading))))
 
 (define-method heading-to-thing block (thing)
   (multiple-value-bind (x1 y1) (center-point thing)
