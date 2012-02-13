@@ -26,7 +26,7 @@
 
 (defvar *quadtree-depth* 0)
 
-(defparameter *default-quadtree-depth* 8) 
+(defparameter *default-quadtree-depth* 9) 
  
 (defstruct quadtree 
   objects bounding-box level
@@ -188,7 +188,8 @@ NODE, if any."
    (multiple-value-list (bounding-box object))
    #'(lambda (thing)
 	 (when (and (field-value :collision-type thing)
-		    (colliding-with object thing))
+		    (colliding-with object thing)
+		    (not (object-eq object thing)))
 	   (collide object thing)))))
 
 (defun find-bounding-box (objects)

@@ -2162,8 +2162,9 @@ of the music."
 				     :type :color
 				     :data (list red green blue))))))
 
-(defun percent-gray (percentage)
-  (format nil "gray~S" (truncate percentage)))
+(defun-memo percent-gray (percentage)
+    (:key #'first :test 'equal :validator #'identity)
+  (format nil "gray~S" (truncate (abs percentage))))
 
 (defun percent-grey (percentage)
   (percent-gray percentage))
