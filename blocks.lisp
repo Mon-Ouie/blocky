@@ -78,7 +78,7 @@ Web at:
   (blend :initform :alpha)
   (opacity :initform 1.0)
   ;; collisions
-  (collision-type :initform :aabb)
+  (collision-type :initform :default)
   ;; dimensions
   (width :initform 32 :documentation "Cached width of block.")
   (height :initform 32 :documentation "Cached height of block.")
