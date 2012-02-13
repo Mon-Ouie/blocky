@@ -411,26 +411,25 @@ most user command messages. (See also the method `forward'.)"
 ;;; Draw the world
 
 (define-method draw world ()
-;  (declare (optimize (speed 3)))
+  ;; (declare (optimize (speed 3)))
   (let ((*world* self))
     (project self) ;; set up camera
     (with-field-values (objects width height background background-color) self
-      ;; draw background image (or color)
+      ;; draw background 
       (if background
 	  (draw-image background 0 0)
 	  (when background-color
 	    (draw-box 0 0 width height
 		      :color background-color)))
       ;; draw the objects
-      (loop for object being the hash-keys in %objects do
+      (loop for object being the hash-keys in objects do
 	(draw object)))))
-					;    (quadtree-show %quadtree %player)))
   
 ;;; Simulation update
 
 (define-method update world (&optional no-collisions)
-  (declare (optimize (speed 3)))
-  (declare (ignore args))
+  ;; (declare (optimize (speed 3)))
+  ;; (declare (ignore args))
   (let ((*world* self))
     (with-field-values (quadtree objects height width player) self
       ;; build quadtree if needed
