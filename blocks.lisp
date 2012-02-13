@@ -1379,7 +1379,7 @@ See shell.lisp for more on the implementation of drag-and-drop."
     ((width number :default 100)
      (height number :default 100))
   "Change this object's size to WIDTH by HEIGHT units."
-  (when *quadtree* (quadtree-delete *quadtree* self))
+  (when %quadtree-node (quadtree-delete *quadtree* self))
   (setf %height height)
   (setf %width width)
   (when *quadtree* (quadtree-insert *quadtree* self))
