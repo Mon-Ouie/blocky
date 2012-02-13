@@ -191,8 +191,6 @@ NODE, if any."
 		    (colliding-with object thing))
 	   (collide object thing)))))
 
-   ;; (not (object-eq object thing))
-
 (defun find-bounding-box (objects)
   ;; calculate the bounding box of a list of objects
   (labels ((left (thing) (field-value :x thing))
