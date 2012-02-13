@@ -183,15 +183,37 @@ NODE, if any."
 	   (funcall processor object))))))
 
 (defun quadtree-collide (tree object)
-  ;; (assert (blockyp object))
   (quadtree-map-collisions 
    tree
    (multiple-value-list (bounding-box object))
    #'(lambda (thing)
-       (when (and (colliding-with object thing)
-		  (not (object-eq object thing))
-		  (field-value :collision-type thing))
-	 (collide object thing)))))
+	 (when (and (field-value :collision-type thing)
+		    (colliding-with object thing))
+	   (collide object thing)))))
+
+   ;; (not (object-eq object thing))
+
+(defun find-bounding-box (objects)
+  ;; calculate the bounding box of a list of objects
+  (labels ((left (thing) (field-value :x thing))
+	   (right (thing) (+ (field-value :x thing)
+			     (field-value :width thing)))
+	   (top (thing) (field-value :y thing))
+	   (bottom (thing) (+ (field-value :y thing)
+			      (field-value :height thing))))
+    ;; let's find the bounding box.
+    (values (reduce #'min (mapcar #'top objects))
+	    (reduce #'min (mapcar #'left objects))
+	    (reduce #'max (mapcar #'right objects))
+	    (reduce #'max (mapcar #'bottom objects)))))
+
+(defun quadtree-fill (quadtree set)
+  (let ((objects (etypecase set
+		   (list set)
+		   (hash-table (loop for object being the hash-keys in set collect object)))))
+    (dolist (object objects)
+      (set-field-value :quadtree-node object nil)
+      (quadtree-insert quadtree object))))
 
 (defun quadtree-show (tree &optional object)
   (when tree
