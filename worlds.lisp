@@ -56,6 +56,11 @@
 ;; Defining and scrolling the screen viewing window
 
 (define-method window-bounding-box world ()
+  (message "WINDOW-BOUNDING-BOX: ~S"
+	   (list %window-y 
+		 %window-x
+		 (+ %window-x *gl-screen-width*)
+		 (+ %window-y *gl-screen-height*))) 
   (values %window-y 
 	  %window-x
 	  (+ %window-x *gl-screen-width*)
@@ -400,7 +405,7 @@ most user command messages. (See also the method `forward'.)"
    self 
    (flip-vertically (duplicate self))))
 
-(defun border-around (world &optional (border 32))
+(defun with-border (border world)
   (with-fields (height width) world
     (with-new-world 
       (paste (world) world border border) 
@@ -414,16 +419,20 @@ most user command messages. (See also the method `forward'.)"
   ;; (declare (optimize (speed 3)))
   (let ((*world* self))
     (project self) ;; set up camera
-    (with-field-values (objects width height background background-color) self
+    (with-field-values (objects quadtree width height background background-color) self
       ;; draw background 
       (if background
 	  (draw-image background 0 0)
 	  (when background-color
 	    (draw-box 0 0 width height
 		      :color background-color)))
-      ;; draw the objects
       (loop for object being the hash-keys in objects do
 	(draw object)))))
+      ;; ;; draw all onscreen objects
+      ;; (quadtree-map-collisions 
+      ;;  quadtree 
+      ;;  (multiple-value-list (window-bounding-box self))
+      ;;  #'draw))))
   
 ;;; Simulation update
 
@@ -446,8 +455,7 @@ most user command messages. (See also the method `forward'.)"
 	(update-window-glide self)
 	;; detect collisions
 	(unless no-collisions
-	  (loop for object being the hash-keys in %objects do
-	    ;; don't begin searches with passive objects
+	  (loop for object being the hash-keys in objects do
 	    (unless (eq :passive (field-value :collision-type object))
 	      (quadtree-collide *quadtree* object))))))))
 

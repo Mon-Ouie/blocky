@@ -53,15 +53,14 @@ quadtree-insert build-quadtree quadtree-collide quadtree-show
 *prompt-qwerty-keybindings* *screen-width* transform-method-body
 *edit* roll-under make-stat make-universe initialize-colors *style*
 create-project *standard-categories* *left-turn* bind-event
-*right-turn* *default-actihandle-point-motions* left-turn right-turn
-roll bind-event-to-method *colors* enable-key-repeat
-disable-key-repeat get-color define-method *default-font* field-value
-set-field-value object-fields dispatch-event run-project
-*user-init-file-name* distance icon-resource icon-image *directions*
-*clear-cached-images-on-resize* *opposites* find-resource-property
-compose-blank-fields font-width font-height *browser* browser
-set-browser find-object *windows* edit create
-transform-field-reference define-block *screen-height*
+*right-turn* left-turn right-turn roll bind-event-to-method *colors*
+enable-key-repeat disable-key-repeat get-color define-method
+*default-font* field-value set-field-value object-fields
+dispatch-event run-project *user-init-file-name* distance
+icon-resource icon-image *directions* *clear-cached-images-on-resize*
+*opposites* find-resource-property compose-blank-fields font-width
+font-height *browser* browser set-browser find-object *windows* edit
+create transform-field-reference define-block *screen-height*
 formatted-line-width *last-event* formatted-line-height
 formatted-string-height formatted-string-width get-color create-image
 draw-image blocky edit define-prototype has-field *target* with-target
@@ -175,7 +174,7 @@ make-text-image find-texture *default-super* clear-text-image-cache
 toggle-debug *debug-on-error* *block-categories* *block-colors* input
 paste arrange-beside arrange-below load-variable-resource translate
 save-variable-resource *persistent-variables* with-new-world
-border-around with-blank-world with-world-prototype with-world
+with-border with-blank-world with-world-prototype with-world
 remove-trailing-space *world-prototype* step-coordinates
 save-excursion *persistent-variables-file-name* duplicate
 persistent-variables-file combine save-variables indicator-size
