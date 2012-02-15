@@ -41,11 +41,6 @@
 
 (defvar *gl-window-open-p* nil)
 
-(defvar *buffers* nil)
-
-(defun initialize-buffers ()
-  (setf *buffers* (make-hash-table :test 'equal)))
-
 (defvar *edit* nil "This is set to non-nil when the editor is being used.")
 
 (defvar *pending-autoload-resources* '())
@@ -64,14 +59,7 @@ worlds.lisp. Sprites and cells are free to send messages to `*world*'
 at any time, because `*world*' is always bound to the world containing
 the object when the method is run.")
 
-;;; Frame rate 
-
-(defvar *frame-rate* 30 "The intended frame rate of the game.")
-
-(defun set-frame-rate (&optional (rate *frame-rate*))
-  "Set the frame rate for the game."
-  (message "Setting frame rate to ~S" rate)
-  (setf (sdl:frame-rate) rate))
+(defun world () *world*)
 
 ;;; Keyboard state
 
@@ -207,24 +195,6 @@ This function arranges for FUNC to be invoked whenever HOOK is triggered with
   (dolist (func (symbol-value hook))
     (funcall func)))
 
-;;; Vector utility macro 
-
-(defmacro do-cells ((var expr) &body body)
-  "Evaluate the forms in BODY with VAR bound successively to the
-elements of the vector produced by evaluating EXPR."
-  (let ((counter (gensym))
-	(vector (gensym)))
-    `(progn
-       (let* ((,var nil)
-	      (,vector (progn ,expr)))
-	 (when (vectorp ,vector)
-	   (let ((,counter (fill-pointer ,vector)))
-	     (decf ,counter)
-	     (loop while (>= ,counter 0) 
-		   do (setf ,var (aref ,vector ,counter))
-		   (progn (decf ,counter)
-			  (when ,var ,@body)))))))))
-
 ;;; The active blocks list 
 
 ;; see also blocks.lisp
@@ -271,56 +241,6 @@ and the like."
 
 (defun disable-key-repeat ()
   (sdl:disable-key-repeat))
-
-;;; "Held Keys" key repeat emulation
-;; NOTE: THIS SECTION IS OBSOLETE.
-
-(defvar *key-table* (make-hash-table :test 'equal))
-
-(defvar *held-keys* nil)
-
-(defun enable-held-keys (&rest args)
-  "Enable key repeat on every frame when held. Arguments are ignored
-for backward-compatibility."
-  (when args 
-    (message "Warning. DELAY and INTERVAL arguments to BLOCKY:ENABLE-HELD-KEYS are deprecated and ignored."))
-  (setf *key-table* (make-hash-table :test 'equal))
-  (setf *held-keys* t))
-
-(defun disable-held-keys ()
-  "Disable key repeat."
-  (setf *held-keys* nil))
-;;  (sdl:disable-key-repeat))
-
-(defun hold-event (event)
-  (when (null (gethash event *key-table*)) 
-    (setf (gethash event *key-table*) 0)))
-
-(defun release-held-event (event)
-  (setf (gethash event *key-table*) -1))
-
-(defun send-held-events ()
-  (unless (null *key-table*)
-    (maphash #'(lambda (event counter)
-		 (send-event event)
-		 ;; A counter value of -1 means that the key release
-		 ;; happened before the event had a chance to be sent.
-		 ;; These must be removed immediately after sending once.
-		 (if (minusp counter)
-		     (remhash event *key-table*)
-		     ;; Otherwise, keep counting how many frames the
-		     ;; key is held for.
-		     (when (numberp (gethash event *key-table*))
-		       (incf (gethash event *key-table*)))))
-	     *key-table*)))
-
-(defun break-events (event)
-  (labels ((break-it (event2 rest)
-	     (declare (ignore rest))
-	     (when (intersection event event2 :test 'equal)
-	       (message "Breaking ~S due to match with ~S." event2 event)
-	       (remhash event2 *key-table*))))
-    (maphash #'break-it *key-table*)))
 
 ;;; Parceling out events to blocks
 
@@ -679,7 +599,14 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 		(setf *joystick-profile* profile)
 		(message "Found joystick profile ~S for ~S." type name))))))))
 
-;;; Timing
+;;; Frame rate and simulation timing
+
+(defvar *frame-rate* 30 "The intended frame rate of the game.")
+
+(defun set-frame-rate (&optional (rate *frame-rate*))
+  "Set the frame rate for the game."
+  (message "Setting frame rate to ~S" rate)
+  (setf (sdl:frame-rate) rate))
 
 (defun get-ticks ()
   (sdl:sdl-get-ticks))
@@ -700,22 +627,6 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
     (apply *update-function* args)))
 
 (defparameter *updates* 0)
-
-;;; Processing once per update
-
-(defvar *keys* nil "List of keywords of currently pressed keys.")
-
-(defvar *mods* nil "List of keywords of currently pressed modifiers.")
-
-(defvar *keyboard-update-number* 0)
-
-(defun get-keys ()
-  (if (= *keyboard-update-number* *updates*)
-      (setf *keys* (keyboard-keys-down)
-	    *mods* (keyboard-modifiers)
-	    *keyboard-update-number* *updates*)
-      (setf *keys* nil *mods* nil))
-  (values *keys* *mods*))
 
 ;;; Screen dimensions
 
@@ -868,32 +779,14 @@ display."
 			      (update-joystick-axis axis value))
       (:video-expose-event () (sdl:update-display))
       (:key-down-event (:key key :mod-key mod :unicode unicode)
-		       (let ((event 
-			       (make-event 
-				;; translate data items from SDL format to internal
-				(cons (make-key-symbol key)
-				      (when (not (zerop unicode))
-					(string (code-char unicode))))
-				(mapcar #'make-key-modifier-symbol mod))))
-			 (if *held-keys*
-			     (hold-event event)
-			     (send-event event))))
-      (:key-up-event (:key key :mod-key mod :unicode unicode)
-		     ;; is this "held keys" code obsolete? it was useful for CONS control
-		     (when *held-keys*
-		       (let* ((event (make-event (cons key nil) mod))
-			      (entry (gethash event *key-table*)))
-			 (if (numberp entry)
-			     (if (plusp entry)
-				 (progn (message "Removing entry ~A:~A" event entry)
-					(remhash event *key-table*))
-				 (when (zerop entry)
-				   ;; This event hasn't yet been sent,
-				   ;; but the key release happened
-				   ;; now. Mark this entry as pending
-				   ;; deletion.
-				   (release-held-event event)))
-			     (break-events event)))))
+		       (send-event
+			(make-event 
+			 ;; translate data items from SDL format to internal
+			 (cons (make-key-symbol key)
+			       (when (not (zerop unicode))
+				 (string (code-char unicode))))
+			 (mapcar #'make-key-modifier-symbol mod))))
+;      (:key-up-event (:key key :mod-key mod :unicode unicode)
       (:idle ()
 	     ;; this lets slime keep working while the main loop is running
 	     ;; in sbcl using the :fd-handler swank:*communication-style*
@@ -1312,18 +1205,6 @@ object save directory. See also `save-object-resource')."
 	      (message "No default startup function for: ~S. Continuing.." (string-upcase (symbol-name start-function)))))
 	(message "Warning: No project package defined. Continuing..."))))
 
-;; (defun publish-project-as-application (&key (output-file "output.io")
-;; 					    project require)
-;;   (assert (stringp project))
-;;   (buildapp::main (list "sbcl"
-;; 			"--asdf-path"
-;; 			(sb-ext:native-namestring
-;; 			 (asdf:system-relative-pathname :blocky "./"))
-;; 		       "--load-system" "blocky"
-;; 		       "--eval" (format nil 
-;; 					"(progn (map nil #'ql:quickload (list :lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx :lispbuilder-sdl-image :cl-opengl :cl-fad :buildapp :uuid)) (blocky:play \"~A\"))" project)
-;; 		       "--output" (sb-ext:native-namestring (merge-pathnames output-file)))))
-
 (defun directory-is-project-p (dir)
   "Test whether a directory has the .blocky suffix."
   (let ((index-filename (concatenate 'string
@@ -1711,13 +1592,13 @@ control the size of the individual frames or subimages."
 ;;; Loading/saving variables
 
 (defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
-*buffers* *screen-height* *world* *blocks* *dt* *pointer-x* *author*
+*screen-height* *world* *blocks* *dt* *pointer-x* *author*
 *joystick-profile* *user-joystick-profile* *joystick-axis-size*
 *joystick-dead-zone* *pointer-y* *trash* *resizable* *window-title*
 *system* *scale-output-to-window* *persistent-variables*))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
-*buffers* *screen-height* *world* *blocks* *dt* *pointer-x* *author*
+*screen-height* *world* *blocks* *dt* *pointer-x* *author*
 *joystick-profile* *user-joystick-profile* *joystick-axis-size*
 *joystick-dead-zone* *scale-output-to-window* *pointer-y* *trash*
 *resizable* *window-title* *system*
@@ -1956,144 +1837,6 @@ found."
 (defvar *output-channels* 2)
 
 (defvar *sample-format* SDL-CFFI::AUDIO-S16LSB)
-
-;;; Voice objects
-
-;; (defvar *voices* nil)
-
-;; (define-prototype voice () output)
-
-;; (define-method initialize voice (&optional (size *output-chunksize*))
-;;   (setf %output (make-array size :element-type 'float :initial-element 0.0))
-;;   (register-voice self))
-
-;; (define-method get-output voice ()
-;;   %output)
-
-;; ;;(define-method play voice (&rest parameters))
-;; (define-method halt voice ())
-;; (define-method run voice ())
-
-;; (defun register-voice (voice)
-;;   (pushnew voice *voices* :test 'eq))
-
-;; (defun unregister-voice (voice)
-;;   (setf *voices*
-;; 	(delete voice *voices* :test 'eq)))
-
-;; (defun cffi-sample-type (sdl-sample-type)
-;;   (ecase sdl-sample-type
-;;     (SDL-CFFI::AUDIO-U8 :uint8) ; Unsigned 8-bit samples
-;;     (SDL-CFFI::AUDIO-S8 :int8) ; Signed 8-bit samples
-;;     (SDL-CFFI::AUDIO-U16LSB :uint16) ; Unsigned 16-bit samples, in little-endian byte order
-;;     (SDL-CFFI::AUDIO-S16LSB :int16) ; Signed 16-bit samples, in little-endian byte order
-;;     ;; (SDL-CFFI::AUDIO-U16MSB nil) ; Unsigned 16-bit samples, in big-endian byte order
-;;     ;; (SDL-CFFI::AUDIO-S16MSB nil) ; Signed 16-bit samples, in big-endian byte order
-;;     (SDL-CFFI::AUDIO-U16 :uint16)  ; same as SDL(SDL-CFFI::AUDIO-U16LSB (for backwards compatability probably)
-;;     (SDL-CFFI::AUDIO-S16 :int16) ; same as SDL(SDL-CFFI::AUDIO-S16LSB (for backwards compatability probably)
-;;     (SDL-CFFI::AUDIO-U16SYS :uint16) ; Unsigned 16-bit samples, in system byte order
-;;     (SDL-CFFI::AUDIO-S16SYS :int16) ; Signed 16-bit samples, in system byte order
-;;     ))
-
-;; (defun cffi-chunk-buffer (chunk)
-;;   (sdl:fp chunk))
-
-;; (defun buffer-length (buffer)
-;;   (let ((type (cffi-sample-type *sample-format*)))
-;;     (length (cffi:mem-ref buffer type))))
-
-;; (defun convert-cffi-sample-to-internal (chunk)
-;;   (let* ((input-buffer (cffi-chunk-buffer chunk))
-;; 	 (type (cffi-sample-type *sample-format*))
-;; 	 (size (length (cffi:mem-ref input-buffer type))))
-;;     (assert (eq *sample-format* SDL-CFFI::AUDIO-S16LSB)) ;; for now
-;;     (let ((output-buffer (make-array size)))
-;; 	(prog1 output-buffer
-;; 	  (dotimes (n size)
-;; 	    (setf (aref output-buffer n)
-;; 		  (/ (float (cffi:mem-aref input-buffer type n))
-;; 		     32768.0)))))))
-
-;; (defun convert-internal-sample-to-cffi (input output &optional limit)
-;;   (let ((type (cffi-sample-type *sample-format*)))
-;;     (dotimes (n 128)
-;;       (setf (cffi:mem-aref output type n)
-;; 	    (truncate (* (cffi:mem-aref input type n)
-;; 			 32768.0))))))
-
-;; (defvar *buffer* (make-array 10000 :element-type 'float :initial-element 0.0))
-
-;; (defvar *sample-generator* nil)
-
-;; (defvar *foo* nil)
-
-;; ;; (defun music-mixer-callback (user output size)
-;; ;;   (setf *foo* t)
-;; ;;   (format t "XXXX ~S" *foo*))
-
-;;   ;; (let ((type (cffi-sample-type *sample-format*)))
-;;   ;;   (dotimes (n size)
-;;   ;;     (setf (cffi:mem-aref output type n) 0))))
-
-;;   ;; (when *sample-generator*
-;;   ;;   (message "Generating samples")
-;;   ;;   (funcall generator *buffer*)
-;;   ;;   (message "Converting samples to output format...")
-;;   ;;   (convert-internal-sample-to-cffi *buffer* output size)
-;;   ;;   ))
-
-;; ;; (defun register-sample-generator (generator)
-;; ;;   (message "Registering sample generator...")
-;; ;;   (setf *sample-generator* generator)
-;; ;;   (sdl-mixer:register-music-mixer #'music-mixer-callback))
-
-;; (defun mix-voices (output)
-;;   (message "Mixing voices...")
-;;   ;; create silence
-;;   (dotimes (n *output-chunksize*)
-;;     (setf (aref output n) 0.0))
-;;   ;; mix in voices
-;;   (dolist (voice *voices*)
-;;     (run voice)
-;;     (let ((input (get-output voice)))
-;;       (dotimes (n *output-chunksize*)
-;; 	(incf (aref output n)
-;; 	      (aref input n))))))
-
-;; ;; (defun register-voice-mixer () 
-;; ;;   (message "Registering voice mixer...")
-;; ;;   (setf *voices* nil)
-;; ;;   (register-sample-generator #'mix-voices))
-
-;; (defvar *buffer-cache* nil)
-
-;; (defun initialize-buffer-cache ()
-;;   (setf *buffer-cache* (make-hash-table :test 'eq)))
-
-;; (defun get-sample-buffer (sample)
-;;   (let ((chunk (if (stringp sample)
-;; 		   (find-resource-object sample)
-;; 		   sample)))
-;;     ;; (when (null *buffer-cache*)
-;;     ;;   (initialize-buffer-cache))
-;;     ;; ;; is it cached?
-;;     ;; (or (gethash chunk *sample-buffers*)
-;;     ;; 	(setf (gethash chunk *sample-buffers*)
-;; 	      (convert-cffi-sample-to-internal chunk)))
-
-;; ;;; Regular music/sample functions
-
-;; ;; (defvar *sample-callback* nil)
-
-;; ;; (defun set-sample-callback (func)
-;; ;;   (assert (functionp func))
-;; ;;   (setf *sample-callback* func))
-
-;; ;; (defvar *music-callback* nil)
-
-;; ;; (defun set-music-callback (func)
-;; ;;   (assert (functionp func))
-;; ;;   (setf *music-callback* func))
 
 (defvar *channels* 256 "Number of audio mixer channels to use.")
 
@@ -2439,7 +2182,8 @@ of the music."
   #+darwin (setf cffi:*foreign-library-directories*
                  (union cffi:*foreign-library-directories*
                         '(#P"/opt/local/lib" #P"/sw/lib/")
-                        :test #'equal)))
+                        :test #'equal))
+  )
 
 (defparameter *do-cffi-loading* t)
 
@@ -2503,7 +2247,7 @@ of the music."
   (message "Starting Blocky...")
   (print-copyright-notice)
   (setf *project-package-name* nil
-;        *project-directories* (default-project-directories)
+	;; *project-directories* (default-project-directories)
 	*blocks* nil
 	*world* nil
 	*project* nil
@@ -2519,7 +2263,6 @@ of the music."
   (initialize-resource-table)
   (initialize-textures-maybe :force)
   (initialize-colors)
-  (initialize-buffers)
   (initialize-sound)
   (initialize-database)
   (load-standard-resources)
@@ -2534,7 +2277,6 @@ of the music."
   (delete-all-resources)
   (sdl-mixer:halt-music)
   (sdl-mixer:close-audio t)
-;  (setf *buffer* nil)
   (setf *world* nil)
   (setf *blocks* nil)
   (setf *event-hook* nil)
@@ -2576,28 +2318,5 @@ of the music."
   (new system)
   (start (new shell (new block)))
   (start-session))
-
-;; (defun share (project) ...
-
-;; (defmacro defsession (name &rest body)
-;;   `(defun ,name (&optional project)
-;;      (start-up)
-;;      (
-
-
-;; (defun update-all-buttons ()
-;;   (dolist (entry (joystick-buttons))
-;;     (destructuring-bind (button . symbol) entry
-;;       (declare (ignore symbol))
-;;       (update-joystick-button button (poll-joystick-button button)))))
-
-;; (defun generate-button-events ()
-;;   (let ((button 0) state sym)
-;;     (loop while (< button (length *joystick-button-states*))
-;; 	  do (setf state (aref *joystick-button-states* button))
-;; 	     (setf sym (button-to-symbol button))
-;; 	     (when (and state sym)
-;; 	       (send-event (make-event :joystick sym)))
-;; 	     (incf button))))
 
 ;;; console.lisp ends here
