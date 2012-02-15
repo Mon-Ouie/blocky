@@ -212,8 +212,6 @@
 (define-method get-player world ()
   %player)
 
-(defun world () *world*)
-
 (defun player ()
   (get-player *world*))
 
