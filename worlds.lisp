@@ -56,11 +56,6 @@
 ;; Defining and scrolling the screen viewing window
 
 (define-method window-bounding-box world ()
-  (message "WINDOW-BOUNDING-BOX: ~S"
-	   (list %window-y 
-		 %window-x
-		 (+ %window-x *gl-screen-width*)
-		 (+ %window-y *gl-screen-height*))) 
   (values %window-y 
 	  %window-x
 	  (+ %window-x *gl-screen-width*)
