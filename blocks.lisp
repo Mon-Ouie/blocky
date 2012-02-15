@@ -1570,8 +1570,7 @@ Note that the center-points of the objects are used for comparison."
 	    (return-from naming name0))))))
 
 (defmacro with-buffer (buffer &rest body)
-  `(let ((*buffer* (find-uuid ,buffer)))
-     (assert (blockyp *buffer*))
+  `(let ((*world* (find-uuid ,buffer)))
      ,@body))
 
 (define-method setvar block (var value)

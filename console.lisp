@@ -43,6 +43,13 @@
 
 (defvar *edit* nil "This is set to non-nil when the editor is being used.")
 
+(defvar *buffers* nil)
+(defvar *buffer* nil)
+(defvar *shell* nil)
+
+(defun initialize-buffers ()
+  (setf *buffers* (make-hash-table :test 'equal)))
+
 (defvar *pending-autoload-resources* '())
 
 (defun random-choose (set)
@@ -2263,6 +2270,7 @@ of the music."
   (initialize-resource-table)
   (initialize-textures-maybe :force)
   (initialize-colors)
+  (initialize-buffers)
   (initialize-sound)
   (initialize-database)
   (load-standard-resources)

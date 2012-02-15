@@ -216,7 +216,7 @@
   (setf %last-focus nil))
 
 (define-method make-widgets shell ()
-;  (setf *shell* (find-uuid self))
+  (setf *shell* (find-uuid self))
   (setf %command-line (make-command-line)))
 
 (define-method add-menubar shell ()
@@ -226,9 +226,17 @@
   (clear-drag-data self)
   (make-widgets self))
 
+(defmacro with-shell (shell &rest body)
+  (let ((sh (gensym)))
+    `(let* ((,sh ,shell)
+	    (*buffer* (field-value :buffer ,sh))
+	    (*world* ,sh)
+	    (*shell* ,sh))
+       ,@body)))
+
 (define-method layout shell ()
   ;; take over the entire GL window
-  (with-buffer %buffer
+  (with-shell self
     (setf %x 0 %y 0 
 	  %width *screen-width* 
 	  %height *screen-height*)
@@ -248,11 +256,11 @@
 
 (define-method update shell ()
   ;; run buffer blocks every frame
-  (with-buffer %buffer
+  (with-shell self
     (update %buffer)
     (update %command-line)))
     
-(define-method initialize shell (buffer)
+(define-method initialize shell (&optional (buffer (clone "BLOCKY:BLOCK")))
   (assert (blockyp buffer))
   (initialize%%world self)
   (setf %buffer (find-uuid buffer))
@@ -268,7 +276,7 @@
   (add-block %buffer new-block x y))
 
 (define-method select shell (block &optional only)
-  (with-buffer %buffer
+  (with-shell self
     (with-fields (selection) self
       (if only
 	  (setf selection (list block))
@@ -278,20 +286,20 @@
 	    (select block))))))
   
 (define-method select-if shell (predicate)
-  (with-buffer %buffer
+  (with-shell self
     (with-fields (selection buffer) self
       (setf selection 
 	    (remove-if predicate (field-value :inputs buffer)
 		       :key #'find-parent)))))
   
 (define-method unselect shell (block)
-  (with-buffer %buffer
+  (with-shell self
     (with-fields (selection) self
       (setf selection (delete block selection 
 			      :test 'eq :key #'find-parent)))))
   
 (define-method handle-event shell (event)
-  (with-buffer %buffer
+  (with-shell self
     (or (super%handle-event self event)
 	(with-field-values (focused-block selection command-line buffer) self
 	  (let ((block
@@ -323,7 +331,7 @@ starting at the end of `%INPUTS' and going backward, because the
 blocks are drawn in list order (i.e. the topmost blocks for
 mousing-over are at the end of the list.) The return value is the
 block found, or nil if none is found."
-  (with-buffer %buffer 
+  (with-shell self 
     (labels ((try (b)
 	       (when b
 		 (hit b x y))))
@@ -340,7 +348,7 @@ block found, or nil if none is found."
 	   (try parent)))))))
 
 (define-method draw shell ()
-  (with-buffer %buffer
+  (with-shell self
     (layout self)
     (project self)
     (when %background-color
@@ -384,8 +392,8 @@ block found, or nil if none is found."
   
 (define-method focus-on shell (block)
   ;; possible to pass nil
-  (with-fields (buffer focused-block self) self
-    (with-buffer buffer
+  (with-fields (buffer focused-block) self
+    (with-shell self
       (let ((last-focus focused-block))
 	;; there's going to be a new focused block. 
 	;; tell the current one it's no longer focused.
@@ -406,7 +414,7 @@ block found, or nil if none is found."
 
 (define-method begin-drag shell (mouse-x mouse-y block)
   (with-fields (drag drag-origin inputs buffer drag-start ghost drag-offset) self
-    (with-buffer buffer
+    (with-shell self
       (setf drag (pick-drag block mouse-x mouse-y))
       (setf drag-origin (find-parent drag))
       (when drag-origin
@@ -430,7 +438,7 @@ block found, or nil if none is found."
 
 (define-method drag-maybe shell (x y)
   ;; require some actual mouse movement to initiate a drag
-  (with-buffer %buffer
+  (with-shell self
     (with-fields (focused-block click-start click-start-block) self
       (when click-start
 	(destructuring-bind (x1 . y1) click-start
@@ -465,7 +473,7 @@ block found, or nil if none is found."
 	  (setf highlight (find-uuid (hit-buffer self mouse-x mouse-y)))
 	  (when (null highlight)
 	    (when %menubar
-	      (with-buffer %buffer (close-menus %menubar))))))))
+	      (with-shell self (close-menus %menubar))))))))
 
 (define-method press shell (x y &optional button)
   (declare (ignore button))
@@ -494,53 +502,56 @@ block found, or nil if none is found."
 	;; %click-start-block nil
 	;; %click-start nil))
   
+*shell*"3AC569F802D04086A17ABE1B2806A53B"
+
 (define-method release shell (x y &optional button)
-  (with-fields 
-      (drag-offset drag-start hover buffer selection drag click-start
-	      click-start-block drag-origin focused-block modified) self
-    (if drag
-	;; we're dragging
-	(destructuring-bind (x0 . y0) drag-offset
-	  (let ((drag-parent (get-parent drag))
-		(drop-x (- x x0))
-		(drop-y (- y y0)))
-	    (if (not (can-escape drag))
-		;; put back in halo or wherever
-		(when drag-origin 
-		  (add-block drag-origin drag drop-x drop-y))
-		;; ok, drop. where are we dropping?
-		(progn 
-		  (when drag-parent
-		    (unplug-from-parent drag))
-		  (if (null hover)
-		      ;; dropping on background
-		      (add-block self drag drop-x drop-y)
-		      ;; dropping on another block
-		      (when (not (accept hover drag))
-			;; hovered block did not accept drag. 
-			;; drop it back in the shell.
-			(add-block self drag drop-x drop-y)))))
-	    ;; select the dropped block
-	    (progn 
-	      (select self drag)
-	      (setf focused-block (find-uuid drag)))))
-	;;
-	;; we were clicking instead of dragging
-	(progn
-	  (setf selection nil)
-	  (when focused-block
-	    (select self focused-block)
-	    (with-buffer buffer 
-	      (if 
-	       ;; right click and control click are interpreted the same
-	       (or (holding-control)
-		   (= button 3))
-	       (alternate-tap focused-block x y)
-	       (tap focused-block x y))
-	      (select self focused-block))
-	    (setf click-start nil))))
-    (clear-drag-data self)
-    (invalidate-layout buffer)))
+  (with-shell self
+    (with-fields 
+	(drag-offset drag-start hover buffer selection drag click-start
+		     click-start-block drag-origin focused-block modified) self
+      (if drag
+	  ;; we're dragging
+	  (destructuring-bind (x0 . y0) drag-offset
+	    (let ((drag-parent (get-parent drag))
+		  (drop-x (- x x0))
+		  (drop-y (- y y0)))
+	      (if (not (can-escape drag))
+		  ;; put back in halo or wherever
+		  (when drag-origin 
+		    (add-block drag-origin drag drop-x drop-y))
+		  ;; ok, drop. where are we dropping?
+		  (progn 
+		    (when drag-parent
+		      (unplug-from-parent drag))
+		    (if (null hover)
+			;; dropping on background
+			(add-block self drag drop-x drop-y)
+			;; dropping on another block
+			(when (not (accept hover drag))
+			  ;; hovered block did not accept drag. 
+			  ;; drop it back in the shell.
+			  (add-block self drag drop-x drop-y)))))
+	      ;; select the dropped block
+	      (progn 
+		(select self drag)
+		(setf focused-block (find-uuid drag)))))
+	  ;;
+	  ;; we were clicking instead of dragging
+	  (progn
+	    (setf selection nil)
+	    (when focused-block
+	      (select self focused-block)
+	      (with-shell self 
+		(if 
+		 ;; right click and control click are interpreted the same
+		 (or (holding-control)
+		     (= button 3))
+		 (alternate-tap focused-block x y)
+		 (tap focused-block x y))
+		(select self focused-block))
+	      (setf click-start nil))))
+      (clear-drag-data self)
+      (invalidate-layout buffer))))
 
 (define-method tab shell (&optional backward)
   (with-fields (focused-block) self
@@ -560,7 +571,7 @@ block found, or nil if none is found."
   (tab self :backward))
   
 (define-method escape shell ()
-  (with-buffer %buffer
+  (with-shell self
     (when %menubar (close-menus %menubar))
     (focus-on self nil)
     (exit-command-line self)

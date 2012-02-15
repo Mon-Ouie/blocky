@@ -166,6 +166,11 @@
 
 (defun turtle ()
   (new system)
-  (start (new shell (new block))))
+  (let ((shell (new shell)))
+    (assert (field-value :buffer shell))
+    (add-menubar shell)
+    (start shell)
+    (setf (field-value :background-color shell) "white")))
+  
 
 ;;; turtle.lisp ends here
