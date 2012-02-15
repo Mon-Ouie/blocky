@@ -421,8 +421,11 @@ most user command messages. (See also the method `forward'.)"
 	  (when background-color
 	    (draw-box 0 0 width height
 		      :color background-color)))
-      (loop for object being the hash-keys in objects do
-	(draw object)))))
+      (let ((box (multiple-value-list (window-bounding-box self))))
+	(loop for object being the hash-keys in objects do
+	  ;; only draw onscreen objects
+	  (colliding-with-bounding-box object box)
+	  (draw object))))))
       ;; ;; draw all onscreen objects
       ;; (quadtree-map-collisions 
       ;;  quadtree 
