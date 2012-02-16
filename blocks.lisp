@@ -1406,7 +1406,7 @@ See shell.lisp for more on the implementation of drag-and-drop."
 ;;; Sound 
 
 (define-method play-sound block 
-    ((name string :default "beep"))
+    ((name string :default "chirp"))
   (play-sample name))
 
 ;;; Collision detection and UI hit testing

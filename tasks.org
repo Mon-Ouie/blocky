@@ -1,51 +1,6 @@
-* API Beta checklist 
+* GUI BETA
 
-* TODO Story ideas for Sanctuary
-*** TODO weaving of spell tapestries relies on the secrets of the weaving guild, who thereby control all magic and society
-*** TODO threat of machines that can weave... punched cards, information age 
-** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
-** TODO [#A] Fix occasional quadtree deletion search assertion failure
-** TODO [#A] Don't require .blocky suffix for project dir
-** TODO [#A] Don't require particular name for project folder
-** TODO [#B] Adapt line-of-sight code to new collision system
-** TODO [#B] Adapt pathfinding code to new collision system
-** TODO [#B] Fix shell not responding to window resize properly
-** TODO [#B] Finish MicroXONG
-*** TODO add documentation in game source
-*** TODO use bouncing ball and glass bricks
-*** TODO finish level generation scheme
-*** TODO replace glass sound with something better
-*** TODO get line-of-sight working again
-** TODO [#B] add more docstrings for worlds.lisp
-** TODO [#B] Release one or two game skeletons in addition to microxong 
-** TODO [#C] Fix key release handling
-** TODO [#C] later-when checks a condition (whether some other method returns non-nil) (also later-until)
-** TODO [#C] "later" macros should evaluate the timer forms
-
-* XONG 2.0 
-
-** TODO [#A] Define level generators
-*** TODO Four level types each with an integer difficulty parameter (1-4)
-*** TODO Each level type has a theme plus unique layout and twists
-*** TODO Three music tracks per type. 
-** TODO [#A] Make objects that spawn enemies. 
-** TODO [#B] Fix enemies that shoot before moving disappearing after shot
-** TODO [#B] fences red/magenta flash
-** TODO [#B] pick up chips as pac pellets
-*** TODO chip = currency as XP to pick up after kills
-** TODO [#B] bombs in the level that blow up stuff
-** TODO [#B] Break bricks to find items
-** TODO [#C] splitting green turtle bullets
-** TODO [#C] more crazy corruption worms and stuff
-** TODO [#C] symmetrical monadic procedural turtle designed aliens with png pieces laid down by turtles.
-** TODO [#C] Growing mismunch corruption clouds
-** TODO [#C] universe = quadtree turtle based world gen/management 
-** TODO [#C] Vaults with special layouts
-** TODO [#C] fictional emails
-** TODO [#C] can push objects like bombs into place to be shot to destroy bricks
-
-* GUI BETA (LATER OCTOBER)
-
+** TODO value printer block, evaluates its argument and prints the value
 ** TODO shortcut macros for defresource foo foo.png auto-typed
 ** TODO [#A] AAAA script wiki database (like the file system)
 *** TODO defblock link <--- to another wikipage or something
@@ -143,6 +98,50 @@
 ** TODO [#C] use turtle to program polygon vertices and stuff, like in fluxus
 ** TODO [#C] general svg image support
 
+
+* API Beta checklist 
+
+* TODO Story ideas for Sanctuary
+*** TODO weaving of spell tapestries relies on the secrets of the weaving guild, who thereby control all magic and society
+*** TODO threat of machines that can weave... punched cards, information age 
+** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
+** TODO [#A] Don't require .blocky suffix for project dir
+** TODO [#B] Adapt line-of-sight code to new collision system
+** TODO [#B] Adapt pathfinding code to new collision system
+** TODO [#B] Fix shell not responding to window resize properly
+** TODO [#B] Finish MicroXONG
+*** TODO add documentation in game source
+*** TODO use bouncing ball and glass bricks
+*** TODO finish level generation scheme
+*** TODO replace glass sound with something better
+*** TODO get line-of-sight working again
+** TODO [#B] add more docstrings for worlds.lisp
+** TODO [#B] Release one or two game skeletons in addition to microxong 
+** TODO [#C] Fix key release handling
+** TODO [#C] later-when checks a condition (whether some other method returns non-nil) (also later-until)
+** TODO [#C] "later" macros should evaluate the timer forms
+
+* XONG 2.0 
+
+** TODO [#A] Define level generators
+*** TODO Four level types each with an integer difficulty parameter (1-4)
+*** TODO Each level type has a theme plus unique layout and twists
+*** TODO Three music tracks per type. 
+** TODO [#A] Make objects that spawn enemies. 
+** TODO [#B] Fix enemies that shoot before moving disappearing after shot
+** TODO [#B] fences red/magenta flash
+** TODO [#B] pick up chips as pac pellets
+*** TODO chip = currency as XP to pick up after kills
+** TODO [#B] bombs in the level that blow up stuff
+** TODO [#B] Break bricks to find items
+** TODO [#C] splitting green turtle bullets
+** TODO [#C] more crazy corruption worms and stuff
+** TODO [#C] symmetrical monadic procedural turtle designed aliens with png pieces laid down by turtles.
+** TODO [#C] Growing mismunch corruption clouds
+** TODO [#C] universe = quadtree turtle based world gen/management 
+** TODO [#C] Vaults with special layouts
+** TODO [#C] fictional emails
+** TODO [#C] can push objects like bombs into place to be shot to destroy bricks
 
 * TODO notify tigtesters: cpw, tacoxtreme, increpare
 
@@ -826,4 +825,14 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_OLPATH: API Beta checklist
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
+   :END:
+
+** DONE [#A] Fix occasional quadtree deletion search assertion failure
+   CLOSED: [2012-02-15 Wed 20:21]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-15 Wed 20:21
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Story ideas for Sanctuary
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
    :END:

@@ -138,7 +138,7 @@
 (define-method update ladybug ()
   (when %moving
     (percent-of-time 0.1 (setf %direction (random-direction)))
-    (move self %direction %speed)))
+    (move-toward self %direction %speed)))
   
 (define-method (wander :category :motion) ladybug ((speed number :default 0.15))
   (setf %moving t %speed speed))
