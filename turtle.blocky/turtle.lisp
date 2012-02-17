@@ -169,6 +169,7 @@
   (let ((shell (new world)))
     (add-system-menu shell)
     (start shell)
+    (bind-event shell '(:escape) :toggle-shell)
     (setf (field-value :background-color shell) "white")))
   
 

@@ -182,6 +182,14 @@
 (define-method tap action-button (x y)
   (apply #'send %method %target %arguments))
 
+;;; Headline 
+
+(define-block system-headline)
+
+(define-method update system-headline ()
+  (setf %image "blocky")
+  (resize self 24 24))
+
 ;;; The system menu itself
 
 (define-block (system-menu :super :list)
@@ -191,19 +199,17 @@
   (find-uuid 
    (new "BLOCKY:SYSTEM-MENU")))
 
-(define-block system-headline)
-
-(define-method update system-headline ()
-  (setf %image "blocky-logo")
-  (resize-to-image self))
-
 (define-method initialize system-menu ()
-  (initialize%%tree
-   self :inputs
-   (list
-    (new system-headline)
-    (new menu :inputs (make-menu *system-menu* :target self)))))
+  (super%initialize
+   self
+   (new system-headline)
+   (new menu :inputs (mapcar #'make-menu *system-menu*) :target self))
+  (freeze self))
         
+(define-method layout system-menu ()
+  (move-to self 0 0)
+  (mapc #'layout %inputs))
+
 (define-method draw system-menu ()
   (draw-background self)
   (mapc #'draw %inputs))

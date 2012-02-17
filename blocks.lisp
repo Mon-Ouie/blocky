@@ -948,7 +948,7 @@ you want to align a group of text items across layouts.")
 
 (defparameter *block-highlight-colors*
   '(:motion "sky blue"
-    :system "white"
+    :system "black"
     :hover "dark orange"
     :button "gold"
     :event "gray90"
@@ -969,7 +969,7 @@ you want to align a group of text items across layouts.")
 
 (defparameter *block-shadow-colors*
   '(:motion "royal blue"
-    :system "white"
+    :system "black"
     :event "gray70"
     :socket "gray90"
     :data "gray55"

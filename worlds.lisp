@@ -521,13 +521,13 @@ slowdown. See also quadtree.lisp")
 	    (draw object))))
       ;; possibly draw shell
       (when %shell-mode 
-	(layout-shell-objects self)
 	(draw-shell-objects self)))))
   
 ;;; Simulation update
 
 (define-method update world (&optional no-collisions)
   (let ((*world* self))
+    (layout self)
     (with-field-values (quadtree objects height width player) self
       ;; build quadtree if needed
       (when (null quadtree)
@@ -549,6 +549,7 @@ slowdown. See also quadtree.lisp")
 	      (quadtree-collide *quadtree* object)))))
       ;; possibly update the shell
       (when %shell-mode
+	(layout-shell-objects self)
 	(update-shell-objects self)))))
 
 ;;; A trash can for user-discarded objects
@@ -628,7 +629,8 @@ slowdown. See also quadtree.lisp")
       (with-style :rounded
 	(layout %system-menu)))
     ;; run command line across bottom
-    (layout %command-line)
+    (when %command-line 
+      (layout %command-line))
     ;;
     (mapc #'layout %inputs)))
 

@@ -129,7 +129,7 @@
 (:name "circle-outline-flat-128" :type :image :file "circle-outline-flat-128.png" :properties (:filter :linear))
 (:name "default-font" :type :ttf :file "DejaVuSans.ttf" :properties (:size 12))
 
-(:name "blocky-logo" :type :image :file "blocky-logo.png")
+(:name "blocky" :type :image :file "blocky.png")
 
  (:name "up" :type :image :file "up.png")
  (:name "down" :type :image :file "down.png")
