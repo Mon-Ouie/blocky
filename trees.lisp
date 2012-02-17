@@ -241,10 +241,13 @@
   (top-level :initform nil)
   (category :initform :menu))
 
+(defvar *menu-prototype* nil)
+
 (defun make-menu (items &key target)
   (make-tree items 
 	     :target target 
-	     :tree-prototype "BLOCKY:MENU"))
+	     :tree-prototype 
+	     "BLOCKY:MENU"))
 
 ;; menu items should not accept any dragged widgets.
 (define-method accept menu (&rest args) nil)

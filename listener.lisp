@@ -719,7 +719,7 @@
 
 (define-method layout command-line () 
   (super%layout self)
-  (with-fields (width height x y) *shell*
+  (with-fields (width height x y) *world*
     (setf %width width)
     (move-to self x (- (+ y height)
 		       %height))))

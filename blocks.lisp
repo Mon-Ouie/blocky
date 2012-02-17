@@ -927,11 +927,11 @@ you want to align a group of text items across layouts.")
 
 (defparameter *block-colors*
   '(:motion "cornflower blue"
-    :system "gray50"
+    :system "black"
     :button "orange"
     :terminal "gray25"
     :event "gray80"
-    :menu "gray95"
+    :menu "black"
     :hover "red"
     :socket "gray60"
     :data "gray50"
@@ -948,11 +948,11 @@ you want to align a group of text items across layouts.")
 
 (defparameter *block-highlight-colors*
   '(:motion "sky blue"
-    :system "gray80"
+    :system "white"
     :hover "dark orange"
     :button "gold"
     :event "gray90"
-    :menu "gray80"
+    :menu "white"
     :terminal "gray30"
     :comment "gray88"
     :looks "medium orchid"
@@ -969,11 +969,11 @@ you want to align a group of text items across layouts.")
 
 (defparameter *block-shadow-colors*
   '(:motion "royal blue"
-    :system "gray40"
+    :system "white"
     :event "gray70"
     :socket "gray90"
     :data "gray55"
-    :menu "gray70"
+    :menu "white"
     :terminal "gray21"
     :button "DarkOrange"
     :structure "gray35"
@@ -998,7 +998,7 @@ you want to align a group of text items across layouts.")
     :socket "gray20"
     :hover "yellow"
     :data "white"
-    :menu "gray40"
+    :menu "white"
     :structure "white"
     :message "white"
     :looks "white"

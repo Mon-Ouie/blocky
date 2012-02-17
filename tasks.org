@@ -1,35 +1,48 @@
 * GUI BETA
 
-** TODO value printer block, evaluates its argument and prints the value
-** TODO shortcut macros for defresource foo foo.png auto-typed
-** TODO [#A] AAAA script wiki database (like the file system)
-*** TODO defblock link <--- to another wikipage or something
-** TODO [#A] Start unit-testing
+** TODO 
+
+** TODO [#A] merge world and shell 
+** TODO [#A] sexy black gradient system menu (gradient patch) pops up from corner---not a menu bar
+*** TODO Blocky
+** TODO [#A] merge windows.lisp
+** TODO [#A] fix project dir naming issues. allow opening any .iof including index.iof 
+** TODO [#A] use clos-style 'foo symbols for prototype names, change NEW from macro to function
+** TODO [#A] get default events working again
 ** TODO [#A] Implement basic blocks library (see list below)
 ** TODO [#A] Show result somewhere when clicking eval bang handle
-** TODO [#A] System Browser for choosing what to define methods on (or blocks from)
+** TODO [#A] System Browser in the menu, for choosing what to define methods on (or blocks from)
 ** TODO [#A] Language tutorial project
 ** TODO [#A] Basic context-sensitive help
 ** TODO [#A] define-block PALETTE so that there's a place to pull useful objects from 
-** TODO [#A] DEFINE-DIALOG with method-buttons
-*** VAR entry
-*** project settings dialog for configuring vars like *screen-width* and *resizable* etc
-*** Dialogs for all basic project save/load stuff
-*** "quit without saving?" dialog
-*** "empty trash before save?" dialog
-** TODO [#A] Refactor collision detection to enable various types.
-*** delegate actual collision detection to method of the object that is moving (not collidee, who hasn't been identified)
-*** in cell/move and sprite/move , compute whether a move would cause a collision
-*** and then only allow the move to go a certain distance. return number moved
-*** then "resting contact" will work; the object won't try to move anymore (if gravity.)
-** TODO [#A] Fix as much of the buglist as possible
-** TODO [#B] Pretty sexy black rounded corner notifications
+** TODO [#B] UUID filenames for worlds?
+** TODO [#B] F1-F10 select desktop screens, i.e. a flipper with configurability
+** TODO [#B] rectangle select for bounding box cut paste
+** TODO [#B] bounding-box args can go into a function such as create-brick or select-region
+** TODO [#B] named bounding boxes as world-local vars with blocks to refer to them
+** TODO [#B] send message to all blocks in selection
+** TODO [#B] value printer block, evaluates its argument and prints the value
+** TODO [#B] shortcut macros for defresource foo foo.png auto-typed
+** TODO [#C] Pretty sexy black rounded corner notifications
+** TODO [#C] editor with split screen view and tools mentality (like old/forms.lisp)
+** TODO [#C] defblock selection 
+
 ** TODO [#B] Improve error handling in shell
 *** isolate/trap all block errors and display them grayed out with an inspectable error
 *** define-method error shell
 *** better error handling for menu methods
 *** define-method warning shell
 *** redirect messages to message bar. optionally fading notifications with widgets in them** TODO [#A] Restore basic collision detection functionality
+
+
+** TODO [#A] Start unit-testing
+** TODO [#A] DEFINE-DIALOG with method-buttons
+*** VAR entry
+*** project settings dialog for configuring vars like *screen-width* and *resizable* etc
+*** Dialogs for all basic project save/load stuff
+*** "quit without saving?" dialog
+*** "empty trash before save?" dialog
+** TODO [#A] Fix as much of the buglist as possible
 ** TODO [#B] Undo framework: https://github.com/smithzvk/modf
 ** TODO [#B] Audio test widget ("left, right")
 ** TODO [#B] duplicate halo handle
@@ -38,7 +51,6 @@
 ** TODO [#B] Read me first: F1, then click on any object for help
 ** TODO [#B] visually indicate clicked send blocks
 ** TODO [#B] animate text box cursor and highlight current line / or show textbox border
-** TODO [#B] UUID filenames for some objects
 ** TODO [#B] general purpose resizer/scroller decorator thinger
 ** TODO [#B] Allow user to move entries easier via yellow triangle tab
 ** desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
@@ -52,7 +64,7 @@
 ** TODO [#B] popup tape-flag/balloons to show you where you are, like hints about M-x window
 ** TODO [#B] Universal access
 ***  How to handle Translations? keywords in most languages are in English even if comments/variable names are French or Japanese or whatever)
-****  translate only meuns?
+**** cl-gettext
 ***  Visual theme-ability for the color-blind and visually-impaired users (larger font, higher contrast etc)
 ***  Braille keyboard and speech synthesis integration for blind users
 ** TODO [#B] Bring back old/forms.lisp spreadsheet
@@ -62,7 +74,6 @@
 ** TODO [#B] reasonable emacs configuration for ioforms dev (imenu etc)
 ** TODO [#B] send unfocused input to terminal? 
 ** TODO [#B] button to add arguments to + etc (just drop onto block list)
-** TODO [#C] sexy black gradient system menu (gradient patch) pops up from corner---not a menu bar
 ** TODO [#C] GLSL https://github.com/jtza8/interact/blob/master/src/filter.lisp http://www.swiftless.com/glsltuts.html
 ** TODO [#C] Show lisp implementation name etc
 ** TODO [#C] explanatory tooltips
@@ -93,8 +104,6 @@
 *** TODO generic buffer similarly 
 *** TODO general widget embed layout thing. =formatter= --> but instead of rich text, it's all widgets (textboxes + img)
 ** TODO [#C] duplicate objects / selection 
-** TODO [#C] defblock selection 
-** TODO [#C] send message to all blocks in selection
 ** TODO [#C] use turtle to program polygon vertices and stuff, like in fluxus
 ** TODO [#C] general svg image support
 

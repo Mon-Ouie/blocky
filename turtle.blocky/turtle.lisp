@@ -166,9 +166,8 @@
 
 (defun turtle ()
   (new system)
-  (let ((shell (new shell)))
-    (assert (field-value :buffer shell))
-    (add-menubar shell)
+  (let ((shell (new world)))
+    (add-system-menu shell)
     (start shell)
     (setf (field-value :background-color shell) "white")))
   

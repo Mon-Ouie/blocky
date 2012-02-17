@@ -120,7 +120,7 @@ add-message-verbosities with-message-queue draw-pixel
 open-project field-options world set-frame-rate *frame-rate*
 *workbook* set-resource-modified-p *iof-file-extension* load-project
 *project* *project-path* *window-title* *window-position* restartably
-*default-shell-width* *default-shell-height* *system* *shell* *buffer*
+*default-shell-width* *default-shell-height* *system*
 set-timer-interval defgcell *message-logging* overlay
 joystick-axis-pressed-p joystick-axis-value joystick-axis-raw-value
 analog-stick-heading find-heading analog-stick-pressure

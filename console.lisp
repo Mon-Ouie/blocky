@@ -43,10 +43,6 @@
 
 (defvar *edit* nil "This is set to non-nil when the editor is being used.")
 
-(defvar *buffers* nil)
-(defvar *buffer* nil)
-(defvar *shell* nil)
-
 (defun initialize-buffers ()
   (setf *buffers* (make-hash-table :test 'equal)))
 
@@ -2302,7 +2298,7 @@ of the music."
     (open-project project)
     (when (null *blocks*)
       (new system)
-      (start (new shell (new block))))
+      (start (new world)))
     (start-session)))
 
 (defun create (project)
@@ -2311,7 +2307,7 @@ of the music."
     (new system)
     (create-project project)
     (open-project project)
-    (start (new shell (new block)))
+    (start (new world))
     (start-session)))
 
 (defun edit (&optional (project *untitled-project-name*) force-shell)
@@ -2319,7 +2315,7 @@ of the music."
     (let ((*edit* t))
       (open-project project :no-error)
       (when force-shell
-	(start (new shell (new block))))
+	(start (new world)))
       (start-session))))
 
 (defun blocky ()

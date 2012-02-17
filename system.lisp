@@ -33,8 +33,7 @@
 
 (define-method show-copyright-notice system ()
   (let ((box (new text *copyright-notice*)))
-    (add-block *shell* box 80 80)
-    ;; (center box)
+    (add-block *world* box 80 80)
     (resize-to-scroll box 80 24)
     (end-of-line box)))
 
@@ -54,9 +53,6 @@
 
 (define-method save-everything system ()
   (save-project :force))
-
-(defun shell ()
-  (symbol-value '*shell*))
 
 (define-method initialize system ()
   (setf *system* (find-uuid self)))
@@ -97,7 +93,7 @@
      ((:label "Cut" :action :cut)
       (:label "Copy" :action :copy)
       (:label "Paste" :action :paste)
-      (:label "Paste as new workspace" :action :paste-as-new-workspace)
+      (:label "Paste in new workspace" :action :paste-as-new-workspace)
       (:label "Select all" :action :select-all)
       (:label "Clear selection" :action :clear-selection)))
     (:label "Blocks"
@@ -151,6 +147,136 @@
       (:label "General help" :action :general-help)
       (:label "Examples" :action :show-examples)
       (:label "Language Reference" :action :language-reference)))))
+
+(define-block (action-button :super :list)
+  (category :initform :button)
+  (target :initform nil)
+  (method :initform nil)
+  (arguments :initform nil)
+  (label :initform nil))
+
+(define-method initialize action-button 
+    (&key target method arguments label)
+  (when target (setf %target target))
+  (when method (setf %method method))
+  (when label (setf %label label))
+  (when arguments (setf %arguments arguments)))
+
+(define-method layout action-button ()
+  (with-fields (height width) self
+    (setf width (+ (* 13 (dash))
+		   (font-text-width %label
+				    *block-bold*))
+	  height (+ (font-height *block-bold*) (* 4 (dash))))))
+
+(define-method draw action-button ()
+  (with-fields (x y height width label) self
+    (draw-patch self x y (+ x width) (+ y height))
+    (draw-image "colorbang" 
+		    (+ x (dash 1))
+		    (+ y (dash 1)))
+    (draw-string %label (+ x (dash 9)) (+ y (dash 2))
+		 :color "white"
+		 :font *block-bold*)))
+
+(define-method tap action-button (x y)
+  (apply #'send %method %target %arguments))
+
+;;; The system menu itself
+
+(define-block (system-menu :super :list)
+  (category :initform :system))
+
+(defun make-system-menu ()
+  (find-uuid 
+   (new "BLOCKY:SYSTEM-MENU")))
+
+(define-block system-headline)
+
+(define-method update system-headline ()
+  (setf %image "blocky-logo")
+  (resize-to-image self))
+
+(define-method initialize system-menu ()
+  (initialize%%tree
+   self :inputs
+   (list
+    (new system-headline)
+    (new menu :inputs (make-menu *system-menu* :target self)))))
+        
+(define-method draw system-menu ()
+  (draw-background self)
+  (mapc #'draw %inputs))
+
+(define-method menu-items system-menu ()
+  (field-value :inputs (second %inputs)))
+
+(define-method close-menus system-menu ()
+  (let ((menus (menu-items self)))
+    (when (some #'is-expanded menus)
+      (mapc #'unexpand menus))))
+
+(define-method tap system-menu (x y)
+  (declare (ignore x y))
+  (close-menus self))
+
+;; Don't allow anything to be dropped on the menus, for now.
+
+(define-method draw-hover system-menu () nil)
+
+(define-method accept system-menu (thing)
+  (declare (ignore thing))
+  nil)
+
+;; (define-method initialize system-menu (&optional (menus *system-menu*))
+;;   (apply #'super%initialize self menus)
+;;   (with-fields (inputs) self
+;;     (dolist (each inputs)
+;;       (setf (field-value :top-level each) t)
+;;       (pin each))))
+
+;; (define-method hit system-menu (mouse-x mouse-y)
+;;   (with-fields (x y width height inputs) self
+;;     (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
+;;       ;; are any of the menus open?
+;;       (let ((opened-menu (find-if #'is-expanded inputs)))
+;; 	(labels ((try (m)
+;; 		   (when m (hit m mouse-x mouse-y))))
+;; 	  (let ((moused-menu (find-if #'try inputs)))
+;; 	    (if (and ;; moused-menu opened-menu
+;; 		     (object-eq moused-menu opened-menu))
+;; 		;; we're over the opened menu, let's check if 
+;; 		;; the user has moused onto the other parts of the system-menu
+;; 	        (flet ((try-other (menu)
+;; 			 (when (not (object-eq menu opened-menu))
+;; 			   (try menu))))
+;; 		  (let ((other (some #'try-other inputs)))
+;; 		    ;; are we touching one of the other system-menu items?
+;; 		    (if (null other)
+;; 			;; nope, just hit the opened submenu items.
+;; 			(try opened-menu)
+;; 			;; yes, switch menus.
+;; 			(prog1 other
+;; 			  (unexpand opened-menu)
+;; 			  (expand other)))))
+;; 		;; we're somewhere else. just try the main menus in
+;; 		;; the system-menu.
+;; 		(let ((candidate (find-if #'try inputs)))
+;; 		  (if (null candidate)
+;; 		      ;; the user moused away. close the menus.
+;; 		      self
+;; 		      ;; we hit one of the other menus.
+;; 		      (if opened-menu
+;; 			  ;; there already was a menu open.
+;; 			  ;; close this one and open the new one.
+;; 			  (prog1 candidate
+;; 			    (unexpand opened-menu)
+;; 			    (expand candidate))
+;; 			  ;; no menu was open---just hit the menu headers
+;; 			  (some #'try inputs)))))))))))
+		
+;; (define-method draw-border system-menu () nil)
+
     
 ;;; system.lisp ends here
 

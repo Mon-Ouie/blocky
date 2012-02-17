@@ -21,18 +21,19 @@
 (in-package :blocky)
 
 (define-block world
+  (shell-mode :initform nil)
   (variables :initform nil 
 	     :documentation "Hash table mapping values to values, local to the current world.")
-  (player :documentation "The player cell (or object).")
-  (background :initform nil)
-  (background-color :initform "black")
+  (player :documentation "The player object, if any.")
+  (background-image :initform nil)
+  (background-color :initform "white")
   (x :initform 0)
   (y :initform 0)
   (heading :initform 0.0)
   (height :initform 16)
   (width :initform 16)
   ;; objects and collisions
-  (objects :initform nil :documentation "A hash table with all the world's object.")
+  (objects :initform nil :documentation "A hash table with all the world's objects.")
   (quadtree :initform nil)
   (quadtree-depth :initform nil)
   ;; viewing window
@@ -42,7 +43,59 @@
   (window-y0 :initform nil)
   (window-scrolling-speed :initform 2)
   (window-scale-x :initform 1)
-  (window-scale-y :initform 1))
+  (window-scale-y :initform 1)
+  ;; selection and region
+  (selection :initform ()
+  	     :documentation "List (subset) of selected blocks.")
+  ;; the optional world shell ui 
+  (system-menu :initform nil
+	   :documentation "Optional system-menu widget. See system.lisp")
+  (command-line :initform nil)
+  (command-p :initform nil)
+  (default-events :initform
+		  '(((:tab) :tab)
+		    ((:tab :control) :backtab)
+		    ((:x :alt) :enter-command-line)
+		    ((:g :control) :escape)
+		    ((:s :alt) :toggle-shell)
+		    ((:escape) :escape)))
+  (excluded-fields :initform
+		   '(:quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :command-line :system-menu :listener :drag :hover :highlight)
+		   :documentation "Don't serialize the menu bar.")
+  (drag :initform nil 
+  	:documentation "Block being dragged, if any.")
+  (hover :initform nil
+	 :documentation "Block being hovered over, if any.")
+  (highlight :initform nil
+	     :documentation "Block being highlighted, if any.")
+  (ghost :initform (new block)
+	 :documentation "Dummy block to hold original place of currently dragged block onscreen.")
+  (focused-block :initform nil
+		 :documentation "Block having current input focus, if any.")
+  (last-focus :initform nil)
+  (click-start :initform nil
+	      :documentation "A cons (X . Y) of widget location at moment of click.")
+  (click-start-block :initform nil
+		     :documentation "The block indicated at the beginning of a drag.")
+  (drag-origin :initform nil
+	       :documentation "The parent block originally holding the dragged block.")
+  (drag-start :initform nil
+	      :documentation "A cons (X . Y) of widget location at start of dragging.")
+  (drag-offset :initform nil
+	       :documentation "A cons (X . Y) of relative mouse click location on dragged block.")
+  (modified :initform nil 
+	  :documentation "Non-nil when modified since last save."))
+
+(define-method show-shell world ()
+  (setf %shell-mode t))
+
+(define-method hide-shell world ()
+  (setf %shell-mode nil))
+
+(define-method toggle-shell world ()
+  (if %shell-mode
+      (hide-shell self)
+      (show-shell self)))
 
 (defmacro define-world (name &body body)
   `(define-block (,name :super "BLOCKY:WORLD")
@@ -50,8 +103,6 @@
 
 (define-method get-objects world ()
   (loop for object being the hash-keys in %objects collect object))
-
-(define-method layout world ())
 
 ;; Defining and scrolling the screen viewing window
 
@@ -133,7 +184,7 @@
   (setf %window-scale-x window-scale-x)
   (setf %window-scale-y window-scale-y))
 
-(define-method project world ()
+(define-method project-window world ()
   (do-orthographic-projection)
   (do-window %window-x %window-y %window-scale-x %window-scale-y))
 
@@ -154,8 +205,6 @@
 	      (handle-event player event)))))))
 
 ;;; The object layer. 
-
-(define-method grab-focus world ())
 
 (define-method add-block world (object &optional x y append)
   (with-fields (quadtree) self
@@ -216,16 +265,16 @@
   (get-player *world*))
 
 (define-method set-player world (player)
-  "Set PLAYER as the player object to which the World will forward
-most user command messages. (See also the method `forward'.)"
   (setf %player player)
   (add-block self player))
 
-;;; Configuring the world's space and its quadtrees
+;;; Configuring the world's space and its quadtree indexing
 
-(defparameter *world-bounding-box-scale* 1.01)
-
-;; see also quadtree.lisp 
+(defparameter *world-bounding-box-scale* 1.01
+  "Actual size of bounding box used for quadtree. The world is bordered
+around on all sides by a thin margin designed to prevent objects near
+the edge of the universe piling up into the top quadrant and causing
+slowdown. See also quadtree.lisp")
 
 (define-method install-quadtree world ()
   (unless (is-empty self)
@@ -263,7 +312,7 @@ most user command messages. (See also the method `forward'.)"
 	  (dolist (object objects)
 	    (with-fields (x y) object
 	      (move-to object (- x left) (- y top))))
-	  ;; resize the world
+	  ;; resize the world so that everything just fits
 	  (setf %x 0 %y 0)
 	  (resize self (- bottom top) (- right left)))))))
 
@@ -406,35 +455,78 @@ most user command messages. (See also the method `forward'.)"
 	      (+ height (* border 2))
 	      (+ width (* border 2))))))
 
-;;; Draw the world
+;;; The Shell is an optional layer of objects on top of the world
+
+;; Including a system menu, editor, and controls for switching worlds
+;; and pages in the system. Maybe zooming out on a mega virtual desktop.
+
+(define-method grab-focus world ())
+
+(define-method layout-shell-objects world ()
+  (mapc #'layout %inputs))
+
+(define-method update-shell-objects world ()
+  (mapc #'update %inputs)
+  (when %command-line (update %command-line))
+  (when %system-menu (update %system-menu)))
+
+(define-method draw-shell-objects world ()
+  (with-world self
+    (with-fields (drag-start selection inputs drag
+			 focused-block highlight system-menu
+			 command-line command-p inputs
+			 modified hover ghost prompt)
+	self
+      ;; now start drawing the shell objects
+      (mapc #'draw inputs)
+	;; draw border around any selected blocks
+	;; (when (find block selection :test 'eq :key #'find-object)
+	;;   (draw-border block))
+      ;; possibly draw command line background
+      (when command-p
+	(draw command-line))
+      ;; during dragging we draw the dragged block.
+      (if drag 
+	    (progn (layout drag)
+		   (when (field-value :parent drag)
+		     (draw-ghost ghost))
+		   ;; also draw any hover-over highlights 
+		   ;; on objects you might drop stuff onto
+		   (when hover 
+		     (draw-hover hover))
+		   (draw drag))
+	    (when focused-block
+	      (assert (blockyp focused-block))
+	      (draw-focus focused-block)))
+	(when system-menu
+	  (with-style :rounded
+	    (draw system-menu)))
+	(when highlight
+	  (draw-highlight highlight)))))
 
 (define-method draw world ()
-  ;; (declare (optimize (speed 3)))
-  (let ((*world* self))
-    (project self) ;; set up camera
-    (with-field-values (objects quadtree width height background background-color) self
+  (with-world self
+    (project-window self)
+    (with-field-values (objects quadtree width height background-image background-color) self
       ;; draw background 
-      (if background
-	  (draw-image background 0 0)
+      (if background-image
+	  (draw-image background-image 0 0)
 	  (when background-color
 	    (draw-box 0 0 width height
 		      :color background-color)))
       (let ((box (multiple-value-list (window-bounding-box self))))
 	(loop for object being the hash-keys in objects do
 	  ;; only draw onscreen objects
-	  (colliding-with-bounding-box object box)
-	  (draw object))))))
-      ;; ;; draw all onscreen objects
-      ;; (quadtree-map-collisions 
-      ;;  quadtree 
-      ;;  (multiple-value-list (window-bounding-box self))
-      ;;  #'draw))))
+	  (when (colliding-with-bounding-box object box)
+	    (draw object))))
+      ;; possibly draw shell
+      (when %shell-mode 
+	(layout-shell-objects self)
+	(draw-shell-objects self)))))
   
 ;;; Simulation update
 
 (define-method update world (&optional no-collisions)
-  ;; (declare (optimize (speed 3)))
-  ;; (declare (ignore args))
   (let ((*world* self))
     (with-field-values (quadtree objects height width player) self
       ;; build quadtree if needed
@@ -447,12 +539,357 @@ most user command messages. (See also the method `forward'.)"
 	  (update object)
 	  (run-tasks object))
 	;; update window movement
-	(glide-follow self player)
-	(update-window-glide self)
+	(when player 
+	  (glide-follow self player)
+	  (update-window-glide self))
 	;; detect collisions
 	(unless no-collisions
 	  (loop for object being the hash-keys in objects do
 	    (unless (eq :passive (field-value :collision-type object))
-	      (quadtree-collide *quadtree* object))))))))
+	      (quadtree-collide *quadtree* object)))))
+      ;; possibly update the shell
+      (when %shell-mode
+	(update-shell-objects self)))))
+
+;;; A trash can for user-discarded objects
+
+(defvar *trash* nil)
+
+(define-block trash 
+  :category :system 
+  :methods '(:empty))
+
+(define-method evaluate trash ())
+
+(define-method update trash ())
+
+(define-method empty trash ()
+  (setf *trash* nil))
+
+(define-method accept trash (item)
+  (push item *trash*))
+
+(defun-memo trash-status-string (count)
+    (:key #'first :test 'equal :validator #'identity)
+  (format nil "trash (~S items)" count))
+
+(define-method layout trash ()
+  (setf %width (dash 4 (font-text-extents 
+		       (trash-status-string 
+			(length %inputs))
+		       *font*)))
+  (setf %height (dash 4 (font-height *font*))))
+
+(define-method draw trash ()
+  (draw-background self)
+  (draw-label-string self (trash-status-string (length *trash*))
+		     "yellow"))
+
+(define-method draw-hover trash ())
+
+(defun make-command-line ()
+  (find-uuid (new command-line)))
+
+(define-method enter-command-line world ()
+  (setf %command-p t)
+  (setf %last-focus %focused-block)
+  (focus-on self %command-line))
+
+(define-method exit-command-line world ()
+  (setf %command-p nil)
+  (focus-on self %last-focus)
+  (setf %last-focus nil))
+
+(define-method make-widgets world ()
+  (setf *world* (find-uuid self))
+  (setf %command-line (make-command-line)))
+
+(define-method add-system-menu world ()
+  (setf %system-menu (make-system-menu)))
+
+(define-method after-deserialize world ()
+  (clear-drag-data self)
+  (make-widgets self))
+
+(defmacro with-world (world &rest body)
+  (let ((sh (gensym)))
+    `(let* ((,sh ,world)
+	    (*world* ,sh))
+       ,@body)))
+
+(define-method layout world ()
+  ;; take over the entire GL window
+  (with-world self
+    (setf %x 0 %y 0 
+	  %width *screen-width* 
+	  %height *screen-height*)
+    ;; run system-menu across top
+    (when %system-menu
+      (with-style :rounded
+	(layout %system-menu)))
+    ;; run command line across bottom
+    (layout %command-line)
+    ;;
+    (mapc #'layout %inputs)))
+
+(define-method select world (block &optional only)
+  (with-world self
+    (with-fields (selection) self
+      (if only
+	  (setf selection (list block))
+	  (progn 
+	    (pushnew block selection 
+		     :test 'eq :key #'find-parent)
+	    (select block))))))
+  
+(define-method select-if world (predicate)
+  (with-world self
+    (with-fields (selection inputs) self
+      (setf selection 
+	    (remove-if predicate inputs
+		       :key #'find-parent)))))
+  
+(define-method unselect world (block)
+  (with-world self
+    (with-fields (selection) self
+      (setf selection (delete block selection 
+			      :test 'eq :key #'find-parent)))))
+  
+(define-method handle-event world (event)
+  (with-world self
+    (or (super%handle-event self event)
+	(with-field-values (focused-block selection command-line inputs) self
+	  (let ((block
+		    (cond
+		      ;; we're focused. send the event there
+		      (focused-block
+		       (prog1 focused-block
+			 (assert (blockyp focused-block))))
+		      ;; only one block selected. use that.
+		      ((= 1 (length selection))
+		       (first selection))
+		      ;; fall back to command-line
+		      (t command-line))))
+	    (when block 
+	      (handle-event block event)))))))
+
+;;; Hit testing
+
+(define-method hit world (x y)
+  ;; return self no matter where mouse is, so that we get to process
+  ;; all the events.
+  (declare (ignore x y))
+  self)
+
+(define-method hit-inputs world (x y)
+  "Recursively search the blocks in this world for a block
+intersecting the point X,Y. We have to search the top-level blocks
+starting at the end of `%INPUTS' and going backward, because the
+blocks are drawn in list order (i.e. the topmost blocks for
+mousing-over are at the end of the list.) The return value is the
+block found, or nil if none is found."
+  (with-world self 
+    (labels ((try (b)
+	       (when b
+		 (hit b x y))))
+      ;; check system-menu, then buffer
+      (or 
+       (when %command-p 
+	 (try %command-line))
+       (when %system-menu (try %system-menu))
+       (let ((parent 
+	       (find-if #'try 
+			%inputs
+			:from-end t)))
+	 (when parent
+	   (try parent)))))))
+  
+(defparameter *minimum-drag-distance* 7)
+  
+(define-method focus-on world (block)
+  ;; possible to pass nil
+  (with-fields (focused-block) self
+    (with-world self
+      (let ((last-focus focused-block))
+	;; there's going to be a new focused block. 
+	;; tell the current one it's no longer focused.
+	(when (and last-focus
+		   ;; don't do this for same block
+		   (not (object-eq last-focus block)))
+	  (discard-halo last-focus)
+	  (lose-focus last-focus))
+      ;; now set up the new focus (possibly nil)
+      (setf focused-block (when block (find-uuid block)))
+      ;; sanity check
+      (assert (or (null focused-block)
+		  (blockyp focused-block)))
+      ;; now tell the block it has focus, but only if not the same
+      (when (and focused-block
+		 (not (object-eq last-focus focused-block)))
+	(focus block))))))
+
+(define-method begin-drag world (mouse-x mouse-y block)
+  (with-fields (drag drag-origin inputs drag-start ghost drag-offset) self
+    (with-world self
+      (setf drag (pick-drag block mouse-x mouse-y))
+      (setf drag-origin (find-parent drag))
+      (when drag-origin
+	  ;; parent might produce a new object
+	(unplug-from-parent block))
+      (let ((dx (field-value :x block))
+	    (dy (field-value :y block))
+	    (dw (field-value :width block))
+	    (dh (field-value :height block)))
+	(with-fields (x y width height) ghost
+	  ;; remember the relative mouse coordinates from the time the
+	  ;; user began dragging, so that the block being dragged is not
+	  ;; simply anchored with its top left corner located exactly at
+	  ;; the mouse pointer.
+	  (let ((x-offset (- mouse-x dx))
+		(y-offset (- mouse-y dy)))
+	    (when (null drag-start)
+	      (setf x dx y dy width dw height dh)
+	      (setf drag-start (cons dx dy))
+	      (setf drag-offset (cons x-offset y-offset)))))))))
+
+(define-method drag-maybe world (x y)
+  ;; require some actual mouse movement to initiate a drag
+  (with-world self
+    (with-fields (focused-block click-start click-start-block) self
+      (when click-start
+	(destructuring-bind (x1 . y1) click-start
+	  (when (and focused-block click-start-block
+		     (> (distance x y x1 y1)
+			*minimum-drag-distance*)
+		     (can-pick click-start-block))
+	    (let ((drag (pick click-start-block)))
+	      (begin-drag self x y drag)
+	      ;; clear click data
+	      (setf click-start nil)
+	      (setf click-start-block nil))))))))
+
+(define-method handle-point-motion world (mouse-x mouse-y)
+  (with-fields (inputs hover highlight click-start drag-offset
+		       drag-start drag) self
+    (setf hover nil)
+    (drag-maybe self mouse-x mouse-y)
+    (if drag
+	;; we're in a mouse drag.
+	(destructuring-bind (ox . oy) drag-offset
+	  (let ((target-x (- mouse-x ox))
+		(target-y (- mouse-y oy)))
+	    (let ((candidate (hit-inputs self target-x target-y)))
+	      ;; obviously we dont want to plug a block into itself.
+	      (setf hover (if (object-eq drag candidate) nil
+			      (find-uuid candidate)))
+	      ;; keep moving along with the mouse
+	      (drag drag target-x target-y))))
+	;; not dragging, just moving
+	(progn
+	  (setf highlight (find-uuid (hit-inputs self mouse-x mouse-y)))
+	  (when (null highlight)
+	    (when %system-menu
+	      (with-world self (close-menus %system-menu))))))))
+
+(define-method press world (x y &optional button)
+  (declare (ignore button))
+  (with-fields (click-start click-start-block focused-block) self
+    ;; now find what we're touching
+    (assert (or (null focused-block)
+		(blockyp focused-block)))
+    (let ((block (hit-inputs self x y)))
+      (if (null block)
+	  (progn
+	    (focus-on self nil)
+	    (when %command-p
+	      (exit-command-line self)))
+	  (progn 
+	    (setf click-start (cons x y))
+	    (setf click-start-block (find-uuid block))
+	    ;; now focus; this might cause another block to be
+	    ;; focused, as in the case of the Listener
+	    (focus-on self block))))))
+
+(define-method clear-drag-data world ()
+  (setf %drag-start nil
+	%drag-offset nil
+	%drag-origin nil
+	%drag nil))
+	;; %click-start-block nil
+	;; %click-start nil))
+  
+(define-method release world (x y &optional button)
+  (with-world self
+    (with-fields 
+	(drag-offset drag-start hover selection drag click-start
+		     click-start-block drag-origin focused-block modified) self
+      (if drag
+	  ;; we're dragging
+	  (destructuring-bind (x0 . y0) drag-offset
+	    (let ((drag-parent (get-parent drag))
+		  (drop-x (- x x0))
+		  (drop-y (- y y0)))
+	      (if (not (can-escape drag))
+		  ;; put back in halo or wherever
+		  (when drag-origin 
+		    (add-block drag-origin drag drop-x drop-y))
+		  ;; ok, drop. where are we dropping?
+		  (progn 
+		    (when drag-parent
+		      (unplug-from-parent drag))
+		    (if (null hover)
+			;; dropping on background
+			(add-block self drag drop-x drop-y)
+			;; dropping on another block
+			(when (not (accept hover drag))
+			  ;; hovered block did not accept drag. 
+			  ;; drop it back in the world.
+			  (add-block self drag drop-x drop-y)))))
+	      ;; select the dropped block
+	      (progn 
+		(select self drag)
+		(setf focused-block (find-uuid drag)))))
+	  ;;
+	  ;; we were clicking instead of dragging
+	  (progn
+	    (setf selection nil)
+	    (when focused-block
+	      (select self focused-block)
+	      (with-world self 
+		(if 
+		 ;; right click and control click are interpreted the same
+		 (or (holding-control)
+		     (= button 3))
+		 (alternate-tap focused-block x y)
+		 (tap focused-block x y))
+		(select self focused-block))
+	      (setf click-start nil))))
+      (clear-drag-data self)
+      (invalidate-layout self))))
+
+(define-method tab world (&optional backward)
+  (with-fields (focused-block) self
+    (when focused-block
+      (assert (blockyp %focused-block))
+      (with-fields (parent) focused-block
+	(let ((index (position-within-parent focused-block)))
+	  (when (numberp index)
+	    (focus-on self
+		      (with-fields (inputs) parent
+			(nth (mod (+ index
+				     (if backward -1 1))
+				  (length inputs))
+			     inputs)))))))))
+
+(define-method backtab world ()
+  (tab self :backward))
+  
+(define-method escape world ()
+  (with-world self
+    (when %system-menu (close-menus %system-menu))
+    (focus-on self nil)
+    (exit-command-line self)
+    (setf %selection nil)))
+
 
 ;;; worlds.lisp ends here
