@@ -40,6 +40,7 @@
   (is-tree :initform t)
   (style :initform :flat)
   (method :initform nil)
+  (draw-frame :initform t)
   (indentation-width :initform (dash 2))
   (top-level :initform nil)
   (locked :initform nil)
@@ -54,10 +55,11 @@
 
 (define-method initialize tree 
     (&key action target top-level inputs pinned locked method
-	  expanded (label "no label..."))
+	  expanded (draw-frame t) (label "no label..."))
   (super%initialize self)
   (setf %action action
 	%pinned pinned
+	%draw-frame draw-frame
 	%expanded expanded
 	%locked locked
 	%target target
@@ -212,14 +214,15 @@
      (draw each))))
 
 (define-method draw tree (&optional highlight)
-  (with-fields (visible expanded label inputs) self
+  (with-fields (visible draw-frame expanded label inputs) self
     (when visible
       (with-style %style
 	(if expanded 
 	    (progn 
-	      (draw-expanded self label)
-	      (deeper (draw-subtree self)))
-	    (draw-unexpanded self label))))))
+	      (when draw-frame
+		(draw-expanded self label))
+	      (draw-subtree self))
+	    (when draw-frame (draw-unexpanded self label)))))))
 
 ;; see system.lisp for example tree menu
 (defun make-tree (items &key target (tree-prototype "BLOCKY:TREE"))

@@ -169,7 +169,7 @@
   (let ((shell (new world)))
     (add-system-menu shell)
     (start shell)
-    (bind-event shell '(:escape) :toggle-shell)
+;    (bind-event shell '(:x :alt) :enter-system-menu)
     (setf (field-value :background-color shell) "white")))
   
 

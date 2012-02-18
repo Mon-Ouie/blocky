@@ -1,7 +1,9 @@
 * GUI BETA
 
 ** TODO 
-
+** TODO fix not being able to drag items off of desktop
+** TODO fix being able to pull out pinned items
+** TODO listener in the system menu on Alt-X and/or F1
 ** TODO [#A] merge world and shell 
 ** TODO [#A] sexy black gradient system menu (gradient patch) pops up from corner---not a menu bar
 *** TODO Blocky

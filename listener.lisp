@@ -22,8 +22,8 @@
 
 ;;; Command prompt block
 
-(defparameter *active-prompt-color* "red")
-(defparameter *inactive-prompt-color* "gray20")
+(defparameter *active-prompt-color* "gray20")
+(defparameter *inactive-prompt-color* "gray10")
 (defparameter *prompt-cursor-inactive-color* "gray50")
 
 (defparameter *default-prompt-text-color* "white")
@@ -47,6 +47,7 @@
   (line :initform "" :documentation "Currently edited command line.")
   (background :initform t)
   (error-output :initform "")
+  (minimum-width :initform 100)
   (text-color :initform *default-prompt-text-color*)
   (label-color :initform *default-prompt-label-color*)
   options label 
@@ -398,8 +399,6 @@
 (define-method label-width entry ()
   (dash 2 (font-text-width (label-string self) *font*)))
 
-(defparameter *minimum-entry-line-width* 16)
-
 (define-method draw-label entry ()
   (when %label (draw-label-string self %label)))
   ;; (draw-string (label-string self)
@@ -450,7 +449,7 @@
     (setf height (+ (* 2 *dash*) (font-height *font*)))
     (setf width (+ (* 4 *dash*)
 		   (label-width self)
-		   (max *minimum-entry-line-width*
+		   (max %minimum-width
 			(font-text-width line *font*))))))
 
 (define-method lose-focus entry ()

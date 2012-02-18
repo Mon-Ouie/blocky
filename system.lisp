@@ -58,13 +58,13 @@
   (setf *system* (find-uuid self)))
 
 (define-method create-trash system ()
-  (add-block (shell) (new trash) 100 100))
+  (add-block (world) (new trash) 100 100))
 
 (define-method create-text system ()
-  (add-block (shell) (new text) 100 100))
+  (add-block (world) (new text) 100 100))
 
 (define-method create-listener system ()
-  (add-block (shell) (new listener) 100 100))
+  (add-block (world) (new listener) 100 100))
 
 (define-method ticks system ()
   (get-ticks))
@@ -186,9 +186,24 @@
 
 (define-block system-headline)
 
-(define-method update system-headline ()
-  (setf %image "blocky")
-  (resize self 24 24))
+(defparameter *logo-height* 24)
+
+(defparameter *blocky-title-string* "Blocky 0.9a")
+
+(define-method layout system-headline ()
+  (resize self 
+	  (+ (dash 2) *logo-height*
+	     (font-text-width *blocky-title-string* *block-bold*))
+	  *logo-height*))
+
+(define-method draw system-headline ()
+  (with-fields (x y) self
+    (draw-image "blocky" x y :height *logo-height* :width *logo-height*)
+    (draw-string *blocky-title-string*
+		 (+ x *logo-height* (dash 2))
+		 (+ y (dash 2))
+		 :color "white"
+		 :font *block-bold*)))
 
 ;;; The system menu itself
 
@@ -203,28 +218,37 @@
   (super%initialize
    self
    (new system-headline)
-   (new menu :inputs (mapcar #'make-menu *system-menu*) :target self))
+   (new listener)
+   (new menu :label "System" 
+	     :inputs (mapcar #'make-menu *system-menu*) 
+	     :target self
+	     :expanded t))
   (freeze self))
-        
-(define-method layout system-menu ()
-  (move-to self 0 0)
-  (mapc #'layout %inputs))
-
-(define-method draw system-menu ()
-  (draw-background self)
-  (mapc #'draw %inputs))
 
 (define-method menu-items system-menu ()
-  (field-value :inputs (second %inputs)))
+  (field-value :inputs (third %inputs)))
+        
+(define-method get-listener system-menu ()
+  (second %inputs))
+
+(define-method layout system-menu ()
+  (move-to self 0 0)
+  (layout-vertically self))
+
+(define-method draw system-menu ()
+  (with-fields (x y width height) self
+    (draw-patch self x y (+ x width) (+ y height))
+    (mapc #'draw %inputs)
+    (draw-focus (get-prompt (get-listener self)))))
 
 (define-method close-menus system-menu ()
   (let ((menus (menu-items self)))
     (when (some #'is-expanded menus)
       (mapc #'unexpand menus))))
 
-(define-method tap system-menu (x y)
-  (declare (ignore x y))
-  (close-menus self))
+;; (define-method tap system-menu (x y)
+;;   (declare (ignore x y))
+;;   (close-menus self))
 
 ;; Don't allow anything to be dropped on the menus, for now.
 

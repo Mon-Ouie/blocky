@@ -931,7 +931,7 @@ you want to align a group of text items across layouts.")
     :button "orange"
     :terminal "gray25"
     :event "gray80"
-    :menu "black"
+    :menu "gray10"
     :hover "red"
     :socket "gray60"
     :data "gray50"
@@ -952,7 +952,7 @@ you want to align a group of text items across layouts.")
     :hover "dark orange"
     :button "gold"
     :event "gray90"
-    :menu "white"
+    :menu "gray30"
     :terminal "gray30"
     :comment "gray88"
     :looks "medium orchid"
@@ -973,7 +973,7 @@ you want to align a group of text items across layouts.")
     :event "gray70"
     :socket "gray90"
     :data "gray55"
-    :menu "white"
+    :menu "gray15"
     :terminal "gray21"
     :button "DarkOrange"
     :structure "gray35"
@@ -1223,9 +1223,9 @@ scale. See also "
   (declare (ignore args))
   nil)
 
-(defparameter *highlight-background-color* "gray80")
+(defparameter *highlight-background-color* "gray40")
 
-(defparameter *highlight-foreground-color* "gray20")
+(defparameter *highlight-foreground-color* "gray10")
 
 (define-method draw-focus block ()
   "Draw any additional indications of input focus." nil)

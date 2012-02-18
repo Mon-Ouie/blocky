@@ -1,4 +1,4 @@
-;; worlds.lisp --- places where gameplay happens
+;;; worlds.lisp --- places where gameplay happens
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
@@ -21,7 +21,6 @@
 (in-package :blocky)
 
 (define-block world
-  (shell-mode :initform nil)
   (variables :initform nil 
 	     :documentation "Hash table mapping values to values, local to the current world.")
   (player :documentation "The player object, if any.")
@@ -50,17 +49,15 @@
   ;; the optional world shell ui 
   (system-menu :initform nil
 	   :documentation "Optional system-menu widget. See system.lisp")
-  (command-line :initform nil)
-  (command-p :initform nil)
+  (system-menu-open-p :initform nil)
   (default-events :initform
 		  '(((:tab) :tab)
 		    ((:tab :control) :backtab)
-		    ((:x :alt) :enter-command-line)
+		    ((:x :alt) :enter-system-menu)
 		    ((:g :control) :escape)
-		    ((:s :alt) :toggle-shell)
-		    ((:escape) :escape)))
+		    ((:escape) :exit-system-menu)))
   (excluded-fields :initform
-		   '(:quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :command-line :system-menu :listener :drag :hover :highlight)
+		   '(:quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :system-menu :listener :drag :hover :highlight)
 		   :documentation "Don't serialize the menu bar.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
@@ -87,13 +84,14 @@
 	  :documentation "Non-nil when modified since last save."))
 
 (define-method show-shell world ()
-  (setf %shell-mode t))
+  (setf %system-menu-open-p t)
+  (focus-on self (get-listener %system-menu)))
 
 (define-method hide-shell world ()
-  (setf %shell-mode nil))
+  (setf %system-menu-open-p nil))
 
 (define-method toggle-shell world ()
-  (if %shell-mode
+  (if %system-menu-open-p
       (hide-shell self)
       (show-shell self)))
 
@@ -102,7 +100,7 @@
      ,@body))
 
 (define-method get-objects world ()
-  (loop for object being the hash-keys in %objects collect object))
+  (loop for object being the hash-values in %objects collect object))
 
 ;; Defining and scrolling the screen viewing window
 
@@ -193,6 +191,7 @@
       (zerop (hash-table-count %objects))))
 
 (define-method initialize world ()
+  (super%initialize self)
   (setf %variables (make-hash-table :test 'equal))
   (setf %objects (make-hash-table :test 'equal)))
   
@@ -213,13 +212,17 @@
 			    %objects)))
       (setf (gethash (find-uuid object)
 		     %objects)
-	    t)
+	    ;; cache actual object to avoid uuid lookup
+	    (find-object object))
       (when (and (numberp x) (numberp y))
 	(setf (field-value :x object) x
 	      (field-value :y object) y))
       (clear-saved-location object)
       (when quadtree
 	(quadtree-insert quadtree object)))))
+
+(define-method add-shell-block world (object &optional x y)
+  (add-block%%block self object x y))
 
 (define-method drop-block world (block x y)
   (add-block self block)
@@ -460,31 +463,35 @@ slowdown. See also quadtree.lisp")
 ;; Including a system menu, editor, and controls for switching worlds
 ;; and pages in the system. Maybe zooming out on a mega virtual desktop.
 
+(define-method enter-system-menu world ()
+  (setf %system-menu-open-p t)
+  (setf %last-focus %focused-block)
+  (focus-on self (get-listener %system-menu)))
+
+(define-method exit-system-menu world ()
+  (setf %system-menu-open-p nil)
+  (focus-on self %last-focus)
+  (setf %last-focus nil))
+
 (define-method grab-focus world ())
 
 (define-method layout-shell-objects world ()
   (mapc #'layout %inputs))
 
 (define-method update-shell-objects world ()
-  (mapc #'update %inputs)
-  (when %command-line (update %command-line))
-  (when %system-menu (update %system-menu)))
+  (mapc #'update %inputs))
+;  (when %system-menu (update %system-menu)))
 
 (define-method draw-shell-objects world ()
   (with-world self
-    (with-fields (drag-start selection inputs drag
-			 focused-block highlight system-menu
-			 command-line command-p inputs
-			 modified hover ghost prompt)
-	self
+    (with-fields (drag-start selection inputs drag focused-block
+			 highlight system-menu inputs modified hover
+			 ghost prompt) self
       ;; now start drawing the shell objects
       (mapc #'draw inputs)
 	;; draw border around any selected blocks
 	;; (when (find block selection :test 'eq :key #'find-object)
 	;;   (draw-border block))
-      ;; possibly draw command line background
-      (when command-p
-	(draw command-line))
       ;; during dragging we draw the dragged block.
       (if drag 
 	    (progn (layout drag)
@@ -515,12 +522,12 @@ slowdown. See also quadtree.lisp")
 	    (draw-box 0 0 width height
 		      :color background-color)))
       (let ((box (multiple-value-list (window-bounding-box self))))
-	(loop for object being the hash-keys in objects do
+	(loop for object being the hash-values in objects do
 	  ;; only draw onscreen objects
 	  (when (colliding-with-bounding-box object box)
 	    (draw object))))
       ;; possibly draw shell
-      (when %shell-mode 
+      (when %system-menu-open-p 
 	(draw-shell-objects self)))))
   
 ;;; Simulation update
@@ -535,7 +542,7 @@ slowdown. See also quadtree.lisp")
       (let ((*quadtree* %quadtree))
 	(assert (zerop *quadtree-depth*))
 	;; run the objects
-	(loop for object being the hash-keys in %objects do
+	(loop for object being the hash-values in %objects do
 	  (update object)
 	  (run-tasks object))
 	;; update window movement
@@ -544,11 +551,11 @@ slowdown. See also quadtree.lisp")
 	  (update-window-glide self))
 	;; detect collisions
 	(unless no-collisions
-	  (loop for object being the hash-keys in objects do
+	  (loop for object being the hash-values in objects do
 	    (unless (eq :passive (field-value :collision-type object))
 	      (quadtree-collide *quadtree* object)))))
       ;; possibly update the shell
-      (when %shell-mode
+      (when %system-menu-open-p
 	(layout-shell-objects self)
 	(update-shell-objects self)))))
 
@@ -588,29 +595,11 @@ slowdown. See also quadtree.lisp")
 
 (define-method draw-hover trash ())
 
-(defun make-command-line ()
-  (find-uuid (new command-line)))
-
-(define-method enter-command-line world ()
-  (setf %command-p t)
-  (setf %last-focus %focused-block)
-  (focus-on self %command-line))
-
-(define-method exit-command-line world ()
-  (setf %command-p nil)
-  (focus-on self %last-focus)
-  (setf %last-focus nil))
-
-(define-method make-widgets world ()
-  (setf *world* (find-uuid self))
-  (setf %command-line (make-command-line)))
-
 (define-method add-system-menu world ()
   (setf %system-menu (make-system-menu)))
 
 (define-method after-deserialize world ()
-  (clear-drag-data self)
-  (make-widgets self))
+  (clear-drag-data self))
 
 (defmacro with-world (world &rest body)
   (let ((sh (gensym)))
@@ -624,15 +613,11 @@ slowdown. See also quadtree.lisp")
     (setf %x 0 %y 0 
 	  %width *screen-width* 
 	  %height *screen-height*)
+    (mapc #'layout %inputs)
     ;; run system-menu across top
-    (when %system-menu
+    (when %system-menu-open-p
       (with-style :rounded
-	(layout %system-menu)))
-    ;; run command line across bottom
-    (when %command-line 
-      (layout %command-line))
-    ;;
-    (mapc #'layout %inputs)))
+	(layout %system-menu)))))
 
 (define-method select world (block &optional only)
   (with-world self
@@ -660,7 +645,7 @@ slowdown. See also quadtree.lisp")
 (define-method handle-event world (event)
   (with-world self
     (or (super%handle-event self event)
-	(with-field-values (focused-block selection command-line inputs) self
+	(with-field-values (focused-block selection inputs) self
 	  (let ((block
 		    (cond
 		      ;; we're focused. send the event there
@@ -669,9 +654,9 @@ slowdown. See also quadtree.lisp")
 			 (assert (blockyp focused-block))))
 		      ;; only one block selected. use that.
 		      ((= 1 (length selection))
-		       (first selection))
+		       (first selection)))))
 		      ;; fall back to command-line
-		      (t command-line))))
+		      ;; (t command-line))))
 	    (when block 
 	      (handle-event block event)))))))
 
@@ -696,15 +681,19 @@ block found, or nil if none is found."
 		 (hit b x y))))
       ;; check system-menu, then buffer
       (or 
-       (when %command-p 
-	 (try %command-line))
-       (when %system-menu (try %system-menu))
+       (when %system-menu-open-p 
+	 (try %system-menu))
        (let ((parent 
 	       (find-if #'try 
 			%inputs
 			:from-end t)))
 	 (when parent
-	   (try parent)))))))
+	   (try parent)))
+       ;; try objects
+       (block trying
+	 (loop for object being the hash-values of %objects
+	       do (let ((result (try object)))
+		    (when result (return-from trying result)))))))))
   
 (defparameter *minimum-drag-distance* 7)
   
@@ -788,10 +777,10 @@ block found, or nil if none is found."
 	      (drag drag target-x target-y))))
 	;; not dragging, just moving
 	(progn
-	  (setf highlight (find-uuid (hit-inputs self mouse-x mouse-y)))
-	  (when (null highlight)
-	    (when %system-menu
-	      (with-world self (close-menus %system-menu))))))))
+	  (setf highlight (find-uuid (hit-inputs self mouse-x mouse-y)))))))
+	  ;; (when (null highlight)
+	  ;;   (when %system-menu
+	  ;;     (with-world self (close-menus %system-menu))))))))
 
 (define-method press world (x y &optional button)
   (declare (ignore button))
@@ -803,8 +792,8 @@ block found, or nil if none is found."
       (if (null block)
 	  (progn
 	    (focus-on self nil)
-	    (when %command-p
-	      (exit-command-line self)))
+	    (when %system-menu-open-p
+	      (exit-system-menu self)))
 	  (progn 
 	    (setf click-start (cons x y))
 	    (setf click-start-block (find-uuid block))
@@ -834,19 +823,19 @@ block found, or nil if none is found."
 	      (if (not (can-escape drag))
 		  ;; put back in halo or wherever
 		  (when drag-origin 
-		    (add-block drag-origin drag drop-x drop-y))
+		    (add-shell-block drag-origin drag drop-x drop-y))
 		  ;; ok, drop. where are we dropping?
 		  (progn 
 		    (when drag-parent
 		      (unplug-from-parent drag))
 		    (if (null hover)
 			;; dropping on background
-			(add-block self drag drop-x drop-y)
+			(add-shell-block self drag drop-x drop-y)
 			;; dropping on another block
 			(when (not (accept hover drag))
 			  ;; hovered block did not accept drag. 
-			  ;; drop it back in the world.
-			  (add-block self drag drop-x drop-y)))))
+			  ;; drop it back in the shell.
+			  (add-shell-block self drag drop-x drop-y)))))
 	      ;; select the dropped block
 	      (progn 
 		(select self drag)
