@@ -310,6 +310,7 @@
       ;; draw shaded area for input
       (draw-input-area self :active)
       ;; draw cursor.
+      (update-cursor-clock self)
       (draw-cursor self 
 		   :x-offset
 		   (dash 4 (font-text-width label *font*))
@@ -352,6 +353,7 @@
   (category :initform :data)
   (read-only :initform nil)
   (pinned :initform t)
+  (minimum-width :initform 18)
   (text-color :initform *default-entry-text-color*)
   (label-color :initform *default-entry-label-color*)
   type-specifier value)

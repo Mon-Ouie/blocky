@@ -1,4 +1,4 @@
-;;; worlds.lisp --- places where gameplay happens
+;;; worlds.lisp --- squeakish spaces 
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011  David O'Toole
 
@@ -28,9 +28,12 @@
   (background-color :initform "white")
   (x :initform 0)
   (y :initform 0)
+  (paused :initform nil)
   (heading :initform 0.0)
   (height :initform 16)
   (width :initform 16)
+  (system-menu :initform nil)
+  (system-menu-open-p :initform nil)
   ;; objects and collisions
   (objects :initform nil :documentation "A hash table with all the world's objects.")
   (quadtree :initform nil)
@@ -46,10 +49,6 @@
   ;; selection and region
   (selection :initform ()
   	     :documentation "List (subset) of selected blocks.")
-  ;; the optional world shell ui 
-  (system-menu :initform nil
-	   :documentation "Optional system-menu widget. See system.lisp")
-  (system-menu-open-p :initform nil)
   (default-events :initform
 		  '(((:tab) :tab)
 		    ((:tab :control) :backtab)
@@ -65,7 +64,7 @@
 	 :documentation "Block being hovered over, if any.")
   (highlight :initform nil
 	     :documentation "Block being highlighted, if any.")
-  (ghost :initform (new block)
+  (ghost :initform nil
 	 :documentation "Dummy block to hold original place of currently dragged block onscreen.")
   (focused-block :initform nil
 		 :documentation "Block having current input focus, if any.")
@@ -76,6 +75,8 @@
 		     :documentation "The block indicated at the beginning of a drag.")
   (drag-origin :initform nil
 	       :documentation "The parent block originally holding the dragged block.")
+  (drag-object-p :initform nil
+		 :documentation "When non-nil, the dragged object is in the world.")
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
@@ -83,17 +84,11 @@
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
-(define-method show-shell world ()
-  (setf %system-menu-open-p t)
-  (focus-on self (get-listener %system-menu)))
+(define-method pause world ()
+  (setf %paused t))
 
-(define-method hide-shell world ()
-  (setf %system-menu-open-p nil))
-
-(define-method toggle-shell world ()
-  (if %system-menu-open-p
-      (hide-shell self)
-      (show-shell self)))
+(define-method resume world ()
+  (setf %paused nil))
 
 (defmacro define-world (name &body body)
   `(define-block (,name :super "BLOCKY:WORLD")
@@ -192,6 +187,7 @@
 
 (define-method initialize world ()
   (super%initialize self)
+  (setf %ghost (new block))
   (setf %variables (make-hash-table :test 'equal))
   (setf %objects (make-hash-table :test 'equal)))
   
@@ -204,8 +200,27 @@
 	      (handle-event player event)))))))
 
 ;;; The object layer. 
+      
+(define-method remove-object world (object)
+  (remhash (find-uuid object) %objects)
+  (when (field-value :quadtree-node object)
+    (quadtree-delete %quadtree object)))
 
-(define-method add-block world (object &optional x y append)
+(define-method remove-object-maybe world (object &optional x y)
+  (when (gethash (find-uuid object) %objects)
+    (remove-object self object))
+  (when (contains self object)
+    (unplug self object)))
+
+(define-method add-block world (object &optional x y)
+  (remove-object-maybe self object)
+  (super%add-block self object x y))
+
+(define-method drop-block world (block x y)
+  (add-object self block)
+  (move-to block x y))
+
+(define-method add-object world (object &optional x y append)
   (with-fields (quadtree) self
     (let ((*quadtree* quadtree))
       (assert (not (gethash (find-uuid object) 
@@ -220,18 +235,6 @@
       (clear-saved-location object)
       (when quadtree
 	(quadtree-insert quadtree object)))))
-
-(define-method add-shell-block world (object &optional x y)
-  (add-block%%block self object x y))
-
-(define-method drop-block world (block x y)
-  (add-block self block)
-  (move-to block x y))
-      
-(define-method remove-block world (object)
-  (remhash (find-uuid object) %objects)
-  (when (field-value :quadtree-node object)
-    (quadtree-delete %quadtree object)))
 
 (define-method discard-block world (object)
   (remhash (find-uuid object) %objects))
@@ -269,7 +272,7 @@
 
 (define-method set-player world (player)
   (setf %player player)
-  (add-block self player))
+  (add-object self player))
 
 ;;; Configuring the world's space and its quadtree indexing
 
@@ -356,7 +359,7 @@ slowdown. See also quadtree.lisp")
   (dolist (object (get-objects other-world))
     (with-fields (x y) object
       (clear-saved-location object)
-      (add-block self object)
+      (add-object self object)
       (move-to object (+ x dx) (+ y dy)))))
 
 (defun translate (world dx dy)
@@ -369,8 +372,8 @@ slowdown. See also quadtree.lisp")
   (with-new-world 
     (when (and world1 world2)
       (dolist (object (nconc (get-objects world1)
-			     (mapcar #'duplicate (get-objects world2))))
-	(add-block (world) object)))))
+			     (get-objects world2)))
+	(add-object (world) object)))))
 
 (define-method scale world (sx &optional sy)
   (let ((objects (get-objects self)))
@@ -385,7 +388,7 @@ slowdown. See also quadtree.lisp")
 (define-method copy world ()
   (with-new-world 
     (dolist (object (mapcar #'duplicate (get-objects self)))
-      (add-block (world) object))))
+      (add-object (world) object))))
 
 (defun vertical-extent (world)
   (if (or (null world)
@@ -463,12 +466,18 @@ slowdown. See also quadtree.lisp")
 ;; Including a system menu, editor, and controls for switching worlds
 ;; and pages in the system. Maybe zooming out on a mega virtual desktop.
 
+(define-method add-system-menu-maybe world ()
+  (when (not (has-local-value :system-menu self))
+    (setf %system-menu (make-system-menu))))
+
 (define-method enter-system-menu world ()
+  (add-system-menu-maybe self)
   (setf %system-menu-open-p t)
   (setf %last-focus %focused-block)
   (focus-on self (get-listener %system-menu)))
 
 (define-method exit-system-menu world ()
+  (add-system-menu-maybe self)
   (setf %system-menu-open-p nil)
   (focus-on self %last-focus)
   (setf %last-focus nil))
@@ -485,7 +494,7 @@ slowdown. See also quadtree.lisp")
 (define-method draw-shell-objects world ()
   (with-world self
     (with-fields (drag-start selection inputs drag focused-block
-			 highlight system-menu inputs modified hover
+			 highlight inputs modified hover
 			 ghost prompt) self
       ;; now start drawing the shell objects
       (mapc #'draw inputs)
@@ -505,9 +514,9 @@ slowdown. See also quadtree.lisp")
 	    (when focused-block
 	      (assert (blockyp focused-block))
 	      (draw-focus focused-block)))
-	(when system-menu
+	(when %system-menu
 	  (with-style :rounded
-	    (draw system-menu)))
+	    (draw %system-menu)))
 	(when highlight
 	  (draw-highlight highlight)))))
 
@@ -533,7 +542,7 @@ slowdown. See also quadtree.lisp")
 ;;; Simulation update
 
 (define-method update world (&optional no-collisions)
-  (let ((*world* self))
+  (with-world self
     (layout self)
     (with-field-values (quadtree objects height width player) self
       ;; build quadtree if needed
@@ -541,19 +550,20 @@ slowdown. See also quadtree.lisp")
       	(install-quadtree self))
       (let ((*quadtree* %quadtree))
 	(assert (zerop *quadtree-depth*))
-	;; run the objects
-	(loop for object being the hash-values in %objects do
-	  (update object)
-	  (run-tasks object))
-	;; update window movement
-	(when player 
-	  (glide-follow self player)
-	  (update-window-glide self))
-	;; detect collisions
-	(unless no-collisions
-	  (loop for object being the hash-values in objects do
-	    (unless (eq :passive (field-value :collision-type object))
-	      (quadtree-collide *quadtree* object)))))
+	;; possibly run the objects
+	(unless %paused
+	  (loop for object being the hash-values in %objects do
+	    (update object)
+	    (run-tasks object))
+	  ;; update window movement
+	  (when player 
+	    (glide-follow self player)
+	    (update-window-glide self))
+	  ;; detect collisions
+	  (unless no-collisions
+	    (loop for object being the hash-values in objects do
+	      (unless (eq :passive (field-value :collision-type object))
+		(quadtree-collide *quadtree* object))))))
       ;; possibly update the shell
       (when %system-menu-open-p
 	(layout-shell-objects self)
@@ -595,9 +605,6 @@ slowdown. See also quadtree.lisp")
 
 (define-method draw-hover trash ())
 
-(define-method add-system-menu world ()
-  (setf %system-menu (make-system-menu)))
-
 (define-method after-deserialize world ()
   (clear-drag-data self))
 
@@ -611,8 +618,8 @@ slowdown. See also quadtree.lisp")
   ;; take over the entire GL window
   (with-world self
     (setf %x 0 %y 0 
-	  %width *screen-width* 
-	  %height *screen-height*)
+	  %width *gl-screen-width* 
+	  %height *gl-screen-height*)
     (mapc #'layout %inputs)
     ;; run system-menu across top
     (when %system-menu-open-p
@@ -679,21 +686,26 @@ block found, or nil if none is found."
     (labels ((try (b)
 	       (when b
 		 (hit b x y))))
-      ;; check system-menu, then buffer
+      ;; check system-menu and inputs first
       (or 
-       (when %system-menu-open-p 
-	 (try %system-menu))
-       (let ((parent 
-	       (find-if #'try 
-			%inputs
-			:from-end t)))
-	 (when parent
-	   (try parent)))
-       ;; try objects
-       (block trying
-	 (loop for object being the hash-values of %objects
-	       do (let ((result (try object)))
-		    (when result (return-from trying result)))))))))
+       (values
+	(or 
+	 (when %system-menu-open-p 
+	   (try %system-menu))
+	 (let ((parent 
+		 (find-if #'try 
+			  %inputs
+			  :from-end t)))
+	   (when parent
+	     (try parent))))
+	nil)
+       ;; try world objects
+       (values 
+	(block trying
+	  (loop for object being the hash-values of %objects
+		do (let ((result (try object)))
+		     (when result (return-from trying result)))))
+	t))))) 
   
 (defparameter *minimum-drag-distance* 7)
   
@@ -788,7 +800,9 @@ block found, or nil if none is found."
     ;; now find what we're touching
     (assert (or (null focused-block)
 		(blockyp focused-block)))
-    (let ((block (hit-inputs self x y)))
+    (multiple-value-bind (block object-p)
+	(hit-inputs self x y)
+      (setf %object-p object-p)
       (if (null block)
 	  (progn
 	    (focus-on self nil)
@@ -804,6 +818,7 @@ block found, or nil if none is found."
 (define-method clear-drag-data world ()
   (setf %drag-start nil
 	%drag-offset nil
+	%drag-object-p nil
 	%drag-origin nil
 	%drag nil))
 	;; %click-start-block nil
@@ -823,19 +838,19 @@ block found, or nil if none is found."
 	      (if (not (can-escape drag))
 		  ;; put back in halo or wherever
 		  (when drag-origin 
-		    (add-shell-block drag-origin drag drop-x drop-y))
+		    (add-block drag-origin drag drop-x drop-y))
 		  ;; ok, drop. where are we dropping?
 		  (progn 
 		    (when drag-parent
 		      (unplug-from-parent drag))
 		    (if (null hover)
 			;; dropping on background
-			(add-shell-block self drag drop-x drop-y)
+			(add-block self drag drop-x drop-y)
 			;; dropping on another block
 			(when (not (accept hover drag))
 			  ;; hovered block did not accept drag. 
 			  ;; drop it back in the shell.
-			  (add-shell-block self drag drop-x drop-y)))))
+			  (add-block self drag drop-x drop-y)))))
 	      ;; select the dropped block
 	      (progn 
 		(select self drag)

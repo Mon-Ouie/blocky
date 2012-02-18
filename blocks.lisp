@@ -152,9 +152,7 @@ initialized with BLOCKS as inputs."
   (push self (symbol-value '*trash*)))
 
 (define-method destroy block ()
-  (if %on-grid 
-      (delete-cell *world* %row %column)
-      (remove-block *world* self)))
+  (remove-object (world) self))
 ;  (discard self))
 
 (define-method damage block (points)
@@ -164,7 +162,7 @@ initialized with BLOCKS as inputs."
   (discard-block *world* self))
 
 (define-method make-duplicate block ()
-  nil) ;; deep copy
+  (duplicate self))
 
 (define-method make-clone block ()
   (find-uuid (clone (find-super self))))
@@ -331,7 +329,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
       (setf parent nil))))
 
 (define-method drop block (other-block &optional (dx 0) (dy 0))
-  (add-block (world) other-block (+ %x dx) (+ %y dy)))
+  (add-object (world) other-block (+ %x dx) (+ %y dy)))
 
 ;;; Defining input events for blocks
 
@@ -644,17 +642,21 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 		 (apply #'clone prototype arg-blocks))))
 	   (list-block (items)
 	     (apply #'clone "BLOCKY:LIST" (mapcar #'make-block items))))
-    (cond ((is-null-block-spec sexp)
-	   (null-block))
-	  ((blockyp sexp) ;; catch UUIDs etc
-	   sexp)
-	  ((stringp sexp)
-	   (new string :value sexp))
-	  ((is-action-spec sexp)
-	   (action-block sexp))
-	  ((is-list-spec sexp)
-	   (list-block sexp))
-	  ((not (null sexp)) (data-block sexp)))))
+    (let ((result 
+	    (cond ((is-null-block-spec sexp)
+		   (null-block))
+		  ((blockyp sexp) ;; catch UUIDs etc
+		   sexp)
+		  ((stringp sexp)
+		   (new string :value sexp))
+		  ((is-action-spec sexp)
+		   (action-block sexp))
+		  ((is-list-spec sexp)
+		   (list-block sexp))
+		  ((not (null sexp)) (data-block sexp)))))
+      (prog1 result
+	(when result
+	  (add-object-to-database result))))))
 
 ;;; Block movement
 
@@ -1209,7 +1211,6 @@ scale. See also "
 	       &key color blink)
   "Draw a graphical cursor at point X, Y of dimensions WIDTH x HEIGHT."
   (with-fields (cursor-clock) self
-    (update-cursor-clock self)
     (let ((color2
 	    (if blink
 		(if (minusp cursor-clock)

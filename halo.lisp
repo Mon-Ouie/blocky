@@ -32,7 +32,7 @@
     :top-left-triangle (0 0)
     :menu (1/4 0)
     :collapse (0 2/4)
-    :move (1 0)
+    :drop (1 0)
     :resize (1 1)
     :reference (0 1)
     :close (0 0)
@@ -88,15 +88,18 @@
     (drop self menu)
     (move-to menu x y)))
 
-(define-handle move :move)
+(define-handle drop :drop)
 
-(define-method drag move (x0 y0)
-  (with-fields (x y) %target
-    (let ((dx (- %x x))
-	  (dy (- %y y)))
-      (move-to %target 
-	       (- x0 dx)
-	       (- y0 dy)))))
+(define-method tap drop (x0 y0)
+  (add-object (world) %target))
+
+;; (define-method drag move (x0 y0)
+;; (with-fields (x y) %target
+;;   (let ((dx (- %x x))
+;; 	  (dy (- %y y)))
+;;     (move-to %target 
+;; 	       (- x0 dx)
+;; 	       (- y0 dy)))))
 
 (define-handle resize :resize)
 
@@ -133,7 +136,7 @@
 ;;; The halo itself
 
 (defparameter *halo-handles* 
-  '(:evaluate :open-menu :move :resize :program :discard :collapse))
+  '(:evaluate :open-menu :drop :resize :program :discard :collapse))
 
 (define-block halo target)
 

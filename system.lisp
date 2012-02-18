@@ -73,7 +73,7 @@
   ;; TODO destroy textures
   (blocky:quit t))
 
-(defparameter *system-menu*
+(defparameter *system-menu-entries*
   '((:label "Project"
      :inputs
      ((:label "Create a new project" :action :create-project)
@@ -220,7 +220,7 @@
    (new system-headline)
    (new listener)
    (new menu :label "System" 
-	     :inputs (mapcar #'make-menu *system-menu*) 
+	     :inputs (mapcar #'make-menu *system-menu-entries*) 
 	     :target self
 	     :expanded t))
   (freeze self))
@@ -234,6 +234,9 @@
 (define-method layout system-menu ()
   (move-to self 0 0)
   (layout-vertically self))
+
+(define-method can-pick system-menu ()
+  nil)
 
 (define-method draw system-menu ()
   (with-fields (x y width height) self

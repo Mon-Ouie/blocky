@@ -1,22 +1,21 @@
 * GUI BETA
 
-** TODO 
-** TODO fix not being able to drag items off of desktop
-** TODO fix being able to pull out pinned items
-** TODO listener in the system menu on Alt-X and/or F1
-** TODO [#A] merge world and shell 
-** TODO [#A] sexy black gradient system menu (gradient patch) pops up from corner---not a menu bar
-*** TODO Blocky
-** TODO [#A] merge windows.lisp
+** TODO sys menu should allow pin/unpin and remember relative screen loc
+** TODO pause and unpause simulation
+** TODO [#A] dragging world object results in moving it within world, not to top layer
+** TODO [#A] right click on world objects to bring them back into top layer
+** TODO [#A] Halo item and hotkey for moving objects down into world
+** TODO [#A] hotkey for moving objects up from world
 ** TODO [#A] fix project dir naming issues. allow opening any .iof including index.iof 
-** TODO [#A] use clos-style 'foo symbols for prototype names, change NEW from macro to function
-** TODO [#A] get default events working again
+** TODO [#A] flesh out basic Projects operations dialogs
 ** TODO [#A] Implement basic blocks library (see list below)
-** TODO [#A] Show result somewhere when clicking eval bang handle
-** TODO [#A] System Browser in the menu, for choosing what to define methods on (or blocks from)
-** TODO [#A] Language tutorial project
-** TODO [#A] Basic context-sensitive help
 ** TODO [#A] define-block PALETTE so that there's a place to pull useful objects from 
+** TODO [#B] merge windows.lisp
+** TODO [#B] Show result somewhere when clicking eval bang handle
+** TODO [#B] Fix null history crash on uparrow
+** TODO [#B] use clos-style 'foo symbols for prototype names, change NEW from macro to function
+** TODO [#B] System Browser in the menu, for choosing what to define methods on (or blocks from)
+** TODO [#B] fix being able to pull out pinned items
 ** TODO [#B] UUID filenames for worlds?
 ** TODO [#B] F1-F10 select desktop screens, i.e. a flipper with configurability
 ** TODO [#B] rectangle select for bounding box cut paste
@@ -25,6 +24,8 @@
 ** TODO [#B] send message to all blocks in selection
 ** TODO [#B] value printer block, evaluates its argument and prints the value
 ** TODO [#B] shortcut macros for defresource foo foo.png auto-typed
+** TODO [#C] Language tutorial project
+** TODO [#C] Basic context-sensitive help
 ** TODO [#C] Pretty sexy black rounded corner notifications
 ** TODO [#C] editor with split screen view and tools mentality (like old/forms.lisp)
 ** TODO [#C] defblock selection 

@@ -166,11 +166,9 @@
 
 (defun turtle ()
   (new system)
-  (let ((shell (new world)))
-    (add-system-menu shell)
-    (start shell)
-;    (bind-event shell '(:x :alt) :enter-system-menu)
-    (setf (field-value :background-color shell) "white")))
+  (let ((world (new world)))
+    (setf *world* world)
+    (start world)))
   
 
 ;;; turtle.lisp ends here
