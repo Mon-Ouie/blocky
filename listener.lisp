@@ -613,9 +613,10 @@
 		    result
 		    ;; no, make a new block from the data
 		    (make-block result))))
-	  ;; spit out result block
-	  (unpin new-block)
-	  (accept container new-block))))))
+	  ;; spit out result block, if any
+	  (when new-block 
+	    (unpin new-block)
+	    (accept container new-block)))))))
 
 (define-method label-width listener-prompt ()
   (dash 2 (font-text-width *default-prompt-string* *font*)))

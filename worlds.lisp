@@ -75,7 +75,7 @@
 		     :documentation "The block indicated at the beginning of a drag.")
   (drag-origin :initform nil
 	       :documentation "The parent block originally holding the dragged block.")
-  (drag-object-p :initform nil
+  (object-p :initform nil
 		 :documentation "When non-nil, the dragged object is in the world.")
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
@@ -88,7 +88,7 @@
   (setf %paused t))
 
 (define-method resume world ()
-  (setf %paused nil))
+  (prog1 t (setf %paused nil)))
 
 (defmacro define-world (name &body body)
   `(define-block (,name :super "BLOCKY:WORLD")
@@ -206,7 +206,7 @@
   (when (field-value :quadtree-node object)
     (quadtree-delete %quadtree object)))
 
-(define-method remove-object-maybe world (object &optional x y)
+(define-method remove-object-maybe world (object)
   (when (gethash (find-uuid object) %objects)
     (remove-object self object))
   (when (contains self object)
@@ -544,14 +544,17 @@ slowdown. See also quadtree.lisp")
 (define-method update world (&optional no-collisions)
   (with-world self
     (layout self)
-    (with-field-values (quadtree objects height width player) self
-      ;; build quadtree if needed
-      (when (null quadtree)
-      	(install-quadtree self))
-      (let ((*quadtree* %quadtree))
-	(assert (zerop *quadtree-depth*))
-	;; possibly run the objects
-	(unless %paused
+    (when %system-menu
+      (layout %system-menu)
+      (update %system-menu))
+    (unless %paused
+      (with-field-values (quadtree objects height width player) self
+	;; build quadtree if needed
+	(when (null quadtree)
+	  (install-quadtree self))
+	(let ((*quadtree* %quadtree))
+	  (assert (zerop *quadtree-depth*))
+	  ;; possibly run the objects
 	  (loop for object being the hash-values in %objects do
 	    (update object)
 	    (run-tasks object))
@@ -563,11 +566,11 @@ slowdown. See also quadtree.lisp")
 	  (unless no-collisions
 	    (loop for object being the hash-values in objects do
 	      (unless (eq :passive (field-value :collision-type object))
-		(quadtree-collide *quadtree* object))))))
-      ;; possibly update the shell
-      (when %system-menu-open-p
-	(layout-shell-objects self)
-	(update-shell-objects self)))))
+		(quadtree-collide *quadtree* object)))))
+	;; possibly update the shell
+	(when %system-menu-open-p
+	  (layout-shell-objects self)
+	  (update-shell-objects self))))))
 
 ;;; A trash can for user-discarded objects
 
@@ -687,25 +690,25 @@ block found, or nil if none is found."
 	       (when b
 		 (hit b x y))))
       ;; check system-menu and inputs first
-      (or 
-       (values
-	(or 
-	 (when %system-menu-open-p 
-	   (try %system-menu))
-	 (let ((parent 
-		 (find-if #'try 
-			  %inputs
-			  :from-end t)))
-	   (when parent
-	     (try parent))))
-	nil)
-       ;; try world objects
-       (values 
-	(block trying
-	  (loop for object being the hash-values of %objects
-		do (let ((result (try object)))
-		     (when result (return-from trying result)))))
-	t))))) 
+      (let* ((object-p nil)
+	     (result 
+	      (or 
+	       (when %system-menu-open-p 
+		 (try %system-menu))
+	       (let ((parent 
+		       (find-if #'try 
+				%inputs
+				:from-end t)))
+		 (when parent
+		   (try parent)))
+	       ;; try world objects
+	       (block trying
+		 (loop for object being the hash-values of %objects
+		       do (let ((result (try object)))
+			    (when result 
+			      (setf object-p t)
+			      (return-from trying result))))))))
+	(values result object-p)))))
   
 (defparameter *minimum-drag-distance* 7)
   
@@ -818,7 +821,7 @@ block found, or nil if none is found."
 (define-method clear-drag-data world ()
   (setf %drag-start nil
 	%drag-offset nil
-	%drag-object-p nil
+	%object-p nil
 	%drag-origin nil
 	%drag nil))
 	;; %click-start-block nil
@@ -843,14 +846,16 @@ block found, or nil if none is found."
 		  (progn 
 		    (when drag-parent
 		      (unplug-from-parent drag))
-		    (if (null hover)
-			;; dropping on background
-			(add-block self drag drop-x drop-y)
-			;; dropping on another block
-			(when (not (accept hover drag))
-			  ;; hovered block did not accept drag. 
-			  ;; drop it back in the shell.
-			  (add-block self drag drop-x drop-y)))))
+		    (if %object-p
+			(move-to drag drop-x drop-y)
+			(if (null hover)
+			    ;; dropping on background
+			    (add-block self drag drop-x drop-y)
+			    ;; dropping on another block
+			    (when (not (accept hover drag))
+			      ;; hovered block did not accept drag. 
+			      ;; drop it back in the shell.
+			      (add-block self drag drop-x drop-y))))))
 	      ;; select the dropped block
 	      (progn 
 		(select self drag)

@@ -69,7 +69,7 @@
 
 (define-method draw-hover handle ())
 		
-(defmacro define-handle (name indicator &key (color "gray20"))
+(defmacro define-handle (name indicator &key (color "gray10"))
   (assert (symbolp name))
   (assert (stringp color))
   `(define-block (,name :super :handle)

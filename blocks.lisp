@@ -149,6 +149,7 @@ initialized with BLOCKS as inputs."
   (when %halo (discard %halo))
   (when %parent 
     (unplug-from-parent self))
+  (remove-object-maybe (world) self)
   (push self (symbol-value '*trash*)))
 
 (define-method destroy block ()
@@ -532,7 +533,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 (define-method make-halo block ()
   (when (null %halo)
     (setf %halo (new halo self))
-    (drop self %halo)))
+    (add-block (world) %halo)))
 
 (define-method discard-halo block ()
   (when %halo 
@@ -656,7 +657,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 		  ((not (null sexp)) (data-block sexp)))))
       (prog1 result
 	(when result
-	  (add-object-to-database result))))))
+	  (add-object-to-database (find-object result)))))))
 
 ;;; Block movement
 
