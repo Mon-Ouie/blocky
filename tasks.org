@@ -1,33 +1,38 @@
 * GUI BETA
 
-** TODO sys menu should allow pin/unpin and remember relative screen loc
-** TODO pause and unpause simulation
+** TODO [#A] create project dialog
+** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
+** TODO [#A] Don't require .blocky suffix for project dir
+
+** TODO [#A] allow empty project
+** TODO [#A] sys menu should allow pin/unpin and remember relative screen loc
+** TODO [#A] selecting single world object
+** TODO [#A] selecting multiple objects
+** TODO [#A] hotkey for moving objects down into world
 ** TODO [#A] dragging world object results in moving it within world, not to top layer
 ** TODO [#A] right click on world objects to bring them back into top layer
-** TODO [#A] Halo item and hotkey for moving objects down into world
 ** TODO [#A] hotkey for moving objects up from world
 ** TODO [#A] fix project dir naming issues. allow opening any .iof including index.iof 
 ** TODO [#A] flesh out basic Projects operations dialogs
 ** TODO [#A] Implement basic blocks library (see list below)
 ** TODO [#A] define-block PALETTE so that there's a place to pull useful objects from 
-** TODO [#B] merge windows.lisp
-** TODO [#B] Show result somewhere when clicking eval bang handle
-** TODO [#B] Fix null history crash on uparrow
 ** TODO [#B] use clos-style 'foo symbols for prototype names, change NEW from macro to function
-** TODO [#B] System Browser in the menu, for choosing what to define methods on (or blocks from)
 ** TODO [#B] fix being able to pull out pinned items
-** TODO [#B] UUID filenames for worlds?
 ** TODO [#B] F1-F10 select desktop screens, i.e. a flipper with configurability
+** TODO [#B] merge windows.lisp
+** TODO [#B] Fix null history crash on uparrow
+** TODO [#B] System Browser in the menu, for choosing what to define methods on (or blocks from)
+** TODO [#B] UUID filenames for worlds?
 ** TODO [#B] rectangle select for bounding box cut paste
 ** TODO [#B] bounding-box args can go into a function such as create-brick or select-region
 ** TODO [#B] named bounding boxes as world-local vars with blocks to refer to them
 ** TODO [#B] send message to all blocks in selection
 ** TODO [#B] value printer block, evaluates its argument and prints the value
 ** TODO [#B] shortcut macros for defresource foo foo.png auto-typed
+** TODO [#C] editor with split screen view and tools mentality (like old/forms.lisp)
 ** TODO [#C] Language tutorial project
 ** TODO [#C] Basic context-sensitive help
 ** TODO [#C] Pretty sexy black rounded corner notifications
-** TODO [#C] editor with split screen view and tools mentality (like old/forms.lisp)
 ** TODO [#C] defblock selection 
 
 ** TODO [#B] Improve error handling in shell
@@ -116,8 +121,6 @@
 * TODO Story ideas for Sanctuary
 *** TODO weaving of spell tapestries relies on the secrets of the weaving guild, who thereby control all magic and society
 *** TODO threat of machines that can weave... punched cards, information age 
-** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
-** TODO [#A] Don't require .blocky suffix for project dir
 ** TODO [#B] Adapt line-of-sight code to new collision system
 ** TODO [#B] Adapt pathfinding code to new collision system
 ** TODO [#B] Fix shell not responding to window resize properly
