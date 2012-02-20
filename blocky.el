@@ -56,8 +56,6 @@
   (blocky-inspect-uuid (or (blocky-uuid-at-point)
 			   (blocky-uuid-on-this-line))))
 
-    
-
 ;;; Font-locking
 
 ;; Put this in your emacs initialization file to get the highlighting:
@@ -78,7 +76,7 @@
 		   (group (one-or-more (not (any space))))))
       (1 font-lock-keyword-face)
       (2 font-lock-type-face))
-    (,(rx (sequence "(" (group "defmacro%")
+    (,(rx (sequence "(" (group "define-block-macro")
 		   (one-or-more space)
 		   (group (one-or-more (not (any space))))))
       (1 font-lock-keyword-face)
