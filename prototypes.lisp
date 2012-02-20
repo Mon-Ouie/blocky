@@ -884,7 +884,7 @@ message queue resulting from the evaluation of EXPR."
       (let* ((name (symbol-name form)))
 	(and (> (length name) 1)
 	     (string= "%" (subseq name 0 1))
-	     ;; don't catch double %%
+	     ;; don't catch double %%input
 	     (not (string= "%" (subseq name 1 2)))))))
 
 (defun make-accessor-macrolet-clause (symbol)

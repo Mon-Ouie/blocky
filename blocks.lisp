@@ -126,11 +126,11 @@ areas.")
 
 ;;; Defining composite blocks more simply
 
-(defun make-input-accessor (symbol)
+(defun make-input-accessor-forms (symbol)
   (let ((accessor (make-non-keyword 
 		   (concatenate 'string 
-				(symbol-name symbol)
-				"%input"))))
+				"%%"
+				(symbol-name symbol)))))
   `((defun ,accessor (thing)
       (nth (position ,symbol 
 		     (%input-names thing))
@@ -185,7 +185,7 @@ if you use your own INITIALIZE method.
   (let ((input-names (remove-if-not #'keywordp inputs)))
     ;; define input accessor functions
     `(progn 
-       ,@(mapcan #'make-input-accessor input-names)
+       ,@(mapcan #'make-input-accessor-forms input-names)
        (define-block (,name :super ,super) 
 	 (label :initform ,(pretty-symbol-string name))
 	 (input-names :initform ',input-names)

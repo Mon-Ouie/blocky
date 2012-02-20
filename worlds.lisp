@@ -474,7 +474,7 @@ slowdown. See also quadtree.lisp")
   (add-system-menu-maybe self)
   (setf %system-menu-open-p t)
   (setf %last-focus %focused-block)
-  (focus-on self (listener%input %system-menu)))
+  (focus-on self (%%listener %system-menu)))
 
 (define-method exit-system-menu world ()
   (add-system-menu-maybe self)

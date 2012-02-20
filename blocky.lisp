@@ -176,7 +176,7 @@ paste arrange-beside arrange-below load-variable-resource translate
 save-variable-resource *persistent-variables* with-new-world
 with-border with-blank-world with-world-prototype with-world
 remove-trailing-space *world-prototype* step-coordinates
-make-field-accessor-forms save-excursion make-input-accessor
+make-field-accessor-forms save-excursion make-input-accessor-forms
 *persistent-variables-file-name* duplicate persistent-variables-file
 combine save-variables indicator-size draw-indicator load-variables
 *block-text-colors* defblock *block-bold* *bold* *italic*

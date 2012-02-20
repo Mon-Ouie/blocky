@@ -232,23 +232,23 @@
    (new "BLOCKY:SYSTEM-MENU")))
 
 (define-method menu-items system-menu ()
-  (field-value :inputs (third %inputs)))
+  (%inputs (%%menu self)))
         
 (define-method layout system-menu ()
-  (move-to self 0 0)
+;  (move-to self 0 0)
   (layout-vertically self))
 
 (define-method can-pick system-menu ()
   t)
 
 (define-method pick system-menu ()
-  (self))
+  self)
 
 (define-method draw system-menu ()
   (with-fields (x y width height) self
     (draw-patch self x y (+ x width) (+ y height))
     (mapc #'draw %inputs)
-    (draw-focus (get-prompt (listener%input self)))))
+    (draw-focus (get-prompt (%%listener self)))))
 
 (define-method close-menus system-menu ()
   (let ((menus (menu-items self)))
