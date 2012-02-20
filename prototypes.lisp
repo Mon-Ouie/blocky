@@ -1099,6 +1099,8 @@ slot value is inherited."
     `((unless (fboundp ',accessor-name)
 	(defun ,accessor-name (thing)
 	  (field-value ,field-name thing))
+	(defun (setf ,accessor-name) (thing value)
+	  (set-field-value ,field-name thing value))
 	(export ',accessor-name)))))
 
 (defmacro define-prototype (name

@@ -299,7 +299,7 @@ or press Alt-X to bring up the system menu.")
 	    (new listener)
 	    (new menu :label "Menu" 
 		      :inputs (mapcar #'make-menu *system-menu-entries*)
-		      :target self
+		      :target *system*
 		      :category :menu
 		      :expanded t)
 	    (new tree :label "Messages"

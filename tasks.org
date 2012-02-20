@@ -1,6 +1,5 @@
 * GUI BETA
 
-** TODO splash
 ** TODO [#B] the clipboard is a world
 ** TODO [#B] sys menu should remember relative screen loc
 ** TODO [#A] create project dialog
