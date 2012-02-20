@@ -1,7 +1,7 @@
 ;;; prototypes.lisp --- an alternative object system for Common Lisp
 
 ;; Copyright (C) 2007, 2008, 2009, 2010, 2011  David O'Toole
-;; Author: David O'Toole %dto@ioforms.org
+;; Author: David O'Toole dto@ioforms.org
 ;; Keywords: oop
 ;; Version: 1.8
 ;;
@@ -193,7 +193,7 @@ extended argument list ARGLIST."
   (let ((name (object-name (find-object prototype))))
     (assert (stringp name))
     (concatenate 'string (symbol-name method)
-		 "%%" (subseq name (1+ (position (character ":") name))))))
+		 "%" (subseq name (1+ (position (character ":") name))))))
 
 (defun find-method-id (prototype method &optional create)
   (assert prototype)
@@ -227,7 +227,7 @@ extended argument list ARGLIST."
 
 (defun method-defun-symbol (method-symbol-name prototype-name)
   (intern (concatenate 'string
-		       method-symbol-name "%%" prototype-name)))
+		       prototype-name "%" method-symbol-name )))
 
 (defun method-options (name method &optional noerror)
   (multiple-value-bind (schema options)
@@ -520,7 +520,7 @@ returned. If a value cannot be found, an error of type `no-such-field'
 is signaled, unless NOERROR is non-nil; in that case,
 `*lookup-failure*' is returned. See also `has-field'."
   (declare (optimize (speed 3))
-  (inline fref set-fref object-fields object-super))
+	   (inline fref set-fref object-fields object-super))
   (let ((pointer (find-object thing))
 	result found)
     ;; search the chain of objects for a field value.
@@ -853,8 +853,6 @@ message queue resulting from the evaluation of EXPR."
 ;;   (princ %name)
 ;;   (setf %width 10)
 ;; 
-;; Because `self' is not bound outside of method bodies, we use a
-;; code-walker to implement the syntax described above. 
 
 (defvar *field-reference-prefix* "%")
 
@@ -878,9 +876,6 @@ message queue resulting from the evaluation of EXPR."
 	;; it failed the test. leave it alone.
 	(t tree)))
 
-;; Now we turn to the syntax itself and the required tree
-;; transformations.
-
 ;;; field references of the form %foo
 
 (defun field-reference-p (form)
@@ -890,19 +885,39 @@ message queue resulting from the evaluation of EXPR."
 	(string= (subseq name 0 1)
 		 *field-reference-prefix*))))
 
-(defun transform-field-reference (ref)
-  "Change the symbol REF from %foo to (field-value :foo self)."
-  (let ((name (symbol-name ref)))
-    (list 'field-value 
-	  (make-keyword (subseq name 1))
-	  'self)))
-	
-(defun transform-method-body (body)
-  "Process the forms in BODY to transform field references."
-  (transform-tree #'field-reference-p
-		  #'transform-field-reference
-		  body))
+(defun make-accessor-macrolet-clause (symbol)
+  (list symbol
+	`(field-value 
+	  ,(make-keyword
+	     ;; strip percent sign 
+	    (subseq (symbol-name symbol) 1))
+	  self)))
 
+(defun make-accessor-flet-clause (symbol)
+  `(,symbol (thing)
+	    (field-value ,symbol thing)))
+
+(defun transform-method-body (body)
+  (let (symbols)
+    ;; collect %foo symbols used in body
+    (transform-tree #'field-reference-p
+		    #'(lambda (symbol)
+			(prog1 symbol
+			  (push symbol symbols)))
+		    body)
+    ;; arrange for the substitution
+    `(symbol-macrolet 
+	 ,(mapcar #'make-accessor-macrolet-clause 
+	   (remove-duplicates symbols))
+       ,@body)))
+
+;; (defun transform-field-reference (ref)
+;;   "Change the symbol REF from %foo to (field-value :foo self)."
+;;   (let ((name (symbol-name ref)))
+;;     (list 'field-value 
+;; 	  (make-keyword (subseq name 1))
+;; 	  'self)))
+       
 ;;; Definining methods
 
 ;; The `define-method' macro defined below is the main top-level facility
@@ -970,9 +985,9 @@ was invoked."
 	   (defun ,defun-symbol (self ,@method-lambda-list)
 	     ,@(if documentation (list documentation))
 	     ,declaration2
-	     ,@(if declaration 
-		   (rest body2)
-		   body2))
+	     ,(if declaration 
+		  (rest body2)
+		  body2))
 	   ;; store the method's function in the prototype's field
 	   (setf (field-value ,field-name prototype) ',defun-symbol)
 	   ;; add this method to the method dictionary
@@ -1075,6 +1090,19 @@ slot value is inherited."
 	      descriptors)))
     (nreverse descriptors)))
 	
+(defun make-field-accessor-forms (descriptor)
+  (let* ((field-name (first descriptor))
+	 (accessor-name (make-non-keyword 
+			 ;; we use a double percent sign for the
+			 ;; accessor functions, because otherwise the
+			 ;; symbol macro definition for the "self"
+			 ;; shortcut symbols would conflict.
+			 (concatenate 'string "%" (symbol-name field-name)))))
+    `((unless (fboundp ',accessor-name)
+	(defun ,accessor-name (thing)
+	  (field-value ,field-name thing))
+	(export ',accessor-name)))))
+
 (defmacro define-prototype (name
 			    (&key super 
 				  documentation
@@ -1121,43 +1149,34 @@ OPTIONS is a property list of field options. Valid keys are:
 			      pre-descriptors))
 	 (prototype-id (make-prototype-id name (project-package-name) t ))
 	 (field-initializer-body (delete nil (mapcar #'make-field-initializer 
-						     descriptors)))
-	 (super-sym (gensym)))
-       ;; Need this at top-level for compiler to know about the special var
-    `(let* ((,super-sym ,(when super (make-prototype-id super)))
+						     descriptors))))
+    `(let* ((super-sym ,(when super `(make-prototype-id ,super)))
 	    (uuid (make-uuid))
-	    (fields (compose-blank-fields))
-	    (blanks (compose-blank-fields ',descriptors))
-	    (super-descriptors (when nil ;; XXXXXX ,super-sym
-				    (field-value :field-descriptors 
-						 ,super-sym
-						 :noerror)))
-	    (descriptors2 (append ',descriptors (when (listp super-descriptors)
-						    super-descriptors))))
-       (setf (fref fields :field-descriptors) descriptors2)
+	    (fields (compose-blank-fields ',descriptors))
+	    (prototype (make-object :fields fields
+				    :name ,prototype-id
+				    :uuid uuid
+				    :super (find-object super-sym))))
+       ,@(mapcan #'make-field-accessor-forms descriptors)
+       (setf (fref fields :field-descriptors) ',descriptors)
        (setf (fref fields :documentation) ,documentation)
        (setf (fref fields :initialize-fields) (function (lambda (self) 
 						,@field-initializer-body)))
-       (let ((prototype (make-object :fields fields
-				     :name ,prototype-id
-				     :uuid uuid
-				     :super (find-object ,super-sym))))
-	 (initialize-method-cache prototype)
-	 (merge-hashes fields blanks)
-	 ;; set the default initforms
-	 (send :initialize-fields prototype)
-	 ;; the prototype's super may have an initialize method.
-	 ;; if so, we need to initialize the present prototype.
-	 (when (has-field :initialize prototype)
-	   (send :initialize prototype))
-	 ;; now add it to the dictionaries
- 	 (add-prototype prototype)
-	 (add-object-to-database prototype)
-	 ;; return the uuid and object
-	 (values uuid prototype)))))
+       (initialize-method-cache prototype)
+       ;; set the default initforms
+       (send :initialize-fields prototype)
+       ;; the prototype's super may have an initialize method.
+       ;; if so, we need to initialize the present prototype.
+       (when (has-field :initialize prototype)
+	 (send :initialize prototype))
+       ;; now add it to the dictionaries
+       (add-prototype prototype)
+       (add-object-to-database prototype)
+       ;; return the uuid and object
+       (values uuid prototype))))
 
 ;;; Cloning and duplicating objects
-
+  
 (defmacro new (prototype-name &rest initargs)
   `(clone ,(make-prototype-id prototype-name)
 	  ,@initargs))

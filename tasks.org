@@ -1,9 +1,16 @@
 * GUI BETA
 
+** TODO update define-visual-macro to accept optional names for inputs and have it auto-make accessor functions
+** TODO use %%foo for input foo
+** TODO use symbol-macrolet instead of tree transformation
+*** DONE change %% to %
+    CLOSED: [2012-02-18 Sat 23:21]
+*** DONE make (%fieldname thing)
+    CLOSED: [2012-02-18 Sat 23:34]
 ** TODO [#A] create project dialog
+** TODO [#A] load project dialog
 ** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
 ** TODO [#A] Don't require .blocky suffix for project dir
-
 ** TODO [#A] allow empty project
 ** TODO [#A] sys menu should allow pin/unpin and remember relative screen loc
 ** TODO [#A] selecting single world object

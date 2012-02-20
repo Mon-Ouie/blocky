@@ -192,7 +192,7 @@
   (setf %objects (make-hash-table :test 'equal)))
   
 (define-method handle-event world (event)
-  (or (handle-event%%block self event)
+  (or (block%handle-event self event)
       (with-fields (player quadtree) self
 	(when player 
 	  (prog1 t
