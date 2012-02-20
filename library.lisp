@@ -239,7 +239,7 @@ inputs are evaluated."
      (substitute #\Space #\- name))))
 
 (define-method initialize message (&key prototype schema method label target (button-p t))
-  (super%initialize self)
+  (initialize%super self)
   (setf %target target)
   (setf %button-p button-p)
   (let* ((schema0
@@ -304,7 +304,7 @@ inputs are evaluated."
 (define-method layout color ())
 
 (define-method initialize color (&optional (name "gray50"))
-  (super%initialize self)
+  (initialize%super self)
   (setf %name name))
 
 ;;; A reference to another block

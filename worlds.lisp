@@ -186,7 +186,7 @@
       (zerop (hash-table-count %objects))))
 
 (define-method initialize world ()
-  (super%initialize self)
+  (initialize%super self)
   (setf %ghost (new block))
   (setf %variables (make-hash-table :test 'equal))
   (setf %objects (make-hash-table :test 'equal)))
@@ -214,7 +214,7 @@
 
 (define-method add-block world (object &optional x y)
   (remove-object-maybe self object)
-  (super%add-block self object x y))
+  (add-block%super self object x y))
 
 (define-method drop-block world (block x y)
   (add-object self block)
@@ -474,7 +474,7 @@ slowdown. See also quadtree.lisp")
   (add-system-menu-maybe self)
   (setf %system-menu-open-p t)
   (setf %last-focus %focused-block)
-  (focus-on self (get-listener %system-menu)))
+  (focus-on self (listener%input %system-menu)))
 
 (define-method exit-system-menu world ()
   (add-system-menu-maybe self)
@@ -654,7 +654,7 @@ slowdown. See also quadtree.lisp")
   
 (define-method handle-event world (event)
   (with-world self
-    (or (super%handle-event self event)
+    (or (handle-event%super self event)
 	(with-field-values (focused-block selection inputs) self
 	  (let ((block
 		    (cond

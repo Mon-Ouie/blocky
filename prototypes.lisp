@@ -882,8 +882,10 @@ message queue resulting from the evaluation of EXPR."
   "Return non-nil if FORM is a symbol like %foo."
   (if (symbolp form)
       (let* ((name (symbol-name form)))
-	(string= (subseq name 0 1)
-		 *field-reference-prefix*))))
+	(and (> (length name) 1)
+	     (string= "%" (subseq name 0 1))
+	     ;; don't catch double %%
+	     (not (string= "%" (subseq name 1 2)))))))
 
 (defun make-accessor-macrolet-clause (symbol)
   (list symbol
@@ -967,11 +969,11 @@ was invoked."
 			  method-symbol-name 
 			  (symbol-name prototype-name)))
 	   (queue-defun-symbol (intern (concatenate 'string
-						    "QUEUE%"
-						    method-symbol-name)))
+						    method-symbol-name 
+						    "%QUEUE")))
 	   (next-defun-symbol (intern (concatenate 'string
-						   "SUPER%"
-						   method-symbol-name)))
+						   method-symbol-name
+						   "%SUPER")))
 	   (method-lambda-list (if (is-extended-arglist arglist)
 				   (make-lambda-list arglist)
 				   arglist)))
@@ -1093,10 +1095,6 @@ slot value is inherited."
 (defun make-field-accessor-forms (descriptor)
   (let* ((field-name (first descriptor))
 	 (accessor-name (make-non-keyword 
-			 ;; we use a double percent sign for the
-			 ;; accessor functions, because otherwise the
-			 ;; symbol macro definition for the "self"
-			 ;; shortcut symbols would conflict.
 			 (concatenate 'string "%" (symbol-name field-name)))))
     `((unless (fboundp ',accessor-name)
 	(defun ,accessor-name (thing)
@@ -1312,10 +1310,10 @@ objects after reconstruction, wherever present."
       ;; passthru
       (t data))))
 
-(defun super%initialize (object &rest args)
+(defun initialize%super (object &rest args)
   (apply #'send-super :initialize object args))
 
-(defun queue%initialize (object &rest args)
+(defun initialize%queue (object &rest args)
   (apply #'send-queue :initialize object args))
 
 (defun duplicate (original)

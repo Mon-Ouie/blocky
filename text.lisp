@@ -139,7 +139,7 @@
   (setf %point-column 0))
 
 (define-method initialize text (&optional buffer)
-  (super%initialize self)
+  (initialize%super self)
   (when (null buffer)
     (setf %buffer (list " ")))
   (when (stringp buffer)

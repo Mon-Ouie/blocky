@@ -44,6 +44,7 @@ Web at:
   ;; general information
   (inputs :initform nil :documentation 
 	  "List of input (or `child') blocks.")
+  (input-names :initform nil)
   (results :initform nil :documentation
 	   "Computed result values from the input blocks.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
@@ -69,11 +70,6 @@ Web at:
   (last-x :initform nil)
   (last-y :initform nil)
   (last-z :initform nil)
-  ;; possible grid location
-  (on-grid :initform nil
-	   :documentation "When non-nil, this block is located on a world's cell-grid.")
-  (row :initform 0 :documentation "When non-nil, the current row location of the block.")
-  (column :initform 0 :documentation "When non-nil, the current column of the block.")
   ;; blending
   (blend :initform :alpha)
   (opacity :initform 1.0)
@@ -96,7 +92,6 @@ Web at:
   (image :initform nil :documentation "Texture to be displayed, if any."))
 
 ;;; Defining blocks
-
 
 (defmacro define-block (spec &body args)
   "Define a new block prototype.
@@ -130,6 +125,17 @@ Argument &BODY difuhy]."
 areas.")
 
 ;;; Defining composite blocks more simply
+
+(defun make-input-accessor (symbol)
+  (let ((accessor (make-non-keyword 
+		   (concatenate 'string 
+				(symbol-name symbol)
+				"%input"))))
+  `((defun ,accessor (thing)
+      (nth (position ,symbol 
+		     (%input-names thing))
+	   (%inputs thing)))
+    (export ',accessor))))
 
 (defmacro define-block-macro (name 
      (&key (super "BLOCKY:BLOCK") fields documentation inputs initforms)
@@ -176,30 +182,24 @@ invoke `initialize-inputs' in your implementation if you want the
 INPUTS argument to be respected. Likewise, the INITFORMS are not run
 if you use your own INITIALIZE method.
 "
-  (let ((input-names (remove-if-not #'keywordp inputs))
-	(definitions nil))
+  (let ((input-names (remove-if-not #'keywordp inputs)))
     ;; define input accessor functions
-    (dolist (input-name input-names)
-      (push `(defun ,(make-non-keyword 
-		      (concatenate 'string "input%" 
-				   (symbol-name input-name)))
-		 (thing)
-	       (nth ,(position input-name input-names) 
-		    (%inputs thing)))
-	    definitions))
     `(progn 
+       ,@(mapcan #'make-input-accessor input-names)
        (define-block (,name :super ,super) 
 	 (label :initform ,(pretty-symbol-string name))
+	 (input-names :initform ',input-names)
 	 ,@fields)
        (define-method initialize-inputs ,name ()
 	 ;; strip out input names, if any
-	 (setf %inputs (remove-if #'keywordp (list ,@inputs))))
+	 (setf %inputs (list ,@(remove-if #'keywordp inputs))))
        (define-method initialize ,name ()
 	 (initialize-inputs self)
 	 (apply #'block%initialize self %inputs) ;; should this be super%init?
 	 ,@initforms)
-       (define-method recompile ,name () `(evaluate self))
-       (define-method evaluate ,name () ,@body))))
+       (define-method recompile ,name () ,@body))))
+
+
 
 ;;; Block lifecycle
 
@@ -1620,15 +1620,15 @@ Note that the center-points of the objects are used for comparison."
   "Return the straight-line distance to the player."
   (distance-to-thing self (get-player *world*)))
 
-(defun uniquify-buffer-name (name)
-  (let ((n 1)
-	(name0 name))
-    (block naming
-      (loop while name0 do
-	(if (get-buffer name0)
-	    (setf name0 (format nil "~A.~S" name n)
-		  n (1+ n))
-	    (return-from naming name0))))))
+;; (defun uniquify-buffer-name (name)
+;;   (let ((n 1)
+;; 	(name0 name))
+;;     (block naming
+;;       (loop while name0 do
+;; 	(if (get-buffer name0)
+;; 	    (setf name0 (format nil "~A.~S" name n)
+;; 		  n (1+ n))
+;; 	    (return-from naming name0))))))
 
 (define-method queue-layout block ()
   (setf %needs-layout t))
@@ -1639,7 +1639,7 @@ Note that the center-points of the objects are used for comparison."
       (queue-layout world))))
 
 (define-method bring-to-front block (block)
-  (with-fields (inputs block) self
+  (with-fields (inputs) self
     (assert (contains self block))
     (delete-input self block)
     (append-input self block)))

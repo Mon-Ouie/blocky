@@ -59,7 +59,7 @@
 (define-method initialize window (&optional (buffer *default-buffer-name*))
   (with-fields (entry) self
     (let ((buffer (find-buffer buffer)))
-      (super%initialize self)
+      (initialize%super self)
       (visit self buffer))))
 
 (define-method set-tool window (tool)

@@ -56,7 +56,7 @@
 (define-method initialize tree 
     (&key action target top-level inputs pinned locked method
 	  expanded (draw-frame t) (label "no label..."))
-  (super%initialize self)
+  (initialize%super self)
   (setf %action action
 	%pinned pinned
 	%draw-frame draw-frame
@@ -313,7 +313,7 @@
 			(dash 0 x width)
 			(- (dash 1 y height) (dash 1))))
 	  ;; nope, draw in the typical fashion.
-	  (super%draw-expanded self label)))))
+	  (draw-expanded%super self label)))))
 
 (define-method draw-unexpanded menu (&optional label)
   (with-fields (action target top-level) self

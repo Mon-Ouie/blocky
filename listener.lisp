@@ -361,7 +361,7 @@
 (define-method initialize entry 
     (&key value type-specifier options label label-color parent
     read-only)
-  (super%initialize self)
+  (initialize%super self)
   ;(assert (and value type-specifier))
   (when parent (setf %parent parent))
   (setf %type-specifier type-specifier
@@ -444,7 +444,7 @@
 
 (define-method enter entry ()
   (unless %read-only
-    (super%enter self :no-clear)))
+    (enter%super self :no-clear)))
 
 (define-method layout entry ()
   (with-fields (height width value line) self
@@ -461,7 +461,7 @@
 ;;; Allow dragging the parent block more easily
 
 (define-method hit entry (x y)
-  (when (super%hit self x y)
+  (when (hit%super self x y)
     ;; always allow clicking data area
     (if (< x (+ %x (label-width self)))
 	(prog1 %parent (assert %parent))
@@ -720,7 +720,7 @@
   (category :initform :menu))
 
 (define-method layout command-line () 
-  (super%layout self)
+  (layout%super self)
   (with-fields (width height x y) *world*
     (setf %width width)
     (move-to self x (- (+ y height)

@@ -95,7 +95,7 @@ run-hook queue-tail make-resource-link save-resource save-project
 defresource export-application export-project make-queue queue unqueue
 queue-message queued-messages-p unqueue-message send-queue field-value
 random-direction random-choose *resources* load-font-resource
-save-object-resource super%initialize super%initialize
+save-object-resource initialize%super initialize%super
 /queue/initialize queue/initialize draw-string-solid read-iof
 initialize-resource-table percent-of-time render-formatted-paragraph
 make-formatted-string draw-string-shaded set-blending-mode
@@ -176,7 +176,7 @@ paste arrange-beside arrange-below load-variable-resource translate
 save-variable-resource *persistent-variables* with-new-world
 with-border with-blank-world with-world-prototype with-world
 remove-trailing-space *world-prototype* step-coordinates
-make-field-accessor-forms save-excursion
+make-field-accessor-forms save-excursion make-input-accessor
 *persistent-variables-file-name* duplicate persistent-variables-file
 combine save-variables indicator-size draw-indicator load-variables
 *block-text-colors* defblock *block-bold* *bold* *italic*

@@ -46,6 +46,10 @@
 
 (define-method create-project system ())
 
+;; (define-method foo system ()
+;;   (message "AA ~S" (when %shell t))
+;;   (message "BB ~S" (%%shell t)))
+
 ;(define-block-macro create-project )
 
 ;; (define-method open-existing-project system ((project-name string :default " "))
@@ -209,42 +213,42 @@
 
 ;;; The system menu itself
 
-(define-block (system-menu :super :list)
-  (category :initform :system))
+(define-block-macro system-menu 
+    (:super :list 
+     :fields 
+     ((category :initform :system))
+     :initforms 
+     ((freeze self))
+     :inputs 
+     (:headline (new system-headline)
+      :listener (new listener)
+      :menu (new menu :label "System" 
+		      :inputs (mapcar #'make-menu *system-menu-entries*)
+		      :target self
+		      :expanded t))))
 
 (defun make-system-menu ()
   (find-uuid 
    (new "BLOCKY:SYSTEM-MENU")))
 
-(define-method initialize system-menu ()
-  (super%initialize
-   self
-   (new system-headline)
-   (new listener)
-   (new menu :label "System" 
-	     :inputs (mapcar #'make-menu *system-menu-entries*) 
-	     :target self
-	     :expanded t))
-  (freeze self))
-
 (define-method menu-items system-menu ()
   (field-value :inputs (third %inputs)))
         
-(define-method get-listener system-menu ()
-  (second %inputs))
-
 (define-method layout system-menu ()
   (move-to self 0 0)
   (layout-vertically self))
 
 (define-method can-pick system-menu ()
-  nil)
+  t)
+
+(define-method pick system-menu ()
+  (self))
 
 (define-method draw system-menu ()
   (with-fields (x y width height) self
     (draw-patch self x y (+ x width) (+ y height))
     (mapc #'draw %inputs)
-    (draw-focus (get-prompt (get-listener self)))))
+    (draw-focus (get-prompt (listener%input self)))))
 
 (define-method close-menus system-menu ()
   (let ((menus (menu-items self)))
@@ -264,7 +268,7 @@
   nil)
 
 ;; (define-method initialize system-menu (&optional (menus *system-menu*))
-;;   (apply #'super%initialize self menus)
+;;   (apply #'initialize%super self menus)
 ;;   (with-fields (inputs) self
 ;;     (dolist (each inputs)
 ;;       (setf (field-value :top-level each) t)

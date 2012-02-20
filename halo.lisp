@@ -41,7 +41,7 @@
 (define-block handle target indicator color)
 
 (define-method initialize handle (&optional target)
-  (super%initialize self)
+  (initialize%super self)
   (setf %target target))
 
 (define-method can-pick handle () t)
@@ -143,7 +143,7 @@
 (define-method initialize halo (target)
   (assert (blockyp target))
   (setf %target target)
-  (apply #'super%initialize self
+  (apply #'initialize%super self
 	 (mapcar #'(lambda (handle)
 		       (clone (make-prototype-id handle) target))
 		 *halo-handles*)))
