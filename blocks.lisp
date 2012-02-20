@@ -128,6 +128,78 @@ Argument &BODY difuhy]."
   "List of keywords used to group blocks into different functionality
 areas.")
 
+;;; Defining composite blocks more simply
+
+(defmacro define-block-macro (name 
+     (&key (super "BLOCKY:BLOCK") fields documentation inputs initforms)
+     &body body)
+  "Define a new block called NAME according to the given options.
+
+The argument SUPER should be the name (a symbol or string) of the base
+prototype to inherit traits (data and behavior) from. The default is
+`block' so that if you don't specify a SUPER argument, you still
+inherit all the inbuilt behaviors of blocks.
+
+The argument FIELDS should be a list of field descriptors, the same as
+would be given to `define-prototype'.
+
+The INPUTS argument is a list of forms evaluated to produce argument
+blocks. 
+
+The argument INITFORMS contains Lisp code to be executed after
+initialization.
+
+DOCUMENTATION is an optional documentation string for the entire
+macro.
+
+The BODY forms are evaluated when the resulting block is evaluated;
+they operate by invoking `evaluate' in various ways on the INPUTS.
+
+The method `recompile' emits Lisp code that has the same result as
+invoking `evaluate', but with zero or more blocks in the entire visual
+expression subtree being replaced by (possibly shorter and more
+efficient) 'plain' Lisp code. This is trivially true for the default
+implementation of `recompile', which emits a statement that just
+invokes `evaluate' when evaluated. When subsequently redefining the
+`recompile' method on a block-macro, the 'equivalence' between the
+results of invoking `recompile' and invoking `evaluate' depends solely
+on the implementor, who can write a `recompile' method which operates
+by invoking `recompile' in various ways on the macro-block's
+`%inputs', and emitting Lisp code forms using those compiled code
+streams as a basis. 
+
+By default, the resulting block's `initialize' method will invoke
+`initialize-inputs', which creates the UI that had been specified in
+INPUTS. If you replace `initialize' with your own method, be sure to
+invoke `initialize-inputs' in your implementation if you want the
+INPUTS argument to be respected. Likewise, the INITFORMS are not run
+if you use your own INITIALIZE method.
+"
+  (let ((input-names (remove-if-not #'keywordp inputs))
+	(definitions nil))
+    ;; define input accessor functions
+    (dolist (input-name input-names)
+      (push `(defun ,(make-non-keyword 
+		      (concatenate 'string "input%" 
+				   (symbol-name input-name)))
+		 (thing)
+	       (nth ,(position input-name input-names) 
+		    (%inputs thing)))
+	    definitions))
+    `(progn 
+       (define-block (,name :super ,super) 
+	 (label :initform ,(pretty-symbol-string name))
+	 ,@fields)
+       (define-method initialize-inputs ,name ()
+	 ;; strip out input names, if any
+	 (setf %inputs (remove-if #'keywordp (list ,@inputs))))
+       (define-method initialize ,name ()
+	 (initialize-inputs self)
+	 (apply #'block%initialize self %inputs) ;; should this be super%init?
+	 ,@initforms)
+       (define-method recompile ,name () `(evaluate self))
+       (define-method evaluate ,name () ,@body))))
+
 ;;; Block lifecycle
 
 (define-method initialize block (&rest blocks)
