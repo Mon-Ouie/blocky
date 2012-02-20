@@ -148,9 +148,6 @@
 		       (clone (make-prototype-id handle) target))
 		 *halo-handles*)))
 
-;; (define-method hit halo (x y)
-;;   (hit%%block self x y))
-
 (define-method layout halo ()
   (with-fields (x y width height) %target
     (let ((size (* *handle-scale* (indicator-size))))
