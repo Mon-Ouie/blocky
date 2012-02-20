@@ -70,7 +70,7 @@
   (apply #'message args))
 
 (define-method initialize prompt ()
-  (initialize%%block self)
+  (block%initialize self)
   (when (not (has-local-value :history self))
     (setf %history (make-queue :max *default-prompt-history-size*)))
   (install-text-keybindings self))
@@ -553,7 +553,7 @@
   (declare (ignore value)))
 
 (define-method hit socket (x y)
-  (hit%%block self x y))
+  (block%hit self x y))
 
 (define-method lose-focus socket ())
 (define-method enter socket ())
@@ -564,7 +564,7 @@
 		       (find-color (or %parent self) :foreground))))
 
 (define-method layout socket ()
-  (layout%%block self))
+  (block%layout self))
 
 (define-method draw socket (&optional no-label)
   (with-fields (x y options inputs width height) self
@@ -577,11 +577,11 @@
 	(draw block)))))
 
 (define-method label-width socket () 
-  (label-width%%block self))
+  (block%label-width self))
 
 ;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
 
-(define-prototype listener-prompt (:super prompt)
+(define-prototype listener-prompt (:super :prompt)
   (operation :initform :prompt)
   (background :initform nil)
   (methods :initform '(:debug-on-error :print-on-error))
@@ -594,7 +594,7 @@
   (setf *debug-on-error* nil))
 
 (define-method initialize listener-prompt (&optional output)
-  (initialize%%prompt self)
+  (prompt%initialize self)
   (print-on-error self)
   (setf %output output))
 
@@ -629,7 +629,7 @@
     ;; (dolist (line (split-string-on-lines %error-output))
     ;;   (accept %parent (new string :value line)))))
 
-(define-prototype listener (:super list)
+(define-prototype listener (:super :list)
   (scrollback-length :initform 100)
   (category :initform :system)
   (temporary :initform t)
@@ -641,7 +641,7 @@
 (define-method initialize listener ()
   (with-fields (image inputs) self
     (let ((prompt (new listener-prompt self)))
-      (initialize%%list self)
+      (list%initialize self)
       (set-output prompt prompt)
       (setf inputs (list prompt))
       (set-parent prompt self)
