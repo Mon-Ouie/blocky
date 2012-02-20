@@ -39,12 +39,12 @@
 	       (:file "trees" :depends-on ("library"))
 	       (:file "listener" :depends-on ("library"))
 	       (:file "worlds" :depends-on ("library"))
-	       (:file "meta" :depends-on ("library"))
+
 	       (:file "system" :depends-on ("library"))))
 ;	       (:file "dance" :depends-on ("blocks"))
 ;	       (:file "universe" :depends-on ("worlds"))
 ;	       (:file "shell" :depends-on ("worlds"))
 ;	       (:file "path")
 ;	       (:file "windows" :depends-on ("library"))
-	       
+;	       (:file "meta" :depends-on ("library"))	       
 	       
