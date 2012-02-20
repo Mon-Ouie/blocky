@@ -168,7 +168,7 @@
   (new system)
   (let ((world (new world)))
     (setf *world* world)
+;    (add-object world (new splash-screen))
     (start world)))
-  
 
 ;;; turtle.lisp ends here

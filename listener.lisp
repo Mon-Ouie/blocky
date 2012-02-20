@@ -32,7 +32,7 @@
 
 (defparameter *default-entry-text-color* "white")
 (defparameter *default-entry-label-color* "white")
-(defparameter *default-prompt-string* "> ")
+(defparameter *default-prompt-string* "Lisp: ")
 
 (defparameter *default-prompt-margin* 4)
 

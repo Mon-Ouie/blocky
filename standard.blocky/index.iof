@@ -130,6 +130,7 @@
 (:name "default-font" :type :ttf :file "DejaVuSans.ttf" :properties (:size 12))
 
 (:name "blocky" :type :image :file "blocky.png")
+(:name "blocky-big" :type :image :file "blocky-big.png")
 
  (:name "up" :type :image :file "up.png")
  (:name "down" :type :image :file "down.png")

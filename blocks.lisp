@@ -194,12 +194,10 @@ if you use your own INITIALIZE method.
 	 ;; strip out input names, if any
 	 (setf %inputs (list ,@(remove-if #'keywordp inputs))))
        (define-method initialize ,name ()
+	 (apply #'initialize%super self %inputs) 
 	 (initialize-inputs self)
-	 (apply #'block%initialize self %inputs) ;; should this be super%init?
 	 ,@initforms)
        (define-method recompile ,name () ,@body))))
-
-
 
 ;;; Block lifecycle
 
@@ -760,9 +758,11 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     ((x number :default 0) (y number :default 0))
   "Move the block to a new (X Y) location."
   (save-location self)
-  (when *quadtree* (quadtree-delete *quadtree* self))
+  (when (and *quadtree* %quadtree-node)
+    (quadtree-delete *quadtree* self))
   (setf %x x %y y)
-  (when *quadtree* (quadtree-insert *quadtree* self)))
+  (when (and *quadtree* %quadtree-node)
+    (quadtree-insert *quadtree* self)))
 
 (define-method move-to-* block
     ((x number :default 0) 
@@ -1095,7 +1095,7 @@ category of block."
 		  (:highlight *block-highlight-colors*)
 		  (:shadow *block-shadow-colors*)
 		  (:foreground *block-foreground-colors*)))
-	 (category (or %category :data))
+	 (category (if (keywordp %category) %category :system))
 	 (result (getf colors category)))
       (prog1 result 
 	(assert category)
@@ -1735,7 +1735,7 @@ Note that the center-points of the objects are used for comparison."
       (t (error "Invalid task.")))))
 
 (defun seconds->frames (seconds)
-  (truncate (* seconds blocky:*frame-rate*)))
+  (truncate (* seconds (/ 1000 *dt*))))
 
 (defun time-until (updates)
   (assert (>= updates *updates*))

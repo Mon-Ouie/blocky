@@ -44,8 +44,8 @@
 (defvar *author* nil)
 
 (defvar *copyright-notice*
-"This is the Blocky programming language.
-Copyright (C) 2006-2011 by David T O'Toole <dto@ioforms.org>
+"Welcome to the Blocky multimedia programming language.
+Copyright (C) 2006-2012 by David T O'Toole <dto@ioforms.org>
 http://blocky.io/
 
 This program is free software: you can redistribute it and/or modify

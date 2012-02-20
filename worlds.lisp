@@ -474,7 +474,7 @@ slowdown. See also quadtree.lisp")
   (add-system-menu-maybe self)
   (setf %system-menu-open-p t)
   (setf %last-focus %focused-block)
-  (focus-on self (%%listener %system-menu)))
+  (focus-on self (get-listener %system-menu)))
 
 (define-method exit-system-menu world ()
   (add-system-menu-maybe self)
@@ -542,17 +542,17 @@ slowdown. See also quadtree.lisp")
 ;;; Simulation update
 
 (define-method update world (&optional no-collisions)
-  (with-world self
-    (layout self)
-    (when %system-menu
-      (layout %system-menu)
-      (update %system-menu))
-    (unless %paused
-      (with-field-values (quadtree objects height width player) self
-	;; build quadtree if needed
-	(when (null quadtree)
-	  (install-quadtree self))
-	(let ((*quadtree* %quadtree))
+  (with-field-values (objects player) self
+    (with-world self
+      ;; build quadtree if needed
+      (when (null %quadtree)
+	(install-quadtree self))
+      (let ((*quadtree* %quadtree))
+	(layout self)
+	(when %system-menu
+	  (layout %system-menu)
+	  (update %system-menu))
+	(unless %paused
 	  (assert (zerop *quadtree-depth*))
 	  ;; possibly run the objects
 	  (loop for object being the hash-values in %objects do
@@ -769,10 +769,11 @@ block found, or nil if none is found."
 			*minimum-drag-distance*)
 		     (can-pick click-start-block))
 	    (let ((drag (pick click-start-block)))
-	      (begin-drag self x y drag)
-	      ;; clear click data
-	      (setf click-start nil)
-	      (setf click-start-block nil))))))))
+	      (when drag 
+		(begin-drag self x y drag)
+		;; clear click data
+		(setf click-start nil)
+		(setf click-start-block nil)))))))))
 
 (define-method handle-point-motion world (mouse-x mouse-y)
   (with-fields (inputs hover highlight click-start drag-offset

@@ -24,6 +24,43 @@
 
 (in-package :blocky)
 
+;;; Message output window
+
+(define-block messenger :category :terminal)
+
+(defparameter *messenger-columns* 80)
+(defparameter *messenger-rows* 7)
+
+(define-method layout messenger ()
+  (setf %height (+ (* (font-height *font*) *messenger-rows*)
+		   (dash 4)))
+  (let ((width 0))
+    (block measuring
+      (dotimes (n *messenger-rows*)
+	(if (<= (length *message-history*) n)
+	    (return-from measuring nil)
+	    (setf width 
+		  (max width 
+		       (font-text-width 
+			(nth n *message-history*)
+			*block-font*))))))
+    (setf %width (+ width (dash 5)))))
+			     
+(define-method draw messenger ()
+  (draw-background self)
+  (with-fields (x y width height) self
+      (let ((y0 (+ y height (- 0 (font-height *font*) (dash 2))))
+	    (x0 (+ x (dash 3))))
+	(dotimes (n *messenger-rows*)
+	  (unless (<= (length *message-history*) n)
+	    (draw-string (nth n *message-history*)
+			 x0 y0
+			 :color "gray70"
+			 :font *block-font*)
+	    (decf y0 (font-height *font*)))))))
+
+;;; A block representing the current system and project universe
+
 (defvar *system* nil)
 
 (define-block system
@@ -45,10 +82,6 @@
 ;;     (:super list
 
 (define-method create-project system ())
-
-;; (define-method foo system ()
-;;   (message "AA ~S" (when %shell t))
-;;   (message "BB ~S" (%%shell t)))
 
 ;(define-block-macro create-project )
 
@@ -194,22 +227,53 @@
 
 (defparameter *logo-height* 24)
 
-(defparameter *blocky-title-string* "Blocky 0.9a")
+(defparameter *blocky-title-string* "Blocky 0.91a")
 
 (define-method layout system-headline ()
   (resize self 
-	  (+ (dash 2) *logo-height*
-	     (font-text-width *blocky-title-string* *block-bold*))
+	  (+ (dash 2) *logo-height*)
 	  *logo-height*))
 
 (define-method draw system-headline ()
-  (with-fields (x y) self
-    (draw-image "blocky" x y :height *logo-height* :width *logo-height*)
-    (draw-string *blocky-title-string*
-		 (+ x *logo-height* (dash 2))
-		 (+ y (dash 2))
-		 :color "white"
-		 :font *block-bold*)))
+  (with-fields (x y width) self
+    (draw-image "blocky" (+ x (dash 0.5)) y :height *logo-height* :width *logo-height*)))
+
+(define-method can-pick system-headline () t)
+
+(define-method pick system-headline () %parent)
+
+;;; Splash screen
+
+(defparameter *splash-screen-text*
+  "Welcome to the Blocky multimedia programming language.
+Copyright (C) 2006-2012 by David T O'Toole <dto@ioforms.org> 
+This program is free software: you can redistribute it and/or 
+modify it under the terms of the GNU General Public License.
+For more information, see the included file 'COPYING',
+or visit the language's home page: http://blocky.io
+
+You may press F1 for help at any time, 
+or press Alt-X to bring up the system menu.")
+
+(define-block splash-logo)
+
+(define-method update splash-logo ()
+  (change-image self "blocky-big"))
+
+(define-block-macro splash-screen
+    (:super :list
+     :fields 
+     ((category :initform :system))
+     :inputs
+     ((new splash-logo)
+      (new text *splash-screen-text*))
+     :initforms 
+     ((later 5.0 (discard self)))))
+
+(define-method update splash-screen ()
+  (mapc #'update %inputs)
+  (center self)
+  (layout-vertically self))
 
 ;;; The system menu itself
 
@@ -218,24 +282,45 @@
      :fields 
      ((category :initform :system))
      :initforms 
-     ((freeze self))
+     ((expand (second %inputs))
+      (pin (second %inputs))
+      (unfreeze self)
+      (setf %locked t))
      :inputs 
      (:headline (new system-headline)
-      :listener (new listener)
-      :menu (new menu :label "System" 
+      :menu 
+      (new tree 
+	   :label *blocky-title-string*
+	   :pinned t
+	   :category :system
+	   :expanded t
+	   :inputs
+	   (list 
+	    (new listener)
+	    (new menu :label "Menu" 
 		      :inputs (mapcar #'make-menu *system-menu-entries*)
 		      :target self
-		      :expanded t))))
+		      :category :menu
+		      :expanded t)
+	    (new tree :label "Messages"
+		 :expanded nil
+		 :inputs (list (new messenger))))))))
 
 (defun make-system-menu ()
   (find-uuid 
    (new "BLOCKY:SYSTEM-MENU")))
 
+(define-method discard system-menu ()
+  (discard%super self)
+  (setf (%system-menu (world)) nil))
+
 (define-method menu-items system-menu ()
   (%inputs (%%menu self)))
+
+(define-method get-listener system-menu ()
+  (first (menu-items self)))
         
 (define-method layout system-menu ()
-;  (move-to self 0 0)
   (layout-vertically self))
 
 (define-method can-pick system-menu ()
@@ -248,7 +333,7 @@
   (with-fields (x y width height) self
     (draw-patch self x y (+ x width) (+ y height))
     (mapc #'draw %inputs)
-    (draw-focus (get-prompt (%%listener self)))))
+    (draw-focus (get-prompt (get-listener self)))))
 
 (define-method close-menus system-menu ()
   (let ((menus (menu-items self)))

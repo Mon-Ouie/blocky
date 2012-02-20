@@ -54,19 +54,20 @@
 (define-method children tree () %inputs)
 
 (define-method initialize tree 
-    (&key action target top-level inputs pinned locked method
+    (&key action target top-level inputs pinned locked method category
 	  expanded (draw-frame t) (label "no label..."))
   (initialize%super self)
   (setf %action action
 	%pinned pinned
 	%draw-frame draw-frame
 	%expanded expanded
+	%category category
 	%locked locked
 	%target target
 	%method method
 	%top-level top-level
-	%inputs inputs
 	%label label)
+  (when inputs (setf %inputs inputs))
   ;; become the parent
   (when inputs
     (dolist (each inputs)
@@ -200,13 +201,26 @@
 	  ;; (when (plusp *tree-depth*)
 	  ;;   (draw-box x y width height :color (depth-gray *tree-depth*))))
       (draw-label-string self display-string)
+      (draw-indicator :down-triangle-open
+		      (+ %x (font-text-width display-string)
+			 (dash 4))
+		      (+ %y (dash 2))
+		      :scale 1.6
+		      :color "gray60")
       (draw-line (+ x 1) (dash 2 y header) 
 		 (+ x width -1) (dash 2 y header)
 		 :color (find-color self :highlight)))))
   
 (define-method draw-unexpanded tree (&optional label)
 ;  (draw-background self)
-  (draw-label-string self (or label (display-string self))))
+  (let ((string (or label (display-string self))))
+    (draw-label-string self string)
+    (draw-indicator :down-triangle-closed 
+		    (+ %x (font-text-width string)
+		       (dash 4))
+		    (+ %y (dash 2))
+		    :scale 1.6
+		    :color "yellow")))
 
 (define-method draw-subtree tree ()
   (deeper 
@@ -225,13 +239,14 @@
 	    (when draw-frame (draw-unexpanded self label)))))))
 
 ;; see system.lisp for example tree menu
-(defun make-tree (items &key target (tree-prototype "BLOCKY:TREE"))
+(defun make-tree (items &key target category (tree-prototype "BLOCKY:TREE"))
   (labels ((xform (item)
 	     (if (listp item)
 		 (if (listp (first item))
 		     (mapcar #'xform item)
 		     (apply #'clone tree-prototype
 			    :target target
+			    :category category
 			    (mapcar #'xform item)))
 		 item)))
     (xform items)))
@@ -249,6 +264,7 @@
 (defun make-menu (items &key target)
   (make-tree items 
 	     :target target 
+	     :category :menu
 	     :tree-prototype 
 	     "BLOCKY:MENU"))
 
@@ -302,9 +318,9 @@
 	  (progn 
 	    (assert parent)
 	    (draw-patch self x (+ 1 y)
-		      (+ (dash 2) x (header-width self))
-		      (dash 3 y header)
-		      :color *menu-tab-color*)
+			(+ (dash 2) x (header-width self))
+			(dash 3 y header)
+			:color *menu-tab-color*)
 	    (draw-label-string 
 	     self (or label *null-display-string*) *menu-title-color*)
 	    ;; draw the rest of the tree background
@@ -313,14 +329,22 @@
 			(dash 0 x width)
 			(- (dash 1 y height) (dash 1))))
 	  ;; nope, draw in the typical fashion.
-	  (draw-expanded%super self label)))))
+	  (draw-expanded%super self label))
+      (draw-indicator :down-triangle-open 
+		      (+ %x (font-text-width (or label *null-display-string*))
+			 (dash 4))
+		      (+ %y (dash 2))
+		      :scale 1.6
+		      :color "gray50"))))
+
 
 (define-method draw-unexpanded menu (&optional label)
   (with-fields (action target top-level) self
-    (draw-label-string self 
-		       (or label (display-string self))
-		       (find-color self :foreground))))
-			 
+    (let ((text (or label (display-string self))))
+      (draw-label-string self 
+			 text
+			 (find-color self :foreground)))))
+		 
 (define-method draw-highlight menu ()
   (with-fields (y height expanded parent top-level) self
     (when parent

@@ -604,7 +604,9 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 
 ;;; Frame rate and simulation timing
 
-(defvar *frame-rate* 30 "The intended frame rate of the game.")
+(defparameter *default-frame-rate* 30)
+
+(defvar *frame-rate* *default-frame-rate*)
 
 (defun set-frame-rate (&optional (rate *frame-rate*))
   "Set the frame rate for the game."
@@ -701,7 +703,9 @@ becomes larger.")
   "Initialize the console, open a window, and play.
 We want to process all inputs, update the game state, then update the
 display."
-  (let ((fps (make-instance 'sdl:fps-mixed :dt *dt*)))
+  (let ((fps (make-instance 'sdl:fps-mixed 
+			    :dt (setf *dt* (or *dt* (truncate (/ 1000 *frame-rate*)))))))
+    (message "Simulation update time set to ~d milliseconds." *dt*)
     (message "Creating OpenGL window...")
     (cond (*fullscreen*
 	   (sdl:window *screen-width* *screen-height*
@@ -2285,6 +2289,8 @@ of the music."
   (sdl-mixer:close-audio t)
   (setf *world* nil)
   (setf *blocks* nil)
+  (setf *dt* nil)
+  (setf *frame-rate* *default-frame-rate*)
   (setf *event-hook* nil)
   (sdl:quit-sdl)
   (setf *gl-window-open-p* nil))

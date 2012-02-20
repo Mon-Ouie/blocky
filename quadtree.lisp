@@ -160,7 +160,7 @@ NODE, if any."
   (let ((object (find-object object0)))
     ;; grab the cached quadtree node
     (let ((node (field-value :quadtree-node object)))
-      (assert node)
+      ;; (assert node)
       (assert (find object
       		    (quadtree-objects node)
       		    :test 'eq))
