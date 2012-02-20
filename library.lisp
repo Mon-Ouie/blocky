@@ -176,7 +176,7 @@ inputs are evaluated."
 		    :scale 1.5)))
 
 (define-method initialize list (&rest blocks)
-  (apply #'initialize%%block self blocks)
+  (apply #'block%initialize self blocks)
   ;; allow them to be freely removed
   (unfreeze self))
 
