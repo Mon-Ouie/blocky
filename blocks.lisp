@@ -97,6 +97,7 @@ Web at:
 
 ;;; Defining blocks
 
+
 (defmacro define-block (spec &body args)
   "Define a new block prototype.
 The first argument SPEC is either a
@@ -464,7 +465,7 @@ as Unicode characters via the `insert' function."
   (unless (is-joystick-event event)
     (with-fields (events) self
       (destructuring-bind (key . unicode) (first event)
-	(when (or (handle-event%%block self (cons key (rest event)))
+	(when (or (block%handle-event self (cons key (rest event)))
 		  ;; treat Unicode characters as self-inserting
 		  (when unicode
 		    (send :insert self unicode)))
@@ -1619,20 +1620,6 @@ Note that the center-points of the objects are used for comparison."
   "Return the straight-line distance to the player."
   (distance-to-thing self (get-player *world*)))
 
-;;; Grouping blocks into buffers with buffer-local variables
-
-(defun get-buffer (name)
-  (gethash name *buffers*))
-
-(defun make-buffer (&rest args)
-  (let* ((buffer (apply #'clone :buffer args))
-	 (name (field-value :name buffer))) ;; name may be uniqified
-    (assert (not (gethash name *buffers*)))
-    (prog1 buffer
-      ;; add it to the table
-      (setf (gethash name *buffers*)
-	    (find-uuid buffer)))))
-  
 (defun uniquify-buffer-name (name)
   (let ((n 1)
 	(name0 name))
@@ -1642,29 +1629,6 @@ Note that the center-points of the objects are used for comparison."
 	    (setf name0 (format nil "~A.~S" name n)
 		  n (1+ n))
 	    (return-from naming name0))))))
-
-(defmacro with-buffer (buffer &rest body)
-  `(let ((*world* (find-uuid ,buffer)))
-     ,@body))
-
-(define-method setvar block (var value)
-  (setf (gethash var %variables) value))
-
-(define-method getvar block (var)
-  (gethash var %variables))
-
-(defun buffer-local-variable (var-name)
-  (getvar *buffer* var-name))
-
-(defun (setf buffer-local-variable) (var-name value)
-  (setvar *buffer* var-name value))
-
-(defmacro with-buffer-local-variables (vars &rest body)
-  (labels ((make-clause (sym)
-	     `(,sym (buffer-local-variable ,(make-keyword sym)))))
-    (let* ((symbols (mapcar #'make-non-keyword vars))
-	   (clauses (mapcar #'make-clause symbols)))
-      `(symbol-macrolet ,clauses ,@body))))
 
 (define-method queue-layout block ()
   (setf %needs-layout t))
@@ -1741,7 +1705,6 @@ Note that the center-points of the objects are used for comparison."
 (define-method evaluate task ()
   (apply #'send %method %target %arguments))
 
-;; see also #'RUN-TASKS%%BLOCK
 (define-method running task ()
   (with-fields (method target arguments clock finished) self
     (cond 
