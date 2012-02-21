@@ -32,7 +32,7 @@
   objects bounding-box level
   southwest northeast northwest southeast)
 
-(defun is-leaf (node)
+(defun leafp (node)
   ;; testing any quadrant will suffice
   (null (quadtree-southwest node)))
 
@@ -90,7 +90,7 @@
   (assert (valid-bounding-box bounding-box))
   (assert (functionp processor))
   (when (bounding-box-contains (quadtree-bounding-box node) bounding-box)
-    (when (not (is-leaf node))
+    (when (not (leafp node))
       (let ((*quadtree-depth* (1+ *quadtree-depth*)))
 	(quadtree-process (quadtree-northwest node) bounding-box processor)
 	(quadtree-process (quadtree-northeast node) bounding-box processor)
@@ -121,7 +121,7 @@ NODE, if any."
   ;; 	   (quadtree-bounding-box node) bounding-box)
   (when (bounding-box-contains (quadtree-bounding-box node) bounding-box)
     ;; ok, it's in the overall bounding-box.
-    (if (is-leaf node)
+    (if (leafp node)
 	;; there aren't any quadrants to search.
 	node
 	(or

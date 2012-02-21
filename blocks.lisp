@@ -332,7 +332,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (define-method set-parent block (parent)
   "Store a UUID link to the enclosing block PARENT."
   (assert (not (null parent)))
-  (assert (is-valid-connection parent self))
+  (assert (valid-connection-p parent self))
   (setf %parent (when parent 
 		  ;; always store uuid to prevent circularity
 		  (find-uuid parent))))
@@ -343,7 +343,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
 (define-method find-parent block ()
   (find-uuid %parent))
 
-(defun is-valid-connection (sink source)
+(defun valid-connection-p (sink source)
   (assert (or sink source))
   ;; make sure source is not actually sink's parent somewhere
   (block checking
@@ -460,7 +460,7 @@ any)."
 (define-method handle-text-event block (event)
   "Look up events as with `handle-event', but insert unhandled keypresses
 as Unicode characters via the `insert' function."
-  (unless (is-joystick-event event)
+  (unless (joystick-event-p event)
     (with-fields (events) self
       (destructuring-bind (key . unicode) (first event)
 	(when (or (block%handle-event self (cons key (rest event)))
@@ -652,15 +652,15 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
    
 ;;; Creating blocks from S-expressions
  
-(defun is-action-spec (spec)
+(defun action-spec-p (spec)
   (and (listp spec)
        (symbolp (first spec))))
 
-(defun is-list-spec (spec)
+(defun list-spec-p (spec)
     (and (not (null spec))
 	 (listp spec)))
 
-(defun is-null-block-spec (spec)
+(defun null-block-spec-p (spec)
   (and (not (null spec))
        (listp spec)
        (= 1 (length spec))
@@ -715,15 +715,15 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	   (list-block (items)
 	     (apply #'clone "BLOCKY:LIST" (mapcar #'make-block items))))
     (let ((result 
-	    (cond ((is-null-block-spec sexp)
+	    (cond ((null-block-spec-p sexp)
 		   (null-block))
 		  ((blockyp sexp) ;; catch UUIDs etc
 		   sexp)
 		  ((stringp sexp)
 		   (new string :value sexp))
-		  ((is-action-spec sexp)
+		  ((action-spec-p sexp)
 		   (action-block sexp))
-		  ((is-list-spec sexp)
+		  ((list-spec-p sexp)
 		   (list-block sexp))
 		  ((not (null sexp)) (data-block sexp)))))
       (prog1 result
@@ -876,7 +876,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
       (hide self)
       (show self)))
 
-(define-method is-visible block ()
+(define-method visiblep block ()
   %visible)
 
 ;;; Menus and programming-blocks
@@ -1446,7 +1446,7 @@ See shell.lisp for more on the implementation of drag-and-drop."
   "Allow dragging and moving of this block."
   (setf %pinned nil))
 
-(define-method is-pinned block ()
+(define-method pinnedp block ()
   "When non-nil, dragging and moving are disallowed for this block."
   %pinned)
 

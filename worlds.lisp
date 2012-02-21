@@ -181,7 +181,7 @@
   (do-orthographic-projection)
   (do-window %window-x %window-y %window-scale-x %window-scale-y))
 
-(define-method is-empty world ()
+(define-method emptyp world ()
   (or (null %objects)
       (zerop (hash-table-count %objects))))
 
@@ -283,7 +283,7 @@ the edge of the universe piling up into the top quadrant and causing
 slowdown. See also quadtree.lisp")
 
 (define-method install-quadtree world ()
-  (unless (is-empty self)
+  (unless (emptyp self)
     ;; make a box with a one-percent margin on all sides.
     ;; this margin helps edge objects not pile up in quadrants
     (let ((box (multiple-value-list
@@ -336,7 +336,7 @@ slowdown. See also quadtree.lisp")
      ,@body))
 
 (define-method adjust-bounding-box-maybe world ()
-  (if (is-empty self)
+  (if (emptyp self)
       self
       (let ((objects-bounding-box 
 	      (multiple-value-list 
@@ -392,7 +392,7 @@ slowdown. See also quadtree.lisp")
 
 (defun vertical-extent (world)
   (if (or (null world)
-	  (is-empty world))
+	  (emptyp world))
       0
       (multiple-value-bind (top left right bottom)
 	  (bounding-box world)
@@ -401,7 +401,7 @@ slowdown. See also quadtree.lisp")
 
 (defun horizontal-extent (world)
   (if (or (null world)
-	  (is-empty world))
+	  (emptyp world))
       0
       (multiple-value-bind (top left right bottom)
 	  (bounding-box world)

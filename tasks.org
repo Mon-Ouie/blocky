@@ -1,9 +1,18 @@
 * GUI BETA
 
+
+** TODO [#B] copyright notice 
+** TODO [#B] basic help
+** TODO [#A] create project dialog
+** TODO [#A] allow untitled project
+** DONE [#C] normalize all is-foo to foo-p
+   CLOSED: [2012-02-20 Mon 23:22]
+** TODO [#A] save project dialog
+*** TODO [#A] overwrite protect
+** TODO [#A] load project dialog
+** TODO [#A] Ability to scroll the world with the mouse wheel
 ** TODO [#B] the clipboard is a world
 ** TODO [#B] sys menu should remember relative screen loc
-** TODO [#A] create project dialog
-** TODO [#A] load project dialog
 ** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
 ** TODO [#A] Don't require .blocky suffix for project dir
 ** TODO [#A] allow empty project

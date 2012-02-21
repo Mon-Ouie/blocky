@@ -37,7 +37,7 @@
 
 (define-prototype tree (:super :list)
   (category :initform :structure)
-  (is-tree :initform t)
+  (treep :initform t)
   (style :initform :flat)
   (method :initform nil)
   (draw-frame :initform t)
@@ -47,7 +47,7 @@
   (temporary :initform t)
   action target (expanded :initform nil) (visible :initform t))
 
-(defun is-tree (thing)
+(defun treep (thing)
   (and (has-field :is-tree thing)
        (eq t (field-value :is-tree thing))))
 
@@ -83,7 +83,7 @@
       (setf expanded (if expanded nil t))
       (invalidate-layout self))))
 
-(define-method is-expanded tree ()
+(define-method expandedp tree ()
   %expanded)
 
 (define-method expand tree (&optional force)
@@ -195,7 +195,7 @@
       ;; possibly draw a background
       (when (or (null parent)
 		(not (null inputs))
-		(not (is-tree parent)))
+		(not (treep parent)))
 	(draw-patch self x y (+ x width) (+ y height)))
 	  ;; possibly colored by depth
 	  ;; (when (plusp *tree-depth*)

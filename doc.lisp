@@ -20,7 +20,7 @@
 
 (in-package :blocky)
 
-(defun is-method (symbol)
+(defun methodp (symbol)
   (and (fboundp symbol)
        (get 'symbol 'is-method)))
 
@@ -140,7 +140,7 @@
 	  (sort 
 	   (remove-if #'(lambda (s)
 			  (or (search "%" (symbol-name s))
-			      (is-method s)))
+			      (methodp s)))
 		      symbols)
 	   #'string<))
     ;; print preamble

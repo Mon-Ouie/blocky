@@ -34,7 +34,7 @@
 (defun make-visual-list ()
   (clone "BLOCKY:LIST"))
 
-(define-method is-frozen list () %frozen)
+(define-method frozenp list () %frozen)
 
 (define-method freeze list ()
   (setf %frozen t)
@@ -78,7 +78,7 @@ inputs are evaluated."
 	(if inputs
 	    ;; we've got inputs. add it to the list (prepending or not)
 	    (progn 
-	      (assert (is-valid-connection self input))
+	      (assert (valid-connection-p self input))
 	      ;; set parent if necessary 
 	      (when (get-parent input)
 		(unplug-from-parent input))

@@ -187,7 +187,7 @@ by symbol name. This enables them to be used as hash keys."
 	   (clauses (mapcar #'make-clause symbols)))
       `(symbol-macrolet ,clauses ,@body))))
 
-(define-method is-completed mission ()
+(define-method completedp mission ()
   "Return T if all goal-valued mission variables are achieved."
   (with-fields (variables) self
     (block checking 

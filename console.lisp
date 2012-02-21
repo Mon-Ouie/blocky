@@ -278,17 +278,17 @@ equality with `equal' and used as hashtable keys.")
 Please set the variable blocky:*event-handler-function*")
       (funcall *event-handler-function* event)))
 
-(defun is-raw-joystick-event (event)
+(defun raw-joystick-event-p (event)
   (eq :raw-joystick (first event)))
 
-(defun is-joystick-event (event)
-  (or (is-raw-joystick-event event)
+(defun joystick-event-p (event)
+  (or (raw-joystick-event-p event)
       (eq :joystick (first event))))
 
 (defun normalize-event (event)
   "Convert EVENT to a normal form suitable for `equal' comparisons."
   ;; don't sort joystick event modifiers
-  (if (is-joystick-event event)
+  (if (joystick-event-p event)
       event
       (cons (first event)
 	    (sort (remove-duplicates (delete nil (rest event)))
@@ -365,7 +365,7 @@ or,
      unaltered." 
   (assert code)
   ;; pass through joystick events unaltered
-  (if (is-joystick-event (cons code modifiers))
+  (if (joystick-event-p (cons code modifiers))
       (cons code modifiers)
       (let ((head
 	      (etypecase code
@@ -688,8 +688,6 @@ becomes larger.")
 
 (defvar *after-startup-hook* nil)
 
-(defvar *project* nil)
-
 (defvar *quitting* nil)
 
 (defvar *fullscreen* nil "When non-nil, attempt to use fullscreen mode.")
@@ -967,8 +965,6 @@ A lookup failure results in an error. See `find-resource'.")
 
 ;;; Opening and saving projects
 
-(defvar *project* nil "The name of the current project.")
-
 (defparameter *project-directory-extension* ".blocky")
 
 (defvar *project-path* nil "The pathname of the currently opened project. 
@@ -979,7 +975,10 @@ This is where all saved objects are stored.")
 (defvar *executable* nil "Non-nil when running Blocky from a saved
 binary image.")
 
-(defparameter *untitled-project-name* "untitled")
+(defparameter *untitled-project-name* "*untitled*")
+
+(defvar *project* *untitled-project-name*
+  "The name of the current project.")
 
 ;;; Project packages
 
@@ -988,8 +987,11 @@ binary image.")
 (defun project-package-name (&optional (project-name *project*))
   (make-keyword (or *project-package-name* project-name)))
 
-(defun is-standard-project ()
-  (string= "STANDARD" (string-upcase *project*)))
+(defun standard-project-p (&optional (project *project*))
+  (string= "STANDARD" (string-upcase project)))
+
+(defun untitled-project-p (&optional (project *project*))
+  (string= project *untitled-project-name*))
 
 (defun project-package-exists-p (project)
   (assert (not (null project)))
@@ -1009,7 +1011,7 @@ binary image.")
        
 (defun in-project-package (project)
   (assert (not (null project)))
-  (if (is-standard-project)
+  (if (standard-project-p)
       (setf *package* (find-package :blocky))
       ;; find project-specific package
       (let ((package (project-package-name project)))
@@ -1146,11 +1148,13 @@ resource is stored; see also `find-resource'."
       (index-iof project object-index-file))))
 
 (defun load-project-lisp (project)
-  (let ((lisp (default-project-lisp-file project)))
-    (if (cl-fad:file-exists-p lisp)
-	(progn (message "Loading lisp for project ~A..." project)
-	       (load lisp))
-	(message "No default lisp file found in project ~S. Continuing..." project))))
+  (unless (or (untitled-project-p project)
+	      (standard-project-p project))
+    (let ((lisp (default-project-lisp-file project)))
+      (if (cl-fad:file-exists-p lisp)
+	  (progn (message "Loading lisp for project ~A..." project)
+		 (load lisp))
+	  (message "No default lisp file found in project ~S. Continuing..." project)))))
 
 (defun create-project (project &optional destination-directory)
   (assert (stringp project))
@@ -1202,15 +1206,17 @@ object save directory. See also `save-object-resource')."
   (run-hook '*after-open-project-hook*))
 
 (defun run-project-lisp (project)
-  (message "Running project startup function...")
-  (let ((package (find-package (project-package-name project))))
-    (if package
-	(let ((start-function (intern (string-upcase project) package)))
-	  (message "Checking for startup function ~S" start-function)
-	  (if (fboundp start-function)
-	      (funcall start-function)
-	      (message "No default startup function for: ~S. Continuing.." (string-upcase (symbol-name start-function)))))
-	(message "Warning: No project package defined. Continuing..."))))
+  (unless (or (untitled-project-p project)
+	      (standard-project-p project))
+    (message "Running project startup function...")
+    (let ((package (find-package (project-package-name project))))
+      (if package
+	  (let ((start-function (intern (string-upcase project) package)))
+	    (message "Checking for startup function ~S" start-function)
+	    (if (fboundp start-function)
+		(funcall start-function)
+		(message "No default startup function for: ~S. Continuing.." (string-upcase (symbol-name start-function)))))
+	  (message "Warning: No project package defined. Continuing...")))))
 
 (defun directory-is-project-p (dir)
   "Test whether a directory has the .blocky suffix."
@@ -1285,14 +1291,14 @@ OBJECT as the resource data."
 
 (defun save-object-resource (resource &optional (project *project*))
   "Save an object resource to disk as {PROJECT-NAME}/{RESOURCE-NAME}.IOF."
-    (setf (resource-data resource) (serialize (resource-object resource)))
-    (write-iof (find-project-file project 
-				 (concatenate 'string (resource-name resource)
-					      *iof-file-extension*))
-	       (list resource))
-    (setf (resource-data resource) nil))
+  (setf (resource-data resource) (serialize (resource-object resource)))
+  (write-iof (find-project-file project 
+				(concatenate 'string (resource-name resource)
+					     *iof-file-extension*))
+	     (list resource))
+  (setf (resource-data resource) nil))
 
-(defun is-special-resource (resource)
+(defun special-resource-p (resource)
   (string= "*" (string (aref (resource-name resource) 0))))
 
 (defun make-resource-link (resource)
@@ -1317,19 +1323,20 @@ OBJECT as the resource data."
 
 (defun save-project (&optional force)
   (let (index)
-    (if (is-standard-project)
-	;; don't save the startup project
-	(message "Not saving project STANDARD. Continuing...")
-	;; save it
+    (if (or (standard-project-p)
+	    (untitled-project-p))
+	(message "Cannot save this project.")
 	(labels ((save (name resource) 
 		   (when (or force (resource-modified-p resource))
 		     (push (save-resource name resource) index))))
+	  (message "Saving project ~S ..." *project*)
 	  (maphash #'save *resources*)
 	  ;; FIXME: allow to save resources in separate file
 	  (write-iof (find-project-file *project* *object-index-filename*)
 		     (nreverse index))
 	  (save-database)
-	  (save-variables)))))
+	  (save-variables)
+	  (message "Saving project ~S ... Done." *project*)))))
 
 (defparameter *export-formats* '(:archive :application))
 
@@ -1561,7 +1568,7 @@ control the size of the individual frames or subimages."
     (labels ((store (uuid object)
 	       ;; don't save prototypes
 	       (when (null (object-name object))
-		 ;; (not (is-temporary object)))
+		 ;; (not (temporaryp object)))
 		 (setf (gethash uuid database2) object))))
       (maphash #'store database) ;; copy into database2
       (values (make-resource :name "--database--"
@@ -1685,12 +1692,12 @@ of the record.")
 
 (defvar *resource-transformation-delimiter* #\:)
 
-(defun is-transformable-resource (name)
+(defun transformable-resource-p (name)
   (eq (aref name 0)
       *resource-transformation-delimiter*))
 
 (defun next-transformation (name)
-  (assert (is-transformable-resource name))
+  (assert (transformable-resource-p name))
   (let ((delimiter-pos (position *resource-transformation-delimiter* 
 				 (subseq name 1))))
     (when delimiter-pos 
@@ -1702,7 +1709,7 @@ of the record.")
 				       ")"))))))
 
 (defun next-source (name)
-  (assert (is-transformable-resource name))
+  (assert (transformable-resource-p name))
   (let ((delimiter-pos (position *resource-transformation-delimiter*
 				 (subseq name 1))))
     (if (numberp delimiter-pos)
@@ -1767,7 +1774,7 @@ when NAME cannot be found."
 		 (find-resource res)))
 	  ;; not found and not an alias. try to xform
 	  ((null res)
-	   (if (is-transformable-resource name)
+	   (if (transformable-resource-p name)
 	       ;; ok. let's xform and cache the result
 	       (let ((xform (next-transformation name))
 		     (source-name (next-source name)))
@@ -2327,8 +2334,9 @@ of the music."
       (start-session))))
 
 (defun blocky ()
-  (new system)
-  (start (new shell (new block)))
-  (start-session))
+  (with-session
+      (new system)
+    (start (new world))
+    (start-session)))
 
 ;;; console.lisp ends here

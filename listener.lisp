@@ -330,7 +330,7 @@
 	(draw-string prompt-string
 		     (+ x *default-prompt-margin*)
 		     (+ y strings-y)
-		     :color (if (is-tree parent)
+		     :color (if (treep parent)
 				%text-color
 				*default-prompt-outside-text-color*)
 		     :font *font*)
@@ -694,7 +694,7 @@
   (with-fields (inputs scrollback-length) self
     (assert (not (null inputs))) ;; we always have a prompt
     (prog1 t
-      (assert (is-valid-connection self input))
+      (assert (valid-connection-p self input))
       (let ((len (length inputs)))
 	;; (when (> len scrollback-length)
 	;;   ;; drop last item in scrollback

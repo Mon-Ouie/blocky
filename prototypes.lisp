@@ -81,7 +81,7 @@ DEJAVU-FONTS-LICENSE in that subdirectory.
 
 ;;; Extended argument lists
 
-(defun is-extended-arglist (lambda-list)
+(defun extended-arglist-p (lambda-list)
   "An extended argument list is like an ordinary CL argument list,
 but with each argument's entry replaced by a triple:
 
@@ -974,7 +974,7 @@ was invoked."
 	   (next-defun-symbol (intern (concatenate 'string
 						   method-symbol-name
 						   "%SUPER")))
-	   (method-lambda-list (if (is-extended-arglist arglist)
+	   (method-lambda-list (if (extended-arglist-p arglist)
 				   (make-lambda-list arglist)
 				   arglist)))
       (let ((name (gensym)))

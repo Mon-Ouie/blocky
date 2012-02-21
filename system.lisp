@@ -337,7 +337,7 @@ or press Alt-X to bring up the system menu.")
 
 (define-method close-menus system-menu ()
   (let ((menus (menu-items self)))
-    (when (some #'is-expanded menus)
+    (when (some #'expandedp menus)
       (mapc #'unexpand menus))))
 
 ;; (define-method tap system-menu (x y)
@@ -351,55 +351,6 @@ or press Alt-X to bring up the system menu.")
 (define-method accept system-menu (thing)
   (declare (ignore thing))
   nil)
-
-;; (define-method initialize system-menu (&optional (menus *system-menu*))
-;;   (apply #'initialize%super self menus)
-;;   (with-fields (inputs) self
-;;     (dolist (each inputs)
-;;       (setf (field-value :top-level each) t)
-;;       (pin each))))
-
-;; (define-method hit system-menu (mouse-x mouse-y)
-;;   (with-fields (x y width height inputs) self
-;;     (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
-;;       ;; are any of the menus open?
-;;       (let ((opened-menu (find-if #'is-expanded inputs)))
-;; 	(labels ((try (m)
-;; 		   (when m (hit m mouse-x mouse-y))))
-;; 	  (let ((moused-menu (find-if #'try inputs)))
-;; 	    (if (and ;; moused-menu opened-menu
-;; 		     (object-eq moused-menu opened-menu))
-;; 		;; we're over the opened menu, let's check if 
-;; 		;; the user has moused onto the other parts of the system-menu
-;; 	        (flet ((try-other (menu)
-;; 			 (when (not (object-eq menu opened-menu))
-;; 			   (try menu))))
-;; 		  (let ((other (some #'try-other inputs)))
-;; 		    ;; are we touching one of the other system-menu items?
-;; 		    (if (null other)
-;; 			;; nope, just hit the opened submenu items.
-;; 			(try opened-menu)
-;; 			;; yes, switch menus.
-;; 			(prog1 other
-;; 			  (unexpand opened-menu)
-;; 			  (expand other)))))
-;; 		;; we're somewhere else. just try the main menus in
-;; 		;; the system-menu.
-;; 		(let ((candidate (find-if #'try inputs)))
-;; 		  (if (null candidate)
-;; 		      ;; the user moused away. close the menus.
-;; 		      self
-;; 		      ;; we hit one of the other menus.
-;; 		      (if opened-menu
-;; 			  ;; there already was a menu open.
-;; 			  ;; close this one and open the new one.
-;; 			  (prog1 candidate
-;; 			    (unexpand opened-menu)
-;; 			    (expand candidate))
-;; 			  ;; no menu was open---just hit the menu headers
-;; 			  (some #'try inputs)))))))))))
-		
-;; (define-method draw-border system-menu () nil)
 
     
 ;;; system.lisp ends here
