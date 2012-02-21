@@ -1,9 +1,9 @@
 * GUI BETA
 
-
+** TODO show project name
+** TODO [#A] create project dialog
 ** TODO [#B] copyright notice 
 ** TODO [#B] basic help
-** TODO [#A] create project dialog
 ** TODO [#A] allow untitled project
 ** DONE [#C] normalize all is-foo to foo-p
    CLOSED: [2012-02-20 Mon 23:22]

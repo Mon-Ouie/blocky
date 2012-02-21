@@ -975,7 +975,7 @@ This is where all saved objects are stored.")
 (defvar *executable* nil "Non-nil when running Blocky from a saved
 binary image.")
 
-(defparameter *untitled-project-name* "*untitled*")
+(defparameter *untitled-project-name* "*untitled-project*")
 
 (defvar *project* *untitled-project-name*
   "The name of the current project.")
@@ -2269,10 +2269,9 @@ of the music."
 	*project* nil
 	*event-hook* nil
 	*message-hook-functions* nil
-	*window-title* "blocky"
+	*window-title* "Blocky"
 	*updates* 0
 	*resizable* t
-	*keyboard-update-number* 0
 	*random-state* (make-random-state t))
   (sdl:init-sdl :video t :audio t :joystick t)
   (load-user-init-file) ;; this step may override *project-directories* and so on 
@@ -2283,6 +2282,7 @@ of the music."
   (initialize-sound)
   (initialize-database)
   (load-standard-resources)
+  (setf *project* *untitled-project-name*)
   (sdl:enable-unicode)
   (enable-key-repeat 9 1.2))
 

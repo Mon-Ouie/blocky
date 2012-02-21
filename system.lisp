@@ -227,7 +227,7 @@
 
 (defparameter *logo-height* 24)
 
-(defparameter *blocky-title-string* "Blocky 0.91a")
+(defparameter *blocky-title-string* "Blocky 0.92a")
 
 (define-method layout system-headline ()
   (resize self 
@@ -235,12 +235,17 @@
 	  *logo-height*))
 
 (define-method draw system-headline ()
-  (with-fields (x y width) self
-    (draw-image "blocky" (+ x (dash 0.5)) y :height *logo-height* :width *logo-height*)))
+  (with-fields (x y) self
+    (draw-image "blocky" (+ x (dash 0.5)) y :height *logo-height* :width *logo-height*)
+    (draw-string *project*
+		 (+ x *logo-height* (dash 2))
+		 (+ y (dash 2))
+		 :color "white"
+		 :font *block-bold*)))
 
-(define-method can-pick system-headline () t)
+;; (define-method can-pick system-headline () t)
 
-(define-method pick system-headline () %parent)
+;; (define-method pick system-headline () %parent)
 
 ;;; Splash screen
 
@@ -255,25 +260,25 @@ or visit the language's home page: http://blocky.io
 You may press F1 for help at any time, 
 or press Alt-X to bring up the system menu.")
 
-(define-block splash-logo)
+;; (define-block splash-logo)
 
-(define-method update splash-logo ()
-  (change-image self "blocky-big"))
+;; (define-method update splash-logo ()
+;;   (change-image self "blocky-big"))
 
-(define-block-macro splash-screen
-    (:super :list
-     :fields 
-     ((category :initform :system))
-     :inputs
-     ((new splash-logo)
-      (new text *splash-screen-text*))
-     :initforms 
-     ((later 5.0 (discard self)))))
+;; (define-block-macro splash-screen
+;;     (:super :list
+;;      :fields 
+;;      ((category :initform :system))
+;;      :inputs
+;;      ((new splash-logo)
+;;       (new text *splash-screen-text*))
+;;      :initforms 
+;;      ((later 5.0 (discard self)))))
 
-(define-method update splash-screen ()
-  (mapc #'update %inputs)
-  (center self)
-  (layout-vertically self))
+;; (define-method update splash-screen ()
+;;   (mapc #'update %inputs)
+;;   (center self)
+;;   (layout-vertically self))
 
 ;;; The system menu itself
 
@@ -321,7 +326,13 @@ or press Alt-X to bring up the system menu.")
   (first (menu-items self)))
         
 (define-method layout system-menu ()
-  (layout-vertically self))
+  (layout-vertically self)
+  ;; adjust header for project name
+  (setf %width 
+	(max %width
+	     (+ *logo-height* (dash 4) 
+		(font-text-width *project*
+				 *block-bold*)))))
 
 (define-method can-pick system-menu ()
   t)
