@@ -77,7 +77,7 @@
 ;;     (list name :initform value)))
 
 ;; (define-method draw field ()
-;;   (let ((*text-base-y* (+ %y (dash 1))))
+;;   (let ((*text-baseline* (+ %y (dash 1))))
 ;;     (super%draw self)))
 
 ;; (define-method accept field (thing)

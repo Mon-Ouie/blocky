@@ -984,7 +984,7 @@ See also `*style'.")
 arguments. Uses `*dash*' which may be configured by `*style*'."
   (apply #'+ (* n *dash*) terms))
 
-(defvar *text-base-y* nil 
+(defvar *text-baseline* nil 
 "Screen Y-coordinate for text baseline.
 This is used to override layout-determined baselines in cases where
 you want to align a group of text items across layouts.")
@@ -1134,7 +1134,7 @@ blocks."
 			  :color (or color background)))
 	      (text (x y string &optional color2)
 		(draw-string string x 
-			     (or *text-base-y* y)
+			     (or *text-baseline* y)
 			     :color (or color2 foreground)
 			     :font *font*)))
        ,@body)))

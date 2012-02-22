@@ -62,10 +62,24 @@
 
 ;;; Message output window
 
-(define-block messenger :category :terminal)
+(define-block messenger :category :terminal :messages nil)
+
+(define-method initialize messenger (&optional messages)
+  (cond 
+    ((stringp messages)
+     (setf %messages (list messages)))
+    ((consp messages)
+     (setf %messages messages))))
+
+(define-method add-message messenger (message-string)
+  (assert (stringp message-string))
+  (push message-string %messages))
 
 (defparameter *messenger-columns* 80)
 (defparameter *messenger-rows* 7)
+
+(define-method get-messages messenger ()
+  (or %messages *message-history*))
 
 (define-method layout messenger ()
   (setf %height (+ (* (font-height *font*) *messenger-rows*)
@@ -73,12 +87,12 @@
   (let ((width 0))
     (block measuring
       (dotimes (n *messenger-rows*)
-	(if (<= (length *message-history*) n)
+	(if (<= (length (get-messages self)) n)
 	    (return-from measuring nil)
 	    (setf width 
 		  (max width 
 		       (font-text-width 
-			(nth n *message-history*)
+			(nth n (get-messages self))
 			*block-font*))))))
     (setf %width (+ width (dash 5)))))
 			     
@@ -88,8 +102,8 @@
       (let ((y0 (+ y height (- 0 (font-height *font*) (dash 2))))
 	    (x0 (+ x (dash 3))))
 	(dotimes (n *messenger-rows*)
-	  (unless (<= (length *message-history*) n)
-	    (draw-string (nth n *message-history*)
+	  (unless (<= (length (get-messages self)) n)
+	    (draw-string (nth n (get-messages self))
 			 x0 y0
 			 :color "gray70"
 			 :font *block-font*)
@@ -238,7 +252,7 @@
   (expand %%menu)
   (pin %%menu)
   (pin %%headline)
-  (pin (third (%inputs %%menu)))
+  (mapc #'pin (%inputs %%menu))
   (setf %locked t))
 
 (defun make-system-menu ()
@@ -273,8 +287,7 @@
 (define-method draw system-menu ()
   (with-fields (x y width height) self
     (draw-patch self x y (+ x width) (+ y height))
-    (mapc #'draw %inputs)
-    (draw-focus (get-prompt (get-listener self)))))
+    (mapc #'draw %inputs)))
 
 (define-method close-menus system-menu ()
   (let ((menus (menu-items self)))
@@ -298,7 +311,9 @@
 	      :parent (new 'string :label "Create in folder:" 
 				   :value (namestring (projects-directory)))
 	      :folder-name (new 'string :label "Project folder name:")
-	      :messenger (new 'messenger)
+	      :messenger (new 'messenger 
+			      '("Use the text entry fields above to name your project."
+				"You may also choose the destination folder and the folder name."))
 	      :buttons (new 'hlist
 			    (new 'button :label "Create project"
 				 :target self :method :create-project)
@@ -308,7 +323,7 @@
 (define-method create-project create-project-dialog ()
   (with-input-values (name parent folder-name) self
     (unless (create-project-image name :folder-name folder-name :parent parent)
-      (message "Could not create project."))))
+      (add-message %%messenger "Could not create project."))))
 
 (define-method create-project system-menu ()
   (let ((dialog (new 'create-project-dialog)))

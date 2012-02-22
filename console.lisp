@@ -1050,7 +1050,7 @@ binary image.")
    
 (defun project-directory-name (project)
   (assert (stringp project))
-  (concatenate 'string project *project-directory-extension*))  
+  (remove #\Space project))
 
 (defun default-project-pathname (project)
   (assert (stringp project))

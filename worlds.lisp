@@ -51,7 +51,7 @@
   	     :documentation "List (subset) of selected blocks.")
   (default-events :initform
 		  '(((:tab) :tab)
-		    ((:tab :control) :backtab)
+		    ((:tab :shift) :backtab)
 		    ((:x :alt) :enter-system-menu)
 		    ((:g :control) :escape)
 		    ((:escape) :exit-system-menu)))
@@ -502,23 +502,24 @@ slowdown. See also quadtree.lisp")
 	;; (when (find block selection :test 'eq :key #'find-object)
 	;;   (draw-border block))
       ;; during dragging we draw the dragged block.
-      (if drag 
-	    (progn (layout drag)
-		   (when (field-value :parent drag)
-		     (draw-ghost ghost))
-		   ;; also draw any hover-over highlights 
-		   ;; on objects you might drop stuff onto
-		   (when hover 
-		     (draw-hover hover))
-		   (draw drag))
-	    (when focused-block
-	      (assert (blockyp focused-block))
-	      (draw-focus focused-block)))
-	(when %system-menu
-	  (with-style :rounded
-	    (draw %system-menu)))
-	(when highlight
-	  (draw-highlight highlight)))))
+      (when drag 
+	(layout drag)
+	(when (field-value :parent drag)
+	  (draw-ghost ghost))
+	;; also draw any hover-over highlights 
+	;; on objects you might drop stuff onto
+	(when hover 
+	  (draw-hover hover))
+	(draw drag))
+      (when %system-menu
+	(with-style :rounded
+	  (draw %system-menu)))
+      ;; draw focus
+      (when focused-block
+	(assert (blockyp focused-block))
+	(draw-focus focused-block))
+      (when highlight
+	(draw-highlight highlight)))))
 
 (define-method draw world ()
   (with-world self
@@ -549,9 +550,6 @@ slowdown. See also quadtree.lisp")
 	(install-quadtree self))
       (let ((*quadtree* %quadtree))
 	(layout self)
-	(when %system-menu
-	  (layout %system-menu)
-	  (update %system-menu))
 	(unless %paused
 	  (assert (zerop *quadtree-depth*))
 	  ;; possibly run the objects

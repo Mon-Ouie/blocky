@@ -415,22 +415,23 @@
 	  (line-width (font-text-width line *font*))
 	  (fh (font-height *font*)))
       ;; draw the label string 
-      (assert (stringp text-color))
-      (unless nolabel 
-	(when (plusp (length %label))
-	  (draw-label self))
-	;; draw shaded area for input
-	(draw-input-area self :inactive)
-	;; draw indicators
-	(draw-indicators self :inactive))
-      ;; draw current input string
-      (when (null line) (setf line ""))
-      (unless (zerop (length line))
-	(draw-string line
-		     (+ (dash 2 x) label-width)
-		     (+ y (dash 1))
-		     :color %text-color
-		     :font *font*)))))
+      (let ((*text-baseline* (+ y (dash 1))))
+	(assert (stringp text-color))
+	(unless nolabel 
+	  (when (plusp (length %label))
+	    (draw-label self))
+	  ;; draw shaded area for input
+	  (draw-input-area self :inactive)
+	  ;; draw indicators
+	  (draw-indicators self :inactive))
+	;; draw current input string
+	(when (null line) (setf line ""))
+	(unless (zerop (length line))
+	  (draw-string line
+		       (+ (dash 2 x) label-width)
+		       *text-baseline*
+		       :color %text-color
+		       :font *font*))))))
 		 
 (define-method do-sexp entry (sexp)
   (with-fields (value type-specifier) self

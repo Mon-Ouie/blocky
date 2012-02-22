@@ -280,7 +280,7 @@ inputs are evaluated."
     (when %button-p
       (with-style :flat
 	(draw-patch self x y (+ x width) (+ y height))))
-    (let ((*text-base-y* (+ y (dash 1))))
+    (let ((*text-baseline* (+ y (dash 1))))
       (draw-label-string self label "white")
       (dolist (each inputs)
 	(draw each)))))
