@@ -1,15 +1,17 @@
 * GUI BETA
 
-** TODO is *world* properly bound during mouse events
 ** TODO [#A] save project dialog
 *** TODO [#A] overwrite protect
+
+** TODO evaluating-inputs macro
+** TODO is *world* properly bound during mouse events
 ** TODO [#A] resource blocks
 *** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
 ** TODO [#A] load project dialog
 *** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
 *** TODO [#A] Don't require .blocky suffix for project dir
 ** TODO [#C] Pretty sexy black rounded corner notifications
-** TODO [#A] create project dialog
+*** TODO [#A] simple ok notification box** TODO [#A] create project dialog
 ** TODO [#B] copyright notice 
 ** TODO [#B] basic help
 ** TODO [#A] Ability to scroll the world with the mouse wheel

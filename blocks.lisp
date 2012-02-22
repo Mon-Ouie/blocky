@@ -134,7 +134,7 @@ areas.")
        (%inputs object)))
 
 (defmacro define-block-macro (name 
-     (&key (super "BLOCKY:BLOCK") fields documentation inputs initforms)
+     (&key (super "BLOCKY:BLOCK") fields documentation inputs)
      &body body)
   "Define a new block called NAME according to the given options.
 
@@ -148,9 +148,6 @@ would be given to `define-prototype'.
 
 The INPUTS argument is a list of forms evaluated to produce argument
 blocks. 
-
-The argument INITFORMS contains Lisp code to be executed after
-initialization.
 
 DOCUMENTATION is an optional documentation string for the entire
 macro.
@@ -170,13 +167,6 @@ on the implementor, who can write a `recompile' method which operates
 by invoking `recompile' in various ways on the macro-block's
 `%inputs', and emitting Lisp code forms using those compiled code
 streams as a basis. 
-
-By default, the resulting block's `initialize' method will invoke
-`initialize-inputs', which creates the subtree that had been specified
-in INPUTS. If you replace `initialize' with your own method, be sure
-to invoke `initialize-inputs' in your implementation if you want the
-INPUTS argument to be respected. Likewise, the INITFORMS are not run
-if you use your own INITIALIZE method.
 "
   (let ((input-names (remove-if-not #'keywordp inputs)))
     `(progn 
@@ -186,13 +176,11 @@ if you use your own INITIALIZE method.
 	 (label :initform ,(pretty-symbol-string name))
 	 (input-names :initform ',input-names)
 	 ,@fields)
-       (define-method initialize-inputs ,name ()
-	 ;; strip out input names, if any
-	 (setf %inputs (list ,@(remove-if #'keywordp inputs))))
        (define-method initialize ,name ()
 	 (apply #'initialize%super self %inputs) 
-	 (initialize-inputs self)
-	 ,@initforms)
+	 (setf %inputs (list ,@(remove-if #'keywordp inputs)))
+	 (update-parent-links self)
+	 ,@body)
        (define-method recompile ,name () `(evaluate self)))))
 
 ;;; Block lifecycle

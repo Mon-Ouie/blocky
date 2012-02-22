@@ -90,31 +90,6 @@
 
 ;; (define-method open-existing-project system ((project-name string :default " "))
 	     
-(define-method save-changes system ()
-  (save-project))
-
-(define-method save-everything system ()
-  (save-project :force))
-
-(define-method initialize system ()
-  (setf *system* (find-uuid self)))
-
-(define-method create-trash system ()
-  (add-block (world) (new 'trash) 100 100))
-
-(define-method create-text system ()
-  (add-block (world) (new 'text) 100 100))
-
-(define-method create-listener system ()
-  (add-block (world) (new 'listener) 100 100))
-
-(define-method ticks system ()
-  (get-ticks))
-
-(define-method quit-blocky system ()
-  ;; TODO destroy textures
-  (blocky:quit t))
-
 (defparameter *system-menu-entries*
   '((:label "Project"
      :inputs

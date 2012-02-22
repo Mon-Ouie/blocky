@@ -510,7 +510,9 @@
   (assert (stringp sexp))
   (setf %value sexp))
  
-;; (define-method type-check string (datum) t)
+(define-method set-value string (value)
+  (when (stringp value)
+    (setf %value value)))
 
 ;;; Block socket
 

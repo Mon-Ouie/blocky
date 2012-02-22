@@ -887,6 +887,17 @@ message queue resulting from the evaluation of EXPR."
 	     ;; don't catch double %%
 	     (not (string= "%" (subseq name 1 2)))))))
 
+(defmacro with-input-values (symbols form &body body)
+  (assert (every #'symbolp symbols))
+  (let ((thing (gensym)))
+    (flet ((make-clause (symbol)
+	     `(,symbol (evaluate 
+			(input-block self 
+				     ,(make-keyword symbol))))))
+      `(let* ((,thing ,form)
+	      ,@(mapcar #'make-clause symbols))
+	 ,@body))))
+		      
 (defun input-reference-p (form)
   "Return non-nil if FORM is a symbol like %%foo."
   (if (symbolp form)

@@ -191,6 +191,12 @@ inputs are evaluated."
   "Replace this empty socket with OTHER-BLOCK."
   (accept %parent other-block))
 
+;;; Horizontal list
+
+(define-block (hlist :super list)
+  (:category :initform :system)
+  (:orientation :initform :horizontal))
+
 ;;; Sending to a particular target
 
 (defvar *target* nil)

@@ -279,16 +279,17 @@
 	  (not %top-level))))
 
 (define-method pick menu ()
-  (if (or (keywordp %action) (blockyp %action))
-      (let ((send (new 'message 
-		       :prototype (find-super-prototype-name %target)
-		       :method %method
-		       :target %target
-		       :label (pretty-symbol-string %method))))
-	(prog1 send 
-	  (with-fields (x y) send
-	    (setf x %x y %y))))
-      self))
+  (when %target
+    (if (or (keywordp %action) (blockyp %action))
+	(let ((send (new 'message 
+			 :prototype (find-super-prototype-name %target)
+			 :method %method
+			 :target %target
+			 :label (pretty-symbol-string %method))))
+	  (prog1 send 
+	    (with-fields (x y) send
+	      (setf x %x y %y))))
+	self)))
 
 (define-method tap menu (x y)
   (declare (ignore x y))

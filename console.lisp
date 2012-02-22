@@ -980,6 +980,8 @@ binary image.")
 (defvar *project* *untitled-project-name*
   "The name of the current project.")
 
+(defvar *project-folder* nil)
+
 ;;; Project packages
 
 (defvar *project-package-name* nil)
@@ -1041,9 +1043,10 @@ binary image.")
 (defparameter *projects-directory* ".blocky")
 
 (defun projects-directory ()
-   (cl-fad:pathname-as-directory 
-    (make-pathname :name *projects-directory*
-		   :defaults (user-homedir-pathname))))
+  (user-homedir-pathname))
+   ;; (cl-fad:pathname-as-directory 
+   ;;  (make-pathname :name *projects-directory*
+   ;; 		   :defaults
    
 (defun project-directory-name (project)
   (assert (stringp project))
@@ -1156,14 +1159,15 @@ resource is stored; see also `find-resource'."
 		 (load lisp))
 	  (message "No default lisp file found in project ~S. Continuing..." project)))))
 
-(defun create-project (project &optional destination-directory)
+(defun create-project-image (project &key folder-name destination-directory)
   (assert (stringp project))
   (let* ((directory (or destination-directory (projects-directory)))
-	 (dirs (mapcar #'string-upcase (find-projects-in-directory directory))))
+	 (dirs (mapcar #'string-upcase (find-directories directory))))
     (if (find project dirs :test 'equal)
-	(message "Cannot create project ~A, because a project with this name already exists in directory ~A"
-		 project directory)
-	(let ((dir (default-project-pathname project)))
+	(prog1 nil 
+	  (message "Cannot create project ~A, because a folder with this name already exists in ~A"
+		   project directory))
+	(let ((dir (or folder-name (default-project-pathname project))))
 	  (message "Creating new project ~A in directory ~A..." project dir)
 	  (setf *project* project)
 	  (prog1 dir
@@ -1228,13 +1232,15 @@ object save directory. See also `save-object-resource')."
 					      dir
 					      (namestring dir))))))
 
+(defun find-directories (dir)
+  (mapcar #'(lambda (s)
+	      (subseq s 0 (1- (length s))))
+	  (mapcar #'namestring
+		  (directory (concatenate 'string (namestring dir) "/*/")))))
+
 (defun find-projects-in-directory (dir)
   "Search DIR for projects and return a list of their names."
-  (let ((dirnames (mapcar #'(lambda (s)
-			      (subseq s 0 (1- (length s))))
-			  (mapcar #'namestring
-				  (directory (concatenate 'string (namestring dir) "/*/"))))))
-    (remove-if-not #'directory-is-project-p dirnames)))
+  (remove-if-not #'directory-is-project-p (find-directories dir)))
 
 (defun find-all-projects ()
   (mapcar #'file-namestring
@@ -2265,6 +2271,7 @@ of the music."
   (setf *project-package-name* nil
 	;; *project-directories* (default-project-directories)
 	*blocks* nil
+	*project-folder* nil
 	*world* nil
 	*project* nil
 	*event-hook* nil
@@ -2295,6 +2302,7 @@ of the music."
   (sdl-mixer:halt-music)
   (sdl-mixer:close-audio t)
   (setf *world* nil)
+  (setf *project-folder* nil)
   (setf *blocks* nil)
   (setf *dt* nil)
   (setf *frame-rate* *default-frame-rate*)
