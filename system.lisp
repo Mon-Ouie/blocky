@@ -24,6 +24,42 @@
 
 (in-package :blocky)
 
+;;; A basic action button
+
+(define-block (button :super :list)
+  (category :initform :button)
+  (target :initform nil)
+  (method :initform nil)
+  (arguments :initform nil)
+  (label :initform nil))
+
+(define-method initialize button 
+    (&key target method arguments label)
+  (when target (setf %target target))
+  (when method (setf %method method))
+  (when label (setf %label label))
+  (when arguments (setf %arguments arguments)))
+
+(define-method layout button ()
+  (with-fields (height width) self
+    (setf width (+ (* 13 (dash))
+		   (font-text-width %label
+				    *block-bold*))
+	  height (+ (font-height *block-bold*) (* 4 (dash))))))
+
+(define-method draw button ()
+  (with-fields (x y height width label) self
+    (draw-patch self x y (+ x width) (+ y height))
+    (draw-image "colorbang" 
+		    (+ x (dash 1))
+		    (+ y (dash 1)))
+    (draw-string %label (+ x (dash 9)) (+ y (dash 2))
+		 :color "white"
+		 :font *block-bold*)))
+
+(define-method tap button (x y)
+  (apply #'send %method %target %arguments))
+
 ;;; Message output window
 
 (define-block messenger :category :terminal)
@@ -68,42 +104,14 @@
   (shell :initform nil)
   (running :initform nil))
 
-(define-method show-copyright-notice system ()
-  (let ((box (new 'text *copyright-notice*)))
-    (add-block *world* box 80 80)
-    (resize-to-scroll box 80 24)
-    (end-of-line box)))
+;; (define-method show-copyright-notice system ()
+;;   (let ((box (new 'text *copyright-notice*)))
+;;     (add-block *world* box 80 80)
+;;     (resize-to-scroll box 80 24)
+;;     (end-of-line box)))
 
-(define-method save-before-exit system ())
+;; (define-method save-before-exit system ())
 
-;; Creating a project
-
-(define-block-macro create-project-dialog 
-    (:super :list
-     :fields ((category :initform :system))
-     :inputs (:name (new 'string :label "Project name:")
-	      :parent (new 'string :label "Create in folder:" 
-				   :value (namestring (projects-directory)))
-	      :folder-name (new 'string :label "Project folder name:")
-	      :messenger (new 'messenger)
-	      :buttons (new 'hlist
-			    (new 'button :label "Create project"
-				 :target self :method :create-project)
-			    (new 'button :label "Dismiss"
-				 :target self :method :discard)))))
-
-(define-method create-project create-project-dialog ()
-  (with-input-values (name parent folder-name) self
-    (unless (create-project-image name :folder-name folder-name :parent parent)
-      (message "Could not create project."))))
-
-(define-method create-project system-menu ()
-  (let ((dialog (new 'create-project-dialog)))
-    (add-block (world) dialog)
-    (center-as-dialog dialog)))
-
-;; (define-method open-existing-project system ((project-name string :default " "))
-	     
 (defparameter *system-menu-entries*
   '((:label "Project"
      :inputs
@@ -142,22 +150,22 @@
       (:label "Search resources" :action :search-resources)
       (:label "Export resource(s)" :action :export-resources)
       (:label "Browse resources" :action :browse-resources)))
-    (:label "Tools" 
-     :inputs
-     ((:label "Create a Lisp listener" :action :create-listener)
-      (:label "Create a text box" :action :create-text)
-      (:label "Create a trash can" :action :create-trash)))
-    ;; (:label "Workspace" :inputs
-    ;;  ((:label "Switch to workspace" :inputs
-    ;; 	      ((:label "Workspace 1" :action :workspace-1)
-    ;; 	       (:label "Workspace 2" :action :workspace-2)
-    ;; 	       (:label "Workspace 3" :action :workspace-3)
-    ;; 	       (:label "Workspace 4" :action :workspace-4)))
-    ;;   (:label "Go back to the previous workspace" :action :previous-workspace)
-    ;;   (:label "Create a new workspace" :action :create-workspace)
-    ;;   (:label "Rename this workspace" :action :rename-workspace)
-    ;;   (:label "Delete this workspace" :action :delete-workspace)
-    ;;   (:label "Workspace settings" :action :configure-workspaces)))
+    ;; (:label "Tools" 
+    ;;  :inputs
+    ;;  ((:label "Create a Lisp listener" :action :create-listener)
+    ;;   (:label "Create a text box" :action :create-text)
+    ;;   (:label "Create a trash can" :action :create-trash)))
+    (:label "Workspace" :inputs
+     ((:label "Switch to workspace" :inputs
+    	      ((:label "Workspace 1" :action :workspace-1)
+    	       (:label "Workspace 2" :action :workspace-2)
+    	       (:label "Workspace 3" :action :workspace-3)
+    	       (:label "Workspace 4" :action :workspace-4)))
+      (:label "Go back to the previous workspace" :action :previous-workspace)
+      (:label "Create a new workspace" :action :create-workspace)
+      (:label "Rename this workspace" :action :rename-workspace)
+      (:label "Delete this workspace" :action :delete-workspace)
+      (:label "Workspace settings" :action :configure-workspaces)))
     ;; (:label "Windows"
     ;;  :inputs
     ;;  ((:label "Create a new window" :action :create-window)
@@ -178,40 +186,6 @@
       (:label "General help" :action :general-help)
       (:label "Examples" :action :show-examples)
       (:label "Language Reference" :action :language-reference)))))
-
-(define-block (button :super :list)
-  (category :initform :button)
-  (target :initform nil)
-  (method :initform nil)
-  (arguments :initform nil)
-  (label :initform nil))
-
-(define-method initialize button 
-    (&key target method arguments label)
-  (when target (setf %target target))
-  (when method (setf %method method))
-  (when label (setf %label label))
-  (when arguments (setf %arguments arguments)))
-
-(define-method layout button ()
-  (with-fields (height width) self
-    (setf width (+ (* 13 (dash))
-		   (font-text-width %label
-				    *block-bold*))
-	  height (+ (font-height *block-bold*) (* 4 (dash))))))
-
-(define-method draw button ()
-  (with-fields (x y height width label) self
-    (draw-patch self x y (+ x width) (+ y height))
-    (draw-image "colorbang" 
-		    (+ x (dash 1))
-		    (+ y (dash 1)))
-    (draw-string %label (+ x (dash 9)) (+ y (dash 2))
-		 :color "white"
-		 :font *block-bold*)))
-
-(define-method tap button (x y)
-  (apply #'send %method %target %arguments))
 
 ;;; Headline 
 
@@ -241,11 +215,6 @@
     (:super :list 
      :fields 
      ((category :initform :system))
-     :initforms 
-     ((expand (second %inputs))
-      (pin (second %inputs))
-      (unfreeze self)
-      (setf %locked t))
      :inputs 
      (:headline (new 'system-headline)
       :menu 
@@ -264,8 +233,13 @@
 		      :expanded t)
 	    (new 'tree :label "Messages"
 		 :expanded nil
-		 :inputs (list (new 'messenger))))))))
-
+		 :inputs (list (new 'messenger)))))))
+  (unfreeze self)
+  (expand %%menu)
+  (pin %%menu)
+  (pin %%headline)
+  (pin (third (%inputs %%menu)))
+  (setf %locked t))
 
 (defun make-system-menu ()
   (find-uuid 
@@ -307,10 +281,6 @@
     (when (some #'expandedp menus)
       (mapc #'unexpand menus))))
 
-;; (define-method tap system-menu (x y)
-;;   (declare (ignore x y))
-;;   (close-menus self))
-
 ;; Don't allow anything to be dropped on the menus, for now.
 
 (define-method draw-hover system-menu () nil)
@@ -319,7 +289,31 @@
   (declare (ignore thing))
   nil)
 
+;; Creating a project
 
+(define-block-macro create-project-dialog 
+    (:super :list
+     :fields ((category :initform :system))
+     :inputs (:name (new 'string :label "Project name:")
+	      :parent (new 'string :label "Create in folder:" 
+				   :value (namestring (projects-directory)))
+	      :folder-name (new 'string :label "Project folder name:")
+	      :messenger (new 'messenger)
+	      :buttons (new 'hlist
+			    (new 'button :label "Create project"
+				 :target self :method :create-project)
+			    (new 'button :label "Dismiss"
+				 :target self :method :discard)))))
+
+(define-method create-project create-project-dialog ()
+  (with-input-values (name parent folder-name) self
+    (unless (create-project-image name :folder-name folder-name :parent parent)
+      (message "Could not create project."))))
+
+(define-method create-project system-menu ()
+  (let ((dialog (new 'create-project-dialog)))
+    (add-block (world) dialog)
+    (center-as-dialog dialog)))
 
 ;;; Splash screen
 
