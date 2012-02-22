@@ -126,16 +126,12 @@ areas.")
 
 ;;; Defining composite blocks more simply
 
-(defun make-input-accessor-forms (symbol)
-  (let ((accessor (make-non-keyword 
-		   (concatenate 'string 
-				"%%"
-				(symbol-name symbol)))))
-  `((defun ,accessor (thing)
-      (nth (position ,symbol 
-		     (%input-names thing))
-	   (%inputs thing)))
-    (export ',accessor))))
+;(declaim (inline input-block))
+
+(defun input-block (object input-name)
+  (nth (position input-name 
+		 (%input-names object))
+       (%inputs object)))
 
 (defmacro define-block-macro (name 
      (&key (super "BLOCKY:BLOCK") fields documentation inputs initforms)
@@ -176,16 +172,16 @@ by invoking `recompile' in various ways on the macro-block's
 streams as a basis. 
 
 By default, the resulting block's `initialize' method will invoke
-`initialize-inputs', which creates the UI that had been specified in
-INPUTS. If you replace `initialize' with your own method, be sure to
-invoke `initialize-inputs' in your implementation if you want the
+`initialize-inputs', which creates the subtree that had been specified
+in INPUTS. If you replace `initialize' with your own method, be sure
+to invoke `initialize-inputs' in your implementation if you want the
 INPUTS argument to be respected. Likewise, the INITFORMS are not run
 if you use your own INITIALIZE method.
 "
   (let ((input-names (remove-if-not #'keywordp inputs)))
-    ;; define input accessor functions
     `(progn 
-       ,@(mapcan #'make-input-accessor-forms input-names)
+       ;; define input accessor functions
+       ,@(mapcan #'make-input-accessor-defun-forms input-names)
        (define-block (,name :super ,super) 
 	 (label :initform ,(pretty-symbol-string name))
 	 (input-names :initform ',input-names)
@@ -197,7 +193,7 @@ if you use your own INITIALIZE method.
 	 (apply #'initialize%super self %inputs) 
 	 (initialize-inputs self)
 	 ,@initforms)
-       (define-method recompile ,name () ,@body))))
+       (define-method recompile ,name () `(evaluate self)))))
 
 ;;; Block lifecycle
 
@@ -615,6 +611,10 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
   (if %halo
       (discard-halo self)
       (make-halo self)))
+
+(define-method align-to-pixels block ()
+  (setf %x (truncate %x))
+  (setf %y (truncate %y)))
 
 (define-method drag block (x y)
   (move-to self x y))

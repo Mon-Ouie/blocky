@@ -180,4 +180,6 @@ remove-trailing-space *world-prototype* step-coordinates
 make-input-accessor-forms *persistent-variables-file-name* duplicate
 persistent-variables-file combine save-variables indicator-size
 draw-indicator load-variables *block-text-colors* defblock
-*block-bold* *bold* *italic* *block-italic* define-block-macro))
+make-input-accessor-macrolet-clause make-input-accessor-defun-forms
+input-reference-p input-block input-value *block-bold* *bold* *italic*
+*block-italic* define-block-macro))

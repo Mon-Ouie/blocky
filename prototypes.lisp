@@ -881,11 +881,18 @@ message queue resulting from the evaluation of EXPR."
 (defun field-reference-p (form)
   "Return non-nil if FORM is a symbol like %foo."
   (if (symbolp form)
-      (let* ((name (symbol-name form)))
+      (let ((name (symbol-name form)))
 	(and (> (length name) 1)
 	     (string= "%" (subseq name 0 1))
-	     ;; don't catch double %%input
+	     ;; don't catch double %%
 	     (not (string= "%" (subseq name 1 2)))))))
+
+(defun input-reference-p (form)
+  "Return non-nil if FORM is a symbol like %%foo."
+  (if (symbolp form)
+      (let ((name (symbol-name form)))
+	(and (> (length name) 2)
+	     (string= "%%" (subseq name 0 2))))))
 
 (defun make-accessor-macrolet-clause (symbol)
   (list symbol
@@ -895,22 +902,49 @@ message queue resulting from the evaluation of EXPR."
 	    (subseq (symbol-name symbol) 1))
 	  self)))
 
+(defun make-input-accessor-defun-forms (symbol)
+  (let ((accessor (make-non-keyword 
+		   (concatenate 'string 
+				"%%"
+				(symbol-name symbol)))))
+  `((defun ,accessor (thing)
+      ;; see also blocks.lisp, `define-block-macro'
+      (input-block thing ,symbol))
+    (export ',accessor))))
+
+(defun make-input-accessor-macrolet-clause (symbol)
+  (list symbol
+	`(input-block 
+	  self
+	  ,(make-keyword
+	    ;; strip double percent sign 
+	    (subseq (symbol-name symbol) 2)))))
+
 (defun make-accessor-flet-clause (symbol)
   `(,symbol (thing)
 	    (field-value ,symbol thing)))
 
 (defun transform-method-body (body)
-  (let (symbols)
+  (let (fields inputs)
     ;; collect %foo symbols used in body
     (transform-tree #'field-reference-p
 		    #'(lambda (symbol)
+			;; don't modify input
 			(prog1 symbol
-			  (push symbol symbols)))
+			  ;; just collect
+			  (pushnew symbol fields)))
+		    body)
+    ;; similarly, collect %%foo symbols
+    (transform-tree #'input-reference-p
+		    #'(lambda (symbol)
+			(prog1 symbol
+			  (pushnew symbol inputs)))
 		    body)
     ;; arrange for the substitution
     `(symbol-macrolet 
-	 ,(mapcar #'make-accessor-macrolet-clause 
-	   (remove-duplicates symbols))
+	 ,(append 
+	   (mapcar #'make-accessor-macrolet-clause fields)
+	   (mapcar #'make-input-accessor-macrolet-clause inputs))
        ,@body)))
 
 ;; (defun transform-field-reference (ref)
@@ -1009,9 +1043,9 @@ was invoked."
 		 (apply #'send ,name self args))
 	       (export ',method-symbol)
 	       ;; and for message queueing
-	       (defun ,queue-defun-symbol (self &rest args)
-		 ,@(when documentation (list documentation))
-		 (apply #'send-queue ,name self args))
+	       ;; (defun ,queue-defun-symbol (self &rest args)
+	       ;; 	 ,@(when documentation (list documentation))
+	       ;; 	 (apply #'send-queue ,name self args))
 	       (export ',queue-defun-symbol)
 	       ;; and for next-method calls.
 	       (defun ,next-defun-symbol (self &rest args)
@@ -1157,6 +1191,7 @@ OPTIONS is a property list of field options. Valid keys are:
 				    :name ,prototype-id
 				    :uuid uuid
 				    :super (find-object super-sym))))
+       ;; create the (%fieldname object) functions
        ,@(mapcan #'make-field-accessor-forms descriptors)
        (setf (fref fields :field-descriptors) ',descriptors)
        (setf (fref fields :documentation) ,documentation)

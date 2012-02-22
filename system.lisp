@@ -311,6 +311,7 @@ or press Alt-X to bring up the system menu.")
 		 :expanded nil
 		 :inputs (list (new messenger))))))))
 
+
 (defun make-system-menu ()
   (find-uuid 
    (new "BLOCKY:SYSTEM-MENU")))
@@ -320,7 +321,7 @@ or press Alt-X to bring up the system menu.")
   (setf (%system-menu (world)) nil))
 
 (define-method menu-items system-menu ()
-  (%inputs (%%menu self)))
+  (%inputs %%menu))
 
 (define-method get-listener system-menu ()
   (first (menu-items self)))
@@ -330,7 +331,7 @@ or press Alt-X to bring up the system menu.")
   ;; adjust header for project name
   (setf %width 
 	(max %width
-	     (+ *logo-height* (dash 4) 
+	     (+ *logo-height* (dash 5) 
 		(font-text-width *project*
 				 *block-bold*)))))
 
