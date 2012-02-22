@@ -58,7 +58,7 @@ PLAYER as the player."
     (add-player world %player)))
 
 (defun make-universe ()
-  (new universe))
+  (new 'universe))
 
 (define-method add-world universe (address world)
   (setf (gethash (normalize-address address) %worlds) world))
@@ -204,7 +204,7 @@ by symbol name. This enables them to be used as hash keys."
 ;;     (assert (listp address))
 ;;     (when (null universe)
 ;;       (setf universe (if (null *universe*)
-;; 			 (new universe)
+;; 			 (new 'universe)
 ;; 			 *universe*)))
 ;;     ;; this probably works better if you have already set up a universe.
 ;;     (setf *mission* self)

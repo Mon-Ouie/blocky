@@ -1212,9 +1212,8 @@ OPTIONS is a property list of field options. Valid keys are:
 
 ;;; Cloning and duplicating objects
   
-(defmacro new (prototype-name &rest initargs)
-  `(clone ,(make-prototype-id prototype-name)
-	  ,@initargs))
+(defun new (prototype-name &rest initargs)
+  (apply #'clone (make-prototype-id prototype-name) initargs))
 
 (defun clone (prototype &rest initargs)
   "Create a new object from PROTOTYPE and pass INITARGS to the

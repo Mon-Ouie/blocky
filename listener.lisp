@@ -478,7 +478,7 @@
   ;; print any error output
   (when (and (stringp %error-output)
 	     (plusp (length %error-output)))
-    (drop self (new text %error-output))))
+    (drop self (new 'text %error-output))))
 
 ;;; Easily defining new entry blocks
 
@@ -520,7 +520,7 @@
   (category :initform :socket))
 
 (define-method initialize socket 
-    (&key label (value (new empty-socket)))
+    (&key label (value (new 'empty-socket)))
   (verify value)
   (setf %label label)
   (setf %inputs (list value))
@@ -625,9 +625,9 @@
   ;; print any error output
   (when (and %parent (stringp %error-output)
 	     (plusp (length %error-output)))
-    (accept %parent (new text %error-output))))
+    (accept %parent (new 'text %error-output))))
     ;; (dolist (line (split-string-on-lines %error-output))
-    ;;   (accept %parent (new string :value line)))))
+    ;;   (accept %parent (new 'string :value line)))))
 
 (define-prototype listener (:super :list)
   (scrollback-length :initform 100)
@@ -640,7 +640,7 @@
 
 (define-method initialize listener ()
   (with-fields (image inputs) self
-    (let ((prompt (new listener-prompt self)))
+    (let ((prompt (new 'listener-prompt self)))
       (list%initialize self)
       (set-output prompt prompt)
       (setf inputs (list prompt))
@@ -733,7 +733,7 @@
 
 ;; (define-block (browser :super tree)
 ;;   (inputs :initform
-;; 	  (list (new reference)
+;; 	  (list (new 'reference)
 
 ;; (define-method accept browser
 

@@ -69,7 +69,7 @@
   (running :initform nil))
 
 (define-method show-copyright-notice system ()
-  (let ((box (new text *copyright-notice*)))
+  (let ((box (new 'text *copyright-notice*)))
     (add-block *world* box 80 80)
     (resize-to-scroll box 80 24)
     (end-of-line box)))
@@ -81,9 +81,12 @@
 ;; (define-visual-macro create-project 
 ;;     (:super list
 
-(define-method create-project system ())
-
-;(define-block-macro create-project )
+;; (define-block-macro save-project 
+    
+(define-method save-project system ()
+  (let ((dialog (new 'save-project)))
+    (add-block (world) dialog)
+    (center-as-dialog dialog)))
 
 ;; (define-method open-existing-project system ((project-name string :default " "))
 	     
@@ -97,13 +100,13 @@
   (setf *system* (find-uuid self)))
 
 (define-method create-trash system ()
-  (add-block (world) (new trash) 100 100))
+  (add-block (world) (new 'trash) 100 100))
 
 (define-method create-text system ()
-  (add-block (world) (new text) 100 100))
+  (add-block (world) (new 'text) 100 100))
 
 (define-method create-listener system ()
-  (add-block (world) (new listener) 100 100))
+  (add-block (world) (new 'listener) 100 100))
 
 (define-method ticks system ()
   (get-ticks))
@@ -270,8 +273,8 @@ or press Alt-X to bring up the system menu.")
 ;;      :fields 
 ;;      ((category :initform :system))
 ;;      :inputs
-;;      ((new splash-logo)
-;;       (new text *splash-screen-text*))
+;;      ((new 'splash-logo)
+;;       (new 'text *splash-screen-text*))
 ;;      :initforms 
 ;;      ((later 5.0 (discard self)))))
 
@@ -292,29 +295,29 @@ or press Alt-X to bring up the system menu.")
       (unfreeze self)
       (setf %locked t))
      :inputs 
-     (:headline (new system-headline)
+     (:headline (new 'system-headline)
       :menu 
-      (new tree 
+      (new 'tree 
 	   :label *blocky-title-string*
 	   :pinned t
 	   :category :system
 	   :expanded t
 	   :inputs
 	   (list 
-	    (new listener)
-	    (new menu :label "Menu" 
+	    (new 'listener)
+	    (new 'menu :label "Menu" 
 		      :inputs (mapcar #'make-menu *system-menu-entries*)
 		      :target *system*
 		      :category :menu
 		      :expanded t)
-	    (new tree :label "Messages"
+	    (new 'tree :label "Messages"
 		 :expanded nil
-		 :inputs (list (new messenger))))))))
+		 :inputs (list (new 'messenger))))))))
 
 
 (defun make-system-menu ()
   (find-uuid 
-   (new "BLOCKY:SYSTEM-MENU")))
+   (new '"BLOCKY:SYSTEM-MENU")))
 
 (define-method discard system-menu ()
   (discard%super self)

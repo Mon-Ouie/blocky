@@ -29,9 +29,9 @@
 (define-method quux ccc ()
   (list :quux :ccc))
 
-(defparameter *aaa* (new aaa))
-(defparameter *bbb* (new bbb))
-(defparameter *ccc* (new ccc))
+(defparameter *aaa* (new 'aaa))
+(defparameter *bbb* (new 'bbb))
+(defparameter *ccc* (new 'ccc))
 
 ;; foo: *ccc* -> BLOCKY:CCC -> BLOCKY:BBB* -> BLOCKY:AAA* 
 ;; baz: *ccc* -> BLOCKY:CCC -> BLOCKY:BBB -> BLOCKY:AAA*

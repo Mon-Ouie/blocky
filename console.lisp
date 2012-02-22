@@ -1321,7 +1321,7 @@ OBJECT as the resource data."
       ;; finally, mark the original as saved.
       (resource-modified-p resource) nil)))
 
-(defun save-project (&optional force)
+(defun save-project-image (&optional force)
   (let (index)
     (if (or (standard-project-p)
 	    (untitled-project-p))
@@ -2312,17 +2312,17 @@ of the music."
   (with-session
     (open-project project)
     (when (null *blocks*)
-      (new system)
-      (start (new world)))
+      (new 'system)
+      (start (new 'world)))
     (start-session)))
 
 (defun create (project)
   (with-session
     (assert (stringp project))
-    (new system)
+    (new 'system)
     (create-project project)
     (open-project project)
-    (start (new world))
+    (start (new 'world))
     (start-session)))
 
 (defun edit (&optional (project *untitled-project-name*) force-shell)
@@ -2330,13 +2330,13 @@ of the music."
     (let ((*edit* t))
       (open-project project :no-error)
       (when force-shell
-	(start (new world)))
+	(start (new 'world)))
       (start-session))))
 
 (defun blocky ()
   (with-session
-      (new system)
-    (start (new world))
+      (new 'system)
+    (start (new 'world))
     (start-session)))
 
 ;;; console.lisp ends here

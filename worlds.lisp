@@ -187,7 +187,7 @@
 
 (define-method initialize world ()
   (initialize%super self)
-  (setf %ghost (new block))
+  (setf %ghost (new 'block))
   (setf %variables (make-hash-table :test 'equal))
   (setf %objects (make-hash-table :test 'equal)))
   

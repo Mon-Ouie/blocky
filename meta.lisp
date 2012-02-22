@@ -34,7 +34,7 @@
 ;;   (error "Recompilation not yet defined for prog0."))
 
 ;; (define-method initialize prog0 (target)
-;;   (initialize%block self (new reference target))
+;;   (initialize%block self (new 'reference target))
 ;;   (pin (first %inputs)))
 
 ;; (define-method evaluate prog0 ()
@@ -48,7 +48,7 @@
 ;; (define-block-macro define-block 
 ;;   (:super list
 ;;    :fields ((header :initform nil))
-;;    :inputs ((new message 
+;;    :inputs ((new 'message 
 ;; 		  :label "define block"
 ;; 		  :schema '((name string :default "my-block") 
 ;; 			    (super string :default "block"))
@@ -68,8 +68,8 @@
 
 ;; (define-block-macro field 
 ;;   (:fields ((category :initform :variables))
-;;    :inputs ((new string :label "field")
-;; 	    (new socket :label ":default")))
+;;    :inputs ((new 'string :label "field")
+;; 	    (new 'socket :label ":default")))
 ;;   ;; grab args
 ;;   (destructuring-bind (name value) 
 ;;       (mapcar #'recompile %inputs)
@@ -88,9 +88,9 @@
 
 ;; (define-block-macro argument
 ;;   (:fields ((category :initform :variables))
-;;    :inputs ((new string :label "name")
-;; 	    (new entry :label "type")
-;; 	    (new string :label "default")))
+;;    :inputs ((new 'string :label "name")
+;; 	    (new 'entry :label "type")
+;; 	    (new 'string :label "default")))
 ;;   (destructuring-bind (name type default) 
 ;;       (mapcar #'recompile %inputs)
 ;;     (list (make-symbol name) type :default default)))
@@ -99,7 +99,7 @@
 
 ;; (define-block-macro define-method 
 ;;   (:super list
-;;    :inputs ((new message 
+;;    :inputs ((new 'message 
 ;; 		 :button-p nil
 ;; 		 :schema '((name string :default "") 
 ;; 			   (prototype string :default "" :label "for block:"))

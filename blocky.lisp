@@ -90,7 +90,7 @@ field-reference-p null-next object-eq *message-send-symbol-suffix*
 *x11-color-data* object-name object-parent send send-super send-queue
 self opposite-direction object-address-string object step-in-direction
 direction-to plasma-rect subdivide-rect render-plasma add-hook
-run-hook queue-tail make-resource-link save-resource save-project
+run-hook queue-tail make-resource-link save-resource save-project-image
 *defined-resources* save-everything *export-formats* export-archive
 defresource export-application export-project make-queue queue unqueue
 queue-message queued-messages-p unqueue-message send-queue field-value

@@ -473,7 +473,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
     (bind-event-to-task block 
 			   key
 			   mods
-			   (new task method-name block))))
+			   (new 'task method-name block))))
 
 (define-method bind-event block (event binding)
   (destructuring-bind (name &rest modifiers) event
@@ -481,7 +481,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
       (symbol (bind-event-to-method self name modifiers binding))
       (list 
        ;; create a method call 
-       (let ((task (new task
+       (let ((task (new 'task
 			   (make-keyword (first binding))
 			   self
 			   :arguments (rest binding))))
@@ -496,7 +496,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 
 (defun bind-event-to-text-insertion (self key mods text)
   (bind-event-to-task self key mods 
-			 (new task :insert self (list text))))
+			 (new 'task :insert self (list text))))
     
 (define-method insert block (string)
   (declare (ignore string))
@@ -599,7 +599,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 
 (define-method make-halo block ()
   (when (null %halo)
-    (setf %halo (new halo self))
+    (setf %halo (new 'halo self))
     (add-block (world) %halo)))
 
 (define-method discard-halo block ()
@@ -682,9 +682,9 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
     ;; see also listener.lisp for more on data entry blocks
     (typecase datum
       ;; see also the definition of "string" blocks in listener.lisp
-      (string (new string :value datum))
-      (symbol (new symbol :value datum))
-      (otherwise (new entry :value datum :type-specifier type-specifier)))))
+      (string (new 'string :value datum))
+      (symbol (new 'symbol :value datum))
+      (otherwise (new 'entry :value datum :type-specifier type-specifier)))))
 		    
 (defvar *make-block-package* nil)
 
@@ -720,7 +720,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 		  ((blockyp sexp) ;; catch UUIDs etc
 		   sexp)
 		  ((stringp sexp)
-		   (new string :value sexp))
+		   (new 'string :value sexp))
 		  ((action-spec-p sexp)
 		   (action-block sexp))
 		  ((list-spec-p sexp)
@@ -889,7 +889,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     (list :label method-string
 	  :method method
 	  :target target
-	  :action (new task method target))))
+	  :action (new 'task method target))))
 
 (define-method context-menu block ()
   (let ((methods nil)
@@ -918,7 +918,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
        :target (find-uuid self)))))
 
 (define-method make-reference block ()
-  (new reference self))
+  (new 'reference self))
 
 ;;; Evaluation and recompilation: compiling block diagrams into equivalent sexps
 
@@ -1438,6 +1438,10 @@ See shell.lisp for more on the implementation of drag-and-drop."
 	(setf x (+ (- center-x (/ width 2))))
 	(setf y (+ (- center-y (/ width 2))))))))
 
+(define-method center-as-dialog block ()
+  (center self)
+  (align-to-pixels self))
+
 (define-method pin block ()
   "Prevent dragging and moving of this block."
   (setf %pinned t))
@@ -1753,7 +1757,7 @@ Note that the center-points of the objects are used for comparison."
       `(let ((,target-sym ,target)
 	     (,delay-sym ,delay))
 	 (add-task ,target-sym
-		   (new task 
+		   (new 'task 
 			,(make-keyword method)
 			,target-sym
 			:subtasks (list ,@(make-tasks delay-sym subexpressions))

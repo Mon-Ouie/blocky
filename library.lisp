@@ -183,7 +183,7 @@ inputs are evaluated."
 (defmacro deflist (name &rest body)
   `(define-block (,name :super :list) ,@body))
 
-(defun null-block () (new list))
+(defun null-block () (new 'list))
 
 (deflist empty-socket)
 

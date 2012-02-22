@@ -1,20 +1,20 @@
 * GUI BETA
 
-** TODO show project name
+** TODO is *world* properly bound during mouse events
+** TODO [#A] save project dialog
+*** TODO [#A] overwrite protect
+** TODO [#A] resource blocks
+*** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
+** TODO [#A] load project dialog
+*** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
+*** TODO [#A] Don't require .blocky suffix for project dir
+** TODO [#C] Pretty sexy black rounded corner notifications
 ** TODO [#A] create project dialog
 ** TODO [#B] copyright notice 
 ** TODO [#B] basic help
-** TODO [#A] allow untitled project
-** DONE [#C] normalize all is-foo to foo-p
-   CLOSED: [2012-02-20 Mon 23:22]
-** TODO [#A] save project dialog
-*** TODO [#A] overwrite protect
-** TODO [#A] load project dialog
 ** TODO [#A] Ability to scroll the world with the mouse wheel
 ** TODO [#B] the clipboard is a world
 ** TODO [#B] sys menu should remember relative screen loc
-** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
-** TODO [#A] Don't require .blocky suffix for project dir
 ** TODO [#A] allow empty project
 ** TODO [#A] selecting single world object
 ** TODO [#A] selecting multiple objects
@@ -42,7 +42,6 @@
 ** TODO [#C] editor with split screen view and tools mentality (like old/forms.lisp)
 ** TODO [#C] Language tutorial project
 ** TODO [#C] Basic context-sensitive help
-** TODO [#C] Pretty sexy black rounded corner notifications
 ** TODO [#C] defblock selection 
 
 ** TODO [#B] Improve error handling in shell
@@ -917,6 +916,34 @@ But the graph doesn't yet actually work, so we must continue.
 ** TODO [#A] indicator icons for tree open/closed
    :PROPERTIES:
    :ARCHIVE_TIME: 2012-02-20 Mon 02:49
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: GUI BETA
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO show project name
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-22 Wed 02:29
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: GUI BETA
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** DONE [#C] normalize all is-foo to foo-p
+   CLOSED: [2012-02-20 Mon 23:22]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-22 Wed 02:30
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: GUI BETA
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END:
+
+** TODO [#A] allow untitled project
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-22 Wed 02:30
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: GUI BETA
    :ARCHIVE_CATEGORY: tasks
