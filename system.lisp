@@ -78,13 +78,27 @@
 
 ;; Creating a project
 
-;; (define-visual-macro create-project 
-;;     (:super list
+(define-block-macro create-project-dialog 
+    (:super :list
+     :fields ((category :initform :system))
+     :inputs (:name (new 'string :label "Project name:")
+	      :parent (new 'string :label "Create in folder:" 
+				   :value (namestring (projects-directory)))
+	      :folder-name (new 'string :label "Project folder name:")
+	      :messenger (new 'messenger)
+	      :buttons (new 'hlist
+			    (new 'button :label "Create project"
+				 :target self :method :create-project)
+			    (new 'button :label "Dismiss"
+				 :target self :method :discard)))))
 
-;; (define-block-macro save-project 
-    
-(define-method save-project system ()
-  (let ((dialog (new 'save-project)))
+(define-method create-project create-project-dialog ()
+  (with-input-values (name parent folder-name) self
+    (unless (create-project-image name :folder-name folder-name :parent parent)
+      (message "Could not create project."))))
+
+(define-method create-project system-menu ()
+  (let ((dialog (new 'create-project-dialog)))
     (add-block (world) dialog)
     (center-as-dialog dialog)))
 
@@ -165,28 +179,28 @@
       (:label "Examples" :action :show-examples)
       (:label "Language Reference" :action :language-reference)))))
 
-(define-block (action-button :super :list)
+(define-block (button :super :list)
   (category :initform :button)
   (target :initform nil)
   (method :initform nil)
   (arguments :initform nil)
   (label :initform nil))
 
-(define-method initialize action-button 
+(define-method initialize button 
     (&key target method arguments label)
   (when target (setf %target target))
   (when method (setf %method method))
   (when label (setf %label label))
   (when arguments (setf %arguments arguments)))
 
-(define-method layout action-button ()
+(define-method layout button ()
   (with-fields (height width) self
     (setf width (+ (* 13 (dash))
 		   (font-text-width %label
 				    *block-bold*))
 	  height (+ (font-height *block-bold*) (* 4 (dash))))))
 
-(define-method draw action-button ()
+(define-method draw button ()
   (with-fields (x y height width label) self
     (draw-patch self x y (+ x width) (+ y height))
     (draw-image "colorbang" 
@@ -196,7 +210,7 @@
 		 :color "white"
 		 :font *block-bold*)))
 
-(define-method tap action-button (x y)
+(define-method tap button (x y)
   (apply #'send %method %target %arguments))
 
 ;;; Headline 
@@ -220,43 +234,6 @@
 		 (+ y (dash 2))
 		 :color "white"
 		 :font *block-bold*)))
-
-;; (define-method can-pick system-headline () t)
-
-;; (define-method pick system-headline () %parent)
-
-;;; Splash screen
-
-(defparameter *splash-screen-text*
-  "Welcome to the Blocky multimedia programming language.
-Copyright (C) 2006-2012 by David T O'Toole <dto@ioforms.org> 
-This program is free software: you can redistribute it and/or 
-modify it under the terms of the GNU General Public License.
-For more information, see the included file 'COPYING',
-or visit the language's home page: http://blocky.io
-
-You may press F1 for help at any time, 
-or press Alt-X to bring up the system menu.")
-
-;; (define-block splash-logo)
-
-;; (define-method update splash-logo ()
-;;   (change-image self "blocky-big"))
-
-;; (define-block-macro splash-screen
-;;     (:super :list
-;;      :fields 
-;;      ((category :initform :system))
-;;      :inputs
-;;      ((new 'splash-logo)
-;;       (new 'text *splash-screen-text*))
-;;      :initforms 
-;;      ((later 5.0 (discard self)))))
-
-;; (define-method update splash-screen ()
-;;   (mapc #'update %inputs)
-;;   (center self)
-;;   (layout-vertically self))
 
 ;;; The system menu itself
 
@@ -282,7 +259,7 @@ or press Alt-X to bring up the system menu.")
 	    (new 'listener)
 	    (new 'menu :label "Menu" 
 		      :inputs (mapcar #'make-menu *system-menu-entries*)
-		      :target *system*
+		      :target self
 		      :category :menu
 		      :expanded t)
 	    (new 'tree :label "Messages"
@@ -341,6 +318,41 @@ or press Alt-X to bring up the system menu.")
 (define-method accept system-menu (thing)
   (declare (ignore thing))
   nil)
+
+
+
+;;; Splash screen
+
+(defparameter *splash-screen-text*
+  "Welcome to the Blocky multimedia programming language.
+Copyright (C) 2006-2012 by David T O'Toole <dto@ioforms.org> 
+This program is free software: you can redistribute it and/or 
+modify it under the terms of the GNU General Public License.
+For more information, see the included file 'COPYING',
+or visit the language's home page: http://blocky.io
+
+You may press F1 for help at any time, 
+or press Alt-X to bring up the system menu.")
+
+;; (define-block splash-logo)
+
+;; (define-method update splash-logo ()
+;;   (change-image self "blocky-big"))
+
+;; (define-block-macro splash-screen
+;;     (:super :list
+;;      :fields 
+;;      ((category :initform :system))
+;;      :inputs
+;;      ((new 'splash-logo)
+;;       (new 'text *splash-screen-text*))
+;;      :initforms 
+;;      ((later 5.0 (discard self)))))
+
+;; (define-method update splash-screen ()
+;;   (mapc #'update %inputs)
+;;   (center self)
+;;   (layout-vertically self))
 
     
 ;;; system.lisp ends here

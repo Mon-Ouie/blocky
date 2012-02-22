@@ -1159,9 +1159,9 @@ resource is stored; see also `find-resource'."
 		 (load lisp))
 	  (message "No default lisp file found in project ~S. Continuing..." project)))))
 
-(defun create-project-image (project &key folder-name destination-directory)
+(defun create-project-image (project &key folder-name parent)
   (assert (stringp project))
-  (let* ((directory (or destination-directory (projects-directory)))
+  (let* ((directory (or parent (projects-directory)))
 	 (dirs (mapcar #'string-upcase (find-directories directory))))
     (if (find project dirs :test 'equal)
 	(prog1 nil 

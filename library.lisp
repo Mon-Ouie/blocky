@@ -177,8 +177,7 @@ inputs are evaluated."
 
 (define-method initialize list (&rest blocks)
   (apply #'block%initialize self blocks)
-  ;; allow them to be freely removed
-  (unfreeze self))
+  (freeze self))
 
 (defmacro deflist (name &rest body)
   `(define-block (,name :super :list) ,@body))
