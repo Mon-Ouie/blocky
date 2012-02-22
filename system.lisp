@@ -302,6 +302,10 @@
   (declare (ignore thing))
   nil)
 
+(define-method tap system-menu (x y)
+  (declare (ignore x y))
+  (grab-focus (get-listener self)))
+
 ;; Creating a project
 
 (define-block-macro create-project-dialog 
