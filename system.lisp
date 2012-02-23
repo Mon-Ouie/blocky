@@ -229,16 +229,26 @@
 ;;; Generic window titlebar utility
 
 (define-block (window :super list)
+  (centered :initform nil)
   (category :initform :system))
 
-(define-method initialize window (&key child (title "*untitled-window*"))
+(define-method initialize window (&key centered child (title "*untitled-window*"))
   (assert child)
   (initialize%super self)
+  (setf %centered centered)
   (setf %inputs (list (new 'headline title) child))
-  (freeze self))
+  (mapc #'pin %inputs))
 
 (define-method layout window ()
-  (layout-vertically self))
+  (layout-vertically self)
+  (when %centered
+    (center-as-dialog self)))
+
+(define-method can-pick window ()
+  t)
+
+(define-method pick window ()
+  self)
 
 ;;; The system menu itself
 
@@ -350,10 +360,6 @@
 	 "Successfully created new project."
 	 "Could not create project."))))
 
-(define-method layout create-project-dialog ()
-  (layout%super self)
-  (center-as-dialog self))
-
 (define-method create-project system-menu ()
   (let ((dialog (new 'window 
 		     :title "Create a new project"
@@ -384,10 +390,6 @@
 	 "Successfully loaded new project."
 	 "Could not load project."))))
 
-(define-method layout load-project-dialog ()
-  (layout%super self)
-  (center-as-dialog self))
-
 (define-method load-project system-menu ()
   (let ((dialog (new 'window 
 		     :title "Load a project"
@@ -412,10 +414,6 @@
    (if (save-project-image :force)
        "Successfully saved project."
        "Could not save project!")))
-
-(define-method layout save-project-dialog ()
-  (layout%super self)
-  (center-as-dialog self))
 
 (define-method save-project system-menu ()
   (let ((dialog (new 'window 

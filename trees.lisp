@@ -301,6 +301,8 @@
 		 (send action (or target (symbol-value '*system*)))))
       (otherwise
        ;; we're a submenu, not an individual menu command.
+       ;; first close any other open menus
+       (mapc #'unexpand (%inputs %parent))
        (toggle-expanded self)))))
 
 ;; (define-method alternate-tap menu (x y)
