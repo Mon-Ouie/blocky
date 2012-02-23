@@ -38,7 +38,7 @@
 (define-prototype tree (:super :list)
   (category :initform :structure)
   (treep :initform t)
-  (style :initform :flat)
+  (style :initform :rounded)
   (method :initform nil)
   (draw-frame :initform t)
   (indentation-width :initform (dash 2))
@@ -257,7 +257,15 @@
   (action :initform nil)
   (style :initform :rounded)
   (top-level :initform nil)
-  (category :initform :menu))
+  (category :initform :menu)
+  (tags :initform '(:menu)))
+
+(defun menup (thing)
+  (and (blockyp thing)
+       (has-tag thing :menu)))
+
+(define-method siblings menu ()
+  (remove-if-not #'menup (%inputs %parent)))
 
 (defvar *menu-prototype* nil)
 
@@ -302,7 +310,7 @@
       (otherwise
        ;; we're a submenu, not an individual menu command.
        ;; first close any other open menus
-       (mapc #'unexpand (%inputs %parent))
+       (mapc #'unexpand (siblings self))
        (toggle-expanded self)))))
 
 ;; (define-method alternate-tap menu (x y)

@@ -1,14 +1,13 @@
 * GUI BETA
 
-** TODO fix centering of dialogs
-** TODO easy wrap titlebar
+** TODO [#A] fix centering of dialogs
+** TODO [#A] Fix dialog closing leftovers
 ** TODO [#A] save project dialog
 ** TODO [#A] load project dialog
 ** TODO [#A] resource blocks
 *** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
 ** TODO [#A] generic question dialog box shortcut function
 ** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
-** TODO [#A] is *world* properly bound during mouse events?
 ** TODO [#A] Pretty sexy black rounded corner notifications
 *** TODO [#A] simple ok notification box
 ** TODO [#A] complete credits file and ensure all docs/license copies in place.
@@ -1006,6 +1005,15 @@ But the graph doesn't yet actually work, so we must continue.
 ** TODO make menu work again
    :PROPERTIES:
    :ARCHIVE_TIME: 2012-02-23 Thu 02:33
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: GUI BETA
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO easy wrap titlebar
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-23 Thu 10:45
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: GUI BETA
    :ARCHIVE_CATEGORY: tasks

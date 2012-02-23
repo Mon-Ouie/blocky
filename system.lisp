@@ -204,7 +204,7 @@
 
 (define-block headline title)
 
-(defparameter *logo-height* 24)
+(defparameter *logo-height* 22)
 
 (defparameter *blocky-title-string* "Blocky 0.92a")
 
@@ -219,10 +219,10 @@
 
 (define-method draw headline ()
   (with-fields (x y) self
-    (draw-image "blocky" (+ x (dash 0.5)) y :height *logo-height* :width *logo-height*)
+    (draw-image "blocky" (+ x (dash 0.5)) (- y (dash 0.5)) :height *logo-height* :width *logo-height*)
     (draw-string %title
 		 (+ x *logo-height* (dash 2))
-		 (+ y (dash 2))
+		 (+ y (dash 1))
 		 :color "white"
 		 :font *block-bold*)))
 
@@ -249,6 +249,10 @@
 
 (define-method pick window ()
   self)
+
+;; (define-method unplug window (input)
+;;   (unplug%super self input)
+;;   (discard self))
 
 ;;; The system menu itself
 
