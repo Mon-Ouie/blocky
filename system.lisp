@@ -60,7 +60,7 @@
 (define-method tap button (x y)
   (apply #'send %method %target %arguments))
 
-;;; Message output window
+;;; Message output widget
 
 (define-block messenger :category :terminal :messages nil)
 
@@ -130,16 +130,15 @@
   '((:label "Project"
      :inputs
      ((:label "Create a new project" :action :create-project)
-      (:label "Open an existing project" :action :open-existing-project)
-      (:label "Save current changes" :action :save-changes)
-      (:label "Save as new project" :action :save-new)
+      (:label "Save current project" :action :save-project)
+      (:label "Load a project" :action :load-project)
       ;; (:label "Show current changes without saving" :action :show-changes)
       ;; (:label "Export as archive" :action :export-archive)
       ;; (:label "Export as application" :action :export-application)
       ;; (:label "Publish to web" :action :publish-web)
       ;; (:label "Publish to community site" :action :publish-community)
       ;; (:label "Publish to FTP" :action :publish-ftp)
-      ;;(:label "Edit preferences" :action :edit-preferences)
+      (:label "Settings" :action :settings)
       (:label "Quit Blocky" :action :quit-blocky)))
     (:label "Edit"
      :inputs
@@ -203,25 +202,43 @@
 
 ;;; Headline 
 
-(define-block system-headline)
+(define-block headline title)
 
 (defparameter *logo-height* 24)
 
 (defparameter *blocky-title-string* "Blocky 0.92a")
 
-(define-method layout system-headline ()
+(define-method initialize headline (&optional (title *project*))
+  (initialize%super self)
+  (setf %title title))
+
+(define-method layout headline ()
   (resize self 
 	  (+ (dash 2) *logo-height*)
 	  *logo-height*))
 
-(define-method draw system-headline ()
+(define-method draw headline ()
   (with-fields (x y) self
     (draw-image "blocky" (+ x (dash 0.5)) y :height *logo-height* :width *logo-height*)
-    (draw-string *project*
+    (draw-string %title
 		 (+ x *logo-height* (dash 2))
 		 (+ y (dash 2))
 		 :color "white"
 		 :font *block-bold*)))
+
+;;; Generic window titlebar utility
+
+(define-block (window :super list)
+  (category :initform :system))
+
+(define-method initialize window (&key child (title "*untitled-window*"))
+  (assert child)
+  (initialize%super self)
+  (setf %inputs (list (new 'headline title) child))
+  (freeze self))
+
+(define-method layout window ()
+  (layout-vertically self))
 
 ;;; The system menu itself
 
@@ -230,7 +247,7 @@
      :fields 
      ((category :initform :system))
      :inputs 
-     (:headline (new 'system-headline)
+     (:headline (new 'headline)
       :menu 
       (new 'tree 
 	   :label *blocky-title-string*
@@ -241,8 +258,10 @@
 	   (list 
 	    (new 'listener)
 	    (new 'menu :label "Menu" 
-		      :inputs (mapcar #'make-menu *system-menu-entries*)
-		      :target self
+		      :inputs 
+		 (flet ((process (entry)
+			  (make-menu entry :target self)))
+		   (mapcar #'process *system-menu-entries*))
 		      :category :menu
 		      :expanded t)
 	    (new 'tree :label "Messages"
@@ -306,7 +325,7 @@
   (declare (ignore x y))
   (grab-focus (get-listener self)))
 
-;; Creating a project
+;;; Creating a project
 
 (define-block-macro create-project-dialog 
     (:super :list
@@ -314,8 +333,8 @@
      :inputs (:name (new 'string :label "Project name:")
 	      :parent (new 'string :label "Create in folder:" 
 				   :value (namestring (projects-directory)))
-	      :folder-name (new 'string :label "Project folder name:")
-	      :messenger (new 'messenger "Use the text entry fields above to name your project.")
+	      :folder-name (new 'string :label "Project folder name (optional):")
+	      :messenger (new 'messenger "Use the text entry fields above to name your new project.")
 	      :buttons (new 'hlist
 			    (new 'button :label "Create project"
 				 :target self :method :create-project)
@@ -331,12 +350,51 @@
 	 "Successfully created new project."
 	 "Could not create project."))))
 
-(define-method create-project system-menu ()
-  (let ((dialog (new 'create-project-dialog)))
-    (add-block (world) dialog)
-    (center-as-dialog dialog)))
+(define-method layout create-project-dialog ()
+  (layout%super self)
+  (center-as-dialog self))
 
-;; Saving a project
+(define-method create-project system-menu ()
+  (let ((dialog (new 'window 
+		     :title "Create a new project"
+		     :child (new 'create-project-dialog))))
+    (add-block (world) dialog)))
+
+;;; Loading a project
+
+(define-block-macro load-project-dialog 
+    (:super :list
+     :fields ((category :initform :system))
+     :inputs (:filename 
+	      (new 'string :label "Load from folder:" 
+			   :value (namestring (projects-directory)))
+	      :messenger (new 'messenger "Use the text entry fields above to name your project.")
+	      :buttons (new 'hlist
+			    (new 'button :label "Load project"
+				 :target self :method :load-project)
+			    (new 'button :label "Dismiss"
+				 :target self :method :discard)))))
+
+(define-method load-project load-project-dialog ()
+  (with-input-values (name parent folder-name) self
+    (add-message 
+     %%messenger    
+     (if (load-project-image 
+	  name :folder-name folder-name :parent parent)
+	 "Successfully loaded new project."
+	 "Could not load project."))))
+
+(define-method layout load-project-dialog ()
+  (layout%super self)
+  (center-as-dialog self))
+
+(define-method load-project system-menu ()
+  (let ((dialog (new 'window 
+		     :title "Load a project"
+		     :child (new 'load-project-dialog))))
+    (add-block (world) dialog)))
+
+;;; Saving a project
 
 (define-block-macro save-project-dialog 
     (:super :list
@@ -355,10 +413,15 @@
        "Successfully saved project."
        "Could not save project!")))
 
+(define-method layout save-project-dialog ()
+  (layout%super self)
+  (center-as-dialog self))
+
 (define-method save-project system-menu ()
-  (let ((dialog (new 'save-project-dialog)))
-    (add-block (world) dialog)
-    (center-as-dialog dialog)))
+  (let ((dialog (new 'window 
+		     :title "Save current project"
+		     :child (new 'save-project-dialog))))
+    (add-block (world) dialog)))
 
 ;;; Splash screen
 

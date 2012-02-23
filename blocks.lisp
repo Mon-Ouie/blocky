@@ -171,7 +171,7 @@ streams as a basis.
   (let ((input-names (remove-if-not #'keywordp inputs)))
     `(progn 
        ;; define input accessor functions
-       ,@(mapcan #'make-input-accessor-defun-forms input-names)
+       ,@(mapcar #'make-input-accessor-defun-forms input-names)
        (define-block (,name :super ,super) 
 	 (label :initform ,(pretty-symbol-string name))
 	 (input-names :initform ',input-names)

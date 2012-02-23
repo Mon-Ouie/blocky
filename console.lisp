@@ -1160,22 +1160,23 @@ resource is stored; see also `find-resource'."
 	  (message "No default lisp file found in project ~S. Continuing..." project)))))
 
 (defun create-project-image (project &key folder-name parent)
-  (assert (stringp project))
-  (let* ((directory (or parent (projects-directory)))
-	 (dirs (mapcar #'string-upcase (find-directories directory))))
-    (if (find project dirs :test 'equal)
-	(prog1 nil 
-	  (message "Cannot create project ~A, because a folder with this name already exists in ~A"
-		   project directory))
-	(let ((dir (if folder-name 
-		       (default-project-pathname folder-name)
-		       (default-project-pathname project))))
-	  (message "Creating new project ~A in directory ~A..." project dir)
-	  (setf *project* project)
-	  (prog1 dir
-	    (make-directory-maybe dir)
-	    (message "Finished creating directory ~A." dir)
-	    (message "Finished creating project ~A." project))))))
+  (if (null project)
+      (prog1 nil (message "Cannot create project. You must choose a project name."))
+      (let* ((directory (or parent (projects-directory)))
+	     (dirs (mapcar #'string-upcase (find-directories directory))))
+	(if (find project dirs :test 'equal)
+	    (prog1 nil 
+	      (message "Cannot create project ~A, because a folder with this name already exists in ~A"
+		       project directory))
+	    (let ((dir (if folder-name 
+			   (default-project-pathname folder-name)
+			   (default-project-pathname project))))
+	      (message "Creating new project ~A in directory ~A..." project dir)
+	      (setf *project* project)
+	      (prog1 dir
+		(make-directory-maybe dir)
+		(message "Finished creating directory ~A." dir)
+		(message "Finished creating project ~A." project)))))))
 
 (defun open-project (project &optional no-error)
   "Load the project named PROJECT. Load any resources marked with a

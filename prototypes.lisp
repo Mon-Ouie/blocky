@@ -918,10 +918,11 @@ message queue resulting from the evaluation of EXPR."
 		   (concatenate 'string 
 				"%%"
 				(symbol-name symbol)))))
-  `((defun ,accessor (thing)
-      ;; see also blocks.lisp, `define-block-macro'
-      (input-block thing ,symbol))
-    (export ',accessor))))
+  `(unless (fboundp ',accessor)
+     (defun ,accessor (thing)
+       ;; see also blocks.lisp, `define-block-macro'
+       (input-block thing ,symbol))
+     (export ',accessor))))
 
 (defun make-input-accessor-macrolet-clause (symbol)
   (list symbol

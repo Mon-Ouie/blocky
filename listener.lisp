@@ -22,7 +22,7 @@
 
 ;;; Command prompt block
 
-(defparameter *active-prompt-color* "gray20")
+(defparameter *active-prompt-color* "red")
 (defparameter *inactive-prompt-color* "gray10")
 (defparameter *prompt-cursor-inactive-color* "gray50")
 
@@ -286,7 +286,9 @@
 			 (:active *active-prompt-color*)
 			 (:inactive (if (null parent)
 					"purple"
-					(find-color parent :shadow))))))))
+					(if (eq :system (%category parent))
+					    "gray20"
+					    (find-color parent :shadow)))))))))
 
 (define-method draw-indicators prompt (state)
   (with-fields (x y options text-color width parent height line) self
