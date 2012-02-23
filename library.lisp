@@ -147,7 +147,8 @@ inputs are evaluated."
 	(layout element)
 	(setf height (max height (+ (ldash) (field-value :height element))))
 	(incf x0 (field-value :width element))
-	(incf width (field-value :width element)))
+	(incf width (field-value :width element))
+	(incf width (dash 1)))
       (incf height (dash 1))
       (incf width (dash 3))))))
 

@@ -336,7 +336,7 @@
     (add-block (world) dialog)
     (center-as-dialog dialog)))
 
-;; Creating a project
+;; Saving a project
 
 (define-block-macro save-project-dialog 
     (:super :list

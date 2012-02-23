@@ -1,23 +1,17 @@
 * GUI BETA
 
-** TODO [#A] complete credits file and ensure all docs/license copies in place.
-** TODO [#A] generic question dialog box shortcut function
-** TODO [#A] fix being able to puull out menu components
+** TODO make menu work again
 ** TODO [#A] save project dialog
 ** TODO [#A] load project dialog
 ** TODO [#A] resource blocks
 *** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
+** TODO [#A] generic question dialog box shortcut function
 ** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
 ** TODO [#A] is *world* properly bound during mouse events?
 ** TODO [#A] Pretty sexy black rounded corner notifications
 *** TODO [#A] simple ok notification box
-** TODO [#B] copyright notice 
-** TODO [#B] Fancy credits 
-** TODO [#B] basic help
+** TODO [#A] complete credits file and ensure all docs/license copies in place.
 ** TODO [#A] Ability to scroll the world with the mouse wheel
-** TODO [#B] the clipboard is a world, paste/duplicate
-** TODO [#C] load all 00- blx files in alphanumeric order
-** TODO [#B] sys menu should remember relative screen loc
 ** TODO [#A] allow empty project
 ** TODO [#A] selecting single world object
 ** TODO [#A] selecting multiple objects
@@ -25,6 +19,15 @@
 ** TODO [#A] dragging world object results in moving it within world, not to top layer
 ** TODO [#A] right click on world objects to bring them back into top layer
 ** TODO [#A] hotkey for moving objects up from world
+** TODO [#B] visually indicate button blink
+** TODO [#B] better hlist packing
+** TODO [#B] fix being able to pull out menu components
+** TODO [#B] copyright notice 
+** TODO [#B] Fancy credits 
+** TODO [#B] basic help
+** TODO [#B] the clipboard is a world, paste/duplicate
+** TODO [#B] sys menu should remember relative screen loc
+** TODO [#C] load all 00- blx files in alphanumeric order
 ** TODO [#A] fix project dir naming issues. allow opening any .iof including index.iof 
 ** TODO [#A] flesh out basic Projects operations dialogs
 ** TODO [#A] Implement basic blocks library (see list below)
