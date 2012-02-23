@@ -1,28 +1,88 @@
-Author: 
-David T. O'Toole <dto@ioforms.org>
-
-Playtesting:  
-Adlai N. Chandrasekhar
-Marcus Eskilsson
-Dana Scott
-Matthew Scott
-Aad Versteden
+Lead programmer:
+David O'Toole <dto@ioforms.org>
 
 Multiplatform support and endless inspiration:
 Shawn Betts
 
 Mathematical training: 
 Eduardo Ochs
+Aparna Mahadev
+Giampiero Pecelli
+Karl Wurst	 
 
-Special thanks to:
-Sacha Chua 
-Carsten Dominik <dominik@science.uva.nl>
-Hiraoka Kazuyuki <khi@users.sourceforge.jp>
-Eduardo Ochs <eduardoochs@gmail.com>
-Michael Olson <mwolson@member.fsf.org>
-Tom Schutzer-Weissmann <trmsw at yahoo.co.uk>
-Richard Stallman <rms@gnu.org>
-Tom Tromey <elpa@tromey.com>
-Ryan Yeske <rcyeske@gmail.com>
-John Weigley
+For SBCL: 
+The developers and users of Steel Bank Common Lisp.
+
+For Lispbuilder-SDL:
+Luke Crook
+
+For Quicklisp and Planet Lisp and a lot more:
+Zach Beane
+
+For cl-opengl and much education:
+Bart Botta
+
+For answering many questions:
+the freenode #lisp crew 
+
+For sheeple and exploring the depths of CLOS:
+sykopomp
+
+For creating an online community,
+the freenode #lispgames crew
+
+For Planner-mode, 
+John Weigley, and 
+Sacha Chua, and
+Michael Olson
+
+For PAIP:
+Peter Norvig
+
+For CL-FAD: 
+Peter Seibel and the CL-FAD team: http://weitz.de/cl-fad/
+
+For Org-mode:
+Carsten Dominik and Team ORG
+
+For Howm-mode:
+Hiraoka Kazuyuki
+
+For GNU Emacs and GPL:
+Richard Stallman  
+
+For ELPA:
+Tom Tromey 
+
+For testing and feedback and discussion:
+Christopher Webber and many more
+
+For Squeak:
+Squeakers
+
+For the rad:
+Ryan Yeske 
+
+For "On Lisp":
+Paul Graham
+
+For The Weekly Repl:
+Abhishek Reddy
+
+Playtesting:  
+Adlai N. Chandrasekhar
+Marcus Eskilsson
+John J. O'Toole
+Ben O'Toole
+Tom Schutzer-Weissmann
+Dana Scott
+Matthew Scott
+Aad Versteden
+
+And so many more:
+Adele Goldberg
+Alan Kay 
+Douglas Engelbart
+John Young
+JESKOLA
 

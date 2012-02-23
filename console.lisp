@@ -825,15 +825,15 @@ display."
 
 (defparameter *use-sound* t "Non-nil (the default) is to use sound. Nil disables sound.")
 
-;;; IOF resource interchange files
+;;; BLX resource interchange files
 
-(defparameter *iof-file-extension* ".iof"
-"IOF is a simple Lisp data interchange file format. An IOF file can
+(defparameter *resource-file-extension* ".blx"
+"BLX is a simple Lisp data interchange file format. An BLX file can
 contain one or more data resources. A 'resource' is an image, sound,
 text, font, lisp program, or other data whose interpretation is up to
 the client.
 
-An IOF resource can be either self-contained, or point to an
+An BLX resource can be either self-contained, or point to an
 external file for its data.
 
 A 'resource record' defines a resource. A resource record is a
@@ -846,7 +846,7 @@ structure with the following elements:
           Corresponding handlers are the responsibility of the client.
           See also `*resource-handlers*' and `load-resource'.
 
-          The special type :iof is used to load the iof file
+          The special type :blx is used to load the blx file
           specified in :FILE, from (optionally) another project
           whose name is given in :DATA.
 
@@ -862,26 +862,26 @@ structure with the following elements:
               (the default is to load resources on demand.)
 
  :FILE    Name of file to load data from, if any. 
-          Relative to directory of IOF file.
+          Relative to directory of BLX file.
  :DATA    Lisp data encoding the resource itself, if any.
 
 In memory, these will be represented by resource structs (see below).
 On disk, it's Lisp data printed as text. This text should compress very
 well.
 
-The string '()' is a valid .IOF file; it contains no resources.")
+The string '()' is a valid .BLX file; it contains no resources.")
 
 (defstruct resource 
   name type properties file data object modified-p)
 
-;; The extra `object' field is not saved in .IOF files; it is used to
+;; The extra `object' field is not saved in .BLX files; it is used to
 ;; store driver-dependent loaded resources (i.e. SDL image surface
 ;; objects and so on). This is used in the resource table.
 ;; The modified-p field is likewise not stored. 
 
 (defun resource-to-plist (res)
   "Convert the resource record RES into a property list.
-This prepares it for printing as part of a IOF file."
+This prepares it for printing as part of a BLX file."
   (list :name (resource-name res)
 	:type (resource-type res)
 	:properties (resource-properties res)
@@ -918,14 +918,14 @@ This prepares it for printing as part of a IOF file."
 	  (message "Reading data from ~A... Done." filename))))))
 
 ;; Now tie it all together with routines that read and write
-;; collections of records into IOF files.
+;; collections of records into BLX files.
 
-(defun write-iof (filename resources)
-  "Write the RESOURCES to the IOF file FILENAME."
+(defun write-resource-file (filename resources)
+  "Write the RESOURCES to the BLX file FILENAME."
   (write-sexp-to-file filename (mapcar #'resource-to-plist resources)))
 
-(defun read-iof (filename)
-  "Return a list of resources from the IOF file FILENAME."
+(defun read-resource-file (filename)
+  "Return a list of resources from the BLX file FILENAME."
   (labels ((resourcep (s)
 	     (keywordp (first s))))
     ;; read the file
@@ -1142,13 +1142,13 @@ resource is stored; see also `find-resource'."
 (defun default-project-lisp-file (project-name)
   (find-project-file project-name (concatenate 'string project-name ".lisp")))
 
-(defparameter *object-index-filename* "index.iof")
+(defparameter *object-index-filename* "index.blx")
 
 (defun load-project-objects (project)
   (let ((object-index-file (find-project-file project *object-index-filename*)))
     (when (cl-fad:file-exists-p object-index-file)
       (message "Reading saved objects from ~S" object-index-file)
-      (index-iof project object-index-file))))
+      (index-resource-file project object-index-file))))
 
 (defun load-project-lisp (project)
   (unless (or (untitled-project-p project)
@@ -1167,7 +1167,9 @@ resource is stored; see also `find-resource'."
 	(prog1 nil 
 	  (message "Cannot create project ~A, because a folder with this name already exists in ~A"
 		   project directory))
-	(let ((dir (or folder-name (default-project-pathname project))))
+	(let ((dir (if folder-name 
+		       (default-project-pathname folder-name)
+		       (default-project-pathname project))))
 	  (message "Creating new project ~A in directory ~A..." project dir)
 	  (setf *project* project)
 	  (prog1 dir
@@ -1226,7 +1228,7 @@ object save directory. See also `save-object-resource')."
   "Test whether a directory has the .blocky suffix."
   (let ((index-filename (concatenate 'string
 				     (file-namestring dir)
-				     *iof-file-extension*)))
+				     *resource-file-extension*)))
     (cl-fad:file-exists-p (make-pathname :name index-filename
 			       :directory (if (stringp dir)
 					      dir
@@ -1246,20 +1248,20 @@ object save directory. See also `save-object-resource')."
   (mapcar #'file-namestring
 	  (mapcan #'find-projects-in-directory *project-directories*)))
 
-(defun index-iof (project-name iof-file)
-  "Add all the resources from the iof IOF-FILE to the resource
+(defun index-resource-file (project-name resource-file)
+  "Add all the resources from the resource-file RESOURCE-FILE to the resource
 table. File names are relative to the project PROJECT-NAME."
-  (let ((resources (read-iof iof-file)))
+  (let ((resources (read-resource-file resource-file)))
     (message "Loading ~A resources from file ~A:~A..." (length resources)
-	     project-name iof-file)
+	     project-name resource-file)
     (dolist (res resources)
-      (if (eq :iof (resource-type res))
-	  ;; we're including another iof file. if :data is specified,
+      (if (eq :blx (resource-type res))
+	  ;; we're including another blx file. if :data is specified,
 	  ;; take this as the name of the project where to look for
-	  ;; that iof file and its resources.
+	  ;; that blx file and its resources.
 	  (let ((include-project (or (resource-data res) 
 				     project-name)))
-	    (index-iof include-project (find-project-file include-project
+	    (index-resource-file include-project (find-project-file include-project
 							  (resource-file res))))
 	  ;; we're indexing a single resource.
 	  (progn
@@ -1273,7 +1275,7 @@ table. File names are relative to the project PROJECT-NAME."
 table."
   (let ((index-file (find-project-file project-name *object-index-filename*)))
     (if (cl-fad:file-exists-p index-file)
-	(index-iof project-name index-file)
+	(index-resource-file project-name index-file)
 	(message "Did not find index file ~A in project ~A. Continuing..."
 		 index-file project-name))))
 
@@ -1281,9 +1283,9 @@ table."
 
 (defvar *default-font* "default-font")
 
-;;; Creating, saving, and loading object resources in IOF files
+;;; Creating, saving, and loading object resources in BLX files
 
-;; See also the documentation string for `*iof-file-extension*'.
+;; See also the documentation string for `*resource-file-extension*'.
 
 (defun make-object-resource (name object)
   "Make an object resource named NAME (a string) with the Lisp object
@@ -1296,11 +1298,11 @@ OBJECT as the resource data."
       (index-resource resource))))
 
 (defun save-object-resource (resource &optional (project *project*))
-  "Save an object resource to disk as {PROJECT-NAME}/{RESOURCE-NAME}.IOF."
+  "Save an object resource to disk as {PROJECT-NAME}/{RESOURCE-NAME}.BLX."
   (setf (resource-data resource) (serialize (resource-object resource)))
-  (write-iof (find-project-file project 
+  (write-resource-file (find-project-file project 
 				(concatenate 'string (resource-name resource)
-					     *iof-file-extension*))
+					     *resource-file-extension*))
 	     (list resource))
   (setf (resource-data resource) nil))
 
@@ -1308,10 +1310,10 @@ OBJECT as the resource data."
   (string= "*" (string (aref (resource-name resource) 0))))
 
 (defun make-resource-link (resource)
-  (make-resource :type :iof 
+  (make-resource :type :blx 
 		 :file (concatenate 'string
 				    (resource-name resource)
-				    *iof-file-extension*)))
+				    *resource-file-extension*)))
   
 (defun save-resource (name resource)
   (let ((pathname (resource-file resource))
@@ -1319,7 +1321,7 @@ OBJECT as the resource data."
     (prog1 link 
       (if (eq :object (resource-type resource))
 	  ;; we want to index them all, whether or not we save them all.
-	  ;; make a link resource (i.e. of type :iof) to pull this in later
+	  ;; make a link resource (i.e. of type :blx) to pull this in later
 	  (save-object-resource resource)
 	  ;; just a normal resource
 	  (setf (resource-file link) (namestring pathname)
@@ -1338,7 +1340,7 @@ OBJECT as the resource data."
 	  (message "Saving project ~S ..." *project*)
 	  (maphash #'save *resources*)
 	  ;; FIXME: allow to save resources in separate file
-	  (write-iof (find-project-file *project* *object-index-filename*)
+	  (write-resource-file (find-project-file *project* *object-index-filename*)
 		     (nreverse index))
 	  (save-database)
 	  (save-variables)
@@ -1449,7 +1451,7 @@ also the documentation for DESERIALIZE."
 	    (cache-image-texture name))))
   
 (defun load-image-resource (resource)
-  "Loads an :IMAGE-type iof resource from a :FILE on disk."
+  "Loads an :IMAGE-type BLX resource from a :FILE on disk."
   (initialize-textures-maybe)
   (let ((surface (sdl-image:load-image (namestring (resource-file resource))
 				       :alpha 255)))
@@ -1461,7 +1463,7 @@ also the documentation for DESERIALIZE."
 		    (resource-properties resource))))))
 
 (defun load-sprite-sheet-resource (resource)
-  "Loads a :SPRITE-SHEET-type iof resource from a :FILE on disk. Looks
+  "Loads a :SPRITE-SHEET-type BLX resource from a :FILE on disk. Looks
 for :SPRITE-WIDTH and :SPRITE-HEIGHT properties on the resource to
 control the size of the individual frames or subimages."
   (let* ((image (load-image-resource resource))
@@ -1584,7 +1586,7 @@ control the size of the individual frames or subimages."
 
 (defun database-file ()
   (assert (not (null *project*)))
-  (find-project-file *project* "database.iof"))
+  (find-project-file *project* "database.blx"))
 
 (defun save-database (&optional (database *database*))
   (assert (hash-table-p database))
@@ -1596,13 +1598,13 @@ control the size of the individual frames or subimages."
       (message "Saving ~S objects from database into ~A..." 
 	       count
 	       (namestring file))
-      (write-iof file (list resource))
+      (write-resource-file file (list resource))
       (message "Finished saving database into ~A. Continuing..." file))))
       
 (defun load-database (&optional (file (database-file)))
   (message "Looking for object database ~A..." file)
   (if (cl-fad:file-exists-p file)
-      (let ((resources (read-iof file)))
+      (let ((resources (read-resource-file file)))
 	(message "Read ~S resources from ~A" (length resources) file)
 	(let ((database (first resources)))
 	  (assert (eq :database (resource-type database)))
@@ -1612,13 +1614,13 @@ control the size of the individual frames or subimages."
 ;;; Loading/saving variables
 
 (defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
-*screen-height* *world* *blocks* *dt* *pointer-x* *author*
+*screen-height* *world* *blocks* *dt* *pointer-x* *author* *project*
 *joystick-profile* *user-joystick-profile* *joystick-axis-size*
 *joystick-dead-zone* *pointer-y* *trash* *resizable* *window-title*
 *system* *scale-output-to-window* *persistent-variables*))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
-*screen-height* *world* *blocks* *dt* *pointer-x* *author*
+*screen-height* *world* *blocks* *dt* *pointer-x* *author* *project*
 *joystick-profile* *user-joystick-profile* *joystick-axis-size*
 *joystick-dead-zone* *scale-output-to-window* *pointer-y* *trash*
 *resizable* *window-title* *system*
@@ -1629,7 +1631,7 @@ control the size of the individual frames or subimages."
 				 ;; changes.
 				 *persistent-variables*))
 
-(defparameter *persistent-variables-file-name* "variables.iof")
+(defparameter *persistent-variables-file-name* "variables.blx")
 
 (defun persistent-variables-file (&optional (project *project*))
   (find-project-file project *persistent-variables-file-name*))
@@ -1654,7 +1656,7 @@ control the size of the individual frames or subimages."
 (defun save-variables (&optional (variables *persistent-variables*))
   (with-standard-io-syntax
     (message "Saving system variables ~A..." variables)
-    (write-iof (persistent-variables-file)
+    (write-resource-file (persistent-variables-file)
 	       (mapcar #'make-variable-resource variables))
     (message "Finished saving system variables.")))
 
@@ -1665,7 +1667,7 @@ control the size of the individual frames or subimages."
 	  (progn 
 	    (message "Loading system variables from ~A..." file)
 	    (mapc #'load-variable-resource 
-		  (read-iof file))
+		  (read-resource-file file))
 	    (message "Finished loading system variables."))
 	  (message "No system variables file found in this project. Continuing...")))))
   

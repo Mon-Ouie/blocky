@@ -315,9 +315,7 @@
 	      :parent (new 'string :label "Create in folder:" 
 				   :value (namestring (projects-directory)))
 	      :folder-name (new 'string :label "Project folder name:")
-	      :messenger (new 'messenger 
-			      '("Use the text entry fields above to name your project."
-				"You may also choose the destination folder and the folder name."))
+	      :messenger (new 'messenger "Use the text entry fields above to name your project.")
 	      :buttons (new 'hlist
 			    (new 'button :label "Create project"
 				 :target self :method :create-project)
@@ -326,11 +324,40 @@
 
 (define-method create-project create-project-dialog ()
   (with-input-values (name parent folder-name) self
-    (unless (create-project-image name :folder-name folder-name :parent parent)
-      (add-message %%messenger "Could not create project."))))
+    (add-message 
+     %%messenger    
+     (if (create-project-image 
+	  name :folder-name folder-name :parent parent)
+	 "Successfully created new project."
+	 "Could not create project."))))
 
 (define-method create-project system-menu ()
   (let ((dialog (new 'create-project-dialog)))
+    (add-block (world) dialog)
+    (center-as-dialog dialog)))
+
+;; Creating a project
+
+(define-block-macro save-project-dialog 
+    (:super :list
+     :fields ((category :initform :system))
+     :inputs (:messenger (new 'messenger "Save current project?")
+	      :buttons (new 'hlist
+			    (new 'button :label "Save project"
+				 :target self :method :save-project)
+			    (new 'button :label "Dismiss"
+				 :target self :method :discard)))))
+
+(define-method save-project save-project-dialog ()
+  (with-input-values (name parent folder-name) self
+    (add-message 
+     %%messenger    
+     (if (save-project-image :force)
+	 "Successfully saved project."
+	 "Could not save project!"))))
+
+(define-method save-project system-menu ()
+  (let ((dialog (new 'save-project-dialog)))
     (add-block (world) dialog)
     (center-as-dialog dialog)))
 
