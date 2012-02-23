@@ -349,12 +349,11 @@
 				 :target self :method :discard)))))
 
 (define-method save-project save-project-dialog ()
-  (with-input-values (name parent folder-name) self
-    (add-message 
-     %%messenger    
-     (if (save-project-image :force)
-	 "Successfully saved project."
-	 "Could not save project!"))))
+  (add-message 
+   %%messenger    
+   (if (save-project-image :force)
+       "Successfully saved project."
+       "Could not save project!")))
 
 (define-method save-project system-menu ()
   (let ((dialog (new 'save-project-dialog)))
