@@ -72,7 +72,7 @@
 (define-method initialize prompt ()
   (block%initialize self)
   (when (not (has-local-value :history self))
-    (setf %history (make-queue :max *default-prompt-history-size*)))
+    (setf %history (make-queue :max *default-prompt-history-size* :count 0)))
   (install-text-keybindings self))
 
 (define-method handle-event prompt (event)

@@ -49,6 +49,7 @@ Web at:
 	   "Computed result values from the input blocks.")
   (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
   (tags :initform nil)
+  (garbagep :initform nil)
   (temporary :initform nil)
   (methods :initform '(:make-reference :move-toward :add-tag :remove-tag :duplicate :make-sibling :move :move-to :play-sound :show :hide :is-visible))
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
@@ -204,12 +205,13 @@ initialized with BLOCKS as inputs."
   (when %halo (discard %halo))
   (when %parent 
     (unplug-from-parent self))
-  (remove-object-maybe (world) self)
-  (push self (symbol-value '*trash*)))
+  (remove-thing-maybe (world) self)
+  (setf %garbagep t))
+;  (push self (symbol-value '*trash*)))
 
 (define-method destroy block ()
-  (remove-object (world) self))
-;  (discard self))
+  (remove-thing-maybe (world) self)
+  (setf %garbagep t))
 
 (define-method damage block (points)
   (declare (ignore points)))
@@ -366,6 +368,8 @@ non-nil to indicate that the block was accepted, nil otherwise."
   (set-parent thing self)
   (setf (input self n) thing))
 
+(define-method after-unplug-hook block (input))
+
 (define-method unplug block (input)
   "Disconnect the block INPUT from this block."
   (with-fields (inputs parent) self
@@ -373,7 +377,8 @@ non-nil to indicate that the block was accepted, nil otherwise."
     (prog1 input
       (setf inputs 
 	    (delete input inputs 
-		    :test 'eq :key #'find-object)))))
+		    :test 'eq :key #'find-object))
+      (after-unplug-hook self input))))
 
 (define-method unplug-from-parent block ()
   (prog1 t
@@ -546,7 +551,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 	  (keyword (bind-event-to-method self key mods result))
 	  (string (bind-event-to-text-insertion self key mods result)))))))
 
-;;; Pointer events (see also shell.lisp)
+;;; Pointer events (see also worlds.lisp)
 
 (define-method select block () nil)
 
@@ -566,11 +571,13 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 (define-method release block (x y button)
   (declare (ignore x y button)))
 
-(define-method can-pick block () t)
-;  (not %pinned))
+(define-method can-pick block () 
+  (not %pinned))
 
 (define-method pick block ()
   (if %pinned %parent self)) ;; Possibly return a child, or a new object 
+
+(define-method place block () nil)
 
 ;;; Focus events (see also shell.lisp)
 

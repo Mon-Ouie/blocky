@@ -206,14 +206,14 @@
   (when (field-value :quadtree-node object)
     (quadtree-delete %quadtree object)))
 
-(define-method remove-object-maybe world (object)
+(define-method remove-thing-maybe world (object)
   (when (gethash (find-uuid object) %objects)
     (remove-object self object))
   (when (contains self object)
     (unplug self object)))
 
 (define-method add-block world (object &optional x y)
-  (remove-object-maybe self object)
+  (remove-thing-maybe self object)
   (add-block%super self object x y))
 
 (define-method drop-block world (block x y)
@@ -822,9 +822,12 @@ block found, or nil if none is found."
 	%drag-offset nil
 	%object-p nil
 	%drag-origin nil
-	%drag nil))
-	;; %click-start-block nil
-	;; %click-start nil))
+	%drag nil
+	%hover nil
+	%highlight nil
+	%last-focus nil
+	%click-start-block nil
+	%click-start nil))
   
 (define-method release world (x y &optional button)
   (with-world self

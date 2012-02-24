@@ -265,7 +265,8 @@
        (has-tag thing :menu)))
 
 (define-method siblings menu ()
-  (remove-if-not #'menup (%inputs %parent)))
+  (when %parent 
+    (remove-if-not #'menup (%inputs %parent))))
 
 (defvar *menu-prototype* nil)
 
@@ -313,10 +314,6 @@
        (mapc #'unexpand (siblings self))
        (toggle-expanded self)))))
 
-;; (define-method alternate-tap menu (x y)
-;;   (when (keywordp %action)
-;;     (add-block *buffer* (context-menu self) x y)))
-
 (defparameter *menu-tab-color* "gray60")
 (defparameter *menu-title-color* "white")
 
@@ -341,12 +338,14 @@
 			(- (dash 1 y height) (dash 1))))
 	  ;; nope, draw in the typical fashion.
 	  (draw-expanded%super self label))
-      (draw-indicator :down-triangle-open 
-		      (+ %x (font-text-width (or label *null-display-string*))
-			 (dash 4))
-		      (+ %y (dash 2))
-		      :scale 1.6
-		      :color "gray50"))))
+      ;; draw status indicator on submenus
+      (when (and (not %locked) parent (menup parent))
+	(draw-indicator :down-triangle-open 
+			(+ %x (font-text-width (or label *null-display-string*))
+			   (dash 4))
+			(+ %y (dash 2))
+			:scale 1.6
+			:color "gray50")))))
 
 
 (define-method draw-unexpanded menu (&optional label)

@@ -1395,9 +1395,8 @@ objects after reconstruction, wherever present."
 	    (object-address-string object)
 	    (object-uuid object))))
 
-(defun install-iob-printer ()
-  (defmethod print-object ((foo blocky:object) stream)
-    (print-iob foo stream)))
+(defmethod print-object ((foo blocky:object) stream)
+  (print-iob foo stream))
 
 ;;; Brute force debugging
     

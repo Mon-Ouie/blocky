@@ -119,7 +119,7 @@ stat-value draw-line *default-message-verbosities*
 operation-symbol message-symbol play-sample set-music-volume
 add-message-verbosities with-message-queue draw-pixel
 *user-keyboard-layout* *fullscreen* draw-circle set-field-option-value
-open-project field-options world set-frame-rate *frame-rate*
+load-project field-options world set-frame-rate *frame-rate*
 *workbook* set-resource-modified-p *iof-file-extension* load-project
 *project* *project-path* *window-title* *window-position* restartably
 *default-shell-width* *default-shell-height* *system*
@@ -139,7 +139,7 @@ zoom-image is-zoomed-resource *timer-interval* save-objects
 enable-timer disable-timer while defmission send-to-blocks
 enable-held-keys disable-held-keys do-cells draw-box *resizable*
 achieve *resize-hook* draw-rectangle *quitting*
-*after-open-project-hook* *mission* mission-variable find-bounding-box
+*after-load-project-hook* *mission* mission-variable find-bounding-box
 combine-worlds stack-vertically set-mission-variable horizontal-extent
 vertical-extent flip-horizontally flip-vertically mirror-horizontally
 mirror-vertically world with-mission-locals with-empty-world

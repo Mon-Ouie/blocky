@@ -872,12 +872,12 @@ well.
 The string '()' is a valid .BLX file; it contains no resources.")
 
 (defstruct resource 
-  name type properties file data object modified-p)
+  name type properties file data object system-p)
 
 ;; The extra `object' field is not saved in .BLX files; it is used to
 ;; store driver-dependent loaded resources (i.e. SDL image surface
 ;; objects and so on). This is used in the resource table.
-;; The modified-p field is likewise not stored. 
+;; The system-p field is likewise not stored. 
 
 (defun resource-to-plist (res)
   "Convert the resource record RES into a property list.
@@ -920,11 +920,11 @@ This prepares it for printing as part of a BLX file."
 ;; Now tie it all together with routines that read and write
 ;; collections of records into BLX files.
 
-(defun write-resource-file (filename resources)
+(defun save-resource-file (filename resources)
   "Write the RESOURCES to the BLX file FILENAME."
   (write-sexp-to-file filename (mapcar #'resource-to-plist resources)))
 
-(defun read-resource-file (filename)
+(defun load-resource-file (filename &optional system-p)
   "Return a list of resources from the BLX file FILENAME."
   (labels ((resourcep (s)
 	     (keywordp (first s))))
@@ -932,7 +932,9 @@ This prepares it for printing as part of a BLX file."
     (let ((sexp (read-sexp-from-file filename)))
       ;; find the resource plists; see `read-sexp-from-file'
       (mapcar #'(lambda (s)
-		  (apply #'make-resource s))
+		  (let ((resource (apply #'make-resource s)))
+		    (prog1 resource
+		      (setf (resource-system-p resource) system-p))))
 	      (if (every #'resourcep sexp)
 	          sexp
 		  (first sexp))))))
@@ -970,7 +972,7 @@ A lookup failure results in an error. See `find-resource'.")
 (defvar *project-path* nil "The pathname of the currently opened project. 
 This is where all saved objects are stored.")
 
-(defvar *after-open-project-hook* nil)
+(defvar *after-load-project-hook* nil)
 
 (defvar *executable* nil "Non-nil when running Blocky from a saved
 binary image.")
@@ -981,6 +983,8 @@ binary image.")
   "The name of the current project.")
 
 (defvar *project-folder* nil)
+
+(defvar *recent-projects* nil)
 
 ;;; Project packages
 
@@ -1178,7 +1182,7 @@ resource is stored; see also `find-resource'."
 		(message "Finished creating directory ~A." dir)
 		(message "Finished creating project ~A." project)))))))
 
-(defun open-project (project &optional no-error)
+(defun load-project-image (project &optional no-error)
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
 object save directory. See also `save-object-resource')."
@@ -1210,7 +1214,9 @@ object save directory. See also `save-object-resource')."
    ;; load any user-written lisp
   (load-project-lisp project)
   (run-project-lisp project)
-  (run-hook '*after-open-project-hook*))
+  (run-hook '*after-load-project-hook*)
+  ;; save to recent list
+  (pushnew project *recent-projects* :test 'equal))
 
 (defun run-project-lisp (project)
   (unless (or (untitled-project-p project)
@@ -1249,10 +1255,10 @@ object save directory. See also `save-object-resource')."
   (mapcar #'file-namestring
 	  (mapcan #'find-projects-in-directory *project-directories*)))
 
-(defun index-resource-file (project-name resource-file)
+(defun index-resource-file (project-name resource-file &optional system-p)
   "Add all the resources from the resource-file RESOURCE-FILE to the resource
 table. File names are relative to the project PROJECT-NAME."
-  (let ((resources (read-resource-file resource-file)))
+  (let ((resources (load-resource-file resource-file system-p)))
     (message "Loading ~A resources from file ~A:~A..." (length resources)
 	     project-name resource-file)
     (dolist (res resources)
@@ -1276,7 +1282,8 @@ table. File names are relative to the project PROJECT-NAME."
 table."
   (let ((index-file (find-project-file project-name *object-index-filename*)))
     (if (cl-fad:file-exists-p index-file)
-	(index-resource-file project-name index-file)
+	(index-resource-file project-name index-file
+			     (standard-project-p project-name))
 	(message "Did not find index file ~A in project ~A. Continuing..."
 		 index-file project-name))))
 
@@ -1301,7 +1308,7 @@ OBJECT as the resource data."
 (defun save-object-resource (resource &optional (project *project*))
   "Save an object resource to disk as {PROJECT-NAME}/{RESOURCE-NAME}.BLX."
   (setf (resource-data resource) (serialize (resource-object resource)))
-  (write-resource-file (find-project-file project 
+  (save-resource-file (find-project-file project 
 				(concatenate 'string (resource-name resource)
 					     *resource-file-extension*))
 	     (list resource))
@@ -1326,23 +1333,21 @@ OBJECT as the resource data."
 	  (save-object-resource resource)
 	  ;; just a normal resource
 	  (setf (resource-file link) (namestring pathname)
-		(resource-data link) nil))
-      ;; finally, mark the original as saved.
-      (resource-modified-p resource) nil)))
+		(resource-data link) nil)))))
 
 (defun save-project-image (&optional force)
   (let (index)
     (if (or (standard-project-p)
 	    (untitled-project-p))
 	(message "Cannot save this project.")
-	(labels ((save (name resource) 
-		   (when (or force (resource-modified-p resource))
+	(labels ((save (name resource)
+		   (unless (resource-system-p resource)
 		     (push (save-resource name resource) index))))
 	  (message "Saving project ~S ..." *project*)
 	  (maphash #'save *resources*)
 	  ;; FIXME: allow to save resources in separate file
-	  (write-resource-file (find-project-file *project* *object-index-filename*)
-		     (nreverse index))
+	  (save-resource-file (find-project-file *project* *object-index-filename*)
+			      (nreverse index))
 	  (save-database)
 	  (save-variables)
 	  (message "Saving project ~S ... Done." *project*)))))
@@ -1599,13 +1604,13 @@ control the size of the individual frames or subimages."
       (message "Saving ~S objects from database into ~A..." 
 	       count
 	       (namestring file))
-      (write-resource-file file (list resource))
+      (save-resource-file file (list resource))
       (message "Finished saving database into ~A. Continuing..." file))))
       
 (defun load-database (&optional (file (database-file)))
   (message "Looking for object database ~A..." file)
   (if (cl-fad:file-exists-p file)
-      (let ((resources (read-resource-file file)))
+      (let ((resources (load-resource-file file)))
 	(message "Read ~S resources from ~A" (length resources) file)
 	(let ((database (first resources)))
 	  (assert (eq :database (resource-type database)))
@@ -1613,6 +1618,9 @@ control the size of the individual frames or subimages."
       (message "No database file found. Continuing...")))
 
 ;;; Loading/saving variables
+
+(defvar *system-variables* '(*recent-projects* *joystick-profile*
+  *user-joystick-profile* *joystick-axis-size* *joystick-dead-zone*))
 
 (defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
 *screen-height* *world* *blocks* *dt* *pointer-x* *author* *project*
@@ -1622,9 +1630,8 @@ control the size of the individual frames or subimages."
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
 *screen-height* *world* *blocks* *dt* *pointer-x* *author* *project*
-*joystick-profile* *user-joystick-profile* *joystick-axis-size*
-*joystick-dead-zone* *scale-output-to-window* *pointer-y* *trash*
-*resizable* *window-title* *system*
+*scale-output-to-window* *pointer-y* *trash* *resizable*
+*window-title*
 				 ;; notice that THIS variable is also
 				 ;; persistent!  this is to avoid
 				 ;; unwanted behavior changes in
@@ -1657,7 +1664,7 @@ control the size of the individual frames or subimages."
 (defun save-variables (&optional (variables *persistent-variables*))
   (with-standard-io-syntax
     (message "Saving system variables ~A..." variables)
-    (write-resource-file (persistent-variables-file)
+    (save-resource-file (persistent-variables-file)
 	       (mapcar #'make-variable-resource variables))
     (message "Finished saving system variables.")))
 
@@ -1668,7 +1675,7 @@ control the size of the individual frames or subimages."
 	  (progn 
 	    (message "Loading system variables from ~A..." file)
 	    (mapc #'load-variable-resource 
-		  (read-resource-file file))
+		  (load-resource-file file))
 	    (message "Finished loading system variables."))
 	  (message "No system variables file found in this project. Continuing...")))))
   
@@ -1819,9 +1826,9 @@ found."
   (getf (resource-properties (find-resource resource-name))
 	property))
 
-(defun set-resource-modified-p (resource &optional (value t))
+(defun set-resource-system-p (resource &optional (value t))
   (let ((res (find-resource resource)))
-    (setf (resource-modified-p res) value)))
+    (setf (resource-system-p res) value)))
 
 (defun delete-all-resources ()
   (loop for resource being the hash-values in *resources*
@@ -2262,7 +2269,7 @@ of the music."
     (message line)))
 
 (defun load-standard-resources ()
-  (open-project "standard"))
+  (load-project-image "standard"))
 
 (defun start-up ()
   #+linux (do-cffi-loading)
@@ -2321,33 +2328,33 @@ of the music."
 
 (defun play (&optional (project *untitled-project-name*))
   (with-session
-    (open-project project)
+    (load-project-image project)
     (when (null *blocks*)
       (new 'system)
       (start (new 'world)))
     (start-session)))
-
-(defun create (project)
-  (with-session
-    (assert (stringp project))
-    (new 'system)
-    (create-project project)
-    (open-project project)
-    (start (new 'world))
-    (start-session)))
-
-(defun edit (&optional (project *untitled-project-name*) force-shell)
-  (with-session
-    (let ((*edit* t))
-      (open-project project :no-error)
-      (when force-shell
-	(start (new 'world)))
-      (start-session))))
 
 (defun blocky ()
   (with-session
       (new 'system)
     (start (new 'world))
     (start-session)))
+
+;; (defun create (project)
+;;   (with-session
+;;     (assert (stringp project))
+;;     (new 'system)
+;;     (create-project project)
+;;     (load-project-image project)
+;;     (start (new 'world))
+;;     (start-session)))
+
+;; (defun edit (&optional (project *untitled-project-name*) force-shell)
+;;   (with-session
+;;     (let ((*edit* t))
+;;       (load-project-image project :no-error)
+;;       (when force-shell
+;; 	(start (new 'world)))
+;;       (start-session))))
 
 ;;; console.lisp ends here

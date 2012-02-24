@@ -56,6 +56,9 @@ inputs are evaluated."
 (define-method can-pick list ()
   (not %frozen))
 
+;; (define-method pick list ()
+;;   (when %frozen self))
+
 (defparameter *null-display-string* "   ")
 
 (define-method set-orientation list (orientation)
@@ -168,17 +171,17 @@ inputs are evaluated."
     (if (null inputs)
 	(draw-label-string self *null-display-string*)
 	(dolist (each inputs)
-	  (draw each))))
-  (when (not %frozen)
-    (draw-indicator :bottom-right-triangle 
-		    (+ %x %width (dash -4))
-		    (+ %y %height (dash -4))
-		    :color "white"
-		    :scale 1.5)))
+	  (draw each)))))
+  ;; (when (not %frozen)
+  ;;   (draw-indicator :bottom-right-triangle 
+  ;; 		    (+ %x %width (dash -4))
+  ;; 		    (+ %y %height (dash -4))
+  ;; 		    :color "white"
+  ;; 		    :scale 1.5)))
 
 (define-method initialize list (&rest blocks)
-  (apply #'block%initialize self blocks)
-  (freeze self))
+  (apply #'block%initialize self blocks))
+;  (freeze self))
 
 (defmacro deflist (name &rest body)
   `(define-block (,name :super :list) ,@body))

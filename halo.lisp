@@ -28,13 +28,14 @@
 
 (defparameter *indicator-positions* 
   '(:asterisk (0 1)
-    :bang (0 1/4)
+    :bang (0 1)
     :top-left-triangle (0 0)
     :menu (1/4 0)
     :collapse (0 2/4)
+;    :move (1 2/4)
     :drop (1 0)
     :resize (1 1)
-    :reference (0 1)
+    :reference (0 1/4)
     :close (0 0)
     :bottom-right-triangle (1 1)))
 
@@ -85,7 +86,7 @@
 
 (define-method tap open-menu (x y)
   (let ((menu (context-menu %target)))
-    (drop self menu)
+    (add-block (world) menu)
     (move-to menu x y)))
 
 (define-handle drop :drop)
@@ -128,6 +129,7 @@
 (define-method tap discard (x y)
   (assert %target)
   (discard %target)
+  ;; get rid of halo
   (when %parent
     (discard %parent)))
      

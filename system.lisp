@@ -155,7 +155,7 @@
       (:label "Inspect" :action :inspect)
       (:label "Clone" :action :do-clone)
       (:label "Copy" :action :do-copy)
-      (:label "Discard" :action :destroy)))
+      (:label "Discard" :action :discard)))
     (:label "Resources"
      :inputs
      ((:label "Import new resource" :action :import-resources)
@@ -232,17 +232,15 @@
   (centered :initform nil)
   (category :initform :system))
 
-(define-method initialize window (&key centered child (title "*untitled-window*"))
+(define-method initialize window (&key child (title "*untitled-window*"))
   (assert child)
   (initialize%super self)
-  (setf %centered centered)
   (setf %inputs (list (new 'headline title) child))
   (mapc #'pin %inputs))
 
 (define-method layout window ()
   (layout-vertically self)
-  (when %centered
-    (center-as-dialog self)))
+  (align-to-pixels self))
 
 (define-method can-pick window ()
   t)
@@ -250,9 +248,12 @@
 (define-method pick window ()
   self)
 
-;; (define-method unplug window (input)
-;;   (unplug%super self input)
-;;   (discard self))
+(define-method center window ()
+  (layout self)
+  (center%super self))
+
+(define-method after-unplug-hook window (thing)
+  (remove-thing-maybe (world) self))
 
 ;;; The system menu itself
 
@@ -368,7 +369,8 @@
   (let ((dialog (new 'window 
 		     :title "Create a new project"
 		     :child (new 'create-project-dialog))))
-    (add-block (world) dialog)))
+    (add-block (world) dialog)
+    (center dialog)))
 
 ;;; Loading a project
 
@@ -398,7 +400,8 @@
   (let ((dialog (new 'window 
 		     :title "Load a project"
 		     :child (new 'load-project-dialog))))
-    (add-block (world) dialog)))
+    (add-block (world) dialog)
+    (center dialog)))
 
 ;;; Saving a project
 
@@ -423,7 +426,8 @@
   (let ((dialog (new 'window 
 		     :title "Save current project"
 		     :child (new 'save-project-dialog))))
-    (add-block (world) dialog)))
+    (add-block (world) dialog)
+    (center dialog)))
 
 ;;; Splash screen
 

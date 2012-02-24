@@ -1,42 +1,45 @@
 * GUI BETA
 
-** TODO [#A] fix centering of dialogs
-** TODO [#A] Fix dialog closing leftovers
-** TODO [#A] save project dialog
-** TODO [#A] load project dialog
-** TODO [#A] resource blocks
+** TODO fix broken dialog box dismiss
+** TODO resource blocks
 *** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
-** TODO [#A] generic question dialog box shortcut function
-** TODO [#A] accept pathnames so that you can run a blocky module no matter what the dir name is
-** TODO [#A] Pretty sexy black rounded corner notifications
-*** TODO [#A] simple ok notification box
-** TODO [#A] complete credits file and ensure all docs/license copies in place.
+** TODO flesh out basic Projects operations dialogs
+*** TODO test save project dialog
+*** TODO test load project dialog
+**** TODO accept pathnames so that you can run a blocky module no matter what the dir name is
+*** TODO fix centering of dialogs
+*** TODO recent projects persistent variable
+** TODO Pretty sexy black rounded corner notifications
+*** TODO notifications and a "notify" function 
+*** TODO smile/frown emoticon status
+*** TODO simple ok notification box
+*** TODO generic question dialog box shortcut function
+** TODO buttons for toggle pin,freeze
 ** TODO [#A] Ability to scroll the world with the mouse wheel
-** TODO [#A] allow empty project
 ** TODO [#A] selecting single world object
 ** TODO [#A] selecting multiple objects
-** TODO [#A] hotkey for moving objects down into world
-** TODO [#A] dragging world object results in moving it within world, not to top layer
+** TODO [#B] the clipboard is a world, paste/duplicate
+** TODO [#B] hotkey for moving objects down into world
 ** TODO [#A] right click on world objects to bring them back into top layer
 ** TODO [#A] hotkey for moving objects up from world
 ** TODO [#B] visually indicate button blink
 ** TODO [#B] better hlist packing
+** TODO [#A] complete credits file and ensure all docs/license copies in place.
 ** TODO [#B] fix being able to pull out menu components
 ** TODO [#B] copyright notice 
 ** TODO [#B] Fancy credits 
 ** TODO [#B] basic help
-** TODO [#B] the clipboard is a world, paste/duplicate
 ** TODO [#B] sys menu should remember relative screen loc
 ** TODO [#C] load all 00- blx files in alphanumeric order
 ** TODO [#A] fix project dir naming issues. allow opening any .iof including index.iof 
-** TODO [#A] flesh out basic Projects operations dialogs
 ** TODO [#A] Implement basic blocks library (see list below)
 ** TODO [#A] define-block PALETTE so that there's a place to pull useful objects from 
 ** TODO [#B] use clos-style 'foo symbols for prototype names, change NEW from macro to function
 ** TODO [#B] fix being able to pull out pinned items
 ** TODO [#B] F1-F10 select desktop screens, i.e. a flipper with configurability
 ** TODO [#B] merge windows.lisp
-** TODO [#B] Fix null history crash on uparrow
+** DONE [#B] Fix null history crash on uparrow
+   CLOSED: [2012-02-24 Fri 02:21]
 ** TODO [#B] System Browser in the menu, for choosing what to define methods on (or blocks from)
 ** TODO [#B] UUID filenames for worlds?
 ** TODO [#B] rectangle select for bounding box cut paste
@@ -1014,6 +1017,34 @@ But the graph doesn't yet actually work, so we must continue.
 ** TODO easy wrap titlebar
    :PROPERTIES:
    :ARCHIVE_TIME: 2012-02-23 Thu 10:45
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: GUI BETA
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** DONE [#A] Fix dialog closing leftovers
+   CLOSED: [2012-02-24 Fri 02:22]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-24 Fri 02:22
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: GUI BETA
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END:
+
+** TODO [#A] allow empty project
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-24 Fri 02:29
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: GUI BETA
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO [#A] dragging world object results in moving it within world, not to top layer
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-24 Fri 02:29
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: GUI BETA
    :ARCHIVE_CATEGORY: tasks
