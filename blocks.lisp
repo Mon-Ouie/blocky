@@ -209,6 +209,11 @@ initialized with BLOCKS as inputs."
   (setf %garbagep t))
 ;  (push self (symbol-value '*trash*)))
 
+(define-method dismiss block ()
+  (if (windowp %parent)
+      (dismiss %parent)
+      (discard self)))
+
 (define-method destroy block ()
   (remove-thing-maybe (world) self)
   (setf %garbagep t))

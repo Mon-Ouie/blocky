@@ -184,7 +184,7 @@
     ;;  ((:label "Create a new window" :action :create-window)
     ;;   (:label "Switch to the next window" :action :next-window)
     ;;   (:label "Switch to window" :action :switch-window)
-    ;;   (:label "Close this window" :action :close-window)))
+    ;;   (:label "Close this window" :action :dismiss-window)))
     ;; (:label "Devices"
     ;;  :inputs
     ;;  ((:label "Browse available devices" :action :browse-devices)
@@ -230,12 +230,18 @@
 
 (define-block (window :super list)
   (centered :initform nil)
+  (tags :initform '(:window))
   (category :initform :system))
+
+(defun windowp (thing)
+  (and (blockyp thing)
+       (has-tag thing :window)))
 
 (define-method initialize window (&key child (title "*untitled-window*"))
   (assert child)
   (initialize%super self)
   (setf %inputs (list (new 'headline title) child))
+  (update-parent-links self)
   (mapc #'pin %inputs))
 
 (define-method layout window ()
@@ -253,7 +259,7 @@
   (center%super self))
 
 (define-method after-unplug-hook window (thing)
-  (remove-thing-maybe (world) self))
+  (discard self))
 
 ;;; The system menu itself
 
@@ -354,7 +360,7 @@
 			    (new 'button :label "Create project"
 				 :target self :method :create-project)
 			    (new 'button :label "Dismiss"
-				 :target self :method :discard)))))
+				 :target self :method :dismiss)))))
 
 (define-method create-project create-project-dialog ()
   (with-input-values (name parent folder-name) self
@@ -385,7 +391,7 @@
 			    (new 'button :label "Load project"
 				 :target self :method :load-project)
 			    (new 'button :label "Dismiss"
-				 :target self :method :discard)))))
+				 :target self :method :dismiss)))))
 
 (define-method load-project load-project-dialog ()
   (with-input-values (name parent folder-name) self
@@ -413,7 +419,7 @@
 			    (new 'button :label "Save project"
 				 :target self :method :save-project)
 			    (new 'button :label "Dismiss"
-				 :target self :method :discard)))))
+				 :target self :method :dismiss)))))
 
 (define-method save-project save-project-dialog ()
   (add-message 
@@ -426,6 +432,7 @@
   (let ((dialog (new 'window 
 		     :title "Save current project"
 		     :child (new 'save-project-dialog))))
+    (assert (windowp dialog))
     (add-block (world) dialog)
     (center dialog)))
 

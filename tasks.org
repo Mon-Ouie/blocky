@@ -1,6 +1,7 @@
 * GUI BETA
 
 ** TODO fix broken dialog box dismiss
+*** TODO find why window%after-unplug-hook is not called
 ** TODO resource blocks
 *** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
 ** TODO flesh out basic Projects operations dialogs
