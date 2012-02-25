@@ -114,7 +114,7 @@
 (define-method draw turtle ()
   (dolist (line %lines)
     (apply #'draw-line line))
-  (super%draw self)
+  (draw%super self)
   (let ((distance 6))
   (with-fields (x y heading height width drawing color) self
     (let ((x0 (floor (+ x (/ width 2))))
@@ -165,10 +165,7 @@
 (define-method accept meadow (other) nil)
 
 (defun turtle ()
-  (new system)
-  (let ((world (new world)))
-    (setf *world* world)
-;    (add-object world (new splash-screen))
-    (start world)))
+  (new 'system)
+  (start (new 'world)))
 
 ;;; turtle.lisp ends here

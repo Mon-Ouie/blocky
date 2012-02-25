@@ -582,7 +582,7 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 (define-method pick block ()
   (if %pinned %parent self)) ;; Possibly return a child, or a new object 
 
-(define-method place block () nil)
+(define-method after-place-hook block () nil)
 
 ;;; Focus events (see also shell.lisp)
 
@@ -776,7 +776,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     ((direction symbol :default :up) (steps number :initform 1))
   (with-field-values (x y) self
     (multiple-value-bind (x0 y0)
-	(step-in-direction x y (or direction :up) steps)
+	(step-in-direction x y (or direction :up) (or steps 5))
       (move-to self x0 y0))))
 
 (defun radian-angle (degrees)

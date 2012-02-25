@@ -290,8 +290,7 @@
 		 :inputs (list (new 'messenger)))))))
   (unfreeze self)
   (expand %%menu)
-  (pin %%menu)
-  (pin %%headline)
+  (mapc #'pin %inputs)
   (mapc #'pin (%inputs %%menu))
   (setf %locked t))
 
@@ -318,11 +317,11 @@
 		(font-text-width *project*
 				 *block-bold*)))))
 
-(define-method can-pick system-menu ()
-  t)
+;; (define-method can-pick system-menu ()
+;;   t)
 
-(define-method pick system-menu ()
-  self)
+;; (define-method pick system-menu ()
+;;   self)
 
 (define-method draw system-menu ()
   (with-fields (x y width height) self
@@ -394,11 +393,10 @@
 				 :target self :method :dismiss)))))
 
 (define-method load-project load-project-dialog ()
-  (with-input-values (name parent folder-name) self
+  (with-input-values (filename) self
     (add-message 
      %%messenger    
-     (if (load-project-image 
-	  name :folder-name folder-name :parent parent)
+     (if (load-project-image filename)
 	 "Successfully loaded new project."
 	 "Could not load project."))))
 

@@ -138,7 +138,7 @@ button-to-symbol symbol-to-button find-device-profile set-screen-width
 zoom-image is-zoomed-resource *timer-interval* save-objects
 enable-timer disable-timer while defmission send-to-blocks
 enable-held-keys disable-held-keys do-cells draw-box *resizable*
-achieve *resize-hook* draw-rectangle *quitting*
+achieve *resize-hook* draw-rectangle *quitting* playerp
 *after-load-project-hook* *mission* mission-variable find-bounding-box
 combine-worlds stack-vertically set-mission-variable horizontal-extent
 vertical-extent flip-horizontally flip-vertically mirror-horizontally

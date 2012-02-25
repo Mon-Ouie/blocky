@@ -1182,7 +1182,7 @@ resource is stored; see also `find-resource'."
 		(message "Finished creating directory ~A." dir)
 		(message "Finished creating project ~A." project)))))))
 
-(defun load-project-image (project &optional no-error)
+(defun load-project-image (project &optional folder)
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
 object save directory. See also `save-object-resource')."
@@ -1191,12 +1191,9 @@ object save directory. See also `save-object-resource')."
   (setf *project* project
 	*pending-autoload-resources* nil
 	*project-package-name* nil)
-  ;; possibly create a new project
-  (setf *project-path* (search-project-path project))
-  (when (null *project-path*)
-    (if no-error
-	(create-project project)
-	(error "Cannot find any project named ~S" project)))
+  (if folder
+      (setf *project-folder* folder)
+      (setf *project-path* (search-project-path project)))
   ;; check path
   (message "Set project path to ~A" (namestring *project-path*)) 
   (assert *project-path*)

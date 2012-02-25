@@ -191,14 +191,6 @@
   (setf %variables (make-hash-table :test 'equal))
   (setf %objects (make-hash-table :test 'equal)))
   
-(define-method handle-event world (event)
-  (or (block%handle-event self event)
-      (with-fields (player quadtree) self
-	(when player 
-	  (prog1 t
-	    (let ((*quadtree* quadtree))
-	      (handle-event player event)))))))
-
 ;;; The object layer. 
       
 (define-method remove-object world (object)
@@ -220,11 +212,14 @@
   (add-object self block)
   (move-to block x y))
 
+(define-method contains-object world (object)
+  (gethash (find-uuid object) 
+	   %objects))
+
 (define-method add-object world (object &optional x y append)
   (with-fields (quadtree) self
     (let ((*quadtree* quadtree))
-      (assert (not (gethash (find-uuid object) 
-			    %objects)))
+      (assert (not (contains-object self object)))
       (setf (gethash (find-uuid object)
 		     %objects)
 	    ;; cache actual object to avoid uuid lookup
@@ -234,7 +229,8 @@
 	      (field-value :y object) y))
       (clear-saved-location object)
       (when quadtree
-	(quadtree-insert quadtree object)))))
+	(quadtree-insert quadtree object))
+      (after-place-hook object))))
 
 (define-method discard-block world (object)
   (remhash (find-uuid object) %objects))
@@ -270,9 +266,13 @@
 (defun player ()
   (get-player *world*))
 
+(defun playerp (thing)
+  (object-eq thing (player)))
+
 (define-method set-player world (player)
-  (setf %player player)
-  (add-object self player))
+  (setf %player player))
+  ;; (unless (contains-object self player)
+  ;;   (add-object self player)))
 
 ;;; Configuring the world's space and its quadtree indexing
 
@@ -653,7 +653,7 @@ slowdown. See also quadtree.lisp")
 (define-method handle-event world (event)
   (with-world self
     (or (handle-event%super self event)
-	(with-field-values (focused-block selection inputs) self
+	(with-field-values (player quadtree focused-block selection inputs) self
 	  (let ((block
 		    (cond
 		      ;; we're focused. send the event there
@@ -662,11 +662,11 @@ slowdown. See also quadtree.lisp")
 			 (assert (blockyp focused-block))))
 		      ;; only one block selected. use that.
 		      ((= 1 (length selection))
-		       (first selection)))))
-		      ;; fall back to command-line
-		      ;; (t command-line))))
+		       (first selection))
+		      ;; fall back to player
+		      (t player))))
 	    (when block 
-	      (handle-event block event)))))))
+	      (prog1 t (handle-event block event))))))))
 
 ;;; Hit testing
 

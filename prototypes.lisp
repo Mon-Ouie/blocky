@@ -1222,6 +1222,11 @@ OPTIONS is a property list of field options. Valid keys are:
        ;; return the uuid and object
        (values uuid prototype))))
 
+(defun is-a (type thing)
+  (and type (blockyp thing)
+       (string= (make-prototype-id type)
+		(object-name (object-super thing)))))
+
 ;;; Cloning and duplicating objects
   
 (defun new (prototype-name &rest initargs)

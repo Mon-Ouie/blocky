@@ -1,8 +1,24 @@
-* GUI BETA
+* TODO Screencast where a game is developed from scratch with Defresource improvements
 
-** TODO fix broken dialog box dismiss
-*** TODO find why window%after-unplug-hook is not called
-** TODO resource blocks
+** TODO grab a couple of images
+
+** TODO make a wall that stops bullets
+** TODO resizeable wall
+** TODO standardized check-if-it's a kind-of 
+
+
+** TODO random-colored brick
+** TODO animated brick
+** TODO wandering enemy
+** TODO player with arrow key movement
+
+* Creating a cool game editor with tight emacs integration
+***  and then growing it into scratch-squared!
+** TODO review smalltalk-elements, byob for TOP LEVEL area identifications
+** TODO use swank:eval-in-emacs
+ via SLIME, to issue a command back to emacs to go to
+ a particular buffer location and/or raise the emacs window? 
+** TODO define-block-macro resource
 *** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
 ** TODO flesh out basic Projects operations dialogs
 *** TODO test save project dialog
@@ -1051,3 +1067,13 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
    :END:
+
+** TODO fix broken dialog box dismiss
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-24 Fri 04:56
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: GUI BETA
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+*** TODO find why window%after-unplug-hook is not called
