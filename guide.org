@@ -1,197 +1,219 @@
-* About this document
+* About this document 
+ 
+This Blocky reference guide collects all the documentation from the 
+[[http://github.com/dto/blocky][Blocky source code repository]] into one document. The file [[https://github.com/dto/blocky/blob/master/doc.lisp][doc.lisp]] 
+contains the code for the extraction, which reformats the docstrings 
+from the Lisp source code as an alphabetized, indexed file for [[http://orgmode.org][Emacs 
+Orgmode]]. Org-mode can easily export its files to HTML, LaTeX, and 
+various other formats. 
+ 
+The latest version of this document may be found at 
+http://blocky.io/reference.html. 
+ 
+* What is Common Lisp? 
+ 
+Because Blocky is an extension to the Common Lisp programming 
+language, it will help to familiarize yourself with how to read bits 
+of Lisp code. The [[http://en.wikipedia.org/wiki/Common_Lisp][wikipedia page for Common Lisp]] has a reasonable 
+capsule explanation of the syntax, with links to further 
+resources.  
+ 
+You don't need to learn the entire language to begin working with
+Blocky, though---being able to at least read and understand the
+examples from the Wikipedia page should be enough to help you read the
+Blocky examples in the next section.
+ 
+* Installing Blocky
 
-This Blocky reference guide collects all the documentation from the
-[[http://github.com/dto/blocky][Blocky source code repository]] into one document. The file [[https://github.com/dto/blocky/blob/master/doc.lisp][doc.lisp]]
-contains the code for the extraction, which reformats the docstrings
-from the Lisp source code as an alphabetized, indexed file for [[http://orgmode.org][Emacs
-Orgmode]]. Org-mode can easily export its files to HTML, LaTeX, and
-various other formats.
+Documentation can be found in the [[https://github.com/dto/blocky/blob/master/INSTALL][INSTALL file]].
 
-The latest version of this document may be found at
-http://blocky.io/reference.html.
+* Handling Lisp in your text editor 
+ 
+If you clicked the link in the last section to the Wikipedia page on 
+Common Lisp and looked at the code examples, you probably noticed all 
+the parentheses. The heavy use of parentheses marks Lisp off from 
+other languages and makes it feel unfamiliar. But once you are able to 
+read and write the basics, it all falls together naturally. The 
+unusual syntax of Lisp is actually the key to many of its coolest 
+features. 
+ 
+Matching up parentheses and indenting things properly is best handled 
+automatically by a text editor with support for editing Lisp code, 
+such as [[http://www.vim.org][Vim]], which can be used with [[http://www.vim.org/scripts/script.php?script_id=2531][Slimv]] --- the Superior Lisp 
+Interaction Mode for Vim. I myself use the [[http://www.gnu.org/software/emacs][GNU Emacs]] text editor along 
+with [[http://common-lisp.net/project/slime/][Slime]].  
+ 
+Using one of these options---Emacs with Slime, or Vim with Slimv---is 
+probably the best way to develop and test Lisp code made with 
+Blocky. With Slime or Slimv you can edit Lisp code efficiently, send 
+commands to the underlying Lisp environment that Blocky is running in, 
+or redefine methods and functions in order to alter object behaviors 
+while the system is running.  
+ 
+Both Emacs and Vim are highly customizable development environments, 
+not just text editors; in fact, I have developed and tested Blocky 
+(all ~8KLOC) entirely with GNU Emacs as my [[http://en.wikipedia.org/wiki/Integrated_development_environment][IDE.]] 
+ 
+Furthermore, Emacs and Vim are [[http://en.wikipedia.org/wiki/Free_software][Free software]], will run on basically 
+any platform, are of very high quality, and have large, friendly user 
+communities. 
+ 
+That being said, you can edit Lisp code in basically any text editor, 
+and it's quite possible that the text editor you already use has a 
+plugin or script available for editing Lisp code and matching those 
+parentheses. If you're unsure about Vim and Emacs, try looking around 
+to see if you can find Lisp support for your existing editor. 
+ 
+* Overview of prototype-based programming 
+ 
+Blocky is built on an alternative view of object-orientation called 
+[[http://en.wikipedia.org/wiki/Prototype-based_programming][Prototype-based programming.]] Instead of partitioning the objects in 
+your program into classes that share inheritance relationships, the 
+objects in a prototype-based system inherit behavior and data directly 
+from each other through "cloning".  
+ 
+The data members of an object are called fields, and the operations on 
+those objects are called methods. Both fields and methods can be 
+inherited through cloning in Blocky. 
+ 
+The cloning process takes an existing object and creates a new object 
+with a link to the original---now called a "superobject"---from which 
+it will inherit methods and data fields. When a method is invoked (or 
+a field is referenced) and no local value is found, the superobject is 
+checked for a value, and then its superobject if any, and so 
+on. Methods are stored in fields, so if you want to replace a clone's 
+method definition with something else, just define the new method on 
+the clone, and the superobject's version will be hidden. 
+ 
+* How to define game objects with Lisp code 
+ 
+While a longer text explanation is in the works, there are several
+code examples and video tutorials available on [[http://blocky.io][blocky.io]]. To get a
+quick overview of basic game-making tasks in Blocky, check out these
+links:
 
-* What is Common Lisp?
+ - This video talk shows interactive development of a mini-game called
+   "Vomac". [[http://blocky.io/blocky-lightning-talk-4.ogv][Lightning talk 4]] (Ogg Theora version) [[http://blocky.io/blocky-lightning-talk-4.mp4][Lightning talk 4]]
+   (MP4 version)
 
-Because Blocky is an extension to the Common Lisp programming
-language, it will help to familiarize yourself with how to read bits
-of Lisp code. The [[http://en.wikipedia.org/wiki/Common_Lisp][wikipedia page for Common Lisp]] has a reasonable
-capsule explanation of the syntax, with links to further
-resources. 
+ - The [[https://github.com/dto/blocky/blob/master/vomac/vomac.lisp][source code]] and [[https://github.com/dto/blocky/tree/master/vomac][images/sounds]] for the example are included for
+   you to experiment with. 
 
-You don't need to learn the entire language to work with Blocky,
-though---being able to at least read and understand the examples from
-the Wikipedia page should be enough to help you read the Blocky
-examples in the next section.
+ - There is another [[https://github.com/dto/blocky/tree/master/turtle][example here]] involving a turtle and ladybug, and
+   more are forthcoming. Here's a video of the Turtle example:
+   [[http://blocky.io/blocky-lightning-talk-2.ogv][Lightning talk 2]] (Ogg Theora version) [[http://blocky.io/blocky-lightning-talk-2.mp4][Lightning talk 2]] (MP4 version)
 
-* Handling Lisp in your text editor
+ - My work-in-progress game [[http://dto.github.com/notebook/xalcyon.html][Xalcyon]] is made entirely with Blocky, here
+   is the [[https://github.com/dto/xalcyon.blocky/blob/master/xalcyon.lisp][source code]]. There are videos on the Xalcyon page.
 
-If you clicked the link in the last section to the Wikipedia page on
-Common Lisp and looked at the code examples, you probably noticed all
-the parentheses. The heavy use of parentheses marks Lisp off from
-other languages and makes it feel unfamiliar. But once you are able to
-read and write the basics, it all falls together naturally. The
-unusual syntax of Lisp is actually the key to many of its coolest
-features.
+ - I'm working on a package with four or five game skeletons for
+   people to expand and remix.
 
-Matching up parentheses and indenting things properly is best handled
-automatically by a text editor with support for editing Lisp code,
-such as [[http://www.vim.org][Vim]], which can be used with [[http://www.vim.org/scripts/script.php?script_id=2531][Slimv]] --- the Superior Lisp
-Interaction Mode for Vim. I myself use the [[http://www.gnu.org/software/emacs][GNU Emacs]] text editor along
-with [[http://common-lisp.net/project/slime/][Slime]]. 
-
-Using one of these options---Emacs with Slime, or Vim with Slimv---is
-probably the best way to develop and test Lisp code made with
-Blocky. With Slime or Slimv you can edit Lisp code efficiently, send
-commands to the underlying Lisp environment that Blocky is running in,
-or redefine methods and functions in order to alter object behaviors
-while the system is running. 
-
-Both Emacs and Vim are highly customizable development environments,
-not just text editors; in fact, I have developed and tested Blocky
-(all ~8KLOC) entirely with GNU Emacs as my [[http://en.wikipedia.org/wiki/Integrated_development_environment][IDE.]]
-
-Furthermore, Emacs and Vim are [[http://en.wikipedia.org/wiki/Free_software][Free software]], will run on basically
-any platform, are of very high quality, and have large, friendly user
-communities.
-
-That being said, you can edit Lisp code in basically any text editor,
-and it's quite possible that the text editor you already use has a
-plugin or script available for editing Lisp code and matching those
-parentheses. If you're unsure about Vim and Emacs, try looking around
-to see if you can find Lisp support for your existing editor.
-
-* Overview of prototype-based programming
-
-Blocky is built on an alternative view of object-orientation called
-[[http://en.wikipedia.org/wiki/Prototype-based_programming][Prototype-based programming.]] Instead of partitioning the objects in
-your program into classes that share inheritance relationships, the
-objects in a prototype-based system inherit behavior and data directly
-from each other through "cloning". 
-
-The data members of an object are called fields, and the operations on
-those objects are called methods. Both fields and methods can be
-inherited through cloning in Blocky.
-
-The cloning process takes an existing object and creates a new object
-with a link to the original---now called a "superobject"---from which
-it will inherit methods and data fields. When a method is invoked (or
-a field is referenced) and no local value is found, the superobject is
-checked for a value, and then its superobject if any, and so
-on. Methods are stored in fields, so if you want to replace a clone's
-method definition with something else, just define the new method on
-the clone, and the superobject's version will be hidden.
-
-* How to define blocks with Lisp code
-
- - *FORTHCOMING...*
-
-* An overview of the blocks model
-
-Blocks are the visual programming elements that programs in the Blocky
-language are built up from. The prototypal block defined in
-BLOCKS.LISP establishes the default properties and behaviors of
-blocks, and the default means of composing individual blocks into
-larger programs.
-
-Blocky programs have some aspects of display trees, in that all blocks
-know how to draw themselves, track the mouse or touchscreen, and
-respond to keyboard input and other events. But these trees have a
-double role as computation structures wherein arbitrary Lisp data can
-flow from block to block---typically from leaf nodes upward to the
-root. In this way Blocky expressions also mimic abstract syntax trees,
-and this makes it possible to create 'visual macros'.
-
-With very few exceptions, all the properties and behaviors of blocks
-may be changed via the prototypal inheritance mechanism (also called
-Traits inheritance) implemented in prototypes.lisp. These changes can
-be made for each prototype that blocks will be `cloned' from. (See
-also the function `clone'.)
-
-Any object defined with `define-block' will inherit certain fields and
-methods from this common base. All the blocks in a Blocky program are
-therefore visually accessible, whether they are in-game entities such
-as monsters or bullets, or menus and buttons used to implement the
-user interface, or still yet, animations to be shown or musical cues
-to be played. 
-
-The purpose of this everything-is-a-Blockness is to mimic the
-Lisp-nature, in which everything is a symbolic expression. Like Lisp
-expressions, all blocks have a computed value---some piece of Lisp
-data considered as the result of the entire block. This value is
-returned by the block method `evaluate' and different blocks can
-override these methods to control evaluation. 
-
-Also like Lisp expressions, Blocks are designed to be composed with
-each other in a tree-structure of arbitrary depth. A block's 'child
-nodes' are stored in a list called %INPUTS. (As in the prototypes
-example above, the percent-sign prefix refers to a field value of the
-current object.)  The choice of the word `inputs' for the name of
-this field reflects the idea of Blocks as nodes in a data-flow tree
-where each node controls the computation of the results it needs from
-its child blocks. Accordingly the computed values of the child
-blocks (if any) are stored in a similar list called %RESULTS, and by
-default this field is filled with the values of calling EVALUATE on
-the corresponding child blocks in %INPUTS. How a given object
-implements the EVALUATE method will influence whether and when that
-object's %INPUTS are themselves evaluated, as with a Lisp macro.
-
-Similarly, methods like DRAW can decide how, whether, and when to draw
-a block's children; the method LAYOUT controls the placement and
-sizing of a Block and its children, and HIT enables customization of
-the way mouse movements and clicks are assigned to individual objects.
-
-Mouse response (drag-and-drop) and analog joystick support are
-controlled by `on-point', `on-press', `on-release', `on-tap', and many
-other methods. Other input events (usually from the keyboard or other
-controllers) are bound with `bind-event' and simliar methods, and
-handled by the method `on-event' when triggered. The choice of how to
-propagate events down the tree may be determined dynamically at each
-and every node of the tree, with full polymorphism available at all
-times to influence dataflow, event handling, layout, positioning,
-graphical rendering, and hit-testing. In other words, despite Blocks
-all having many universal methods and properties in common, nothing is
-sacred; everything can be redefined at every step, since the blocks
-themselves control the computation. See also shell.lisp.
-
-Blocky programs also have the quality of `liveness'; everything can be
-interacted with, and objects are always ready to react to events and
-display information to the user. (In fact, all blocks can behave as
-sprites in Blocky.) Processes that occur over time may be implemented
-as repeated computations whose updating occurs during the method
-`on-update' at some user-requested frequency. A simple event scheduler
-is also built in to the base block; see `add-task', `remove-task'
-`later', `later-at', `later-while'.
-
-For more on the topic of `liveness' and directness, see this research
-paper about Self Morphic:
-
-http://selflanguage.org/documentation/published/directness.html
-
-Where applicable, Blocky programs may be compiled into equivalent Lisp
-programs with fewer blocks (or even without blocks at all.) The method
-`recompile' is a counterpart to `evaluate', and allows each block
-to control how the Blockyness can be compiled away.
-
-Blocks are easily serializable with the functions `serialize' and
-`deserialize'. (Hash tables and arbitrary Blocky objects are
-supported, but otherwise all field values must print readably.)  Every
-block has a UUID (univerally unique identifier) which survives the
-deep freeze of serialization.
-
-The `halo' is a feature borrowed from Squeak Morphic; an array of
-pop-up interactive `handles' that surround a given onscreen object,
-allowing the user to inspect or resize or delete or otherwise interact
-with the object. See also halo.lisp.
-
-Block appearance may be defined with arbitrary OpenGL. Hardware
-acceleration is strongly recommended for using Blocky.
-
-Blocks are user-programmable, in that visual `message' blocks allow
-any block method to be invoked interactively, with point-and-click
-control over its argument values as well as being able to choose the
-recipient of the message.
-
-Messages and lists are among a number of basic utility blocks defined
-in library.lisp and listener.lisp.
-
-
+* An overview of the blocks model 
+ 
+Blocks are the visual programming elements that programs in the Blocky 
+language are built up from. The prototypal block defined in 
+BLOCKS.LISP establishes the default properties and behaviors of 
+blocks, and the default means of composing individual blocks into 
+larger programs. 
+ 
+Blocky programs have some aspects of display trees, in that all blocks 
+know how to draw themselves, track the mouse or touchscreen, and 
+respond to keyboard input and other events. But these trees have a 
+double role as computation structures wherein arbitrary Lisp data can 
+flow from block to block---typically from leaf nodes upward to the 
+root. In this way Blocky expressions also mimic abstract syntax trees, 
+and this makes it possible to create 'visual macros'. 
+ 
+With very few exceptions, all the properties and behaviors of blocks 
+may be changed via the prototypal inheritance mechanism (also called 
+Traits inheritance) implemented in prototypes.lisp. These changes can 
+be made for each prototype that blocks will be `cloned' from. (See 
+also the function `clone'.) 
+ 
+Any object defined with `define-block' will inherit certain fields and 
+methods from this common base. All the blocks in a Blocky program are 
+therefore visually accessible, whether they are in-game entities such 
+as monsters or bullets, or menus and buttons used to implement the 
+user interface, or still yet, animations to be shown or musical cues 
+to be played.  
+ 
+The purpose of this everything-is-a-Blockness is to mimic the 
+Lisp-nature, in which everything is a symbolic expression. Like Lisp 
+expressions, all blocks have a computed value---some piece of Lisp 
+data considered as the result of the entire block. This value is 
+returned by the block method `evaluate' and different blocks can 
+override these methods to control evaluation.  
+ 
+Also like Lisp expressions, Blocks are designed to be composed with 
+each other in a tree-structure of arbitrary depth. A block's 'child 
+nodes' are stored in a list called %INPUTS. (As in the prototypes 
+example above, the percent-sign prefix refers to a field value of the 
+current object.)  The choice of the word `inputs' for the name of 
+this field reflects the idea of Blocks as nodes in a data-flow tree 
+where each node controls the computation of the results it needs from 
+its child blocks. Accordingly the computed values of the child 
+blocks (if any) are stored in a similar list called %RESULTS, and by 
+default this field is filled with the values of calling EVALUATE on 
+the corresponding child blocks in %INPUTS. How a given object 
+implements the EVALUATE method will influence whether and when that 
+object's %INPUTS are themselves evaluated, as with a Lisp macro. 
+ 
+Similarly, methods like DRAW can decide how, whether, and when to draw 
+a block's children; the method LAYOUT controls the placement and 
+sizing of a Block and its children, and HIT enables customization of 
+the way mouse movements and clicks are assigned to individual objects. 
+ 
+Mouse response (drag-and-drop) and analog joystick support are 
+controlled by `on-point', `on-press', `on-release', `on-tap', and many 
+other methods. Other input events (usually from the keyboard or other 
+controllers) are bound with `bind-event' and simliar methods, and 
+handled by the method `on-event' when triggered. The choice of how to 
+propagate events down the tree may be determined dynamically at each 
+and every node of the tree, with full polymorphism available at all 
+times to influence dataflow, event handling, layout, positioning, 
+graphical rendering, and hit-testing. In other words, despite Blocks 
+all having many universal methods and properties in common, nothing is 
+sacred; everything can be redefined at every step, since the blocks 
+themselves control the computation. See also shell.lisp. 
+ 
+Blocky programs also have the quality of `liveness'; everything can be 
+interacted with, and objects are always ready to react to events and 
+display information to the user. (In fact, all blocks can behave as 
+sprites in Blocky.) Processes that occur over time may be implemented 
+as repeated computations whose updating occurs during the method 
+`on-update' at some user-requested frequency. A simple event scheduler 
+is also built in to the base block; see `add-task', `remove-task' 
+`later', `later-at', `later-while'. 
+ 
+For more on the topic of `liveness' and directness, see this research 
+paper about Self Morphic: 
+ 
+http://selflanguage.org/documentation/published/directness.html 
+ 
+Where applicable, Blocky programs may be compiled into equivalent Lisp 
+programs with fewer blocks (or even without blocks at all.) The method 
+`recompile' is a counterpart to `evaluate', and allows each block 
+to control how the Blockyness can be compiled away. 
+ 
+Blocks are easily serializable with the functions `serialize' and 
+`deserialize'. (Hash tables and arbitrary Blocky objects are 
+supported, but otherwise all field values must print readably.)  Every 
+block has a UUID (univerally unique identifier) which survives the 
+deep freeze of serialization. 
+ 
+The `halo' is a feature borrowed from Squeak Morphic; an array of 
+pop-up interactive `handles' that surround a given onscreen object, 
+allowing the user to inspect or resize or delete or otherwise interact 
+with the object. See also halo.lisp. 
+ 
+Block appearance may be defined with arbitrary OpenGL. Hardware 
+acceleration is strongly recommended for using Blocky. 
+ 
+Blocks are user-programmable, in that visual `message' blocks allow 
+any block method to be invoked interactively, with point-and-click 
+control over its argument values as well as being able to choose the 
+recipient of the message. 
+ 
+Messages and lists are among a number of basic utility blocks defined 
+in library.lisp and listener.lisp. 

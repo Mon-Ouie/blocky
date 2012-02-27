@@ -464,10 +464,9 @@ EVENT is a list of the form:
 
        (NAME modifiers...)
 
-EVENT is either a keyword symbol identifying the keyboard key, or
-a string giving the Unicode character to be bound. MODIFIERS is a list
-of keywords like :control, :alt, and so
-on.
+NAME is either a keyword symbol identifying the keyboard key, or a
+string giving the Unicode character to be bound. MODIFIERS is a list
+of keywords like :control, :alt, and so on.
 
 Examples:
   

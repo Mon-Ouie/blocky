@@ -1,5 +1,7 @@
 * TODO Think and review ALL this todo list
-
+(swank:eval-in-emacs '(progn (make-frame-command) nil))
+ there is swank:eval-in-emacs and slime-eval
+ but you've to set slime-enable-evaluate-in-emacs to T
 * BETA RELEASE
 ** Documentation
 *** TODO rewrite prototype explanation to include more clear language, relevant to games, and more 
