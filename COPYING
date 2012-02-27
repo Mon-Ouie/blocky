@@ -12,7 +12,7 @@ License; see rgb.lisp for details.
 
 On some platforms, binaries of libSDL 1.2 are redistributed with
 BLOCKY. libSDL 1.2 is under the LGPL license; see the file
-LIBSDL-LICENSE for full details.
+win32/LIBSDL-LICENSE for full details.
 
 Please note that Blocky may be redistributed along with graphics and
 sound files as part of a game or other application, and that the

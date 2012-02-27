@@ -1,16 +1,11 @@
 What follows the dashed line below is the text of the GNU Lesser
 General Public License. This license governs the SDL (Simple
 DirectMedia Layer) library portion of redistributed binaries made with
-the XE2 game engine. The text is reproduced here per redistribution
+the Blocky game engine. The text is reproduced here per redistribution
 requirements.
 
 The SDL site is http://www.libsdl.org where you may find more
 information.
-
-NOTE: The LGPL license in this file does NOT cover the XE2 game
-engine, my games, or the assets (images and sounds)! XE2 is provided
-under the GPLv3 license, and the game assets are individually licensed
-by game (check the game's resource directory for information.)
 
 --------------------------------------------------------------------
 
