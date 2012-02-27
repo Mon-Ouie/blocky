@@ -155,7 +155,7 @@
       (:label "Inspect" :action :inspect)
       (:label "Clone" :action :do-clone)
       (:label "Copy" :action :do-copy)
-      (:label "Discard" :action :discard)))
+      (:label "Destroy" :action :destroy)))
     (:label "Resources"
      :inputs
      ((:label "Import new resource" :action :import-resources)
@@ -259,7 +259,7 @@
   (center%super self))
 
 (define-method after-unplug-hook window (thing)
-  (discard self))
+  (destroy self))
 
 ;;; The system menu itself
 
@@ -298,8 +298,8 @@
   (find-uuid 
    (new '"BLOCKY:SYSTEM-MENU")))
 
-(define-method discard system-menu ()
-  (discard%super self)
+(define-method destroy system-menu ()
+  (destroy%super self)
   (setf (%system-menu (world)) nil))
 
 (define-method menu-items system-menu ()
@@ -460,7 +460,7 @@ or press Alt-X to bring up the system menu.")
 ;;      ((new 'splash-logo)
 ;;       (new 'text *splash-screen-text*))
 ;;      :initforms 
-;;      ((later 5.0 (discard self)))))
+;;      ((later 5.0 (destroy self)))))
 
 ;; (define-method update splash-screen ()
 ;;   (mapc #'update %inputs)

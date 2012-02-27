@@ -42,31 +42,25 @@ Web at:
 ")
   (cursor-clock :initform 0)
   ;; general information
-  (inputs :initform nil :documentation 
-	  "List of input (or `child') blocks.")
+  (inputs :initform nil)
   (input-names :initform nil)
-  (results :initform nil :documentation
-	   "Computed result values from the input blocks.")
-  (category :initform :data :documentation "Category name of block. See also `*block-categories*'.")
+  (results :initform nil)
+  (category :initform :data)
   (tags :initform nil)
   (garbagep :initform nil)
   (temporary :initform nil)
   (methods :initform '(:make-reference :move-toward :add-tag :remove-tag :duplicate :make-sibling :move :move-to :play-sound :show :hide :is-visible))
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
-  (events :initform nil :documentation "Event bindings, if any.")
+  (events :initform nil :documentation "Event bindings, if any. See also `bind-event'.")
   (default-events :initform nil)
-  (description :initform nil :documentation "A description of the block.") 
-  (operation :initform :block :documentation "Keyword name of method to be invoked on target.")
-  (excluded-fields :initform '(:quadtree-node))
+  (operation :initform :block)
   ;; visual layout
-  (x :initform 0 :documentation "Integer X coordinate of this block's position.")
-  (y :initform 0 :documentation "Integer Y coordinate of this block's position.")
-  (z :initform 0 :documentation "Integer Z coordinate of this block's position.")
-  (drawing :initform nil) ;; 
-  (heading :initform 0.0 :documentation "Heading angle of this block, in radians.")
-  (direction :initform :up :documentation "Keyword direction angle.")
-  (quadtree-node :initform nil
-		 :documentation "A pointer to the current quadtree node, if any. See also quadtree.lisp")
+  (x :initform 0 :documentation "X coordinate of this block's position.")
+  (y :initform 0 :documentation "Y coordinate of this block's position.")
+  (z :initform 0 :documentation "Z coordinate of this block's position.")
+  (heading :initform 0.0 :documentation "Heading angle of this block, in radians. See also `radian-angle'.")
+  (quadtree-node :initform nil)
+  (excluded-fields :initform '(:quadtree-node))
   ;; 
   (last-x :initform nil)
   (last-y :initform nil)
@@ -77,35 +71,33 @@ Web at:
   ;; collisions
   (collision-type :initform :default)
   ;; dimensions
-  (width :initform 32 :documentation "Cached width of block.")
-  (height :initform 32 :documentation "Cached height of block.")
-  (depth :initform 32 :documentation "Cached z-depth of block.")
-  (pinned :initform nil :documentation "When non-nil, do not allow dragging.")
-  (visible :initform t :documentation "When non-nil, block will be visible.")
+  (width :initform 32 :documentation "Width of the block, in GL units.")
+  (height :initform 32 :documentation "Height of the block, in GL units.")
+  (depth :initform 32 :documentation "Depth of block, in GL units. Currently ignored.")
+  (pinned :initform nil) ;; when non-nil, do not allow dragging
+  (visible :initform t)
   ;; morphic style halo
   (halo :initform nil)
   (mode :initform nil)
   (name :initform nil)
-  (variables :initform (make-hash-table :test 'eq))
   (needs-layout :initform t)
   (label :initform nil)
   (tasks :initform nil)
-  (image :initform nil :documentation "Texture to be displayed, if any."))
+  (image :initform nil :documentation "Name of texture to be displayed, if any."))
 
 ;;; Defining blocks
 
 (defmacro define-block (spec &body args)
-  "Define a new block prototype.
+  "Define a new block.
 The first argument SPEC is either a
 symbol naming the new block, or a list of the form
  (SYMBOL . PROPERTIES) Where SYMBOL is similarly a name symbol but
 PROPERTIES is a keyword property list whose valid keys
 are :SUPER (specifying which prototype the newly defined block will
 inherit behavior from) and :DOCUMENTATION (a documentation string.)
-The arguments ARGS are field specifiers, each of which is either a
-symbol naming the field, or a list of the form (SYMBOL . PROPERTIES) 
-with :INITFORM and :DOCUMENTATION as valid keys.
-Argument &BODY difuhy]."
+The remaining arguments ARGS are field specifiers, each of which is
+either a symbol naming the field, or a list of the form (SYMBOL
+. PROPERTIES) with :INITFORM and :DOCUMENTATION as valid keys."
   (let ((name0 nil)
 	(super0 "BLOCKY:BLOCK"))
     (etypecase spec
@@ -200,29 +192,22 @@ initialized with BLOCKS as inputs."
     (resize-to-image self))
   (setf %x 0 %y 0))
 
-(define-method discard block ()
-  (mapc #'discard %inputs)
-  (when %halo (discard %halo))
+(define-method destroy block ()
+  "Throw away this block."
+  (mapc #'destroy %inputs)
+  (when %halo (destroy %halo))
   (when %parent 
     (unplug-from-parent self))
   (remove-thing-maybe (world) self)
   (setf %garbagep t))
-;  (push self (symbol-value '*trash*)))
 
 (define-method dismiss block ()
   (if (windowp %parent)
       (dismiss %parent)
-      (discard self)))
-
-(define-method destroy block ()
-  (remove-thing-maybe (world) self)
-  (setf %garbagep t))
-
-(define-method damage block (points)
-  (declare (ignore points)))
+      (destroy self)))
 
 (define-method exit block ()
-  (discard-block *world* self))
+  (destroy-block *world* self))
 
 (define-method make-duplicate block ()
   (duplicate self))
@@ -241,26 +226,18 @@ initialized with BLOCKS as inputs."
 
 Blocks may be marked with tags that influence their processing by the
 engine. The field `%tags' is a set of keyword symbols; if a symbol
-`:foo' is in the list, then the block is in the tag `:foo'.
-
-Although a game built on BLOCKY can define whatever tags are
-needed, certain base tags are built-in and have a fixed
-interpretation:
-
- -    :obstacle --- Blocks movement and causes collisions
- -    :light-source --- This object casts light. 
- -    :opaque --- Blocks line-of-sight, casts shadows. 
+`:foo' is in the list, then the block is in the tag category `:foo'.
 "
   (member tag %tags))
 
 (define-method add-tag block 
     ((tag symbol :default nil :label ""))
-  "Add the specified TAG to this block."
+  "Add the specified TAG symbol to this block."
   (pushnew tag %tags))
 
 (define-method remove-tag block 
     ((tag symbol :default nil :label ""))
-  "Remove the specified TAG  from this block."
+  "Remove the specified TAG symbol from this block."
   (setf %tags (remove tag %tags)))
 
 ;;; Serialization hooks
@@ -394,8 +371,16 @@ non-nil to indicate that the block was accepted, nil otherwise."
       (assert (not (contains parent self)))
       (setf parent nil))))
 
-(define-method drop block (other-block &optional (dx 0) (dy 0))
-  (add-object (world) other-block (+ %x dx) (+ %y dy)))
+(define-method drop block (new-block &optional (dx 0) (dy 0))
+  "Add a new object to the current world at the current position.
+Optionally provide an x-offset DX and a y-offset DY.
+See also `drop-at'."
+  (add-object (world) new-block (+ %x dx) (+ %y dy)))
+
+(define-method drop-at block (new-block x y)
+  "Add the NEW-BLOCK to the current world at the location X,Y."
+  (assert (and (numberp x) (numberp y)))
+  (add-object (world) new-block x y))
 
 ;;; Defining input events for blocks
 
@@ -474,7 +459,26 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
 			   (new 'task method-name block))))
 
 (define-method bind-event block (event binding)
-  (destructuring-bind (name &rest modifiers) event
+  "Bind the EVENT to invoke the action specified in BINDING.
+EVENT is a list of the form:
+
+       (NAME modifiers...)
+
+EVENT is either a keyword symbol identifying the keyboard key, or
+a string giving the Unicode character to be bound. MODIFIERS is a list
+of keywords like :control, :alt, and so
+on.
+
+Examples:
+  
+  (bind-event self '(:up) :move-up)
+  (bind-event self '(:down) :move-down)
+  (bind-event self '(:q :control) :quit)
+  (bind-event self '(:escape :shift) :menu)
+
+See `keys.lisp' for the full table of key and modifier symbols.
+
+"  (destructuring-bind (name &rest modifiers) event
     (etypecase binding
       (symbol (bind-event-to-method self name modifiers binding))
       (list 
@@ -602,14 +606,14 @@ whenever the event (EVENT-NAME . MODIFIERS) is received."
     (setf %halo (new 'halo self))
     (add-block (world) %halo)))
 
-(define-method discard-halo block ()
+(define-method destroy-halo block ()
   (when %halo 
-    (discard %halo)
+    (destroy %halo)
     (setf %halo nil)))
 
 (define-method toggle-halo block ()
   (if %halo
-      (discard-halo self)
+      (destroy-halo self)
       (make-halo self)))
 
 (define-method align-to-pixels block ()
@@ -756,7 +760,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 
 (define-method move-to block 
     ((x number :default 0) (y number :default 0))
-  "Move the block to a new (X Y) location."
+  "Move this block to a new (X Y) location."
   (save-location self)
   (when (and *quadtree* %quadtree-node)
     (quadtree-delete *quadtree* self))
@@ -768,12 +772,17 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     ((x number :default 0) 
      (y number :default 0)
      (z number :default 0))
-  "Move the block to a new (X Y) location."
+  "Move this block to a new (X Y Z) location."
   (move-to self x y)
   (setf %z z))
 
 (define-method move-toward block 
     ((direction symbol :default :up) (steps number :initform 1))
+    "Move this block STEPS steps in the direction given by KEYWORD.
+The KEYWORD must be one of:
+
+ :up :down :left :right :upright :upleft :downleft :downright
+"
   (with-field-values (x y) self
     (multiple-value-bind (x0 y0)
 	(step-in-direction x y (or direction :up) (or steps 5))
@@ -784,44 +793,44 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (* degrees (float (/ pi 180))))
 
 (define-method (turn-left :category :motion) block ((degrees number :default 90))
+  "Turn this object's heading to the left DEGREES degrees."
   (decf %heading (radian-angle degrees)))
 
 (define-method (turn-right :category :motion) block ((degrees number :default 90))
+  "Turn this object's heading to the right DEGREES degrees."
   (incf %heading (radian-angle degrees)))
-
-(define-method (pen-down :category :looks) block ()
-  (setf %drawing t))
-
-(define-method (pen-up :category :looks) block ()
-  (setf %drawing nil))
 
 (defun step-coordinates (x y heading &optional (distance 1))
   (values (+ x (* distance (cos heading)))
 	  (+ y (* distance (sin heading)))))
 
 (define-method step-toward-heading block (heading &optional (distance 1))
+  "Return as values the X,Y coordinate of the point DISTANCE units
+away from this object, in the angle HEADING."
   (multiple-value-bind (x y) (center-point self)
     (step-coordinates x y heading distance)))
 
 (define-method move-toward-heading block (heading &optional (distance 1))
+  "Move this object DISTANCE units toward the angle HEADING."
   (multiple-value-bind (x0 y0) (step-coordinates %x %y heading distance)
     (move-to self x0 y0)))
 
 (define-method move-forward block (distance)
+  "Move this object DISTANCE units toward its current heading."
   (move-toward-heading self %heading distance))
 
 (define-method move-backward block (distance)
+  "Move this object DISTANCE units away from its current heading."
   (move-toward-heading self (- (* 2 pi) %heading distance)))
 
-(define-method draw-turtle-line block (x0 y0 x1 y1)
-  nil)
-
-(defmacro save-excursion (expression &body body)
+(defmacro save-excursion (object &body body)
+  "Evaluate the forms in BODY, on OBJECT, saving the turtle
+state (position and heading) and restoring them afterward."
   (let ((x (gensym))
 	(y (gensym))
 	(heading (gensym))
 	(turtle (gensym)))
-    `(let* ((,turtle ,expression)
+    `(let* ((,turtle ,object)
 	    (,x (field-value :x ,turtle))
 	    (,y (field-value :y ,turtle))
 	    (,heading (field-value :heading ,turtle)))
@@ -831,37 +840,14 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
        (values ,x ,y ,heading))))
 
 (define-method heading-to-thing block (thing)
+  "Compute the heading angle from this object to the other object THING."
   (multiple-value-bind (x1 y1) (center-point thing)
     (multiple-value-bind (x0 y0) (center-point self)
       (find-heading x0 y0 x1 y1))))
 
 (define-method heading-to-player block ()
+  "Compute the heading angle from this object to the player."
   (heading-to-thing self (get-player *world*)))
-
-;;; Grid block movement
-
-(defun world-grid-size ()
-  (field-value :grid-size *world*))
-
-(define-method enter-grid block ()
-  (setf %on-grid t))
-
-(define-method exit-grid block ()
-  (setf %on-grid nil))
-
-(define-method move-to-grid block 
-    ((row integer :default 0) (column integer :default 0))
-  "Move the block to a new (ROW COLUMN) location."
-  (save-location self)
-  (setf %x (* column (world-grid-size)))
-  (setf %y (* row (world-grid-size)))
-  (move-cell *world* self row column))
-
-(define-method move-toward-grid block 
-    ((direction symbol :default :up) (steps number :initform 1))
-  (multiple-value-bind (column row)
-      (step-in-direction %column %row direction steps)
-    (move-to-grid self row column)))
 
 ;;; Visibility
 
@@ -974,6 +960,7 @@ current block. Used for taking a count of all the nodes in a tree."
 (defparameter *block-bold* "sans-bold-11")
 
 (defmacro with-font (font &rest body)
+  "Evaluate forms in BODY with FONT as the current font."
   `(let ((*font* ,font))
      ,@body))
 
@@ -1352,13 +1339,14 @@ See shell.lisp for more on the implementation of drag-and-drop."
 
 (define-method change-image block 
     ((image string :default nil))
-  "Change this sprite's currently displayed image to IMAGE."
+  "Change this sprite's currently displayed image to IMAGE, resizing
+the object if necessary."
   (when image
     (setf %image image)
     (resize-to-image self)))
   
 (define-method draw block ()
-  "Draw this block via OpenGL."
+  "Draw this block via OpenGL commands. "
   (with-fields (image x y width height blend opacity) self
     (if image 
 	(draw-image image x y 
@@ -1486,6 +1474,7 @@ See shell.lisp for more on the implementation of drag-and-drop."
 
 (define-method play-sound block 
     ((name string :default "chirp"))
+    "Play the sample named NAME."
   (play-sample name))
 
 ;;; Collision detection and UI hit testing
@@ -1551,7 +1540,7 @@ The order is (TOP LEFT RIGHT BOTTOM)."
 
 (define-method collide block (object)
   (declare (ignore object))
-  "Respond to a collision detected with OBJECT."
+  "Respond to a collision detected with OBJECT. The default implementation does nothing."
   nil)
 
 (defun point-in-rectangle-p (x y width height o-top o-left o-width o-height)
@@ -1595,7 +1584,7 @@ The order is (TOP LEFT RIGHT BOTTOM)."
     (direction-to %x %y x y)))
 
 (define-method direction-to-player block ()
-  "Return the direction the player is in from here."
+  "Return the directional keyword naming the general direction to the player."
   (direction-to-thing self (get-player *world*)))
 
 (define-method heading-to-thing block (thing)
@@ -1604,12 +1593,15 @@ The order is (TOP LEFT RIGHT BOTTOM)."
     (find-heading %x %y x y)))
 
 (define-method heading-to-player block ()
+  "The heading (in radians) to the player from this block."
   (heading-to-thing self (get-player *world*)))
 
-(define-method point-at-thing block (thing)
+(define-method aim-at-thing block (thing)
+  "Aim the current heading at the object THING."
   (setf %heading (heading-to-thing self thing)))
 
 (define-method aim block (heading)
+  "Aim this object toward the angle HEADING."
   (assert (numberp heading))
   (setf %heading heading))
 

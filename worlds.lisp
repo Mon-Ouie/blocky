@@ -232,7 +232,7 @@
 	(quadtree-insert quadtree object))
       (after-place-hook object))))
 
-(define-method discard-block world (object)
+(define-method destroy-block world (object)
   (remhash (find-uuid object) %objects))
 
 ;;; World-local variables
@@ -570,7 +570,7 @@ slowdown. See also quadtree.lisp")
 	  (layout-shell-objects self)
 	  (update-shell-objects self))))))
 
-;;; A trash can for user-discarded objects
+;;; A trash can for user-destroyed objects
 
 (defvar *trash* nil)
 
@@ -720,7 +720,7 @@ block found, or nil if none is found."
 	(when (and last-focus
 		   ;; don't do this for same block
 		   (not (object-eq last-focus block)))
-	  (discard-halo last-focus)
+	  (destroy-halo last-focus)
 	  (lose-focus last-focus))
       ;; now set up the new focus (possibly nil)
       (setf focused-block (when block (find-uuid block)))

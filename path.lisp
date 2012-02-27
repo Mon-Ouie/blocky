@@ -260,7 +260,7 @@
 							 :obstacle))
 			     (not (equal path-turn-number (node-closed successor)))))
 		       ;; if successor is open and existing path is better
-		       ;; or as good as new path, discard the successor
+		       ;; or as good as new path, destroy the successor
 		       ;; if successor is not open, proceed 
 		       (if (equal path-turn-number (node-open successor))
 			   (if (< new-G (node-G successor))

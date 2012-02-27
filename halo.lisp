@@ -124,21 +124,21 @@
 (define-method tap program (x y)
   (drop self (pick self)))
 
-(define-handle discard :close)
+(define-handle destroy :close)
 
-(define-method tap discard (x y)
+(define-method tap destroy (x y)
   (assert %target)
-  (discard %target)
+  (destroy %target)
   ;; get rid of halo
   (when %parent
-    (discard %parent)))
+    (destroy %parent)))
      
 (define-handle collapse :collapse)
 
 ;;; The halo itself
 
 (defparameter *halo-handles* 
-  '(:evaluate :open-menu :drop :resize :program :discard :collapse))
+  '(:evaluate :open-menu :drop :resize :program :destroy :collapse))
 
 (define-block halo target)
 

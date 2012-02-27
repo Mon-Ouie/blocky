@@ -1,30 +1,20 @@
-* TODO Screencast where a game is developed from scratch with Defresource improvements
+* TODO Think and review ALL this todo list
 
-** TODO grab a couple of images
+* BETA RELEASE
+** Documentation
+*** TODO what is common lisp?x
+*** TODO revise prototype explanation to include more clear language, relevant to games, and more 
 
-** TODO make a wall that stops bullets
-** TODO resizeable wall
-** TODO standardized check-if-it's a kind-of 
-
-
-** TODO random-colored brick
-** TODO animated brick
-** TODO wandering enemy
-** TODO player with arrow key movement
-
+* TODO explicit pull-up handle instead of auto-pullup
 * Creating a cool game editor with tight emacs integration
 ***  and then growing it into scratch-squared!
 ** TODO review smalltalk-elements, byob for TOP LEVEL area identifications
-** TODO use swank:eval-in-emacs
- via SLIME, to issue a command back to emacs to go to
- a particular buffer location and/or raise the emacs window? 
 ** TODO define-block-macro resource
 *** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
 ** TODO flesh out basic Projects operations dialogs
 *** TODO test save project dialog
 *** TODO test load project dialog
 **** TODO accept pathnames so that you can run a blocky module no matter what the dir name is
-*** TODO fix centering of dialogs
 *** TODO recent projects persistent variable
 ** TODO Pretty sexy black rounded corner notifications
 *** TODO notifications and a "notify" function 
@@ -32,6 +22,9 @@
 *** TODO simple ok notification box
 *** TODO generic question dialog box shortcut function
 ** TODO buttons for toggle pin,freeze
+** TODO [#C] use swank:eval-in-emacs
+ via SLIME, to issue a command back to emacs to go to
+ a particular buffer location and/or raise the emacs window? 
 ** TODO [#A] Ability to scroll the world with the mouse wheel
 ** TODO [#A] selecting single world object
 ** TODO [#A] selecting multiple objects
@@ -1077,3 +1070,12 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_TODO: TODO
    :END:
 *** TODO find why window%after-unplug-hook is not called
+
+** TODO fix centering of dialogs
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-24 Fri 22:23
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Eliminate onionskin layer confusion/flesh out basic Projects operations dialogs
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
