@@ -48,10 +48,6 @@
   :methods '(:pen-down :pen-up :turn-left :turn-right 
 	     :go-forward :pen-ink :save-state :restore-state :clear-lines :sing))
 
-(define-method click turtle (x y)
-  (declare (ignore x y))
-  (setf *target* self))
-
 (defun radian-angle (degrees)
   "Convert DEGREES to radians."
   (* degrees (float (/ pi 180))))
@@ -94,22 +90,12 @@
 		    (+ y0 dy)
 		    :color color))))))
 
-(define-method (save-state :category :control) turtle ()
-  (push (list %x %y %heading %color) 
-	%states))
-
 (defresource (:name "turtle-theme" :type :music :file "turtle.xm")) 
 
 (define-method (sing :category :sound) turtle ((song string :default "turtle-theme"))
   (if (zerop (length song))
       (halt-music)
       (play-music song :loop t)))
-
-(define-method (restore-state :category :control) turtle ()
-  (destructuring-bind (x y heading color) 
-      (pop %states)
-    (setf %x x %y y %color color
-	  %heading heading)))
 
 (define-method draw turtle ()
   (dolist (line %lines)

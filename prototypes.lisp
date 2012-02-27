@@ -192,8 +192,10 @@ extended argument list ARGLIST."
 (defun make-method-id (prototype method)
   (let ((name (object-name (find-object prototype))))
     (assert (stringp name))
-    (concatenate 'string (symbol-name method)
-		 "%" (subseq name (1+ (position (character ":") name))))))
+    (concatenate 'string 
+		 (subseq name (1+ (position (character ":") name)))
+		 "%" 
+		 (symbol-name method))))
 
 (defun find-method-id (prototype method &optional create)
   (assert prototype)

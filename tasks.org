@@ -2,9 +2,11 @@
 
 * BETA RELEASE
 ** Documentation
-*** TODO what is common lisp?x
-*** TODO revise prototype explanation to include more clear language, relevant to games, and more 
-
+*** TODO rewrite prototype explanation to include more clear language, relevant to games, and more 
+*** TODO import vomac example from video
+*** TODO test examples
+*** TODO import xeng remix
+*** TODO tag release
 * TODO explicit pull-up handle instead of auto-pullup
 * Creating a cool game editor with tight emacs integration
 ***  and then growing it into scratch-squared!

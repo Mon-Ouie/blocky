@@ -60,12 +60,30 @@ plugin or script available for editing Lisp code and matching those
 parentheses. If you're unsure about Vim and Emacs, try looking around
 to see if you can find Lisp support for your existing editor.
 
+* Overview of prototype-based programming
+
+Blocky is built on an alternative view of object-orientation called
+[[http://en.wikipedia.org/wiki/Prototype-based_programming][Prototype-based programming.]] Instead of partitioning the objects in
+your program into classes that share inheritance relationships, the
+objects in a prototype-based system inherit behavior and data directly
+from each other through "cloning". 
+
+The data members of an object are called fields, and the operations on
+those objects are called methods. Both fields and methods can be
+inherited through cloning in Blocky.
+
+The cloning process takes an existing object and creates a new object
+with a link to the original---now called a "superobject"---from which
+it will inherit methods and data fields. When a method is invoked (or
+a field is referenced) and no local value is found, the superobject is
+checked for a value, and then its superobject if any, and so
+on. Methods are stored in fields, so if you want to replace a clone's
+method definition with something else, just define the new method on
+the clone, and the superobject's version will be hidden.
+
 * How to define blocks with Lisp code
 
-
-
-
-
+ - *FORTHCOMING...*
 
 * An overview of the blocks model
 
@@ -176,24 +194,4 @@ recipient of the message.
 Messages and lists are among a number of basic utility blocks defined
 in library.lisp and listener.lisp.
 
-* Overview of prototype-based programming
-
-Blocky is built on an alternative view of object-orientation called
-[[http://en.wikipedia.org/wiki/Prototype-based_programming][Prototype-based programming.]] Instead of partitioning the objects in
-your program into classes that share inheritance relationships, the
-objects in a prototype-based system inherit behavior and data directly
-from each other through "cloning". 
-
-The data members of an object are called fields, and the operations on
-those objects are called methods. Both fields and methods can be
-inherited through cloning in Blocky.
-
-The cloning process takes an existing object and creates a new object
-with a link to the original---now called a "superobject"---from which
-it will inherit methods and data fields. When a method is invoked (or
-a field is referenced) and no local value is found, the superobject is
-checked for a value, and then its superobject if any, and so
-on. Methods are stored in fields, so if you want to replace a clone's
-method definition with something else, just define the new method on
-the clone, and the superobject's version will be hidden.
 

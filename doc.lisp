@@ -49,7 +49,7 @@
 	(heading 3 "Documentation" stream)
 	(format stream "~A" doc)
 	(fresh-line stream)))))
-
+  
 (defun document-function (symbol stream)
   (let ((doc (documentation symbol 'function)))
     (when doc
@@ -113,6 +113,7 @@
 		  (format stream "~S" initform))))))
 	(fresh-line stream)
 	;; methods
+	(message "Documenting ~S methods..." (length methods))
 	(dolist (m methods)
 	  (document-method name m stream))
 	methods))))
