@@ -535,7 +535,7 @@ slowdown. See also quadtree.lisp")
       (let ((box (multiple-value-list (window-bounding-box self))))
 	(loop for object being the hash-values in objects do
 	  ;; only draw onscreen objects
-	  (when t;(colliding-with-bounding-box object box)
+	  (when (colliding-with-bounding-box object box)
 	    (draw object))))
       ;; possibly draw shell
       (when %system-menu-open-p 
