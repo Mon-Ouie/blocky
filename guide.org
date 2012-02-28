@@ -106,7 +106,17 @@ links:
  - My work-in-progress game [[http://dto.github.com/notebook/xalcyon.html][Xalcyon]] is made entirely with Blocky, here
    is the [[https://github.com/dto/xalcyon.blocky/blob/master/xalcyon.lisp][source code]]. There are videos on the Xalcyon page.
 
- - I'm working on a package with four or five game skeletons for
+ - A slightly more complex game called [[https://github.com/dto/microxong][MicroXONG]] is available for you
+   to remix and share. The approximately [[https://github.com/dto/microxong/blob/master/microxong.lisp][600 line microxong.lisp]] uses
+   the Blocky game engine to create a player who can fire bullets and
+   destroy enemies, a score display, some basic enemies to fight, a
+   simple arrows-and-spacebar control scheme, and the rudiments of a
+   level generator to play with. There are also some remixable
+   graphics, music, and sound effects included. You can remix and
+   share MicroXONG thanks to the GPL and Creative Commons licenses it
+   carries; [[https://github.com/dto/microxong/blob/master/COPYING][see here for more information.]]
+
+ - I'm working on a package with four or five more game skeletons for
    people to expand and remix.
 
 * An overview of the blocks model 
