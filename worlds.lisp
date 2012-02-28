@@ -85,8 +85,7 @@
 	  :documentation "Non-nil when modified since last save."))
 
 (defmacro with-world (world &rest body)
-  `(let* ((*world* ,world)
-	  (*quadtree* (field-value :quadtree *world*)))
+  `(let* ((*world* ,world))
      (prog1 *world*
        ,@body)))
 
@@ -202,7 +201,7 @@
 (define-method remove-object world (object)
   (remhash (find-uuid object) %objects)
   (when (field-value :quadtree-node object)
-    (quadtree-delete %quadtree object)))
+    (quadtree-delete object)))
 
 (define-method remove-thing-maybe world (object)
   (when (gethash (find-uuid object) %objects)
@@ -222,9 +221,9 @@
   (gethash (find-uuid object) 
 	   %objects))
 
-(define-method add-object world (object &optional x y append)
-  (with-fields (quadtree) self
-    (with-world self
+(define-method add-object world (object &optional x y)
+  (with-world self
+    (with-quadtree %quadtree
       (assert (not (contains-object self object)))
       (setf (gethash (find-uuid object)
 		     %objects)
@@ -234,9 +233,8 @@
 	(setf (field-value :x object) x
 	      (field-value :y object) y))
       (clear-saved-location object)
-      (when quadtree
-	(quadtree-insert quadtree object))
-      (after-place-hook object))))
+      (quadtree-insert-maybe object))))
+;      (after-place-hook object))))
 
 (define-method destroy-block world (object)
   (remhash (find-uuid object) %objects))
@@ -303,7 +301,7 @@ slowdown. See also quadtree.lisp")
       (assert quadtree)
       (let ((objects (get-objects self)))
 	(when objects
-	  (quadtree-fill quadtree objects))))))
+	  (quadtree-fill objects quadtree))))))
 
 (define-method resize world (new-height new-width)
   (assert (and (plusp new-height)
@@ -324,7 +322,8 @@ slowdown. See also quadtree.lisp")
 	  ;; move all the objects
 	  (dolist (object objects)
 	    (with-fields (x y) object
-	      (move-to object (- x left) (- y top))))
+	      (with-quadtree quadtree
+		(move-to object (- x left) (- y top)))))
 	  ;; resize the world so that everything just fits
 	  (setf %x 0 %y 0)
 	  (resize self (- bottom top) (- right left)))))))
@@ -526,7 +525,7 @@ slowdown. See also quadtree.lisp")
 (define-method draw world ()
   (with-world self
     (project-window self)
-    (with-field-values (objects quadtree width height background-image background-color) self
+    (with-field-values (objects width height background-image background-color) self
       ;; draw background 
       (if background-image
 	  (draw-image background-image 0 0)
@@ -536,7 +535,7 @@ slowdown. See also quadtree.lisp")
       (let ((box (multiple-value-list (window-bounding-box self))))
 	(loop for object being the hash-values in objects do
 	  ;; only draw onscreen objects
-	  (when (colliding-with-bounding-box object box)
+	  (when t;(colliding-with-bounding-box object box)
 	    (draw object))))
       ;; possibly draw shell
       (when %system-menu-open-p 
@@ -549,26 +548,27 @@ slowdown. See also quadtree.lisp")
     ;; build quadtree if needed
     (when (null %quadtree)
       (install-quadtree self))
+    (assert %quadtree)
     (unless %paused
-      (assert (zerop *quadtree-depth*))
       (with-world self
-	(layout self)
-	;; possibly run the objects
-	(loop for object being the hash-values in %objects do
-	  (update object)
-	  (run-tasks object))
-	;; update window movement
-	(when player 
-	  (glide-follow self player)
-	  (update-window-glide self))
-	;; detect collisions
-	(loop for object being the hash-values in objects do
-	  (unless (eq :passive (field-value :collision-type object))
-	    (quadtree-collide %quadtree object)))
-	;; possibly update the shell
-	(when %system-menu-open-p
-	  (layout-shell-objects self)
-	  (update-shell-objects self))))))
+	(with-quadtree %quadtree
+	  (layout self)
+	  ;; possibly run the objects
+	  (loop for object being the hash-values in %objects do
+	    (update object)
+	    (run-tasks object))
+	  ;; update window movement
+	  (when player 
+	    (glide-follow self player)
+	    (update-window-glide self))
+	  ;; detect collisions
+	  (loop for object being the hash-values in objects do
+	    (unless (eq :passive (field-value :collision-type object))
+	      (quadtree-collide object)))
+	  ;; possibly update the shell
+	  (when %system-menu-open-p
+	    (layout-shell-objects self)
+	    (update-shell-objects self)))))))
   
 ;;; A trash can for user-destroyed objects
 
@@ -651,21 +651,22 @@ slowdown. See also quadtree.lisp")
   
 (define-method handle-event world (event)
   (with-world self
-    (or (handle-event%super self event)
-	(with-field-values (player quadtree focused-block selection inputs) self
-	  (let ((block
-		    (cond
-		      ;; we're focused. send the event there
-		      (focused-block
-		       (prog1 focused-block
-			 (assert (blockyp focused-block))))
-		      ;; only one block selected. use that.
-		      ((= 1 (length selection))
-		       (first selection))
-		      ;; fall back to player
-		      (t player))))
-	    (when block 
-	      (prog1 t (handle-event block event))))))))
+    (with-quadtree %quadtree
+      (or (handle-event%super self event)
+	  (with-field-values (player quadtree focused-block selection inputs) self
+	    (let ((block
+		      (cond
+			;; we're focused. send the event there
+			(focused-block
+			 (prog1 focused-block
+			   (assert (blockyp focused-block))))
+			;; only one block selected. use that.
+			((= 1 (length selection))
+			 (first selection))
+			;; fall back to player
+			(t player))))
+	      (when block 
+		(prog1 t (handle-event block event)))))))))
 
 ;;; Hit testing
 
@@ -683,29 +684,30 @@ blocks are drawn in list order (i.e. the topmost blocks for
 mousing-over are at the end of the list.) The return value is the
 block found, or nil if none is found."
   (with-world self 
-    (labels ((try (b)
-	       (when b
-		 (hit b x y))))
-      ;; check system-menu and inputs first
-      (let* ((object-p nil)
-	     (result 
-	      (or 
-	       (when %system-menu-open-p 
-		 (try %system-menu))
-	       (let ((parent 
-		       (find-if #'try 
-				%inputs
-				:from-end t)))
-		 (when parent
-		   (try parent)))
-	       ;; try world objects
-	       (block trying
-		 (loop for object being the hash-values of %objects
-		       do (let ((result (try object)))
-			    (when result 
-			      (setf object-p t)
-			      (return-from trying result))))))))
-	(values result object-p)))))
+    (with-quadtree %quadtree
+      (labels ((try (b)
+		 (when b
+		   (hit b x y))))
+	;; check system-menu and inputs first
+	(let* ((object-p nil)
+	       (result 
+		 (or 
+		  (when %system-menu-open-p 
+		    (try %system-menu))
+		  (let ((parent 
+			  (find-if #'try 
+				   %inputs
+				   :from-end t)))
+		    (when parent
+		      (try parent)))
+		  ;; try world objects
+		  (block trying
+		    (loop for object being the hash-values of %objects
+			  do (let ((result (try object)))
+			       (when result 
+				 (setf object-p t)
+				 (return-from trying result))))))))
+	  (values result object-p))))))
   
 (defparameter *minimum-drag-distance* 7)
   

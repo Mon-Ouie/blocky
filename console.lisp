@@ -56,12 +56,6 @@
       (progn ,@body)
     (continue () :report "Continue"  )))
 
-(defvar *world* nil
-"The current world object. Only one may be active at a time. See also
-worlds.lisp. Sprites and cells are free to send messages to `*world*'
-at any time, because `*world*' is always bound to the world containing
-the object when the method is run.")
-
 (defun world () *world*)
 
 ;;; Keyboard state

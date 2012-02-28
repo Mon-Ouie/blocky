@@ -724,8 +724,8 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 					  (or (make-block-package)
 					      (find-package "BLOCKY")))))
 		     (arg-blocks (mapcar #'make-block arguments)))
-		 (message "arg-blocks ~S" (list (length arg-blocks)
-		 				(mapcar #'find-uuid arg-blocks)))
+		 ;; (message "arg-blocks ~S" (list (length arg-blocks)
+		 ;; 				(mapcar #'find-uuid arg-blocks)))
 		 (apply #'clone prototype arg-blocks))))
 	   (list-block (items)
 	     (apply #'clone "BLOCKY:LIST" (mapcar #'make-block items))))
@@ -760,11 +760,11 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 (define-method restore-location block ()
   ;; is there a location to restore? 
   (when %last-x
-    (when *quadtree* (quadtree-delete *quadtree* self))
+    (quadtree-delete-maybe self)
     (setf %x %last-x
 	  %y %last-y
 	  %z %last-z)
-    (when *quadtree* (quadtree-insert *quadtree* self))))
+    (quadtree-insert-maybe self)))
 
 (define-method set-location block (x y)
   (setf %x x %y y))
@@ -773,11 +773,9 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
     ((x number :default 0) (y number :default 0))
   "Move this block to a new (X Y) location."
   (save-location self)
-  (when (and *quadtree* %quadtree-node)
-    (quadtree-delete *quadtree* self))
+  (quadtree-delete-maybe self)
   (setf %x x %y y)
-  (when (and *quadtree* %quadtree-node)
-    (quadtree-insert *quadtree* self)))
+  (quadtree-insert-maybe self))
 
 (define-method move-to-* block
     ((x number :default 0) 
@@ -1457,10 +1455,10 @@ the object if necessary."
     ((width number :default 100)
      (height number :default 100))
   "Change this object's size to WIDTH by HEIGHT units."
-  (when %quadtree-node (quadtree-delete *quadtree* self))
+  (quadtree-delete-maybe self)
   (setf %height height)
   (setf %width width)
-  (when *quadtree* (quadtree-insert *quadtree* self))
+  (quadtree-insert-maybe self)
   (invalidate-layout self))
 
 (define-method layout block () 

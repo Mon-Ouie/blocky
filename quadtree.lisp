@@ -24,9 +24,16 @@
 
 (defvar *quadtree* nil)
 
-(defun quadtree ()
-  (when *world*
-    (field-value :quadtree *world*)))
+(defvar *world* nil
+"The current world object. Only one may be active at a time. See also
+worlds.lisp. Sprites and cells are free to send messages to `*world*'
+at any time, because `*world*' is always bound to the world containing
+the object when the method is run.")
+
+(defmacro with-quadtree (quadtree &rest body)
+  `(let* ((*quadtree* ,quadtree))
+     (prog1 *quadtree*
+       ,@body)))
 
 (defvar *quadtree-depth* 0)
 
@@ -37,7 +44,8 @@
   southwest northeast northwest southeast)
 
 (defmethod print-object ((tree blocky::quadtree) stream)
-  (format stream "#<BLX QUADTREE @ ~S" (quadtree-level tree)))
+  (format stream "#<BLOCKY:QUADTREE count: ~S>"
+	  (length (quadtree-objects tree))))
 
 (defun leafp (node)
   ;; testing any quadrant will suffice
@@ -92,17 +100,17 @@
     (list (float (/ (+ top bottom) 2)) left
 	  (float (/ (+ left right) 2)) bottom)))
 
-(defun quadtree-process (node bounding-box processor)
+(defun quadtree-process (bounding-box processor &optional (node *quadtree*))
   (assert (quadtree-p node))
   (assert (valid-bounding-box bounding-box))
   (assert (functionp processor))
   (when (bounding-box-contains (quadtree-bounding-box node) bounding-box)
     (when (not (leafp node))
       (let ((*quadtree-depth* (1+ *quadtree-depth*)))
-	(quadtree-process (quadtree-northwest node) bounding-box processor)
-	(quadtree-process (quadtree-northeast node) bounding-box processor)
-	(quadtree-process (quadtree-southwest node) bounding-box processor)
-	(quadtree-process (quadtree-southeast node) bounding-box processor)))
+	(quadtree-process bounding-box processor (quadtree-northwest node))
+	(quadtree-process bounding-box processor (quadtree-northeast node))
+	(quadtree-process bounding-box processor (quadtree-southwest node))
+	(quadtree-process bounding-box processor (quadtree-southeast node))))
     (funcall processor node)))
 
 (defun build-quadtree (bounding-box0 &optional (depth *default-quadtree-depth*))
@@ -118,7 +126,7 @@
 		       :southwest (build-quadtree (southwest-quadrant bounding-box) depth)
 		       :southeast (build-quadtree (southeast-quadrant bounding-box) depth)))))
 
-(defun quadtree-search (node bounding-box)
+(defun quadtree-search (bounding-box &optional (node *quadtree*))
   "Return the smallest quadrant enclosing BOUNDING-BOX at or below
 NODE, if any."
   (assert (quadtree-p node))
@@ -134,19 +142,19 @@ NODE, if any."
 	(or
 	 ;; search the quadrants.
 	 (let ((*quadtree-depth* (1+ *quadtree-depth*)))
-	   (or (quadtree-search (quadtree-northwest node) bounding-box)
-	       (quadtree-search (quadtree-northeast node) bounding-box)
-	       (quadtree-search (quadtree-southwest node) bounding-box)
-	       (quadtree-search (quadtree-southeast node) bounding-box)))
+	   (or (quadtree-search bounding-box (quadtree-northwest node))
+	       (quadtree-search bounding-box (quadtree-northeast node))
+	       (quadtree-search bounding-box (quadtree-southwest node))
+	       (quadtree-search bounding-box (quadtree-southeast node))))
 	 ;; none of them are suitable. stay here
 	 node))))
 
-(defun quadtree-insert (tree object)
+(defun quadtree-insert (object &optional (tree *quadtree*))
   (let ((node0
 	  (quadtree-search 
-	   tree
 	   (multiple-value-list 
-	    (bounding-box object)))))
+	    (bounding-box object))
+	   tree)))
     (let ((node (or node0 tree)))
       ;; (message "Inserting ~S ~S"
       ;; 	       (get-some-object-name object) 
@@ -163,11 +171,11 @@ NODE, if any."
 		    (quadtree-objects node)
 		    :test 'eq)))))
 
-(defun quadtree-delete (tree object0)
+(defun quadtree-delete (object0 &optional (tree *quadtree*))
   (let ((object (find-object object0)))
     ;; grab the cached quadtree node
-    (let ((node (field-value :quadtree-node object)))
-      ;; (assert node)
+    (let ((node (or (field-value :quadtree-node object) tree)))
+      (assert node)
       (assert (find object
       		    (quadtree-objects node)
       		    :test 'eq))
@@ -178,26 +186,35 @@ NODE, if any."
 			 (quadtree-objects node)
 			 :test 'eq))))))
 
-(defun quadtree-map-collisions (tree bounding-box processor)
+(defun quadtree-insert-maybe (object &optional (tree *quadtree*))
+  (when tree
+    (quadtree-insert object tree)))
+
+(defun quadtree-delete-maybe (object &optional (tree *quadtree*))
+  (when tree
+    (quadtree-delete object tree)))
+
+(defun quadtree-map-collisions (bounding-box processor &optional (tree *quadtree*))
   (assert (functionp processor))
   (assert (valid-bounding-box bounding-box))
   (quadtree-process
-   tree
    bounding-box
    #'(lambda (node)
        (dolist (object (quadtree-objects node))
 	 (when (colliding-with-bounding-box object bounding-box)
-	   (funcall processor object))))))
+	   (funcall processor object))))
+   tree))
 
-(defun quadtree-collide (tree object)
+(defun quadtree-collide (object &optional (tree *quadtree*))
   (quadtree-map-collisions 
-   tree
    (multiple-value-list (bounding-box object))
    #'(lambda (thing)
-	 (when (and (field-value :collision-type thing)
-		    (colliding-with object thing)
-		    (not (object-eq object thing)))
-	   (collide object thing)))))
+       (when (and (field-value :collision-type thing)
+		  (colliding-with object thing)
+		  (not (object-eq object thing)))
+	 (with-quadtree tree
+	   (collide object thing))))
+   tree))
 
 (defun find-bounding-box (objects)
   ;; calculate the bounding box of a list of objects
@@ -213,14 +230,14 @@ NODE, if any."
 	    (reduce #'max (mapcar #'right objects))
 	    (reduce #'max (mapcar #'bottom objects)))))
 
-(defun quadtree-fill (quadtree set)
+(defun quadtree-fill (set &optional (quadtree *quadtree*))
   (let ((objects (etypecase set
 		   (list set)
 		   (hash-table (loop for object being the hash-keys in set collect object)))))
     (dolist (object objects)
       (message "Filling ~S into quadtree" object)
       (set-field-value :quatree-node object nil)
-      (quadtree-insert quadtree object))))
+      (quadtree-insert object quadtree))))
 
 (defun quadtree-show (tree &optional object)
   (when tree
@@ -240,7 +257,7 @@ NODE, if any."
 		     object top left (- right left) (- bottom top))
 		(draw-box left top (- right left) (- bottom top)
 			  :color "cyan"
-			  :alpha 0.1)))))
+			  :alpha 0.2)))))
       (let ((*quadtree-depth* (1+ *quadtree-depth*)))
 	(quadtree-show (quadtree-northeast tree) object)
 	(quadtree-show (quadtree-northwest tree) object)

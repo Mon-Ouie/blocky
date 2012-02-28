@@ -46,21 +46,22 @@ is-raw-joystick-event keyboard-time-in-previous-state *updates*
 keyboard-down-p keyboard-keys-down keyboard-modifier-down-p
 keyboard-modifiers draw-filled-circle draw-aa-circle get-keys
 *project-package-name* project-package-name make-block
-*form-command-handler-function* add-block remove-block
+*form-command-handler-function* add-block remove-block with-quadtree
 *initialization-hook* initialize-engine hit-blocks quadtree-delete
 quadtree-insert build-quadtree quadtree-collide quadtree-show
-*quadtree* split-string-on-lines message *prompt-sweden-keybindings*
-*prompt-qwerty-keybindings* *screen-width* transform-method-body
-*edit* roll-under make-stat make-universe initialize-colors *style*
-create-project *standard-categories* *left-turn* bind-event
-*right-turn* left-turn right-turn roll bind-event-to-method *colors*
-enable-key-repeat disable-key-repeat get-color define-method
-*default-font* field-value set-field-value object-fields
-dispatch-event run-project *user-init-file-name* distance
-icon-resource icon-image *directions* *clear-cached-images-on-resize*
-*opposites* find-resource-property compose-blank-fields font-width
-font-height *browser* browser set-browser find-object *windows* edit
-create transform-field-reference define-block *screen-height*
+*quadtree* *quadtree-depth* split-string-on-lines message
+*prompt-sweden-keybindings* *prompt-qwerty-keybindings* *screen-width*
+transform-method-body *edit* roll-under make-stat make-universe
+initialize-colors *style* create-project *standard-categories*
+*left-turn* bind-event *right-turn* left-turn right-turn roll
+bind-event-to-method *colors* enable-key-repeat disable-key-repeat
+get-color define-method *default-font* field-value set-field-value
+object-fields dispatch-event run-project *user-init-file-name*
+distance icon-resource icon-image *directions*
+*clear-cached-images-on-resize* *opposites* find-resource-property
+compose-blank-fields font-width font-height *browser* browser
+set-browser find-object *windows* edit create
+transform-field-reference define-block *screen-height*
 formatted-line-width *last-event* formatted-line-height
 formatted-string-height formatted-string-width get-color create-image
 draw-image blocky edit define-prototype has-field *target* with-target
@@ -92,10 +93,9 @@ self opposite-direction object-address-string object step-in-direction
 direction-to plasma-rect subdivide-rect render-plasma add-hook
 run-hook queue-tail make-resource-link save-resource
 save-project-image system *system* *defined-resources* save-everything
-with-input-values with-inputs
-*export-formats* export-archive defresource export-application
-export-project make-queue queue unqueue queue-message
-queued-messages-p unqueue-message send-queue field-value
+with-input-values with-inputs *export-formats* export-archive
+defresource export-application export-project make-queue queue unqueue
+queue-message queued-messages-p unqueue-message send-queue field-value
 random-direction random-choose *resources* load-font-resource
 save-object-resource initialize%super initialize%super
 /queue/initialize queue/initialize draw-string-solid read-iof

@@ -1212,12 +1212,13 @@ OPTIONS is a property list of field options. Valid keys are:
        (setf (fref fields :initialize-fields) (function (lambda (self) 
 						,@field-initializer-body)))
        (initialize-method-cache prototype)
-       ;; set the default initforms
+       ;; set the default initforms. note that you should not allocate
+       ;; resources here.
        (send :initialize-fields prototype)
-       ;; the prototype's super may have an initialize method.
-       ;; if so, we need to initialize the present prototype.
-       (when (has-field :initialize prototype)
-	 (send :initialize prototype))
+       ;; ;; the prototype's super may have an initialize method.
+       ;; ;; if so, we need to initialize the present prototype.
+       ;; (when (has-field :initialize prototype)
+       ;; 	 (send :initialize prototype))
        ;; now add it to the dictionaries
        (add-prototype prototype)
        (add-object-to-database prototype)
