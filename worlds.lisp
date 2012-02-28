@@ -312,21 +312,21 @@ slowdown. See also quadtree.lisp")
     (when quadtree
       (install-quadtree self))))
 
-(define-method shrink-wrap world ()
+(define-method normalize-quadtree world ()
   (prog1 self
     (let ((objects (get-objects self)))
       (with-fields (quadtree height width) self
 	;; adjust bounding box so that all objects have positive coordinates
 	(multiple-value-bind (top left right bottom)
 	    (find-bounding-box objects)
+	  ;; resize the world so that everything just fits
+	  (setf %x 0 %y 0)
+	  (resize self (- bottom top) (- right left))
 	  ;; move all the objects
 	  (dolist (object objects)
 	    (with-fields (x y) object
 	      (with-quadtree quadtree
-		(move-to object (- x left) (- y top)))))
-	  ;; resize the world so that everything just fits
-	  (setf %x 0 %y 0)
-	  (resize self (- bottom top) (- right left)))))))
+		(move-to object (- x left) (- y top))))))))))
 
 ;; Algebraic operations on worlds and their contents
 
@@ -905,8 +905,9 @@ block found, or nil if none is found."
     (exit-command-line self)
     (setf %selection nil)))
 
-;; (define-method start world ()
-;;   (install-quadtree self)
-;;   (start%super self))
+(define-method start world ()
+  (unless (emptyp self)
+    (normalize-quadtree self))
+  (start%super self))
 
 ;;; worlds.lisp ends here

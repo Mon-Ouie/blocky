@@ -235,7 +235,7 @@ NODE, if any."
 		   (list set)
 		   (hash-table (loop for object being the hash-keys in set collect object)))))
     (dolist (object objects)
-      (message "Filling ~S into quadtree" object)
+;      (message "Filling ~S into quadtree" object)
       (set-field-value :quatree-node object nil)
       (quadtree-insert object quadtree))))
 
