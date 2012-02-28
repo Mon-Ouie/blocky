@@ -86,8 +86,7 @@
 
 (defmacro with-world (world &rest body)
   `(let* ((*world* ,world))
-     (prog1 *world*
-       ,@body)))
+     ,@body))
 
 (define-method pause world ()
   (setf %paused t))
@@ -233,8 +232,8 @@
 	(setf (field-value :x object) x
 	      (field-value :y object) y))
       (clear-saved-location object)
-      (quadtree-insert-maybe object))))
-;      (after-place-hook object))))
+      (quadtree-insert-maybe object)
+      (after-place-hook object))))
 
 (define-method destroy-block world (object)
   (remhash (find-uuid object) %objects))
@@ -564,9 +563,11 @@ slowdown. See also quadtree.lisp")
 	  ;; detect collisions
 	  (loop for object being the hash-values in objects do
 	    (unless (eq :passive (field-value :collision-type object))
-	      (quadtree-collide object)))
-	  ;; possibly update the shell
-	  (when %system-menu-open-p
+	      (quadtree-collide object))))
+	;; now outside the quadtree,
+	;; possibly update the shell
+	(when %system-menu-open-p
+	  (with-quadtree nil
 	    (layout-shell-objects self)
 	    (update-shell-objects self)))))))
   
@@ -651,23 +652,25 @@ slowdown. See also quadtree.lisp")
   
 (define-method handle-event world (event)
   (with-world self
-    (with-quadtree %quadtree
-      (or (handle-event%super self event)
-	  (with-field-values (player quadtree focused-block selection inputs) self
-	    (let ((block
-		      (cond
-			;; we're focused. send the event there
-			(focused-block
-			 (prog1 focused-block
-			   (assert (blockyp focused-block))))
-			;; only one block selected. use that.
-			((= 1 (length selection))
-			 (first selection))
-			;; fall back to player
-			(t player))))
-	      (when block 
-		(prog1 t (handle-event block event)))))))))
-
+    (with-field-values (player quadtree focused-block selection) self
+      (or (block%handle-event self event)
+	  (let ((block
+		    (cond
+		      ;; we're focused. send the event there
+		      ((and %system-menu-open-p focused-block)
+		       (prog1 focused-block
+			 (assert (blockyp focused-block))))
+		      ;; only one block selected. use that.
+		      ((and %system-menu-open-p
+			    (= 1 (length selection))
+			    (first selection)))
+		      ;; fall back to player
+		      (t player))))
+	    (when block 
+	      (prog1 t 
+		(with-quadtree quadtree
+		  (handle-event block event)))))))))
+  
 ;;; Hit testing
 
 (define-method hit world (x y)
@@ -775,48 +778,51 @@ block found, or nil if none is found."
 		(setf click-start-block nil)))))))))
 
 (define-method handle-point-motion world (mouse-x mouse-y)
-  (with-fields (inputs hover highlight click-start drag-offset
+  (with-fields (inputs hover highlight click-start drag-offset quadtree
 		       drag-start drag) self
-    (setf hover nil)
-    (drag-maybe self mouse-x mouse-y)
-    (if drag
-	;; we're in a mouse drag.
-	(destructuring-bind (ox . oy) drag-offset
-	  (let ((target-x (- mouse-x ox))
-		(target-y (- mouse-y oy)))
-	    (let ((candidate (hit-inputs self target-x target-y)))
-	      ;; obviously we dont want to plug a block into itself.
-	      (setf hover (if (object-eq drag candidate) nil
-			      (find-uuid candidate)))
-	      ;; keep moving along with the mouse
-	      (drag drag target-x target-y))))
-	;; not dragging, just moving
-	(progn
-	  (setf highlight (find-uuid (hit-inputs self mouse-x mouse-y)))))))
-	  ;; (when (null highlight)
-	  ;;   (when %system-menu
-	  ;;     (with-world self (close-menus %system-menu))))))))
+    (with-world self
+      (with-quadtree quadtree
+	(setf hover nil)
+	(drag-maybe self mouse-x mouse-y)
+	(if drag
+	    ;; we're in a mouse drag.
+	    (destructuring-bind (ox . oy) drag-offset
+	      (let ((target-x (- mouse-x ox))
+		    (target-y (- mouse-y oy)))
+		(let ((candidate (hit-inputs self target-x target-y)))
+		  ;; obviously we dont want to plug a block into itself.
+		  (setf hover (if (object-eq drag candidate) nil
+				  (find-uuid candidate)))
+		  ;; keep moving along with the mouse
+		  (drag drag target-x target-y))))
+	    ;; not dragging, just moving
+	    (progn
+	      (setf highlight (find-uuid (hit-inputs self mouse-x mouse-y)))))))))
+    ;; (when (null highlight)
+  ;;   (when %system-menu
+  ;;     (with-world self (close-menus %system-menu))))))))
 
 (define-method press world (x y &optional button)
   (declare (ignore button))
-  (with-fields (click-start click-start-block focused-block) self
-    ;; now find what we're touching
-    (assert (or (null focused-block)
-		(blockyp focused-block)))
-    (multiple-value-bind (block object-p)
-	(hit-inputs self x y)
-      (setf %object-p object-p)
-      (if (null block)
-	  (progn
-	    (focus-on self nil)
-	    (when %system-menu-open-p
-	      (exit-system-menu self)))
-	  (progn 
-	    (setf click-start (cons x y))
-	    (setf click-start-block (find-uuid block))
-	    ;; now focus; this might cause another block to be
-	    ;; focused, as in the case of the Listener
-	    (focus-on self block))))))
+  (with-world self
+    (with-fields (click-start click-start-block focused-block) self
+      ;; now find what we're touching
+      (assert (or (null focused-block)
+		  (blockyp focused-block)))
+      (multiple-value-bind (block object-p)
+	  (hit-inputs self x y)
+	(setf %object-p object-p)
+	(if (null block)
+	    (progn
+	      (focus-on self nil)
+	      (when %system-menu-open-p
+		(exit-system-menu self)))
+	    (progn 
+	      (setf click-start (cons x y))
+	      (setf click-start-block (find-uuid block))
+	      ;; now focus; this might cause another block to be
+	      ;; focused, as in the case of the Listener
+	      (focus-on self block)))))))
 
 (define-method clear-drag-data world ()
   (setf %drag-start nil
@@ -882,18 +888,19 @@ block found, or nil if none is found."
       (invalidate-layout self))))
 
 (define-method tab world (&optional backward)
-  (with-fields (focused-block) self
-    (when focused-block
-      (assert (blockyp %focused-block))
-      (with-fields (parent) focused-block
-	(let ((index (position-within-parent focused-block)))
-	  (when (numberp index)
-	    (focus-on self
-		      (with-fields (inputs) parent
-			(nth (mod (+ index
-				     (if backward -1 1))
-				  (length inputs))
-			     inputs)))))))))
+  (with-world self
+    (with-fields (focused-block) self
+      (when focused-block
+	(assert (blockyp %focused-block))
+	(with-fields (parent) focused-block
+	  (let ((index (position-within-parent focused-block)))
+	    (when (numberp index)
+	      (focus-on self
+			(with-fields (inputs) parent
+			  (nth (mod (+ index
+				       (if backward -1 1))
+				    (length inputs))
+			       inputs))))))))))
 
 (define-method backtab world ()
   (tab self :backward))
@@ -906,8 +913,9 @@ block found, or nil if none is found."
     (setf %selection nil)))
 
 (define-method start world ()
-  (unless (emptyp self)
-    (normalize-quadtree self))
-  (start%super self))
+  (with-world self
+    (unless (emptyp self)
+      (normalize-quadtree self))
+    (start%super self)))
 
 ;;; worlds.lisp ends here

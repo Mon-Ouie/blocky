@@ -32,8 +32,7 @@ the object when the method is run.")
 
 (defmacro with-quadtree (quadtree &rest body)
   `(let* ((*quadtree* ,quadtree))
-     (prog1 *quadtree*
-       ,@body)))
+       ,@body))
 
 (defvar *quadtree-depth* 0)
 
@@ -159,11 +158,12 @@ NODE, if any."
       ;; (message "Inserting ~S ~S"
       ;; 	       (get-some-object-name object) 
       ;; 	       (object-address-string object))
-      (assert (not (find (find-object object)
-			 (quadtree-objects node)
-			 :test 'eq)))
-      (push (find-object object)
-	    (quadtree-objects node))
+      ;; (assert (not (find (find-object object)
+      ;; 			 (quadtree-objects node)
+      ;; 			 :test 'eq)))
+      (pushnew (find-object object)
+	       (quadtree-objects node)
+	       :test 'eq)
       ;; save pointer to node so we can avoid searching when it's time
       ;; to delete (i.e. move) the object later.
       (blocky:set-field-value :quadtree-node object node)
@@ -191,7 +191,7 @@ NODE, if any."
     (quadtree-insert object tree)))
 
 (defun quadtree-delete-maybe (object &optional (tree *quadtree*))
-  (when tree
+  (when (and tree (field-value :quadtree-node object))
     (quadtree-delete object tree)))
 
 (defun quadtree-map-collisions (bounding-box processor &optional (tree *quadtree*))
