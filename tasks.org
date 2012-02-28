@@ -1,24 +1,19 @@
-* TODO Working map editor
-* TODO Fix able to pull out system menus
-* TODO fix crash on deleting system menu
-* TODO create unified error handling dialog
-* TODO Also show how to make worlds programmatically
-* TODO do something about objects leaving quadtree <-- restrict them?
-* TODO Show basic workflow in a video
-* TODO Think and review ALL this todo list
-(swank:eval-in-emacs '(progn (make-frame-command) nil))
- there is swank:eval-in-emacs and slime-eval
- but you've to set slime-enable-evaluate-in-emacs to T
-* BETA RELEASE
-** Documentation
-*** TODO rewrite prototype explanation to include more clear language, relevant to games, and more 
-*** TODO import vomac example from video
-*** TODO test examples
-*** TODO import xeng remix
-*** TODO tag release
-* TODO explicit pull-up handle instead of auto-pullup
-* Creating a cool game editor with tight emacs integration
-***  and then growing it into scratch-squared!
+
+** TODO [#A] Fix collision issues
+** TODO [#A] don't change layers when dragging an object
+** TODO [#A] Show how to make worlds programmatically
+** TODO [#A] prevent objects leaving quadtree
+** TODO [#B] Working map editor
+** TODO [#B] Fix able to pull out system menus
+** TODO [#B] Show basic workflow in a video
+** TODO [#B] rewrite prototype explanation to include more clear language, relevant to games, and more 
+** TODO [#B] create unified error handling dialog
+** TODO [#B] explicit pull-up handle instead of auto-pullup
+** TODO [#C] fix crash on deleting system menu
+** TODO [#C] Think and review ALL this todo list
+
+* Creating a cool game editor/IDE with tight emacs integration, and then growing it into a standalone MIT-Scratch-squared!
+
 ** TODO review smalltalk-elements, byob for TOP LEVEL area identifications
 ** TODO define-block-macro resource
 *** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
@@ -81,6 +76,10 @@
 *** define-method warning shell
 *** redirect messages to message bar. optionally fading notifications with widgets in them** TODO [#A] Restore basic collision detection functionality
 
+
+(swank:eval-in-emacs '(progn (make-frame-command) nil))
+ there is swank:eval-in-emacs and slime-eval
+ but you've to set slime-enable-evaluate-in-emacs to T
 
 ** TODO [#A] Start unit-testing
 ** TODO [#A] DEFINE-DIALOG with method-buttons

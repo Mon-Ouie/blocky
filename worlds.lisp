@@ -609,11 +609,11 @@ slowdown. See also quadtree.lisp")
 (define-method after-deserialize world ()
   (clear-drag-data self))
 
-(defmacro with-world (world &rest body)
-  (let ((sh (gensym)))
-    `(let* ((,sh ,world)
-	    (*world* ,sh))
-       ,@body)))
+;; (defmacro with-world (world &rest body)
+;;   (let ((sh (gensym)))
+;;     `(let* ((,sh ,world)
+;; 	    (*world* ,sh))
+;;        ,@body)))
 
 (define-method layout world ()
   ;; take over the entire GL window
@@ -632,10 +632,9 @@ slowdown. See also quadtree.lisp")
     (with-fields (selection) self
       (if only
 	  (setf selection (list block))
-	  (progn 
-	    (pushnew block selection 
-		     :test 'eq :key #'find-parent)
-	    (select block))))))
+	  (pushnew block selection 
+		   :test 'eq :key #'find-parent)))))
+;	  (select block))))))
   
 (define-method select-if world (predicate)
   (with-world self
@@ -904,5 +903,8 @@ block found, or nil if none is found."
     (exit-command-line self)
     (setf %selection nil)))
 
+(define-method start world ()
+  (install-quadtree self)
+  (start%super self))
 
 ;;; worlds.lisp ends here
