@@ -1,8 +1,9 @@
 
-** TODO [#A] Fix collision issues
 ** TODO [#A] don't change layers when dragging an object
+** TODO [#A] Better explanation of blocks
 ** TODO [#A] Show how to make worlds programmatically
 ** TODO [#A] prevent objects leaving quadtree
+** TODO [#B] improve defresource and call it define-resource
 ** TODO [#B] Working map editor
 ** TODO [#B] Fix able to pull out system menus
 ** TODO [#B] Show basic workflow in a video
@@ -1088,4 +1089,13 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_OLPATH: Eliminate onionskin layer confusion/flesh out basic Projects operations dialogs
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
+   :END:
+
+** DONE [#A] Fix collision issues
+   CLOSED: [2012-02-28 Tue 13:56]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-28 Tue 13:56
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
    :END:
