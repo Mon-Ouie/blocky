@@ -36,6 +36,9 @@
   objects bounding-box level
   southwest northeast northwest southeast)
 
+(defmethod print-object ((tree blocky::quadtree) stream)
+  (format stream "#<BLX QUADTREE @ ~S" (quadtree-level tree)))
+
 (defun leafp (node)
   ;; testing any quadrant will suffice
   (null (quadtree-southwest node)))
@@ -215,7 +218,8 @@ NODE, if any."
 		   (list set)
 		   (hash-table (loop for object being the hash-keys in set collect object)))))
     (dolist (object objects)
-      (set-field-value :quadtree-node object nil)
+      (message "Filling ~S into quadtree" object)
+      (set-field-value :quatree-node object nil)
       (quadtree-insert quadtree object))))
 
 (defun quadtree-show (tree &optional object)

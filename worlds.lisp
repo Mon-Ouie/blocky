@@ -84,6 +84,12 @@
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
+(defmacro with-world (world &rest body)
+  `(let* ((*world* ,world)
+	  (*quadtree* (field-value :quadtree *world*)))
+     (prog1 *world*
+       ,@body)))
+
 (define-method pause world ()
   (setf %paused t))
 
@@ -218,7 +224,7 @@
 
 (define-method add-object world (object &optional x y append)
   (with-fields (quadtree) self
-    (let ((*quadtree* quadtree))
+    (with-world self
       (assert (not (contains-object self object)))
       (setf (gethash (find-uuid object)
 		     %objects)
@@ -283,20 +289,21 @@ the edge of the universe piling up into the top quadrant and causing
 slowdown. See also quadtree.lisp")
 
 (define-method install-quadtree world ()
-  (unless (emptyp self)
-    ;; make a box with a one-percent margin on all sides.
-    ;; this margin helps edge objects not pile up in quadrants
-    (let ((box (multiple-value-list
-		(scale-bounding-box 
-		 (multiple-value-list (bounding-box self))
-		 *world-bounding-box-scale*))))
-      (destructuring-bind (top left right bottom) box
-	(with-fields (quadtree) self
-	  (setf quadtree (build-quadtree 
-			  box 
-			  (or %quadtree-depth 
-			      *default-quadtree-depth*)))
-	  (quadtree-fill quadtree (get-objects self)))))))
+  ;; make a box with a one-percent margin on all sides.
+  ;; this margin helps edge objects not pile up in quadrants
+  (let ((box (multiple-value-list
+	      (scale-bounding-box 
+	       (multiple-value-list (bounding-box self))
+	       *world-bounding-box-scale*))))
+    (with-fields (quadtree) self
+      (setf quadtree (build-quadtree 
+		      box 
+		      (or %quadtree-depth 
+			  *default-quadtree-depth*)))
+      (assert quadtree)
+      (let ((objects (get-objects self)))
+	(when objects
+	  (quadtree-fill quadtree objects))))))
 
 (define-method resize world (new-height new-width)
   (assert (and (plusp new-height)
@@ -325,11 +332,6 @@ slowdown. See also quadtree.lisp")
 ;; Algebraic operations on worlds and their contents
 
 (defvar *world-prototype* "BLOCKY:WORLD")
-
-(defmacro with-world (world &rest body)
-  `(let ((*world* ,world))
-     (prog1 *world*
-       ,@body)))
 
 (defmacro with-world-prototype (world &rest body)
   `(let ((*world-prototype* (find-super ,world)))
@@ -542,34 +544,32 @@ slowdown. See also quadtree.lisp")
   
 ;;; Simulation update
 
-(define-method update world (&optional no-collisions)
+(define-method update world ()
   (with-field-values (objects player) self
-    (with-world self
-      ;; build quadtree if needed
-      (when (null %quadtree)
-	(install-quadtree self))
-      (let ((*quadtree* %quadtree))
+    ;; build quadtree if needed
+    (when (null %quadtree)
+      (install-quadtree self))
+    (unless %paused
+      (assert (zerop *quadtree-depth*))
+      (with-world self
 	(layout self)
-	(unless %paused
-	  (assert (zerop *quadtree-depth*))
-	  ;; possibly run the objects
-	  (loop for object being the hash-values in %objects do
-	    (update object)
-	    (run-tasks object))
-	  ;; update window movement
-	  (when player 
-	    (glide-follow self player)
-	    (update-window-glide self))
-	  ;; detect collisions
-	  (unless no-collisions
-	    (loop for object being the hash-values in objects do
-	      (unless (eq :passive (field-value :collision-type object))
-		(quadtree-collide *quadtree* object)))))
+	;; possibly run the objects
+	(loop for object being the hash-values in %objects do
+	  (update object)
+	  (run-tasks object))
+	;; update window movement
+	(when player 
+	  (glide-follow self player)
+	  (update-window-glide self))
+	;; detect collisions
+	(loop for object being the hash-values in objects do
+	  (unless (eq :passive (field-value :collision-type object))
+	    (quadtree-collide %quadtree object)))
 	;; possibly update the shell
 	(when %system-menu-open-p
 	  (layout-shell-objects self)
 	  (update-shell-objects self))))))
-
+  
 ;;; A trash can for user-destroyed objects
 
 (defvar *trash* nil)
@@ -903,8 +903,8 @@ block found, or nil if none is found."
     (exit-command-line self)
     (setf %selection nil)))
 
-(define-method start world ()
-  (install-quadtree self)
-  (start%super self))
+;; (define-method start world ()
+;;   (install-quadtree self)
+;;   (start%super self))
 
 ;;; worlds.lisp ends here
