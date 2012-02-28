@@ -228,13 +228,6 @@ BLOCKY may override the current block set at any time for system menus
 and the like."
   (setf *blocks* blocks))
 
-(defun start (block)
-  (unless (find block *blocks* :test 'eq :key #'find-object)
-    (setf *blocks* (adjoin block *blocks*))))
-
-(defun stop (block)
-  (setf *blocks* (delete block *blocks* :test #'eq :key #'find-object)))
-
 ;;; "Classic" key repeat
 
 (defun enable-key-repeat (delay interval)

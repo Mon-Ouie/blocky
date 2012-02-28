@@ -117,6 +117,18 @@ either a symbol naming the field, or a list of the form (SYMBOL
   "List of keywords used to group blocks into different functionality
 areas.")
 
+;;; Adding blocks to the simulation
+
+(define-method start block ()
+  "Add this block to the simulation so that it receives update events."
+  (unless (find self *blocks* :test 'eq :key #'find-object)
+    (setf *blocks* (adjoin self *blocks*))))
+
+(define-method stop block ()
+  "Remove this block from the simulation so that stops getting update
+events."
+  (setf *blocks* (delete self *blocks* :test #'eq :key #'find-object)))
+
 ;;; Defining composite blocks more simply
 
 ;(declaim (inline input-block))

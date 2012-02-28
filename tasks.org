@@ -1,3 +1,10 @@
+* TODO Working map editor
+* TODO Fix able to pull out system menus
+* TODO fix crash on deleting system menu
+* TODO create unified error handling dialog
+* TODO Also show how to make worlds programmatically
+* TODO do something about objects leaving quadtree <-- restrict them?
+* TODO Show basic workflow in a video
 * TODO Think and review ALL this todo list
 (swank:eval-in-emacs '(progn (make-frame-command) nil))
  there is swank:eval-in-emacs and slime-eval

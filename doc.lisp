@@ -109,7 +109,7 @@
 		(format stream "~A" documentation)
 		(fresh-line stream)
 		(when initform 
-		  (heading 4 "Initialization form" stream)
+		  (heading 4 "Initial value" stream)
 		  (format stream "~S" initform))))))
 	(fresh-line stream)
 	;; methods

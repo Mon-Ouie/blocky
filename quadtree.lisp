@@ -24,6 +24,10 @@
 
 (defvar *quadtree* nil)
 
+(defun quadtree ()
+  (when *world*
+    (field-value :quadtree *world*)))
+
 (defvar *quadtree-depth* 0)
 
 (defparameter *default-quadtree-depth* 9) 
