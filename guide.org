@@ -120,6 +120,9 @@ links:
    people to expand and remix.
 
 * An overview of the blocks model 
+
+/Note: You can skip this section if you don't need to learn about the GUI
+features of Blocky just yet./
  
 Blocks are the visual programming elements that programs in the Blocky 
 language are built up from. The prototypal block defined in 

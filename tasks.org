@@ -1,64 +1,123 @@
-
-** TODO [#A] prevent objects leaving quadtree
-** TODO [#A] improve defresource and call it define-resource
-** TODO [#A] Working map editor
-** TODO [#A] Show basic workflow in a video
-** TODO [#B] lispdoc mode support 
-** TODO [#B] Better explanation of blocks
-** TODO [#B] Show how to make worlds programmatically
-** TODO [#B] don't change layers when dragging an object
-** TODO [#B] Fix able to pull out system menus
-** TODO [#B] rewrite prototype explanation to include more clear language, relevant to games, and more 
-** TODO [#B] create unified error handling dialog
-** TODO [#B] explicit pull-up handle instead of auto-pullup
-** TODO [#C] fix crash on deleting system menu
-** TODO [#C] Think and review ALL this todo list
-
 * Creating a cool game editor/IDE with tight emacs integration, and then growing it into a standalone MIT-Scratch-squared!
 
-** TODO review smalltalk-elements, byob for TOP LEVEL area identifications
-** TODO define-block-macro resource
-*** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
-** TODO flesh out basic Projects operations dialogs
-*** TODO test save project dialog
-*** TODO test load project dialog
+** TODO [#A] review smalltalk-elements
+** TODO [#A] review byob
+** TODO [#A] improve defresource and call it define-resource
+** TODO [#A] Working map editor
+** TODO [#A] resource-defining block-ui
+**** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
+** TODO [#A] flesh out basic Projects operations dialogs
+**** TODO test save project dialog
+**** TODO test load project dialog
 **** TODO accept pathnames so that you can run a blocky module no matter what the dir name is
-*** TODO recent projects persistent variable
-** TODO Pretty sexy black rounded corner notifications
-*** TODO notifications and a "notify" function 
-*** TODO smile/frown emoticon status
-*** TODO simple ok notification box
-*** TODO generic question dialog box shortcut function
-** TODO buttons for toggle pin,freeze
-** TODO [#C] use swank:eval-in-emacs
- via SLIME, to issue a command back to emacs to go to
- a particular buffer location and/or raise the emacs window? 
+**** TODO recent projects persistent variable
 ** TODO [#A] Ability to scroll the world with the mouse wheel
 ** TODO [#A] selecting single world object
 ** TODO [#A] selecting multiple objects
-** TODO [#B] the clipboard is a world, paste/duplicate
-** TODO [#B] hotkey for moving objects down into world
-** TODO [#A] right click on world objects to bring them back into top layer
+** TODO [#A] the clipboard is a world, paste/duplicate
 ** TODO [#A] hotkey for moving objects up from world
-** TODO [#B] visually indicate button blink
-** TODO [#B] better hlist packing
+** TODO [#A] right click on world objects to bring them back into top layer
 ** TODO [#A] complete credits file and ensure all docs/license copies in place.
-** TODO [#B] fix being able to pull out menu components
-** TODO [#B] copyright notice 
-** TODO [#B] Fancy credits 
-** TODO [#B] basic help
-** TODO [#B] sys menu should remember relative screen loc
-** TODO [#C] load all 00- blx files in alphanumeric order
 ** TODO [#A] fix project dir naming issues. allow opening any .iof including index.iof 
 ** TODO [#A] Implement basic blocks library (see list below)
 ** TODO [#A] define-block PALETTE so that there's a place to pull useful objects from 
-** TODO [#B] use clos-style 'foo symbols for prototype names, change NEW from macro to function
+** TODO [#A] System Browser in the menu, for choosing what to define methods on (or blocks from)
+** TODO [#A] Improve error handling in shell
+**** isolate/trap all block errors and display them grayed out with an inspectable error
+**** define-method error shell
+**** better error handling for menu methods
+**** define-method warning shell
+**** redirect messages to message bar. optionally fading notifications with widgets in them** TODO [#A] Restore basic collision detection functionality
+** TODO [#A] duplicate halo handle
+** TODO [#A] PRINTer blocks
+** TODO [#A] Universal access
+****  How to handle Translations? keywords in most languages are in English even if comments/variable names are French or Japanese or whatever)
+***** cl-gettext
+****  Visual theme-ability for the color-blind and visually-impaired users (larger font, higher contrast etc)
+****  Braille keyboard and speech synthesis integration for blind users
+** TODO [#B] Adapt line-of-sight code to new collision system
+** TODO [#B] Adapt pathfinding code to new collision system
+** TODO [#B] prevent objects leaving quadtree
+** TODO [#B] Show basic workflow in a video
+** TODO [#B] lispdoc mode support 
+** TODO [#B] Show how to make worlds programmatically
+** TODO [#B] Fix able to pull out system menus
+** TODO [#B] create unified error handling dialog
+** TODO [#B] explicit pull-up handle instead of auto-pullup
+** TODO [#B] Pretty sexy black rounded corner notifications
+**** TODO notifications and a "notify" function 
+**** TODO smile/frown emoticon status
+**** TODO simple ok notification box
+**** TODO generic question dialog box shortcut function
+** TODO [#B] buttons for toggle pin,freeze
+** TODO [#B] hotkey for moving objects down into world
+** TODO [#B] visually indicate button blink
+** TODO [#B] better hlist packing
+** TODO [#B] fix being able to pull out menu components
+** TODO [#B] basic help
+** [#B] STANDARD BLOCKS LIBRARY
+*** move
+*** move to 
+*** move onto 
+*** [#C] glide 
+*** change <var> <amount>
+*** set <var> <value>
+*** get <var>
+*** my <var>
+*** turn left
+*** turn right
+*** point at
+*** say
+*** think <text> <time>
+*** display <image>
+*** blend
+*** opacity
+*** show
+*** hide
+*** move to front
+*** play sound
+*** play music
+*** stop sound
+*** [#C] play note/drum/tempo etc
+*** [#B] defblock event, the script tests events on them
+**** on play
+**** on click
+**** on event
+*** wait
+*** loop
+*** dotimes
+*** dolist
+*** send (to some other object explicitly)
+*** method
+*** while
+*** if
+**** display true and false
+**** use question marks and occasional symbols
+*** when 
+*** [#C] wait until <condition>
+*** stop script
+*** stop all
+*** touching
+*** ask <question>
+*** mouse y
+*** mouse x
+*** mouse down <number>
+*** key down <key>
+*** distance to
+*** common mathematical operations/relations
+*** common logical connectives
+*** concatenate <strings>
+*** [#C] loudness, loud, sensor value
+*** random <min> <max>
+*** list ops: length, append, add, delete, insert
+*** contains
+*** [#B] defblock with (introduce local vars) 
+*** [#B] defblock defresource (a stand-in reference to a resource)
+*** defblock let (with drag-off variable refs)
+*** TODO Win32 build tips
+** TODO [#B] sys menu should remember relative screen loc
 ** TODO [#B] fix being able to pull out pinned items
 ** TODO [#B] F1-F10 select desktop screens, i.e. a flipper with configurability
-** TODO [#B] merge windows.lisp
-** DONE [#B] Fix null history crash on uparrow
-   CLOSED: [2012-02-24 Fri 02:21]
-** TODO [#B] System Browser in the menu, for choosing what to define methods on (or blocks from)
 ** TODO [#B] UUID filenames for worlds?
 ** TODO [#B] rectangle select for bounding box cut paste
 ** TODO [#B] bounding-box args can go into a function such as create-brick or select-region
@@ -66,63 +125,51 @@
 ** TODO [#B] send message to all blocks in selection
 ** TODO [#B] value printer block, evaluates its argument and prints the value
 ** TODO [#B] shortcut macros for defresource foo foo.png auto-typed
-** TODO [#C] editor with split screen view and tools mentality (like old/forms.lisp)
-** TODO [#C] Language tutorial project
-** TODO [#C] Basic context-sensitive help
-** TODO [#C] defblock selection 
-
-** TODO [#B] Improve error handling in shell
-*** isolate/trap all block errors and display them grayed out with an inspectable error
-*** define-method error shell
-*** better error handling for menu methods
-*** define-method warning shell
-*** redirect messages to message bar. optionally fading notifications with widgets in them** TODO [#A] Restore basic collision detection functionality
-
-
-(swank:eval-in-emacs '(progn (make-frame-command) nil))
- there is swank:eval-in-emacs and slime-eval
- but you've to set slime-enable-evaluate-in-emacs to T
-
-** TODO [#A] Start unit-testing
-** TODO [#A] DEFINE-DIALOG with method-buttons
-*** VAR entry
-*** project settings dialog for configuring vars like *screen-width* and *resizable* etc
-*** Dialogs for all basic project save/load stuff
-*** "quit without saving?" dialog
-*** "empty trash before save?" dialog
-** TODO [#A] Fix as much of the buglist as possible
-** TODO [#B] Undo framework: https://github.com/smithzvk/modf
-** TODO [#B] Audio test widget ("left, right")
-** TODO [#B] duplicate halo handle
-** TODO [#B] PRINTer blocks
-** TODO [#B] Plus-button decorator for lists to add objects (fields, methods, etc)
-** TODO [#B] Read me first: F1, then click on any object for help
+** TODO [#B] Start unit-testing
+** TODO [#B] DEFINE-DIALOG with method-buttons
+*** TODO [#C] VAR entry
+*** TODO [#C] project settings dialog for configuring vars like *screen-width* and *resizable* etc
+*** TODO [#C] Dialogs for all basic project save/load stuff
+*** TODO [#C] "quit without saving?" dialog
+*** TODO [#C] "empty trash before save?" dialog
 ** TODO [#B] visually indicate clicked send blocks
-** TODO [#B] animate text box cursor and highlight current line / or show textbox border
-** TODO [#B] general purpose resizer/scroller decorator thinger
-** TODO [#B] Allow user to move entries easier via yellow triangle tab
 ** desktop wall morphic http://www.cs.ucsb.edu/~urs/oocsb/self/release/Self-4.0/Tutorial/Morphic/Morphic/Kansas.html
 ** COOL FEATURE: gnome-do/anything.el style search/operate, for quick access to everything
 ** TODO [#B] file selector dialog (only choosing from project dir at first)
 ** TODO [#B] pin toggle button
-
 ** TODO [#B] explicit "save" and "compile" buttons 
-** TODO [#B] joystick menu to find connected devices x3
-** TODO [#B] standardize on "ABXY" for the face buttons, LB RB LT RT for the shoulder buttons
-** TODO [#B] popup tape-flag/balloons to show you where you are, like hints about M-x window
-** TODO [#B] Universal access
-***  How to handle Translations? keywords in most languages are in English even if comments/variable names are French or Japanese or whatever)
-**** cl-gettext
-***  Visual theme-ability for the color-blind and visually-impaired users (larger font, higher contrast etc)
-***  Braille keyboard and speech synthesis integration for blind users
 ** TODO [#B] Bring back old/forms.lisp spreadsheet
 ***  compilation options
 ** TODO [#B] allow any font size to be requested
-** TODO [#B] list-scroll-decorator
-** TODO [#B] reasonable emacs configuration for ioforms dev (imenu etc)
-** TODO [#B] send unfocused input to terminal? 
-** TODO [#B] button to add arguments to + etc (just drop onto block list)
-** TODO [#C] GLSL https://github.com/jtza8/interact/blob/master/src/filter.lisp http://www.swiftless.com/glsltuts.html
+** TODO [#B] GLSL https://github.com/jtza8/interact/blob/master/src/filter.lisp http://www.swiftless.com/glsltuts.html
+** TODO [#C] Better explanation of blocks
+** TODO [#C] don't change layers when dragging an object
+** TODO [#C] rewrite prototype explanation to include more clear language, relevant to games, and more 
+** TODO [#C] fix crash on deleting system menu
+** TODO [#C] Think and review ALL this todo list
+** TODO [#C] use swank:eval-in-emacs
+ via SLIME, to issue a command back to emacs to go to
+ a particular buffer location and/or raise the emacs window? 
+** TODO [#C] copyright notice 
+** TODO [#C] Fancy credits 
+** TODO [#C] load all 00- blx files in alphanumeric order
+** TODO [#C] editor with split screen view and tools mentality (like old/forms.lisp)
+** TODO [#C] Language tutorial project
+** TODO [#C] Basic context-sensitive help
+** TODO [#C] defblock selection 
+** TODO [#C] Undo framework: https://github.com/smithzvk/modf
+** TODO [#C] Audio test widget ("left, right")
+** TODO [#C] Plus-button decorator for lists to add objects (fields, methods, etc)
+** TODO [#C] Read me first: F1, then click on any object for help
+** TODO [#C] animate text box cursor and highlight current line / or show textbox border
+** TODO [#C] general purpose resizer/scroller decorator thinger
+** TODO [#C] Allow user to move entries easier via yellow triangle tab
+** TODO [#C] joystick menu to find connected devices x3
+** TODO [#C] popup tape-flag/balloons to show you where you are, like hints about M-x window
+** TODO [#C] list-scroll-decorator
+** TODO [#C] reasonable emacs configuration for ioforms dev (imenu etc)
+** TODO [#C] send unfocused input to terminal? 
+** TODO [#C] button to add arguments to + etc (just drop onto block list)
 ** TODO [#C] Show lisp implementation name etc
 ** TODO [#C] explanatory tooltips
 ** TODO [#C] collapse halo handle
@@ -146,23 +193,39 @@
 ** TODO [#C] defface with bold, italic, etc
 ** TODO [#C] Change submenu ellipsis to a nice triangle
 ** TODO [#C] universal (row,column) ref interface for buffers/blocks
-*** TODO basic buffer is a free-roaming space a la squeak
-*** TODO generic proportional and table layouts  
-*** TODO world implements buffer interface its own way, with grid
-*** TODO generic buffer similarly 
-*** TODO general widget embed layout thing. =formatter= --> but instead of rich text, it's all widgets (textboxes + img)
+**** TODO basic buffer is a free-roaming space a la squeak
+**** TODO generic proportional and table layouts  
+**** TODO world implements buffer interface its own way, with grid
+**** TODO generic buffer similarly 
+**** TODO general widget embed layout thing. =formatter= --> but instead of rich text, it's all widgets (textboxes + img)
 ** TODO [#C] duplicate objects / selection 
 ** TODO [#C] use turtle to program polygon vertices and stuff, like in fluxus
+
+oh, and on windows at least, you'll need to call %gl:reset-gl-pointers
+after you set that, when starting the new image you've built if you
+want it to work on windows, you'll need to set
+%gl::*gl-get-proc-address* I think sdl has a get-proc-address, or you
+can bind to the windows one yourself I use #'glfw:get-proc-address , I
+add "." and "%CD%" to cffi's foreign directory search list...
+(04:20:28 AM) : and just dump them in the folder with the image :)
+(04:20:40 AM) : and change the OS working directory, too
 ** TODO [#C] general svg image support
 
+
+** TODO [#C] ALPHA issues for PNG images
+<|3b|> you want 'save color values from transparent pixels', and need to make
+       sure the pixels are white with 0 alpha
+<|3b|> also, looks like you weren't passing blend to draw-circle from
+       draw-solid-circle, not that it matters here  [23:46]
+** TODO [#C] automatically generate blocky friend faces with given body/face shapes
+** TODO [#C] pretty rubberband movement
 
 * API Beta checklist 
 
 * TODO Story ideas for Sanctuary
 *** TODO weaving of spell tapestries relies on the secrets of the weaving guild, who thereby control all magic and society
 *** TODO threat of machines that can weave... punched cards, information age 
-** TODO [#B] Adapt line-of-sight code to new collision system
-** TODO [#B] Adapt pathfinding code to new collision system
+
 ** TODO [#B] Fix shell not responding to window resize properly
 ** TODO [#B] Finish MicroXONG
 *** TODO add documentation in game source
@@ -170,9 +233,8 @@
 *** TODO finish level generation scheme
 *** TODO replace glass sound with something better
 *** TODO get line-of-sight working again
-** TODO [#B] add more docstrings for worlds.lisp
-** TODO [#B] Release one or two game skeletons in addition to microxong 
-** TODO [#C] Fix key release handling
+** TODO [#A] Fix key release handling
+
 ** TODO [#C] later-when checks a condition (whether some other method returns non-nil) (also later-until)
 ** TODO [#C] "later" macros should evaluate the timer forms
 
@@ -215,83 +277,6 @@
 ** TODO [#C] Fix Control-E etc not working in textbox
 ** TODO [#C] Fix not traversing line break with C-f and C-b
 ** TODO [#C] Fix example numbering
-
-* STANDARD BLOCKS LIBRARY
-** move
-** move to 
-** move onto 
-** [#C] glide 
-** change <var> <amount>
-** set <var> <value>
-** get <var>
-** my <var>
-** turn left
-** turn right
-** point at
-** say
-** think <text> <time>
-** display <image>
-** blend
-** opacity
-** show
-** hide
-** move to front
-** play sound
-** play music
-** stop sound
-** [#C] play note/drum/tempo etc
-** [#B] defblock event, the script tests events on them
-*** on play
-*** on click
-*** on event
-** wait
-** loop
-** dotimes
-** dolist
-** send (to some other object explicitly)
-** method
-** while
-** if
-*** display true and false
-*** use question marks and occasional symbols
-** when 
-** [#C] wait until <condition>
-** stop script
-** stop all
-** touching
-** ask <question>
-** mouse y
-** mouse x
-** mouse down <number>
-** key down <key>
-** distance to
-** common mathematical operations/relations
-** common logical connectives
-** concatenate <strings>
-** [#C] loudness, loud, sensor value
-** random <min> <max>
-** list ops: length, append, add, delete, insert
-** contains
-** [#B] defblock with (introduce local vars) 
-** [#B] defblock defresource (a stand-in reference to a resource)
-** defblock let (with drag-off variable refs)
-** TODO Win32 build tips
-
-oh, and on windows at least, you'll need to call %gl:reset-gl-pointers
-after you set that, when starting the new image you've built if you
-want it to work on windows, you'll need to set
-%gl::*gl-get-proc-address* I think sdl has a get-proc-address, or you
-can bind to the windows one yourself I use #'glfw:get-proc-address , I
-add "." and "%CD%" to cffi's foreign directory search list...
-(04:20:28 AM) : and just dump them in the folder with the image :)
-(04:20:40 AM) : and change the OS working directory, too
-** TODO [#C] ALPHA issues for PNG images
-<|3b|> you want 'save color values from transparent pixels', and need to make
-       sure the pixels are white with 0 alpha
-<|3b|> also, looks like you weren't passing blend to draw-circle from
-       draw-solid-circle, not that it matters here  [23:46]
-** TODO [#C] automatically generate blocky friend faces with given body/face shapes
-** TODO [#C] pretty rubberband movement
 
 * OLDER NOTES
 
@@ -453,6 +438,11 @@ But the graph doesn't yet actually work, so we must continue.
 ** TODO Re-examine "invader tactics" source and see what blocks are required to reimplement it
 ** TODO re-release "Invader"!
 
+
+
+(swank:eval-in-emacs '(progn (make-frame-command) nil))
+ there is swank:eval-in-emacs and slime-eval
+ but you've to set slime-enable-evaluate-in-emacs to T
 
 
 ** TODO [#C] GAME IDEA: nested puzzle blox? got to drag your guy through various boxes of different sizes and shapes
@@ -1099,4 +1089,41 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: DONE
+   :END:
+
+** TODO [#B] use clos-style 'foo symbols for prototype names, change NEW from macro to function
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-28 Tue 23:50
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Creating a cool game editor/IDE with tight emacs integration, and then growing it into a standalone MIT-Scratch-squared!
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** DONE [#B] Fix null history crash on uparrow
+   CLOSED: [2012-02-24 Fri 02:21]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-28 Tue 23:50
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Creating a cool game editor/IDE with tight emacs integration, and then growing it into a standalone MIT-Scratch-squared!
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END:
+
+** TODO [#B] merge windows.lisp
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-28 Tue 23:50
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Creating a cool game editor/IDE with tight emacs integration, and then growing it into a standalone MIT-Scratch-squared!
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO [#B] standardize on "ABXY" for the face buttons, LB RB LT RT for the shoulder buttons
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-02-28 Tue 23:57
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Creating a cool game editor/IDE with tight emacs integration, and then growing it into a standalone MIT-Scratch-squared!
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
    :END:

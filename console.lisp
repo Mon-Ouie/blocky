@@ -41,11 +41,6 @@
 
 (defvar *gl-window-open-p* nil)
 
-(defvar *edit* nil "This is set to non-nil when the editor is being used.")
-
-(defun initialize-buffers ()
-  (setf *buffers* (make-hash-table :test 'equal)))
-
 (defvar *pending-autoload-resources* '())
 
 (defun random-choose (set)
