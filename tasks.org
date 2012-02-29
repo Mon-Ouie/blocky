@@ -1,12 +1,13 @@
 
-** TODO [#A] don't change layers when dragging an object
-** TODO [#A] Better explanation of blocks
-** TODO [#A] Show how to make worlds programmatically
 ** TODO [#A] prevent objects leaving quadtree
-** TODO [#B] improve defresource and call it define-resource
-** TODO [#B] Working map editor
+** TODO [#A] improve defresource and call it define-resource
+** TODO [#A] Working map editor
+** TODO [#A] Show basic workflow in a video
+** TODO [#B] lispdoc mode support 
+** TODO [#B] Better explanation of blocks
+** TODO [#B] Show how to make worlds programmatically
+** TODO [#B] don't change layers when dragging an object
 ** TODO [#B] Fix able to pull out system menus
-** TODO [#B] Show basic workflow in a video
 ** TODO [#B] rewrite prototype explanation to include more clear language, relevant to games, and more 
 ** TODO [#B] create unified error handling dialog
 ** TODO [#B] explicit pull-up handle instead of auto-pullup
