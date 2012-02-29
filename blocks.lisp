@@ -125,7 +125,7 @@ areas.")
     (setf *blocks* (adjoin self *blocks*))))
 
 (define-method stop block ()
-  "Remove this block from the simulation so that stops getting update
+  "Remove this block from the simulation so that it stops  getting update
 events."
   (setf *blocks* (delete self *blocks* :test #'eq :key #'find-object)))
 
