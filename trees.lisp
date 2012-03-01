@@ -294,7 +294,7 @@
 			 :prototype (find-super-prototype-name %target)
 			 :method %method
 			 :target %target
-			 :label (pretty-symbol-string %method))))
+			 :label (pretty-string %method))))
 	  (prog1 send 
 	    (with-fields (x y) send
 	      (setf x %x y %y))))

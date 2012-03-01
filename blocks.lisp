@@ -1042,7 +1042,7 @@ you want to align a group of text items across layouts.")
     :comment "gray88"
     :looks "medium orchid"
     :socket "gray80"
-    :data "gray80"
+    :data "gray60"
     :structure "gray60"
     :sound "plum"
     :message "sienna2"
@@ -1057,7 +1057,7 @@ you want to align a group of text items across layouts.")
     :system "black"
     :event "gray70"
     :socket "gray90"
-    :data "gray55"
+    :data "gray45"
     :menu "gray15"
     :terminal "gray21"
     :button "DarkOrange"
@@ -1934,7 +1934,7 @@ inputs are evaluated."
 	(incf height (field-value :height element))
 	(incf y0 (field-value :height element))
 	(setf width (max width (field-value :width element))))
-      (incf height (dash 1))
+;      (incf height (dash 1))
       (incf width (dash 3))))))
 
 (define-method layout-horizontally list ()

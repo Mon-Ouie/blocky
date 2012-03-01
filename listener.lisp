@@ -354,7 +354,7 @@
 (define-prototype entry (:super "BLOCKY:PROMPT")
   (category :initform :data)
   (read-only :initform nil)
-  (pinned :initform t)
+  (pinned :initform nil)
   (minimum-width :initform 18)
   (text-color :initform *default-entry-text-color*)
   (label-color :initform *default-entry-label-color*)
@@ -516,73 +516,6 @@
 (define-method set-value string (value)
   (when (stringp value)
     (setf %value value)))
-
-;;; Block socket
-
-(defentry socket 
-  blocky:object-p 
-  (null-block)
-  (category :initform :socket))
-
-(define-method initialize socket 
-    (&key label (value (new 'empty-socket)))
-  (verify value)
-  (setf %label label)
-  (setf %inputs (list value))
-  (pin self)
-  (update-parent-links self))
-
-(define-method accept socket (thing)
-  (verify thing)
-  (setf %inputs (list thing))
-  (update-parent-links self))
-
-(define-method evaluate socket ()
-  (when (first %inputs)
-    (evaluate (first %inputs))))
-
-(define-method recompile socket ()
-  (when (first %inputs)
-    (recompile (first %inputs))))
-
-(define-method draw-focus socket ())
-
-(define-method handle-event socket (event)
-  (declare (ignore event))
-  nil)
-
-(define-method get-value socket ()
-  (evaluate self))
-
-(define-method set-value socket (value)
-  (declare (ignore value)))
-
-(define-method hit socket (x y)
-  (block%hit self x y))
-
-(define-method lose-focus socket ())
-(define-method enter socket ())
-
-(define-method draw-label socket ()
-  (when (stringp %label)
-    (draw-label-string self %label
-		       (find-color (or %parent self) :foreground))))
-
-(define-method layout socket ()
-  (block%layout self))
-
-(define-method draw socket (&optional no-label)
-  (with-fields (x y options inputs width height) self
-    ;; draw the label string 
-    (unless no-label 
-      (draw-label self))
-    ;; draw block
-    (let ((block (first inputs)))
-      (when block 
-	(draw block)))))
-
-(define-method label-width socket () 
-  (block%label-width self))
 
 ;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
 

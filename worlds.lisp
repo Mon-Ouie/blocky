@@ -381,7 +381,7 @@ slowdown. See also quadtree.lisp")
       (with-fields (x y width height) object
 	(move-to object (* x sx) (* y (or sy sx)))
 	(resize object (* width sx) (* height (or sy sx))))))
-  (shrink-wrap self))
+  (normalize-quadtree self))
 
 (define-method destroy-region world (bounding-box))
 
@@ -434,14 +434,14 @@ slowdown. See also quadtree.lisp")
       (with-fields (x y) object
 	(move-to object (- x) y))))
   ;; get rid of negative coordinates
-  (shrink-wrap self))
+  (normalize-quadtree self))
 
 (define-method flip-vertically world ()
   (let ((objects (get-objects self)))
     (dolist (object objects)
       (with-fields (x y) object
 	(move-to object x (- y)))))
-  (shrink-wrap self))
+  (normalize-quadtree self))
 
 (define-method mirror-horizontally world ()
   (stack-horizontally 

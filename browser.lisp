@@ -189,7 +189,7 @@
 
 (define-block headline title)
 
-(defparameter *logo-height* 22)
+(defparameter *logo-height* 18)
 
 (defparameter *blocky-title-string* "Blocky 0.92a")
 

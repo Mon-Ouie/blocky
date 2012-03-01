@@ -169,6 +169,9 @@
     (set-buffer %%output
 		(split-string-on-lines string))))
 
+(define-method accept printer (thing))
+(define-method draw-hover printer () nil)
+
 ;;; Generic message block
 
 (define-block-macro message 
