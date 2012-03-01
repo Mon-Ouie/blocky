@@ -1,4 +1,4 @@
-;;; syntax.lisp --- visual syntax
+;;; syntax.lisp --- visual lisp macros for a blocky-in-blocky funfest
 
 ;; Copyright (C) 2011  David O'Toole
 
