@@ -2308,20 +2308,17 @@ of the music."
   (with-session
     (load-project-image project)
     (when (null *blocks*)
-      (new 'system)
       (start (new 'world)))
     (start-session)))
 
 (defun blocky ()
   (with-session
-      (new 'system)
     (start (new 'world))
     (start-session)))
 
 ;; (defun create (project)
 ;;   (with-session
 ;;     (assert (stringp project))
-;;     (new 'system)
 ;;     (create-project project)
 ;;     (load-project-image project)
 ;;     (start (new 'world))

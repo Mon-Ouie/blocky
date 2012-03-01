@@ -31,7 +31,7 @@
     :bang (0 1)
     :top-left-triangle (0 0)
     :menu (1/4 0)
-    :collapse (0 2/4)
+;    :collapse (0 2/4)
 ;    :move (1 2/4)
     :drop (1 0)
     :resize (1 1)
@@ -138,7 +138,7 @@
 ;;; The halo itself
 
 (defparameter *halo-handles* 
-  '(:evaluate :open-menu :drop :resize :program :destroy :collapse))
+  '(:evaluate :open-menu :drop :resize :program :destroy))
 
 (define-block halo target)
 

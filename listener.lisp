@@ -467,7 +467,7 @@
   (when (hit%super self x y)
     ;; always allow clicking data area
     (if (< x (+ %x (label-width self)))
-	(prog1 %parent (assert %parent))
+	%parent
 	self)))
 
 (define-method type-check entry (datum)

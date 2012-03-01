@@ -20,11 +20,6 @@
 
 (in-package :blocky)
 
-;; This file implements a visual layer on top of prototypes.lisp, so
-;; that OOP can occur visually. Understanding the terms used in
-;; prototypes.lisp will help in reading the present file.
-
-
 ;;; Send the messages in a list to the referent of the first element
 
 ;; (define-block-macro prog0 

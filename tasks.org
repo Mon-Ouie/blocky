@@ -4,12 +4,14 @@
 ** TODO new block macro with: 
 *** TODO allow inline editing of message name (via better context popups)
 **** TODO togglable-readonly prompt for message name
-*** TODO toggle with black ephemeral right-click context menu
+**** TODO toggle with right-click?
+*** TODO blank block
 *** TODO dynamic arguments gui by replacing message block
 *** TODO left-squarey-socket messages (with implicit self?)
 *** TODO "message" becomes simply a way of building a simple (or complex) argument GUI, not a scratch-style block
 ** TODO Lisp literals
 ** TODO local variable palettes
+** TODO [#C] generic lock/unlock halo?
 * TODO choose simple syntax for wiki page name scoping which allows default to project package
 *** TODO "name" without any colon, is a project-specific page
 *** TODO with any colons, it's special and refers to something 

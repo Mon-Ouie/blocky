@@ -27,6 +27,18 @@
 
 (in-package :blocky)
 
+(defun-memo pretty-string (thing)
+    (:key #'first :test 'equal :validator #'identity)
+  (let ((name (etypecase thing
+		(symbol (symbol-name thing))
+		(string thing))))
+    (string-downcase 
+     (substitute #\Space #\- name))))
+
+(defun ugly-symbol (string)
+  (string-upcase
+   (substitute #\- #\Space string)))
+
 (define-prototype block 
     (:documentation
      "Blocks are the visual programming elements that programs in the
@@ -178,13 +190,14 @@ streams as a basis.
        ;; define input accessor functions
        ,@(mapcar #'make-input-accessor-defun-forms input-names)
        (define-block (,name :super ,super) 
-	 (label :initform ,(pretty-symbol-string name))
+	 (label :initform ,(pretty-string name))
 	 (input-names :initform ',input-names)
 	 ,@fields)
        (define-method initialize ,name ()
 	 (apply #'initialize%super self %inputs) 
 	 (setf %inputs (list ,@(remove-if #'keywordp inputs)))
 	 (update-parent-links self)
+	 (mapc #'pin %inputs)
 	 ,@body)
        (define-method recompile ,name () `(evaluate self)))))
 
@@ -880,7 +893,7 @@ state (position and heading) and restoring them afterward."
 
 (define-method make-method-menu-item block (method target)
   (assert (and target (keywordp method)))
-  (let ((method-string (pretty-symbol-string method)))
+  (let ((method-string (pretty-string method)))
     (list :label method-string
 	  :method method
 	  :target target
@@ -1565,6 +1578,9 @@ The order is (TOP LEFT RIGHT BOTTOM)."
 	  ;; is left to right of other right?
 	  (<= o-right x)))))
 
+(define-method touching-point block (x y)
+  (within-extents x y %x %y (+ %x %width) (+ %y %height)))
+
 (define-method colliding-with-rectangle block (o-top o-left o-width o-height)
   ;; you must pass arguments in Y X order since this is TOP then LEFT
   (with-fields (x y width height) self
@@ -1827,7 +1843,8 @@ Note that the center-points of the objects are used for comparison."
   (setf %frozen nil)
   (mapc #'unpin %inputs))
 
-(define-method evaluate list () self)
+(define-method evaluate list () 
+  (mapcar #'evaluate %inputs))
 
 (define-method recompile list () 
   (mapcar #'recompile %inputs))

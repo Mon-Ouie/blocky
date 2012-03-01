@@ -18,17 +18,17 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Commentary: 
+
+;; This file implements a visual layer on top of prototypes.lisp, so
+;; that OOP can occur visually. Understanding the terms used in
+;; prototypes.lisp will help in reading the present file.
+
 ;;; Code:
 
 (in-package :blocky)
 
-(deflist empty-socket)
-
-(define-method accept empty-socket (other-block)
-  "Replace this empty socket with OTHER-BLOCK."
-  (accept %parent other-block))
-
-;;; Sending to a particular target
+;;; Dynamically binding the recipient of a message
 
 (defvar *target* nil)
 
@@ -36,52 +36,83 @@
   `(let ((*target* ,target))
      ,@body))
 
-;;; Generic message block. 
+;;; Widget for empty target slot
 
-(define-block message prototype method schema target label button-p)
+(deflist socket)
 
-(define-method recompile message ()
+(define-method hit socket (x y)
+  (if %inputs
+      (hit%super self x y)
+      (when (touching-point self x y)
+	self)))
+
+(define-method draw socket ()
+  (if %inputs 
+      (draw (first %inputs))
+      (draw-image "socket" %x %y)))
+
+(define-method draw-hover socket ()
+  (with-fields (x y width height) self
+    (draw-box x y width height :color "red" :alpha 0.5)))
+
+(define-method accept socket (other-block)
+  "Replace the child object with OTHER-BLOCK."
+  (when other-block 
+    (setf %inputs (list other-block))
+    (set-parent other-block self)))
+
+(define-method evaluate socket ()
+  (when %inputs (first %inputs)))
+
+(define-method can-pick socket () 
+  (not (null %inputs)))
+
+(define-method pick socket ()
+  (first %inputs))
+
+;;; Inactive placeholder
+
+(deflist blank)
+
+(define-method accept blank ())
+(define-method can-pick blank () nil)
+(define-method draw blank ())
+
+;;; Message argument GUI
+
+(define-block arguments prototype method schema target label button-p)
+
+(define-method recompile arguments ()
   ;; grab argument values from all the input widgets
   (mapcar #'recompile %inputs))
 
-(define-method evaluate message ()
-  (apply #'send %method 
-	 ;; with-target will override,
-	 ;; also will fall back on parent
-	 (or *target* %target %parent)
-	 (mapcar #'evaluate %inputs)))
+(define-method evaluate arguments ()
+  (mapcar #'evaluate %inputs))
 
-(define-method tap message (x y)
+(define-method tap arguments (x y)
   (declare (ignore x y))
   (when %button-p
     (evaluate self)))
 
-(define-method can-pick message () t)
+(define-method can-pick arguments () t)
 
-(define-method pick message ()
-  ;; allow to move parent block by the labels of this message block
+(define-method pick arguments ()
+  ;; allow to move parent block by the labels of this arguments block
   (if %button-p self %parent))
 
-(define-method accept message (block)
+(define-method accept arguments (block)
   ;; make these click-align instead
   (assert (blockyp block))
   nil)
 
-(defun-memo pretty-symbol-string (thing)
-    (:key #'first :test 'equal :validator #'identity)
-  (let ((name (etypecase thing
-		(symbol (symbol-name thing))
-		(string thing))))
-    (string-downcase 
-     (substitute #\Space #\- name))))
-
-(define-method initialize message (&key prototype schema method label target (button-p t))
+(define-method initialize arguments (&key prototype schema method label target (button-p t))
   (initialize%super self)
   (setf %target target)
   (setf %button-p button-p)
-  (let* ((schema0
+  (let* ((proto0 (find-prototype (or prototype target "BLOCKY:BLOCK")))
+	 (schema0
 	   (or schema
-	       (method-schema (find-prototype (or prototype target)) method)))
+	       (method-schema proto0) method))
 	 (inputs nil)
 	 (proto (or prototype (when target
 				(object-name (find-super target))))))
@@ -105,9 +136,9 @@
       (setf %schema schema0
 	    %prototype proto
 	    %method method
-	    %label (or label (pretty-symbol-string method))))))
+	    %label label))))
 
-(define-method draw message ()
+(define-method draw arguments ()
   (with-fields (x y width height label inputs) self
     (when %button-p
       (with-style :flat
@@ -117,80 +148,47 @@
       (dolist (each inputs)
 	(draw each)))))
 
-(define-method draw-hover message ()
+(define-method draw-hover arguments ()
   nil)
 
-;;; A reference to another block
+;;; Lisp value printer block
 
-(define-block reference
-  (target :initform nil)
-  (iwidth :initform 0)
-  (category :initform :data))
+(define-block-macro printer 
+    (:super :list
+     :fields 
+     ((category :initform :data))
+     :inputs 
+     (:input (new 'socket)
+      :output (new 'text))))
 
-(define-method evaluate reference () 
-  %target)
+(define-method evaluate printer ()
+  (let* ((*print-pretty* t)
+	 (input-block (evaluate %%input))
+	 (string (format nil "~S" (when input-block
+				    (evaluate input-block)))))
+    (set-buffer %%output
+		(split-string-on-lines string))))
 
-(define-method recompile reference ()
-  (recompile %target))
+;;; Generic message block
 
-(define-method set-target reference (target)
-  (setf %target 
-	(cond 
-	  ((stringp target)
-	   (prog1 target
-	     (assert (find-object target))))
-	  ((blockyp target)
-	   (find-uuid target)))))
+(define-block-macro message 
+    (:super :list
+     :fields 
+     ((orientation :initform :horizontal)
+      (style :initform :flat))
+     :inputs 
+     (:target (new 'socket)
+      :method (new 'string)
+      :arguments (new 'blank))))
 
-(define-method initialize reference (&optional target)
-  (when target
-    (set-target self target)))
+(define-method evaluate message ()
+  (with-input-values (method target arguments) self 
+    (apply #'send method target arguments)))
 
-(define-method accept reference (new-block)
-  (prog1 nil ;; signal not accepting
-    (set-target self new-block)))
-
-(defun-memo make-reference-name (target)
-    (:key #'first :test 'equal :validator #'identity)
-  (concatenate 'string
-	       (get-some-object-name target)
-	       " "
-	       (object-address-string target)))
-
-(defparameter *null-reference-string* "(null reference)")
-
-(define-method layout reference () 
-  (with-fields (target x y iwidth width height) self
-    (if target
-	(let ((image (field-value :image target))
-	      (name (make-reference-name target)))
-	  (setf iwidth (if image (image-width image) 0))
-	  (setf width (dash 8 iwidth (font-text-width name *font*)
-			    (* *handle-scale* (indicator-size))))
-	  (setf height (dash 2 (font-height *font*)
-			     (if image (image-height image) 0))))
-	(setf width (dash 8 iwidth (font-text-width *null-reference-string* *font*))
-	      height (dash 4 (font-height *font*))))))
-
-(define-method draw reference ()
-  (with-fields (target x y width height iwidth) self
-    ;; (draw-background self)
-    (let ((offset (* *handle-scale* (indicator-size))))
-      (if (null target)
-	  (draw-string *null-reference-string* 
-		       (+ offset x) y)
-	(let ((image (field-value :image target))
-	      (name (make-reference-name target)))
-	  (if image
-	      (draw-image image 
-			  (dash 1 x)
-			  (dash 1 y))
-	      (draw-indicator :asterisk 
-			      x y
-			      :scale *handle-scale*
-			      :background "purple"
-			      :color "cyan"))
-	  (draw-string name (dash 1 x offset iwidth) (dash 1 y)))))))
+(define-method update-arguments message ()
+  (with-input-values (method target) self
+    (setf (third %inputs)
+	  (new 'arguments :method method :target target))))
 
 ;;; Palettes to tear cloned objects off of 
 
