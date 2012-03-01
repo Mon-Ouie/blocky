@@ -1,5 +1,40 @@
-* Creating a cool game editor/IDE with tight emacs integration, and then growing it into a standalone MIT-Scratch-squared!
+* TODO rework message syntax in a more smalltalk-like direction
+** TODO disable drawing of message label
+** TODO simple object reference for "self" "world" and arbitrary ones
+** TODO new block macro with: 
+*** TODO allow inline editing of message name (via better context popups)
+**** TODO togglable-readonly prompt for message name
+*** TODO toggle with black ephemeral right-click context menu
+*** TODO dynamic arguments gui by replacing message block
+*** TODO left-squarey-socket messages (with implicit self?)
+*** TODO "message" becomes simply a way of building a simple (or complex) argument GUI, not a scratch-style block
+** TODO Lisp literals
+** TODO local variable palettes
+* TODO choose simple syntax for wiki page name scoping which allows default to project package
+*** TODO "name" without any colon, is a project-specific page
+*** TODO with any colons, it's special and refers to something 
+**** TODO index:
+**** TODO help:
+**** TODO packagename:
+**** TODO packagename:blockname
+**** TODO packagename:blockname:methodname
 
+* system->browser
+
+* TODO Wiki browser is the system menu
+** TODO wiki "pages" are actually blocks and prototypes and such, auto-named
+** TODO allow one system menu per workspace,  
+** wikify blocky so that each method and each block type
+      have their own (possibly empty) wiki page with a definition (in
+      a list) and/or comments (everything else)
+** TODO 
+** TODO wikipage database 
+** TODO blocks
+** TODO 8 vdesktops by default on f1-f8 (switcher showing title)
+** TODO Open browsers on multiple vdesktops each visiting own page
+** TODO Palette on right side
+
+** TODO [#A] fix scrolling
 ** TODO [#A] review smalltalk-elements
 ** TODO [#A] review byob
 ** TODO [#A] improve defresource and call it define-resource
@@ -20,8 +55,8 @@
 ** TODO [#A] complete credits file and ensure all docs/license copies in place.
 ** TODO [#A] fix project dir naming issues. allow opening any .iof including index.iof 
 ** TODO [#A] Implement basic blocks library (see list below)
-** TODO [#A] define-block PALETTE so that there's a place to pull useful objects from 
 ** TODO [#A] System Browser in the menu, for choosing what to define methods on (or blocks from)
+** TODO [#A] define-block PALETTE so that there's a place to pull useful objects from 
 ** TODO [#A] Improve error handling in shell
 **** isolate/trap all block errors and display them grayed out with an inspectable error
 **** define-method error shell
@@ -210,6 +245,7 @@ add "." and "%CD%" to cffi's foreign directory search list...
 (04:20:28 AM) : and just dump them in the folder with the image :)
 (04:20:40 AM) : and change the OS working directory, too
 ** TODO [#C] general svg image support
+* Creating a cool game editor/IDE with tight emacs integration, and then growing it into a standalone MIT-Scratch-squared!
 
 
 ** TODO [#C] ALPHA issues for PNG images

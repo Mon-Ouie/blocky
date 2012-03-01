@@ -1,4 +1,4 @@
-;;; library.lisp --- standard blocks library for blocky
+;;; syntax.lisp --- visual syntax
 
 ;; Copyright (C) 2011  David O'Toole
 
@@ -22,183 +22,11 @@
 
 (in-package :blocky)
 
-;;; Vertically stacked list of blocks
-
-(define-block list
-  (dash :initform 2)
-  (frozen :initform nil)
-  (orientation :initform :vertical)
-  (operation :initform :empty-list)
-  (category :initform :structure))
-
-(defun make-visual-list ()
-  (clone "BLOCKY:LIST"))
-
-(define-method frozenp list () %frozen)
-
-(define-method freeze list ()
-  (setf %frozen t)
-  (mapc #'pin %inputs))
-
-(define-method unfreeze list ()
-  (setf %frozen nil)
-  (mapc #'unpin %inputs))
-
-(define-method evaluate list () self)
-
-(define-method recompile list () 
-  (mapcar #'recompile %inputs))
-  "Return the computed result of this block.  By default, all the
-inputs are evaluated."
-  ;; (prog1 self
-  ;;   (evaluate-inputs self)))
-
-(define-method can-pick list ()
-  (not %frozen))
-
-;; (define-method pick list ()
-;;   (when %frozen self))
-
-(defparameter *null-display-string* "   ")
-
-(define-method set-orientation list (orientation)
-  (assert (member orientation '(:horizontal :vertical)))
-  (setf %orientation orientation))
-
-;; (define-method tap list (x y)
-;;   (dolist (block %inputs)
-;;     (evaluate block)))
-
-(define-method can-accept block () 
-  (not %frozen))
-
-(define-method accept list (input &optional prepend)
-  (assert (blockyp input))
-  (when (not %frozen)
-    (prog1 t
-      (invalidate-layout self)
-      (with-fields (inputs) self
-	(if inputs
-	    ;; we've got inputs. add it to the list (prepending or not)
-	    (progn 
-	      (assert (valid-connection-p self input))
-	      ;; set parent if necessary 
-	      (when (get-parent input)
-		(unplug-from-parent input))
-	      (set-parent input self)
-	      (setf inputs 
-		    (if prepend
-			(append (list input) inputs)
-			(append inputs (list input)))))
-	    ;; no inputs yet. make a single-element inputs list
-	    (progn
-	      (setf inputs (list input))
-	      (set-parent input self)))))))
-
-(define-method take-first list ()
-  (with-fields (inputs) self
-    (let ((block (first inputs)))
-      (prog1 block
-	(unplug self block)))))
-
-(define-method get-length list ()
-  (length %inputs))
-
-(define-method header-height list () 0)
-
-(define-method label-width list ()
-  (+ (* 2 *dash*)
-     (expression-width *null-display-string*)))
-
-(define-method layout-as-null list ()
-  (with-fields (height width) self
-    (setf width (+ (* 4 *dash*)
-		   (font-text-width *null-display-string*
-				      *font*))
-	  height (+ (font-height *font*) (* 4 *dash*)))))
-
-(define-method layout-vertically list ()
-  (with-fields (x y height width inputs dash) self
-    (flet ((ldash (&rest args)
-	     (apply #'dash 1 args)))
-    (let* ((header-height (ldash (header-height self)))
-	   (y0 (ldash y header-height))
-	   (line-height (font-height *font*)))
-      (setf height (ldash line-height))
-      (setf width (dash 8))
-      (dolist (element inputs)
-	(move-to element (ldash x) y0)
-	(layout element)
-	(incf height (field-value :height element))
-	(incf y0 (field-value :height element))
-	(setf width (max width (field-value :width element))))
-      (incf height (dash 1))
-      (incf width (dash 3))))))
-
-(define-method layout-horizontally list ()
-  (with-fields (x y height width inputs dash) self
-    (flet ((ldash (&rest args)
-	     (apply #'dash 1 args)))
-    (let* ((header-height (ldash (header-height self)))
-	   (x0 (+ x (dash 1)))
-	   (y0 (ldash y))
-	   (line-height (font-height *font*)))
-      (setf height (ldash line-height))
-      (setf width (dash 8))
-      (dolist (element inputs)
-	(move-to element (ldash x0) y0)
-	(layout element)
-	(setf height (max height (+ (ldash) (field-value :height element))))
-	(incf x0 (field-value :width element))
-	(incf width (field-value :width element))
-	(incf width (dash 1)))
-      (incf height (dash 1))
-      (incf width (dash 3))))))
-
-(define-method layout list ()
-  (with-fields (inputs) self
-    (if (null inputs)
-	(layout-as-null self)
-	(ecase %orientation
-	  (:horizontal (layout-horizontally self))
-	  (:vertical (layout-vertically self))))))
-
-(define-method draw-header list () 0)
-
-(define-method draw list ()
-  (with-fields (inputs) self
-    (draw-background self)
-    (if (null inputs)
-	(draw-label-string self *null-display-string*)
-	(dolist (each inputs)
-	  (draw each)))))
-  ;; (when (not %frozen)
-  ;;   (draw-indicator :bottom-right-triangle 
-  ;; 		    (+ %x %width (dash -4))
-  ;; 		    (+ %y %height (dash -4))
-  ;; 		    :color "white"
-  ;; 		    :scale 1.5)))
-
-(define-method initialize list (&rest blocks)
-  (apply #'block%initialize self blocks))
-;  (freeze self))
-
-(defmacro deflist (name &rest body)
-  `(define-block (,name :super :list) ,@body))
-
-(defun null-block () (new 'list))
-
 (deflist empty-socket)
 
 (define-method accept empty-socket (other-block)
   "Replace this empty socket with OTHER-BLOCK."
   (accept %parent other-block))
-
-;;; Horizontal list
-
-(define-block (hlist :super list)
-  (:category :initform :system)
-  (:orientation :initform :horizontal))
 
 ;;; Sending to a particular target
 
@@ -291,30 +119,6 @@ inputs are evaluated."
 
 (define-method draw-hover message ()
   nil)
-
-;;; A generic color swatch
-
-(define-block color 
-  :pinned nil
-  :methods '(:set-color)
-  :name "gray50"
-  :width (dash 20) :height (dash 20))
-
-(define-method set-color color
-    ((name string :default "gray50"))
-  (setf %name name))
-
-(define-method draw color ()
-  (with-fields (x y width height red green blue) self
-    (with-style :rounded
-      (draw-patch self x y (+ x width) (+ y height)
-		  :color %name))))
-
-(define-method layout color ())
-
-(define-method initialize color (&optional (name "gray50"))
-  (initialize%super self)
-  (setf %name name))
 
 ;;; A reference to another block
 
@@ -410,10 +214,4 @@ inputs are evaluated."
 	(make-clone %source)
 	self)))
 
-;;; If and when
-
-;; (define-block if 
-
-
-
-;;; library.lisp ends here
+;;; syntax.lisp ends here

@@ -2274,7 +2274,6 @@ of the music."
   (initialize-resource-table)
   (initialize-textures-maybe :force)
   (initialize-colors)
-  (initialize-buffers)
   (initialize-sound)
   (initialize-database)
   (load-standard-resources)

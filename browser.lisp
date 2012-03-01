@@ -1,4 +1,4 @@
-;;; system.lisp --- the system menu
+;;; browser.lisp --- the system menu
 
 ;; Copyright (C) 2010, 2011, 2012  David O'Toole
 
@@ -111,22 +111,7 @@
 
 ;;; A block representing the current system and project universe
 
-(defvar *system* nil)
-
-(define-block system
-  (type :initform :system)
-  (shell :initform nil)
-  (running :initform nil))
-
-;; (define-method show-copyright-notice system ()
-;;   (let ((box (new 'text *copyright-notice*)))
-;;     (add-block *world* box 80 80)
-;;     (resize-to-scroll box 80 24)
-;;     (end-of-line box)))
-
-;; (define-method save-before-exit system ())
-
-(defparameter *system-menu-entries*
+(defparameter *browser-menu-entries*
   '((:label "Project"
      :inputs
      ((:label "Create a new project" :action :create-project)
@@ -263,7 +248,7 @@
 
 ;;; The system menu itself
 
-(define-block-macro system-menu 
+(define-block-macro browser 
     (:super :list 
      :fields 
      ((category :initform :system))
@@ -282,7 +267,7 @@
 		      :inputs 
 		 (flet ((process (entry)
 			  (make-menu entry :target self)))
-		   (mapcar #'process *system-menu-entries*))
+		   (mapcar #'process *browser-menu-entries*))
 		      :category :menu
 		      :expanded t)
 	    (new 'tree :label "Messages"
@@ -294,21 +279,21 @@
   (mapc #'pin (%inputs %%menu))
   (setf %locked t))
 
-(defun make-system-menu ()
+(defun make-browser ()
   (find-uuid 
-   (new '"BLOCKY:SYSTEM-MENU")))
+   (new '"BLOCKY:BROWSER")))
 
-(define-method destroy system-menu ()
+(define-method destroy browser ()
   (destroy%super self)
-  (setf (%system-menu (world)) nil))
+  (setf (%browser (world)) nil))
 
-(define-method menu-items system-menu ()
+(define-method menu-items browser ()
   (%inputs %%menu))
 
-(define-method get-listener system-menu ()
+(define-method get-listener browser ()
   (first (menu-items self)))
         
-(define-method layout system-menu ()
+(define-method layout browser ()
   (layout-vertically self)
   ;; adjust header for project name
   (setf %width 
@@ -317,31 +302,31 @@
 		(font-text-width *project*
 				 *block-bold*)))))
 
-;; (define-method can-pick system-menu ()
+;; (define-method can-pick browser ()
 ;;   t)
 
-;; (define-method pick system-menu ()
+;; (define-method pick browser ()
 ;;   self)
 
-(define-method draw system-menu ()
+(define-method draw browser ()
   (with-fields (x y width height) self
     (draw-patch self x y (+ x width) (+ y height))
     (mapc #'draw %inputs)))
 
-(define-method close-menus system-menu ()
+(define-method close-menus browser ()
   (let ((menus (menu-items self)))
     (when (some #'expandedp menus)
       (mapc #'unexpand menus))))
 
 ;; Don't allow anything to be dropped on the menus, for now.
 
-(define-method draw-hover system-menu () nil)
+(define-method draw-hover browser () nil)
 
-(define-method accept system-menu (thing)
+(define-method accept browser (thing)
   (declare (ignore thing))
   nil)
 
-(define-method tap system-menu (x y)
+(define-method tap browser (x y)
   (declare (ignore x y))
   (grab-focus (get-listener self)))
 
@@ -370,7 +355,7 @@
 	 "Successfully created new project."
 	 "Could not create project."))))
 
-(define-method create-project system-menu ()
+(define-method create-project browser ()
   (let ((dialog (new 'window 
 		     :title "Create a new project"
 		     :child (new 'create-project-dialog))))
@@ -400,7 +385,7 @@
 	 "Successfully loaded new project."
 	 "Could not load project."))))
 
-(define-method load-project system-menu ()
+(define-method load-project browser ()
   (let ((dialog (new 'window 
 		     :title "Load a project"
 		     :child (new 'load-project-dialog))))
@@ -426,7 +411,7 @@
        "Successfully saved project."
        "Could not save project!")))
 
-(define-method save-project system-menu ()
+(define-method save-project browser ()
   (let ((dialog (new 'window 
 		     :title "Save current project"
 		     :child (new 'save-project-dialog))))
@@ -468,5 +453,5 @@ or press Alt-X to bring up the system menu.")
 ;;   (layout-vertically self))
 
     
-;;; system.lisp ends here
+;;; browser.lisp ends here
 
