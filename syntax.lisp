@@ -123,13 +123,13 @@
   (assert (blockyp block))
   nil)
 
-(define-method initialize arguments (&key schema method label target (button-p t))
+(define-method initialize arguments (&key prototype schema method label target (button-p t))
   (initialize%super self)
   (setf %no-background t)
   ;; (setf %target target)
   (setf %button-p button-p)
   (let* ((proto (or prototype target))
-	 (proto-name (object-name (find-object (find-super proto))))
+	 (proto-name (find-super-prototype-name proto))
 	 (schema0
 	   (or schema
 	       (method-schema proto-name method)))
@@ -203,19 +203,19 @@
       :arguments (new 'blank))))
 
 (define-method evaluate message ()
-  (with-input-values (target arguments) self 
+  (with-input-values (arguments) self 
     (apply #'send %method *target* arguments)))
 
 (define-method get-target message ()
   (if (is-a 'phrase-list %parent)
-      (get-target %parent))
-      *target*)
+      (get-target %parent)
+      *target*))
 
 (define-method update-arguments-maybe message ()
   (with-input-values (method) self
     (when (plusp (length (string-trim " " method)))
       (let ((method-key (make-keyword (ugly-symbol method)))
-	    (target (or (get-target self) "BLOCKY:BLOCK")))
+	    (target (or (get-target self) (find-object "BLOCKY:BLOCK"))))
 	(when (not (eq method-key %method))
 	  ;; time to change args
 	  (setf %method method-key)
@@ -240,7 +240,11 @@
 
 (define-method get-target phrase-list ()
   (assert %parent)
-  (%%target %parent))
+  (get-target %parent))
+
+(define-method accept phrase-list (thing)
+  (when (is-a 'message thing)
+    (accept%super self thing)))
 
 (define-block-macro phrase 
     (:super :list
@@ -252,9 +256,17 @@
       :messages (new 'phrase-list (new 'message)))))
 
 (define-method evaluate phrase ()
-  (with-target (%%target self)
-    (dolist (message (%inputs %%messages))
-      (evaluate message))))
+  (with-input-values (target) self
+    (with-target target
+      (dolist (message (%inputs %%messages))
+	(evaluate message)))))
+
+(define-method get-target phrase ()
+  (let ((in (%inputs %%target)))
+    (when in
+      (first in))))
+
+(define-method accept phrase (thing))
       
 ;;; Palettes to tear cloned objects off of 
 
