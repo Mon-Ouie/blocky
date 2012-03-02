@@ -138,8 +138,7 @@
 	 (layout-as-string self (display-string self))))))
   
 (define-method header-height tree ()
-  (deeper 
-   (font-height *font*)))
+  (font-height *font*))
 
 (define-method header-width tree ()
   (deeper 

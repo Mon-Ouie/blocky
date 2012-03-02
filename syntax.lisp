@@ -63,7 +63,7 @@
 
 (define-method draw-hover socket ()
   (with-fields (x y width height) self
-    (draw-box x y width height :color "red" :alpha 0.5)))
+    (draw-box x y width height :color *hover-color* :alpha *hover-alpha*)))
 
 (define-method accept socket (other-block)
   "Replace the child object with OTHER-BLOCK."
@@ -98,7 +98,9 @@
 
 ;;; Message argument GUI
 
-(define-block arguments prototype method schema target label button-p)
+(define-block arguments       
+  (category :initform :message)
+  prototype method schema target label button-p)
 
 (define-method recompile arguments ()
   ;; grab argument values from all the input widgets
@@ -114,9 +116,12 @@
 
 (define-method can-pick arguments () t)
 
-(define-method pick arguments ()
-  ;; allow to move parent block by the labels of this arguments block
-  (if %button-p self %parent))
+;; (define-method pick arguments ()
+;;   ;; allow to move parent block by the labels of this arguments block
+;;   (if %button-p self %parent))
+      ;; (if (is-a 'phrase-list %parent)
+      ;; 	  (%parent %parent)
+      ;; 	  %parent)))
 
 (define-method accept arguments (block)
   ;; make these click-align instead
@@ -135,16 +140,19 @@
 	       (method-schema proto-name method)))
 	 (inputs nil))
     (dolist (entry schema0)
-      (push (clone (if (eq 'string (schema-type entry))
-		       "BLOCKY:STRING" "BLOCKY:ENTRY")
-		   :value (schema-option entry :default)
-		   :parent (find-uuid self)
-		   :type-specifier (schema-type entry)
-		   :options (schema-options entry)
-		   :label (concatenate 'string
-				       ":" ;; mimic the keyword arguments visually
-				       (string-downcase (symbol-name (schema-name entry)))))
-	    inputs))
+      (let ((thing 
+	      (if (eq 'block (schema-type entry))
+		  (new 'socket)
+		  (clone (if (eq 'string (schema-type entry))
+			     "BLOCKY:STRING" "BLOCKY:ENTRY")
+			 :value (schema-option entry :default)
+			 :parent (find-uuid self)
+			 :type-specifier (schema-type entry)
+			 :options (schema-options entry)
+			 :label (concatenate 'string
+					     ":" ;; mimic the keyword arguments visually
+					     (string-downcase (symbol-name (schema-name entry))))))))
+	(push thing inputs)))
     (when inputs 
       (setf %inputs (nreverse inputs)))
     (setf %schema schema0
@@ -196,6 +204,7 @@
     (:super :list
      :fields 
      ((orientation :initform :horizontal)
+      (category :initform :message)
       (method :initform nil) 
       (style :initform :flat))
      :inputs 
@@ -236,7 +245,8 @@
 ;;; Stacked messages to a particular receiver
 
 (deflist phrase-list
-    (no-background :initform t))
+    (category :initform :message)
+  (no-background :initform t))
 
 (define-method get-target phrase-list ()
   (assert %parent)
@@ -246,10 +256,17 @@
   (when (is-a 'message thing)
     (accept%super self thing)))
 
+(define-method can-pick phrase-list () t)
+      
+(define-method pick phrase-list () 
+  (when (is-a 'phrase %parent)
+    %parent))
+
 (define-block-macro phrase 
     (:super :list
      :fields 
      ((orientation :initform :horizontal)
+      (category :initform :message)
       (style :initform :flat))
      :inputs 
      (:target (new 'socket)
@@ -267,7 +284,7 @@
       (first in))))
 
 (define-method accept phrase (thing))
-      
+
 ;;; Palettes to tear cloned objects off of 
 
 (define-block (palette :super :list) 

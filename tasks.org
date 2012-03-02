@@ -1,4 +1,6 @@
 * TODO Syntax demo
+** TODO typing on air
+** TODO socket argument type in schema
 ** TODO simple block reference for "self" "world" and arbitrary ones
 *** TODO <--- assignment method << or "is"
 *** TODO "new" is a method 

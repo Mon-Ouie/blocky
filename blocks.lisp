@@ -138,6 +138,9 @@ areas.")
 (define-method new block (&rest args)
   (apply #'clone self args))
 
+(define-method create block ()
+  (new self))
+
 ;;; Adding blocks to the simulation
 
 (define-method start block ()
@@ -1069,7 +1072,7 @@ you want to align a group of text items across layouts.")
     :comment "khaki1"
     :looks "purple"
     :sound "orchid"
-    :message "sienna3"
+    :message "orange"
     :control "orange1"
     :variables "DarkOrange2"
     :operators "OliveDrab3"
@@ -1090,7 +1093,7 @@ you want to align a group of text items across layouts.")
     :data "gray60"
     :structure "gray60"
     :sound "plum"
-    :message "sienna2"
+    :message "gold"
     :control "gold"
     :variables "DarkOrange1"
     :operators "OliveDrab1"
@@ -1111,7 +1114,7 @@ you want to align a group of text items across layouts.")
     :hover "orange red"
     :looks "dark magenta"
     :sound "violet red"
-    :message "chocolate3"
+    :message "DarkOrange"
     :control "dark orange"
     :variables "DarkOrange3"
     :operators "OliveDrab4"
@@ -1362,16 +1365,18 @@ scale. See also "
 (define-method draw-highlight block () 
   "Draw any additional indications of mouseover." nil)
 
-(defparameter *hover-color* "red" 
+(defparameter *hover-color* "cyan" 
   "Name of the color used to indicate areas where objects can be
 dropped.")
+
+(defparameter *hover-alpha* 0.8)
 
 (define-method draw-hover block ()
   "Draw something to indicate that this object can recieve a drop.
 See shell.lisp for more on the implementation of drag-and-drop."
   (with-fields (x y width height inputs) self
-    (draw-patch self x y (+ x *dash* width) (+ y *dash* height)
-	      :color *hover-color*)
+    (draw-box x y width height
+	      :color *hover-color* :alpha *hover-alpha*)
     (dolist (input inputs)
       (draw input))))
 
@@ -1978,8 +1983,8 @@ inputs are evaluated."
   (with-fields (x y height width inputs dash) self
     (flet ((ldash (&rest args)
 	     (apply #'dash 1 args)))
-    (let* ((header-height (ldash (header-height self)))
-	   (y0 (ldash y header-height))
+    (let* ((header-height (header-height self))
+	   (y0 (+ y (if (zerop header-height) (dash 1) (dash 2 header-height))))
 	   (line-height (font-height *font*)))
       (setf height (ldash line-height))
       (setf width (dash 8))
