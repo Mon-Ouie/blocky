@@ -39,7 +39,7 @@
 
 (in-package :blocky)
 
-(defvar *debug-on-error* nil)
+(defvar *debug-on-error* t)
 
 (defvar *author* nil)
 
@@ -190,7 +190,7 @@ extended argument list ARGLIST."
 (initialize-methods)
 
 (defun make-method-id (prototype method)
-  (let ((name (object-name (find-object prototype))))
+  (let ((name (object-name (find-prototype prototype))))
     (assert (stringp name))
     (concatenate 'string 
 		 (subseq name (1+ (position (character ":") name)))
@@ -200,7 +200,7 @@ extended argument list ARGLIST."
 (defun find-method-id (prototype method &optional create)
   (assert prototype)
   (assert method)
-  (let ((pointer prototype))
+  (let ((pointer (find-prototype prototype)))
     (block searching
       (loop while pointer do
 	(let ((id (make-method-id pointer method)))
@@ -243,7 +243,7 @@ extended argument list ARGLIST."
 	           
 (defun method-schema (prototype method)
   (assert (hash-table-p *methods*))
-  (let ((id (find-method-id prototype method)))
+  (let ((id (find-method-id (object-name (find-prototype prototype)) method)))
     (assert (stringp id))
     (let ((result (gethash id *methods*)))
       (when result
@@ -285,11 +285,14 @@ extended argument list ARGLIST."
 
 (defun find-prototype (name &optional noerror)
   (assert (hash-table-p *prototypes*))
-  (or (gethash name *prototypes*)
-      (unless noerror
-	(error "Cannot find prototype named ~S" name))))
+  (if (object-p name)
+      name
+      (or (gethash name *prototypes*)
+	  (unless noerror
+	    (error "Cannot find prototype named ~S" name)))))
 
 ;;; UUID object dictionary
+
 
 (defun make-uuid ()
   (uuid:print-bytes 
@@ -339,7 +342,7 @@ extended argument list ARGLIST."
   (when (not (null thing))
     (let ((result 
 	    (etypecase thing
-	      (symbol (symbol-value thing))
+	      (symbol (find-prototype (make-prototype-id thing)))
 	      (string (or (find-object-by-uuid thing :noerror)
 			  (find-prototype thing :noerror)))
 	      (object thing))))
@@ -1151,6 +1154,13 @@ slot value is inherited."
 	  (set-field-value ,field-name thing value))
 	(export ',accessor-name)))))
 
+(defun proto-intern (name)
+  (let ((colon (position #\: name)))
+    (intern
+     (if colon
+	 (subseq name (1+ colon))
+	 name))))
+
 (defmacro define-prototype (name
 			    (&key super 
 				  documentation
@@ -1195,16 +1205,16 @@ OPTIONS is a property list of field options. Valid keys are:
 			      declarations))
 	 (descriptors (mapcar #'transform-declaration 
 			      pre-descriptors))
-	 (prototype-id (make-prototype-id name (project-package-name) t ))
+	 (prototype-id (make-prototype-id name (project-package-name) t))
 	 (field-initializer-body (delete nil (mapcar #'make-field-initializer 
-						     descriptors))))
-    `(let* ((super-sym ,(when super `(make-prototype-id ,super)))
-	    (uuid (make-uuid))
+						     descriptors)))
+	 (super-name (when super `(make-prototype-id ,super))))
+    `(let* ((uuid (make-uuid))
 	    (fields (compose-blank-fields ',descriptors))
 	    (prototype (make-object :fields fields
 				    :name ,prototype-id
 				    :uuid uuid
-				    :super (find-object super-sym))))
+				    :super (find-object ,super-name))))
        ;; create the (%fieldname object) functions
        ,@(mapcan #'make-field-accessor-forms descriptors)
        (setf (fref fields :field-descriptors) ',descriptors)
@@ -1226,15 +1236,16 @@ OPTIONS is a property list of field options. Valid keys are:
        (values uuid prototype))))
 
 (defun is-a (type thing)
-  (and type (blockyp thing)
+  (and type thing
+       (blockyp thing)
        (string= (make-prototype-id type)
 		(object-name (object-super 
 			      (find-object thing))))))
 
 ;;; Cloning and duplicating objects
   
-(defun new (prototype-name &rest initargs)
-  (apply #'clone (make-prototype-id prototype-name) initargs))
+;; (defun new (prototype-name &rest initargs)
+;;   (apply #'clone (make-prototype-id prototype-name) initargs))
 
 (defun clone (prototype &rest initargs)
   "Create a new object from PROTOTYPE and pass INITARGS to the
@@ -1399,10 +1410,9 @@ objects after reconstruction, wherever present."
 
 (defun print-iob (foo stream)
   (let ((object (find-object foo)))
-    (format stream "#<IOB ~A ~A ~A>" 
+    (format stream "#<BLX ~A ~A>" 
 	    (get-some-object-name object)
-	    (object-address-string object)
-	    (object-uuid object))))
+	    (object-address-string object))))
 
 (defmethod print-object ((foo blocky:object) stream)
   (print-iob foo stream))

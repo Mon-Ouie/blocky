@@ -135,6 +135,9 @@ either a symbol naming the field, or a list of the form (SYMBOL
   "List of keywords used to group blocks into different functionality
 areas.")
 
+(define-method new block (&rest args)
+  (apply #'clone self args))
+
 ;;; Adding blocks to the simulation
 
 (define-method start block ()
@@ -643,7 +646,12 @@ See `keys.lisp' for the full table of key and modifier symbols.
   (not %pinned))
 
 (define-method pick block ()
-  (if %pinned %parent self)) ;; Possibly return a child, or a new object 
+  (with-fields (pinned parent) self
+    (if (not pinned)
+	self
+	(when (and parent
+		   (can-pick parent))
+	  (pick parent)))))
 
 (define-method after-place-hook block () nil)
 
@@ -1154,7 +1162,7 @@ category of block."
 			 (:flat :dash 1))
   "Graphical style parameters for block drawing.")
 
-(defvar *style* :rounded "The default style setting; must be a keyword.")
+(defvar *style* :flat "The default style setting; must be a keyword.")
 
 (defmacro with-style (style &rest body)
   "Evaluate the forms in BODY with `*style*' bound to STYLE."
@@ -1900,11 +1908,11 @@ inputs are evaluated."
   ;; (prog1 self
   ;;   (evaluate-inputs self)))
 
-(define-method can-pick list ()
-  (not %frozen))
+;; (define-method can-pick list ()
+;;   (not %pinned))
 
 ;; (define-method pick list ()
-;;   (when %frozen self))
+;;   )
 
 (defparameter *null-display-string* "   ")
 
@@ -1987,10 +1995,9 @@ inputs are evaluated."
 (define-method layout-horizontally list ()
   (with-fields (x y height spacing width inputs dash) self
     (flet ((ldash (&rest args) (apply #'+ %spacing args)))
-      (let* ((header-height (ldash (header-height self)))
-	     (x0 (+ x spacing))
-	     (y0 (ldash y))
-	     (line-height (font-height *font*)))
+      (let ((x0 (+ x spacing))
+	    (y0 (ldash y))
+	    (line-height (font-height *font*)))
 	(setf height (ldash line-height))
 	(setf width (dash 2))
 	(dolist (element inputs)
@@ -2000,8 +2007,7 @@ inputs are evaluated."
 	  (incf x0 (field-value :width element))
 	  (incf width (field-value :width element)))
 ;	  (incf width spacing))
-	(incf height spacing)
-	(incf width spacing)))))
+	(incf height spacing)))))
 
 (define-method layout list ()
   (with-fields (inputs) self

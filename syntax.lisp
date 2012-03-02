@@ -123,18 +123,17 @@
   (assert (blockyp block))
   nil)
 
-(define-method initialize arguments (&key prototype schema method label target (button-p t))
+(define-method initialize arguments (&key schema method label target (button-p t))
   (initialize%super self)
   (setf %no-background t)
-  (setf %target target)
+  ;; (setf %target target)
   (setf %button-p button-p)
-  (let* ((proto0 (find-prototype (or prototype target "BLOCKY:BLOCK")))
+  (let* ((proto (or prototype target))
+	 (proto-name (object-name (find-object (find-super proto))))
 	 (schema0
 	   (or schema
-	       (method-schema proto0 method)))
-	 (inputs nil)
-	 (proto (or prototype (when target
-				(object-name (find-super target))))))
+	       (method-schema proto-name method)))
+	 (inputs nil))
     (dolist (entry schema0)
       (push (clone (if (eq 'string (schema-type entry))
 		       "BLOCKY:STRING" "BLOCKY:ENTRY")
@@ -143,19 +142,19 @@
 		   :type-specifier (schema-type entry)
 		   :options (schema-options entry)
 		   :label (concatenate 'string
-				    ":" ;; mimic the keyword arguments visually
-				    (string-downcase (symbol-name (schema-name entry)))))
+				       ":" ;; mimic the keyword arguments visually
+				       (string-downcase (symbol-name (schema-name entry)))))
 	    inputs))
     (when inputs 
       (setf %inputs (nreverse inputs)))
-    (let ((category (when proto
-		      (method-option (find-prototype proto)
-				     method :category))))
-      (when category (setf %category category))
-      (setf %schema schema0
-	    %prototype proto
-	    %method method
-	    %label label))))
+    (setf %schema schema0
+	  %method method
+	  %label label)))
+
+    ;; (let ((category (when proto
+    ;; 		      (method-option (find-prototype proto)
+    ;; 				     method :category))))
+    ;;   (when category (setf %category category))
 
 (define-method draw arguments ()
   (with-fields (x y width height label inputs) self
@@ -204,19 +203,29 @@
       :arguments (new 'blank))))
 
 (define-method evaluate message ()
-  (with-input-values (method target arguments) self 
-    (apply #'send method *target* arguments)))
+  (with-input-values (target arguments) self 
+    (apply #'send %method *target* arguments)))
+
+(define-method get-target message ()
+  (if (is-a 'phrase-list %parent)
+      (get-target %parent))
+      *target*)
 
 (define-method update-arguments-maybe message ()
   (with-input-values (method) self
     (when (plusp (length (string-trim " " method)))
-      (let ((method-key (make-keyword (ugly-symbol method))))
+      (let ((method-key (make-keyword (ugly-symbol method)))
+	    (target (or (get-target self) "BLOCKY:BLOCK")))
 	(when (not (eq method-key %method))
 	  ;; time to change args
 	  (setf %method method-key)
 	  (setf (second %inputs)
 		(new 'arguments :method method-key
-				:target *target*)))))))
+				:target target)))))))
+
+(define-method child-updated message (child)
+  (when (object-eq child %%method)
+    (update-arguments-maybe self)))
 
 (define-method draw-hover message ()
   nil)
@@ -224,28 +233,33 @@
 (define-method accept message ()
   nil)
 
-(define-method child-updated message (child)
-  (when (object-eq child %%method)
-    (update-arguments-maybe self)))
-
 ;;; Stacked messages to a particular receiver
 
-;; (define-block-macro phrase 
-;;     (:super :list
-;;      :fields 
-;;      ((orientation :initform :horizontal)
-;;       (style :initform :flat))
-;;      :inputs 
-;;      (:socket (new 'socket)
-;;       :messages (new 'list (new 'message)))))
+(deflist phrase-list
+    (no-background :initform t))
 
-;; (define-method evaluate phrase 
+(define-method get-target phrase-list ()
+  (assert %parent)
+  (%%target %parent))
 
+(define-block-macro phrase 
+    (:super :list
+     :fields 
+     ((orientation :initform :horizontal)
+      (style :initform :flat))
+     :inputs 
+     (:target (new 'socket)
+      :messages (new 'phrase-list (new 'message)))))
 
+(define-method evaluate phrase ()
+  (with-target (%%target self)
+    (dolist (message (%inputs %%messages))
+      (evaluate message))))
+      
 ;;; Palettes to tear cloned objects off of 
 
 (define-block (palette :super :list) 
-  source
+    source
   (style :initform :rounded)
   (height :initform 100)
   (width :initform 100))
