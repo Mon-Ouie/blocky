@@ -1,11 +1,19 @@
+* TODO Syntax demo
+** TODO allow message stacking
+** TODO add schemata to more methods
+** TODO renaming message triggers schema lookup / argument change
+** TODO ephemeral context menu that disappears when you click the background2
+** TODO dividers for which class methods came from (union field)
+** TODO tighten up message layout
+
+** TODO error block appearing to right-of browser
+** TODO [#C] add new objects in the foreground
 * TODO rework message syntax in a more smalltalk-like direction
 ** TODO disable drawing of message label
 ** TODO simple object reference for "self" "world" and arbitrary ones
+** TODO naming objects in Talk To Me style
 ** TODO new block macro with: 
 *** TODO allow inline editing of message name (via better context popups)
-**** TODO togglable-readonly prompt for message name
-**** TODO toggle with right-click?
-*** TODO blank block
 *** TODO dynamic arguments gui by replacing message block
 *** TODO left-squarey-socket messages (with implicit self?)
 *** TODO "message" becomes simply a way of building a simple (or complex) argument GUI, not a scratch-style block
@@ -1162,6 +1170,42 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_TIME: 2012-02-28 Tue 23:57
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: Creating a cool game editor/IDE with tight emacs integration, and then growing it into a standalone MIT-Scratch-squared!
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO blank block
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-01 Thu 22:26
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: rework message syntax in a more smalltalk-like direction/new block macro with:
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO don't draw background on readonly entry
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-02 Fri 00:24
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Syntax demo
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO right click for edit (if there's only one :methods)
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-02 Fri 00:24
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Syntax demo
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO simplify header title line for context menu
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-02 Fri 00:24
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Syntax demo
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
    :END:

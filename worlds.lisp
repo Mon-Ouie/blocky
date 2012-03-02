@@ -208,9 +208,9 @@
   (when (contains self object)
     (unplug self object)))
 
-(define-method add-block world (object &optional x y)
+(define-method add-block world (object &optional x y prepend)
   (remove-thing-maybe self object)
-  (add-block%super self object x y))
+  (add-block%super self object x y prepend))
 
 (define-method drop-block world (block x y)
   (add-object self block)
@@ -875,12 +875,30 @@ block found, or nil if none is found."
 	    (when focused-block
 	      (select self focused-block)
 	      (with-world self 
-		(if 
-		 ;; right click and control click are interpreted the same
-		 (or (holding-control)
-		     (= button 3))
-		 (alternate-tap focused-block x y)
-		 (tap focused-block x y))
+		(cond
+		  ;; right click and control click are equivalent
+		  ((or (= button 3)
+		       (and (holding-control) (= button 1)))
+		   (alternate-tap focused-block x y))
+		  ;; scroll wheel click and shift click are equivalent
+		  ((or (= button 2)
+		       (and (holding-shift) (= button 1)))
+		   (scroll-tap focused-block x y))
+		  ;; vertical scrolling
+		  ((= button 4)
+		   (scroll-up focused-block))
+		  ((= button 5)
+		   (scroll-down focused-block))
+		  ;; hold shift for horizontal scrolling
+		  ((and (= button 4)
+		        (holding-shift))
+		   (scroll-left focused-block))
+		  ((and (= button 5)
+		        (holding-shift))
+		   (scroll-right focused-block))
+		  ;; plain old click
+		  (t 
+		   (tap focused-block x y)))
 		(select self focused-block))
 	      (setf click-start nil))))
       (clear-drag-data self)
@@ -908,7 +926,6 @@ block found, or nil if none is found."
   (with-world self
     (when %browser (close-menus %browser))
     (focus-on self nil)
-    (exit-command-line self)
     (setf %selection nil)))
 
 (define-method start world ()

@@ -51,6 +51,12 @@
 (define-method layout handle ())
 (define-method toggle-halo handle () nil) ;; don't let halos have halos
 
+(define-method alternate-tap handle (x y) 
+  (tap self x y))
+
+(define-method scroll-tap handle (x y) 
+  (tap self x y))
+
 (define-method draw handle ()
   (with-fields (x y width height) %target
     (destructuring-bind (px py) (getf *indicator-positions* %indicator)
@@ -169,7 +175,7 @@
 (define-method pick halo ()
   (pick %target))
 
-(define-method alternate-tap halo (x y)
+(define-method scroll-tap halo (x y)
   (toggle-halo %target))
 	  
 (define-method draw-hover halo ())

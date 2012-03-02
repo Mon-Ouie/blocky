@@ -243,6 +243,10 @@
   (layout self)
   (center%super self))
 
+(define-method accept window (thing))
+
+(define-method draw-hover window ())
+
 (define-method after-unplug-hook window (thing)
   (destroy self))
 
@@ -277,11 +281,14 @@
   (expand %%menu)
   (mapc #'pin %inputs)
   (mapc #'pin (%inputs %%menu))
-  (setf %locked t))
+  (setf %locked nil))
 
 (defun make-browser ()
   (find-uuid 
    (new '"BLOCKY:BROWSER")))
+
+(define-method alternate-tap browser (x y))
+(define-method scroll-tap browser (x y))
 
 (define-method destroy browser ()
   (destroy%super self)
@@ -317,6 +324,10 @@
   (let ((menus (menu-items self)))
     (when (some #'expandedp menus)
       (mapc #'unexpand menus))))
+
+(define-method drop-dialog browser (dialog)
+  (multiple-value-bind (x y) (right-of self)
+    (add-block (world) dialog x y)))
 
 ;; Don't allow anything to be dropped on the menus, for now.
 
@@ -359,8 +370,7 @@
   (let ((dialog (new 'window 
 		     :title "Create a new project"
 		     :child (new 'create-project-dialog))))
-    (add-block (world) dialog)
-    (center dialog)))
+    (drop-dialog self dialog)))
 
 ;;; Loading a project
 
@@ -389,8 +399,7 @@
   (let ((dialog (new 'window 
 		     :title "Load a project"
 		     :child (new 'load-project-dialog))))
-    (add-block (world) dialog)
-    (center dialog)))
+    (drop-dialog self dialog)))
 
 ;;; Saving a project
 
@@ -416,8 +425,7 @@
 		     :title "Save current project"
 		     :child (new 'save-project-dialog))))
     (assert (windowp dialog))
-    (add-block (world) dialog)
-    (center dialog)))
+    (drop-dialog self dialog)))
 
 ;;; Splash screen
 

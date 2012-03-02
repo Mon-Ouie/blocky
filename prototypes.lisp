@@ -690,9 +690,9 @@ upon binding."
 
 ;; When a message cannot be delivered because no corresponding
 ;; function was found, BLOCKY attempts to re-send the message via the
-;; object's `forward' method (if any).
+;; object's `does-not-understand' method (if any).
 
-;; An object's `forward' method should accept the method-key as the
+;; An object's `does-not-understand' method should accept the method-key as the
 ;; first argument, and the arguments of the original message as the
 ;; remaining arguments.
 
@@ -721,8 +721,8 @@ If the method is not found, attempt to forward the message."
 		       (cache-method object method func)
 		       (apply func object args))
 		     ;; no such method. try forwarding
-		     (if (has-field :forward object)
-			 (apply (field-value :forward object)
+		     (if (has-field :does-not-understand object)
+			 (apply (field-value :does-not-understand object)
 				object method args)
 			 (error (format nil "Could not invoke method ~S" method)))))))))
 
@@ -1228,7 +1228,8 @@ OPTIONS is a property list of field options. Valid keys are:
 (defun is-a (type thing)
   (and type (blockyp thing)
        (string= (make-prototype-id type)
-		(object-name (object-super thing)))))
+		(object-name (object-super 
+			      (find-object thing))))))
 
 ;;; Cloning and duplicating objects
   

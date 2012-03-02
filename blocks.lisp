@@ -33,11 +33,15 @@
 		(symbol (symbol-name thing))
 		(string thing))))
     (string-downcase 
-     (substitute #\Space #\- name))))
+     (substitute #\Space #\- 
+		 (string-trim " " name)
+		 ))))
 
 (defun ugly-symbol (string)
-  (string-upcase
-   (substitute #\- #\Space string)))
+  (intern 
+   (string-upcase
+    (substitute #\- #\Space 
+		(string-trim " " string)))))
 
 (define-prototype block 
     (:documentation
@@ -55,13 +59,15 @@ Web at:
   (cursor-clock :initform 0)
   ;; general information
   (inputs :initform nil)
+  (read-only :initform nil)
   (input-names :initform nil)
   (results :initform nil)
   (category :initform :data)
   (tags :initform nil)
   (garbagep :initform nil)
+  (no-background :initform nil)
   (temporary :initform nil)
-  (methods :initform '(:make-reference :move-toward :add-tag :remove-tag :duplicate :make-sibling :move :move-to :play-sound :show :hide :is-visible))
+  (methods :initform nil)
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")
   (events :initform nil :documentation "Event bindings, if any. See also `bind-event'.")
   (default-events :initform nil)
@@ -140,6 +146,16 @@ areas.")
   "Remove this block from the simulation so that it stops  getting update
 events."
   (setf *blocks* (delete self *blocks* :test #'eq :key #'find-object)))
+
+;;; Read-only status
+
+(define-method toggle-read-only block ()
+  (setf %read-only (if %read-only nil t)))
+
+(define-method set-read-only block (&optional (read-only t))
+  (setf %read-only read-only))
+
+(define-method child-updated block (child))
 
 ;;; Defining composite blocks more simply
 
@@ -593,7 +609,26 @@ See `keys.lisp' for the full table of key and modifier symbols.
   nil)
 
 (define-method alternate-tap block (x y)
+  (with-fields (methods) self
+    (when methods
+      (if (= 1 (length methods))
+	  ;; just do the action if there's only one
+	  (send (first methods) self)
+	  ;; multiple actions require a menu
+	  (let ((menu (context-menu self)))
+	    (add-block (world) menu)
+	    (move-to menu x y))))))
+
+(define-method scroll-tap block (x y)
   (toggle-halo self))
+
+(define-method scroll-up block ())
+
+(define-method scroll-down block ())
+
+(define-method scroll-left block ())
+
+(define-method scroll-right block ())
 
 (define-method handle-point-motion block (x y)
   (declare (ignore x y)))
@@ -832,18 +867,19 @@ away from this object, in the angle HEADING."
   (multiple-value-bind (x y) (center-point self)
     (step-coordinates x y heading distance)))
 
-(define-method move-toward-heading block (heading &optional (distance 1))
+(define-method move block ((heading number :default 0.0)
+			   (distance number :default 1))
   "Move this object DISTANCE units toward the angle HEADING."
   (multiple-value-bind (x0 y0) (step-coordinates %x %y heading distance)
     (move-to self x0 y0)))
 
-(define-method move-forward block (distance)
+(define-method forward block ((distance number :default 1))
   "Move this object DISTANCE units toward its current heading."
-  (move-toward-heading self %heading distance))
+  (move self %heading distance))
 
-(define-method move-backward block (distance)
+(define-method backward block ((distance number :default 1))
   "Move this object DISTANCE units away from its current heading."
-  (move-toward-heading self (- (* 2 pi) %heading distance)))
+  (move self (- (* 2 pi) %heading) distance))
 
 (defmacro save-excursion (object &body body)
   "Evaluate the forms in BODY, on OBJECT, saving the turtle
@@ -915,10 +951,11 @@ state (position and heading) and restoring them afterward."
       (dolist (method (sort methods #'string<))
 	(push (make-method-menu-item self method (find-uuid self)) inputs))
       (make-menu
-       (list :label (concatenate 'string 
-				 "Methods: "
-				 (get-some-object-name self)
-				 " " (object-address-string self))
+       (list :label 
+	     (string-downcase 
+	      (concatenate 'string 
+			   (get-some-object-name self)
+			   " " (object-address-string self)))
 	     :inputs (nreverse inputs)
 	     :pinned nil
 	     :expanded t
@@ -1421,7 +1458,7 @@ the object if necessary."
   %label)
 
 (define-method label-width block ()
-  (if (null %label)
+  (if (or (null %label) (string= "" %label))
       0
       (+ (dash 2)
 	 (font-text-width %label *block-font*))))
@@ -1685,10 +1722,19 @@ Note that the center-points of the objects are used for comparison."
     (set-parent block self)
     (setf inputs (nconc inputs (list block)))))
 
-(define-method add-block block (block &optional x y)
+(define-method prepend-input block (block)
+  (assert (blockyp block))
+  (with-fields (inputs) self
+    (assert (not (contains self block)))
+    (set-parent block self)
+    (push block inputs)))
+
+(define-method add-block block (block &optional x y prepend)
   (assert (blockyp block))
   ;(assert (not (contains self block)))
-  (append-input self block)
+  (if prepend 
+      (prepend-input self block)
+      (append-input self block))
   (when (and (integerp x)
 	     (integerp y))
     (move-to block x y))
@@ -1824,6 +1870,7 @@ Note that the center-points of the objects are used for comparison."
 ;;; Vertically stacked list of blocks
 
 (define-block list
+  (spacing :initform 1)
   (dash :initform 2)
   (frozen :initform nil)
   (orientation :initform :vertical)
@@ -1847,9 +1894,9 @@ Note that the center-points of the objects are used for comparison."
   (mapcar #'evaluate %inputs))
 
 (define-method recompile list () 
-  (mapcar #'recompile %inputs))
   "Return the computed result of this block.  By default, all the
 inputs are evaluated."
+  (mapcar #'recompile %inputs))
   ;; (prog1 self
   ;;   (evaluate-inputs self)))
 
@@ -1938,24 +1985,23 @@ inputs are evaluated."
       (incf width (dash 3))))))
 
 (define-method layout-horizontally list ()
-  (with-fields (x y height width inputs dash) self
-    (flet ((ldash (&rest args)
-	     (apply #'dash 1 args)))
-    (let* ((header-height (ldash (header-height self)))
-	   (x0 (+ x (dash 1)))
-	   (y0 (ldash y))
-	   (line-height (font-height *font*)))
-      (setf height (ldash line-height))
-      (setf width (dash 8))
-      (dolist (element inputs)
-	(move-to element (ldash x0) y0)
-	(layout element)
-	(setf height (max height (+ (ldash) (field-value :height element))))
-	(incf x0 (field-value :width element))
-	(incf width (field-value :width element))
-	(incf width (dash 1)))
-      (incf height (dash 1))
-      (incf width (dash 3))))))
+  (with-fields (x y height spacing width inputs dash) self
+    (flet ((ldash (&rest args) (apply #'+ %spacing args)))
+      (let* ((header-height (ldash (header-height self)))
+	     (x0 (+ x spacing))
+	     (y0 (ldash y))
+	     (line-height (font-height *font*)))
+	(setf height (ldash line-height))
+	(setf width (dash 2))
+	(dolist (element inputs)
+	  (move-to element x0 y0)
+	  (layout element)
+	  (setf height (max height (+ (ldash) (field-value :height element))))
+	  (incf x0 (field-value :width element))
+	  (incf width (field-value :width element)))
+;	  (incf width spacing))
+	(incf height spacing)
+	(incf width spacing)))))
 
 (define-method layout list ()
   (with-fields (inputs) self
@@ -1969,7 +2015,8 @@ inputs are evaluated."
 
 (define-method draw list ()
   (with-fields (inputs) self
-    (draw-background self)
+    (unless %no-background 
+      (draw-background self))
     (if (null inputs)
 	(draw-label-string self *null-display-string*)
 	(dolist (each inputs)
@@ -1989,6 +2036,11 @@ inputs are evaluated."
   `(define-block (,name :super :list) ,@body))
 
 (defun null-block () (new 'list))
+
+(defun hlist (&rest args)
+  (let ((list (apply #'new 'list args)))
+    (prog1 list 
+      (setf (field-value :orientation list) :horizontal))))
 
 ;;; Horizontal list
 

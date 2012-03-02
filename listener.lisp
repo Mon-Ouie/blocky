@@ -76,7 +76,8 @@
   (install-text-keybindings self))
 
 (define-method handle-event prompt (event)
-  (handle-text-event self event))
+  (unless %read-only
+    (handle-text-event self event)))
 
 (define-method forward-char prompt ()
   (setf %point (min (1+ %point)
@@ -106,7 +107,7 @@
 
 (define-method delete-char prompt ()
   (with-fields (point line) self
-    (when (< 0 point (1- (length line)))
+    (when (<= 0 point (1- (length line)))
       (setf line (concatenate 'string
 			      (subseq line 0 point)
 			      (subseq line (1+ point)))))))
@@ -245,21 +246,23 @@
 
 (define-method tap prompt (mouse-x mouse-y)
   (declare (ignore mouse-y))
-  (with-fields (x y width height clock point parent background
-		  line) self
-    ;; find the left edge of the data area
-    (let* ((left (+ x (label-width self) (dash 4)))
-	   (tx (- mouse-x left)))
-      ;; which character was clicked?
-      (let ((click-index 
-	      (block measuring
-		(dotimes (ix (length line))
-		  (when (< tx (font-text-width 
-			       (subseq line 0 ix)
-			       *font*))
-		    (return-from measuring ix))))))
-	(when (numberp click-index)
-	  (setf point click-index))))))
+  (unless %read-only
+    (with-fields (x y width height clock point parent background
+		    line) self
+      ;; find the left edge of the data area
+      (let* ((left (+ x (label-width self) (dash 4)))
+	     (tx (- mouse-x left)))
+	;; which character was clicked?
+	(let ((click-index 
+		(block measuring
+		  (dotimes (ix (length line))
+		    (when (< tx (font-text-width 
+				 (subseq line 0 ix)
+				 *font*))
+		      (return-from measuring ix))))))
+	  (if (numberp click-index)
+	      (setf point click-index)
+	      (setf point (length line))))))))
 
 (define-method layout prompt ())
 
@@ -278,7 +281,7 @@
     (assert (not (null line)))
     (let ((label-width (label-width self))
 	  (line-width (font-text-width line *font*)))
-      (draw-box (dash 1.5 x label-width)
+      (draw-box (dash 0.5 x label-width)
 		(dash 1 y)
 		(dash 2 line-width)
 		(+ 1 (font-height *font*))
@@ -300,27 +303,28 @@
       ;; 		      (dash 1 y)
       ;; 		      :state state)
       (draw-indicator :bottom-right-triangle
-		      (dash 2 x -2 label-width line-width)
+		      (dash 1 x -2 label-width line-width)
 		      (+ y -2 fh)
 		      :state state))))
 
 (define-method draw-focus prompt () 
-  (with-fields (cursor-clock x y width line parent) self
-    (let* ((label (label-string self))
-	   (label-width (label-width self))
-	   (line-width (font-text-width line *font*)))
-      ;; draw shaded area for input
-      (draw-input-area self :active)
-      ;; draw cursor.
-      (update-cursor-clock self)
-      (draw-cursor self 
-		   :x-offset
-		   (dash 4 (font-text-width label *font*))
-		   :blink t)
-      ;; draw highlighted indicators
-      (draw-indicators self :active)
-      ;; redraw content (but not label)
-      (draw self :nolabel))))
+  (unless %read-only
+    (with-fields (cursor-clock x y width line parent) self
+      (let* ((label (label-string self))
+	     (label-width (label-width self))
+	     (line-width (font-text-width line *font*)))
+	;; draw shaded area for input
+	(draw-input-area self :active)
+	;; draw cursor.
+	(update-cursor-clock self)
+	(draw-cursor self 
+		     :x-offset
+		     (dash 3 (font-text-width label *font*))
+		     :blink t)
+	;; draw highlighted indicators
+	(draw-indicators self :active)
+	;; redraw content (but not label)
+	(draw self :nolabel)))))
 
 (define-method draw prompt (&optional nolabel)
   (with-fields (x y width height point parent background
@@ -336,15 +340,16 @@
 				%text-color
 				*default-prompt-outside-text-color*)
 		     :font *font*)
-	(update-layout-maybe self)
+ 	(update-layout-maybe self)
 	;; draw background for input
-	(draw-input-area self :inactive)
-	(draw-indicators self :inactive))
+	(unless %read-only
+	  (draw-input-area self :inactive)
+	  (draw-indicators self :inactive)))
       ;; draw current command line text
       (when (null line) (setf line ""))
       (unless (zerop (length line))
 	(draw-string line
-		     (dash 2 x (label-width self))
+		     (dash 1 x (label-width self))
 		     (+ y strings-y)
 		     :color %text-color
 		     :font *font*)))))
@@ -353,9 +358,9 @@
 
 (define-prototype entry (:super "BLOCKY:PROMPT")
   (category :initform :data)
-  (read-only :initform nil)
+  (methods :initform '(:toggle-read-only))
   (pinned :initform nil)
-  (minimum-width :initform 18)
+  (minimum-width :initform 10)
   (text-color :initform *default-entry-text-color*)
   (label-color :initform *default-entry-label-color*)
   type-specifier value)
@@ -372,7 +377,7 @@
 	%value value)
   ;; fill in the input box with the value
   (setf %line (if (null value)
-		  " "
+		  ""
 		  (if (stringp value)
 		      ;; no extraneous quotes unless it's a general sexp entry
 		      value
@@ -397,8 +402,9 @@
   %value)
 
 (define-method label-string entry ()
-  (or %label (getf %options :label)
-      "  "))
+  (or %label 
+      (getf %options :label)
+      ""))
       
 (define-method label-width entry ()
   (dash 2 (font-text-width (label-string self) *font*)))
@@ -412,38 +418,40 @@
   ;; 	       :font *font*))
 
 (define-method draw entry (&optional nolabel)
-  (with-fields (x y options text-color width parent height line) self
+  (with-fields (x y options read-only 
+		  text-color width 
+		  parent height line) self
     (let ((label-width (label-width self))
-	  (line-width (font-text-width line *font*))
-	  (fh (font-height *font*)))
+	  (line-width (font-text-width line *font*)))
       ;; draw the label string 
       (let ((*text-baseline* (+ y (dash 1))))
-	(assert (stringp text-color))
 	(unless nolabel 
 	  (when (plusp (length %label))
 	    (draw-label self))
 	  ;; draw shaded area for input
-	  (draw-input-area self :inactive)
-	  ;; draw indicators
-	  (draw-indicators self :inactive))
+	  (unless read-only
+	    (draw-input-area self :inactive)
+	    ;; draw indicators
+	    (draw-indicators self :inactive)))
 	;; draw current input string
 	(when (null line) (setf line ""))
 	(unless (zerop (length line))
 	  (draw-string line
-		       (+ (dash 2 x) label-width)
+		       (+ (dash 1 x) label-width)
 		       *text-baseline*
 		       :color %text-color
 		       :font *font*))))))
 		 
 (define-method do-sexp entry (sexp)
-  (with-fields (value type-specifier) self
+  (with-fields (value type-specifier parent) self
     (assert (and (listp sexp) (= 1 (length sexp))))
     (let ((datum (first sexp)))
       (if (or (null type-specifier)
 	      (type-check self datum))
 	  (setf value datum)
 	  (message "Warning: value entered does not match type ~S. Not storing value."
-		   type-specifier)))))
+		   type-specifier))
+      (when parent (child-updated parent self)))))
 
 (define-method enter entry ()
   (unless %read-only
@@ -451,8 +459,8 @@
 
 (define-method layout entry ()
   (with-fields (height width value line) self
-    (setf height (+ (* 2 *dash*) (font-height *font*)))
-    (setf width (+ (* 4 *dash*)
+    (setf height (+ (* 1 *dash*) (font-height *font*)))
+    (setf width (+ (* 2 *dash*)
 		   (label-width self)
 		   (max %minimum-width
 			(font-text-width line *font*))))))
@@ -511,7 +519,8 @@
 
 (define-method do-sexp string (sexp)
   (assert (stringp sexp))
-  (setf %value sexp))
+  (setf %value sexp)
+  (when %parent (child-updated %parent self)))
  
 (define-method set-value string (value)
   (when (stringp value)

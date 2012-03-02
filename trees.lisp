@@ -300,6 +300,11 @@
 	      (setf x %x y %y))))
 	self)))
 
+(define-method alternate-tap menu (x y)
+  (when (or (null %parent)
+	    (not (is-a 'menu %parent)))
+    (alternate-tap%super self x y)))
+
 (define-method tap menu (x y)
   (declare (ignore x y))
   (with-fields (action target) self

@@ -117,6 +117,10 @@
   (or (keyboard-modifier-down-p :lctrl)
       (keyboard-modifier-down-p :rctrl)))
 
+(defun holding-alt ()
+  (or (keyboard-modifier-down-p :lalt)
+      (keyboard-modifier-down-p :ralt)))
+
 (defun holding-shift ()
   (or (keyboard-modifier-down-p :lshift)
       (keyboard-modifier-down-p :rshift)))
@@ -200,12 +204,14 @@ Do not set this variable directly from a project; instead, call
 
 (defun hit-blocks (x y &optional (blocks *blocks*))
   (when blocks
-    (labels ((try (b)
-	       (send :hit b x y)))
-      (let ((parent (find-if #'try blocks :from-end t)))
-	(when parent
-	  (try parent))))))
-
+    (let ((x0 (truncate x))
+	  (y0 (truncate y)))
+      (labels ((try (b)
+		 (send :hit b x0 y0)))
+	(let ((parent (find-if #'try blocks :from-end t)))
+	  (when parent
+	    (try parent)))))))
+  
 (defun draw-blocks ()
   "Draw the active blocks to the screen."
   (dolist (block *blocks*)

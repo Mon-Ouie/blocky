@@ -51,6 +51,16 @@
       (draw (first %inputs))
       (draw-image "socket" %x %y)))
 
+(define-method layout socket ()
+  (if %inputs 
+      (progn 
+	(let ((target (first %inputs)))
+	  (move-to target %x %y)
+	  (layout target)
+	  (setf %height (%height target))
+	  (setf %width (%width target))))
+      (setf %height 16 %width 16)))
+
 (define-method draw-hover socket ()
   (with-fields (x y width height) self
     (draw-box x y width height :color "red" :alpha 0.5)))
@@ -58,17 +68,21 @@
 (define-method accept socket (other-block)
   "Replace the child object with OTHER-BLOCK."
   (when other-block 
-    (setf %inputs (list other-block))
-    (set-parent other-block self)))
+    (prog1 t
+      (setf %inputs (list other-block))
+      (set-parent other-block self))))
 
 (define-method evaluate socket ()
   (when %inputs (first %inputs)))
 
-(define-method can-pick socket () 
-  (not (null %inputs)))
-
+(define-method can-pick socket () t)
+  
 (define-method pick socket ()
-  (first %inputs))
+  ;; allow dragging of parent via empty socket
+  (if (null %inputs)
+      %parent
+      ;; otherwise, pick object
+      (first %inputs)))
 
 ;;; Inactive placeholder
 
@@ -77,6 +91,10 @@
 (define-method accept blank ())
 (define-method can-pick blank () nil)
 (define-method draw blank ())
+(define-method layout blank ()
+  (setf %height 2 %width 2))
+(define-method tap blank ())
+(define-method alternate-tap blank ())
 
 ;;; Message argument GUI
 
@@ -107,12 +125,13 @@
 
 (define-method initialize arguments (&key prototype schema method label target (button-p t))
   (initialize%super self)
+  (setf %no-background t)
   (setf %target target)
   (setf %button-p button-p)
   (let* ((proto0 (find-prototype (or prototype target "BLOCKY:BLOCK")))
 	 (schema0
 	   (or schema
-	       (method-schema proto0) method))
+	       (method-schema proto0 method)))
 	 (inputs nil)
 	 (proto (or prototype (when target
 				(object-name (find-super target))))))
@@ -140,11 +159,11 @@
 
 (define-method draw arguments ()
   (with-fields (x y width height label inputs) self
-    (when %button-p
-      (with-style :flat
-	(draw-patch self x y (+ x width) (+ y height))))
+    ;; (when %button-p
+    ;;   (with-style :flat
+    ;; 	(draw-patch self x y (+ x width) (+ y height))))
     (let ((*text-baseline* (+ y (dash 1))))
-      (draw-label-string self label "white")
+      (when label (draw-label-string self label "white"))
       (dolist (each inputs)
 	(draw each)))))
 
@@ -178,20 +197,50 @@
     (:super :list
      :fields 
      ((orientation :initform :horizontal)
+      (method :initform nil) 
       (style :initform :flat))
      :inputs 
-     (:target (new 'socket)
-      :method (new 'string)
+     (:method (new 'string)
       :arguments (new 'blank))))
 
 (define-method evaluate message ()
   (with-input-values (method target arguments) self 
-    (apply #'send method target arguments)))
+    (apply #'send method *target* arguments)))
 
-(define-method update-arguments message ()
-  (with-input-values (method target) self
-    (setf (third %inputs)
-	  (new 'arguments :method method :target target))))
+(define-method update-arguments-maybe message ()
+  (with-input-values (method) self
+    (when (plusp (length (string-trim " " method)))
+      (let ((method-key (make-keyword (ugly-symbol method))))
+	(when (not (eq method-key %method))
+	  ;; time to change args
+	  (setf %method method-key)
+	  (setf (second %inputs)
+		(new 'arguments :method method-key
+				:target *target*)))))))
+
+(define-method draw-hover message ()
+  nil)
+
+(define-method accept message ()
+  nil)
+
+(define-method child-updated message (child)
+  (when (object-eq child %%method)
+    (update-arguments-maybe self)))
+
+;;; Stacked messages to a particular receiver
+
+;; (define-block-macro phrase 
+;;     (:super :list
+;;      :fields 
+;;      ((orientation :initform :horizontal)
+;;       (style :initform :flat))
+;;      :inputs 
+;;      (:socket (new 'socket)
+;;       :messages (new 'list (new 'message)))))
+
+;; (define-method evaluate phrase 
+
 
 ;;; Palettes to tear cloned objects off of 
 
