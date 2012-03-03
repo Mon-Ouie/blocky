@@ -17,10 +17,10 @@
 *** TODO show lisp data and printer
 *** TODO show copyright 
 *** TODO show phrases
+*** TODO show toggle-orientation
 *** TODO show color and resize
-*** TODO show variable reference
 *** TODO show resizing of color while in parent
-
+*** TODO turtle var turtle square
 
 ** TODO make video
 

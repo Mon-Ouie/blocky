@@ -33,7 +33,6 @@ language is a human right.
 For more information on the design of Blocky, see
 http://blocky.io/design.html
 
-
 For a quick start to getting familiar with Blocky internals, see the
 included file GUIDE.ORG (or read the first parts of the
 [[http://blocky.io/reference.html][online Blocky reference manual]])
@@ -47,6 +46,7 @@ while editing Blocky sources and game modules.
 Here is a quick index of the various files:
 
 - COPYING: Licensing information, including full GPLv3 text
+- CREDITS: List of thank-yous for help, influences, dependencies
 - INSTALL: How to obtain and build Blocky from source
 - rgb.lisp: X11 color set
 - keys.lisp: SDL key symbol translation table
@@ -78,5 +78,5 @@ Here is a quick index of the various files:
 - build-unix.lisp: build script for unix
 - build-win32.lisp: build script for win32
 
-Blocky is (C) Copyright 2006-2011 by David T. O'Toole <dto@ioforms.org>
+Blocky is (C) Copyright 2006-2012 by David T. O'Toole <dto@ioforms.org>
 This program is dedicated to our beloved Yogi, who died 2006-10-06.

@@ -1,6 +1,6 @@
 ;;; path.lisp --- A* pathfinding for BLOCKY
 
-;; Copyright (C) 2009, 2011  David O'Toole
+;; Copyright (C) 2009, 2011, 2012  David O'Toole
 
 ;; Author: David O'Toole %dto@ioforms.org
 ;; Keywords: 

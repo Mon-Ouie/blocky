@@ -1,6 +1,6 @@
 ;;; blocks.lisp --- core visual language model for Blocky
 
-;; Copyright (C) 2010, 2011 David O'Toole
+;; Copyright (C) 2010, 2011, 2012 David O'Toole
 
 ;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: oop, languages, mouse, lisp, multimedia, hypermedia

@@ -1,6 +1,6 @@
 ;;; text.lisp --- a text control
 
-;; Copyright (C) 2008, 2009, 2010, 2011  David O'Toole
+;; Copyright (C) 2008, 2009, 2010, 2011, 2012  David O'Toole
 
 ;; Author: David O'Toole <dto@blocky.org>
 ;; Keywords: 

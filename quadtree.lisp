@@ -1,6 +1,6 @@
 ;;; quadtree.lisp --- for spatial indexing and stuff
 
-;; Copyright (C) 2011  David O'Toole
+;; Copyright (C) 2011, 2012  David O'Toole
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Keywords: 

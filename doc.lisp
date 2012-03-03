@@ -1,6 +1,6 @@
 ;;; doc.lisp --- extract blocky docs into orgmode format
 
-;; Copyright (C) 2009-2011  David O'Toole
+;; Copyright (C) 2009-2011, 2012  David O'Toole
 
 ;; Author: David O'Toole dto@ioforms.org
 ;; Keywords: lisp, tools

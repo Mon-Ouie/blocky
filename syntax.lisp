@@ -1,6 +1,6 @@
 ;;; syntax.lisp --- visual lisp macros for a blocky-in-blocky funfest
 
-;; Copyright (C) 2011  David O'Toole
+;; Copyright (C) 2011, 2012  David O'Toole
 
 ;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: 
@@ -114,7 +114,7 @@
   (world-variable (variable-name self)))
 
 (define-method pick-target variable ()
-  (evaluate self))
+  (or (evaluate self) self))
 
 ;;; Inactive placeholder
 
@@ -334,7 +334,8 @@
     (when in
       (pick-target (first in)))))
 
-(define-method accept phrase (thing))
+(define-method accept phrase (thing)
+  (accept %%messages thing))
 
 ;;; Palettes to tear cloned objects off of 
 

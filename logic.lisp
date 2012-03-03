@@ -1,6 +1,6 @@
 ;;; logic.lisp --- some useful functions adapted from PAIP
 
-;; Copyright (C) 2009, 2010, 2011  David O'Toole
+;; Copyright (C) 2009, 2010, 2011, 2012  David O'Toole
 
 ;; Author: David O'Toole %dto@ioforms.org
 ;; Keywords: 

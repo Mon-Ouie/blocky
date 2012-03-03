@@ -1,7 +1,7 @@
 ;;; trees.lisp --- generic folding hierarchical list widget with
 ;;;                indentation and headlines, a la orgmode
 
-;; Copyright (C) 2011  David O'Toole
+;; Copyright (C) 2011, 2012  David O'Toole
 
 ;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: 
