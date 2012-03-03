@@ -22,6 +22,8 @@
 
 ;;; Command prompt block
 
+(defparameter *logo-height* 26)
+
 (defparameter *active-prompt-color* "red")
 (defparameter *inactive-prompt-color* "gray10")
 (defparameter *prompt-cursor-inactive-color* "gray50")
@@ -32,7 +34,7 @@
 
 (defparameter *default-entry-text-color* "white")
 (defparameter *default-entry-label-color* "white")
-(defparameter *default-prompt-string* "Lisp: ")
+(defparameter *default-prompt-string* "     ")
 
 (defparameter *default-prompt-margin* 4)
 
@@ -287,11 +289,7 @@
 		(+ 1 (font-height *font*))
 		:color (ecase state
 			 (:active *active-prompt-color*)
-			 (:inactive (if (null parent)
-					"purple"
-					(if (eq :system (%category parent))
-					    "gray20"
-					    (find-color parent :shadow)))))))))
+			 (:inactive (find-color self :shadow)))))))
 
 (define-method draw-indicators prompt (state)
   (with-fields (x y options text-color width parent height line) self
@@ -439,9 +437,27 @@
 	  (draw-string line
 		       (+ (dash 1 x) label-width)
 		       *text-baseline*
-		       :color %text-color
+		       :color (find-color self :foreground)
 		       :font *font*))))))
 		 
+(define-method draw-focus entry ()
+  (unless %read-only 
+    (with-fields (x y line) self
+      (draw-input-area self :active)
+      (let ((*text-baseline* (+ y (dash 1))))
+	(unless (zerop (length line))
+	  (draw-string line
+		       (+ (dash 1 x) (label-width self))
+		       *text-baseline*
+		       :color *default-prompt-text-color*
+		       :font *font*))
+	(draw-indicators self :active)
+	(update-cursor-clock self)
+	(draw-cursor self 
+		     :x-offset
+		     (dash 3 (font-text-width (label-string self) *font*))
+		     :blink t)))))
+  
 (define-method do-sexp entry (sexp)
   (with-fields (value type-specifier parent) self
     (assert (and (listp sexp) (= 1 (length sexp))))
@@ -452,7 +468,7 @@
 	  (message "Warning: value entered does not match type ~S. Not storing value."
 		   type-specifier))
       (when parent (child-updated parent self)))))
-
+ 
 (define-method enter entry ()
   (unless %read-only
     (enter%super self :no-clear)))
@@ -507,7 +523,8 @@
   (category :initform :data))
 (defentry positive-integer (integer 1 *) 1)
 (defentry non-negative-integer (integer 0 *) 0)
-(defentry expression t nil)
+(defentry expression t nil 
+  (category :initform :expression))
 
 ;;; Plain text entry, as a string
 
@@ -547,6 +564,11 @@
 
 (define-method set-output listener-prompt (output)
   (setf %output output))
+
+(define-method can-pick listener-prompt () t)
+
+(define-method pick listener-prompt ()
+  %parent)
 
 (define-method do-sexp listener-prompt (sexp)
   (with-fields (output) self
@@ -654,11 +676,14 @@
 
 (define-method draw listener ()
   (with-fields (inputs x y height width) self
-    (draw-patch self x y (+ x width) (+ y height))
+    (with-style :rounded (draw-patch self x y (+ x width) (+ y height)))
     (if (null inputs)
 	(draw-label-string self *null-display-string*)
 	(dolist (each inputs)
-	  (draw each)))))
+	  (draw each)))
+    (draw-image "blocky" x (+ y (dash 1.7))
+;		:vertex-color "gray34"
+		:height *logo-height* :width *logo-height*)))
 
 ;;; Minibuffer-style status bar / listener
 

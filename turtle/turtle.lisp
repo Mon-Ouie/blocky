@@ -151,7 +151,6 @@
 (define-method accept meadow (other) nil)
 
 (defun turtle ()
-  (new 'system)
   (start (new 'world)))
 
 ;;; turtle.lisp ends here

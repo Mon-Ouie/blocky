@@ -131,7 +131,7 @@ either a symbol naming the field, or a list of the form (SYMBOL
 
 (defparameter *block-categories*
   '(:system :motion :event :message :looks :sound :structure :data :button
-    :menu :hover :control :comment :sensing :operators :variables)
+    :expression :menu :hover :control :comment :sensing :operators :variables)
   "List of keywords used to group blocks into different functionality
 areas.")
 
@@ -1060,7 +1060,8 @@ you want to align a group of text items across layouts.")
 
 (defparameter *block-colors*
   '(:motion "cornflower blue"
-    :system "black"
+    :system "gray50"
+    :expression "white"
     :button "orange"
     :terminal "gray25"
     :event "gray80"
@@ -1081,9 +1082,10 @@ you want to align a group of text items across layouts.")
 
 (defparameter *block-highlight-colors*
   '(:motion "sky blue"
-    :system "black"
+    :system "gray60"
     :hover "dark orange"
     :button "gold"
+    :expression "gray90"
     :event "gray90"
     :menu "gray30"
     :terminal "gray30"
@@ -1102,10 +1104,11 @@ you want to align a group of text items across layouts.")
 
 (defparameter *block-shadow-colors*
   '(:motion "royal blue"
-    :system "black"
+    :system "gray42"
     :event "gray70"
     :socket "gray90"
     :data "gray45"
+    :expression "gray90"
     :menu "gray15"
     :terminal "gray21"
     :button "DarkOrange"
@@ -1126,6 +1129,7 @@ you want to align a group of text items across layouts.")
     :system "white"
     :button "yellow"
     :event "gray40"
+    :expression "gray30"
     :terminal "white"
     :comment "gray20"
     :socket "gray20"

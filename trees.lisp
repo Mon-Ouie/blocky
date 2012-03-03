@@ -200,12 +200,12 @@
 	  ;; (when (plusp *tree-depth*)
 	  ;;   (draw-box x y width height :color (depth-gray *tree-depth*))))
       (draw-label-string self display-string)
-      (draw-indicator :down-triangle-open
-		      (+ %x (font-text-width display-string)
-			 (dash 4))
-		      (+ %y (dash 2))
-		      :scale 1.6
-		      :color "gray60")
+      ;; (draw-indicator :down-triangle-open
+      ;; 		      (+ %x (font-text-width display-string)
+      ;; 			 (dash 4))
+      ;; 		      (+ %y (dash 2))
+      ;; 		      :scale 1.6
+      ;; 		      :color "gray60")
       (draw-line (+ x 1) (dash 2 y header) 
 		 (+ x width -1) (dash 2 y header)
 		 :color (find-color self :highlight)))))

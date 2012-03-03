@@ -32,8 +32,8 @@
   (heading :initform 0.0)
   (height :initform 16)
   (width :initform 16)
-  (browser :initform nil)
-  (browser-open-p :initform nil)
+  (listener :initform nil)
+  (listener-open-p :initform nil)
   ;; objects and collisions
   (objects :initform nil :documentation "A hash table with all the world's objects.")
   (quadtree :initform nil)
@@ -52,11 +52,11 @@
   (default-events :initform
 		  '(((:tab) :tab)
 		    ((:tab :shift) :backtab)
-		    ((:x :alt) :enter-browser)
+		    ((:x :alt) :enter-listener)
 		    ((:g :control) :escape)
-		    ((:escape) :exit-browser)))
+		    ((:escape) :exit-listener)))
   (excluded-fields :initform
-		   '(:quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :browser :listener :drag :hover :highlight)
+		   '(:quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :listener :drag :hover :highlight)
 		   :documentation "Don't serialize the menu bar.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
@@ -466,19 +466,19 @@ slowdown. See also quadtree.lisp")
 ;; Including a system menu, editor, and controls for switching worlds
 ;; and pages in the system. Maybe zooming out on a mega virtual desktop.
 
-(define-method add-browser-maybe world ()
-  (when (not (has-local-value :browser self))
-    (setf %browser (make-browser))))
+(define-method add-listener-maybe world ()
+  (when (not (has-local-value :listener self))
+    (setf %listener (new 'listener))))
 
-(define-method enter-browser world ()
-  (add-browser-maybe self)
-  (setf %browser-open-p t)
+(define-method enter-listener world ()
+  (add-listener-maybe self)
+  (setf %listener-open-p t)
   (setf %last-focus %focused-block)
-  (focus-on self (get-listener %browser)))
+  (focus-on self %listener))
 
-(define-method exit-browser world ()
-  (add-browser-maybe self)
-  (setf %browser-open-p nil)
+(define-method exit-listener world ()
+  (add-listener-maybe self)
+  (setf %listener-open-p nil)
   (focus-on self %last-focus)
   (setf %last-focus nil))
 
@@ -489,7 +489,6 @@ slowdown. See also quadtree.lisp")
 
 (define-method update-shell-objects world ()
   (mapc #'update %inputs))
-;  (when %browser (update %browser)))
 
 (define-method draw-shell-objects world ()
   (with-world self
@@ -511,9 +510,9 @@ slowdown. See also quadtree.lisp")
 	(when hover 
 	  (draw-hover hover))
 	(draw drag))
-      (when %browser
+      (when %listener
 	(with-style :rounded
-	  (draw %browser)))
+	  (draw %listener)))
       ;; draw focus
       (when focused-block
 	(assert (blockyp focused-block))
@@ -537,7 +536,7 @@ slowdown. See also quadtree.lisp")
 	  (when (colliding-with-bounding-box object box)
 	    (draw object))))
       ;; possibly draw shell
-      (when %browser-open-p 
+      (when %listener-open-p 
 	(draw-shell-objects self)))))
   
 ;;; Simulation update
@@ -566,7 +565,7 @@ slowdown. See also quadtree.lisp")
 	      (quadtree-collide object))))
 	;; now outside the quadtree,
 	;; possibly update the shell
-	(when %browser-open-p
+	(when %listener-open-p
 	  (with-quadtree nil
 	    (layout-shell-objects self)
 	    (update-shell-objects self)))))))
@@ -623,10 +622,9 @@ slowdown. See also quadtree.lisp")
 	  %width *gl-screen-width* 
 	  %height *gl-screen-height*)
     (mapc #'layout %inputs)
-    ;; run browser across top
-    (when %browser-open-p
+    (when %listener-open-p
       (with-style :rounded
-	(layout %browser)))))
+	(layout %listener)))))
 
 (define-method select world (block &optional only)
   (with-world self
@@ -657,11 +655,11 @@ slowdown. See also quadtree.lisp")
 	  (let ((block
 		    (cond
 		      ;; we're focused. send the event there
-		      ((and %browser-open-p focused-block)
+		      ((and %listener-open-p focused-block)
 		       (prog1 focused-block
 			 (assert (blockyp focused-block))))
 		      ;; only one block selected. use that.
-		      ((and %browser-open-p
+		      ((and %listener-open-p
 			    (= 1 (length selection))
 			    (first selection)))
 		      ;; fall back to player
@@ -691,12 +689,12 @@ block found, or nil if none is found."
       (labels ((try (b)
 		 (when b
 		   (hit b x y))))
-	;; check browser and inputs first
+	;; check listener and inputs first
 	(let* ((object-p nil)
 	       (result 
 		 (or 
-		  (when %browser-open-p 
-		    (try %browser))
+		  (when %listener-open-p 
+		    (try %listener))
 		  (let ((parent 
 			  (find-if #'try 
 				   %inputs
@@ -799,8 +797,8 @@ block found, or nil if none is found."
 	    (progn
 	      (setf highlight (find-uuid (hit-inputs self mouse-x mouse-y)))))))))
     ;; (when (null highlight)
-  ;;   (when %browser
-  ;;     (with-world self (close-menus %browser))))))))
+  ;;   (when %listener
+  ;;     (with-world self (close-menus %listener))))))))
 
 (define-method press world (x y &optional button)
   (declare (ignore button))
@@ -814,8 +812,8 @@ block found, or nil if none is found."
 	(setf %object-p object-p)
 	(if (null block)
 	    (focus-on self nil)
-	      ;; (when %browser-open-p
-	      ;; 	(exit-browser self)))
+	      ;; (when %listener-open-p
+	      ;; 	(exit-listener self)))
 	    (progn 
 	      (setf click-start (cons x y))
 	      (setf click-start-block (find-uuid block))
@@ -924,7 +922,6 @@ block found, or nil if none is found."
   
 (define-method escape world ()
   (with-world self
-    (when %browser (close-menus %browser))
     (focus-on self nil)
     (setf %selection nil)))
 

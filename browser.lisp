@@ -189,8 +189,6 @@
 
 (define-block headline title)
 
-(defparameter *logo-height* 18)
-
 (defparameter *blocky-title-string* "Blocky 0.92a")
 
 (define-method initialize headline (&optional (title *project*))

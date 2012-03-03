@@ -44,9 +44,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.6568544"
-     inkscape:cx="531.48749"
-     inkscape:cy="776.32821"
+     inkscape:zoom="4.0000001"
+     inkscape:cx="583.86967"
+     inkscape:cy="776.07747"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -104,7 +104,7 @@
          sodipodi:role="line">blockλ</tspan></text>
     <g
        id="g3900"
-       transform="matrix(13.190615,0,0,13.190615,-3010.0268,-4631.7006)"
+       transform="matrix(13.190615,0,0,13.190615,-2907.2768,-4646.2006)"
        inkscape:export-filename="/home/dto/Desktop/blocky-logo3.png"
        inkscape:export-xdpi="407.34"
        inkscape:export-ydpi="407.34">
@@ -325,5 +325,51 @@
              style="fill:#ffca07;fill-opacity:1"
              id="tspan3830">λ</tspan></tspan></text>
     </g>
+    <path
+       sodipodi:nodetypes="ccccccccc"
+       style="fill:#c2c2c2;fill-opacity:1;stroke-width:2.70000005;stroke-miterlimit:4"
+       d="m 723.15678,306.91878 10.96272,32.14962 c -0.005,3.00997 -2.43868,5.42622 -5.44865,5.41765 l -37.6228,0.0923 c -3.00997,-0.005 -5.42622,-2.43881 -5.41752,-5.44864 l 2.28106,-36.07541 c 0.3047,-8.76635 2.06235,-10.90284 4.93764,-11.70417 l 20.51576,0.28228 c 5.95358,1.33568 5.82972,6.24127 9.79192,15.2899 z"
+       id="path3045"
+       inkscape:connector-curvature="0" />
+    <g
+       style="fill:#ffffff;fill-opacity:1"
+       transform="matrix(13.189883,0.13891591,-0.13891591,13.189883,-3194.2722,-5024.6604)"
+       id="g3047"
+       inkscape:export-filename="/home/dto/blocky/rect3063.png"
+       inkscape:export-xdpi="148.86"
+       inkscape:export-ydpi="148.86">
+      <g
+         id="g3049"
+         style="font-size:9.42843723000000011px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Ubuntu;-inkscape-font-specification:Ubuntu Bold"
+         transform="matrix(0.41482161,-0.00396547,0.00396547,0.41482161,225.1948,203.2849)">
+        <path
+           inkscape:connector-curvature="0"
+           id="path3051"
+           d="m 162.07838,468.52376 c -0.0629,-0.24514 -0.13514,-0.52171 -0.21685,-0.8297 -0.0817,-0.308 -0.16972,-0.61914 -0.264,-0.93342 -0.088,-0.32056 -0.176,-0.62856 -0.264,-0.92399 -0.088,-0.29542 -0.17285,-0.55627 -0.25456,-0.78256 -0.088,0.22629 -0.18229,0.48714 -0.28286,0.78256 -0.10057,0.29543 -0.20114,0.60343 -0.30171,0.92399 -0.0943,0.31428 -0.18542,0.62542 -0.27342,0.93342 -0.088,0.30799 -0.16343,0.58456 -0.22628,0.8297 l -1.44255,0 c 0.28285,-0.97427 0.5877,-1.88254 0.91455,-2.72482 0.33314,-0.84227 0.65999,-1.57769 0.98056,-2.20625 -0.0754,-0.19485 -0.14771,-0.36457 -0.21685,-0.50914 -0.0629,-0.15085 -0.132,-0.27656 -0.20743,-0.37714 -0.0754,-0.10056 -0.16343,-0.17599 -0.26399,-0.22628 -0.10058,-0.0503 -0.22315,-0.0754 -0.36771,-0.0754 -0.0817,1e-5 -0.16343,0.006 -0.24514,0.0189 -0.0817,0.0126 -0.17286,0.0377 -0.27343,0.0754 l -0.24514,-1.13142 c 0.11943,-0.0377 0.26086,-0.0723 0.42428,-0.10371 0.16343,-0.0377 0.35514,-0.0566 0.57514,-0.0566 0.21371,1e-5 0.40856,0.022 0.58456,0.066 0.18228,0.044 0.34571,0.11629 0.49028,0.21685 0.15085,0.10058 0.28913,0.23572 0.41485,0.40543 0.12571,0.16343 0.24514,0.36457 0.35828,0.60342 0.14457,0.308 0.28914,0.64114 0.43371,0.99941 0.14456,0.352 0.28285,0.71342 0.41485,1.08427 0.13828,0.36457 0.26713,0.73228 0.38657,1.10313 0.1257,0.37085 0.24199,0.72913 0.34885,1.07484 0.10685,0.33943 0.20428,0.65999 0.29228,0.9617 0.088,0.30171 0.16342,0.56885 0.22628,0.80142 l -1.49912,0"
+           style="fill:#ffffff;fill-opacity:1" />
+      </g>
+    </g>
+    <text
+       sodipodi:linespacing="125%"
+       id="text3053"
+       y="338.01059"
+       x="553.5426"
+       style="font-size:54.56658173px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#808080;fill-opacity:1;stroke:none;font-family:Sans"
+       xml:space="preserve"><tspan
+         style="font-size:54.56658173px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#808080;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu Bold"
+         y="338.01059"
+         x="553.5426"
+         id="tspan3055"
+         sodipodi:role="line">block</tspan></text>
+    <rect
+       style="fill:none;fill-opacity:1;stroke-width:2.70000004999999987;stroke-miterlimit:4;stroke-dasharray:none"
+       id="rect3063"
+       width="53.25"
+       height="58.75"
+       x="599.25"
+       y="200.36221"
+       ry="0.41862738"
+       inkscape:export-xdpi="148.86"
+       inkscape:export-ydpi="148.86" />
   </g>
 </svg>

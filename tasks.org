@@ -1,26 +1,23 @@
-* TODO Syntax demo
-** TODO typing on air
-** TODO socket argument type in schema
-** TODO simple block reference for "self" "world" and arbitrary ones
+* TODO Syntax demo vid
+** TODO smaller lisp listener that pops up anywhere you press M-x
+*** TODO don't deselect when dropping
+** TODO make list of things to show in video
+** TODO VAR simple block reference for "self" "world" and arbitrary ones
 *** TODO <--- assignment method << or "is"
-*** TODO "new" is a method 
 *** TODO naming objects in Talk To Me style
-** TODO allow message stacking
+*** TODO hitting Lambda for a var ref
+** TODO typing on air for minimal complete interface
+*** TODO middle-click to create floating listener
+** TODO socket argument type in schema
 ** TODO local variable palettes that can also name the func/closure
 ** TODO add schemata to more methods
+
+** TODO [#B] highly visible error block appearing to right-of browser
 ** TODO [#C] ephemeral context menu that disappears when you click the background2
 ** TODO [#C] dividers for which class methods came from (union field)
 ** TODO [#B] tighten up message layout
-** TODO [#B] highly visible error block appearing to right-of browser
 ** TODO [#C] add new objects in the foreground
-*** TODO Lisp literals
-** TODO new block macro with: 
-*** TODO allow inline editing of message name (via better context popups)
-*** TODO dynamic arguments gui by replacing message block
-*** TODO left-squarey-socket messages (with implicit self?)
-*** TODO "message" becomes simply a way of building a simple (or complex) argument GUI, not a scratch-style block
 ** TODO [#C] generic lock/unlock halo?
-* TODO rework message syntax in a more smalltalk-like direction
 * TODO choose simple syntax for wiki page name scoping which allows default to project package
 *** TODO "name" without any colon, is a project-specific page
 *** TODO with any colons, it's special and refers to something 
@@ -1225,6 +1222,64 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_TIME: 2012-03-02 Fri 10:53
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: Syntax demo
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO "new" is a method
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-02 Fri 17:54
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Syntax demo/simple block reference for "self" "world" and arbitrary ones
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** DONE allow message stacking
+   CLOSED: [2012-03-02 Fri 17:55]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-02 Fri 17:55
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Syntax demo
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END:
+
+** TODO new block macro with:
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-02 Fri 17:55
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Syntax demo
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+*** TODO allow inline editing of message name (via better context popups)
+*** TODO dynamic arguments gui by replacing message block
+*** TODO left-squarey-socket messages (with implicit self?)
+*** TODO "message" becomes simply a way of building a simple (or complex) argument GUI, not a scratch-style block
+
+** TODO rework message syntax in a more smalltalk-like direction
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-02 Fri 17:55
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO Lisp literals
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-02 Fri 18:41
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Syntax demo vid
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO disable browser for now
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-02 Fri 19:14
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: Syntax demo vid
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
    :END:
