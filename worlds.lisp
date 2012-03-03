@@ -54,7 +54,11 @@
 		    ((:tab :shift) :backtab)
 		    ((:x :alt) :enter-listener)
 		    ((:g :control) :escape)
-		    ((:escape) :exit-listener)))
+		    ((:escape) :exit-listener)
+		    ((:f1) :add-message)
+		    ((:f2) :add-phrase)
+		    ((:f3) :add-variable)
+		    ))
   (excluded-fields :initform
 		   '(:quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :listener :drag :hover :highlight)
 		   :documentation "Don't serialize the menu bar.")
@@ -215,6 +219,9 @@
 (define-method drop-block world (block x y)
   (add-object self block)
   (move-to block x y))
+
+(define-method drop-at-pointer world (object)
+  (drop-block self *pointer-x* *pointer-y*))
 
 (define-method contains-object world (object)
   (gethash (find-uuid object) 

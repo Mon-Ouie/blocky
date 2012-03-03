@@ -1,18 +1,27 @@
 * TODO Syntax demo vid
-** TODO smaller lisp listener that pops up anywhere you press M-x
-*** TODO don't deselect when dropping
-** TODO VAR simple block reference for "self" "world" and arbitrary ones
-*** TODO <--- assignment method << or "is"
-*** TODO naming objects in Talk To Me style
-*** TODO hitting Lambda for a var ref
-** TODO socket argument type in schema
-** TODO world add-object [ladybug new]
+** TODO CONTROL 1 place message 2 place phrase 3 place var 4 place literal
+** TODO [#A] socket argument type in schema
+**** TODO socket labels
+** TODO [#A] REF simple block reference for "self" "world" and arbitrary ones
+*** TODO [#A] <--- assignment method << or "is"
+*** TODO [#B] hitting Lambda for a var ref
+*** TODO [#C] naming objects in Talk To Me style
+** TODO [#A] world add-object [ladybug new]
+** TODO [#B] don't deselect listener when dropping
 ** TODO typing on air for minimal complete interface
 *** TODO middle-click to create floating listener
 ** TODO local variable palettes that can also name the func/closure
 ** TODO add schemata to more methods
 
 ** TODO make list of things to show in video
+*** TODO show lisp data and printer
+*** TODO show copyright 
+*** TODO show phrases
+*** TODO show color and resize
+*** TODO show variable reference
+*** TODO show resizing of color while in parent
+
+
 ** TODO make video
 
 ** TODO [#B] highly visible error block appearing to right-of browser

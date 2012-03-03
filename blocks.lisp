@@ -695,6 +695,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
   (declare (ignore x y)) 
   self)
 
+(define-method pick-target block () self)
+
 (define-method can-escape block ()
   t)
 
@@ -1073,7 +1075,7 @@ you want to align a group of text items across layouts.")
     :sound "orchid"
     :message "orange"
     :control "orange1"
-    :variables "DarkOrange2"
+    :variables "maroon3"
     :operators "OliveDrab3"
     :sensing "DeepSkyBlue3")
   "X11 color names of the different block categories.")
@@ -1095,7 +1097,7 @@ you want to align a group of text items across layouts.")
     :sound "plum"
     :message "gold"
     :control "gold"
-    :variables "DarkOrange1"
+    :variables "maroon2"
     :operators "OliveDrab1"
     :sensing "DeepSkyBlue2")
   "X11 color names of highlights on the different block categories.")
@@ -1117,7 +1119,7 @@ you want to align a group of text items across layouts.")
     :sound "violet red"
     :message "DarkOrange"
     :control "dark orange"
-    :variables "DarkOrange3"
+    :variables "maroon4"
     :operators "OliveDrab4"
     :sensing "steel blue")
   "X11 color names of shadows on the different block categories.")
@@ -1988,8 +1990,8 @@ inputs are evaluated."
     (let* ((header-height (header-height self))
 	   (y0 (+ y (if (zerop header-height) spacing (dash 2 header-height))))
 	   (line-height (font-height *font*)))
-      (setf height (ldash line-height))
-      (setf width (dash 8))
+      (setf height (ldash))
+      (setf width (dash 6))
       (dolist (element inputs)
 	(move-to element (ldash x) y0)
 	(layout element)
@@ -1997,7 +1999,7 @@ inputs are evaluated."
 ;	(incf height spacing)
 	(incf y0 (field-value :height element))
 	(setf width (max width (field-value :width element))))
-      (incf width (dash 1))))))
+      (incf width (dash 2))))))
 
 (define-method layout-horizontally list ()
   (with-fields (x y height spacing width inputs dash) self

@@ -84,6 +84,38 @@
       ;; otherwise, pick object
       (first %inputs)))
 
+(define-method initialize socket (&optional input label)
+  (setf %input input %label label))
+
+;;; Object variable
+
+(define-block (variable :super :list)
+  (name :initform nil)
+  (category :initform :variables))
+
+(define-method initialize variable (name)
+  (assert (and (stringp name)
+	       (plusp (length name))))
+  (setf %name name)
+  (apply #'initialize%super self
+	 (list (new 'string :value name)))
+  (mapc #'pin %inputs))
+
+(define-method accept variable (thing))
+
+(define-method variable-name variable ()
+  (make-keyword (evaluate (first %inputs))))
+
+(define-method << variable ((target block))
+  (setf (world-variable (variable-name self))
+	target))
+
+(define-method evaluate variable ()
+  (world-variable (variable-name self)))
+
+(define-method pick-target variable ()
+  (evaluate self))
+
 ;;; Inactive placeholder
 
 (deflist blank)
@@ -114,7 +146,7 @@
   (when %button-p
     (evaluate self)))
 
-(define-method can-pick arguments () t)
+;(define-method can-pick arguments () t)
 
 ;; (define-method pick arguments ()
 ;;   ;; allow to move parent block by the labels of this arguments block
@@ -140,10 +172,11 @@
 	   (or schema
 	       (method-schema proto method)))
 	 (inputs nil))
+    ;; create labels and controls
     (dolist (entry schema0)
       (let ((thing 
 	      (if (eq 'block (schema-type entry))
-		  (new 'socket)
+		  (new 'socket :label (pretty-string (schema-name entry)))
 		  (clone (if (eq 'string (schema-type entry))
 			     "BLOCKY:STRING" "BLOCKY:ENTRY")
 			 :value (schema-option entry :default)
@@ -299,7 +332,7 @@
 (define-method get-target phrase ()
   (let ((in (%inputs %%target)))
     (when in
-      (first in))))
+      (pick-target (first in)))))
 
 (define-method accept phrase (thing))
 

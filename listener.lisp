@@ -408,6 +408,16 @@
   (or %label 
       (getf %options :label)
       ""))
+
+;; (define-method can-pick entry () 
+;;   (if (is-a 'arguments %parent)
+;;       t
+;;       (can-pick%super self)))
+
+;; (define-method pick entry ()
+;;   (if (is-a 'arguments %parent)
+;;       %parent
+;;       (pick%super self)))
       
 (define-method label-width entry ()
   (dash 2 (font-text-width (label-string self) *font*)))
