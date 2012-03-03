@@ -289,7 +289,12 @@
 		(+ 1 (font-height *font*))
 		:color (ecase state
 			 (:active *active-prompt-color*)
-			 (:inactive (find-color self :shadow)))))))
+			 (:inactive 
+			  (find-color 
+			   (or 
+			    (unless (is-a 'world %parent)
+			      %parent)
+			    self) :shadow)))))))
 
 (define-method draw-indicators prompt (state)
   (with-fields (x y options text-color width parent height line) self
@@ -389,9 +394,9 @@
   %value)
 
 (define-method set-value entry (value)
+  (message "VALUE: ~S" value)
   (setf %value value)
-  (clear-line self)
-  (insert self (prin1-to-string value)))
+  (setf %line (prin1-to-string value)))
 
 (define-method get-value entry ()
   %value)
@@ -679,10 +684,13 @@
     (with-style :rounded (draw-patch self x y (+ x width) (+ y height)))
     (if (null inputs)
 	(draw-label-string self *null-display-string*)
-	(dolist (each inputs)
-	  (draw each)))
-    (draw-image "blocky" x (+ y (dash 1.7))
-;		:vertex-color "gray34"
+	(with-style :flat
+	    (dolist (each inputs)
+	      (draw each))))
+    (draw-image "blocky" 
+		x
+		(- (+ y height)
+		   (+ (dash 1.5) *logo-height*))
 		:height *logo-height* :width *logo-height*)))
 
 ;;; Minibuffer-style status bar / listener

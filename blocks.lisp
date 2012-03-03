@@ -302,8 +302,6 @@ engine. The field `%tags' is a set of keyword symbols; if a symbol
     (unplug-from-parent child))
   (set-parent child self))
 
-(define-method set-value block (value))
-
 (define-method update-parent-links block ()
   (dolist (each %inputs)
     (set-parent each self)))
@@ -1984,11 +1982,11 @@ inputs are evaluated."
 	  height (+ (font-height *font*) (* 4 *dash*)))))
 
 (define-method layout-vertically list ()
-  (with-fields (x y height width inputs dash) self
+  (with-fields (x y height width spacing inputs dash) self
     (flet ((ldash (&rest args)
 	     (apply #'dash 1 args)))
     (let* ((header-height (header-height self))
-	   (y0 (+ y (if (zerop header-height) (dash 1) (dash 2 header-height))))
+	   (y0 (+ y (if (zerop header-height) spacing (dash 2 header-height))))
 	   (line-height (font-height *font*)))
       (setf height (ldash line-height))
       (setf width (dash 8))
@@ -1996,10 +1994,10 @@ inputs are evaluated."
 	(move-to element (ldash x) y0)
 	(layout element)
 	(incf height (field-value :height element))
+;	(incf height spacing)
 	(incf y0 (field-value :height element))
 	(setf width (max width (field-value :width element))))
-;      (incf height (dash 1))
-      (incf width (dash 3))))))
+      (incf width (dash 1))))))
 
 (define-method layout-horizontally list ()
   (with-fields (x y height spacing width inputs dash) self

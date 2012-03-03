@@ -1,20 +1,23 @@
 * TODO Syntax demo vid
 ** TODO smaller lisp listener that pops up anywhere you press M-x
 *** TODO don't deselect when dropping
-** TODO make list of things to show in video
 ** TODO VAR simple block reference for "self" "world" and arbitrary ones
 *** TODO <--- assignment method << or "is"
 *** TODO naming objects in Talk To Me style
 *** TODO hitting Lambda for a var ref
+** TODO socket argument type in schema
+** TODO world add-object [ladybug new]
 ** TODO typing on air for minimal complete interface
 *** TODO middle-click to create floating listener
-** TODO socket argument type in schema
 ** TODO local variable palettes that can also name the func/closure
 ** TODO add schemata to more methods
 
+** TODO make list of things to show in video
+** TODO make video
+
 ** TODO [#B] highly visible error block appearing to right-of browser
 ** TODO [#C] ephemeral context menu that disappears when you click the background2
-** TODO [#C] dividers for which class methods came from (union field)
+** TODO [#C] subtree dividers for which class methods came from (union field)
 ** TODO [#B] tighten up message layout
 ** TODO [#C] add new objects in the foreground
 ** TODO [#C] generic lock/unlock halo?

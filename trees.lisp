@@ -288,14 +288,11 @@
 
 (define-method pick menu ()
   (when %target
-    (if (or (keywordp %action) (blockyp %action))
-	(let ((send (new 'message 
-			 :prototype (find-super-prototype-name %target)
-			 :method %method
-			 :target %target
-			 :label (pretty-string %method))))
-	  (prog1 send 
-	    (with-fields (x y) send
+    (if (keywordp %method)
+	(let ((message
+		(message-for-method %method %target)))
+	  (prog1 message 
+	    (with-fields (x y) message
 	      (setf x %x y %y))))
 	self)))
 

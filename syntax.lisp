@@ -133,11 +133,12 @@
   (setf %no-background t)
   ;; (setf %target target)
   (setf %button-p button-p)
-  (let* ((proto (or prototype target))
-	 (proto-name (find-super-prototype-name proto))
+  (let* ((proto (or prototype 
+		    (when target (find-super-prototype-name target))
+		    "BLOCKY:BLOCK"))
 	 (schema0
 	   (or schema
-	       (method-schema proto-name method)))
+	       (method-schema proto method)))
 	 (inputs nil))
     (dolist (entry schema0)
       (let ((thing 
@@ -149,9 +150,7 @@
 			 :parent (find-uuid self)
 			 :type-specifier (schema-type entry)
 			 :options (schema-options entry)
-			 :label (concatenate 'string
-					     ":" ;; mimic the keyword arguments visually
-					     (string-downcase (symbol-name (schema-name entry))))))))
+			 :label (pretty-string (schema-name entry))))))
 	(push thing inputs)))
     (when inputs 
       (setf %inputs (nreverse inputs)))
@@ -206,19 +205,27 @@
      ((orientation :initform :horizontal)
       (category :initform :message)
       (method :initform nil) 
+      (target :initform nil)
       (style :initform :flat))
      :inputs 
      (:method (new 'string)
       :arguments (new 'blank))))
 
-(define-method evaluate message ()
-  (with-input-values (arguments) self 
-    (apply #'send %method *target* arguments)))
-
 (define-method get-target message ()
   (if (is-a 'phrase-list %parent)
       (get-target %parent)
-      *target*))
+      ;; global overrides local
+      (or *target* %target "BLOCKY:BLOCK")))
+
+(define-method set-target message (target)
+  (setf %target target))
+
+(define-method evaluate message ()
+  (with-input-values (arguments) self 
+    (apply #'send 
+	   %method 
+	   (get-target self)
+	   arguments)))
 
 (define-method update-arguments-maybe message ()
   (with-input-values (method) self
@@ -231,6 +238,16 @@
 	  (setf (second %inputs)
 		(new 'arguments :method method-key
 				:target target)))))))
+
+(define-method set-method message (method)
+  (set-value %%method (pretty-string method))
+  (update-arguments-maybe self))
+
+(defun message-for-method (method target)
+  (let ((message (new 'message)))
+    (prog1 message
+      (set-target message target)
+      (set-method message method))))
 
 (define-method child-updated message (child)
   (when (object-eq child %%method)
@@ -246,6 +263,7 @@
 
 (deflist phrase-list
     (category :initform :message)
+  (spacing :initform 0)
   (no-background :initform t))
 
 (define-method get-target phrase-list ()
