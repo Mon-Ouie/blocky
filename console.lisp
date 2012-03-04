@@ -2321,7 +2321,7 @@ of the music."
 
 (defun blocky ()
   (with-session
-    (start (new 'world))
+    (start (find-wiki-page *desktop*))
     (start-session)))
 
 ;; (defun create (project)

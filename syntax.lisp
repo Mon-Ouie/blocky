@@ -120,6 +120,26 @@
 	 (pick-target self)
 	 arguments))
 
+;;; Self reference
+
+(define-block-macro self 
+    (:super :list
+     :fields ((category :initform :variables))
+     :inputs ((new 'string :value "self" :locked t :read-only t))))
+
+(define-method recompile self () 'self)
+
+(define-method evaluate self () 
+  (field-value :self (world)))
+
+(define-method pick-target self ()
+  (evaluate self))
+
+(define-method forward-message self (method arguments)
+  (apply #'send method 
+	 (evaluate self)
+	 arguments))
+
 ;;; Inactive placeholder
 
 (deflist blank)

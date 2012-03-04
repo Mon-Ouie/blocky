@@ -362,6 +362,7 @@
 (define-prototype entry (:super "BLOCKY:PROMPT")
   (category :initform :data)
   (methods :initform '(:toggle-read-only))
+  (locked :initform nil)
   (pinned :initform nil)
   (minimum-width :initform 10)
   (text-color :initform *default-entry-text-color*)
@@ -369,13 +370,14 @@
   type-specifier value)
 
 (define-method initialize entry 
-    (&key value type-specifier options label label-color parent
+    (&key value type-specifier options label label-color parent locked
     read-only)
   (initialize%super self)
   ;(assert (and value type-specifier))
   (when parent (setf %parent parent))
   (setf %type-specifier type-specifier
 	%options options
+	%locked locked
 	%read-only read-only
 	%value value)
   ;; fill in the input box with the value
@@ -419,6 +421,10 @@
 ;;       %parent
 ;;       (pick%super self)))
       
+(define-method toggle-read-only entry ()
+  (unless %locked
+    (setf %read-only (if %read-only nil t))))
+
 (define-method label-width entry ()
   (dash 2 (font-text-width (label-string self) *font*)))
 

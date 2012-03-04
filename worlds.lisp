@@ -28,6 +28,7 @@
   (background-color :initform "white")
   (x :initform 0)
   (y :initform 0)
+  (self :initform nil)
   (paused :initform nil)
   (heading :initform 0.0)
   (height :initform 16)
@@ -86,6 +87,7 @@
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
 	       :documentation "A cons (X . Y) of relative mouse click location on dragged block.")
+  (prototype-name :initform "BLOCKY:BLOCK")
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
@@ -194,8 +196,11 @@
   (or (null %objects)
       (zerop (hash-table-count %objects))))
 
-(define-method initialize world (&optional name)
+(define-method initialize world (&key name)
   (initialize%super self)
+  (setf %wiki-name name)
+  (setf %prototype-name 
+	(or (
   (setf %ghost (new 'block))
   (setf %variables (make-hash-table :test 'equal))
   (setf %objects (make-hash-table :test 'equal)))

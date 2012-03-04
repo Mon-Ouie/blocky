@@ -363,6 +363,13 @@ extended argument list ARGLIST."
     (eq (find-object a)
 	(find-object b))))
 
+(defun find-schema (method &optional target)
+  (let ((source (or (when target
+		      (find-super-prototype-name 
+		       (send :pick-target target)))
+		    "BLOCKY:BLOCK")))
+    (method-schema source method)))
+
 ;;; Emacs Lisp compatibilty macro 
 
 (defmacro while (test &body body)
@@ -1394,6 +1401,8 @@ objects after reconstruction, wherever present."
 
 (defvar *wiki* nil)
 
+(defvar *desktop* "desktop:")
+
 (defun initialize-wiki ()
   (setf *wiki* 
 	(make-hash-table :test 'equal :size 8192)))
@@ -1418,6 +1427,10 @@ objects after reconstruction, wherever present."
 		 (string *wiki-delimiter*) 
 		 name)))
 
+(defun project-wiki-name (project)
+  (assert (not (special-wiki-name-p project)))
+  (concatenate 'string project ":"))
+
 (defun prototype-wiki-name (thing)
   (cond
     ((blockyp thing)
@@ -1431,11 +1444,42 @@ objects after reconstruction, wherever present."
 	       (not (keywordp method))))
   (concatenate 'string 
 	       (prototype-wiki-name object)
-	       *wiki-delimiter*
+	       (string *wiki-delimiter*)
 	       (string-upcase (symbol-name method))))
+
+(defun wiki-name-project (name)
+  (when (special-wiki-name-p name)
+    (subseq name 0 (position *wiki-delimiter* name))))
+
+(defun wiki-name-prototype (name)
+  (when (special-wiki-name-p name)
+    (let* ((colon (position *wiki-delimiter* name))
+	   (colon2 (position *wiki-delimiter* 
+			     (subseq name (1+ colon)))))
+      (subseq name 
+	      (+ 1 colon) 
+	      (when colon2 (+ 1 colon colon2))))))
+  
+(defun wiki-name-method (name)
+  (when (special-wiki-name-p name)
+    (let* ((colon (position *wiki-delimiter* name))
+	   (remainder (subseq name (1+ colon)))
+	   (colon2 (position *wiki-delimiter* remainder)))
+      (when (and colon colon2)
+	(subseq remainder (1+ colon2))))))
 
 ;; (prototype-wiki-name (new 'turtle))
 ;; (find-super-prototype-name 'block)
+;; (find-super-prototype-name 'entry)
+;; (find-super-prototype-name 'integer)
+;; (find-super-prototype-name 'world)
+;; (method-wiki-name 'move)
+;; (method-wiki-name 'set-color "BLOCKY:COLOR")
+;; (wiki-name-project "BLOCKY:BLOCK")
+;; (wiki-name-prototype "BLOCKY:ENTRY")
+;; (wiki-name-prototype "BLOCKY:BLOCK:MOVE")
+;; (wiki-name-method "BLOCKY:BLOCK:DRAW")
+;; (wiki-name-method "BLOCKY:BLOCK:DRAW")
 
 (defun add-wiki-page (name object)
   (assert (blockyp object))
@@ -1450,15 +1494,8 @@ objects after reconstruction, wherever present."
 (defun find-wiki-page (name &optional (create t))
   (or (gethash name *wiki*)
       (if create
-	  (add-wiki-page name (new 'world))
+	  (add-wiki-page name (new 'world :name name))
 	  (error "Cannot find wiki page ~S" name))))
-
-(defun find-schema (method &optional target)
-  (let ((source (or (when target
-		      (find-super-prototype-name 
-		       (send :pick-target target)))
-		    "BLOCKY:BLOCK")))
-    (method-schema source method)))
 
 ;;; Printing objects
 
