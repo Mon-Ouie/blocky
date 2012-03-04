@@ -193,7 +193,7 @@
   (or (null %objects)
       (zerop (hash-table-count %objects))))
 
-(define-method initialize world ()
+(define-method initialize world (&optional name)
   (initialize%super self)
   (setf %ghost (new 'block))
   (setf %variables (make-hash-table :test 'equal))

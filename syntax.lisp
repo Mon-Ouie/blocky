@@ -116,6 +116,10 @@
 (define-method pick-target variable ()
   (or (evaluate self) self))
 
+(define-method does-not-understand variable (method arguments)
+  (let ((target (evaluate self)))
+    (when target (apply #'send method target arguments))))
+
 ;;; Inactive placeholder
 
 (deflist blank)

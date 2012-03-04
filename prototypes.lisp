@@ -3,7 +3,6 @@
 ;; Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012  David O'Toole
 ;; Author: David O'Toole dto@ioforms.org
 ;; Keywords: oop
-;; Version: 1.8
 ;;
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -77,6 +76,9 @@ Bart Botta's CL-OPENGL tutorials; see http://3bb.cc/tutorials/cl-opengl/
 This program includes the free DejaVu fonts family in the subdirectory
 ./standard.blocky/. For more information, see the file named
 DEJAVU-FONTS-LICENSE in that subdirectory.
+
+Please see the included text file CREDITS for more information on the
+technology behind Blocky.
 ")
 
 ;;; Extended argument lists
@@ -293,7 +295,6 @@ extended argument list ARGLIST."
 
 ;;; UUID object dictionary
 
-
 (defun make-uuid ()
   (uuid:print-bytes 
    nil 
@@ -396,15 +397,18 @@ extended argument list ARGLIST."
     (if (null thing)
 	(error "Cannot make a prototype ID for nil.")
 	(string-upcase
-	 (etypecase thing
-	   (blocky:object (object-name thing))
-	   (string 
+	 (cond 
+	   ((string= "BLOCKY:BLOCK" thing) thing)
+	   ((blocky:object-p thing)
+	    (object-name thing))
+;	   ((blockyp thing) (object-name 
+	   ((stringp thing) 
 	    (apply #'concatenate 'string 
 		   (if (search delimiter thing)
 		       (list thing)
 		       (list (package-name package)
 			     delimiter thing))))
-	   (symbol 
+	   ((symbolp thing)
 	    ;; check for things that are already in COMMON-LISP package
 	    (let ((thing-package (symbol-package thing)))
 	      (let ((prefix (if (eq thing-package (find-package :common-lisp))
@@ -416,16 +420,6 @@ extended argument list ARGLIST."
 			(if create name
 			    (concatenate 'string "BLOCKY" delimiter (symbol-name thing))))))))))))))
   
-
-		      ;; 	   ;; is there a built-in prototype with this
-		      ;; 	   ;; name, or is it something from CL-USER?
-		      ;; (list 
-		      ;;  (if (find-prototype project-candidate :noerror)
-		      ;; 	   project-candidate
-		      ;; 	   (concatenate 'string "BLOCKY:" 
-		      ;; 			      (symbol-name thing))))))))))))
-
-
 ;;; Object data structure
 
 ;; Each object's "bookkeeping data" is stored in a structure. The
@@ -725,8 +719,8 @@ If the method is not found, attempt to forward the message."
 		       (apply func object args))
 		     ;; no such method. try forwarding
 		     (if (has-field :does-not-understand object)
-			 (apply (field-value :does-not-understand object)
-				object method args)
+			 (funcall (field-value :does-not-understand object)
+				  object method args)
 			 (error (format nil "Could not invoke method ~S" method)))))))))
 
 (define-condition null-next (error)
@@ -1390,6 +1384,69 @@ objects after reconstruction, wherever present."
 	  (make-uuid))
     (add-object-to-database (find-object duplicate))))
 
+;;; Wiki pages 
+
+(defvar *wiki* nil)
+
+(defun initialize-wiki ()
+  (setf *wiki* 
+	(make-hash-table :test 'equal :size 8192)))
+
+(initialize-wiki)
+
+(defun find-wiki-name (thing)
+  (when (blockyp thing)
+    ;; see also blocks.lisp
+    (send :wiki thing)))
+    
+(defparameter *wiki-delimiter* #\:)
+
+(defun special-wiki-name-p (name)
+  (position *wiki-delimiter* name))
+
+(defun verbose-symbol-name (sym &optional other-package)
+  (let ((name (symbol-name sym))
+	(package (package-name (symbol-package sym))))
+    (concatenate 'string 
+		 (or other-package package)
+		 (string *wiki-delimiter*) 
+		 name)))
+
+(defun prototype-wiki-name (thing)
+  (cond
+    ((blockyp thing)
+     (make-prototype-id thing))
+     ;; passthru for existing prototype names
+    ((stringp thing)
+     thing)))
+
+(defun method-wiki-name (method &optional (object "BLOCKY:BLOCK"))
+  (assert (and (symbolp method)
+	       (not (keywordp method))))
+  (concatenate 'string 
+	       (prototype-wiki-name object)
+	       *wiki-delimiter*
+	       (string-upcase (symbol-name method))))
+
+;; (prototype-wiki-name (new 'turtle))
+;; (find-super-prototype-name 'block)
+
+(defun add-wiki-page (name object)
+  (assert (blockyp object))
+  (when (null *wiki*)
+    (initialize-wiki))
+  (prog1 object
+    (setf (gethash 
+	   (or name (find-wiki-name object))
+	   *wiki*)
+	  (find-uuid object))))
+
+(defun find-wiki-page (name &optional (create t))
+  (or (gethash name *wiki*)
+      (if create
+	  (add-wiki-page name (new 'world))
+	  (error "Cannot find wiki page ~S" name))))
+
 ;;; Printing objects
 
 (defun get-some-object-name (ob)
@@ -1410,7 +1467,7 @@ objects after reconstruction, wherever present."
 
 (defun print-iob (foo stream)
   (let ((object (find-object foo)))
-    (format stream "#<BLX ~A ~A>" 
+    (format stream "#<% ~A ~A>" 
 	    (get-some-object-name object)
 	    (object-address-string object))))
 

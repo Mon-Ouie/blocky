@@ -59,6 +59,7 @@ Web at:
   (cursor-clock :initform 0)
   ;; general information
   (inputs :initform nil)
+  (wiki-name :initform nil)
   (read-only :initform nil)
   (input-names :initform nil)
   (results :initform nil)
@@ -124,7 +125,7 @@ either a symbol naming the field, or a list of the form (SYMBOL
 	      (setf name0 name)
 	      (when super (setf super0 super)))))
     `(define-prototype ,name0 (:super ,(make-prototype-id super0))
-       (operation :initform ,(make-keyword name0))
+       (wiki-name :initform ,(verbose-symbol-name name0))
        ,@(if (keywordp (first args))
 	  (plist-to-descriptors args)
 	  args))))
@@ -141,6 +142,16 @@ areas.")
 (define-method create block ()
   (new self))
 
+;;; Wiki pages
+
+(define-method get-wiki-name block () %wiki-name)
+
+(define-method set-wiki-name block ((name string))
+  (setf %wiki-name name))
+
+(define-method wiki block ()
+  (find-wiki-page %wiki-name))
+
 ;;; Adding blocks to the simulation
 
 (define-method start block ()
@@ -149,7 +160,7 @@ areas.")
     (setf *blocks* (adjoin self *blocks*))))
 
 (define-method stop block ()
-  "Remove this block from the simulation so that it stops  getting update
+  "Remove this block from the simulation so that it stops getting update
 events."
   (setf *blocks* (delete self *blocks* :test #'eq :key #'find-object)))
 
