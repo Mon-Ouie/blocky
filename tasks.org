@@ -1,5 +1,7 @@
 * TODO KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
 
+** TODO F1 help F
+** TODO middle-click drag is a simple gesture menu with up down left=back right=forward
 ** TODO [#A] Working map editor; maps are wiki page/worlds
 ** TODO [#A] improve defresource and call it define-resource
 *** TODO resource-defining block-ui
