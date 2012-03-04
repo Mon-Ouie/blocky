@@ -679,6 +679,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (define-method grab-focus block () 
   (send :focus-on (world) self))
 
+(define-method pick-focus block () self)
+
 ;;; Squeak-style pop-up halo with action handles
 
 ;; see also halo.lisp
@@ -1776,6 +1778,25 @@ Note that the center-points of the objects are used for comparison."
   (assert (blockyp block))
   (assert (contains self block))
   (delete-input self block))
+
+;;; Buttons for next/previous
+
+(defvar *next-tab* nil)
+
+(define-method tab block (&optional backward)
+  (if *next-tab*
+      (focus-on (world) *next-tab*)
+      (let ((index (position-within-parent self)))
+	(when (numberp index)
+	  (focus-on (world)
+		    (with-fields (inputs) %parent
+		      (nth (mod (+ index
+				   (if backward -1 1))
+				(length inputs))
+			   inputs)))))))
+
+(define-method backtab block ()
+  (tab self :backward))
 
 ;;; Simple scheduling mechanisms
 

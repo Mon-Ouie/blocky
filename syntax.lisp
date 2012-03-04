@@ -93,9 +93,8 @@
   (name :initform nil)
   (category :initform :variables))
 
-(define-method initialize variable (name)
-  (assert (and (stringp name)
-	       (plusp (length name))))
+(define-method initialize variable (&optional (name ""))
+  (assert (stringp name))
   (setf %name name)
   (apply #'initialize%super self
 	 (list (new 'string :value name)))
@@ -156,7 +155,7 @@
 ;; (define-method pick arguments ()
 ;;   ;; allow to move parent block by the labels of this arguments block
 ;;   (if %button-p self %parent))
-      ;; (if (is-a 'phrase-list %parent)
+      ;; (if (is-a 'statement-list %parent)
       ;; 	  (%parent %parent)
       ;; 	  %parent)))
 
@@ -207,6 +206,9 @@
 (define-method draw-hover arguments ()
   nil)
 
+(define-method pick-focus arguments ()
+  (first %inputs))
+
 ;;; Lisp value printer block
 
 (define-block-macro printer 
@@ -236,6 +238,7 @@
      ((orientation :initform :horizontal)
       (category :initform :message)
       (method :initform nil) 
+      (updated :initform nil)
       (target :initform nil)
       (style :initform :flat))
      :inputs 
@@ -243,7 +246,7 @@
       :arguments (new 'blank))))
 
 (define-method get-target message ()
-  (if (is-a 'phrase-list %parent)
+  (if (is-a 'statement-list %parent)
       (get-target %parent)
       ;; global overrides local
       (or *target* %target "BLOCKY:BLOCK")))
@@ -267,7 +270,13 @@
 	  (setf %method method-key)
 	  (setf (second %inputs)
 		(new 'arguments :method method-key
-				:target target)))))))
+				:target target))
+	  (setf %updated t))))))
+
+(define-method update message ()
+  (when %updated
+    (grab-focus (first %inputs))
+    (setf %updated nil)))
 
 (define-method set-method message (method)
   (set-value %%method (pretty-string method))
@@ -289,28 +298,43 @@
 (define-method accept message (thing)
   nil)
 
+;; (define-method tab message () 
+;;   (when (is-a 'arguments %%arguments)
+;;     (focus-on (world) (first (%inputs %%arguments)))))
+
+;; (define-method backtab message ())
+
 ;;; Stacked messages to a particular receiver
 
-(deflist phrase-list
+(deflist statement-list
     (category :initform :message)
   (spacing :initform 0)
+  (default-events :initform '(((:return :alt) :add-message)
+			      ((:backspace :alt) :remove-message)))
   (no-background :initform t))
 
-(define-method get-target phrase-list ()
+(define-method add-message statement-list ()
+  (accept self (new 'message)))
+
+(define-method remove-message statement-list ()
+  (setf (cdr (last %inputs))
+	nil))
+
+(define-method get-target statement-list ()
   (assert %parent)
   (get-target %parent))
 
-(define-method accept phrase-list (thing)
+(define-method accept statement-list (thing)
   (when (is-a 'message thing)
     (accept%super self thing)))
 
-(define-method can-pick phrase-list () t)
+(define-method can-pick statement-list () t)
       
-(define-method pick phrase-list () 
-  (when (is-a 'phrase %parent)
+(define-method pick statement-list () 
+  (when (is-a 'statement %parent)
     %parent))
 
-(define-block-macro phrase 
+(define-block-macro statement 
     (:super :list
      :fields 
      ((orientation :initform :horizontal)
@@ -318,17 +342,17 @@
       (style :initform :flat))
      :inputs 
      (:target (new 'socket)
-      :messages (new 'phrase-list (new 'message)))))
+      :messages (new 'statement-list (new 'message)))))
 
-(define-method evaluate phrase ()
+(define-method evaluate statement ()
   (with-target %%target
     (dolist (message (%inputs %%messages))
       (evaluate message))))
 
-(define-method get-target phrase ()
+(define-method get-target statement ()
   (first (%inputs %%target)))
 
-(define-method accept phrase (thing)
+(define-method accept statement (thing)
   (accept %%messages thing))
 
 ;;; Palettes to tear cloned objects off of 

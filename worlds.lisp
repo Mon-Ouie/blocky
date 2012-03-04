@@ -56,8 +56,9 @@
 		    ((:g :control) :escape)
 		    ((:escape) :exit-listener)
 		    ((:f1) :add-message)
-		    ((:f2) :add-phrase)
+		    ((:f2) :add-statement)
 		    ((:f3) :add-variable)
+		    ((:f4) :add-expression)
 		    ))
   (excluded-fields :initform
 		   '(:quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :listener :drag :hover :highlight)
@@ -214,14 +215,30 @@
 
 (define-method add-block world (object &optional x y prepend)
   (remove-thing-maybe self object)
-  (add-block%super self object x y prepend))
+  (add-block%super self object x y))
 
 (define-method drop-block world (block x y)
   (add-object self block)
   (move-to block x y))
 
 (define-method drop-at-pointer world (object)
-  (drop-block self *pointer-x* *pointer-y*))
+  (add-block self object *pointer-x* *pointer-y* :prepend))
+
+;; (define-method drop-dwim world (object)
+;;   (if %focused-block 
+;;       (accept 
+
+(define-method add-message world ()
+  (drop-at-pointer self (new 'message)))
+
+(define-method add-statement world ()
+  (drop-at-pointer self (new 'statement)))
+
+(define-method add-variable world ()
+  (drop-at-pointer self (new 'variable)))
+
+(define-method add-expression world ()
+  (drop-at-pointer self (new 'expression)))
 
 (define-method contains-object world (object)
   (gethash (find-uuid object) 
@@ -732,7 +749,9 @@ block found, or nil if none is found."
 	  (destroy-halo last-focus)
 	  (lose-focus last-focus))
       ;; now set up the new focus (possibly nil)
-      (setf focused-block (when block (find-uuid block)))
+      (setf focused-block (when block 
+			    (find-uuid 
+			     (pick-focus block))))
       ;; sanity check
       (assert (or (null focused-block)
 		  (blockyp focused-block)))
@@ -910,19 +929,9 @@ block found, or nil if none is found."
       (invalidate-layout self))))
 
 (define-method tab world (&optional backward)
-  (with-world self
-    (with-fields (focused-block) self
-      (when focused-block
-	(assert (blockyp %focused-block))
-	(with-fields (parent) focused-block
-	  (let ((index (position-within-parent focused-block)))
-	    (when (numberp index)
-	      (focus-on self
-			(with-fields (inputs) parent
-			  (nth (mod (+ index
-				       (if backward -1 1))
-				    (length inputs))
-			       inputs))))))))))
+  (when %focused-block
+    (with-world self
+      (tab %focused-block backward))))
 
 (define-method backtab world ()
   (tab self :backward))
