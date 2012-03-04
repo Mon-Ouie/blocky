@@ -1,77 +1,37 @@
 * TODO KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
 
-* TODO choose simple syntax for wiki page name scoping which allows default to project package
-*** TODO wikify blocky so that each method and each block type
-       have their own (possibly empty) wiki page with a definition (in
-       a list) and/or comments (everything else) USE THE SAME %NAMES
-*** TODO wiki "pages" are actually blocks and prototypes and such, auto-named
-*** TODO "name" without any colon, is a project-specific page
-*** TODO with colons, it's special and refers to something 
-**** TODO index:
-**** TODO help:
-**** TODO packagename:
-**** TODO packagename:blockname
-**** TODO packagename:blockname:methodname
-
-** TODO make variables use does-not-understand
-
-** TODO CONTROL 1 place message 2 place phrase 3 place var 4 place literal
+** TODO [#A] CONTROL 1 place message 2 place phrase 3 place var 4 place literal
 *** TODO place message at pointer
 *** TODO add message after current focused message in a phrase
-** TODO other keyboard accels
+** TODO [#A] other keyboard accels
 ** TODO [#A] world add-object [ladybug new]
-** TODO [#B] hitting Lambda handle for a var ref
-** TODO [#C] naming objects in Talk To Me style
-** TODO [#B] don't deselect listener when dropping
 ** TODO [#A] add new objects in the foreground
-** TODO [#B] fix Control keybindings
-** TODO typing on air for minimal complete interface
-*** TODO middle-click to create floating listener
 ** TODO [#A] local variable palettes that can also name the func/closure
 ** TODO [#A] add schemata to more methods
-
-** TODO [#B] highly visible error block appearing to right-of browser
-** TODO [#C] ephemeral context menu that disappears when you click the background2
-** TODO [#C] subtree dividers for which class methods came from (union field)
-** TODO [#C] generic lock/unlock halo?
-* TODO choose simple syntax for wiki page name scoping which allows default to project package
-*** TODO "name" without any colon, is a project-specific page
-*** TODO with any colons, it's special and refers to something 
+** TODO [#A] hitting Lambda handle for a var ref
+** TODO [#A] don't deselect listener when dropping
+** TODO [#A] fix Control keybindings
+** TODO [#A] wikify blocky so that each method and each block type
+      have their own (possibly empty) wiki page with a definition (in
+      a list) and/or comments (everything else) USE THE SAME %NAMES
+**** TODO wiki "pages" are actually blocks and prototypes and such, auto-named
+**** TODO "name" without any colon, is a project-specific page
+**** TODO with colons, it's special and refers to something 
 **** TODO index:
 **** TODO help:
 **** TODO packagename:
 **** TODO packagename:blockname
 **** TODO packagename:blockname:methodname
-
-* system->browser
-
-* TODO Wiki browser is the system menu
-** TODO 
-** TODO wikipage database 
-** TODO blocks
-** TODO 8 vdesktops by default on f1-f8 (switcher showing title)
-** TODO Open browsers on multiple vdesktops each visiting own page
-** TODO Palette on right side
-
+** TODO [#A] complete credits file and ensure all docs/license copies in place.
 ** TODO [#A] fix scrolling
-** TODO [#A] review smalltalk-elements
-** TODO [#A] review byob
-** TODO [#A] improve defresource and call it define-resource
-** TODO [#A] Working map editor
-** TODO [#A] resource-defining block-ui
-**** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
 ** TODO [#A] flesh out basic Projects operations dialogs
 **** TODO test save project dialog
 **** TODO test load project dialog
 **** TODO accept pathnames so that you can run a blocky module no matter what the dir name is
 **** TODO recent projects persistent variable
-** TODO [#A] Ability to scroll the world with the mouse wheel
 ** TODO [#A] selecting single world object
-** TODO [#A] selecting multiple objects
-** TODO [#A] the clipboard is a world, paste/duplicate
 ** TODO [#A] hotkey for moving objects up from world
 ** TODO [#A] right click on world objects to bring them back into top layer
-** TODO [#A] complete credits file and ensure all docs/license copies in place.
 ** TODO [#A] fix project dir naming issues. allow opening any .iof including index.iof 
 ** TODO [#A] Implement basic blocks library (see list below)
 ** TODO [#A] System Browser in the menu, for choosing what to define methods on (or blocks from)
@@ -89,6 +49,22 @@
 ***** cl-gettext
 ****  Visual theme-ability for the color-blind and visually-impaired users (larger font, higher contrast etc)
 ****  Braille keyboard and speech synthesis integration for blind users
+** TODO [#B] typing on air for minimal complete interface
+** TODO [#B] highly visible error block appearing to right-of browser
+** TODO choose simple syntax for wiki page name scoping which allows default to project package
+*** TODO "name" without any colon, is a project-specific page
+*** TODO with any colons, it's special and refers to something 
+**** TODO index:
+**** TODO help:
+**** TODO packagename:
+**** TODO packagename:blockname
+**** TODO packagename:blockname:methodname
+** TODO [#B] improve defresource and call it define-resource
+** TODO [#B] Working map editor
+** TODO [#B] resource-defining block-ui
+**** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
+** TODO [#B] selecting multiple objects
+** TODO [#B] the clipboard is a world, paste/duplicate
 ** TODO [#B] Adapt line-of-sight code to new collision system
 ** TODO [#B] Adapt pathfinding code to new collision system
 ** TODO [#B] prevent objects leaving quadtree
@@ -196,6 +172,14 @@
 ***  compilation options
 ** TODO [#B] allow any font size to be requested
 ** TODO [#B] GLSL https://github.com/jtza8/interact/blob/master/src/filter.lisp http://www.swiftless.com/glsltuts.html
+** TODO [#C] naming objects in Talk To Me style
+** TODO [#C] ephemeral context menu that disappears when you click the background2
+** TODO [#C] subtree dividers for which class methods came from (union field)
+** TODO [#C] generic lock/unlock halo?
+** TODO [#C] 8 vdesktops by default on f1-f8 (switcher showing title)
+** TODO [#C] Open browsers on multiple vdesktops each visiting own page
+** TODO [#C] Palette on right side
+** TODO [#C] Ability to scroll the world with the mouse wheel
 ** TODO [#C] Better explanation of blocks
 ** TODO [#C] don't change layers when dragging an object
 ** TODO [#C] rewrite prototype explanation to include more clear language, relevant to games, and more 
@@ -1353,6 +1337,34 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_TIME: 2012-03-03 Sat 19:26
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** DONE make variables use does-not-understand
+   CLOSED: [2012-03-03 Sat 23:17]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-03 Sat 23:17
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: choose simple syntax for wiki page name scoping which allows default to project package
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END:
+
+** TODO [#A] review smalltalk-elements
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-03 Sat 23:18
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: choose simple syntax for wiki page name scoping which allows default to project package
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO [#A] review byob
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-03 Sat 23:18
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: choose simple syntax for wiki page name scoping which allows default to project package
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
    :END:
