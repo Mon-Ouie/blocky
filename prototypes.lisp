@@ -26,8 +26,8 @@
 ;; are no classes; instead, objects are cloned from other objects
 ;; called "prototypes", from which the new objects may inherit data
 ;; and behavior. The details of inheritance, message passing, and
-;; field lookup are inspired by the Io language and the Garnet UI
-;; toolkit.
+;; field lookup are inspired by Smalltalk, Objective-C, the Io
+;; language, and the Garnet UI toolkit.
 
 ;; http://en.wikipedia.org/wiki/Prototype-based_programming
 ;; http://en.wikipedia.org/wiki/Message_passing
