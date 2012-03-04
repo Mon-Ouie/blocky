@@ -520,7 +520,7 @@
   ;; print any error output
   (when (and (stringp %error-output)
 	     (plusp (length %error-output)))
-    (drop self (new 'text %error-output))))
+    (add-block (world) (new 'text %error-output) *pointer-x* *pointer-y*)))
 
 ;;; Easily defining new entry blocks
 
