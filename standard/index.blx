@@ -116,6 +116,8 @@
 (:name "asterisk" :type :image :file "asterisk.png" :properties (:filter :linear))
 (:name "menu" :type :image :file "menu.png" :properties (:filter :linear))
 (:name "colorbang" :type :image :file "colorbang.png" :properties (:filter :linear))
+(:name "plus" :type :image :file "plus.png" :properties (:filter :linear))
+(:name "minus" :type :image :file "minus.png" :properties (:filter :linear))
 (:name "socket" :type :image :file "socket.png" :properties (:filter :linear))
 (:name "collapse" :type :image :file "collapse.png" :properties (:filter :linear))
 (:name "move" :type :image :file "move.png" :properties (:filter :linear))
