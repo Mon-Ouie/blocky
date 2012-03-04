@@ -1,59 +1,44 @@
 * TODO KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
 
-** TODO F1 help F
-** TODO middle-click drag is a simple gesture menu with up down left=back right=forward
-** TODO [#A] Working map editor; maps are wiki page/worlds
-** TODO [#A] improve defresource and call it define-resource
-*** TODO resource-defining block-ui
-**** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
+** TODO [#A] self and world variable blocks
+** TODO [#A] lisp literal variables 
 ** TODO [#A] Generic + handle to add message
-** TODO [#A] add schemata to more methods
-** TODO [#A] browser in the menu, for choosing what to define methods on (or blocks from)
-** TODO [#A] world add-object [ladybug new]
+**** TODO Keybinding for add-foo in current list SHIFT-F1 etc
 ** TODO [#A] local variable palettes that can also name the func/closure
-** TODO [#A] wikify blocky so that each method and each block type
-      have their own (possibly empty) wiki page with a definition (in
-      a list) and/or comments (everything else) USE THE SAME %NAMES
-**** TODO wiki "pages" are actually blocks and prototypes and such, auto-named
-**** TODO "name" without any colon, is a project-specific page
-**** TODO with colons, it's special and refers to something 
-**** TODO index:
-**** TODO help:
-**** TODO packagename:
-**** TODO packagename:blockname
-**** TODO packagename:blockname:methodname
-** TODO [#A] flesh out basic Projects operations dialogs
+** TODO [#A] add schemata to more methods
+** TODO [#A] arbitrary lisp function message wrapper
+
+** TODO [#B] improve defresource and call it define-resource
+**** TODO resource-defining block-ui
+**** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
+** TODO [#B] wiki browser: substring match as you type , for choosing what to define methods on (or blocks from)
+**** TODO [#B] scrolling list box
+** TODO [#B] flesh out basic Projects operations dialogs
 **** TODO test save project dialog
 **** TODO test load project dialog
 **** TODO accept pathnames so that you can run a blocky module no matter what the dir name is
 **** TODO recent projects persistent variable
-** TODO [#A] define-block PALETTE so that there's a place to pull useful objects from 
-** TODO [#A] Improve error handling in shell
+** TODO [#B] define-block PALETTE so that there's a place to pull useful objects from 
+** TODO [#B] Improve error handling in shell
 **** isolate/trap all block errors and display them grayed out with an inspectable error
 **** define-method error shell
 **** better error handling for menu methods
 **** define-method warning shell
 **** redirect messages to message bar. optionally fading notifications with widgets in them** TODO [#A] Restore basic collision detection functionality
-** TODO [#A] duplicate halo handle
-** TODO [#A] PRINTer blocks
-** TODO [#A] Universal access
+** TODO [#B] Working map editor; maps are wiki page/worlds
+** TODO [#B] duplicate halo handle
+** TODO [#B] Universal access
 ****  How to handle Translations? keywords in most languages are in English even if comments/variable names are French or Japanese or whatever)
 ***** cl-gettext
 ****  Visual theme-ability for the color-blind and visually-impaired users (larger font, higher contrast etc)
 ****  Braille keyboard and speech synthesis integration for blind users
+** TODO [#B] middle-click drag is a simple gesture menu with up down left=back right=forward, plus a keyboard equivalent (alt-arrow?)
 ** TODO [#B] don't deselect listener when dropping
 ** TODO [#B] complete credits file and ensure all docs/license copies in place.
 ** TODO [#B] fix scrolling
 ** TODO [#B] typing on air for minimal complete interface
 ** TODO [#B] highly visible error block appearing to right-of browser
 ** TODO choose simple syntax for wiki page name scoping which allows default to project package
-*** TODO "name" without any colon, is a project-specific page
-*** TODO with any colons, it's special and refers to something 
-**** TODO index:
-**** TODO help:
-**** TODO packagename:
-**** TODO packagename:blockname
-**** TODO packagename:blockname:methodname
 ** TODO [#B] selecting multiple objects
 ** TODO [#B] the clipboard is a world, paste/duplicate
 ** TODO [#B] Adapt line-of-sight code to new collision system
@@ -166,7 +151,7 @@
 ***  compilation options
 ** TODO [#B] allow any font size to be requested
 ** TODO [#B] GLSL https://github.com/jtza8/interact/blob/master/src/filter.lisp http://www.swiftless.com/glsltuts.html
-** TODO [#C] naming objects in Talk To Me style
+ ** TODO [#C] naming objects in Talk To Me style
 ** TODO [#C] ephemeral context menu that disappears when you click the background2
 ** TODO [#C] subtree dividers for which class methods came from (union field)
 ** TODO [#C] generic lock/unlock halo?
@@ -1404,6 +1389,15 @@ But the graph doesn't yet actually work, so we must continue.
 ** TODO [#C] right click on world objects to bring them back into top layer
    :PROPERTIES:
    :ARCHIVE_TIME: 2012-03-04 Sun 00:55
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO [#A] blocks a la carte, some methods can be visual some can be textual as needed
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-04 Sun 16:52
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
    :ARCHIVE_CATEGORY: tasks
