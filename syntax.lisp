@@ -116,9 +116,10 @@
 (define-method pick-target variable ()
   (or (evaluate self) self))
 
-(define-method does-not-understand variable (method arguments)
-  (let ((target (evaluate self)))
-    (when target (apply #'send method target arguments))))
+(define-method forward-message variable (method arguments)
+  (apply #'send method 
+	 (pick-target self)
+	 arguments))
 
 ;;; Inactive placeholder
 
@@ -164,20 +165,13 @@
   (assert (blockyp block))
   nil)
 
-(define-method initialize arguments (&key prototype schema method label target (button-p t))
-  (initialize%super self)
-  (setf %no-background t)
-  ;; (setf %target target)
-  (setf %button-p button-p)
-  (let* ((proto (or prototype 
-		    (when target (find-super-prototype-name target))
-		    "BLOCKY:BLOCK"))
-	 (schema0
-	   (or schema
-	       (method-schema proto method)))
-	 (inputs nil))
-    ;; create labels and controls
-    (dolist (entry schema0)
+(define-method initialize arguments (&key method label target)
+  (let ((schema (find-schema method target))
+	(inputs nil))
+    (initialize%super self)
+    (setf %no-background t)
+    ;; create appropriate controls for the arguments in the schema
+    (dolist (entry schema)
       (let ((thing 
 	      (if (eq 'block (schema-type entry))
 		  (new 'socket :label (pretty-string (schema-name entry)))
@@ -191,7 +185,7 @@
 	(push thing inputs)))
     (when inputs 
       (setf %inputs (nreverse inputs)))
-    (setf %schema schema0
+    (setf %schema schema
 	  %method method
 	  %label label)))
 
@@ -259,10 +253,9 @@
 
 (define-method evaluate message ()
   (with-input-values (arguments) self 
-    (apply #'send 
-	   %method 
-	   (get-target self)
-	   arguments)))
+    (forward-message (get-target self)
+		     %method
+		     arguments)))
 
 (define-method update-arguments-maybe message ()
   (with-input-values (method) self
@@ -293,7 +286,7 @@
 (define-method draw-hover message ()
   nil)
 
-(define-method accept message ()
+(define-method accept message (thing)
   nil)
 
 ;;; Stacked messages to a particular receiver
@@ -328,15 +321,12 @@
       :messages (new 'phrase-list (new 'message)))))
 
 (define-method evaluate phrase ()
-  (with-input-values (target) self
-    (with-target target
-      (dolist (message (%inputs %%messages))
-	(evaluate message)))))
+  (with-target %%target
+    (dolist (message (%inputs %%messages))
+      (evaluate message))))
 
 (define-method get-target phrase ()
-  (let ((in (%inputs %%target)))
-    (when in
-      (pick-target (first in)))))
+  (first (%inputs %%target)))
 
 (define-method accept phrase (thing)
   (accept %%messages thing))

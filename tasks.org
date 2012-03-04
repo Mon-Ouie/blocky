@@ -1,24 +1,25 @@
 * TODO KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
 
 * TODO choose simple syntax for wiki page name scoping which allows default to project package
+*** TODO wikify blocky so that each method and each block type
+       have their own (possibly empty) wiki page with a definition (in
+       a list) and/or comments (everything else) USE THE SAME %NAMES
+*** TODO wiki "pages" are actually blocks and prototypes and such, auto-named
 *** TODO "name" without any colon, is a project-specific page
-*** TODO with any colons, it's special and refers to something 
+*** TODO with colons, it's special and refers to something 
 **** TODO index:
 **** TODO help:
 **** TODO packagename:
 **** TODO packagename:blockname
 **** TODO packagename:blockname:methodname
-     
+
+** TODO make variables use does-not-understand
+
 ** TODO CONTROL 1 place message 2 place phrase 3 place var 4 place literal
 *** TODO place message at pointer
 *** TODO add message after current focused message in a phrase
-** TODO wiki "pages" are actually blocks and prototypes and such, auto-named
-** TODO wikify blocky so that each method and each block type
-      have their own (possibly empty) wiki page with a definition (in
-      a list) and/or comments (everything else) USE THE SAME %NAMES
 ** TODO other keyboard accels
 ** TODO [#A] world add-object [ladybug new]
-** TODO make variables use does-not-understand
 ** TODO [#B] hitting Lambda handle for a var ref
 ** TODO [#C] naming objects in Talk To Me style
 ** TODO [#B] don't deselect listener when dropping

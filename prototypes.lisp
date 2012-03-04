@@ -687,9 +687,9 @@ upon binding."
 
 ;; When a message cannot be delivered because no corresponding
 ;; function was found, BLOCKY attempts to re-send the message via the
-;; object's `does-not-understand' method (if any).
+;; object's `forward-message' method (if any).
 
-;; An object's `does-not-understand' method should accept the method-key as the
+;; An object's `forward-message' method should accept the method-key as the
 ;; first argument, and the arguments of the original message as the
 ;; remaining arguments.
 
@@ -697,6 +697,11 @@ upon binding."
 ;; version of a method; for example during initialization, one might
 ;; wish to run the super's initializer as the first statement in the
 ;; child's.
+
+(defvar *forward-message-handler* nil)
+
+(defmacro with-forward-message-handler (form &body body)
+  `(let ((*forward-message-handler* ,form)) ,@body))
 
 (defun send (method thing &rest args)
   "Invoke the method identified by the keyword METHOD on the OBJECT with ARGS.
@@ -717,11 +722,12 @@ If the method is not found, attempt to forward the message."
 		     (progn 
 		       (cache-method object method func)
 		       (apply func object args))
-		     ;; no such method. try forwarding
-		     (if (has-field :does-not-understand object)
-			 (funcall (field-value :does-not-understand object)
-				  object method args)
-			 (error (format nil "Could not invoke method ~S" method)))))))))
+		     ;; no such method. try another handler
+		     (let ((handler (or *forward-message-handler* object)))
+		       (if (has-field :forward-message handler)
+			   (funcall (field-value :forward-message handler)
+				    method args)
+			   (error (format nil "Could not invoke method ~S" method))))))))))
 
 (define-condition null-next (error)
   ((method-key :initarg :message :accessor method-key)
@@ -1446,6 +1452,13 @@ objects after reconstruction, wherever present."
       (if create
 	  (add-wiki-page name (new 'world))
 	  (error "Cannot find wiki page ~S" name))))
+
+(defun find-schema (method &optional target)
+  (let ((source (or (when target
+		      (find-super-prototype-name 
+		       (send :pick-target target)))
+		    "BLOCKY:BLOCK")))
+    (method-schema source method)))
 
 ;;; Printing objects
 

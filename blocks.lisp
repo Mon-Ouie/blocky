@@ -142,6 +142,9 @@ areas.")
 (define-method create block ()
   (new self))
 
+(define-method forward-message block (method args)
+  (apply #'send method self args))
+
 ;;; Wiki pages
 
 (define-method get-wiki-name block () %wiki-name)
