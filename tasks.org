@@ -10,7 +10,8 @@
 ** TODO [#A] add schemata to more methods
 ** TODO [#A] hitting Lambda handle for a var ref
 ** TODO [#A] don't deselect listener when dropping
-** TODO [#A] fix Control keybindings
+** DONE [#A] fix Control keybindings
+   CLOSED: [2012-03-03 Sat 23:24]
 ** TODO [#A] wikify blocky so that each method and each block type
       have their own (possibly empty) wiki page with a definition (in
       a list) and/or comments (everything else) USE THE SAME %NAMES
