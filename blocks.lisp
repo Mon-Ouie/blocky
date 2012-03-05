@@ -978,11 +978,12 @@ state (position and heading) and restoring them afterward."
       (dolist (method (sort methods #'string<))
 	(push (make-method-menu-item self method (find-uuid self)) inputs))
       (make-menu
-       (list :label 
-	     (string-downcase 
-	      (concatenate 'string 
-			   (get-some-object-name self)
-			   " " (object-address-string self)))
+       (list 
+;; :label 
+;; 	     (string-downcase 
+;; 	      (concatenate 'string 
+;; 			   (get-some-object-name self)
+;; 			   " " (object-address-string self)))
 	     :inputs (nreverse inputs)
 	     :pinned nil
 	     :expanded t

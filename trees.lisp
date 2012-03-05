@@ -48,14 +48,13 @@
   action target (expanded :initform nil) (visible :initform t))
 
 (defun treep (thing)
-  (and (has-field :is-tree thing)
-       (eq t (field-value :is-tree thing))))
+  (is-a 'tree thing))
 
 (define-method children tree () %inputs)
 
 (define-method initialize tree 
     (&key action target top-level inputs pinned locked method category
-	  expanded (draw-frame t) (label "no label..."))
+	  expanded (draw-frame t) label)
   (initialize%super self)
   (setf %action action
 	%pinned pinned
@@ -102,65 +101,61 @@
 
 (define-method display-string tree ()	    
   (with-fields (action label top-level) self
-    (let ((ellipsis (concatenate 'string label *null-display-string*)))
+    (let ((ellipsis (concatenate 'string (or label "") *null-display-string*)))
       (if action
 	  (etypecase action
 	    ((or string blocky:object) ellipsis)
-	    ((or keyword function) label))
-	  (if top-level label ellipsis)))))
+	    (keyword (pretty-string action)))
+	  (if top-level (or label "") ellipsis)))))
 
 (define-method layout-as-string tree (string)
-  (deeper 
-   (with-fields (height width) self
-     (setf height (dash 1 (font-height *font*)))
-     (setf width 
-	   (+ (dash 2) (font-text-width string *font*))))))
+  (with-fields (height width) self
+    (setf height (dash 1 (font-height *font*)))
+    (setf width 
+	  (+ (dash 2) (font-text-width string *font*)))))
 
 (define-method layout tree ()
-  (deeper
-   (with-fields (expanded height inputs label width) self
-     (if expanded 
-	 ;; we're an expanded subtree. lay it out
-	 (progn 
-	   ;; lay out the children as in a typical list
-	   (layout-vertically self)
-	   ;; add a little padding to the bottom
-	   (incf height (dash 4))
-	   ;; handle the case that the label is wider than the content.
-	   (when label 
-	     (setf width 
-		   (max width 
-			(dash 6 (font-text-width label *font*)))))
-	   ;; make all inputs equally wide
-	   (dolist (each inputs)
-	     (setf (field-value :width each) (- width (dash 2)))))
-	 ;; we're not expanded. just lay out for label.
-	 (layout-as-string self (display-string self))))))
+  (with-fields (expanded height inputs label width) self
+    (if expanded 
+	;; we're an expanded subtree. lay it out
+	(progn 
+	  ;; lay out the children as in a typical list
+	  (layout-vertically self)
+	  ;; add a little padding to the bottom
+	  (incf height (dash 2))
+	  ;; handle the case that the label is wider than the content.
+	  (when label 
+	    (setf width 
+		  (max width 
+		       (dash 6 (font-text-width label *font*)))))
+	  ;; make all inputs equally wide
+	  (dolist (each inputs)
+	    (setf (field-value :width each) (- width (dash 2)))))
+	;; we're not expanded. just lay out for label.
+	(layout-as-string self (display-string self)))))
   
 (define-method header-height tree ()
-  (font-height *font*))
+  (when %label (font-height *font*)))
 
 (define-method header-width tree ()
-  (deeper 
-   (if %expanded
-       (dash 2 (font-text-width (display-string self) *font*))
-       %width)))
+  (if %expanded
+      (dash 2 (font-text-width (display-string self) *font*))
+      %width))
 
 (define-method hit tree (mouse-x mouse-y)
-  (deeper
-   (with-field-values (x y expanded inputs width height) self
-     (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
-       (flet ((try (item)
-		(hit item mouse-x mouse-y)))
-	 (if (not expanded)
-	     self
-	     ;; we're expanded. is the mouse to the left of this
-	     ;; tree's header tab thingy?
-	     (if %top-level
-		 (when (and (< mouse-x (+ x (header-width self)))
-			    (< (header-height self) mouse-y))
-		   (some #'try inputs))
-		 (or (some #'try inputs) self))))))))
+  (with-field-values (x y expanded inputs width height) self
+    (when (within-extents mouse-x mouse-y x y (+ x width) (+ y height))
+      (flet ((try (item)
+	       (hit item mouse-x mouse-y)))
+	(if (not expanded)
+	    self
+	    ;; we're expanded. is the mouse to the left of this
+	    ;; tree's header tab thingy?
+	    (if %top-level
+		(when (and (< mouse-x (+ x (header-width self)))
+			   (< (header-height self) mouse-y))
+		  (some #'try inputs))
+		(or (some #'try inputs) self)))))))
 		
 ;;       (let ((hh (header-height self))
 ;; 	    (hw (header-width self)))

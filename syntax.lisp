@@ -28,14 +28,6 @@
 
 (in-package :blocky)
 
-;;; Dynamically binding the recipient of a message
-
-(defvar *target* nil)
-
-(defmacro with-target (target &rest body)
-  `(let ((*target* ,target))
-     ,@body))
-
 ;;; Widget for empty target slot
 
 (deflist socket)
@@ -129,17 +121,12 @@
      :fields ((category :initform :parameters))))
 
 
-
-
-;; ;;; Parameter declaration
+;;;; Parameter declaration
 
 ;; (define-block-macro parameter 
 ;;     (:super :variable
 ;;      :fields ((category :initform :parameters))
 ;;      :
-	    
-	    
-
 
 ;;; Closure for parameterizing a tree
 
@@ -321,12 +308,6 @@
 
 (define-method accept message (thing)
   nil)
-
-;; (define-method tab message () 
-;;   (when (is-a 'arguments %%arguments)
-;;     (focus-on (world) (first (%inputs %%arguments)))))
-
-;; (define-method backtab message ())
 
 ;;; Stacked messages to a particular receiver
 

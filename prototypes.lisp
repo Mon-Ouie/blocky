@@ -775,6 +775,14 @@ finding the next implementation after that."
       (apply (next-definition method (find-object object))
 	     object arguments))
 
+;;; Dynamically binding the recipient of a message
+
+(defvar *target* nil)
+
+(defmacro with-target (target &rest body)
+  `(let ((*target* ,target))
+     ,@body))
+
 ;;; Message queueing
 
 ;; In some situations, an object will wish to queue up messages to be
