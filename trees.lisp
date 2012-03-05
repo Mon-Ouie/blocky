@@ -357,7 +357,10 @@
       (with-fields (x width) parent
 	;; don't highlight top-level trees.
 	(when (and (not expanded) (not top-level))
-	  (draw-box x (+ y (dash 1)) width (+ height 1)
+	  (draw-box (+ x (dash 2))
+		    (+ y (dash 1)) 
+		    (- width (dash 4))
+		    (+ height 1)
 		  :color *highlight-background-color*)
 	  (draw-label-string self (display-string self)))))))
 

@@ -1389,7 +1389,7 @@ scale. See also "
   (declare (ignore args))
   nil)
 
-(defparameter *highlight-background-color* "gray40")
+(defparameter *highlight-background-color* "gray90")
 
 (defparameter *highlight-foreground-color* "gray10")
 
