@@ -135,7 +135,7 @@
 	(layout-as-string self (display-string self)))))
   
 (define-method header-height tree ()
-  (when %label (font-height *font*)))
+  (if %label (font-height *font*) 0))
 
 (define-method header-width tree ()
   (if %expanded
@@ -201,9 +201,10 @@
       ;; 		      (+ %y (dash 2))
       ;; 		      :scale 1.6
       ;; 		      :color "gray60")
-      (draw-line (+ x 1) (dash 2 y header) 
-		 (+ x width -1) (dash 2 y header)
-		 :color (find-color self :highlight)))))
+      (when %label 
+	(draw-line (+ x 1) (dash 2 y header) 
+		   (+ x width -1) (dash 2 y header)
+		   :color (find-color self :highlight))))))
   
 (define-method draw-unexpanded tree (&optional label)
 ;  (draw-background self)
@@ -255,8 +256,7 @@
   (tags :initform '(:menu)))
 
 (defun menup (thing)
-  (and (blockyp thing)
-       (has-tag thing :menu)))
+  (is-a 'menu thing))
 
 (define-method siblings menu ()
   (when %parent 
