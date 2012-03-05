@@ -65,6 +65,7 @@
 		   :documentation "Don't serialize the menu bar.")
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
+  (drag-button :initform nil)
   (hover :initform nil
 	 :documentation "Block being hovered over, if any.")
   (highlight :initform nil
@@ -770,14 +771,18 @@ block found, or nil if none is found."
 (define-method drag-maybe world (x y)
   ;; require some actual mouse movement to initiate a drag
   (with-world self
-    (with-fields (focused-block click-start click-start-block) self
+    (with-fields (focused-block drag-button click-start click-start-block) self
       (when click-start
 	(destructuring-bind (x1 . y1) click-start
 	  (when (and focused-block click-start-block
 		     (> (distance x y x1 y1)
 			*minimum-drag-distance*)
 		     (can-pick click-start-block))
-	    (let ((drag (pick click-start-block)))
+	    (let ((drag 
+		    (if (and drag-button (= 3 drag-button))
+			;; right-drag means "grab whole thing"
+			(topmost click-start-block) 
+			(pick click-start-block))))
 	      (when drag 
 		(begin-drag self x y drag)
 		;; clear click data
@@ -810,9 +815,9 @@ block found, or nil if none is found."
   ;;     (with-world self (close-menus %listener))))))))
 
 (define-method press world (x y &optional button)
-  (declare (ignore button))
   (with-world self
-    (with-fields (click-start click-start-block focused-block) self
+    (with-fields (click-start drag-button click-start-block
+			      focused-block) self
       ;; now find what we're touching
       (assert (or (null focused-block)
 		  (blockyp focused-block)))
@@ -821,11 +826,12 @@ block found, or nil if none is found."
 	(setf %object-p object-p)
 	(if (null block)
 	    (focus-on self nil)
-	      ;; (when %listener-open-p
-	      ;; 	(exit-listener self)))
+	    ;; (when %listener-open-p
+	    ;; 	(exit-listener self)))
 	    (progn 
 	      (setf click-start (cons x y))
 	      (setf click-start-block (find-uuid block))
+	      (setf drag-button button)
 	      ;; now focus; this might cause another block to be
 	      ;; focused, as in the case of the Listener
 	      (focus-on self block)))))))
@@ -845,11 +851,12 @@ block found, or nil if none is found."
 (define-method release world (x y &optional button)
   (with-world self
     (with-fields 
-	(drag-offset drag-start hover selection drag click-start
+	(drag-offset drag-start hover selection drag click-start drag-button
 		     click-start-block drag-origin focused-block modified) self
       (if drag
 	  ;; we're dragging
 	  (destructuring-bind (x0 . y0) drag-offset
+	    (setf drag-button nil)
 	    (let ((drag-parent (get-parent drag))
 		  (drop-x (- x x0))
 		  (drop-y (- y y0)))
