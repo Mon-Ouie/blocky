@@ -28,7 +28,6 @@
   (background-color :initform "white")
   (x :initform 0)
   (y :initform 0)
-  (self :initform nil)
   (paused :initform nil)
   (heading :initform 0.0)
   (height :initform 16)
@@ -87,7 +86,10 @@
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
 	       :documentation "A cons (X . Y) of relative mouse click location on dragged block.")
-  (prototype-name :initform "BLOCKY:BLOCK")
+  ;; For wiki page worlds
+  (self :initform nil)
+  (prototype-name :initform nil)
+  (method :initform nil)
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
@@ -199,10 +201,10 @@
 (define-method initialize world (&key name)
   (initialize%super self)
   (setf %wiki-name name)
-  (setf %prototype-name 
-	(or (
+  (when name
+    (setf %prototype-name (wiki-name-prototype name))
+    (setf %method (wiki-name-method name)))
   (setf %ghost (new 'block))
-  (setf %variables (make-hash-table :test 'equal))
   (setf %objects (make-hash-table :test 'equal)))
   
 ;;; The object layer. 
@@ -269,17 +271,24 @@
 
 ;;; World-local variables
 
+(define-method initialize-variables-maybe world () 
+  (when (null %variables) 
+    (setf %variables (make-hash-table :test 'equal))
+    (setf (gethash "WORLD" %variables) self)))
+
 (define-method setvar world (var value)
+  (initialize-variables-maybe self)
   (setf (gethash var %variables) value))
 
 (define-method getvar world (var)
+  (initialize-variables-maybe self)
   (gethash var %variables))
 
 (defun world-variable (var-name)
-  (getvar *world* var-name))
+  (getvar (world) var-name))
 
 (defun set-world-variable (var-name value)
-  (setvar *world* var-name value))
+  (setvar (world) var-name value))
 
 (defsetf world-variable set-world-variable)
 
@@ -598,51 +607,20 @@ slowdown. See also quadtree.lisp")
 	  (with-quadtree nil
 	    (layout-shell-objects self)
 	    (update-shell-objects self)))))))
-  
-;;; A trash can for user-destroyed objects
 
-(defvar *trash* nil)
+;;; Running a world as a script
 
-(define-block trash 
-  :category :system 
-  :methods '(:empty))
-
-(define-method evaluate trash ())
-
-(define-method update trash ())
-
-(define-method empty trash ()
-  (setf *trash* nil))
-
-(define-method accept trash (item)
-  (push item *trash*))
-
-(defun-memo trash-status-string (count)
-    (:key #'first :test 'equal :validator #'identity)
-  (format nil "trash (~S items)" count))
-
-(define-method layout trash ()
-  (setf %width (dash 4 (font-text-extents 
-		       (trash-status-string 
-			(length %inputs))
-		       *font*)))
-  (setf %height (dash 4 (font-height *font*))))
-
-(define-method draw trash ()
-  (draw-background self)
-  (draw-label-string self (trash-status-string (length *trash*))
-		     "yellow"))
-
-(define-method draw-hover trash ())
-
+(define-method evaluate world ()
+  ;; make sure var references to 'self' and 'player' resolve properly
+  (setvar self :self *target*)
+  (when %player
+    (setvar self :player %player))
+  (prog1 self
+    (with-world self
+      (mapc #'evaluate %inputs))))
+ 
 (define-method after-deserialize world ()
   (clear-drag-data self))
-
-;; (defmacro with-world (world &rest body)
-;;   (let ((sh (gensym)))
-;;     `(let* ((,sh ,world)
-;; 	    (*world* ,sh))
-;;        ,@body)))
 
 (define-method layout world ()
   ;; take over the entire GL window

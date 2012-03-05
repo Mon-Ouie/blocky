@@ -1,19 +1,17 @@
 * TODO KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
 
-** DONE [#A] self variable blocks
-   CLOSED: [2012-03-04 Sun 17:18]
-** TODO [#A] (browse-method 
-** TODO [#A] local variable palettes that can also name the func/closure
+** TODO [#A] local variable palettes
+** TODO local variables in ROOK world are the fields of ROOK and body is initializer?
 **** TODO locked to 0,0 position
-
+** TODO [#A] (browse-method ... some command from listener
 ** TODO [#A] literal 'ladybug new
-** TODO [#A] world variable
 ** TODO [#A] lisp literal variables 
 ** TODO [#A] Generic + handle to add message
 **** TODO Keybinding for add-foo in current list SHIFT-F1 etc
 ** TODO [#A] add schemata to more methods
 ** TODO [#A] arbitrary lisp function message wrapper
 
+** TODO [#B] eliminate onionskin layer split, move all into quadtree and dont run collisions unless required
 ** TODO [#B] improve defresource and call it define-resource
 **** TODO resource-defining block-ui
 **** TODO auto finding of new resources (.png, .wav handlers etc) in a dir

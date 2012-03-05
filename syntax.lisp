@@ -87,7 +87,9 @@
 (define-method initialize socket (&optional input label)
   (setf %input input %label label))
 
-;;; Object variable
+;;; Variables whose values are blocks
+
+(defvar *parameters* nil)
 
 (define-block (variable :super :list)
   (name :initform nil)
@@ -120,25 +122,27 @@
 	 (pick-target self)
 	 arguments))
 
-;;; Self reference
+;;; Parameter declarations (ordinary variables refer to them)
 
-(define-block-macro self 
-    (:super :list
-     :fields ((category :initform :variables))
-     :inputs ((new 'string :value "self" :locked t :read-only t))))
+(define-block-macro parameter 
+    (:super :variable
+     :fields ((category :initform :parameters))))
 
-(define-method recompile self () 'self)
 
-(define-method evaluate self () 
-  (field-value :self (world)))
 
-(define-method pick-target self ()
-  (evaluate self))
 
-(define-method forward-message self (method arguments)
-  (apply #'send method 
-	 (evaluate self)
-	 arguments))
+;; ;;; Parameter declaration
+
+;; (define-block-macro parameter 
+;;     (:super :variable
+;;      :fields ((category :initform :parameters))
+;;      :
+	    
+	    
+
+
+;;; Closure for parameterizing a tree
+
 
 ;;; Inactive placeholder
 
