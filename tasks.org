@@ -1,7 +1,7 @@
 * TODO KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
 
-** TODO Possibly F1 system/help, F2 browser, F3 browser, F4 browser
-** TODO proper field references
+** TODO demo defining a method first
+** TODO proper field references---are they pseudo %messages to self? (yes)
 ** TODO Navigate to a prototype's page to make a method or derived block
 ** TODO [#A] local variable palettes with add-variable etc
 ** TODO better listener menu
@@ -10,6 +10,7 @@
 ** TODO [#A] (browse-method ... some command from listener
 ** TODO [#A] Generic + handle to add message
 **** TODO Keybinding for add-foo in current list SHIFT-F1 etc
+** TODO Possibly F1 system/help, F2 browser, F3 browser, F4 browser
 ** TODO [#A] add schemata to more methods
 ** TODO [#A] arbitrary lisp function message wrapper
 
