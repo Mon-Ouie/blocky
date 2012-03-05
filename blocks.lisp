@@ -695,10 +695,11 @@ See `keys.lisp' for the full table of key and modifier symbols.
     (destroy %halo)
     (setf %halo nil)))
 
-(define-method toggle-halo block ()
+(define-method toggle-halo block (&optional force)
   (if %halo
       (destroy-halo self)
-      (make-halo self)))
+      (when (or force (not %pinned))
+	(make-halo self))))
 
 (define-method align-to-pixels block ()
   (setf %x (truncate %x))
