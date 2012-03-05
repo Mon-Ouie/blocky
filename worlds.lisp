@@ -908,6 +908,12 @@ block found, or nil if none is found."
 		   (tap focused-block x y)))
 		(select self focused-block))
 	      (setf click-start nil))))
+      ;; close any ephemeral menus
+      (dolist (input %inputs)
+	(when (and (menup input)
+		   (not (object-eq focused-block input)))
+	  (destroy input)))
+      ;; clean up bookeeping
       (clear-drag-data self)
       (invalidate-layout self))))
 

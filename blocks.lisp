@@ -635,7 +635,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
 	  ;; multiple actions require a menu
 	  (let ((menu (context-menu self)))
 	    (add-block (world) menu)
-	    (move-to menu x y))))))
+	    (move-to menu x y)
+	    (focus-on (world) menu))))))
 
 (define-method scroll-tap block (x y)
   (toggle-halo self))
@@ -667,6 +668,17 @@ See `keys.lisp' for the full table of key and modifier symbols.
 	(when (and parent
 		   (can-pick parent))
 	  (pick parent)))))
+
+(define-method topmost block ()
+  (let ((this self)
+	(next nil))
+    (block searching
+      (loop while this do
+	(setf next (%parent this))
+	(when (or (null next)
+		  (is-a 'world next))
+	  (return-from searching this))
+	(setf this next)))))
 
 (define-method after-place-hook block () nil)
 
