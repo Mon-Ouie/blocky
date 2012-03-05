@@ -1,6 +1,8 @@
 * TODO KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
 
-** TODO ephemeral white title-less (yet nested) popup menus
+** TODO Possibly F1 system/help, F2 browser, F3 browser, F4 browser
+** TODO proper field references
+** TODO Navigate to a prototype's page to make a method or derived block
 ** TODO [#A] local variable palettes with add-variable etc
 ** TODO better listener menu
 ** TODO local variables in ROOK world are the fields of ROOK and body is initializer?
@@ -42,7 +44,7 @@
 ** TODO [#B] complete credits file and ensure all docs/license copies in place.
 ** TODO [#B] fix scrolling
 ** TODO [#B] typing on air for minimal complete interface
-** TODO [#B] highly visible error block appearing to right-of browser
+** TODO [#B] highly visible error block notifications to right-of browser
 ** TODO choose simple syntax for wiki page name scoping which allows default to project package
 ** TODO [#B] selecting multiple objects
 ** TODO [#B] the clipboard is a world, paste/duplicate
@@ -286,20 +288,10 @@ add "." and "%CD%" to cffi's foreign directory search list...
 * TODO notify tigtesters: cpw, tacoxtreme, increpare
 
 * BUGS
-** TODO [#A] Fix Quadtree deletion crash (seems to happen if obj deleted during on-update)
 ** TODO [#B] Fix bad circle artifacts on rounded corner patches on OSX
-** TODO [#B] Fix custom schema entry labels not being used in 
-** TODO [#A] Fix halo handles not working after first move of object w/halo
-*** TODO Halo is in front after pickup/putdown? it should hit-test its children
-** TODO [#B] Fix bad halo layout on small objects (establish a minimum size)
-** TODO [#B] Fix listener history errors
-** TODO [#B] Fix crashes with tab and shift-tab navigation
 ** TODO [#B] Fix crash when error in init file
 ** TODO [#C] Fix crash on wrong color names
-** TODO [#C] Fix error handling: use error message bubbles with X close box and (backtrace) button?
-** TODO [#C] Fix Control-E etc not working in textbox
 ** TODO [#C] Fix not traversing line break with C-f and C-b
-** TODO [#C] Fix example numbering
 
 * OLDER NOTES
 
@@ -1412,6 +1404,24 @@ But the graph doesn't yet actually work, so we must continue.
 ** TODO [#A] Restore basic collision detection functionality
    :PROPERTIES:
    :ARCHIVE_TIME: 2012-03-04 Sun 17:10
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO ephemeral white title-less (yet nested) popup menus
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-05 Mon 05:13
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_OLPATH: KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+
+** TODO Drag entire top-level block via right-drag
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-05 Mon 05:14
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_OLPATH: KEEP DOING THE SIMPLEST THING THAT COULD POSSIBLY WORK
    :ARCHIVE_CATEGORY: tasks
