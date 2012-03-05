@@ -841,6 +841,7 @@ block found, or nil if none is found."
 	%drag-offset nil
 	%object-p nil
 	%drag-origin nil
+	%drag-button nil
 	%drag nil
 	%hover nil
 	%highlight nil
