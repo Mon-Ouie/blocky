@@ -132,7 +132,7 @@ either a symbol naming the field, or a list of the form (SYMBOL
 
 (defparameter *block-categories*
   '(:system :motion :event :message :looks :sound :structure :data :button
-    :expression :menu :hover :control :comment :sensing :operators :variables)
+    :expression :menu :hover :control :parameters :comment :sensing :operators :variables)
   "List of keywords used to group blocks into different functionality
 areas.")
 
@@ -144,6 +144,12 @@ areas.")
 
 (define-method forward-message block (method args)
   (apply #'send method self args))
+
+(define-method set-field block (field value)
+  (setf (field-value field (evaluate self)) value))
+
+(define-method get-field block (field)
+  (field-value field (evaluate self)))
 
 ;;; Wiki pages
 
@@ -1104,6 +1110,7 @@ you want to align a group of text items across layouts.")
     :looks "purple"
     :sound "orchid"
     :message "orange"
+    :parameters "YellowGreen"
     :control "orange1"
     :variables "maroon3"
     :operators "OliveDrab3"
@@ -1120,6 +1127,7 @@ you want to align a group of text items across layouts.")
     :menu "gray80"
     :terminal "gray30"
     :comment "gray88"
+    :parameters "GreenYellow"
     :looks "medium orchid"
     :socket "gray80"
     :data "gray60"
@@ -1142,6 +1150,7 @@ you want to align a group of text items across layouts.")
     :menu "gray80"
     :terminal "gray21"
     :button "DarkOrange"
+    :parameters "OliveDrab"
     :structure "gray35"
     :comment "gray70"
     :hover "orange red"
@@ -1164,6 +1173,7 @@ you want to align a group of text items across layouts.")
     :comment "gray20"
     :socket "gray20"
     :hover "yellow"
+    :parameters "white"
     :data "white"
     :menu "gray60"
     :structure "white"

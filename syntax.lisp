@@ -114,13 +114,40 @@
 	 (pick-target self)
 	 arguments))
 
+;;; Self reference
+
+(defvar *self* nil)
+
+(define-block-macro self
+    (:super :list
+     :fields
+     ((category :initform :parameters))
+     :inputs
+     ((new 'string :value "self" :read-only t :locked t))))
+
+(define-method accept self (thing))
+
+(define-method evaluate self ()
+  (or *self* *target*))
+
+(define-method recompile self ()
+  'self)
+  
+(define-method pick-target self ()
+  (evaluate self))
+
+(define-method forward-message self (method arguments)
+  (apply #'send method 
+	 (pick-target self)
+	 arguments))
+  
+;;; Field references (to self or other objects)
+
 ;;; Parameter declarations (ordinary variables refer to them)
 
 (define-block-macro parameter 
     (:super :variable
      :fields ((category :initform :parameters))))
-
-
 ;;;; Parameter declaration
 
 ;; (define-block-macro parameter 

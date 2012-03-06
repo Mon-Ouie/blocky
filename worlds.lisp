@@ -88,7 +88,6 @@
   (drag-offset :initform nil
 	       :documentation "A cons (X . Y) of relative mouse click location on dragged block.")
   ;; For wiki page worlds
-  (self :initform nil)
   (prototype-name :initform nil)
   (method :initform nil)
   (modified :initform nil 
@@ -612,10 +611,6 @@ slowdown. See also quadtree.lisp")
 ;;; Running a world as a script
 
 (define-method evaluate world ()
-  ;; make sure var references to 'self' and 'player' resolve properly
-  (setvar self :self *target*)
-  (when %player
-    (setvar self :player %player))
   (prog1 self
     (with-world self
       (mapc #'evaluate %inputs))))
