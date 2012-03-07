@@ -40,7 +40,7 @@ later-when start-up seconds->frames keyboard-held-p keyboard-pressed-p
 holding-control *scale-output-to-window* keyboard-released-p *edit*
 with-font *font* find-heading keyboard-time-in-current-state
 pretty-string ugly-symbol *pointer-x* *pointer-y* is-joystick-event
-is-raw-joystick-event keyboard-time-in-previous-state *updates*
+*self* is-raw-joystick-event keyboard-time-in-previous-state *updates*
 keyboard-down-p keyboard-keys-down keyboard-modifier-down-p
 keyboard-modifiers draw-filled-circle draw-aa-circle get-keys
 *project-package-name* project-package-name make-block add-block
