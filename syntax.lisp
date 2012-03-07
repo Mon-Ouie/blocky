@@ -138,22 +138,37 @@
 
 (define-method forward-message self (method arguments)
   (apply #'send method 
-	 (pick-target self)
+	 (evaluate self)
 	 arguments))
-  
+
 ;;; Field references (to self or other objects)
+
+(define-block-macro field 
+  (:super :list
+   :fields ((category :initform :variables)
+	    (orientation :initform :horizontal))
+   :inputs (:target (new 'socket)
+	    :field (new 'string))))
+
+(define-method accept field (thing)
+  (declare (ignore thing))
+  nil)
+
+(define-method << field ((value block))
+  (with-input-values (target field) self
+    (let ((key (make-keyword field)))
+      (setf (field-value key target) value))))
+
+(define-method evaluate field ()
+  (with-input-values (target field) self
+    (message "FIELD TARGET: ~S ~S" field target)
+    (field-value (make-keyword field) target)))
 
 ;;; Parameter declarations (ordinary variables refer to them)
 
 (define-block-macro parameter 
     (:super :variable
      :fields ((category :initform :parameters))))
-;;;; Parameter declaration
-
-;; (define-block-macro parameter 
-;;     (:super :variable
-;;      :fields ((category :initform :parameters))
-;;      :
 
 ;;; Closure for parameterizing a tree
 
@@ -188,15 +203,6 @@
   (when %button-p
     (evaluate self)))
 
-;(define-method can-pick arguments () t)
-
-;; (define-method pick arguments ()
-;;   ;; allow to move parent block by the labels of this arguments block
-;;   (if %button-p self %parent))
-      ;; (if (is-a 'statement-list %parent)
-      ;; 	  (%parent %parent)
-      ;; 	  %parent)))
-
 (define-method accept arguments (block)
   ;; make these click-align instead
   (assert (blockyp block))
@@ -225,11 +231,6 @@
     (setf %schema schema
 	  %method method
 	  %label label)))
-
-    ;; (let ((category (when proto
-    ;; 		      (method-option (find-prototype proto)
-    ;; 				     method :category))))
-    ;;   (when category (setf %category category))
 
 (define-method draw arguments ()
   (with-fields (x y width height label inputs) self
@@ -260,8 +261,9 @@
 (define-method evaluate printer ()
   (let* ((*print-pretty* t)
 	 (input-block (evaluate %%input))
-	 (string (format nil "~S" (when input-block
-				    (evaluate input-block)))))
+	 (string (format nil "~S" input-block)))
+;; (when input-block
+;; 				    (evaluate input-block)))))
     (set-buffer %%output
 		(split-string-on-lines string))))
 

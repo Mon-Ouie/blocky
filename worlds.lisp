@@ -55,10 +55,11 @@
 		    ((:x :alt) :enter-listener)
 		    ((:g :control) :escape)
 		    ((:escape) :exit-listener)
-		    ((:f1) :add-message)
-		    ((:f2) :add-statement)
-		    ((:f3) :add-variable)
-		    ((:f4) :add-expression)
+		    ((:m :alt) :add-message)
+		    ((:s :alt) :add-statement)
+		    ((:v :alt) :add-variable)
+		    ((:f :alt) :add-field)
+		    ((:e :alt) :add-expression)
 		    ))
   (excluded-fields :initform
 		   '(:quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :listener :drag :hover :highlight)
@@ -246,6 +247,9 @@
 
 (define-method add-expression world ()
   (drop-at-pointer self (new 'expression)))
+
+(define-method add-field world ()
+  (drop-at-pointer self (new 'field)))
 
 (define-method contains-object world (object)
   (gethash (find-uuid object) 

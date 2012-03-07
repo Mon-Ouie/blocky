@@ -912,7 +912,7 @@ message queue resulting from the evaluation of EXPR."
   (let ((thing (gensym)))
     (flet ((make-clause (symbol)
 	     `(,symbol (evaluate 
-			(input-block self 
+			(input-block ,thing 
 				     ,(make-keyword symbol))))))
       `(let* ((,thing ,form)
 	      ,@(mapcar #'make-clause symbols))

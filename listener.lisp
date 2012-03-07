@@ -411,11 +411,18 @@
       (getf %options :label)
       ""))
 
+(define-method can-pick entry () 
+  %pinned)
+  
+(define-method pick entry ()
+  (if %pinned %parent self))
+
 ;; (define-method can-pick entry () 
 ;;   (if (is-a 'arguments %parent)
 ;;       t
 ;;       (can-pick%super self)))
 
+;; (define-method can-pick entry () 
 ;; (define-method pick entry ()
 ;;   (if (is-a 'arguments %parent)
 ;;       %parent
@@ -426,10 +433,16 @@
     (setf %read-only (if %read-only nil t))))
 
 (define-method label-width entry ()
-  (dash 2 (font-text-width (label-string self) *font*)))
+  (dash 1 (font-text-width (label-string self) *font*)))
 
 (define-method draw-label entry ()
-  (when %label (draw-label-string self %label)))
+  (when %label
+    (draw-string %label
+		 (+ (dash 1 %x))
+		    *text-baseline*
+		 :color (find-color self :foreground)
+		 :font *font*)))
+		 
   ;; (draw-string (label-string self)
   ;; 	       (dash 1 %x)
   ;; 	       (+ %y (dash 1))
@@ -471,13 +484,13 @@
 		       (+ (dash 1 x) (label-width self))
 		       *text-baseline*
 		       :color *default-prompt-text-color*
-		       :font *font*))
-	(draw-indicators self :active)
-	(update-cursor-clock self)
-	(draw-cursor self 
-		     :x-offset
-		     (dash 3 (font-text-width (label-string self) *font*))
-		     :blink t)))))
+		       :font *font*)
+	  (draw-indicators self :active)
+	  (update-cursor-clock self)
+	  (draw-cursor self 
+		       :x-offset
+		       (dash 2 (font-text-width (label-string self) *font*))
+		       :blink t))))))
   
 (define-method do-sexp entry (sexp)
   (with-fields (value type-specifier parent) self
