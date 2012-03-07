@@ -1113,6 +1113,7 @@ you want to align a group of text items across layouts.")
     :parameters "YellowGreen"
     :control "orange1"
     :variables "maroon3"
+    :fields "gold"
     :operators "OliveDrab3"
     :sensing "DeepSkyBlue3")
   "X11 color names of the different block categories.")
@@ -1125,6 +1126,7 @@ you want to align a group of text items across layouts.")
     :expression "gray90"
     :event "gray90"
     :menu "gray80"
+    :fields "LightGoldenrod"
     :terminal "gray30"
     :comment "gray88"
     :parameters "GreenYellow"
@@ -1147,6 +1149,7 @@ you want to align a group of text items across layouts.")
     :socket "gray90"
     :data "gray45"
     :expression "gray90"
+    :fields "DarkGoldenrod"
     :menu "gray80"
     :terminal "gray21"
     :button "DarkOrange"
