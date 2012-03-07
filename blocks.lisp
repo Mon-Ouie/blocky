@@ -1174,6 +1174,7 @@ you want to align a group of text items across layouts.")
     :expression "gray30"
     :terminal "white"
     :comment "gray20"
+    :fields "white"
     :socket "gray20"
     :hover "yellow"
     :parameters "white"
