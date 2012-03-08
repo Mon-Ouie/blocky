@@ -37,7 +37,8 @@
 		 (string-trim " " name)
 		 ))))
 
-(defun ugly-symbol (string)
+(defun-memo ugly-symbol (string)
+    (:key #'first :test 'equal :validator #'identity)
   (intern 
    (string-upcase
     (substitute #\- #\Space 
@@ -125,7 +126,7 @@ either a symbol naming the field, or a list of the form (SYMBOL
 	      (setf name0 name)
 	      (when super (setf super0 super)))))
     `(define-prototype ,name0 (:super ,(make-prototype-id super0))
-       (wiki-name :initform ,(verbose-symbol-name name0))
+;       (wiki-name :initform ,(verbose-symbol-name name0))
        ,@(if (keywordp (first args))
 	  (plist-to-descriptors args)
 	  args))))
@@ -1113,7 +1114,7 @@ you want to align a group of text items across layouts.")
     :parameters "YellowGreen"
     :control "orange1"
     :variables "maroon3"
-    :fields "gold"
+    :fields "MediumOrchid"
     :operators "OliveDrab3"
     :sensing "DeepSkyBlue3")
   "X11 color names of the different block categories.")
@@ -1126,7 +1127,7 @@ you want to align a group of text items across layouts.")
     :expression "gray90"
     :event "gray90"
     :menu "gray80"
-    :fields "LightGoldenrod"
+    :fields "orchid"
     :terminal "gray30"
     :comment "gray88"
     :parameters "GreenYellow"
@@ -1149,7 +1150,7 @@ you want to align a group of text items across layouts.")
     :socket "gray90"
     :data "gray45"
     :expression "gray90"
-    :fields "DarkGoldenrod"
+    :fields "DarkOrchid"
     :menu "gray80"
     :terminal "gray21"
     :button "DarkOrange"

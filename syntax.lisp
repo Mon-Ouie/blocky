@@ -38,20 +38,44 @@
       (when (touching-point self x y)
 	self)))
 
-(define-method draw socket ()
-  (if %inputs 
-      (draw (first %inputs))
-      (draw-image "socket" %x %y)))
+(defparameter *socket-size* 16)
 
 (define-method layout socket ()
-  (if %inputs 
-      (progn 
-	(let ((target (first %inputs)))
-	  (move-to target %x %y)
-	  (layout target)
-	  (setf %height (%height target))
-	  (setf %width (%width target))))
-      (setf %height 16 %width 16)))
+  (with-fields (label inputs height width) self
+    (setf height *socket-size* width *socket-size*)
+    (let ((target (first inputs))
+	  (x %x)
+	  (y %y)
+	  (label-width 0))
+      (when label
+	(setf label-width 
+	      (font-text-width label *font*))
+	(incf x (+ (dash 1) label-width))
+	(setf height (+ (max (font-height *font*)
+			     *socket-size*)))
+	(setf width (- x %x)))
+      (cond 
+	((and label (null target))
+	 (incf width (+ (dash 1) *socket-size*)))
+	((and target (null label))
+	 (move-to target x y)
+	 (layout target) 
+	 (setf height (+ (%height target)))
+	 (setf width (+ label-width (%width target))))))))
+
+(define-method draw socket ()
+  (with-fields (label inputs) self
+    (let ((x %x)
+	  (y %y))
+      (when label 
+	(draw-string label x y 
+		     :color "white"
+		     :font *font*)
+	(incf x (+ (dash 1)
+		   (font-text-width label *font*))))
+      (if inputs 
+	  (draw (first inputs))
+	  (draw-image "socket" x y)))))
 
 (define-method draw-hover socket ()
   (with-fields (x y width height) self
@@ -145,7 +169,7 @@
 
 (define-block-macro field 
   (:super :list
-   :fields ((category :initform :variables)
+   :fields ((category :initform :fields)
 	    (orientation :initform :horizontal))
    :inputs (:target (new 'socket)
 	    :field (new 'string))))
@@ -161,8 +185,8 @@
 
 (define-method evaluate field ()
   (with-input-values (target field) self
-    (message "FIELD TARGET: ~S ~S" field target)
-    (field-value (make-keyword field) target)))
+    (field-value (make-keyword field) 
+		 (pick-target target))))
 
 ;;; Parameter declarations (ordinary variables refer to them)
 
@@ -260,10 +284,10 @@
 
 (define-method evaluate printer ()
   (let* ((*print-pretty* t)
-	 (input-block (evaluate %%input))
-	 (string (format nil "~S" input-block)))
-;; (when input-block
-;; 				    (evaluate input-block)))))
+	 (input (evaluate %%input))
+	 (string (format nil "~S" 
+			 (if (blockyp input)
+			     (evaluate input) input))))
     (set-buffer %%output
 		(split-string-on-lines string))))
 

@@ -484,13 +484,13 @@
 		       (+ (dash 1 x) (label-width self))
 		       *text-baseline*
 		       :color *default-prompt-text-color*
-		       :font *font*)
-	  (draw-indicators self :active)
-	  (update-cursor-clock self)
-	  (draw-cursor self 
-		       :x-offset
-		       (dash 2 (font-text-width (label-string self) *font*))
-		       :blink t))))))
+		       :font *font*))
+	(draw-indicators self :active)
+	(update-cursor-clock self)
+	(draw-cursor self 
+		     :x-offset
+		     (dash 2 (font-text-width (label-string self) *font*))
+		     :blink t)))))
   
 (define-method do-sexp entry (sexp)
   (with-fields (value type-specifier parent) self
