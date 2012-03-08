@@ -24,6 +24,7 @@
 
 (defparameter *logo-height* 26)
 
+(defparameter *socket-size* 16)
 (defparameter *active-prompt-color* "red")
 (defparameter *inactive-prompt-color* "gray10")
 (defparameter *prompt-cursor-inactive-color* "gray50")
@@ -519,6 +520,18 @@
   ;; update the entry value if the user mouses away
   (enter self))
 
+;;; Dropping expressions onto argument inputs
+
+(define-method accept entry (thing)
+  (with-fields (parent) self
+    (when (is-a 'arguments parent)
+      (prog1 t
+	(let ((index (position-within-parent self)))
+	  (send :replace-widget parent index
+		(send :schema-widget parent 
+		      (nth index (%schema parent))
+		      :force-socket t)))))))
+		      
 ;;; Allow dragging the parent block more easily
 
 (define-method hit entry (x y)

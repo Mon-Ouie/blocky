@@ -126,7 +126,7 @@ either a symbol naming the field, or a list of the form (SYMBOL
 	      (setf name0 name)
 	      (when super (setf super0 super)))))
     `(define-prototype ,name0 (:super ,(make-prototype-id super0))
-;       (wiki-name :initform ,(verbose-symbol-name name0))
+       (wiki-name :initform ,(verbose-symbol-name name0))
        ,@(if (keywordp (first args))
 	  (plist-to-descriptors args)
 	  args))))

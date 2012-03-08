@@ -58,6 +58,7 @@
 		    ((:m :alt) :add-message)
 		    ((:s :alt) :add-statement)
 		    ((:v :alt) :add-variable)
+		    ((:l :alt) :add-self)
 		    ((:f :alt) :add-field)
 		    ((:e :alt) :add-expression)
 		    ))
@@ -232,10 +233,6 @@
 (define-method drop-at-pointer world (object)
   (add-block self object *pointer-x* *pointer-y* :prepend))
 
-;; (define-method drop-dwim world (object)
-;;   (if %focused-block 
-;;       (accept 
-
 (define-method add-message world ()
   (drop-at-pointer self (new 'message)))
 
@@ -250,6 +247,9 @@
 
 (define-method add-field world ()
   (drop-at-pointer self (new 'field)))
+
+(define-method add-self world ()
+  (drop-at-pointer self (new 'self)))
 
 (define-method contains-object world (object)
   (gethash (find-uuid object) 

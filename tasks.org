@@ -1,12 +1,13 @@
+** TODO [#C] allow replacing field as computed method using (defstruct computed-field 
 ** TODO [#A] being able to replace/augment any arguments entry with a labeled socket
+*** TODO refactor initialize arguments to allow individual updating
 ** TODO [#A] local variable palettes with add-variable etc
-** TODO Navigate to a prototype's page to make a method or derived block
-** TODO better listener menu
-** TODO local variables in ROOK defworld are the fields of ROOK and body is initializer?
-**** TODO locked to 0,0 position
-** TODO demo and test defining a new method before demoing defining a new object
 ** TODO [#A] (browse-method ... some command from listener
-** TODO [#A] intelligent rejection of listener eof
+** TODO [#A] Navigate to a prototype's page to make a method or derived block
+** TODO [#A] local variables in ROOK defworld are the fields of ROOK and body is initializer?
+**** TODO locked to 0,0 position
+** TODO [#A] better listener menu
+** TODO [#A] graceful rejection of listener eof
 ** TODO [#A] Generic + handle to add message
 **** TODO Keybinding for add-foo in current list SHIFT-F1 etc
 ** TODO Possibly F1 system/help, F2 browser, F3 browser, F4 browser

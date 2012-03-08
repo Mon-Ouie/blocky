@@ -245,7 +245,8 @@ extended argument list ARGLIST."
 	           
 (defun method-schema (prototype method)
   (assert (hash-table-p *methods*))
-  (let ((id (find-method-id (object-name (find-prototype prototype)) method)))
+  (let ((id (find-method-id (object-name (find-prototype prototype)) 
+			    (make-keyword method))))
     (assert (stringp id))
     (let ((result (gethash id *methods*)))
       (when result
@@ -710,6 +711,8 @@ upon binding."
 (defmacro with-forward-message-handler (form &body body)
   `(let ((*forward-message-handler* ,form)) ,@body))
 
+(defvar *self* nil)
+
 (defun send (method thing &rest args)
   "Invoke the method identified by the keyword METHOD on the OBJECT with ARGS.
 If the method is not found, attempt to forward the message."
@@ -1166,7 +1169,7 @@ slot value is inherited."
 	(defun ,accessor-name (thing)
 	  (field-value ,field-name thing))
 	(defun (setf ,accessor-name) (thing value)
-	  (set-field-value ,field-name thing value))
+	  (set-field-value thing ,field-name value))
 	(export ',accessor-name)))))
 
 (defun proto-intern (name)

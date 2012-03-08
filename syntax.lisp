@@ -32,13 +32,28 @@
 
 (deflist socket)
 
-(define-method hit socket (x y)
-  (if %inputs
-      (hit%super self x y)
-      (when (touching-point self x y)
-	self)))
+(define-method initialize socket (&optional target label)
+  (setf %label label)
+  (when target (setf %inputs (list target))))
 
-(defparameter *socket-size* 16)
+(define-method accept socket (other-block)
+  "Replace the child object with OTHER-BLOCK."
+  (when other-block 
+    (prog1 t
+      (setf %inputs (list other-block))
+      (set-parent other-block self))))
+
+(define-method evaluate socket ()
+  (when %inputs (first %inputs)))
+
+(define-method can-pick socket () t)
+  
+(define-method pick socket ()
+  ;; allow dragging of parent via empty socket
+  (if (null %inputs)
+      %parent
+      ;; otherwise, pick object
+      (first %inputs)))
 
 (define-method layout socket ()
   (with-fields (label inputs height width) self
@@ -77,31 +92,15 @@
 	  (draw (first inputs))
 	  (draw-image "socket" x y)))))
 
+(define-method hit socket (x y)
+  (if %inputs
+      (hit%super self x y)
+      (when (touching-point self x y)
+	self)))
+
 (define-method draw-hover socket ()
   (with-fields (x y width height) self
     (draw-box x y width height :color *hover-color* :alpha *hover-alpha*)))
-
-(define-method accept socket (other-block)
-  "Replace the child object with OTHER-BLOCK."
-  (when other-block 
-    (prog1 t
-      (setf %inputs (list other-block))
-      (set-parent other-block self))))
-
-(define-method evaluate socket ()
-  (when %inputs (first %inputs)))
-
-(define-method can-pick socket () t)
-  
-(define-method pick socket ()
-  ;; allow dragging of parent via empty socket
-  (if (null %inputs)
-      %parent
-      ;; otherwise, pick object
-      (first %inputs)))
-
-(define-method initialize socket (&optional input label)
-  (setf %input input %label label))
 
 ;;; Variables whose values are blocks
 
@@ -139,8 +138,6 @@
 	 arguments))
 
 ;;; Self reference
-
-(defvar *self* nil)
 
 (define-block-macro self
     (:super :list
@@ -197,6 +194,7 @@
 ;;; Closure for parameterizing a tree
 
 
+
 ;;; Inactive placeholder
 
 (deflist blank)
@@ -232,6 +230,26 @@
   (assert (blockyp block))
   nil)
 
+(define-method schema-widget arguments (entry &key force-socket no-label)
+  (if (or force-socket 
+	  (eq 'block (schema-type entry)))
+      (new 'socket :label (unless no-label 
+			    (pretty-string (schema-name entry))))
+      (clone (if (eq 'string (schema-type entry))
+		 "BLOCKY:STRING" 
+		 "BLOCKY:ENTRY")
+	     :value (schema-option entry :default)
+	     :parent (find-uuid self)
+	     :type-specifier (schema-type entry)
+	     :options (schema-options entry)
+	     :label (pretty-string (schema-name entry)))))
+
+(define-method replace-widget arguments (index widget)
+  (with-fields (inputs) self
+    (assert inputs)
+    (assert (< index (length inputs)))
+    (setf (nth index inputs) widget)))
+
 (define-method initialize arguments (&key method label target)
   (let ((schema (find-schema method target))
 	(inputs nil))
@@ -239,17 +257,7 @@
     (setf %no-background t)
     ;; create appropriate controls for the arguments in the schema
     (dolist (entry schema)
-      (let ((thing 
-	      (if (eq 'block (schema-type entry))
-		  (new 'socket :label (pretty-string (schema-name entry)))
-		  (clone (if (eq 'string (schema-type entry))
-			     "BLOCKY:STRING" "BLOCKY:ENTRY")
-			 :value (schema-option entry :default)
-			 :parent (find-uuid self)
-			 :type-specifier (schema-type entry)
-			 :options (schema-options entry)
-			 :label (pretty-string (schema-name entry))))))
-	(push thing inputs)))
+      (push (schema-widget self entry) inputs))
     (when inputs 
       (setf %inputs (nreverse inputs)))
     (setf %schema schema
@@ -258,9 +266,6 @@
 
 (define-method draw arguments ()
   (with-fields (x y width height label inputs) self
-    ;; (when %button-p
-    ;;   (with-style :flat
-    ;; 	(draw-patch self x y (+ x width) (+ y height))))
     (let ((*text-baseline* (+ y (dash 1))))
       (when label (draw-label-string self label "white"))
       (dolist (each inputs)
@@ -330,17 +335,18 @@
       (let ((method-key (make-keyword (ugly-symbol method)))
 	    (target (or (get-target self) (find-object "BLOCKY:BLOCK"))))
 	(when (not (eq method-key %method))
-	  ;; time to change args
+	  ;; remember to change args at next update.
 	  (setf %method method-key)
-	  (setf (second %inputs)
-		(new 'arguments :method method-key
-				:target target))
 	  (setf %updated t))))))
 
 (define-method update message ()
   (when %updated
-    (grab-focus (first %inputs))
-    (setf %updated nil)))
+    (with-input-values (method) self
+      (grab-focus (first %inputs))
+      (setf (second %inputs)
+	    (new 'arguments :method method
+			    :target (get-target self)))
+      (setf %updated nil))))
 
 (define-method set-method message (method)
   (set-value %%method (pretty-string method))
