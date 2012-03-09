@@ -569,7 +569,7 @@ The new value overrides any inherited value."
 	  (set-fref (object-fields object) field value)
 	    ;; don't lose new list heads
 	(prog1 value 
-	  (when (listp fields)
+	  (when (list fields)
 	    (setf (object-fields object) fields)))))))
   
 (defsetf field-value set-field-value)
@@ -1274,16 +1274,19 @@ evaluated, then any applicable initializer is triggered."
   (when (not (object-name (find-object prototype)))
     (setf prototype (find-super prototype)))
   ;; now clone it
-  (let ((uuid (make-uuid)))
-    (let ((new-object (make-object :super (find-object prototype)
-				   :uuid uuid
-				   :fields (compose-blank-fields nil :list))))
+  (let* ((uuid (make-uuid))
+	 (super (find-object prototype))
+	 (type (field-value :field-collection-type super))
+	 (fields (compose-blank-fields nil type))
+	 (new-object (make-object :super super
+				  :uuid uuid
+				  :fields fields)))
     (prog1 uuid
       (initialize-method-cache new-object)
       (send :initialize-fields new-object)
       (if (has-field :initialize new-object)
 	  (apply #'send :initialize new-object initargs))
-      (add-object-to-database new-object)))))
+      (add-object-to-database new-object))))
 
 ;;; Serialization support
 
@@ -1306,10 +1309,12 @@ evaluated, then any applicable initializer is triggered."
 (defconstant +object-type-key+ :%BLX1%OBJECT%)
 (defconstant +hash-type-key+ :%BLX1%HASH%)
 
+(defvar *already-serialized* nil)
+
 (defun serialize (object)
   "Convert a Lisp object a print-ready S-expression.
 Invokes :BEFORE-SERIALIZE on BLOCKY objects whenever present. Any fields
-named in the list %EXCLUDED-FIELDS of said object will be ignored."
+named in the field %EXCLUDED-FIELDS will be ignored."
   ;; use labels here so we can call #'serialize
   (with-standard-io-syntax
     (labels ((hash-to-list (hash)
@@ -1321,18 +1326,23 @@ named in the list %EXCLUDED-FIELDS of said object will be ignored."
 		   (cons +hash-type-key+ (cons (hash-table-test hash) plist))))))
       (typecase object 
 	(hash-table (hash-to-list object))
+	;; handle tree structure
 	(cons 
 	 (if (consp (cdr object)) ;; it's a list
 	     (mapcar #'serialize object)
 	     (cons (serialize (car object)) ;; it's a dotted pair
 		   (serialize (cdr object)))))
+	;; leave strings and uuids alone
 	(string object)
+	;; pass other vectors
 	(vector (map 'vector #'serialize object))
+	;; revive blocky objects
 	(object (let ((excluded-fields (when (has-field :excluded-fields object)
 					 (field-value :excluded-fields object))))
 		  ;; possibly prepare object for serialization.
 		  (when (has-method :before-serialize object)
 		    (send :before-serialize object))
+		  ;; serialize
 		  (let ((super-name (object-name (object-super object)))
 			(name (object-name object))
 			(uuid (object-uuid object))
@@ -1340,61 +1350,88 @@ named in the list %EXCLUDED-FIELDS of said object will be ignored."
 			(plist nil))
 		    (assert (and super-name 
 				 (null name)
-				 (stringp uuid)
-				 (listp fields)))
-		    (labels ((collect (field value)
-			       (unless (member field excluded-fields)
-				 (push (serialize value) plist)
-				 (push field plist))))
-		      ;; make serialized/cleaned plist 
-		      (loop while fields
-			    do (let ((field (pop fields))
-				     (value (pop fields)))
-				 (collect field value)))
-		      ;; cons up the final serialized thing
-		      (list +object-type-key+
-			    :super super-name
-			    :uuid uuid
-			    :fields plist)))))
+				 (stringp uuid)))
+		    ;; don't duplicate objects already in database
+		    (if (and (hash-table-p *already-serialized*)
+			     (gethash uuid *already-serialized*))
+			uuid
+			;; just serialize
+			(labels ((collect (field value)
+				   (unless (member field excluded-fields)
+				     (push (serialize value) plist)
+				     (push field plist))))
+			  ;; make serialized/cleaned plist 
+			  (etypecase fields
+			    (hash-table (maphash #'collect fields))
+			    (list (loop while fields
+					;; dissect plist
+					do (let ((field (pop fields))
+						 (value (pop fields)))
+					     (collect field value)))))
+			  ;; prevent duplicates
+			  (setf (gethash uuid *already-serialized*) t)
+			  ;; cons up the final serialized thing
+			  (list +object-type-key+
+				:super super-name
+				:uuid uuid
+				:fields plist))))))
 	(otherwise object)))))
-  
+
+(defun deserialize-hash (data)
+  (let (test)
+    ;; skip hash key
+    (when (eq +hash-type-key+ (first data))
+      (pop data))
+    ;; skip test indicator
+    (when (and (symbolp (first data))
+	       (not (keywordp (first data))))
+      (setf test (or (pop data) :list)))
+    ;; fill in the hash with what remains
+    (let ((plist data)
+	  (hash (make-hash-table :test (or test 'eq))))
+      (loop while plist do
+	(let* ((key (pop plist))
+	       (value (pop plist)))
+	  (setf (gethash key hash) (deserialize value))))
+      hash)))
+
 (defun deserialize (data)
   "Reconstruct Lisp objects (including BLOCKY-derived objects) from an
 S-expression made by SERIALIZE. Invokes :AFTER-DESERIALIZE on BLOCKY
 objects after reconstruction, wherever present."
   (with-standard-io-syntax 
-    (cond 
-      ;; handle BLOCKY objects
-      ((and (listp data) (eq +object-type-key+ (first data)))
-       (destructuring-bind (&key super uuid fields &allow-other-keys)
-	   (rest data)
-	 (let ((object (make-object :fields (mapcar #'deserialize fields)
-				    :uuid uuid
-				    :super (find-prototype super))))
-	   (prog1 object
-	     (initialize-method-cache object)
-	     ;; possibly recover from deserialization
-	     (when (has-method :after-deserialize object)
-	       (send :after-deserialize object))))))
-      ;; handle hashes
-      ((and (listp data) (eq +hash-type-key+ (first data)))
-       (destructuring-bind (test &rest plist)
-	   (rest data)
-	 (let ((hash (make-hash-table :test test)))
-	   (loop while plist do
-	     (let* ((key (pop plist))
-		    (value (pop plist)))
-	       (setf (gethash key hash) (deserialize value))))
-	   hash)))
-      ((consp data)
-       (if (consp (cdr data))
-	   ;; it's a list
-	   (mapcar #'deserialize data)
-	   ;; it's a dotted pair
-	   (cons (deserialize (car data))
-		 (deserialize (cdr data)))))
-      ;; passthru
-      (t data))))
+    (labels ((deserialize-fields (fields &optional (type :list))
+	       (ecase type
+		 (:list (mapcar #'deserialize fields))
+		 (:hash (deserialize-hash (rest fields))))))
+      (cond 
+	;; handle BLOCKY objects
+	((and (listp data) (eq +object-type-key+ (first data)))
+	 (destructuring-bind (&key super uuid fields0 &allow-other-keys)
+	     (rest data)
+	   (let* ((type (getf fields0 :field-collection-type :list))
+		  (fields (deserialize-fields fields0 type))
+		  (object (make-object :fields fields
+				       :uuid uuid
+				       :super (find-prototype super))))
+	     (prog1 object
+	       (initialize-method-cache object)
+	       ;; possibly recover from deserialization
+	       (when (has-method :after-deserialize object)
+		 (send :after-deserialize object))))))
+	;; handle hashes
+	((and (listp data) (eq +hash-type-key+ (first data)))
+	 (deserialize-fields (rest data) :hash))
+	;; handle lists
+	((consp data)
+	 (if (consp (cdr data))
+	     ;; it's a list
+	     (mapcar #'deserialize data)
+	     ;; it's a dotted pair
+	     (cons (deserialize (car data))
+		   (deserialize (cdr data)))))
+	;; passthru
+	(t data)))))
 
 (defun initialize%super (object &rest args)
   (apply #'send-super :initialize object args))

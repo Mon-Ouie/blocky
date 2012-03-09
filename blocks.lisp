@@ -57,6 +57,9 @@ Web at:
 
  http://blocky.io/reference.html 
 ")
+  (excluded-fields :initform '(:quadtree-node))
+  (field-collection-type :initform :list)
+  ;;
   (cursor-clock :initform 0)
   ;; general information
   (inputs :initform nil)
@@ -80,7 +83,6 @@ Web at:
   (z :initform 0 :documentation "Z coordinate of this block's position.")
   (heading :initform 0.0 :documentation "Heading angle of this block, in radians. See also `radian-angle'.")
   (quadtree-node :initform nil)
-  (excluded-fields :initform '(:quadtree-node))
   ;; 
   (last-x :initform nil)
   (last-y :initform nil)

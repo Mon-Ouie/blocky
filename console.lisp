@@ -1321,21 +1321,22 @@ OBJECT as the resource data."
 		(resource-data link) nil)))))
 
 (defun save-project-image (&optional force)
-  (let (index)
-    (if (or (standard-project-p)
-	    (untitled-project-p))
-	(message "Cannot save this project.")
-	(labels ((save (name resource)
-		   (unless (resource-system-p resource)
-		     (push (save-resource name resource) index))))
-	  (message "Saving project ~S ..." *project*)
-	  ;; (maphash #'save *resources*)
-	  ;; FIXME: allow to save resources in separate file
-	  (save-resource-file (find-project-file *project* *object-index-filename*)
-			      (nreverse index))
-	  (save-database)
-	  (save-variables)
-	  (message "Saving project ~S ... Done." *project*)))))
+  (let ((*already-serialized* (make-hash-table :test 'equal)))
+    (let (index)
+      (if (or (standard-project-p)
+	      (untitled-project-p))
+	  (message "Cannot save this project.")
+	  (labels ((save (name resource)
+		     (unless (resource-system-p resource)
+		       (push (save-resource name resource) index))))
+	    (message "Saving project ~S ..." *project*)
+	    ;; (maphash #'save *resources*)
+	    ;; FIXME: allow to save resources in separate file
+	    (save-resource-file (find-project-file *project* *object-index-filename*)
+				(nreverse index))
+	    (save-database)
+	    (save-variables)
+	    (prog1 t (message "Saving project ~S ... Done." *project*)))))))
 
 (defparameter *export-formats* '(:archive :application))
 
@@ -1629,19 +1630,14 @@ control the size of the individual frames or subimages."
 (defun persistent-variables-file (&optional (project *project*))
   (find-project-file project *persistent-variables-file-name*))
 
-(defun make-variable-resource (name)
+(defun make-variable-resource (name &optional nodup)
   (assert (and (symbolp name)
 	       (boundp name)))
   (assert (member name *safe-variables*))
   (assert (not (eq name '*safe-variables*)))
-  (let* ((thing (symbol-value name))
-	 (data (if (blockyp thing)
-		   ;; don't duplicate anything from *database*
-		   (find-uuid thing)
-		   (serialize thing))))
-    (make-resource :name name
-		   :type :variable
-		   :data data)))
+  (make-resource :name name
+		 :type :variable
+		 :data (serialize (symbol-value name))))
 
 (defun load-variable-resource (resource)
   (assert (eq :variable (resource-type resource)))

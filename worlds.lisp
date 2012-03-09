@@ -62,9 +62,12 @@
 		    ((:f :alt) :add-field)
 		    ((:e :alt) :add-expression)
 		    ))
+  ;; prototype control
   (excluded-fields :initform
 		   '(:quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :listener :drag :hover :highlight)
 		   :documentation "Don't serialize the menu bar.")
+  (field-collection-type :initform :hash)
+  ;; dragging info
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
   (drag-button :initform nil)
@@ -315,7 +318,7 @@
   (object-eq thing (player)))
 
 (define-method set-player world (player)
-  (setf %player player))
+  (setf %player (find-uuid player)))
   ;; (unless (contains-object self player)
   ;;   (add-object self player)))
 
@@ -511,9 +514,6 @@ slowdown. See also quadtree.lisp")
 (define-method add-listener-maybe world ()
   (when (not (has-local-value :listener self))
     (setf %listener (new 'listener))))
-
-(define-method after-deserialize world ()
-  (add-listener-maybe self))
 
 (define-method enter-listener world ()
   (add-listener-maybe self)
@@ -945,5 +945,19 @@ block found, or nil if none is found."
     (unless (emptyp self)
       (normalize-quadtree self))
     (start%super self)))
+
+;;; Serialization of worlds
+
+(define-method before-serialize world ()
+  (with-fields (objects) self
+    (loop for id being the hash-keys of objects do
+      ;; don't serialize the cached object
+      (setf (gethash id objects) t))))
+    
+(define-method after-deserialize world ()
+  (with-fields (objects) self
+    (loop for id being the hash-keys of objects do
+      (setf (gethash id objects) (find-object id)))
+    (add-listener-maybe self)))
 
 ;;; worlds.lisp ends here
