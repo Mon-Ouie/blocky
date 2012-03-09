@@ -32,7 +32,7 @@
 
 (deflist socket)
 
-(define-method initialize socket (&optional target label)
+(define-method initialize socket (&key target label)
   (setf %label label)
   (when target (setf %inputs (list target))))
 
@@ -69,14 +69,14 @@
 	(setf height (+ (max (font-height *font*)
 			     *socket-size*)))
 	(setf width (- x %x)))
-      (cond 
-	((and label (null target))
-	 (incf width (+ (dash 1) *socket-size*)))
-	((and target (null label))
-	 (move-to target x y)
-	 (layout target) 
-	 (setf height (+ (%height target)))
-	 (setf width (+ label-width (%width target))))))))
+      (when
+	  (and label (null target))
+	(incf width (+ (dash 1) *socket-size*)))
+      (when target
+	(move-to target x y)
+	(layout target)
+	(setf height (+ (dash 1) (%height target)))
+	(setf width (+ label-width (%width target)))))))
 
 (define-method draw socket ()
   (with-fields (label inputs) self
@@ -233,7 +233,9 @@
 (define-method schema-widget arguments (entry &key force-socket no-label)
   (if (or force-socket 
 	  (eq 'block (schema-type entry)))
-      (new 'socket :label (unless no-label 
+      (new 'socket 
+	   :target *target*
+	   :label (unless no-label 
 			    (pretty-string (schema-name entry))))
       (clone (if (eq 'string (schema-type entry))
 		 "BLOCKY:STRING" 

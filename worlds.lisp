@@ -208,7 +208,7 @@
     (setf %method (wiki-name-method name)))
   (setf %ghost (new 'block))
   (setf %objects (make-hash-table :test 'equal)))
-  
+
 ;;; The object layer. 
       
 (define-method remove-object world (object)
@@ -511,6 +511,9 @@ slowdown. See also quadtree.lisp")
 (define-method add-listener-maybe world ()
   (when (not (has-local-value :listener self))
     (setf %listener (new 'listener))))
+
+(define-method after-deserialize world ()
+  (add-listener-maybe self))
 
 (define-method enter-listener world ()
   (add-listener-maybe self)

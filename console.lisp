@@ -1329,7 +1329,7 @@ OBJECT as the resource data."
 		   (unless (resource-system-p resource)
 		     (push (save-resource name resource) index))))
 	  (message "Saving project ~S ..." *project*)
-	  (maphash #'save *resources*)
+	  ;; (maphash #'save *resources*)
 	  ;; FIXME: allow to save resources in separate file
 	  (save-resource-file (find-project-file *project* *object-index-filename*)
 			      (nreverse index))
@@ -1610,12 +1610,12 @@ control the size of the individual frames or subimages."
 (defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
 *screen-height* *world* *blocks* *dt* *pointer-x* *author* *project*
 *joystick-profile* *user-joystick-profile* *joystick-axis-size*
-*joystick-dead-zone* *pointer-y* *trash* *resizable* *window-title*
-*system* *scale-output-to-window* *persistent-variables*))
+*joystick-dead-zone* *pointer-y* *resizable* *window-title*
+*scale-output-to-window* *persistent-variables*))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
 *screen-height* *world* *blocks* *dt* *pointer-x* *author* *project*
-*scale-output-to-window* *pointer-y* *trash* *resizable*
+*scale-output-to-window* *pointer-y* *resizable*
 *window-title*
 				 ;; notice that THIS variable is also
 				 ;; persistent!  this is to avoid
@@ -1633,10 +1633,15 @@ control the size of the individual frames or subimages."
   (assert (and (symbolp name)
 	       (boundp name)))
   (assert (member name *safe-variables*))
-  (assert (not (eq name '*safe-variables*))) 
-  (make-resource :name name
-		 :type :variable
-		 :data (serialize (symbol-value name))))
+  (assert (not (eq name '*safe-variables*)))
+  (let* ((thing (symbol-value name))
+	 (data (if (blockyp thing)
+		   ;; don't duplicate anything from *database*
+		   (find-uuid thing)
+		   (serialize thing))))
+    (make-resource :name name
+		   :type :variable
+		   :data data)))
 
 (defun load-variable-resource (resource)
   (assert (eq :variable (resource-type resource)))
@@ -1644,7 +1649,8 @@ control the size of the individual frames or subimages."
     (assert (member name *safe-variables*))
     (message "Setting variable: ~S..." name)
     (setf (symbol-value name)
-	  (resource-data resource))))
+	  (deserialize (resource-data resource)))
+    (setf (resource-data resource) nil)))
 
 (defun save-variables (&optional (variables *persistent-variables*))
   (with-standard-io-syntax

@@ -1303,8 +1303,8 @@ evaluated, then any applicable initializer is triggered."
 ;; these will be properly re-initialized by the :AFTER-DESERIALIZE
 ;; method.
 
-(defconstant +object-type-key+ :%IOF1%OBJECT%)
-(defconstant +hash-type-key+ :%IOF1%HASH%)
+(defconstant +object-type-key+ :%BLX1%OBJECT%)
+(defconstant +hash-type-key+ :%BLX1%HASH%)
 
 (defun serialize (object)
   "Convert a Lisp object a print-ready S-expression.
@@ -1513,14 +1513,14 @@ objects after reconstruction, wherever present."
   ;; 	    (1+ (search "{" string))
   ;; 	    (search "}" string))))
 
-(defun print-iob (foo stream)
+(defun print-blx (foo stream)
   (let ((object (find-object foo)))
     (format stream "#<% ~A ~A>" 
 	    (get-some-object-name object)
 	    (object-address-string object))))
 
 (defmethod print-object ((foo blocky:object) stream)
-  (print-iob foo stream))
+  (print-blx foo stream))
 
 ;;; Brute force debugging
     
