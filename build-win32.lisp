@@ -14,7 +14,6 @@
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/lispbuilder/lispbuilder-sdl/") asdf:*central-registry*)
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/lispbuilder/lispbuilder-sdl-image/") asdf:*central-registry*)
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/lispbuilder/lispbuilder-sdl-mixer/") asdf:*central-registry*)
-(pushnew (translate-pathname *base-pathname* "**/" "**/site/lispbuilder/lispbuilder-sdl-gfx/") asdf:*central-registry*)
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/lispbuilder/lispbuilder-sdl-ttf/") asdf:*central-registry*)
 
 (pushnew (translate-pathname *base-pathname* "**/" "**/blocky/") asdf:*central-registry*)
@@ -26,7 +25,7 @@
 ;;(setf *default-pathname-defaults* (make-pathname :directory '(:relative)))
 
 (map nil
-#'ql:quickload (list "lispbuilder-sdl-mixer" "lispbuilder-sdl-ttf" "lispbuilder-sdl-gfx" "lispbuilder-sdl-image" "cl-opengl" "cl-fad" "uuid")) (require :blocky)
+#'ql:quickload (list "lispbuilder-sdl-mixer" "lispbuilder-sdl-ttf" "lispbuilder-sdl-image" "cl-opengl" "cl-fad" "uuid")) (require :blocky)
 
 (asdf:oos 'asdf:load-op :blocky)
 (pop cffi:*foreign-library-directories*)

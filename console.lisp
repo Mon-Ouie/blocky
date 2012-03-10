@@ -1474,16 +1474,17 @@ control the size of the individual frames or subimages."
     image))
 
 (defun load-bitmap-font-resource (resource)
-  (let ((props (resource-properties resource)))
-    (if (null props)
-	(error "Must set properties for bitmap font.")
-	(destructuring-bind (&key width height character-map color-key) props
-	  (sdl-gfx:initialise-font (make-instance 'SDL:simple-font-definition
-						  :width width :height height
-						  :character-map character-map
-						  :color-key (apply #'sdl:color color-key)
-						  :filename (resource-file resource)
-						  :pad-x 0 :pad-y 0))))))
+  nil)
+  ;; (let ((props (resource-properties resource)))
+  ;;   (if (null props)
+  ;; 	(error "Must set properties for bitmap font.")
+  ;; 	(destructuring-bind (&key width height character-map color-key) props
+  ;; 	  (sdl-gfx:initialise-font (make-instance 'SDL:simple-font-definition
+  ;; 						  :width width :height height
+  ;; 						  :character-map character-map
+  ;; 						  :color-key (apply #'sdl:color color-key)
+  ;; 						  :filename (resource-file resource)
+  ;; 						  :pad-x 0 :pad-y 0))))))
     
 (defun load-text-resource (resource)
   (with-open-file (file (resource-file resource)
@@ -1733,13 +1734,13 @@ of the record.")
   (sdl:set-surface-* image :x 0 :y 0)
   image))
 
-(defun scale-image (image &optional (factor 1))
-  "Return a scaled version of IMAGE, scaled by FACTOR.
-Allocates a new image."
-  (assert (integerp factor))
-  (lispbuilder-sdl-gfx:zoom-surface factor factor
-				    :surface (resource-object image)
-				    :smooth nil))
+(defun scale-image (image &optional (factor 1)) nil)
+;;   "Return a scaled version of IMAGE, scaled by FACTOR.
+;; Allocates a new image."
+;;   (assert (integerp factor))
+;;   (lispbuilder-sdl-gfx:zoom-surface factor factor
+;; 				    :surface (resource-object image)
+;; 				    :smooth nil))
 
 (defvar *resource-transformations* 
   (list :rotate #'rotate-image
@@ -2233,17 +2234,17 @@ of the music."
 		  "libSDL_mixer")))
     (cffi:use-foreign-library sdl-mixer)
     ;;
-    (cffi:define-foreign-library sdl-gfx
-      (:darwin (:or (:framework "SDL_gfx")
-		    (:default "libSDL_gfx")))
-      (:unix (:or "libSDL_gfx-1.2.so.0.7.2"
-		  "libSDL_gfx-1.2.so.0"
-		  "libSDL_gfx-1.2.so"
-		  "libSDL_gfx.so.4"
-		  "libSDL_gfx.so.13"
-		  "libSDL_gfx.so"
-		  "libSDL_gfx")))
-    (cffi:use-foreign-library sdl-gfx)
+    ;; (cffi:define-foreign-library sdl-gfx
+    ;;   (:darwin (:or (:framework "SDL_gfx")
+    ;; 		    (:default "libSDL_gfx")))
+    ;;   (:unix (:or "libSDL_gfx-1.2.so.0.7.2"
+    ;; 		  "libSDL_gfx-1.2.so.0"
+    ;; 		  "libSDL_gfx-1.2.so"
+    ;; 		  "libSDL_gfx.so.4"
+    ;; 		  "libSDL_gfx.so.13"
+    ;; 		  "libSDL_gfx.so"
+    ;; 		  "libSDL_gfx")))
+    ;; (cffi:use-foreign-library sdl-gfx)
     ;;
     (cffi:define-foreign-library sdl-image
       (:darwin (:or (:framework "SDL_image")

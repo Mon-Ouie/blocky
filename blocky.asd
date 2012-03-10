@@ -16,7 +16,7 @@
   :serial t
   :depends-on (:lispbuilder-sdl 
 	       :lispbuilder-sdl-image 
-	       :lispbuilder-sdl-gfx
+	       ;; :lispbuilder-sdl-gfx
 	       :lispbuilder-sdl-ttf
 	       :lispbuilder-sdl-mixer
 	       :uuid

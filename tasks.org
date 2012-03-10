@@ -1,3 +1,4 @@
+** TODO fix key events not working in deserialized worlds
 ** TODO [#A] being able to replace/augment any arguments entry with a labeled socket
 *** TODO refactor initialize arguments to allow individual updating
 ** TODO [#A] local variable palettes with add-variable etc
