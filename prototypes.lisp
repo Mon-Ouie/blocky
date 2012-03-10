@@ -318,6 +318,10 @@ extended argument list ARGLIST."
 		 *database*)
 	object))
 
+(defun remove-object-from-database (object)
+  (assert (hash-table-p *database*))
+  (remhash (find-uuid object) *database*))
+
 (defun find-object-by-uuid (uuid &optional noerror)
   (or (gethash uuid *database*)
       (unless noerror
@@ -1336,7 +1340,7 @@ named in the field %EXCLUDED-FIELDS will be ignored."
 	(string object)
 	;; pass other vectors
 	(vector (map 'vector #'serialize object))
-	;; revive blocky objects
+	;; flatten blocky objects
 	(object (let ((excluded-fields (when (has-field :excluded-fields object)
 					 (field-value :excluded-fields object))))
 		  ;; possibly prepare object for serialization.
@@ -1379,59 +1383,58 @@ named in the field %EXCLUDED-FIELDS will be ignored."
 
 (defun deserialize-hash (data)
   (let (test)
-    ;; skip hash key
+    ;; skip hash key and test indicator
     (when (eq +hash-type-key+ (first data))
-      (pop data))
-    ;; skip test indicator
-    (when (and (symbolp (first data))
-	       (not (keywordp (first data))))
+      (pop data)
+      ;; skip test indicator
       (setf test (or (pop data) :list)))
     ;; fill in the hash with what remains
     (let ((plist data)
 	  (hash (make-hash-table :test (or test 'eq))))
-      (loop while plist do
-	(let* ((key (pop plist))
-	       (value (pop plist)))
-	  (setf (gethash key hash) (deserialize value))))
-      hash)))
+      (prog1 hash
+	(loop while plist do
+	  (let* ((key (pop plist))
+		 (value (pop plist)))
+	    (setf (gethash key hash) (deserialize value))))))))
+
+(defun deserialize-fields (fields &optional (type :list))
+  (ecase type
+    (:list (mapcar #'deserialize fields))
+    (:hash (deserialize-hash fields))))
 
 (defun deserialize (data)
   "Reconstruct Lisp objects (including BLOCKY-derived objects) from an
 S-expression made by SERIALIZE. Invokes :AFTER-DESERIALIZE on BLOCKY
 objects after reconstruction, wherever present."
   (with-standard-io-syntax 
-    (labels ((deserialize-fields (fields &optional (type :list))
-	       (ecase type
-		 (:list (mapcar #'deserialize fields))
-		 (:hash (deserialize-hash (rest fields))))))
-      (cond 
-	;; handle BLOCKY objects
-	((and (listp data) (eq +object-type-key+ (first data)))
-	 (destructuring-bind (&key super uuid fields0 &allow-other-keys)
-	     (rest data)
-	   (let* ((type (getf fields0 :field-collection-type :list))
-		  (fields (deserialize-fields fields0 type))
-		  (object (make-object :fields fields
-				       :uuid uuid
-				       :super (find-prototype super))))
-	     (prog1 object
-	       (initialize-method-cache object)
-	       ;; possibly recover from deserialization
-	       (when (has-method :after-deserialize object)
-		 (send :after-deserialize object))))))
-	;; handle hashes
-	((and (listp data) (eq +hash-type-key+ (first data)))
-	 (deserialize-fields (rest data) :hash))
-	;; handle lists
-	((consp data)
-	 (if (consp (cdr data))
-	     ;; it's a list
-	     (mapcar #'deserialize data)
-	     ;; it's a dotted pair
-	     (cons (deserialize (car data))
-		   (deserialize (cdr data)))))
-	;; passthru
-	(t data)))))
+    (cond 
+      ;; handle BLOCKY objects
+      ((and (listp data) (eq +object-type-key+ (first data)))
+       (destructuring-bind (&key super uuid fields0 &allow-other-keys)
+	   (rest data)
+	 (let* ((type (getf fields0 :field-collection-type :list))
+		(fields (deserialize-fields fields0 type))
+		(object (make-object :fields fields
+				     :uuid uuid
+				     :super (find-prototype super))))
+	   (prog1 object
+	     (initialize-method-cache object)
+	     ;; possibly recover from deserialization
+	     (when (has-method :after-deserialize object)
+	       (send :after-deserialize object))))))
+      ;; handle hashes
+      ((and (listp data) (eq +hash-type-key+ (first data)))
+       (deserialize-fields (rest data) :hash))
+      ;; handle lists
+      ((consp data)
+       (if (consp (cdr data))
+	   ;; it's a list
+	   (mapcar #'deserialize data)
+	   ;; it's a dotted pair
+	   (cons (deserialize (car data))
+		 (deserialize (cdr data)))))
+      ;; passthru
+      (t data))))
 
 (defun initialize%super (object &rest args)
   (apply #'send-super :initialize object args))
