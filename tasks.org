@@ -1,4 +1,3 @@
-** TODO easier setup of test scenarios --- load/save
 ** TODO [#A] being able to replace/augment any arguments entry with a labeled socket
 *** TODO refactor initialize arguments to allow individual updating
 ** TODO [#A] local variable palettes with add-variable etc

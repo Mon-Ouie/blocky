@@ -104,8 +104,6 @@
 
 ;;; Variables whose values are blocks
 
-(defvar *parameters* nil)
-
 (define-block (variable :super :list)
   (name :initform nil)
   (category :initform :variables))
