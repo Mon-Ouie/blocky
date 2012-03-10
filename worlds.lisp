@@ -621,9 +621,6 @@ slowdown. See also quadtree.lisp")
   (prog1 self
     (with-world self
       (mapc #'evaluate %inputs))))
- 
-(define-method after-deserialize world ()
-  (clear-drag-data self))
 
 (define-method layout world ()
   ;; take over the entire GL window
@@ -955,9 +952,13 @@ block found, or nil if none is found."
       (setf (gethash id objects) t))))
     
 (define-method after-deserialize world ()
+  (after-deserialize%super self)
   (with-fields (objects) self
     (loop for id being the hash-keys of objects do
       (setf (gethash id objects) (find-object id)))
     (add-listener-maybe self)))
+
+
+
 
 ;;; worlds.lisp ends here

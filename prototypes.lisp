@@ -1356,7 +1356,8 @@ named in the field %EXCLUDED-FIELDS will be ignored."
 				 (null name)
 				 (stringp uuid)))
 		    ;; don't duplicate objects already in database
-		    (if (and (hash-table-p *already-serialized*)
+		    (if (and nil ;; removed for the time being
+			     (hash-table-p *already-serialized*)
 			     (gethash uuid *already-serialized*))
 			uuid
 			;; just serialize
@@ -1374,20 +1375,21 @@ named in the field %EXCLUDED-FIELDS will be ignored."
 					     (collect field value)))))
 			  ;; prevent duplicates
 			  (setf (gethash uuid *already-serialized*) t)
-			  ;; cons up the final serialized thing
+			  ;; cons up the final serialized sexp
 			  (list +object-type-key+
 				:super super-name
 				:uuid uuid
 				:fields plist))))))
+	;; pass through other Lisp entities
 	(otherwise object)))))
 
 (defun deserialize-hash (data)
   (let (test)
-    ;; skip hash key and test indicator
-    (when (eq +hash-type-key+ (first data))
-      (pop data)
-      ;; skip test indicator
-      (setf test (or (pop data) :list)))
+    ;; ;; skip hash key and test indicator
+    ;; (when (eq +hash-type-key+ (first data))
+    ;;   (pop data)
+    ;;   ;; skip test indicator
+    ;;   (setf test (or (pop data) :list)))
     ;; fill in the hash with what remains
     (let ((plist data)
 	  (hash (make-hash-table :test (or test 'eq))))
@@ -1410,13 +1412,12 @@ objects after reconstruction, wherever present."
     (cond 
       ;; handle BLOCKY objects
       ((and (listp data) (eq +object-type-key+ (first data)))
-       (destructuring-bind (&key super uuid fields0 &allow-other-keys)
+       (destructuring-bind (&key super uuid fields &allow-other-keys)
 	   (rest data)
-	 (let* ((type (getf fields0 :field-collection-type :list))
-		(fields (deserialize-fields fields0 type))
-		(object (make-object :fields fields
-				     :uuid uuid
-				     :super (find-prototype super))))
+	 (let ((object
+		 (make-object :fields (deserialize-fields fields)
+			      :uuid uuid
+			      :super (find-prototype super))))
 	   (prog1 object
 	     (initialize-method-cache object)
 	     ;; possibly recover from deserialization
@@ -1424,7 +1425,7 @@ objects after reconstruction, wherever present."
 	       (send :after-deserialize object))))))
       ;; handle hashes
       ((and (listp data) (eq +hash-type-key+ (first data)))
-       (deserialize-fields (rest data) :hash))
+       (deserialize-fields (rest (rest data)) :hash))
       ;; handle lists
       ((consp data)
        (if (consp (cdr data))
