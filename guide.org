@@ -21,7 +21,7 @@ resources.
 You don't need to learn the entire language to begin working with
 Blocky, though---being able to at least read and understand the
 examples from the Wikipedia page should be enough to help you read the
-Blocky examples in the next section.
+Blocky examples in the next sections.
  
 * Installing Blocky
 
@@ -64,18 +64,15 @@ plugin or script available for editing Lisp code and matching those
 parentheses. If you're unsure about Vim and Emacs, try looking around 
 to see if you can find Lisp support for your existing editor. 
  
-* Overview of prototype-based programming 
+* Using Blocky's object system
  
-Blocky is built on an alternative view of object-orientation called 
-[[http://en.wikipedia.org/wiki/Prototype-based_programming][Prototype-based programming.]] Instead of partitioning the objects in 
-your program into classes that share inheritance relationships, the 
-objects in a prototype-based system inherit behavior and data directly 
-from each other through "cloning".  
- 
-The data members of an object are called fields, and the operations on 
-those objects are called methods. Both fields and methods can be 
-inherited through cloning in Blocky. 
- 
+Blocky is built on an alternative view of object-orientation called
+[[http://en.wikipedia.org/wiki/Prototype-based_programming][Prototype-based programming.]] Instead of partitioning the objects in
+your program into classes arranged in an inheritance tree, the objects
+in a prototype-based system inherit behavior and data directly from
+each other in linear fashion through "cloning". The following sections
+explain how Blocky objects define and access this data and behavior.
+
 The cloning process takes an existing object and creates a new object 
 with a link to the original---now called a "superobject"---from which 
 it will inherit methods and data fields. When a method is invoked (or 
@@ -84,7 +81,123 @@ checked for a value, and then its superobject if any, and so
 on. Methods are stored in fields, so if you want to replace a clone's 
 method definition with something else, just define the new method on 
 the clone, and the superobject's version will be hidden. 
- 
+
+You might define a Lisp variable to refer to a color swatch, and
+assign a new swatch to it:
+
+: ;; asterisks are a convention for global variables
+: (defvar *my-color*)
+: ;; the NEW function creates objects and passes initializer arguments
+: (setf *my-color* (new 'color "blue"))
+
+You can execute these expressions at a SLIME or SLIMV prompt, or type
+them in the Lisp listener in Blocky itself if you want to play with
+the resulting objects in the IDE.
+
+The data members of an object are called fields. For example, the X
+and Y position of a block are stored as fields in the object, named :X
+and :Y, and the cooresponding X and Y values are called field values.
+
+Notice the colon character in the field names :X and :Y. A symbol
+prefixed with a colon is a /keyword symbol/ in Common Lisp. (Notice
+also the single quote in front of the prototype name in the SETF
+statement above: "'color". The single quote (as opposed to colon)
+prefix is usually required, but the reasons for this are a bit beyond
+the scope of the present document---it relates to the Common Lisp
+package system.)
+
+To read or write a field's value, you can use the function FIELD-VALUE
+with one of these keyword symbols naming the desired field:
+
+: (setf (field-value :name *my-color*) "red")
+: (message (field-value :name *my-color*))
+
+There is an equivalent shorthand, recommended if you don't wish to
+keep typing FIELD-VALUE:
+
+: (setf (%name *my-color*) "red")
+: (message (%name *my-color*))
+
+The function %NAME is a simple accessor, which returns the field value
+for :NAME in the object that is the function's sole argument.
+
+You can read and update other fields similarly:
+
+: (message "My x-coordinate is ~S, my y-coordinate is ~S."
+:          (%x *my-color*) (%y *my-color*))
+
+It may look strange in that both SETF statements above appear to be
+/setting the value/ of a function call, but this is not exactly the
+case. SETF works with a high-level feature of Common Lisp called
+"generalized variables". That is, not only variables can identify
+places to store data---many expressions can identify a "place", that
+can qualify as the destination for a SETF statement. Behind the
+scenes, this expression is transformed into appropriate code by Common
+Lisp.
+
+Now let's try defining a simple custom block with some of its own
+/methods/, which are fields with function values. These behavioral
+members of an object can be created with the macro DEFINE-METHOD, but
+first we need to create a prototype:
+
+: (define-block monster
+:   (hits :initform 5
+:         :documentation "Number of remaining hit points before monster dies.")
+:   (speed :initform 2
+:          :documentation "Distance to move on each update.")          
+:   (hunger :initform 0
+:           :documentation "Number of recently eaten adventurers."))
+  
+First we have DEFINE-BLOCK, then the name of your new block "MONSTER"
+as a symbol, and then two field declarations. These declarations are
+each of the form:
+
+: (<field-name> :initform <value> :documentation <value>...
+
+You'll often see this pattern in Common Lisp, called /keyword
+arguments/. The keywords can appear in any order, and each keyword is
+followed by its corresponding value.
+
+Now that our monster is defined, let's define a behavior.
+
+: (define-method munch monster ()
+:   ;; seek out the player when hungry
+:   (when (zerop (%hunger self))
+:     (aim-at-thing self (player))
+:     (forward (%speed self))
+
+Notice you can invoke methods on SELF and get field values from SELF
+as described above. SELF refers to the current object this method is
+being invoked on. You can simplify the above to:
+
+: (define-method hunt monster ()
+:   (when (zerop %hunger)
+:     (aim-at-thing self (player))
+:     (forward %speed)))
+
+That is, when %FOO appears as a variable name, it is taken as
+shorthand for (%foo self), which becomes (field-value :foo self).
+
+Every timestep, a method called UPDATE is invoked on all active game
+objects in the simulation. We can now redefine the update method to
+make our monster seek the player whenever hungry.
+
+: (define-method update monster ()
+:   (hunt self))
+
+*** Under construction...
+
+Now let's define what happens if we hit the player.
+
+: (define-method collide monster (thing)
+:   (when (is-a 'adventurer thing)
+:     (destroy thing)
+:     (decf %hunger)))
+
+** TODO Document WITH-FIELDS and WITH-FIELD-VALUES
+** TODO Document %%FOO and INPUT-VALUE and WITH-INPUT-VALUES
+** TODO Document method properties and extended arglists
+
 * How to define game objects with Lisp code 
  
 While a longer text explanation is in the works, there are several
