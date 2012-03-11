@@ -739,7 +739,7 @@ If the method is not found, attempt to forward the message."
 		     ;; no such method. try another handler
 		     (let ((handler (or *forward-message-handler* object)))
 		       (if (has-field :forward-message handler)
-			   (funcall (field-value :forward-message handler)
+			   (apply (field-value :forward-message handler)
 				    method args)
 			   (error (format nil "Could not invoke method ~S" method))))))))))
 

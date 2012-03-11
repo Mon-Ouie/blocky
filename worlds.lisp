@@ -234,7 +234,8 @@
   (move-to block x y))
 
 (define-method drop-at-pointer world (object)
-  (add-block self object *pointer-x* *pointer-y* :prepend))
+  (add-block self object *pointer-x* *pointer-y* :prepend)
+  (focus-on self object))
 
 (define-method add-message world ()
   (drop-at-pointer self (new 'message)))
@@ -956,7 +957,6 @@ block found, or nil if none is found."
   (with-fields (objects) self
     (loop for id being the hash-keys of objects do
       (setf (gethash id objects) (find-object id)))
-    (add-listener-maybe self)
-    (bind-any-default-events self)))
+    (add-listener-maybe self)))
 
 ;;; worlds.lisp ends here

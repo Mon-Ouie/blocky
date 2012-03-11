@@ -316,6 +316,7 @@ engine. The field `%tags' is a set of keyword symbols; if a symbol
 
 (define-method after-deserialize block ()
   "Prepare a deserialized block for running."
+  (bind-any-default-events self)
   (register-uuid self))
 
 ;;; Expression structure (blocks composed into trees)
@@ -1842,6 +1843,7 @@ Note that the center-points of the objects are used for comparison."
 	      (null clock)
 	      (and (integerp clock)
 		   (plusp clock))))
+  (initialize%super self)
   (setf %method (make-keyword method)
 	%arguments arguments
 	%target (find-uuid target)

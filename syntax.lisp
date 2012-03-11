@@ -83,7 +83,7 @@
     (let ((x %x)
 	  (y %y))
       (when label 
-	(draw-string label x y 
+	(draw-string label x *text-baseline*
 		     :color "white"
 		     :font *font*)
 	(incf x (+ (dash 1)
@@ -134,6 +134,9 @@
   (apply #'send method 
 	 (pick-target self)
 	 arguments))
+
+(define-method focus variable ()
+  (grab-focus (first %inputs)))
 
 ;;; Self reference
 
@@ -232,9 +235,9 @@
   (if (or force-socket 
 	  (eq 'block (schema-type entry)))
       (new 'socket 
-	   :input input
+	   :input nil
 	   :label (unless no-label 
-			    (pretty-string (schema-name entry))))
+		    (pretty-string (schema-name entry))))
       (clone (if (eq 'string (schema-type entry))
 		 "BLOCKY:STRING" 
 		 "BLOCKY:ENTRY")
@@ -290,7 +293,7 @@
 
 (define-method evaluate printer ()
   (let* ((*print-pretty* t)
-	 (input (evaluate %%input))
+	 (input (pick-target %%input))
 	 (string (format nil "~S" 
 			 (if (blockyp input)
 			     (evaluate input) input))))
