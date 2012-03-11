@@ -17,7 +17,7 @@
 ** TODO [#A] arbitrary lisp function message wrapper
 ** TODO [#B] lisp literal variables as targets
 ** TODO [#B] improve defresource and call it define-resource
-**** TODO resource-defining block-ui
+**** TODO resource-defining block-ui , each 
 **** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
 ** TODO [#B] wiki browser: substring match as you type , for choosing what to define methods on (or blocks from)
 **** TODO [#B] scrolling list box
