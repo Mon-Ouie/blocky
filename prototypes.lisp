@@ -371,7 +371,7 @@ extended argument list ARGLIST."
 (defun find-schema (method &optional target)
   (let ((source (or (when target
 		      (find-super-prototype-name 
-		       (send :pick-target target)))
+		       (send :as-target target)))
 		    "BLOCKY:BLOCK")))
     (method-schema source method)))
 

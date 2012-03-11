@@ -730,11 +730,11 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (define-method drag block (x y)
   (move-to self x y))
 
-(define-method pick-drag block (x y)
+(define-method as-drag block (x y)
   (declare (ignore x y)) 
   self)
 
-(define-method pick-target block () self)
+(define-method as-target block () self)
 
 (define-method can-escape block ()
   t)

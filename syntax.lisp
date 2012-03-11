@@ -127,12 +127,12 @@
 (define-method evaluate variable ()
   (world-variable (variable-name self)))
 
-(define-method pick-target variable ()
+(define-method as-target variable ()
   (or (evaluate self) self))
 
 (define-method forward-message variable (method arguments)
   (apply #'send method 
-	 (pick-target self)
+	 (as-target self)
 	 arguments))
 
 (define-method focus variable ()
@@ -155,7 +155,7 @@
 (define-method recompile self ()
   'self)
   
-(define-method pick-target self ()
+(define-method as-target self ()
   (evaluate self))
 
 (define-method forward-message self (method arguments)
@@ -184,7 +184,7 @@
 (define-method evaluate field ()
   (with-input-values (target field) self
     (field-value (make-keyword field) 
-		 (pick-target target))))
+		 (as-target target))))
 
 ;;; Parameter declarations (ordinary variables refer to them)
 
@@ -293,7 +293,7 @@
 
 (define-method evaluate printer ()
   (let* ((*print-pretty* t)
-	 (input (pick-target %%input))
+	 (input (as-target %%input))
 	 (string (format nil "~S" 
 			 (if (blockyp input)
 			     (evaluate input) input))))
@@ -437,7 +437,7 @@
 
 (define-method can-pick palette () t)
 
-(define-method pick-drag palette (x y)
+(define-method as-drag palette (x y)
   (labels ((hit-it (ob)
 	     (hit ob x y)))
     (setf %source (some #'hit-it %inputs))

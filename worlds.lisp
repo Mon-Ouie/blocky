@@ -747,7 +747,7 @@ block found, or nil if none is found."
 (define-method begin-drag world (mouse-x mouse-y block)
   (with-fields (drag drag-origin inputs drag-start ghost drag-offset) self
     (with-world self
-      (setf drag (pick-drag block mouse-x mouse-y))
+      (setf drag (as-drag block mouse-x mouse-y))
       (setf drag-origin (find-parent drag))
       (when drag-origin
 	  ;; parent might produce a new object

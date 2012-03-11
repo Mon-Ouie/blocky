@@ -1,8 +1,6 @@
+** TODO fix socket text baseline behavior, also for entries
 ** TODO [#A] good universal arrow/keypad nav in widget fields
-** TODO [#A] being able to replace/augment any arguments entry with a labeled socket
-*** TODO refactor initialize arguments to allow individual updating
 ** TODO [#A] local variable palettes with add-variable etc
-** TODO [#A] fix up keyboard nav
 ** TODO [#A] (browse-method ... some command from listener
 ** TODO [#A] Navigate to a prototype's page to make a method or derived block
 ** TODO [#C] allow replacing field as computed method using (defstruct computed-field 
@@ -1455,3 +1453,12 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: DONE
    :END:
+
+** TODO [#A] being able to replace/augment any arguments entry with a labeled socket
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-11 Sun 16:28
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+*** TODO refactor initialize arguments to allow individual updating
