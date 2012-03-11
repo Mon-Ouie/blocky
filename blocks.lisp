@@ -1032,8 +1032,7 @@ all the time."
 		(evaluate (nth n inputs))))))
     results))
 
-(define-method evaluate block () 
-  (eval (recompile self)))
+(define-method evaluate block () self)
 
 (define-method recompile block ()
   `(progn 

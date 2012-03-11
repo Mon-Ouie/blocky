@@ -1,4 +1,4 @@
-** TODO fix key events not working in deserialized worlds
+** TODO [#A] good universal arrow/keypad nav in widget fields
 ** TODO [#A] being able to replace/augment any arguments entry with a labeled socket
 *** TODO refactor initialize arguments to allow individual updating
 ** TODO [#A] local variable palettes with add-variable etc
@@ -1445,4 +1445,13 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_FILE: ~/blocky/tasks.org
    :ARCHIVE_CATEGORY: tasks
    :ARCHIVE_TODO: TODO
+   :END:
+
+** DONE fix key events not working in deserialized worlds
+   CLOSED: [2012-03-10 Sat 19:20]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-10 Sat 19:29
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
    :END:

@@ -32,9 +32,9 @@
 
 (deflist socket)
 
-(define-method initialize socket (&key target label)
+(define-method initialize socket (&key input label)
   (setf %label label)
-  (when target (setf %inputs (list target))))
+  (when input (setf %inputs (list input))))
 
 (define-method accept socket (other-block)
   "Replace the child object with OTHER-BLOCK."
@@ -44,7 +44,7 @@
       (set-parent other-block self))))
 
 (define-method evaluate socket ()
-  (when %inputs (first %inputs)))
+  (when %inputs (evaluate (first %inputs))))
 
 (define-method can-pick socket () t)
   
@@ -228,11 +228,11 @@
   (assert (blockyp block))
   nil)
 
-(define-method schema-widget arguments (entry &key force-socket no-label)
+(define-method schema-widget arguments (entry &key input force-socket no-label)
   (if (or force-socket 
 	  (eq 'block (schema-type entry)))
       (new 'socket 
-	   :target *target*
+	   :input input
 	   :label (unless no-label 
 			    (pretty-string (schema-name entry))))
       (clone (if (eq 'string (schema-type entry))
@@ -248,6 +248,7 @@
   (with-fields (inputs) self
     (assert inputs)
     (assert (< index (length inputs)))
+    (setf (field-value :parent widget) self)
     (setf (nth index inputs) widget)))
 
 (define-method initialize arguments (&key method label target)
@@ -257,7 +258,7 @@
     (setf %no-background t)
     ;; create appropriate controls for the arguments in the schema
     (dolist (entry schema)
-      (push (schema-widget self entry) inputs))
+      (push (schema-widget self entry :input target) inputs))
     (when inputs 
       (setf %inputs (nreverse inputs)))
     (setf %schema schema

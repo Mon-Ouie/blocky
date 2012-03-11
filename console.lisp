@@ -1621,7 +1621,7 @@ control the size of the individual frames or subimages."
 *scale-output-to-window* *persistent-variables*))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
-*screen-height* *world* *blocks* *dt* *pointer-x* *author* *project*
+*screen-height* *world* *blocks* *dt* *pointer-x* *author* *project* 
 *scale-output-to-window* *pointer-y* *resizable*
 *window-title*
 				 ;; notice that THIS variable is also

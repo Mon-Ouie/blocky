@@ -530,6 +530,7 @@
 	  (send :replace-widget parent index
 		(send :schema-widget parent 
 		      (nth index (%schema parent))
+		      :input thing
 		      :force-socket t)))))))
 		      
 ;;; Allow dragging the parent block more easily
@@ -631,8 +632,8 @@
 		    (make-block result))))
 	  ;; spit out result block, if any
 	  (when new-block 
-	    (unpin new-block)
-	    (accept container new-block)))))))
+	    (accept container new-block)
+	    (unpin new-block)))))))
 
 (define-method label-width listener-prompt ()
   (dash 2 (font-text-width *default-prompt-string* *font*)))
