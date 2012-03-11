@@ -559,7 +559,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (define-method bind-any-default-events block ()
   (with-fields (default-events) self
     (when default-events
-      (initialize-events-table-maybe self)
+      (initialize-events-table-maybe self :force)
       (dolist (entry default-events)
 	(apply #'bind-event self entry)))))
 

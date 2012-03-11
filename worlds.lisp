@@ -64,7 +64,7 @@
 		    ))
   ;; prototype control
   (excluded-fields :initform
-		   '(:quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :listener :drag :hover :highlight)
+		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :listener :drag :hover :highlight)
 		   :documentation "Don't serialize the menu bar.")
   (field-collection-type :initform :hash)
   ;; dragging info
