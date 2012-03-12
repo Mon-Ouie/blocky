@@ -43,7 +43,7 @@
   (window-y :initform 0)
   (window-x0 :initform nil)
   (window-y0 :initform nil)
-  (window-scrolling-speed :initform 2)
+  (window-scrolling-speed :initform 5)
   (window-scale-x :initform 1)
   (window-scale-y :initform 1)
   ;; selection and region
@@ -146,8 +146,8 @@
 
 (define-method glide-follow world (object)
   (with-fields (window-x window-y width height) self
-    (let ((margin-x (* 1/3 *gl-screen-width*))
-	  (margin-y (* 1/3 *gl-screen-height*))
+    (let ((margin-x (* 1/4 *gl-screen-width*))
+	  (margin-y (* 1/4 *gl-screen-height*))
 	  (object-x (field-value :x object))
 	  (object-y (field-value :y object)))
     ;; are we outside the "comfort zone"?
@@ -626,9 +626,9 @@ slowdown. See also quadtree.lisp")
 (define-method layout world ()
   ;; take over the entire GL window
   (with-world self
-    (setf %x 0 %y 0 
-	  %width *gl-screen-width* 
-	  %height *gl-screen-height*)
+    (setf %x 0 %y 0)
+	  ;; %width *gl-screen-width* 
+	  ;; %height *gl-screen-height*)
     (mapc #'layout %inputs)
     (when %listener-open-p
       (with-style :rounded
