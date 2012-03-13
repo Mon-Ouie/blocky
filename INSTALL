@@ -8,8 +8,8 @@ because everything is self-contained.
 
 If you are on GNU/Linux, you must install certain libraries through
 your distributions' software installer: namely, sdl, sdl-image,
-sdl-mixer, sdl-ttf, and sdl-gfx. You may additionally need to install
-the corresponding *-dev versions of those packages.
+sdl-mixer, and sdl-ttf. You may additionally need to install the
+corresponding *-dev versions of those packages.
 
 This file also gives you instructions on how to download Blocky and
 compile it from the source code. Unless you are planning to do this,
@@ -49,10 +49,10 @@ More instructions for Mac and Windows will be available soon.
    You must have the SDL (Simple Direct Media Layer) libraries
    installed on your system. How to do this is beyond the scope of
    this document. See http://www.libsdl.org for more information.
-   Your Linux distribution will most likely have SDL packages for
-   sdl, sdl-image, sdl-mixer, sdl-ttf, and sdl-gfx, all of which
-   are required for to compile Blocky. You may also need to install
-   the sdl-*-dev packages corresponding to each.
+   Your Linux distribution will most likely have SDL packages for sdl,
+   sdl-image, sdl-mixer, and sdl-ttf, all of which are required for to
+   compile Blocky. You may also need to install the sdl-*-dev packages
+   corresponding to each.
 
 1b. System Requirements (Windows)
 
@@ -129,7 +129,7 @@ More instructions for Mac and Windows will be available soon.
 
       ;; load dependencies via Quicklisp
       (ql:quickload 
-    	 '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-gfx 
+    	 '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf 
 	 :lispbuilder-sdl-image :uuid :cl-opengl :cl-fad))
 
       ;; compile and load Blocky
