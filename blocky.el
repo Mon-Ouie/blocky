@@ -56,6 +56,28 @@
   (blocky-inspect-uuid (or (blocky-uuid-at-point)
 			   (blocky-uuid-on-this-line))))
 
+;;; Imenu support 
+
+(defun blocky-insinuate-lisp ()
+  (interactive)
+  (add-hook 'lisp-mode-hook
+	    #'(lambda ()
+		(add-to-list 'imenu-generic-expression 
+			     `("Methods" ,(rx (sequence "(" (group "define-method")
+							(one-or-more space)
+							(group (one-or-more (not (any space)))
+							       (one-or-more space)
+							       (one-or-more (not (any space))))))
+					 2))
+		(add-to-list 'imenu-generic-expression 
+			     `("Blocks" ,(rx (sequence "(" (group "define-block")
+						       (one-or-more space)
+						       (group (one-or-more (not (any space))))))
+					2))
+		(imenu-add-menubar-index))))
+
+(blocky-insinuate-lisp)
+
 ;;; Font-locking
 
 ;; Put this in your emacs initialization file to get the highlighting:
@@ -77,21 +99,6 @@
       (1 font-lock-keyword-face)
       (2 font-lock-type-face))
     (,(rx (sequence "(" (group "define-block-macro")
-		   (one-or-more space)
-		   (group (one-or-more (not (any space))))))
-      (1 font-lock-keyword-face)
-      (2 font-lock-type-face))
-    (,(rx (sequence "(" (group "defwidget")
-		   (one-or-more space)
-		   (group (one-or-more (not (any space))))))
-      (1 font-lock-keyword-face)
-      (2 font-lock-type-face))
-    (,(rx (sequence "(" (group "defsprite")
-		   (one-or-more space)
-		   (group (one-or-more (not (any space))))))
-      (1 font-lock-keyword-face)
-      (2 font-lock-type-face))
-    (,(rx (sequence "(" (group "defblock")
 		   (one-or-more space)
 		   (group (one-or-more (not (any space))))))
       (1 font-lock-keyword-face)
