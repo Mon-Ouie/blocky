@@ -218,6 +218,7 @@ NODE, if any."
 
 (defun find-bounding-box (objects)
   ;; calculate the bounding box of a list of objects
+  (assert (not (null objects)))
   (labels ((left (thing) (field-value :x thing))
 	   (right (thing) (+ (field-value :x thing)
 			     (field-value :width thing)))
