@@ -68,7 +68,6 @@ More instructions for Mac and Windows will be available soon.
    cd ~/src
    git clone git://github.com/dto/blocky.git 
 
-
 2a. (OPTIONAL) If you need to use the development branch of Blocky, do
      this:
   
@@ -80,13 +79,7 @@ More instructions for Mac and Windows will be available soon.
    git checkout -b release/0.989  
      # replace 0.989 with desired version
 
-3. Then link the blocky.asd file into your ~/.sbcl/systems directory:
-
-   mkdir ~/.sbcl
-   mkdir ~/.sbcl/systems
-   ln -s ~/src/blocky/blocky.asd ~/.sbcl/systems/blocky.asd
-
-4. Install Quicklisp
+3. Install Quicklisp
     
     http://www.quicklisp.org/ It takes only a few moments to install
     Quicklisp, and this is the best way to download and install all
@@ -97,7 +90,7 @@ More instructions for Mac and Windows will be available soon.
     Doing this will make Quicklisp load automatically when you start
     your Lisp implementation.
 
-6. (OPTIONAL) Configure project folders
+4. (OPTIONAL) Configure project folders
 
    By default, new projects are created in ~/.blocky 
 
@@ -119,7 +112,7 @@ More instructions for Mac and Windows will be available soon.
 
    (setf *project-directories* (list #P"~/src/blocky/" #P"~/.blocky/" #P"~/"))
    
-7. At the shell, 
+5. At the shell, 
 
      cd ~/src/blocky    # or wherever you installed it...
      sbcl       
@@ -143,7 +136,7 @@ More instructions for Mac and Windows will be available soon.
       
       (blocky:blocky)
 
-7a.  The work-in-progress game XALCYON is written with Blocky, and can
+6.   The work-in-progress game XALCYON is written with Blocky, and can
      be downloaded via git:
 
       	  git clone git@github.com:dto/xalcyon.blocky.git
@@ -156,7 +149,7 @@ More instructions for Mac and Windows will be available soon.
 
           (blocky:play "xalcyon")
 
-8. Getting help and reporting bugs 
+7. Getting help and reporting bugs 
 
    When reporting bugs, please use the issue reporting system at
    Github if possible: https://github.com/dto/blocky/issues
