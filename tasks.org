@@ -1,5 +1,5 @@
 ** TODO Programmable, better documented microxong!
-https://raw.github.com/madnificent/COPP/master/copp.org
+** TODO check out contextl https://raw.github.com/madnificent/COPP/master/copp.org
 ** TODO fix socket text baseline behavior, also for entries
 ** TODO [#A] good universal arrow/keypad nav in widget fields
 ** TODO [#A] local variable palettes with add-variable etc
