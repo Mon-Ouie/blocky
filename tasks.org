@@ -5,7 +5,7 @@
 ** TODO update with C-c C-c 
 ** TODO VISIT level, editing of wiki page
 ** TODO return to other level
-** TODO paste other world into terminal
+** TODO paste other world into terminalgx
 
 * OTHER
 ** TODO Programmable, better documented microxong!
