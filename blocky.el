@@ -72,7 +72,7 @@
 		(add-to-list 'imenu-generic-expression 
 			     `("Blocks" ,(rx (sequence "(" (group "define-block")
 						       (one-or-more space)
-						       (group (one-or-more (not (any space))))))
+						       (group (one-or-more (or "-" (any word))))))
 					2))
 		(imenu-add-menubar-index))))
 
