@@ -53,6 +53,7 @@
 		  '(((:tab) :tab)
 		    ((:tab :shift) :backtab)
 		    ((:x :alt) :enter-listener)
+		    ((:x :control) :enter-listener)
 		    ((:g :control) :escape)
 		    ((:escape) :exit-listener)
 		    ((:m :alt) :add-message)
