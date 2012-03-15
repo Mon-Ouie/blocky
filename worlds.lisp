@@ -661,18 +661,20 @@ slowdown. See also quadtree.lisp")
   (with-world self
     (with-field-values (player quadtree focused-block selection) self
       (or (block%handle-event self event)
-	  (let ((block
-		    (cond
-		      ;; we're focused. send the event there
-		      ((and %listener-open-p focused-block)
-		       (prog1 focused-block
-			 (assert (blockyp focused-block))))
-		      ;; only one block selected. use that.
-		      ((and %listener-open-p
-			    (= 1 (length selection))
-			    (first selection)))
-		      ;; fall back to player
-		      (t player))))
+	  (let ((block (if %listener-open-p
+			   (or focused-block (first selection))
+			   player)))
+		    ;; (cond
+		    ;;   ;; we're focused. send the event there
+		    ;;   ((and %listener-open-p focused-block)
+		    ;;    (prog1 focused-block
+		    ;; 	 (assert (blockyp focused-block))))
+		    ;;   ;; only one block selected. use that.
+		    ;;   ((and %listener-open-p
+		    ;; 	    (= 1 (length selection))
+		    ;; 	    (first selection)))
+		    ;;   ;; fall back to player
+		    ;;   (t player))))
 	    (when block 
 	      (prog1 t 
 		(with-quadtree quadtree
