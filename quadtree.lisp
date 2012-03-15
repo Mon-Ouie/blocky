@@ -53,8 +53,8 @@ the object when the method is run.")
 (defun bounding-box-contains (box0 box1)
   (destructuring-bind (top0 left0 right0 bottom0) box0
     (destructuring-bind (top1 left1 right1 bottom1) box1
-      (and (< top0 top1)
-	   (< left0 left1)
+      (and (<= top0 top1)
+	   (<= left0 left1)
 	   (>= right0 right1)
 	   (>= bottom0 bottom1)))))
 
@@ -73,7 +73,7 @@ the object when the method is run.")
   (and (listp box)
        (= 4 (length box))
        (destructuring-bind (top left right bottom) box
-	 (and (< left right) (< top bottom)))))
+	 (and (<= left right) (<= top bottom)))))
 
 (defun northeast-quadrant (bounding-box)
   (assert (valid-bounding-box bounding-box))
