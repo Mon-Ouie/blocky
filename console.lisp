@@ -663,7 +663,18 @@ becomes larger.")
 	    *gl-screen-height* *screen-height*))
   (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 *z-near* *z-far*))
 
+(defvar *window-x* 0)
+(defvar *window-y* 0)
+
+(defun window-pointer-x (&optional (x *pointer-x*))
+  (+ x *window-x*))
+
+(defun window-pointer-y (&optional (y *pointer-y*))
+  (+ y *window-y*))
+  
 (defun do-window (&optional (x0 0) (y0 0) (scale-x 1.0) (scale-y 1.0))
+  (setf *window-x* x0)
+  (setf *window-y* y0)
   ;; now move viewing volume
   (gl:matrix-mode :modelview)
   (gl:load-identity)
@@ -747,17 +758,35 @@ display."
 			   )
       (:mouse-motion-event (:x x :y y)
 			   (setf *pointer-x* x *pointer-y* y)
-			   (let ((block (hit-blocks x y *blocks*)))
+			   (let ((block (hit-blocks (window-pointer-x)
+						    (window-pointer-y) 
+						    *blocks*)))
 			     (when block
-			       (send :handle-point-motion block x y))))
+			       (send :handle-point-motion block
+				     (window-pointer-x)
+				     (window-pointer-y)))))
       (:mouse-button-down-event (:button button :x x :y y)
-				(let ((block (hit-blocks x y *blocks*)))
+				(setf *pointer-x* x *pointer-y* y)
+				(let ((block (hit-blocks 
+					      (window-pointer-x)
+					      (window-pointer-y)
+					      *blocks*)))
 				  (when block
-				    (send :press block x y button))))
+				    (send :press block
+					  (window-pointer-x)
+					  (window-pointer-y)
+					  button))))
       (:mouse-button-up-event (:button button :x x :y y)
-			      (let ((block (hit-blocks x y *blocks*)))
+			      (setf *pointer-x* x *pointer-y* y)
+			      (let ((block (hit-blocks 					  
+					    (window-pointer-x)
+					    (window-pointer-y)
+					    *blocks*)))
 				(when block
-				  (send :release block x y button))))
+				  (send :release block
+					(window-pointer-x)
+					(window-pointer-y)
+					button))))
       (:joy-button-down-event (:button button :state state)
 		      (send-event (make-event :raw-joystick (list button :button-down)))
 		      (when (assoc button (joystick-buttons))
