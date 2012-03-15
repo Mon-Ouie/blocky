@@ -133,10 +133,15 @@ More instructions for Mac and Windows will be available soon.
 	 :lispbuilder-sdl-image :uuid :cl-opengl :cl-fad))
 
       ;; compile and load Blocky
+      (push #p"/path/to/blocky/" asdf:*central-registry*)
       (asdf:load-system :blocky)
 
       ;; run an example
       (blocky:play "turtle")  ;; A GUI tutorial, with turtle and ladybug
+
+      ;; or run the GUI
+      
+      (blocky:blocky)
 
 7a.  The work-in-progress game XALCYON is written with Blocky, and can
      be downloaded via git:
