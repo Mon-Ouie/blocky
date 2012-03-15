@@ -615,9 +615,13 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 (defvar *updates*)
 
 (defun do-update (&rest args) 
-  (incf *updates*)
-  (when (functionp *update-function*)
-    (apply *update-function* args)))
+  (handler-case 
+      (when (functionp *update-function*)
+	(apply *update-function* args))
+    (floating-point-inexact (fpe)
+      (error fpe))))
+
+;; (incf *updates*)
 
 (defparameter *updates* 0)
 
