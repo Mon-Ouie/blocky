@@ -30,8 +30,8 @@
   (y :initform 0)
   (paused :initform nil)
   (heading :initform 0.0)
-  (height :initform 16)
-  (width :initform 16)
+  (height :initform 256)
+  (width :initform 256)
   (listener :initform nil)
   (listener-open-p :initform nil)
   ;; objects and collisions
