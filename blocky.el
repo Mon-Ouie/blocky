@@ -71,7 +71,9 @@
 					 2))
 		(add-to-list 'imenu-generic-expression 
 			     `("Blocks" ,(rx (sequence "(" (group "define-block")
+						       (zero-or-more "-macro")
 						       (one-or-more space)
+						       (zero-or-one "(")
 						       (group (one-or-more (or "-" (any word))))))
 					2))
 		(imenu-add-menubar-index))))
