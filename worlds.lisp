@@ -628,9 +628,10 @@ slowdown. See also quadtree.lisp")
 	    (update object)
 	    (run-tasks object))
 	  ;; update window movement
-	  (when player 
-	    (glide-follow self player)
-	    (update-window-glide self))
+	  (let ((thing (or drag player)))
+	    (when thing
+	      (glide-follow self thing)
+	      (update-window-glide self)))
 	  ;; detect collisions
 	  (loop for object being the hash-values in objects do
 	    (unless (eq :passive (field-value :collision-type object))
