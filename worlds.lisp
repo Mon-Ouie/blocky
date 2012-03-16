@@ -587,27 +587,34 @@ slowdown. See also quadtree.lisp")
 
 (define-method draw world ()
   (with-world self
-    (project-window self)
     (with-field-values (objects width height background-image background-color) self
+      (unless %parent 
+	(project-window self))
+      (when %parent 
+	(gl:push-matrix)
+	(gl:translate %x %y 0))
       ;; draw background 
       (if background-image
 	  (draw-image background-image 0 0)
 	  (when background-color
 	    (draw-box 0 0 width height
 		      :color background-color)))
+      ;; now draw the object layer
       (let ((box (multiple-value-list (window-bounding-box self))))
 	(loop for object being the hash-values in objects do
 	  ;; only draw onscreen objects
 	  (when (colliding-with-bounding-box object box)
 	    (draw object))))
-      ;; possibly draw shell
-      (when %listener-open-p 
-	(draw-shell-objects self)))))
+      (if %parent
+	  (gl:pop-matrix)
+	  ;; possibly draw shell
+	  (when %listener-open-p 
+	    (draw-shell-objects self))))))
   
 ;;; Simulation update
 
 (define-method update world ()
-  (with-field-values (objects player) self
+  (with-field-values (objects drag player) self
     ;; build quadtree if needed
     (when (null %quadtree)
       (install-quadtree self))
