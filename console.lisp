@@ -225,13 +225,25 @@ and the like."
 
 ;;; "Classic" key repeat
 
-(defun enable-key-repeat (delay interval)
+(defvar *key-repeat-p* nil)
+
+(defvar *key-repeat-delay* 9)
+(defvar *key-repeat-interval* 1.2)
+
+(defun key-repeat-p () *key-repeat-p*)
+
+(defun enable-key-repeat (&optional (delay *key-repeat-delay*) 
+				    (interval *key-repeat-interval*))
   (let ((delay-milliseconds (truncate (* delay (/ 1000.0 *frame-rate*))))
   	(interval-milliseconds (truncate (* interval (/ 1000.0 *frame-rate*)))))
-    (sdl:enable-key-repeat delay-milliseconds interval-milliseconds)))
+    (sdl:enable-key-repeat delay-milliseconds interval-milliseconds)
+    (setf *key-repeat-delay* delay)
+    (setf *key-repeat-interval* interval)
+    (setf *key-repeat-p* t)))
 
 (defun disable-key-repeat ()
-  (sdl:disable-key-repeat))
+  (sdl:disable-key-repeat)
+  (setf *key-repeat-p* nil))
 
 ;;; Parceling out events to blocks
 
@@ -606,6 +618,12 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 
 (defvar *dt* 20)
 
+(defvar *next-update-hook* nil)
+
+(defmacro at-next-update (&body body)
+  `(add-hook '*next-update-hook*
+	     #'(lambda () ,@body)))
+		 
 (defun update-blocks ()
   (dolist (block *blocks*)
     (send :update block)))
@@ -2327,7 +2345,7 @@ of the music."
   (load-standard-resources)
   (setf *project* *untitled-project-name*)
   (sdl:enable-unicode)
-  (enable-key-repeat 9 1.2))
+  (enable-key-repeat))
 
 (defun shut-down ()
   ;; delete any cached textures and surfaces
@@ -2360,9 +2378,23 @@ of the music."
       (start (new 'world)))
     (start-session)))
 
+(defvar *wiki-history* nil)
+
+(defun visit (name)
+  (let ((page (find-wiki-page name)))
+    (when page
+      (push name *wiki-history*)
+      (at-next-update (start-alone page)))))
+
+(defun back ()
+  (let ((name (pop *wiki-history*)))
+    (when name
+      (at-next-update 
+       (start-alone (find-wiki-page name))))))
+
 (defun blocky ()
   (with-session
-    (start (find-wiki-page *desktop*))
+    (start-alone (find-wiki-page *desktop*))
     (start-session)))
 
 ;; (defun create (project)

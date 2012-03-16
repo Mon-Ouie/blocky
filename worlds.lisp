@@ -34,6 +34,7 @@
   (width :initform 256)
   (listener :initform nil)
   (listener-open-p :initform nil)
+  (was-key-repeat-p :initform nil)
   ;; objects and collisions
   (objects :initform nil :documentation "A hash table with all the world's objects.")
   (quadtree :initform nil)
@@ -55,7 +56,7 @@
 		    ((:x :alt) :enter-listener)
 		    ((:x :control) :enter-listener)
 		    ((:g :control) :escape)
-		    ((:escape) :exit-listener)
+		    ((:escape) :toggle-listener)
 		    ((:m :alt) :add-message)
 		    ((:s :alt) :add-statement)
 		    ((:v :alt) :add-variable)
@@ -209,7 +210,8 @@
   (setf %wiki-name name)
   (when name
     (setf %prototype-name (wiki-name-prototype name))
-    (setf %method (wiki-name-method name)))
+    (setf %method (wiki-name-method name))
+    (add-wiki-page name self))
   (setf %ghost (new 'block))
   (setf %objects (make-hash-table :test 'equal)))
 
@@ -403,7 +405,7 @@ slowdown. See also quadtree.lisp")
      ,@body
      (adjust-bounding-box-maybe (world))))
 
-(define-method paste world (other-world &optional (dx 0) (dy 0))
+(define-method paste world ((other-world block) (dx number :default 0) (dy number :default 0))
   (dolist (object (get-objects other-world))
     (with-fields (x y) object
       (clear-saved-location object)
@@ -519,16 +521,28 @@ slowdown. See also quadtree.lisp")
     (setf %listener (new 'listener))))
 
 (define-method enter-listener world ()
-  (add-listener-maybe self)
-  (setf %listener-open-p t)
-  (setf %last-focus %focused-block)
-  (focus-on self %listener))
-
+  (unless %listener-open-p
+    (add-listener-maybe self)
+    (setf %listener-open-p t)
+    (setf %last-focus %focused-block)
+    (focus-on self %listener)
+    (setf %was-key-repeat-p (key-repeat-p))
+    (enable-key-repeat)))
+  
 (define-method exit-listener world ()
-  (add-listener-maybe self)
-  (setf %listener-open-p nil)
-  (focus-on self %last-focus)
-  (setf %last-focus nil))
+  (when %listener-open-p
+    (add-listener-maybe self)
+    (setf %listener-open-p nil)
+    (focus-on self %last-focus)
+    (setf %last-focus nil)
+    (unless %was-key-repeat-p 
+      (disable-key-repeat))
+    (setf %was-key-repeat-p nil)))
+
+(define-method toggle-listener world ()
+  (if %listener-open-p 
+      (exit-listener self)
+      (enter-listener self)))
 
 (define-method grab-focus world ())
 
@@ -659,27 +673,29 @@ slowdown. See also quadtree.lisp")
 			      :test 'eq :key #'find-parent)))))
   
 (define-method handle-event world (event)
-  (with-world self
-    (with-field-values (player quadtree focused-block selection) self
+  (with-field-values (player quadtree focused-block selection) self
+    (with-world self
       (or (block%handle-event self event)
-	  (let ((block (if %listener-open-p
-			   (or focused-block (first selection))
-			   player)))
-		    ;; (cond
-		    ;;   ;; we're focused. send the event there
-		    ;;   ((and %listener-open-p focused-block)
-		    ;;    (prog1 focused-block
-		    ;; 	 (assert (blockyp focused-block))))
-		    ;;   ;; only one block selected. use that.
-		    ;;   ((and %listener-open-p
-		    ;; 	    (= 1 (length selection))
-		    ;; 	    (first selection)))
-		    ;;   ;; fall back to player
-		    ;;   (t player))))
-	    (when block 
+	  (let ((thing
+		  (if %listener-open-p 
+		      (or focused-block (first selection))
+		      player)))
 	      (prog1 t 
-		(with-quadtree quadtree
-		  (handle-event block event)))))))))
+		(when thing 
+		  (with-quadtree quadtree
+		    (handle-event thing event)))))))))
+
+		;; (cond
+		;;   ;; we're focused. send the event there
+		;;   ((and %listener-open-p focused-block)
+		;;    (prog1 focused-block
+		;; 	 (assert (blockyp focused-block))))
+		;;   ;; only one block selected. use that.
+		;;   ((and %listener-open-p
+		;; 	    (= 1 (length selection))
+		;; 	    (first selection)))
+		;;   ;; fall back to player
+		;;   (t player))))
   
 ;;; Hit testing
 

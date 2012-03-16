@@ -171,6 +171,9 @@ areas.")
   (unless (find self *blocks* :test 'eq :key #'find-object)
     (setf *blocks* (adjoin self *blocks*))))
 
+(define-method start-alone block ()
+  (setf *blocks* (list self)))
+
 (define-method stop block ()
   "Remove this block from the simulation so that it stops getting update
 events."
