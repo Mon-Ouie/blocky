@@ -1376,10 +1376,14 @@ named in the field %EXCLUDED-FIELDS will be ignored."
 			  ;; prevent duplicates
 			  (setf (gethash uuid *already-serialized*) t)
 			  ;; cons up the final serialized sexp
-			  (list +object-type-key+
-				:super super-name
-				:uuid uuid
-				:fields plist))))))
+			  (prog1 
+			      (list +object-type-key+
+				    :super super-name
+				    :uuid uuid
+				    :fields plist)
+			    ;; handle any serialization cleanup
+			    (when (has-method :after-serialize object)
+			      (send :after-serialize object))))))))
 	;; pass through other Lisp entities
 	(otherwise object)))))
 
