@@ -1,6 +1,6 @@
 * TODO always place listener onscreen somewhere when it opens
+* TODO auto glide-follow drag
 * TODO worlds-within-worlds with a stamp down operation
-* TODO explicit up handle
 
 * SCREENCAST!
 ** TODO show browsing methods with imenu
@@ -20,7 +20,7 @@
 ** TODO [#B] good universal arrow/keypad nav in widget fields
 ** TODO [#B] local variable palettes with add-variable etc
 ** TODO [#B] (browse-method ... some command from listener
-** TODO [#A] Navigate to a prototype's page to make a method or derived block
+** TODO [#A] Navigate to a prototype's page to makqe a method or derived block
 ** TODO [#C] allow replacing field as computed method using (defstruct computed-field 
 ** TODO [#A] local variables in ROOK defworld are the fields of ROOK and body is initializer?
 **** TODO locked to 0,0 position
