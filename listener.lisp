@@ -54,7 +54,7 @@
   (text-color :initform *default-prompt-text-color*)
   (label-color :initform *default-prompt-label-color*)
   options label 
-  (pinned :initform t)
+  (pinned :initform nil)
   (prompt-string :initform *default-prompt-string*)
   (category :initform :data)
   (history :documentation "A queue of strings containing the command history.")
@@ -413,7 +413,7 @@
       ""))
 
 (define-method can-pick entry () 
-  %pinned)
+  (not %pinned))
   
 (define-method pick entry ()
   (if %pinned %parent self))
