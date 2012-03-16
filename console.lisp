@@ -621,10 +621,13 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 (defvar *next-update-hook* nil)
 
 (defmacro at-next-update (&body body)
-  `(add-hook '*next-update-hook*
-	     #'(lambda () ,@body)))
+  `(prog1 nil 
+     (add-hook '*next-update-hook*
+	       #'(lambda () ,@body))))
 		 
 (defun update-blocks ()
+  (run-hook '*next-update-hook*)
+  (setf *next-update-hook* nil)
   (dolist (block *blocks*)
     (send :update block)))
 
