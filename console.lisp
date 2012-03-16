@@ -2380,7 +2380,7 @@ of the music."
 
 (defvar *wiki-history* nil)
 
-(defun visit (name)
+(defun browse (name)
   (let ((page (find-wiki-page name)))
     (when page
       (push name *wiki-history*)

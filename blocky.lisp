@@ -35,7 +35,7 @@
   (:export null-block *frequency* *output-chunksize* *output-channels*
 halt-sample *dt* *copyright-notice* *author* *message-hook-functions*
 add-to-list modify-joystick-profile defproject start stop
-*already-serialized* visit back *update-function* *target* *blocks*
+*already-serialized* browse back *update-function* *target* *blocks*
 shut-down later later-at later-when start-up seconds->frames
 keyboard-held-p keyboard-pressed-p holding-control
 *scale-output-to-window* keyboard-released-p *edit* with-font *font*
