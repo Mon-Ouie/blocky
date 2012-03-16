@@ -986,7 +986,12 @@ block found, or nil if none is found."
     (loop for id being the hash-keys of objects do
       ;; don't serialize the cached object
       (setf (gethash id objects) t))))
-    
+
+(define-method after-serialize world ()
+  (loop for id being the hash-keys of %objects do
+    (message "AFTER:SER ~S"
+	     (setf (gethash id %objects) (find-object id)))))
+
 (define-method after-deserialize world ()
   (after-deserialize%super self)
   (with-fields (objects) self
