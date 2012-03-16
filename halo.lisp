@@ -99,12 +99,14 @@
 (define-handle drop :drop)
 
 (define-method tap drop (x0 y0)
-  (add-object (world) %target))
+  (unless (has-object (world) %target)
+    (add-object (world) %target)))
 
 (define-handle pick-up :pick-up)
 
 (define-method tap pick-up (x0 y0)
-  (add-block (world) %target))
+  (unless (contains (world) %target)
+    (add-block (world) %target)))
 
 ;; (define-method drag move (x0 y0)
 ;; (with-fields (x y) %target
