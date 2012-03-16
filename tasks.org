@@ -1,3 +1,6 @@
+* TODO always place listener onscreen somewhere when it opens
+* TODO automatically add all other objects to %objects
+
 * SCREENCAST!
 ** TODO show browsing methods with imenu
 ** TODO substring browse with icicles
