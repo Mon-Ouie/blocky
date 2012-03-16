@@ -290,19 +290,19 @@
     (setf %variables (make-hash-table :test 'equal))
     (setf (gethash "WORLD" %variables) self)))
 
-(define-method setvar world (var value)
+(define-method set-variable world (var value)
   (initialize-variables-maybe self)
   (setf (gethash var %variables) value))
 
-(define-method getvar world (var)
+(define-method get-variable world (var)
   (initialize-variables-maybe self)
   (gethash var %variables))
 
 (defun world-variable (var-name)
-  (getvar (world) var-name))
+  (get-variable (world) var-name))
 
 (defun set-world-variable (var-name value)
-  (setvar (world) var-name value))
+  (set-variable (world) var-name value))
 
 (defsetf world-variable set-world-variable)
 
