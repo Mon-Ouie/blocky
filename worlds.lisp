@@ -117,6 +117,9 @@
 (define-method get-objects world ()
   (loop for object being the hash-values in %objects collect object))
 
+(define-method has-object world (thing)
+  (gethash (find-uuid thing) %objects))
+
 ;; Defining and scrolling the screen viewing window
 
 (define-method window-bounding-box world ()
@@ -611,8 +614,8 @@ slowdown. See also quadtree.lisp")
     (assert %quadtree)
     (unless %paused
       (with-world self
+	;; enable quadtree for collision detection
 	(with-quadtree %quadtree
-	  (layout self)
 	  ;; possibly run the objects
 	  (loop for object being the hash-values in %objects do
 	    (update object)
@@ -626,9 +629,10 @@ slowdown. See also quadtree.lisp")
 	    (unless (eq :passive (field-value :collision-type object))
 	      (quadtree-collide object))))
 	;; now outside the quadtree,
-	;; possibly update the shell
+	;; possibly update the shell layer
 	(when %listener-open-p
 	  (with-quadtree nil
+	    (layout self)
 	    (layout-shell-objects self)
 	    (update-shell-objects self)))))))
 
@@ -892,8 +896,11 @@ block found, or nil if none is found."
 		    (if %object-p
 			(move-to drag drop-x drop-y)
 			(if (null hover)
-			    ;; dropping on background
-			    (add-block self drag drop-x drop-y)
+			    ;; dropping on background. was it in %OBJECTS?
+			    (if (has-object self drag)
+				nil ;; do nothing, leave it where it is
+				;; otherwise move it back to the listener layer
+				(add-block self drag drop-x drop-y))
 			    ;; dropping on another block
 			    (when (not (accept hover drag))
 			      ;; hovered block did not accept drag. 

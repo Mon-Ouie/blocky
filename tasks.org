@@ -1,5 +1,6 @@
 * TODO always place listener onscreen somewhere when it opens
-* TODO automatically add all other objects to %objects
+* TODO worlds-within-worlds with a stamp down operation
+* TODO explicit up handle
 
 * SCREENCAST!
 ** TODO show browsing methods with imenu

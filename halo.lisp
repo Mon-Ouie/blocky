@@ -34,6 +34,7 @@
 ;    :collapse (0 2/4)
 ;    :move (1 2/4)
     :drop (0 1)
+    :pick-up (2/6 1)
     :resize (1 1)
     :reference (0 1/2)
     :close (1 0)
@@ -100,6 +101,11 @@
 (define-method tap drop (x0 y0)
   (add-object (world) %target))
 
+(define-handle pick-up :pick-up)
+
+(define-method tap pick-up (x0 y0)
+  (add-block (world) %target))
+
 ;; (define-method drag move (x0 y0)
 ;; (with-fields (x y) %target
 ;;   (let ((dx (- %x x))
@@ -144,7 +150,7 @@
 ;;; The halo itself
 
 (defparameter *halo-handles* 
-  '(:evaluate :open-menu :drop :resize :program :destroy))
+  '(:evaluate :open-menu :drop :pick-up :resize :program :destroy))
 
 (define-block halo target)
 
