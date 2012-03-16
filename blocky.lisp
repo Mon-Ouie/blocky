@@ -35,22 +35,23 @@
   (:export null-block *frequency* *output-chunksize* *output-channels*
 halt-sample *dt* *copyright-notice* *author* *message-hook-functions*
 add-to-list modify-joystick-profile defproject start stop
-*already-serialized* browse back *update-function* *target* *blocks*
-shut-down later later-at later-when start-up seconds->frames
-keyboard-held-p keyboard-pressed-p holding-control
-*scale-output-to-window* keyboard-released-p *edit* with-font *font*
-find-heading keyboard-time-in-current-state pretty-string ugly-symbol
-*pointer-x* *pointer-y* is-joystick-event *self* is-raw-joystick-event
-keyboard-time-in-previous-state *updates* keyboard-down-p
-keyboard-keys-down keyboard-modifier-down-p *socket-size*
-keyboard-modifiers draw-filled-circle draw-aa-circle get-keys
-*project-package-name* project-package-name make-block add-block
-remove-block with-quadtree *initialization-hook* hit-blocks
-quadtree-delete quadtree-insert build-quadtree quadtree-collide
-quadtree-show *quadtree* *quadtree-depth* split-string-on-lines
-message *prompt-sweden-keybindings* *prompt-qwerty-keybindings*
-*screen-width* transform-method-body roll-under initialize-colors
-*style* load-project-image create-project-image *standard-categories*
+at-next-update *next-update-hook* *already-serialized* browse back
+*update-function* *target* *blocks* shut-down later later-at
+later-when start-up seconds->frames keyboard-held-p keyboard-pressed-p
+holding-control *scale-output-to-window* keyboard-released-p *edit*
+with-font *font* find-heading keyboard-time-in-current-state
+pretty-string ugly-symbol *pointer-x* *pointer-y* is-joystick-event
+*self* is-raw-joystick-event keyboard-time-in-previous-state *updates*
+keyboard-down-p keyboard-keys-down keyboard-modifier-down-p
+find-wiki-page find-world *socket-size* keyboard-modifiers
+draw-filled-circle draw-aa-circle get-keys *project-package-name*
+project-package-name make-block add-block remove-block with-quadtree
+*initialization-hook* hit-blocks quadtree-delete quadtree-insert
+build-quadtree quadtree-collide quadtree-show *quadtree*
+*quadtree-depth* split-string-on-lines message
+*prompt-sweden-keybindings* *prompt-qwerty-keybindings* *screen-width*
+transform-method-body roll-under initialize-colors *style*
+load-project-image create-project-image *standard-categories*
 *left-turn* bind-event *right-turn* left-turn right-turn roll
 bind-event-to-method *colors* enable-key-repeat disable-key-repeat
 get-color define-method *default-font* field-value set-field-value
