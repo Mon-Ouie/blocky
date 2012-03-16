@@ -1224,7 +1224,7 @@ resource is stored; see also `find-resource'."
 		(message "Finished creating directory ~A." dir)
 		(message "Finished creating project ~A." project)))))))
 
-(defun load-project-image (project &optional folder)
+(defun load-project-image (project &key folder (run t))
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
 object save directory. See also `save-object-resource')."
@@ -1246,14 +1246,15 @@ object save directory. See also `save-object-resource')."
   (index-project project)
   (mapc #'load-resource (nreverse *pending-autoload-resources*))
   (setf *pending-autoload-resources* nil)
+   ;; load any user-written lisp
+  (load-project-lisp project)
+  (when run (run-project-lisp project))
+  (run-hook '*after-load-project-hook*)
+  ;; load objects
   (load-project-objects project)
   (load-database)
   (load-variables)
   (message "Started up successfully. Indexed ~A resources." (hash-table-count *resources*))
-   ;; load any user-written lisp
-  (load-project-lisp project)
-  (run-project-lisp project)
-  (run-hook '*after-load-project-hook*)
   ;; save to recent list
   (pushnew project *recent-projects* :test 'equal))
 
@@ -1671,11 +1672,11 @@ control the size of the individual frames or subimages."
 (defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
 *screen-height* *world* *blocks* *dt* *pointer-x* *author* *project*
 *joystick-profile* *user-joystick-profile* *joystick-axis-size*
-*joystick-dead-zone* *pointer-y* *resizable* *window-title*
+*joystick-dead-zone* *pointer-y* *resizable* *window-title* *wiki*
 *scale-output-to-window* *persistent-variables*))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
-*screen-height* *world* *blocks* *dt* *pointer-x* *author* *project* 
+*screen-height* *world* *blocks* *dt* *pointer-x* *author* *project* *wiki*
 *scale-output-to-window* *pointer-y* *resizable*
 *window-title*
 				 ;; notice that THIS variable is also
@@ -2380,6 +2381,12 @@ of the music."
     (when (null *blocks*)
       (start (new 'world)))
     (start-session)))
+
+(defun edit (project)
+  (let ((*edit* t))
+    (with-session
+	(load-project-image project :run nil)
+      (start-session))))
 
 (defvar *wiki-history* nil)
 
