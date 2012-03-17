@@ -524,13 +524,12 @@ slowdown. See also quadtree.lisp")
     (setf %listener (new 'listener))))
 
 (define-method enter-listener world ()
-  (unless %listener-open-p
-    (add-listener-maybe self)
-    (setf %listener-open-p t)
-    (setf %last-focus %focused-block)
-    (focus-on self %listener)
-    (setf %was-key-repeat-p (key-repeat-p))
-    (enable-key-repeat)))
+  (add-listener-maybe self)
+  (setf %last-focus %focused-block)
+  (focus-on self %listener)
+  (when (null %listener-open-p) (setf %was-key-repeat-p (key-repeat-p)))
+  (setf %listener-open-p t)
+  (enable-key-repeat))
   
 (define-method exit-listener world ()
   (when %listener-open-p
