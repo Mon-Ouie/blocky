@@ -223,51 +223,6 @@
   (setf %objects (make-hash-table :test 'equal)))
 
 ;;; The object layer. 
-      
-(define-method remove-object world (object)
-  (remhash (find-uuid object) %objects)
-  (when (field-value :quadtree-node object)
-    (quadtree-delete object)))
-
-(define-method remove-thing-maybe world (object)
-  (when (gethash (find-uuid object) %objects)
-    (remove-object self object))
-  (when (%parent object)
-    (unplug-from-parent object)))
-
-(define-method add-block world (object &optional x y prepend)
-  (remove-thing-maybe self object)
-  (add-block%super self object x y))
-
-(define-method drop-block world (object x y)
-  (add-object self object)
-  (move-to object x y))
-
-(define-method drop-at-pointer world (object)
-  (add-block self object *pointer-x* *pointer-y* :prepend)
-  (focus-on self object))
-
-(define-method add-message world ()
-  (drop-at-pointer self (new 'message)))
-
-(define-method add-statement world ()
-  (drop-at-pointer self (new 'statement)))
-
-(define-method add-variable world ()
-  (drop-at-pointer self (new 'variable)))
-
-(define-method add-expression world ()
-  (drop-at-pointer self (new 'expression)))
-
-(define-method add-field world ()
-  (drop-at-pointer self (new 'field)))
-
-(define-method add-self world ()
-  (drop-at-pointer self (new 'self)))
-
-(define-method contains-object world (object)
-  (gethash (find-uuid object) 
-	   %objects))
 
 (define-method add-object world (object &optional x y)
   (with-world self
@@ -284,6 +239,53 @@
       (clear-saved-location object)
       (quadtree-insert-maybe object)
       (after-place-hook object))))
+      
+(define-method remove-object world (object)
+  (remhash (find-uuid object) %objects)
+  (when (%quadtree-node object)
+    (quadtree-delete object)
+    (setf (%quadtree-node object) nil)))
+
+(define-method remove-thing-maybe world (object)
+  (with-world self
+    (when (gethash (find-uuid object) %objects)
+      (remove-object self object))
+    (when (%parent object)
+      (unplug-from-parent object))))
+
+(define-method add-block world (object &optional x y prepend)
+  (remove-thing-maybe self object)
+  (add-block%super self object x y))
+
+(define-method drop-block world (object x y)
+  (add-object self object)
+  (move-to object x y))
+
+(define-method add-at-pointer world (object)
+  (add-block self object *pointer-x* *pointer-y* :prepend)
+  (focus-on self object))
+
+(define-method add-message world ()
+  (add-at-pointer self (new 'message)))
+
+(define-method add-statement world ()
+  (add-at-pointer self (new 'statement)))
+
+(define-method add-variable world ()
+  (add-at-pointer self (new 'variable)))
+
+(define-method add-expression world ()
+  (add-at-pointer self (new 'expression)))
+
+(define-method add-field world ()
+  (add-at-pointer self (new 'field)))
+
+(define-method add-self world ()
+  (add-at-pointer self (new 'self)))
+
+(define-method contains-object world (object)
+  (gethash (find-uuid object) 
+	   %objects))
 
 (define-method destroy-block world (object)
   (remhash (find-uuid object) %objects))
