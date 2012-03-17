@@ -35,23 +35,23 @@
   (:export null-block *frequency* *output-chunksize* *output-channels*
 halt-sample *dt* *copyright-notice* *author* *message-hook-functions*
 add-to-list modify-joystick-profile defproject start stop
-at-next-update *next-update-hook* *already-serialized* browse back
-*update-function* *target* *blocks* shut-down later later-at
-later-when start-up seconds->frames keyboard-held-p keyboard-pressed-p
-holding-control *scale-output-to-window* keyboard-released-p *edit*
-with-font *font* find-heading keyboard-time-in-current-state
-pretty-string ugly-symbol *pointer-x* *pointer-y* is-joystick-event
-*self* is-raw-joystick-event keyboard-time-in-previous-state *updates*
-keyboard-down-p keyboard-keys-down keyboard-modifier-down-p
-find-wiki-page find-world *socket-size* keyboard-modifiers
-draw-filled-circle draw-aa-circle get-keys *project-package-name*
-project-package-name make-block add-block remove-block with-quadtree
-*initialization-hook* hit-blocks quadtree-delete quadtree-insert
-build-quadtree quadtree-collide quadtree-show *quadtree*
-*quadtree-depth* split-string-on-lines message
-*prompt-sweden-keybindings* *prompt-qwerty-keybindings* *screen-width*
-transform-method-body roll-under initialize-colors *style*
-load-project-image create-project-image *standard-categories*
+clear-clipboard copy-to-clipboard at-next-update *next-update-hook*
+*already-serialized* browse back *update-function* *target* *blocks*
+shut-down later later-at later-when start-up seconds->frames
+keyboard-held-p keyboard-pressed-p holding-control
+*scale-output-to-window* keyboard-released-p *edit* with-font *font*
+find-heading keyboard-time-in-current-state pretty-string ugly-symbol
+*pointer-x* *pointer-y* is-joystick-event *self* is-raw-joystick-event
+keyboard-time-in-previous-state *updates* keyboard-down-p
+keyboard-keys-down keyboard-modifier-down-p find-wiki-page find-world
+*socket-size* keyboard-modifiers draw-filled-circle draw-aa-circle
+get-keys *project-package-name* project-package-name make-block
+add-block remove-block with-quadtree *initialization-hook* hit-blocks
+quadtree-delete quadtree-insert build-quadtree quadtree-collide
+quadtree-show *quadtree* *quadtree-depth* split-string-on-lines
+message *prompt-sweden-keybindings* *prompt-qwerty-keybindings*
+*screen-width* transform-method-body roll-under initialize-colors
+*style* load-project-image create-project-image *standard-categories*
 *left-turn* bind-event *right-turn* left-turn right-turn roll
 bind-event-to-method *colors* enable-key-repeat disable-key-repeat
 get-color define-method *default-font* field-value set-field-value
@@ -60,16 +60,16 @@ icon-resource icon-image *directions* *opposites*
 find-resource-property compose-blank-fields font-width font-height
 find-object *windows* edit create blocky transform-field-reference
 define-block *screen-height* formatted-line-width find-world
-formatted-line-height formatted-string-height formatted-string-width
-get-color create-image draw-image blocky edit define-prototype
-has-field *target* with-target define-world set-field-options
-*user-joystick-profile* field-option-value index-resource
-*default-joystick-profile* joystick-profile find-project-path
-index-project load-image-resource load-lisp-resource *executable*
-*screen-height* player *screen-width* blockyp *nominal-screen-width*
-*nominal-screen-height* *gl-screen-width* *gl-screen-height*
-*message-function* dash holding-shift get-button-index
-message-to-standard-output reset-message-function
+*clipboard* formatted-line-height formatted-string-height
+formatted-string-width get-color create-image draw-image blocky edit
+define-prototype has-field *target* with-target define-world
+set-field-options *user-joystick-profile* field-option-value
+index-resource *default-joystick-profile* joystick-profile
+find-project-path index-project load-image-resource load-lisp-resource
+*executable* *screen-height* player *screen-width* blockyp
+*nominal-screen-width* *nominal-screen-height* *gl-screen-width*
+*gl-screen-height* *message-function* dash holding-shift
+get-button-index message-to-standard-output reset-message-function
 *make-prototype-id-package* lturn rturn ticks-per-beat radian-angle
 draw-textured-rectangle default-project-directories
 *resource-handlers* load-resource find-resource find-resource-object
