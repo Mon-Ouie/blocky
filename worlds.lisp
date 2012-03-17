@@ -232,16 +232,16 @@
 (define-method remove-thing-maybe world (object)
   (when (gethash (find-uuid object) %objects)
     (remove-object self object))
-  (when (contains self object)
-    (unplug self object)))
+  (when (%parent object)
+    (unplug-from-parent object)))
 
 (define-method add-block world (object &optional x y prepend)
   (remove-thing-maybe self object)
   (add-block%super self object x y))
 
-(define-method drop-block world (block x y)
-  (add-object self block)
-  (move-to block x y))
+(define-method drop-block world (object x y)
+  (add-object self object)
+  (move-to object x y))
 
 (define-method drop-at-pointer world (object)
   (add-block self object *pointer-x* *pointer-y* :prepend)
@@ -271,6 +271,7 @@
 
 (define-method add-object world (object &optional x y)
   (with-world self
+    (remove-thing-maybe self object)
     (with-quadtree %quadtree
       (assert (not (contains-object self object)))
       (setf (gethash (find-uuid object)
@@ -994,8 +995,7 @@ block found, or nil if none is found."
 
 (define-method after-serialize world ()
   (loop for id being the hash-keys of %objects do
-    (message "AFTER:SER ~S"
-	     (setf (gethash id %objects) (find-object id)))))
+    (setf (gethash id %objects) (find-object id))))
 
 (define-method after-deserialize world ()
   (after-deserialize%super self)
