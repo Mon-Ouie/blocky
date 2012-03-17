@@ -2333,6 +2333,7 @@ of the music."
 	*world* nil
 	*project* nil
 	*event-hook* nil
+	*listener* nil
 	*message-hook-functions* nil
 	*window-title* "Blocky"
 	*updates* 0
@@ -2363,6 +2364,7 @@ of the music."
   (setf *world* nil)
   (setf *project-folder* nil)
   (setf *blocks* nil)
+  (setf *listener* nil)
   (setf *dt* nil)
   (setf *frame-rate* *default-frame-rate*)
   (setf *event-hook* nil)
