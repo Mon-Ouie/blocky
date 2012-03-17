@@ -742,28 +742,4 @@
 		   (+ *logo-height*))
 		:height *logo-height* :width *logo-height*)))
 
-;;; Minibuffer-style status bar / listener
-
-(define-block (command-line :super listener)
-  (pinned :initform t)
-  (category :initform :menu))
-
-(define-method layout command-line () 
-  (layout%super self)
-  (with-fields (width height x y) *world*
-    (setf %width width)
-    (move-to self x (- (+ y height)
-		       %height))))
-
-(define-method lose-focus command-line ()
-  (clear-line (get-prompt self)))
-
-;; ;;; Browser for inspecting objects
-
-;; (define-block (browser :super tree)
-;;   (inputs :initform
-;; 	  (list (new 'reference)
-
-;; (define-method accept browser
-
 ;;; listener.lisp ends here

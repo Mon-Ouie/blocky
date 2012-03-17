@@ -1,10 +1,8 @@
-* TODO always place listener onscreen somewhere when it opens
-* DONE auto glide-follow drag
-  CLOSED: [2012-03-16 Fri 20:33]
 * TODO worlds-within-worlds with a stamp down operation
 
+* TODO better ability to resume if wrong method compiled
+
 * SCREENCAST!
-** TODO listener back at bottom
 ** TODO show browsing methods with imenu
 ** TODO substring browse with icicles
 ** TODO trace
