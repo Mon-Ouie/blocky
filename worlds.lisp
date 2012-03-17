@@ -368,7 +368,7 @@ slowdown. See also quadtree.lisp")
     (when quadtree
       (install-quadtree self))))
 
-(define-method normalize-quadtree world ()
+(define-method fit-to-objects world ()
   (prog1 self
     (let ((objects (get-objects self)))
       (when objects
@@ -439,7 +439,7 @@ slowdown. See also quadtree.lisp")
       (with-fields (x y width height) object
 	(move-to object (* x sx) (* y (or sy sx)))
 	(resize object (* width sx) (* height (or sy sx))))))
-  (normalize-quadtree self))
+  (fit-to-objects self))
 
 (define-method destroy-region world (bounding-box))
 
@@ -492,14 +492,14 @@ slowdown. See also quadtree.lisp")
       (with-fields (x y) object
 	(move-to object (- x) y))))
   ;; get rid of negative coordinates
-  (normalize-quadtree self))
+  (fit-to-objects self))
 
 (define-method flip-vertically world ()
   (let ((objects (get-objects self)))
     (dolist (object objects)
       (with-fields (x y) object
 	(move-to object x (- y)))))
-  (normalize-quadtree self))
+  (fit-to-objects self))
 
 (define-method mirror-horizontally world ()
   (stack-horizontally 
@@ -547,7 +547,7 @@ slowdown. See also quadtree.lisp")
     (setf %was-key-repeat-p nil)))
 
 (define-method toggle-listener world ()
-  (if %listener-open-p 
+  (if *listener-open-p* 
       (exit-listener self)
       (enter-listener self)))
 
@@ -982,7 +982,7 @@ block found, or nil if none is found."
 (define-method start world ()
   (with-world self
     (unless (emptyp self)
-      (normalize-quadtree self))
+      (fit-to-objects self))
     (start%super self)))
 
 ;;; Serialization of worlds
