@@ -576,8 +576,7 @@ slowdown. See also quadtree.lisp")
 	  (draw-hover hover))
 	(draw drag))
       (when %listener
-	(with-style :rounded
-	  (draw %listener)))
+	(draw %listener))
       ;; draw focus
       (when focused-block
 	(assert (blockyp focused-block))
