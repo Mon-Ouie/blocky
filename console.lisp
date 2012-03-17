@@ -2053,7 +2053,7 @@ of the music."
 
 (defparameter *indicators* 
   '(:asterisk :bang :top-left-triangle :bottom-right-triangle
-    :down-triangle-open :down-triangle-closed
+    :down-triangle-open :down-triangle-closed :copy :paste :cut
     :menu :collapse :move :resize :reference :close))
 
 (defparameter *indicator-images* 
@@ -2065,6 +2065,9 @@ of the music."
     :menu "menu"
     :collapse "collapse"
     :move "move"
+    :copy "copy"
+    :cut "cut"
+    :paste "paste"
     :drop "downright"
     :pick-up "upleft"
     :resize "resize"

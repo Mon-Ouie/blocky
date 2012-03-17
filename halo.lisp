@@ -31,13 +31,14 @@
     :bang (0 0)
     :top-left-triangle (0 0)
     :menu (1/2 0)
-;    :collapse (0 2/4)
 ;    :move (1 2/4)
     :drop (0 1)
     :pick-up (2/6 1)
     :resize (1 1)
     :reference (0 1/2)
     :close (1 0)
+    :copy (1 2/4)
+    :cut (1 1/4)
     :bottom-right-triangle (1 1)))
 
 (define-block handle target indicator color)
@@ -149,10 +150,24 @@
      
 (define-handle collapse :collapse)
 
+;;; Copy and cut
+
+(define-handle copy :copy)
+
+(define-method tap copy (x y)
+  (when %parent (destroy %parent))
+  (copy (world) (list (duplicate %target)))) 
+
+(define-handle cut :cut)
+
+(define-method tap cut (x y)
+  (when %parent (destroy %parent))
+  (cut (world) (list %target)))
+
 ;;; The halo itself
 
 (defparameter *halo-handles* 
-  '(:evaluate :open-menu :drop :pick-up :resize :program :destroy))
+  '(:evaluate :open-menu :drop :pick-up :resize :program :cut :copy :destroy))
 
 (define-block halo target)
 
