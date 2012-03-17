@@ -1,5 +1,6 @@
 * TODO always place listener onscreen somewhere when it opens
-* TODO auto glide-follow drag
+* DONE auto glide-follow drag
+  CLOSED: [2012-03-16 Fri 20:33]
 * TODO worlds-within-worlds with a stamp down operation
 
 * SCREENCAST!

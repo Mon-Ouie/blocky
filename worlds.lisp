@@ -110,6 +110,9 @@
 (define-method resume world ()
   (prog1 t (setf %paused nil)))
 
+;; test
+(define-method foo world ())
+
 (defmacro define-world (name &body body)
   `(define-block (,name :super "BLOCKY:WORLD")
      ,@body))
@@ -997,6 +1000,9 @@ block found, or nil if none is found."
   (with-fields (objects) self
     (loop for id being the hash-keys of objects do
       (setf (gethash id objects) (find-object id)))
+    (when %player 
+      (setf (gethash (find-uuid %player) objects)
+	    %player))
     (add-listener-maybe self)))
 
 ;;; worlds.lisp ends here
