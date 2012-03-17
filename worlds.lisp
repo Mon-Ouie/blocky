@@ -20,12 +20,17 @@
 
 (in-package :blocky)
 
+(defvar *listener* nil)
+
+(defvar *listener-open-p* nil)
+
 (define-block world
   (variables :initform nil 
 	     :documentation "Hash table mapping values to values, local to the current world.")
   (player :documentation "The player object, if any.")
   (background-image :initform nil)
   (background-color :initform "white")
+  (category :initform :data)
   (x :initform 0)
   (y :initform 0)
   (paused :initform nil)
@@ -33,7 +38,6 @@
   (height :initform 256)
   (width :initform 256)
   (listener :initform nil)
-  (listener-open-p :initform nil)
   (was-key-repeat-p :initform nil)
   ;; objects and collisions
   (objects :initform nil :documentation "A hash table with all the world's objects.")
@@ -519,22 +523,22 @@ slowdown. See also quadtree.lisp")
 ;; Including a system menu, editor, and controls for switching worlds
 ;; and pages in the system. Maybe zooming out on a mega virtual desktop.
 
-(define-method add-listener-maybe world ()
-  (when (not (has-local-value :listener self))
-    (setf %listener (new 'listener))))
+(define-method add-listener-maybe world (&optional force)
+  (when (or force (null *listener*))
+    (setf *listener* (new 'listener))))
 
 (define-method enter-listener world ()
   (add-listener-maybe self)
   (setf %last-focus %focused-block)
-  (focus-on self %listener)
-  (when (null %listener-open-p) (setf %was-key-repeat-p (key-repeat-p)))
-  (setf %listener-open-p t)
+  (focus-on self *listener*)
+  (when (null *listener-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
+  (setf *listener-open-p* t)
   (enable-key-repeat))
   
 (define-method exit-listener world ()
-  (when %listener-open-p
+  (when *listener-open-p*
     (add-listener-maybe self)
-    (setf %listener-open-p nil)
+    (setf *listener-open-p* nil)
     (focus-on self %last-focus)
     (setf %last-focus nil)
     (unless %was-key-repeat-p 
@@ -574,8 +578,8 @@ slowdown. See also quadtree.lisp")
 	(when hover 
 	  (draw-hover hover))
 	(draw drag))
-      (when %listener
-	(draw %listener))
+      (when *listener*
+	(draw *listener*))
       ;; draw focus
       (when focused-block
 	(assert (blockyp focused-block))
@@ -606,7 +610,7 @@ slowdown. See also quadtree.lisp")
       (if %parent
 	  (gl:pop-matrix)
 	  ;; possibly draw shell
-	  (when %listener-open-p 
+	  (when *listener-open-p* 
 	    (draw-shell-objects self))))))
   
 ;;; Simulation update
@@ -635,14 +639,15 @@ slowdown. See also quadtree.lisp")
 	  ;; detect collisions
 	  (loop for object being the hash-values in objects do
 	    (unless (eq :passive (field-value :collision-type object))
-	      (quadtree-collide object))))
-	;; now outside the quadtree,
-	;; possibly update the shell layer
-	(when %listener-open-p
-	  (with-quadtree nil
-	    (layout self)
-	    (layout-shell-objects self)
-	    (update-shell-objects self)))))))
+	      (quadtree-collide object))))))
+    ;; now outside the quadtree,
+    ;; possibly update the shell layer
+    (with-world self
+      (when *listener-open-p*
+	(with-quadtree nil
+	  (layout self)
+	  (layout-shell-objects self)
+	  (update-shell-objects self))))))
 
 ;;; Running a world as a script
 
@@ -658,9 +663,9 @@ slowdown. See also quadtree.lisp")
 	  ;; %width *gl-screen-width* 
 	  ;; %height *gl-screen-height*)
     (mapc #'layout %inputs)
-    (when %listener-open-p
+    (when *listener-open-p*
       (with-style :rounded
-	(layout %listener)))))
+	(layout *listener*)))))
 
 (define-method select world (block &optional only)
   (with-world self
@@ -689,7 +694,7 @@ slowdown. See also quadtree.lisp")
     (with-world self
       (or (block%handle-event self event)
 	  (let ((thing
-		  (if %listener-open-p 
+		  (if *listener-open-p* 
 		      (or focused-block (first selection))
 		      player)))
 	      (prog1 t 
@@ -699,11 +704,11 @@ slowdown. See also quadtree.lisp")
 
 		;; (cond
 		;;   ;; we're focused. send the event there
-		;;   ((and %listener-open-p focused-block)
+		;;   ((and *listener-open-p* focused-block)
 		;;    (prog1 focused-block
 		;; 	 (assert (blockyp focused-block))))
 		;;   ;; only one block selected. use that.
-		;;   ((and %listener-open-p
+		;;   ((and *listener-open-p*
 		;; 	    (= 1 (length selection))
 		;; 	    (first selection)))
 		;;   ;; fall back to player
@@ -733,8 +738,8 @@ block found, or nil if none is found."
 	(let* ((object-p nil)
 	       (result 
 		 (or 
-		  (when %listener-open-p 
-		    (try %listener))
+		  (when *listener-open-p* 
+		    (try *listener*))
 		  (let ((parent 
 			  (find-if #'try 
 				   %inputs
@@ -843,8 +848,8 @@ block found, or nil if none is found."
 	    (progn
 	      (setf highlight (find-uuid (hit-inputs self mouse-x mouse-y)))))))))
     ;; (when (null highlight)
-  ;;   (when %listener
-  ;;     (with-world self (close-menus %listener))))))))
+  ;;   (when *listener*
+  ;;     (with-world self (close-menus *listener*))))))))
 
 (define-method press world (x y &optional button)
   (with-world self
@@ -858,7 +863,7 @@ block found, or nil if none is found."
 	(setf %object-p object-p)
 	(if (null block)
 	    (focus-on self nil)
-	    ;; (when %listener-open-p
+	    ;; (when *listener-open-p*
 	    ;; 	(exit-listener self)))
 	    (progn 
 	      (setf click-start (cons x y))
@@ -1000,6 +1005,6 @@ block found, or nil if none is found."
     (when %player 
       (setf (gethash (find-uuid %player) objects)
 	    %player))
-    (add-listener-maybe self)))
+    (add-listener-maybe self :force)))
 
 ;;; worlds.lisp ends here
