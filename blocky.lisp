@@ -59,7 +59,7 @@ object-fields dispatch-event *user-init-file-name* distance
 icon-resource icon-image *directions* *opposites*
 find-resource-property compose-blank-fields font-width font-height
 find-object *windows* edit create blocky transform-field-reference
-define-block *screen-height* formatted-line-width
+define-block *screen-height* formatted-line-width find-world
 formatted-line-height formatted-string-height formatted-string-width
 get-color create-image draw-image blocky edit define-prototype
 has-field *target* with-target define-world set-field-options
