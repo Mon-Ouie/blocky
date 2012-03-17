@@ -573,8 +573,12 @@
   (category :initform :data))
 (defentry positive-integer (integer 1 *) 1)
 (defentry non-negative-integer (integer 0 *) 0)
+
 (defentry expression t nil 
   (category :initform :expression))
+
+(define-method evaluate expression ()
+  (eval (get-value self)))
 
 ;;; Plain text entry, as a string
 
@@ -631,7 +635,7 @@
 		(if (blockyp result)
 		    result
 		    ;; no, make a new block from the data
-		    (make-block result))))
+		    (when result (make-block result)))))
 	  ;; spit out result block, if any
 	  (when new-block 
 	    (accept container new-block)
@@ -730,13 +734,11 @@
 
 (define-method draw listener ()
   (with-fields (inputs x y height width) self
-    (draw-box x y *gl-screen-width* height :color "black" :alpha 0.2)
+    (draw-box x y *gl-screen-width* height :color "black" :alpha 0.3)
 ;    (draw-patch self x y (+ x width) (+ y height))
     (if (null inputs)
 	(draw-label-string self *null-display-string*)
-	(with-style :flat
-	    (dolist (each inputs)
-	      (draw each))))
+	(mapc #'draw inputs))
     (draw-image "blocky" 
 		x
 		(- (+ y height)
