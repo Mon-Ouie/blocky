@@ -1103,7 +1103,7 @@ you want to align a group of text items across layouts.")
 (defparameter *block-colors*
   '(:motion "cornflower blue"
     :system "gray50"
-    :expression "white"
+    :expression "gray80"
     :button "orange"
     :terminal "gray25"
     :event "gray80"
@@ -1177,7 +1177,7 @@ you want to align a group of text items across layouts.")
     :system "white"
     :button "yellow"
     :event "gray40"
-    :expression "gray30"
+    :expression "white"
     :terminal "white"
     :comment "gray20"
     :fields "white"
