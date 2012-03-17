@@ -1558,6 +1558,17 @@ objects after reconstruction, wherever present."
 (defun find-world (name)
   (find-wiki-page name nil))
 
+;;; Clipboard
+
+(defvar *clipboard* nil)
+
+(defun initialize-clipboard-maybe (&optional force)
+  (when (or force (null *clipboard*))
+    (setf *clipboard* (new 'world))))
+
+(defun clear-clipboard ()
+  (initialize-clipboard-maybe :force))
+
 ;;; Printing objects
 
 (defun get-some-object-name (ob)

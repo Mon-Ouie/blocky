@@ -2335,6 +2335,7 @@ of the music."
 	*project-folder* nil
 	*world* nil
 	*project* nil
+	*clipboard* nil
 	*event-hook* nil
 	*listener* nil
 	*message-hook-functions* nil
@@ -2349,6 +2350,7 @@ of the music."
   (initialize-colors)
   (initialize-sound)
   (initialize-database)
+  (initialize-clipboard-maybe :force)
   (initialize-wiki)
   (load-standard-resources)
   (setf *project* *untitled-project-name*)
@@ -2368,6 +2370,7 @@ of the music."
   (setf *project-folder* nil)
   (setf *blocks* nil)
   (setf *listener* nil)
+  (setf *clipboard* nil)
   (setf *dt* nil)
   (setf *frame-rate* *default-frame-rate*)
   (setf *event-hook* nil)
