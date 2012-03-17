@@ -1671,13 +1671,13 @@ control the size of the individual frames or subimages."
 
 (defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
 *screen-height* *world* *blocks* *dt* *pointer-x* *author* *project*
-*joystick-profile* *user-joystick-profile* *joystick-axis-size*
+*joystick-profile* *user-joystick-profile* *joystick-axis-size* 
 *joystick-dead-zone* *pointer-y* *resizable* *window-title* *wiki*
 *scale-output-to-window* *persistent-variables*))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
-*screen-height* *world* *blocks* *dt* *pointer-x* *author* *project* *wiki*
-*scale-output-to-window* *pointer-y* *resizable*
+*screen-height* *world* *blocks* *dt* *pointer-x* *author* 
+*project* *wiki* *scale-output-to-window* *pointer-y* *resizable*
 *window-title*
 				 ;; notice that THIS variable is also
 				 ;; persistent!  this is to avoid
