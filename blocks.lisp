@@ -454,6 +454,10 @@ See also `drop-at'."
   (assert (and (numberp x) (numberp y)))
   (add-object (world) new-block x y))
 
+(define-method clear-world-data block ()
+  (setf %quadtree-node nil)
+  (setf %parent nil))
+
 ;;; Defining input events for blocks
 
 ;; see also definition of "task" blocks below.
