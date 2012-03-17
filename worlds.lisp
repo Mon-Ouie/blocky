@@ -22,8 +22,6 @@
 
 (defvar *listener* nil)
 
-(defvar *clipboard* nil)
-
 (defvar *listener-open-p* nil)
 
 (define-block world
@@ -389,17 +387,32 @@ slowdown. See also quadtree.lisp")
 
 ;;; Cut and paste
 
-(define-method paste world ((other-world block) (dx number :default 0) (dy number :default 0))
-  (dolist (object (mapcar #'duplicate (get-objects other-world)))
+(define-method copy world (&optional objects0)
+  (let ((objects (or objects0 %selection)))
+    (when objects
+      (setf *clipboard* (new 'world))
+      (dolist (object objects)
+	(let ((duplicate (duplicate object)))
+	  ;; don't keep references to anything in the (world)
+	  (clear-world-data duplicate)
+	  (add-object *clipboard* duplicate))))))
+
+(define-method cut world (&optional objects0)
+  (let ((objects (or objects0 %selection)))
+    (when objects
+      (setf *clipboard* (new 'world))
+      (dolist (object objects)
+	(remove-thing-maybe self object)
+	(add-object *clipboard* object)))))
+
+(define-method paste world ((source block) (dx number :default 0) (dy number :default 0))
+  (dolist (object (mapcar #'duplicate (get-objects source)))
     (with-fields (x y) object
       (clear-saved-location object)
       (add-object self object)
       (move-to object (+ x dx) (+ y dy)))))
 
-(defun copy-to-clipboard (objects)
-  (setf *clipboard* (new 'world))
-  (dolist (object objects)
-    (add-object *clipboard* (duplicate object))))
+; (define-method paste-cut 
 
 ;;; Algebraic operations on worlds and their contents
 
