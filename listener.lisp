@@ -181,6 +181,7 @@
   (when (> %history-position 0)
     (setf %line (history-item self (progn (decf %history-position)
 					   %history-position)))
+    (when (null %line) (setf %line ""))
     (setf %point (length %line))))
  
 (define-method backward-history prompt ()
@@ -333,6 +334,7 @@
 (define-method draw prompt (&optional nolabel)
   (with-fields (x y width height point parent background
 		  line prompt-string) self
+    (when (null line) (setf line ""))
     (let ((strings-y *default-prompt-margin*))
       (unless nolabel
 	;; draw prompt string
