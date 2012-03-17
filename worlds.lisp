@@ -686,9 +686,8 @@ slowdown. See also quadtree.lisp")
 	  ;; %width *gl-screen-width* 
 	  ;; %height *gl-screen-height*)
     (mapc #'layout %inputs)
-    (when *listener-open-p*
-      (with-style :rounded
-	(layout *listener*)))))
+    (when *listener*
+      (layout *listener*))))
 
 (define-method select world (block &optional only)
   (with-world self
