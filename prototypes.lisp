@@ -1540,6 +1540,9 @@ objects after reconstruction, wherever present."
 	  (add-wiki-page name (new 'world :name name))
 	  (error "Cannot find wiki page ~S" name))))
 
+(defun find-world (name)
+  (find-wiki-page name nil))
+
 ;;; Printing objects
 
 (defun get-some-object-name (ob)
