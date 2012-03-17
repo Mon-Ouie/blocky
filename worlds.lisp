@@ -626,7 +626,9 @@ slowdown. See also quadtree.lisp")
 	    (update object)
 	    (run-tasks object))
 	  ;; update window movement
-	  (let ((thing (or drag player)))
+	  (let ((thing (or 
+			(when (holding-shift) drag) 
+			player)))
 	    (when thing
 	      (glide-follow self thing)
 	      (update-window-glide self)))
@@ -652,7 +654,7 @@ slowdown. See also quadtree.lisp")
 (define-method layout world ()
   ;; take over the entire GL window
   (with-world self
-    (setf %x 0 %y 0)
+    ;; (setf %x 0 %y 0)
 	  ;; %width *gl-screen-width* 
 	  ;; %height *gl-screen-height*)
     (mapc #'layout %inputs)
