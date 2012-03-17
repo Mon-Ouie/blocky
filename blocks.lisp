@@ -161,7 +161,7 @@ areas.")
 (define-method set-wiki-name block ((name string))
   (setf %wiki-name name))
 
-(define-method wiki block ()
+(define-method wiki-page block ()
   (find-wiki-page %wiki-name))
 
 ;;; Adding blocks to the simulation
