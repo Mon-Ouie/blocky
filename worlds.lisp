@@ -110,9 +110,6 @@
 (define-method resume world ()
   (prog1 t (setf %paused nil)))
 
-;; test
-(define-method foo world ())
-
 (defmacro define-world (name &body body)
   `(define-block (,name :super "BLOCKY:WORLD")
      ,@body))
