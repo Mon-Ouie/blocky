@@ -588,9 +588,9 @@ slowdown. See also quadtree.lisp")
 			 ghost prompt) self
       ;; now start drawing the shell objects
       (mapc #'draw inputs)
-	;; draw border around any selected blocks
-	(when (find block selection :test 'eq :key #'find-object)
-	  (draw-border block))
+	;; ;; draw border around any selected blocks
+	;; (when (find block selection :test 'eq :key #'find-object)
+	;;   (draw-border block))
       ;; during dragging we draw the dragged block.
       (when drag 
 	(layout drag)
