@@ -1448,10 +1448,25 @@ objects after reconstruction, wherever present."
   (apply #'send-queue :initialize object args))
 
 (defun duplicate (original)
-  (let ((duplicate (deserialize (serialize original))))
-    (setf (object-uuid (find-object duplicate))
-	  (make-uuid))
-    (add-object-to-database (find-object duplicate))))
+  (let ((duplicate 
+	  (make-object 
+	   :super (object-super original)
+	   :uuid (make-uuid))))
+    (prog1 duplicate
+      (initialize-method-cache duplicate)
+      (add-object-to-database duplicate)
+      ;; copy any local field values
+      (let ((fields (object-fields original))
+	    (fields0 fields)
+	    names)
+	(if (hash-table-p fields)
+	    (setf names (loop for f being the hash-keys of fields collect f))
+	    (dolist (f fields)
+	      (push (pop fields) names)
+	      (pop fields)))
+	(dolist (name names)
+	  (set-field-value name duplicate 
+			   (fref fields0 name))))))) 
 
 ;;; Wiki pages 
 
@@ -1461,7 +1476,7 @@ objects after reconstruction, wherever present."
 
 (defun initialize-wiki ()
   (setf *wiki* 
-	(make-hash-table :test 'equal :size 8192)))
+	(make-hash-table :test 'equal)))
 
 (initialize-wiki)
 

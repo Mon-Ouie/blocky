@@ -1,6 +1,7 @@
 * TODO worlds-within-worlds with a stamp down operation (custom drop halo hook)
 
-* TODO better ability to resume if wrong method compiled
+* TODO select rectangle
+* TODO clipboard
 
 * SCREENCAST!
 ** TODO show browsing methods with imenu
@@ -10,6 +11,8 @@
 ** TODO VISIT level, editing of wiki page
 ** TODO return to other level
 ** TODO paste other world into terminal
+
+* TODO [#B] better ability to resume if wrong method compiled
 
 * OTHER
 ** TODO Programmable, better documented microxong!

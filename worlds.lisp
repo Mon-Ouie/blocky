@@ -22,6 +22,8 @@
 
 (defvar *listener* nil)
 
+(defvar *clipboard* nil)
+
 (defvar *listener-open-p* nil)
 
 (define-block world
@@ -385,7 +387,21 @@ slowdown. See also quadtree.lisp")
 		(with-quadtree quadtree
 		  (move-to object (- x left) (- y top)))))))))))
 
-;; Algebraic operations on worlds and their contents
+;;; Cut and paste
+
+(define-method paste world ((other-world block) (dx number :default 0) (dy number :default 0))
+  (dolist (object (mapcar #'duplicate (get-objects other-world)))
+    (with-fields (x y) object
+      (clear-saved-location object)
+      (add-object self object)
+      (move-to object (+ x dx) (+ y dy)))))
+
+(defun copy-to-clipboard (objects)
+  (setf *clipboard* (new 'world))
+  (dolist (object objects)
+    (add-object *clipboard* (duplicate object))))
+
+;;; Algebraic operations on worlds and their contents
 
 (defvar *world-prototype* "BLOCKY:WORLD")
 
@@ -412,13 +428,6 @@ slowdown. See also quadtree.lisp")
   `(with-world (clone *world-prototype*) 
      ,@body
      (adjust-bounding-box-maybe (world))))
-
-(define-method paste world ((other-world block) (dx number :default 0) (dy number :default 0))
-  (dolist (object (get-objects other-world))
-    (with-fields (x y) object
-      (clear-saved-location object)
-      (add-object self object)
-      (move-to object (+ x dx) (+ y dy)))))
 
 (defun translate (world dx dy)
   (when world
@@ -567,8 +576,8 @@ slowdown. See also quadtree.lisp")
       ;; now start drawing the shell objects
       (mapc #'draw inputs)
 	;; draw border around any selected blocks
-	;; (when (find block selection :test 'eq :key #'find-object)
-	;;   (draw-border block))
+	(when (find block selection :test 'eq :key #'find-object)
+	  (draw-border block))
       ;; during dragging we draw the dragged block.
       (when drag 
 	(layout drag)

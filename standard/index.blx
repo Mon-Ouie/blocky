@@ -120,6 +120,8 @@
 (:name "minus" :type :image :file "minus.png" :properties (:filter :linear))
 (:name "socket" :type :image :file "socket.png" :properties (:filter :linear))
 (:name "collapse" :type :image :file "collapse.png" :properties (:filter :linear))
+(:name "copy" :type :image :file "copy.png" :properties (:filter :linear))
+(:name "paste" :type :image :file "paste.png" :properties (:filter :linear))
 (:name "move" :type :image :file "move.png" :properties (:filter :linear))
 (:name "resize" :type :image :file "resize.png" :properties (:filter :linear))
 (:name "bang" :type :image :file "bang.png" :properties (:filter :linear))
