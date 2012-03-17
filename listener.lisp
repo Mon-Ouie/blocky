@@ -665,7 +665,7 @@
       (pin prompt))))
 
 (define-method layout listener ()
-  (with-fields (x y height width parent inputs) self
+  (with-fields (height width parent inputs) self
     ;; start by calculating current height
     (setf height (font-height *font*))
     (setf width 0)
@@ -674,15 +674,19 @@
       (layout element)
       (incf height (field-value :height element))
       (callf max width (dash 2 (field-value :width element))))
-    ;; now compute proper positions
-    (let ((y0 (+ y height (- (dash 2))))
-	  (left (dash 1 x)))
+    ;; now compute proper positions and re-layout
+    (let* ((x (%window-x (world)))
+	   (y0 (+ (%window-y (world))
+		 *gl-screen-height*))
+	   (y (- y0 height (dash 3))))
       (dolist (element inputs)
 	(decf y0 (field-value :height element))
-	(move-to element left y0)
-	(layout element)))))
-      ;; a little extra room at the top and sides
-;;      (incf height (dash 1)))))
+	(move-to element x y0)
+	(layout element))
+      (setf %y y)
+      (setf %x x)
+      ;;  a little extra room at the top and sides
+      (incf height (dash 3)))))
       ;; ;; move to the right spot to keep the bottom on the bottom.
       ;; (setf y (- y0 (dash 1))))))
 
@@ -724,7 +728,8 @@
 
 (define-method draw listener ()
   (with-fields (inputs x y height width) self
-    (with-style :rounded (draw-patch self x y (+ x width) (+ y height)))
+    (draw-box x y *gl-screen-width* height :color "black" :alpha 0.2)
+;    (draw-patch self x y (+ x width) (+ y height))
     (if (null inputs)
 	(draw-label-string self *null-display-string*)
 	(with-style :flat
@@ -733,7 +738,8 @@
     (draw-image "blocky" 
 		x
 		(- (+ y height)
-		   (+ (dash 1.5) *logo-height*))
+		   -2
+		   (+ *logo-height*))
 		:height *logo-height* :width *logo-height*)))
 
 ;;; Minibuffer-style status bar / listener
