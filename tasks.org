@@ -1,4 +1,4 @@
-* TODO worlds-within-worlds with a stamp down operation
+* TODO worlds-within-worlds with a stamp down operation (custom drop halo hook)
 
 * TODO better ability to resume if wrong method compiled
 
