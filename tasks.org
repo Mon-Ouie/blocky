@@ -4,6 +4,7 @@
 * TODO worlds-within-worlds with a stamp down operation
 
 * SCREENCAST!
+** TODO listener back at bottom
 ** TODO show browsing methods with imenu
 ** TODO substring browse with icicles
 ** TODO trace
