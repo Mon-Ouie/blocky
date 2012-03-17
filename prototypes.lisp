@@ -1168,13 +1168,17 @@ slot value is inherited."
 (defun make-field-accessor-forms (descriptor)
   (let* ((field-name (first descriptor))
 	 (accessor-name (make-non-keyword 
-			 (concatenate 'string "%" (symbol-name field-name)))))
+			 (concatenate 'string "%" (symbol-name field-name))))
+	 (setter-name (make-non-keyword
+                         (concatenate 'string "set-" (symbol-name accessor-name)))))
     `((unless (fboundp ',accessor-name)
 	(defun ,accessor-name (thing)
 	  (field-value ,field-name thing))
-	(defun (setf ,accessor-name) (thing value)
+	(defun ,setter-name (thing value)
 	  (set-field-value ,field-name thing value))
-	(export ',accessor-name)))))
+	(defsetf ,accessor-name ,setter-name)
+	(export ',accessor-name)
+	(export ',setter-name)))))
 
 (defun proto-intern (name)
   (let ((colon (position #\: name)))
@@ -1456,7 +1460,7 @@ objects after reconstruction, wherever present."
       (initialize-method-cache duplicate)
       (add-object-to-database duplicate)
       ;; copy any local field values
-      (let ((fields (object-fields original))
+      (let* ((fields (object-fields original))
 	    (fields0 fields)
 	    names)
 	(if (hash-table-p fields)
