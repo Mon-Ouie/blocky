@@ -34,7 +34,7 @@
   (:use :common-lisp) 
   (:export null-block *frequency* *output-chunksize* *output-channels*
 halt-sample *dt* *copyright-notice* *author* *message-hook-functions*
-add-to-list modify-joystick-profile defproject start stop
+add-to-list modify-joystick-profile defproject start stop selection
 clear-clipboard copy-to-clipboard at-next-update *next-update-hook*
 *already-serialized* browse back *update-function* *target* *blocks*
 shut-down later later-at later-when start-up seconds->frames
