@@ -111,22 +111,27 @@
     (add-block (world) %target)))
 
 (define-handle move :move
-  :fields (x1 y1))
+  :fields (positions))
 
 (define-method can-pick move () t)
 
 (define-method pick move () self)
 
 (define-method drag move (x0 y0)
-  (setf %x1 (or %x1 x0))
-  (setf %y1 (or %y1 y0))
-  (let ((dx (- x0 %x1))
-	(dy (- y0 %y1)))
-    (dolist (thing (cons %target (get-selection (world))))
-      (with-fields (x y) thing
+  (with-fields (positions) self
+    (when (null positions)
+      (dolist (thing (cons %target (get-selection (world))))
+	(with-fields (x y) thing
+	  ;; store initial offset from pointer
+	  (push (list thing 
+		      (- x x0)
+		      (- y y0))
+		positions))))
+    (dolist (entry positions)
+      (destructuring-bind (thing x y) entry
 	(move-to thing
-		 (+ x dx)
-		 (+ y dy))))))
+		 (+ x x0)
+		 (+ y y0))))))
 
 (define-handle resize :resize)
 

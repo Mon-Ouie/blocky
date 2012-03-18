@@ -794,7 +794,7 @@ block found, or nil if none is found."
 				 (return-from trying result))))))))
 	  (values result object-p))))))
   
-(defparameter *minimum-drag-distance* 7)
+(defparameter *minimum-drag-distance* 6)
   
 (define-method clear-halos world ()
   (mapc #'destroy (get-selection self)))
@@ -878,8 +878,8 @@ block found, or nil if none is found."
 	(if drag
 	    ;; we're in a mouse drag.
 	    (destructuring-bind (ox . oy) drag-offset
-	      (let ((target-x (- (window-pointer-x) ox))
-		    (target-y (- (window-pointer-y) oy)))
+	      (let ((target-x (- mouse-x ox))
+		    (target-y (- mouse-y oy)))
 		(let ((candidate (hit-inputs self target-x target-y)))
 		  ;; obviously we dont want to plug a block into itself.
 		  (setf hover (if (object-eq drag candidate) nil
