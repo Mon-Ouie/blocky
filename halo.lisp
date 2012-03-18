@@ -155,14 +155,12 @@
 (define-handle copy :copy)
 
 (define-method tap copy (x y)
-  (when %parent (destroy %parent))
-  (copy (world) (list (duplicate %target)))) 
+  (copy (world) (cons %target (get-selection (world)))))
 
 (define-handle cut :cut)
 
 (define-method tap cut (x y)
-  (when %parent (destroy %parent))
-  (cut (world) (list %target)))
+  (cut (world) (cons %target (get-selection (world)))))
 
 ;;; The halo itself
 

@@ -389,8 +389,12 @@ slowdown. See also quadtree.lisp")
 
 ;;; Cut and paste
 
+(define-method get-selection world ()
+  (let ((all (append (get-objects self) %inputs)))
+   (remove-if-not #'%halo all)))
+
 (define-method copy world (&optional objects0)
-  (let ((objects (or objects0 %selection)))
+  (let ((objects (or objects0 (get-selection self))))
     (when objects
       (setf *clipboard* (new 'world))
       (dolist (object objects)
@@ -400,21 +404,25 @@ slowdown. See also quadtree.lisp")
 	  (add-object *clipboard* duplicate))))))
 
 (define-method cut world (&optional objects0)
-  (let ((objects (or objects0 %selection)))
+  (let ((objects (or objects0 (get-selection self))))
     (when objects
       (setf *clipboard* (new 'world))
       (dolist (object objects)
 	(remove-thing-maybe self object)
 	(add-object *clipboard* object)))))
 
-(define-method paste world ((source block) (dx number :default 0) (dy number :default 0))
+(define-method paste-from world ((source block) (dx number :default 0) (dy number :default 0))
   (dolist (object (mapcar #'duplicate (get-objects source)))
     (with-fields (x y) object
       (clear-saved-location object)
       (add-object self object)
       (move-to object (+ x dx) (+ y dy)))))
 
-; (define-method paste-cut 
+(define-method paste world ((dx number :default 0) (dy number :default 0))
+  (paste-from self *clipboard* dx dy))
+
+;; (define-method paste-cut 
+;; (define-method paste-trim
 
 ;;; Algebraic operations on worlds and their contents
 
@@ -466,11 +474,6 @@ slowdown. See also quadtree.lisp")
   (fit-to-objects self))
 
 (define-method destroy-region world (bounding-box))
-
-(define-method copy world ()
-  (with-new-world 
-    (dolist (object (mapcar #'duplicate (get-objects self)))
-      (add-object (world) object))))
 
 (defun vertical-extent (world)
   (if (or (null world)
@@ -691,13 +694,11 @@ slowdown. See also quadtree.lisp")
     (when *listener*
       (layout *listener*))))
 
-(define-method select world (block &optional only)
+(define-method select world (block)
   (with-world self
     (with-fields (selection) self
-      (if only
-	  (setf selection (list block))
-	  (pushnew block selection 
-		   :test 'eq :key #'find-parent)))))
+      (pushnew (find-uuid block) selection 
+	       :test 'equal))))
 ;	  (select block))))))
   
 (define-method select-if world (predicate)
@@ -781,6 +782,9 @@ block found, or nil if none is found."
   
 (defparameter *minimum-drag-distance* 7)
   
+(define-method clear-halos world ()
+  (mapc #'destroy (get-selection self)))
+
 (define-method focus-on world (block)
   ;; possible to pass nil
   (with-fields (focused-block) self
@@ -791,7 +795,7 @@ block found, or nil if none is found."
 	(when (and last-focus
 		   ;; don't do this for same block
 		   (not (object-eq last-focus block)))
-	  (destroy-halo last-focus)
+	  (unless (holding-control) (destroy-halo last-focus))
 	  (lose-focus last-focus))
       ;; now set up the new focus (possibly nil)
       (setf focused-block (when block 
@@ -945,14 +949,14 @@ block found, or nil if none is found."
 			      (add-block self drag drop-x drop-y))))))
 	      ;; select the dropped block
 	      (progn 
-		(select self drag)
+;		(select self drag)
 		(setf focused-block (find-uuid drag)))))
 	  ;;
 	  ;; we were clicking instead of dragging
 	  (progn
 	    (setf selection nil)
 	    (when focused-block
-	      (select self focused-block)
+;	      (select self focused-block)
 	      (with-world self 
 		(cond
 		  ;; right click and control click are equivalent
@@ -977,8 +981,8 @@ block found, or nil if none is found."
 		   (scroll-right focused-block))
 		  ;; plain old click
 		  (t 
-		   (tap focused-block x y)))
-		(select self focused-block))
+		   (tap focused-block x y))))
+		;;(select self focused-block))
 	      (setf click-start nil))))
       ;; close any ephemeral menus
       (dolist (input %inputs)
