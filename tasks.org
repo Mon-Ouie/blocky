@@ -4,6 +4,7 @@
 * TODO clipboard
 
 * SCREENCAST!
+** TODO move as a group
 ** TODO show browsing methods with imenu
 ** TODO substring browse with icicles
 ** TODO trace

@@ -61,6 +61,7 @@
 		    ((:x :control) :cut)
 		    ((:c :control) :copy)
 		    ((:v :control) :paste)
+		    ((:v :control :shift) :paste-here)
 		    ((:g :control) :escape)
 		    ((:escape) :toggle-listener)
 		    ((:m :alt) :add-message)
@@ -105,6 +106,9 @@
   (method :initform nil)
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
+
+(defun selection ()
+  (get-selection (world)))
 
 (defmacro with-world (world &rest body)
   `(let* ((*world* ,world))
@@ -372,7 +376,7 @@ slowdown. See also quadtree.lisp")
     (when quadtree
       (install-quadtree self))))
 
-(define-method fit-to-objects world ()
+(define-method trim world ()
   (prog1 self
     (let ((objects (get-objects self)))
       (when objects
@@ -424,8 +428,15 @@ slowdown. See also quadtree.lisp")
 (define-method paste world ((dx number :default 0) (dy number :default 0))
   (paste-from self *clipboard* dx dy))
 
+(define-method paste-here world ()
+  (let ((temp (new 'world)))
+    (paste-from temp *clipboard*)
+    (send :trim temp)
+    (paste-from self temp
+		(window-pointer-x)
+		(window-pointer-y))))
+
 ;; (define-method paste-cut 
-;; (define-method paste-trim
 
 ;;; Algebraic operations on worlds and their contents
 
@@ -474,7 +485,7 @@ slowdown. See also quadtree.lisp")
       (with-fields (x y width height) object
 	(move-to object (* x sx) (* y (or sy sx)))
 	(resize object (* width sx) (* height (or sy sx))))))
-  (fit-to-objects self))
+  (trim self))
 
 (define-method destroy-region world (bounding-box))
 
@@ -522,14 +533,14 @@ slowdown. See also quadtree.lisp")
       (with-fields (x y) object
 	(move-to object (- x) y))))
   ;; get rid of negative coordinates
-  (fit-to-objects self))
+  (trim self))
 
 (define-method flip-vertically world ()
   (let ((objects (get-objects self)))
     (dolist (object objects)
       (with-fields (x y) object
 	(move-to object x (- y)))))
-  (fit-to-objects self))
+  (trim self))
 
 (define-method mirror-horizontally world ()
   (stack-horizontally 
@@ -867,8 +878,8 @@ block found, or nil if none is found."
 	(if drag
 	    ;; we're in a mouse drag.
 	    (destructuring-bind (ox . oy) drag-offset
-	      (let ((target-x (- mouse-x ox))
-		    (target-y (- mouse-y oy)))
+	      (let ((target-x (- (window-pointer-x) ox))
+		    (target-y (- (window-pointer-y) oy)))
 		(let ((candidate (hit-inputs self target-x target-y)))
 		  ;; obviously we dont want to plug a block into itself.
 		  (setf hover (if (object-eq drag candidate) nil
@@ -1012,7 +1023,7 @@ block found, or nil if none is found."
 (define-method start world ()
   (with-world self
     (unless (emptyp self)
-      (fit-to-objects self))
+      (trim self))
     (start%super self)))
 
 ;;; Serialization of worlds
