@@ -1,12 +1,13 @@
 * TODO worlds-within-worlds with a stamp down operation (custom drop halo hook)
 
 * TODO select rectangle
-* TODO clipboard
 
 * SCREENCAST!
+** TODO select/move/resize
+** TODO multiple select
 ** TODO move as a group
+** TODO cut, copy, paste, paste-here
 ** TODO show browsing methods with imenu
-** TODO substring browse with icicles
 ** TODO trace
 ** TODO update with C-c C-c 
 ** TODO VISIT level, editing of wiki page
@@ -1482,3 +1483,13 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_TODO: TODO
    :END:
 *** TODO refactor initialize arguments to allow individual updating
+
+** DONE clipboard
+   CLOSED: [2012-03-18 Sun 02:59]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-18 Sun 02:59
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: DONE
+   :END:
+

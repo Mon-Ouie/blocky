@@ -455,6 +455,7 @@ See also `drop-at'."
   (add-object (world) new-block x y))
 
 (define-method clear-world-data block ()
+  (clear-saved-location self)
   (setf %quadtree-node nil)
   (setf %parent nil))
 

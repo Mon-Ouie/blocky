@@ -421,13 +421,15 @@ slowdown. See also quadtree.lisp")
 (define-method paste-from world ((source block) (dx number :default 0) (dy number :default 0))
   (dolist (object (mapcar #'duplicate (get-objects source)))
     (with-fields (x y) object
-      (clear-saved-location object)
-      (add-object self object)
-      (move-to object (+ x dx) (+ y dy)))))
-
+      (clear-world-data object)
+      (with-world self
+	(with-quadtree %quadtree
+	  (add-object self object)
+	  (move-to object (+ x dx) (+ y dy)))))))
+  
 (define-method paste world ((dx number :default 0) (dy number :default 0))
   (paste-from self *clipboard* dx dy))
-
+  
 (define-method paste-here world ()
   (let ((temp (new 'world)))
     (paste-from temp *clipboard*)
