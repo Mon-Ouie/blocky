@@ -31,7 +31,7 @@
     :bang (0 0)
     :top-left-triangle (0 0)
     :menu (1/2 0)
-;    :move (1 2/4)
+    :move (3/4 1)
     :drop (0 1)
     :pick-up (2/6 1)
     :resize (1 1)
@@ -78,12 +78,13 @@
 
 (define-method draw-hover handle ())
 		
-(defmacro define-handle (name indicator &key (color "gray10"))
+(defmacro define-handle (name indicator &key (color "gray10") fields)
   (assert (symbolp name))
   (assert (stringp color))
   `(define-block (,name :super :handle)
      (indicator :initform ,indicator)
-     (color :initform ,color)))
+     (color :initform ,color)
+     ,@fields))
 
 (define-handle evaluate :bang)
 
@@ -109,13 +110,23 @@
   (unless (contains (world) %target)
     (add-block (world) %target)))
 
-;; (define-method drag move (x0 y0)
-;; (with-fields (x y) %target
-;;   (let ((dx (- %x x))
-;; 	  (dy (- %y y)))
-;;     (move-to %target 
-;; 	       (- x0 dx)
-;; 	       (- y0 dy)))))
+(define-handle move :move
+  :fields (x1 y1))
+
+(define-method can-pick move () t)
+
+(define-method pick move () self)
+
+(define-method drag move (x0 y0)
+  (setf %x1 (or %x1 x0))
+  (setf %y1 (or %y1 y0))
+  (let ((dx (- x0 %x1))
+	(dy (- y0 %y1)))
+    (dolist (thing (cons %target (get-selection (world))))
+      (with-fields (x y) thing
+	(move-to thing
+		 (+ x dx)
+		 (+ y dy))))))
 
 (define-handle resize :resize)
 
@@ -165,7 +176,7 @@
 ;;; The halo itself
 
 (defparameter *halo-handles* 
-  '(:evaluate :open-menu :drop :pick-up :resize :program :cut :copy :destroy))
+  '(:evaluate :open-menu :drop :move :pick-up :resize :program :cut :copy :destroy))
 
 (define-block halo target)
 
