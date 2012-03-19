@@ -410,13 +410,15 @@ slowdown. See also quadtree.lisp")
 	  (add-object *clipboard* duplicate))))))
 
 (define-method cut world (&optional objects0)
-  (let ((objects (or objects0 (get-selection self))))
-    (when objects
-      (clear-halos self)
-      (setf *clipboard* (new 'world))
-      (dolist (object objects)
-	(remove-thing-maybe self object)
-	(add-object *clipboard* object)))))
+  (with-world self
+    (let ((objects (or objects0 (get-selection self))))
+      (when objects
+	(clear-halos self)
+	(setf *clipboard* (new 'world))
+	(dolist (object objects)
+	  (with-quadtree %quadtree
+	    (remove-thing-maybe self object)
+	    (add-object *clipboard* object)))))))
 
 (define-method paste-from world ((source block) (dx number :default 0) (dy number :default 0))
   (dolist (object (mapcar #'duplicate (get-objects source)))
