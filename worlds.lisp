@@ -101,7 +101,7 @@
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
 	       :documentation "A cons (X . Y) of relative mouse click location on dragged block.")
-  ;; For wiki page worlds
+  ;; For buffer page worlds
   (prototype-name :initform nil)
   (method :initform nil)
   (modified :initform nil 
@@ -401,6 +401,7 @@ slowdown. See also quadtree.lisp")
 
 (define-method copy world (&optional objects0)
   (let ((objects (or objects0 (get-selection self))))
+    (clear-halos self)
     (when objects
       (setf *clipboard* (new 'world))
       (dolist (object objects)
@@ -413,7 +414,7 @@ slowdown. See also quadtree.lisp")
   (with-world self
     (let ((objects (or objects0 (get-selection self))))
       (when objects
-;	(clear-halos self)
+	(clear-halos self)
 	(setf *clipboard* (new 'world))
 	(dolist (object objects)
 	  (with-quadtree %quadtree
@@ -801,7 +802,7 @@ block found, or nil if none is found."
 (defparameter *minimum-drag-distance* 6)
   
 (define-method clear-halos world ()
-  (mapc #'destroy (get-selection self)))
+  (mapc #'destroy-halo (get-selection self)))
 
 (define-method focus-on world (block)
   ;; possible to pass nil
@@ -977,9 +978,9 @@ block found, or nil if none is found."
 ;	      (select self focused-block)
 	      (with-world self 
 		(cond
-		  ;; right click and control click are equivalent
+		  ;; right click and alt click are equivalent
 		  ((or (= button 3)
-		       (and (holding-control) (= button 1)))
+		       (and (holding-alt) (= button 1)))
 		   (alternate-tap focused-block x y))
 		  ;; scroll wheel click and shift click are equivalent
 		  ((or (= button 2)

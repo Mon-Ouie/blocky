@@ -641,8 +641,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (define-method select block () nil)
 
 (define-method tap block (x y)
-  (declare (ignore x y))
-  nil)
+  (toggle-halo self))
 
 (define-method alternate-tap block (x y)
   (with-fields (methods) self
@@ -657,7 +656,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
 	    (focus-on (world) menu))))))
 
 (define-method scroll-tap block (x y)
-  (toggle-halo self))
+  (declare (ignore x y))
+  nil)
 
 (define-method scroll-up block ())
 
@@ -1445,23 +1445,6 @@ See shell.lisp for more on the implementation of drag-and-drop."
       (setf width (image-width image)))
       (setf height (image-height image))))
 
-;; (define-method draw-as-sprite block ()
-;;   "Draw this block as a sprite. By default only %IMAGE is drawn.
-;; The following block fields will control sprite drawing:
-
-;;    %OPACITY  Number in the range 0.0-1.0 with 0.0 being fully transparent
-;;              and 1.0 being fully opaque.
-
-;;    %BLEND    Blending mode for OpenGL compositing.
-;;              See the function `set-blending-mode' for a list of modes."
-;;   (with-fields (image x y z height opacity blend) self
-;;     (when image
-;;       (when (null height)
-;; 	(resize-to-image self))
-;;       (draw-image image x y :z z 
-;; 			    :opacity opacity 
-;; 			    :blend blend))))
-
 (define-method scale block (x-factor &optional y-factor)
   (let ((image (find-resource-object %image)))
     (resize self 
@@ -1477,7 +1460,14 @@ the object if necessary."
     (resize-to-image self)))
   
 (define-method draw block ()
-  "Draw this block via OpenGL commands. "
+  "Draw this block as a sprite. By default only %IMAGE is drawn.
+The following block fields will control sprite drawing:
+
+   %OPACITY  Number in the range 0.0-1.0 with 0.0 being fully transparent
+             and 1.0 being fully opaque.
+
+   %BLEND    Blending mode for OpenGL compositing.
+             See the function `set-blending-mode' for a list of modes."
   (with-fields (image x y width height blend opacity) self
     (if image 
 	(draw-image image x y 

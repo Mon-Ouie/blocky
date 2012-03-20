@@ -746,4 +746,11 @@
 		   (+ *logo-height*))
 		:height *logo-height* :width *logo-height*)))
 
+;;; Modeline
+
+(define-block (modeline :super :list)
+  (orientation :initform :horizontal)
+  (no-background :initform t))
+  
+
 ;;; listener.lisp ends here
