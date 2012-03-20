@@ -293,8 +293,8 @@
   (gethash (find-uuid object) 
 	   %objects))
 
-;; (define-method destroy-block world (object)
-;;   (remhash (find-uuid object) %objects))
+(define-method destroy-block world (object)
+  (remhash (find-uuid object) %objects))
 
 ;;; World-local variables
 
