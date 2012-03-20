@@ -194,8 +194,6 @@
 
 ;;; Closure for parameterizing a tree
 
-
-
 ;;; Inactive placeholder
 
 (deflist blank)
