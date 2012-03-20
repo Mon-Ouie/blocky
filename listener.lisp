@@ -595,7 +595,8 @@
  
 (define-method set-value string (value)
   (when (stringp value)
-    (setf %value value)))
+    (setf %value value)
+    (setf %line value)))
 
 ;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
 
