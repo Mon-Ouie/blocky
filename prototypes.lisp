@@ -1473,41 +1473,41 @@ objects after reconstruction, wherever present."
 	    (set-field-value name duplicate 
 			     (fref fields0 name))))))))
 
-;;; Wiki pages 
+;;; Buffer pages 
 
-(defvar *wiki* nil)
+(defvar *buffers* nil)
 
 (defvar *desktop* "desktop:")
 
-(defun initialize-wiki ()
-  (setf *wiki* 
+(defun initialize-buffers ()
+  (setf *buffers* 
 	(make-hash-table :test 'equal)))
 
-(initialize-wiki)
+(initialize-buffers)
 
-(defun find-wiki-name (thing)
+(defun find-buffer-name (thing)
   (when (blockyp thing)
     ;; see also blocks.lisp
-    (send :wiki thing)))
+    (send :buffer thing)))
     
-(defparameter *wiki-delimiter* #\:)
+(defparameter *buffer-delimiter* #\:)
 
-(defun special-wiki-name-p (name)
-  (position *wiki-delimiter* name))
+(defun special-buffer-name-p (name)
+  (position *buffer-delimiter* name))
 
 (defun verbose-symbol-name (sym &optional other-package)
   (let ((name (symbol-name sym))
 	(package (package-name (symbol-package sym))))
     (concatenate 'string 
 		 (or other-package package)
-		 (string *wiki-delimiter*) 
+		 (string *buffer-delimiter*) 
 		 name)))
 
-(defun project-wiki-name (project)
-  (assert (not (special-wiki-name-p project)))
+(defun project-buffer-name (project)
+  (assert (not (special-buffer-name-p project)))
   (concatenate 'string project ":"))
 
-(defun prototype-wiki-name (thing)
+(defun prototype-buffer-name (thing)
   (cond
     ((blockyp thing)
      (make-prototype-id thing))
@@ -1515,53 +1515,53 @@ objects after reconstruction, wherever present."
     ((stringp thing)
      thing)))
 
-(defun method-wiki-name (method &optional (object "BLOCKY:BLOCK"))
+(defun method-buffer-name (method &optional (object "BLOCKY:BLOCK"))
   (assert (and (symbolp method)
 	       (not (keywordp method))))
   (concatenate 'string 
-	       (prototype-wiki-name object)
-	       (string *wiki-delimiter*)
+	       (prototype-buffer-name object)
+	       (string *buffer-delimiter*)
 	       (string-upcase (symbol-name method))))
 
-(defun wiki-name-project (name)
-  (when (special-wiki-name-p name)
-    (subseq name 0 (position *wiki-delimiter* name))))
+(defun buffer-name-project (name)
+  (when (special-buffer-name-p name)
+    (subseq name 0 (position *buffer-delimiter* name))))
 
-(defun wiki-name-prototype (name)
-  (when (special-wiki-name-p name)
-    (let* ((colon (position *wiki-delimiter* name))
-	   (colon2 (position *wiki-delimiter* 
+(defun buffer-name-prototype (name)
+  (when (special-buffer-name-p name)
+    (let* ((colon (position *buffer-delimiter* name))
+	   (colon2 (position *buffer-delimiter* 
 			     (subseq name (1+ colon)))))
       (subseq name 
 	      (+ 1 colon) 
 	      (when colon2 (+ 1 colon colon2))))))
   
-(defun wiki-name-method (name)
-  (when (special-wiki-name-p name)
-    (let* ((colon (position *wiki-delimiter* name))
+(defun buffer-name-method (name)
+  (when (special-buffer-name-p name)
+    (let* ((colon (position *buffer-delimiter* name))
 	   (remainder (subseq name (1+ colon)))
-	   (colon2 (position *wiki-delimiter* remainder)))
+	   (colon2 (position *buffer-delimiter* remainder)))
       (when (and colon colon2)
 	(make-keyword (subseq remainder (1+ colon2)))))))
 
-(defun add-wiki-page (name object)
+(defun add-buffer (name object)
   (assert (blockyp object))
-  (when (null *wiki*)
-    (initialize-wiki))
+  (when (null *buffers*)
+    (initialize-buffer))
   (prog1 (find-uuid object)
     (setf (gethash 
-	   (or name (find-wiki-name object))
-	   *wiki*)
+	   (or name (find-buffer-name object))
+	   *buffers*)
 	  (find-uuid object))))
 
-(defun find-wiki-page (name &optional (create t))
-  (or (gethash name *wiki*)
+(defun find-buffer (name &optional (create t))
+  (or (gethash name *buffers*)
       (if create
-	  (add-wiki-page name (new 'world :name name))
-	  (error "Cannot find wiki page ~S" name))))
+	  (add-buffer name (new 'world :name name))
+	  (error "Cannot find buffer page ~S" name))))
 
 (defun find-world (name)
-  (find-wiki-page name nil))
+  (find-buffer name nil))
 
 ;;; Clipboard
 

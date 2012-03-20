@@ -51,8 +51,7 @@ PLAYER as the player."
   (setf *universe* self)
   (when world 
     (setf %world world)
-    (setf *world* world)
-    (setf *buffer* world))
+    (setf *world* world))
   (when player (setf %player player))
   (when %player 
     (add-player world %player)))

@@ -63,7 +63,7 @@ Web at:
   (cursor-clock :initform 0)
   ;; general information
   (inputs :initform nil)
-  (wiki-name :initform nil)
+  (buffer-name :initform nil)
   (read-only :initform nil)
   (input-names :initform nil)
   (results :initform nil)
@@ -128,7 +128,7 @@ either a symbol naming the field, or a list of the form (SYMBOL
 	      (setf name0 name)
 	      (when super (setf super0 super)))))
     `(define-prototype ,name0 (:super ,(make-prototype-id super0))
-       (wiki-name :initform ,(verbose-symbol-name name0))
+       (buffer-name :initform ,(verbose-symbol-name name0))
        ,@(if (keywordp (first args))
 	  (plist-to-descriptors args)
 	  args))))
@@ -154,15 +154,15 @@ areas.")
 (define-method get-field block (field)
   (field-value field (evaluate self)))
 
-;;; Wiki pages
+;;; Buffer pages
 
-(define-method get-wiki-name block () %wiki-name)
+(define-method get-buffer-name block () %buffer-name)
 
-(define-method set-wiki-name block ((name string))
-  (setf %wiki-name name))
+(define-method set-buffer-name block ((name string))
+  (setf %buffer-name name))
 
-(define-method wiki-page block ()
-  (find-wiki-page %wiki-name))
+(define-method buffer block ()
+  (find-buffer %buffer-name))
 
 ;;; Adding blocks to the simulation
 
@@ -340,7 +340,7 @@ engine. The field `%tags' is a set of keyword symbols; if a symbol
 non-nil to indicate that the block was accepted, nil otherwise."
   nil)
 
-(defvar *buffer* nil
+(defvar *buffers* nil
   "When non-nil, the UUID of the current buffer object.")
 
 (define-method contains block (block)

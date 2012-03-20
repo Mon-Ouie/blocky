@@ -220,11 +220,11 @@
 
 (define-method initialize world (&key name)
   (initialize%super self)
-  (setf %wiki-name name)
+  (setf %buffer-name name)
   (when name
-    (setf %prototype-name (wiki-name-prototype name))
-    (setf %method (wiki-name-method name))
-    (add-wiki-page name self))
+    (setf %prototype-name (buffer-name-prototype name))
+    (setf %method (buffer-name-method name))
+    (add-buffer name self))
   (setf %ghost (new 'block))
   (setf %objects (make-hash-table :test 'equal)))
 

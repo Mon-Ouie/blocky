@@ -1672,12 +1672,12 @@ control the size of the individual frames or subimages."
 (defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
 *screen-height* *world* *blocks* *dt* *pointer-x* *author* *project*
 *joystick-profile* *user-joystick-profile* *joystick-axis-size* 
-*joystick-dead-zone* *pointer-y* *resizable* *window-title* *wiki*
+*joystick-dead-zone* *pointer-y* *resizable* *window-title* *buffers*
 *scale-output-to-window* *persistent-variables*))
 
 (defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
 *screen-height* *world* *blocks* *dt* *pointer-x* *author* 
-*project* *wiki* *scale-output-to-window* *pointer-y* *resizable*
+*project* *buffers* *scale-output-to-window* *pointer-y* *resizable*
 *window-title*
 				 ;; notice that THIS variable is also
 				 ;; persistent!  this is to avoid
@@ -2351,7 +2351,7 @@ of the music."
   (initialize-sound)
   (initialize-database)
   (initialize-clipboard-maybe :force)
-  (initialize-wiki)
+  (initialize-buffers)
   (load-standard-resources)
   (setf *project* *untitled-project-name*)
   (sdl:enable-unicode)
@@ -2363,7 +2363,7 @@ of the music."
   (delete-all-textures)
   (purge-all-objects)
   (delete-all-resources)
-  (setf *wiki* nil)
+  (setf *buffers* nil)
   (sdl-mixer:halt-music)
   (sdl-mixer:close-audio t)
   (setf *world* nil)
@@ -2396,23 +2396,23 @@ of the music."
 	(load-project-image project :run nil)
       (start-session))))
 
-(defvar *wiki-history* nil)
+(defvar *buffer-history* nil)
 
 (defun browse (name)
-  (let ((page (find-wiki-page name)))
+  (let ((page (find-buffer name)))
     (when page
-      (push name *wiki-history*)
+      (push name *buffer-history*)
       (at-next-update (start-alone page)))))
 
 (defun back ()
-  (let ((name (pop *wiki-history*)))
+  (let ((name (pop *buffer-history*)))
     (when name
       (at-next-update 
-       (start-alone (find-wiki-page name))))))
+       (start-alone (find-buffer name))))))
 
 (defun blocky ()
   (with-session
-    (start-alone (find-wiki-page *desktop*))
+    (start-alone (find-buffer *desktop*))
     (start-session)))
 
 ;; (defun create (project)

@@ -118,7 +118,6 @@ See also CREATE-BUFFER."
     (say self (format nil "Visiting buffer ~S" %buffer-name))
     (set-resource-modified-p %buffer-name t)
     (setf %buffer buffer)
-    (setf *buffer* buffer) ;; TODO suspicious
     (install-keybindings self)
     (setf %rows (field-value :height buffer))
     (setf %columns (field-value :width buffer))

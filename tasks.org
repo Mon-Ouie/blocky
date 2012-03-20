@@ -1,12 +1,14 @@
-* TODO select rectangle
-* TODO better way of showing multi select 
-* TODO groups
-* TODO visually indicate which layer something is in
-* TODO more subtle handles/menus on the listener bar
-* TODO clean up select keybindings
-* TODO [#B] better ability to resume if wrong method compiled
-
-* OTHER
+** TODO [#A] MODELINE: more subtle handles/menus on the listener bar, show wiki page modeline etc
+*** TODO project name , buffer name , 
+*** TODO visually indicate which layer something is in
+** TODO doing things that insert a command in the repl?
+** TODO [#A] select rectangle
+** TODO [#A] better way of showing multi select 
+** TODO [#A] groups
+** TODO [#A] graceful rejection of listener eof
+** TODO [#A] clean up select keybindings
+** TODO [#A] better listener menu
+** TODO [#C] better ability to resume if wrong method compiled
 ** TODO Programmable, better documented microxong!
 ** TODO [#C] check out contextl https://raw.github.com/madnificent/COPP/master/copp.org
 ** TODO [#B] fix socket text baseline behavior, also for entries
@@ -17,20 +19,17 @@
 ** TODO [#C] allow replacing field as computed method using (defstruct computed-field 
 ** TODO [#A] local variables in ROOK defworld are the fields of ROOK and body is initializer?
 **** TODO locked to 0,0 position
-** TODO [#A] better listener menu
-** TODO [#A] graceful rejection of listener eof
 ** TODO [#A] Generic + handle to add message
 **** TODO Keybinding for add-foo in current list SHIFT-F1 etc
+** TODO [#B] wiki browser: substring match as you type , for choosing what to define methods on (or blocks from)
+**** TODO [#B] scrolling list box
 ** TODO Possibly F1 system/help, F2 browser, F3 browser, F4 browser
 ** TODO [#A] add schemata to more methods
 ** TODO [#A] arbitrary lisp function message wrapper
-** TODO [#B] lisp literal variables as targets
 ** TODO [#B] improve defresource and call it define-resource
 **** TODO resource-defining block-ui , each 
 **** TODO auto finding of new resources (.png, .wav handlers etc) in a dir
-** TODO [#B] wiki browser: substring match as you type , for choosing what to define methods on (or blocks from)
-**** TODO [#B] scrolling list box
-** TODO [#B] eliminate onionskin layer split???, move all into quadtree and dont run collisions unless required
+** TODO [#B] lisp literal variables as targets
 ** TODO [#B] flesh out basic Projects operations dialogs
 **** TODO test save project dialog
 **** TODO test load project dialog
@@ -48,15 +47,7 @@
 ***** cl-gettext
 ****  Visual theme-ability for the color-blind and visually-impaired users (larger font, higher contrast etc)
 ****  Braille keyboard and speech synthesis integration for blind users
-** TODO [#B] middle-click drag is a simple gesture menu with up down left=back right=forward, plus a keyboard equivalent (alt-arrow?)
-** TODO [#B] don't deselect listener when dropping
 ** TODO [#B] complete credits file and ensure all docs/license copies in place.
-** TODO [#B] fix scrolling
-** TODO [#B] typing on air for minimal complete interface
-** TODO [#B] highly visible error block notifications to right-of browser
-** TODO choose simple syntax for wiki page name scoping which allows default to project package
-** TODO [#B] selecting multiple objects
-** TODO [#B] the clipboard is a world, paste/duplicate
 ** TODO [#B] Adapt line-of-sight code to new collision system
 ** TODO [#B] Adapt pathfinding code to new collision system
 ** TODO [#B] prevent objects leaving quadtree
@@ -1511,3 +1502,20 @@ But the graph doesn't yet actually work, so we must continue.
    :ARCHIVE_TODO: DONE
    :END:
 
+** TODO [#B] highly visible error block notifications to right-of browser
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-20 Tue 01:12
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
+** TODO choose simple syntax for wiki page name scoping which allows default to project package
+** TODO [#B] selecting multiple objects
+
+** TODO [#B] the clipboard is a world, paste/duplicate
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-03-20 Tue 01:12
+   :ARCHIVE_FILE: ~/blocky/tasks.org
+   :ARCHIVE_CATEGORY: tasks
+   :ARCHIVE_TODO: TODO
+   :END:
