@@ -1,7 +1,9 @@
-* Todo worlds-within-worlds with a stamp down operation (custom drop halo hook)
-
 * TODO select rectangle
-
+* TODO better way of showing multi select 
+* TODO groups
+* TODO visually indicate which layer something is in
+* TODO more subtle handles/menus on the listener bar
+* TODO clean up select keybindings
 * TODO [#B] better ability to resume if wrong method compiled
 
 * OTHER
