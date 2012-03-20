@@ -603,7 +603,8 @@ slowdown. See also quadtree.lisp")
   (mapc #'layout %inputs))
 
 (define-method update-shell-objects world ()
-  (mapc #'update %inputs))
+  (mapc #'update %inputs)
+  (update *listener*))
 
 (define-method draw-shell-objects world ()
   (with-world self
