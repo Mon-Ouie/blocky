@@ -253,6 +253,7 @@
 
 (define-method remove-thing-maybe world (object)
   (with-world self
+    (destroy-halo object)
     (when (gethash (find-uuid object) %objects)
       (remove-object self object))
     (when (%parent object)
@@ -412,12 +413,12 @@ slowdown. See also quadtree.lisp")
   (with-world self
     (let ((objects (or objects0 (get-selection self))))
       (when objects
-	(clear-halos self)
+;	(clear-halos self)
 	(setf *clipboard* (new 'world))
 	(dolist (object objects)
 	  (with-quadtree %quadtree
-	    (remove-thing-maybe self object)
-	    (add-object *clipboard* object)))))))
+	    (remove-thing-maybe self object))
+	  (add-object *clipboard* object))))))
 
 (define-method paste-from world ((source block) (dx number :default 0) (dy number :default 0))
   (dolist (object (mapcar #'duplicate (get-objects source)))
