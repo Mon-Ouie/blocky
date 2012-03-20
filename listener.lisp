@@ -664,12 +664,15 @@
 
 (define-method initialize listener ()
   (with-fields (image inputs) self
-    (let ((prompt (new 'listener-prompt self)))
+    (let ((prompt (new 'listener-prompt self))
+	  (modeline (new 'modeline)))
       (list%initialize self)
       (set-output prompt prompt)
-      (setf inputs (list prompt))
+      (setf inputs (list modeline prompt))
       (set-parent prompt self)
-      (pin prompt))))
+      (set-parent modeline self)
+      (pin prompt)
+      (pin modeline))))
 
 (define-method layout listener ()
   (with-fields (height width parent inputs) self
@@ -698,7 +701,7 @@
       ;; (setf y (- y0 (dash 1))))))
 
 (define-method get-prompt listener ()
-  (first %inputs))
+  (second %inputs))
  
 (define-method evaluate listener ()
   (evaluate (get-prompt self)))
@@ -711,11 +714,6 @@
 
 (define-method print-on-error listener ()
   (print-on-error (get-prompt self)))
-
-;; forward keypresses to prompt for convenience
-;; (define-method handle-event listener (event)
-;;   (message "ON EVENT LISTENER")
-;;   (handle-event (get-prompt self) event))
 
 (define-method accept listener (input &optional prepend)
   (declare (ignore prepend))
@@ -730,8 +728,10 @@
 	;; set parent if necessary 
 	(adopt self input)
 	(setf inputs 
-	      (nconc (list (first inputs) input)
-		     (nthcdr 1 inputs)))))))
+	      (nconc (list (first inputs) 
+			   (second inputs)
+			   input)
+		     (nthcdr 2 inputs)))))))
 
 (define-method draw listener ()
   (with-fields (inputs x y height width) self
@@ -744,14 +744,33 @@
 		x
 		(- (+ y height)
 		   -2
-		   (+ *logo-height*))
+		   (+ *logo-height*)
+		   (%height (first inputs)))
 		:height *logo-height* :width *logo-height*)))
 
 ;;; Modeline
 
-(define-block (modeline :super :list)
-  (orientation :initform :horizontal)
-  (no-background :initform t))
-  
+(defun-memo modeline-position-string (x y)
+    (:key #'identity :test 'equal :validator #'identity)
+  (format nil "X:~S Y:~S" x y))
+
+(define-block-macro modeline
+    (:super :list
+     :fields 
+     ((orientation :initform :horizontal)
+      (no-background :initform t))
+     :inputs (:project-id (new 'string :read-only t)
+	      :buffer-id (new 'string :read-only t)
+	      :position (new 'string :read-only t)
+	      :mode (new 'string :read-only t))))
+
+(define-method update modeline ()
+  (set-value %%project-id *project*)
+  (set-value %%buffer-id (%buffer-name (world)))
+  (set-value %%position
+	     (modeline-position-string
+	      (%window-x (world))
+	      (%window-y (world))))
+  (set-value %%mode "(normal)"))
 
 ;;; listener.lisp ends here
