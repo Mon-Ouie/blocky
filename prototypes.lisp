@@ -1548,7 +1548,7 @@ objects after reconstruction, wherever present."
   (assert (blockyp object))
   (when (null *wiki*)
     (initialize-wiki))
-  (prog1 object
+  (prog1 (find-uuid object)
     (setf (gethash 
 	   (or name (find-wiki-name object))
 	   *wiki*)
