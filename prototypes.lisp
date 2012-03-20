@@ -1391,8 +1391,7 @@ named in the field %EXCLUDED-FIELDS will be ignored."
 	;; pass through other Lisp entities
 	(otherwise object)))))
 
-(defun deserialize-hash (data)
-  (let (test)
+(defun deserialize-hash (data test)
     ;; ;; skip hash key and test indicator
     ;; (when (eq +hash-type-key+ (first data))
     ;;   (pop data)
@@ -1400,17 +1399,17 @@ named in the field %EXCLUDED-FIELDS will be ignored."
     ;;   (setf test (or (pop data) :list)))
     ;; fill in the hash with what remains
     (let ((plist data)
-	  (hash (make-hash-table :test (or test 'eq))))
+	  (hash (make-hash-table :test test)))
       (prog1 hash
 	(loop while plist do
 	  (let* ((key (pop plist))
 		 (value (pop plist)))
-	    (setf (gethash key hash) (deserialize value))))))))
+	    (setf (gethash key hash) (deserialize value)))))))
 
-(defun deserialize-fields (fields &optional (type :list))
+(defun deserialize-fields (fields &optional (type :list) (test 'eq))
   (ecase type
     (:list (mapcar #'deserialize fields))
-    (:hash (deserialize-hash fields))))
+    (:hash (deserialize-hash fields test))))
 
 (defun deserialize (data)
   "Reconstruct Lisp objects (including BLOCKY-derived objects) from an
@@ -1433,7 +1432,8 @@ objects after reconstruction, wherever present."
 	       (send :after-deserialize object))))))
       ;; handle hashes
       ((and (listp data) (eq +hash-type-key+ (first data)))
-       (deserialize-fields (rest (rest data)) :hash))
+       ;; pass hash table test key
+       (deserialize-fields (rest (rest data)) :hash (second data)))
       ;; handle lists
       ((consp data)
        (if (consp (cdr data))
@@ -1451,26 +1451,27 @@ objects after reconstruction, wherever present."
 (defun initialize%queue (object &rest args)
   (apply #'send-queue :initialize object args))
 
-(defun duplicate (original)
-  (let ((duplicate 
-	  (make-object 
-	   :super (object-super original)
-	   :uuid (make-uuid))))
-    (prog1 duplicate
-      (initialize-method-cache duplicate)
-      (add-object-to-database duplicate)
-      ;; copy any local field values
-      (let* ((fields (object-fields original))
-	    (fields0 fields)
-	    names)
-	(if (hash-table-p fields)
-	    (setf names (loop for f being the hash-keys of fields collect f))
-	    (dolist (f fields)
-	      (push (pop fields) names)
-	      (pop fields)))
-	(dolist (name names)
-	  (set-field-value name duplicate 
-			   (fref fields0 name))))))) 
+(defun duplicate (original0)
+  (let ((original (find-object original0)))
+    (let ((duplicate 
+	    (make-object 
+	     :super (object-super original)
+	     :uuid (make-uuid))))
+      (prog1 duplicate
+	(initialize-method-cache duplicate)
+	(add-object-to-database duplicate)
+	;; copy any local field values
+	(let* ((fields (object-fields original))
+	       (fields0 fields)
+	       names)
+	  (if (hash-table-p fields)
+	      (setf names (loop for f being the hash-keys of fields collect f))
+	      (dolist (f fields)
+		(push (pop fields) names)
+		(pop fields)))
+	  (dolist (name names)
+	    (set-field-value name duplicate 
+			     (fref fields0 name))))))))
 
 ;;; Wiki pages 
 
