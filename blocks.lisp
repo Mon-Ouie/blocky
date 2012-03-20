@@ -169,15 +169,15 @@ areas.")
 (define-method start block ()
   "Add this block to the simulation so that it receives update events."
   (unless (find self *blocks* :test 'eq :key #'find-object)
-    (setf *blocks* (adjoin self *blocks*))))
+    (setf *blocks* (adjoin (find-uuid self) *blocks* :test 'equal))))
 
 (define-method start-alone block ()
-  (setf *blocks* (list self)))
+  (setf *blocks* (list (find-uuid self))))
 
 (define-method stop block ()
   "Remove this block from the simulation so that it stops getting update
 events."
-  (setf *blocks* (delete self *blocks* :test #'eq :key #'find-object)))
+  (setf *blocks* (delete (find-uuid self) *blocks* :test #'equal)))
 
 ;;; Read-only status
 

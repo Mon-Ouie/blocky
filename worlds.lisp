@@ -111,7 +111,7 @@
   (get-selection (world)))
 
 (defmacro with-world (world &rest body)
-  `(let* ((*world* ,world))
+  `(let* ((*world* (find-uuid ,world)))
      ,@body))
 
 (define-method pause world ()
@@ -232,13 +232,12 @@
 
 (define-method add-object world (object &optional x y)
   (with-world self
-    (remove-thing-maybe self object)
     (with-quadtree %quadtree
+      (remove-thing-maybe self object)
       (assert (not (contains-object self object)))
       (setf (gethash (find-uuid object)
 		     %objects)
-	    ;; cache actual object to avoid uuid lookup
-	    (find-object object))
+	    (find-uuid object))
       (when (and (numberp x) (numberp y))
 	(setf (field-value :x object) x
 	      (field-value :y object) y))
@@ -1032,24 +1031,18 @@ block found, or nil if none is found."
 
 ;;; Serialization of worlds
 
-(define-method before-serialize world ()
-  (with-fields (objects) self
-    (loop for id being the hash-keys of objects do
-      ;; don't serialize the cached object
-      (setf (gethash id objects) t))))
+;; (define-method before-serialize world ()
+;;   (with-fields (objects) self
+;;     (loop for id being the hash-keys of objects do
+;;       ;; don't serialize the cached object
+;;       (setf (gethash id objects) t))))
 
-(define-method after-serialize world ()
-  (loop for id being the hash-keys of %objects do
-    (setf (gethash id %objects) (find-object id))))
+;; (define-method after-serialize world ()
+;;   (loop for id being the hash-keys of %objects do
+;;     (setf (gethash id %objects) (find-object id))))
 
 (define-method after-deserialize world ()
   (after-deserialize%super self)
-  (with-fields (objects) self
-    (loop for id being the hash-keys of objects do
-      (setf (gethash id objects) (find-object id)))
-    (when %player 
-      (setf (gethash (find-uuid %player) objects)
-	    %player))
-    (add-listener-maybe self :force)))
+  (add-listener-maybe self :force))
 
 ;;; worlds.lisp ends here
