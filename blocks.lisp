@@ -279,8 +279,8 @@ initialized with BLOCKS as inputs."
       (dismiss %parent)
       (destroy self)))
 
-(define-method exit block ()
-  (destroy-block *world* self))
+;; (define-method exit block ()
+;;   (destroy-block *world* self))
 
 (define-method make-duplicate block ()
   (duplicate self))
