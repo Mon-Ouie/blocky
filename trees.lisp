@@ -38,6 +38,7 @@
 (define-prototype tree (:super :list)
   (category :initform :structure)
   (treep :initform t)
+  (always-visible :initform nil)
   (style :initform :rounded)
   (method :initform nil)
   (draw-frame :initform t)
@@ -115,7 +116,7 @@
 	  (+ (dash 2) (font-text-width string *font*)))))
 
 (define-method layout tree ()
-  (with-fields (expanded height inputs label width) self
+  (with-fields (expanded x y always-visible height inputs label width) self
     (if expanded 
 	;; we're an expanded subtree. lay it out
 	(progn 
@@ -130,7 +131,16 @@
 		       (dash 6 (font-text-width label *font*)))))
 	  ;; make all inputs equally wide
 	  (dolist (each inputs)
-	    (setf (field-value :width each) (- width (dash 2)))))
+	    (setf (field-value :width each) (- width (dash 2))))
+	  ;; possibly adjust to stay onscreen 
+	  (when always-visible
+	    (multiple-value-bind (top left bottom right)
+		(window-bounding-box (world))
+	      (let ((overlap (- bottom  
+				(+ y height))))
+		(when (minusp overlap)
+		  (incf y overlap)
+		  (layout-vertically self))))))
 	;; we're not expanded. just lay out for label.
 	(layout-as-string self (display-string self)))))
   
@@ -250,6 +260,7 @@
 
 (define-prototype menu (:super :tree)
   (action :initform nil)
+  (always-visible :initform t)
   (style :initform :rounded)
   (top-level :initform nil)
   (category :initform :menu)
