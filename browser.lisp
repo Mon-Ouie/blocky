@@ -49,7 +49,7 @@
 
 (define-method draw button ()
   (with-fields (x y height width label) self
-    (draw-patch self x y (+ x width) (+ y height))
+    (with-style :rounded (draw-patch self x y (+ x width) (+ y height)))
     (draw-image "colorbang" 
 		    (+ x (dash 1))
 		    (+ y (dash 1)))
