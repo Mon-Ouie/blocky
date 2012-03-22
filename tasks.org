@@ -1,10 +1,10 @@
 ** TODO [#A] MODELINE: more subtle handles/menus on the listener bar, show wiki page modeline etc
-** TODO clickable project menu on modeline
-** TODO clickable buffer id menu
-** TODO turn X and Y into separate labeled entries?
-** TODO show object data right-justified when selected 
+** TODO [#A] clickable project menu on modeline
+** TODO [#A] clickable buffer id menu
+** TODO [#A] show object data right-justified when selected 
 *** DONE visually indicate which layer something is in
     CLOSED: [2012-03-22 Thu 07:46]
+** TODO [#B] turn X and Y into separate labeled entries?
 ** TODO doing things that insert a command in the repl?
 ** TODO [#A] select rectangle
 ** TODO [#A] better way of showing multi select 
