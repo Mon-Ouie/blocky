@@ -37,7 +37,6 @@
   (heading :initform 0.0)
   (height :initform 256)
   (width :initform 256)
-  (listener :initform nil)
   (was-key-repeat-p :initform nil)
   ;; objects and collisions
   (objects :initform nil :documentation "A hash table with all the world's objects.")
