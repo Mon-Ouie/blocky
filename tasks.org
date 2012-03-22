@@ -1,6 +1,10 @@
 ** TODO [#A] MODELINE: more subtle handles/menus on the listener bar, show wiki page modeline etc
-*** TODO project name , buffer name , 
-*** TODO visually indicate which layer something is in
+** TODO clickable project menu on modeline
+** TODO clickable buffer id menu
+** TODO turn X and Y into separate labeled entries?
+** TODO show object data right-justified when selected 
+*** DONE visually indicate which layer something is in
+    CLOSED: [2012-03-22 Thu 07:46]
 ** TODO doing things that insert a command in the repl?
 ** TODO [#A] select rectangle
 ** TODO [#A] better way of showing multi select 
@@ -15,7 +19,7 @@
 ** TODO [#B] good universal arrow/keypad nav in widget fields
 ** TODO [#B] local variable palettes with add-variable etc
 ** TODO [#B] (browse-method ... some command from listener
-** TODO [#A] Navigate to a prototype's page to makqe a method or derived block
+** TODO [#A] Navigate to a prototype's page to make a method or derived block
 ** TODO [#C] allow replacing field as computed method using (defstruct computed-field 
 ** TODO [#A] local variables in ROOK defworld are the fields of ROOK and body is initializer?
 **** TODO locked to 0,0 position
