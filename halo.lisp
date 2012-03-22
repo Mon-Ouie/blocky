@@ -26,6 +26,9 @@
 
 (defparameter *handle-scale* 3.2)
 
+(defparameter *handle-highlight-background-color* "gray50")
+(defparameter *handle-highlight-foreground-color* "white")
+
 (defparameter *indicator-positions* 
   '(:asterisk (0 1)
     :bang (0 0)
@@ -41,7 +44,7 @@
     :cut (1 1/4)
     :bottom-right-triangle (1 1)))
 
-(define-block handle target indicator color)
+(define-block handle target indicator color foreground-color)
 
 (define-method initialize handle (&optional target)
   (initialize%super self)
@@ -53,13 +56,17 @@
 (define-method layout handle ())
 (define-method toggle-halo handle () nil) ;; don't let halos have halos
 
+(define-method highlight handle ()
+  (setf %color *handle-highlight-background-color*)
+  (setf %foreground-color *handle-highlight-foreground-color*))
+
 (define-method alternate-tap handle (x y) 
   (tap self x y))
 
 (define-method scroll-tap handle (x y) 
   (tap self x y))
 
-(define-method draw handle ()
+(define-method layout handle ()
   (with-fields (x y width height) %target
     (destructuring-bind (px py) (getf *indicator-positions* %indicator)
       (let* ((margin (* *handle-scale* (indicator-size)))
@@ -70,26 +77,36 @@
 	(setf %y (+ y0 
 		    (* py (+ height margin))))
 	(setf %width margin)
-	(setf %height margin)
-	(draw-indicator %indicator %x %y 
-			:color "white"
-			:scale *handle-scale*
-			:background %color)))))
+	(setf %height margin)))))
+
+(define-method draw handle ()
+  (draw-indicator %indicator %x %y 
+		  :color %foreground-color
+		  :scale *handle-scale*
+		  :background %color))
 
 (define-method draw-hover handle ())
 		
-(defmacro define-handle (name indicator &key (color "gray10") fields)
+(defmacro define-handle (name indicator 
+			 &key (color "gray10")
+			      (foreground-color "white")
+			      fields)
   (assert (symbolp name))
   (assert (stringp color))
   `(define-block (,name :super :handle)
      (indicator :initform ,indicator)
      (color :initform ,color)
+     (foreground-color :initform ,foreground-color)
      ,@fields))
+
+;;; Evaluation
 
 (define-handle evaluate :bang)
 
 (define-method tap evaluate (x y)
   (evaluate %target))
+
+;;; Getting a context menu
 
 (define-handle open-menu :menu)
 
@@ -98,17 +115,35 @@
     (add-block (world) menu)
     (move-to menu x y)))
 
+;;; Dropping things down into the object layer
+
 (define-handle drop :drop)
 
 (define-method tap drop (x0 y0)
   (unless (has-object (world) %target)
     (add-object (world) %target)))
 
+(define-method update drop ()
+  (when (%quadtree-node %target)
+    ;; ghost/highlight when already in object layer
+    (highlight self))
+  (update%super self))
+
+;;; Picking them up from the object layer
+
 (define-handle pick-up :pick-up)
 
 (define-method tap pick-up (x0 y0)
   (unless (contains (world) %target)
     (add-block (world) %target)))
+
+(define-method update pick-up ()
+  (when (null (%quadtree-node %target))
+    ;; ghost/highlight when not in object layer
+    (highlight self))
+  (update%super self))
+  
+;;; Moving objects or groups of them
 
 (define-handle move :move
   :fields (positions))
@@ -133,6 +168,8 @@
 		 (+ x x0)
 		 (+ y y0))))))
 
+;;; Resizing objects interactively
+
 (define-handle resize :resize)
 
 (define-method can-pick resize () t)
@@ -145,6 +182,8 @@
 	    (- x0 x)
 	    (- y0 y))))
 
+;;; References
+
 (define-handle program :reference)
 
 (define-method pick program ()
@@ -154,6 +193,8 @@
 
 (define-method tap program (x y)
   (drop self (pick self)))
+
+;;; Destroying objects
 
 (define-handle destroy :close)
 
@@ -178,7 +219,7 @@
 (define-method tap cut (x y)
   (cut (world) (cons %target (get-selection (world)))))
 
-;;; The halo itself
+;;; The halo, which manages all the handles
 
 (defparameter *halo-handles* 
   '(:evaluate :open-menu :drop :move :pick-up :resize :program :cut :copy :destroy))
@@ -201,7 +242,9 @@
       ;; add twice the halo border to make sure
       ;; we get clicks all the way to the right of the halo
       (setf %width (+ width (* 2 size)))
-      (setf %height (+ height (* 2 size))))))
+      (setf %height (+ height (* 2 size)))
+      ;; now lay out the individual items
+      (mapc #'layout %inputs))))
 
 (define-method draw halo ()
   (mapc #'draw %inputs))
@@ -215,6 +258,9 @@
 (define-method scroll-tap halo (x y)
   (toggle-halo %target))
 	  
+(define-method tap halo (x y)
+  (destroy-halo %target))
+
 (define-method draw-hover halo ())
 (define-method draw-focus halo ())
 (define-method draw-highlight halo ())
