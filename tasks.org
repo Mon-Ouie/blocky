@@ -1,3 +1,11 @@
+* A.U.R.A.
+** TODO AAA production values all the way through
+** TODO manage oxygen, battery, ammo
+** TODO dual analog stick control
+** TODO z-depth fog, blur, and mask out a binocular circle, lensflare, liquid creatures w tentacles, projection
+** TODO more maneuverability on ground? indoor locales
+** TODO descend, lay nuke bomb, rise, detonate
+
 ** TODO [#A] MODELINE: more subtle handles/menus on the listener bar, show wiki page modeline etc
 ** TODO [#A] clickable project menu on modeline
 ** TODO [#A] clickable buffer id menu
