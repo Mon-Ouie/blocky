@@ -21,6 +21,7 @@
 	       :lispbuilder-sdl-mixer
 	       :uuid
 	       :cl-fad
+	       :cl-glu
 	       :cl-opengl)
   :components ((:file "blocky")
 	       (:file "rgb" :depends-on ("blocky"))
