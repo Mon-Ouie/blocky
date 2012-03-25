@@ -50,6 +50,7 @@
   (window-scrolling-speed :initform 5)
   (window-scale-x :initform 1)
   (window-scale-y :initform 1)
+  (projection-mode :initform :orthographic)
   ;; selection and region
   (selection :initform ()
   	     :documentation "List (subset) of selected blocks.")
@@ -210,8 +211,10 @@
   (setf %window-scale-y window-scale-y))
 
 (define-method project-window world ()
-  (do-orthographic-projection)
-  (do-window %window-x %window-y %window-scale-x %window-scale-y))
+  (ecase %projection-mode 
+    (:orthographic (project-orthographically))
+    (:perspective (project-with-perspective)))
+  (transform-window %window-x %window-y %window-scale-x %window-scale-y))
 
 (define-method emptyp world ()
   (or (null %objects)
@@ -639,9 +642,9 @@ slowdown. See also quadtree.lisp")
     (with-field-values (objects width height background-image background-color) self
       (unless %parent 
 	(project-window self))
-      (when %parent 
-	(gl:push-matrix)
-	(gl:translate %x %y 0))
+      ;; (when %parent 
+      ;; 	(gl:push-matrix)
+      ;; 	(gl:translate %x %y 0))
       ;; draw background 
       (if background-image
 	  (draw-image background-image 0 0)
@@ -654,11 +657,11 @@ slowdown. See also quadtree.lisp")
 	  ;; only draw onscreen objects
 	  (when (colliding-with-bounding-box object box)
 	    (draw object))))
-      (if %parent
-	  (gl:pop-matrix)
-	  ;; possibly draw shell
-	  (when *listener-open-p* 
-	    (draw-shell-objects self))))))
+      ;; (if %parent
+      ;; 	  (gl:pop-matrix)
+      ;; possibly draw shell
+      (when *listener-open-p* 
+	(draw-shell-objects self)))))
   
 ;;; Simulation update
 

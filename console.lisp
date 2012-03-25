@@ -668,12 +668,10 @@ window size. Otherwise (the default) one onscreen pixel equals one
 unit of world space, so that more of the world shows if the window
 becomes larger.")
  
-(defparameter *z-near* -100)
-(defparameter *z-far* 100)
+(defparameter *z-near* 0)
+(defparameter *z-far* -100)
 
-(defun do-orthographic-projection ()
-  "Configure OpenGL so that the screen coordinates go from (X0,Y0) at
- top left to ((+ X0 WIDTH) (+ Y0 HEIGHT)) at lower right."
+(defun open-viewport ()
   (gl:matrix-mode :projection)
   (gl:load-identity)
   (gl:viewport 0 0 *screen-width* *screen-height*)
@@ -681,8 +679,17 @@ becomes larger.")
       (setf *gl-screen-width* *nominal-screen-width*
 	    *gl-screen-height* *nominal-screen-height*)
       (setf *gl-screen-width* *screen-width*
-	    *gl-screen-height* *screen-height*))
+	    *gl-screen-height* *screen-height*)))
+
+(defun project-orthographically ()
+  (gl:matrix-mode :projection)
+  (gl:load-identity)
   (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 *z-near* *z-far*))
+
+(defun project-with-perspective (&optional (field-of-view 45))
+  (gl:matrix-mode :projection)
+  (gl:load-identity)
+  (glu:perspective field-of-view (/ *gl-screen-width* *gl-screen-height*) *z-near* *z-far*))
 
 (defvar *window-x* 0)
 (defvar *window-y* 0)
@@ -693,7 +700,7 @@ becomes larger.")
 (defun window-pointer-y (&optional (y *pointer-y*))
   (+ y *window-y*))
   
-(defun do-window (&optional (x0 0) (y0 0) (scale-x 1.0) (scale-y 1.0))
+(defun transform-window (&optional (x0 0) (y0 0) (scale-x 1.0) (scale-y 1.0))
   (setf *window-x* x0)
   (setf *window-y* y0)
   ;; now move viewing volume
@@ -758,7 +765,8 @@ display."
     (set-frame-rate *frame-rate*)
     (reset-joysticks)
     (scan-for-joysticks)
-    (do-orthographic-projection)
+    (open-viewport)
+    (project-orthographically)
     (load-project-lisp "STANDARD")
     (run-hook '*after-startup-hook*)
     (message "Finished initializing Blocky for project ~A." *project*)
@@ -770,7 +778,8 @@ display."
 ;			   (run-hook '*resize-hook*)
 			   (sdl:resize-window w h :title-caption *window-title*
 				       :flags (logior sdl:SDL-OPENGL sdl:SDL-RESIZABLE))
-			   (do-orthographic-projection)
+			   (open-viewport)
+			   (project-orthographically)
 			   ;; handle any blitzed textures. on some platforms/drivers
 			   ;; the textures become invalidated after resize
 			   (when *clear-cached-images-on-resize*
@@ -2391,10 +2400,9 @@ of the music."
     (start-session)))
 
 (defun edit (project)
-  (let ((*edit* t))
-    (with-session
-	(load-project-image project :run nil)
-      (start-session))))
+  (with-session
+      (load-project-image project :run nil)
+    (start-session)))
 
 (defvar *buffer-history* nil)
 

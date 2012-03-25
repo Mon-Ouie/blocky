@@ -38,7 +38,7 @@ add-to-list modify-joystick-profile defproject start stop selection
 clear-clipboard copy-to-clipboard at-next-update *next-update-hook*
 *already-serialized* browse back *update-function* *target* *blocks*
 shut-down later later-at later-when start-up seconds->frames
-keyboard-held-p keyboard-pressed-p holding-control
+keyboard-held-p keyboard-pressed-p holding-control transform-window
 *scale-output-to-window* keyboard-released-p *edit* with-font *font*
 find-heading keyboard-time-in-current-state pretty-string ugly-symbol
 *pointer-x* *pointer-y* is-joystick-event *self* is-raw-joystick-event
@@ -57,7 +57,8 @@ bind-event-to-method *colors* enable-key-repeat disable-key-repeat
 get-color define-method *default-font* field-value set-field-value
 object-fields dispatch-event *user-init-file-name* distance
 icon-resource icon-image *directions* *opposites*
-find-resource-property compose-blank-fields font-width font-height
+project-orthographically project-with-perspective open-viewport
+find-resource-property compose-blank-fields font-width font-height 
 find-object *windows* edit create blocky transform-field-reference
 define-block *screen-height* formatted-line-width find-world
 *clipboard* formatted-line-height formatted-string-height
