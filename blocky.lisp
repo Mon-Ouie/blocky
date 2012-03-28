@@ -58,7 +58,7 @@ get-color define-method *default-font* field-value set-field-value
 object-fields dispatch-event *user-init-file-name* distance
 icon-resource icon-image *directions* *opposites*
 project-orthographically project-with-perspective open-viewport
-find-resource-property compose-blank-fields font-width font-height 
+find-resource-property compose-blank-fields font-width font-height
 find-object *windows* edit create blocky transform-field-reference
 define-block *screen-height* formatted-line-width find-world
 *clipboard* formatted-line-height formatted-string-height
@@ -82,13 +82,13 @@ make-key-modifier-symbol make-key-string normalize-event make-keyword
 make-object queue-head queue-max queue-count *sender*
 field-reference-p null-next object-eq *x11-color-data* object-name
 object-parent send send-super send-queue self opposite-direction
-object-address-string object step-in-direction direction-to
-plasma-rect subdivide-rect render-plasma add-hook run-hook queue-tail
-make-resource-link save-resource save-project-image *system*
-*defined-resources* save-everything with-input-values with-inputs
-*export-formats* export-archive defresource export-application
-export-project make-queue queue unqueue queue-message
-queued-messages-p unqueue-message send-queue field-value
+opposite-heading object-address-string object step-in-direction
+direction-to plasma-rect subdivide-rect render-plasma add-hook
+run-hook queue-tail make-resource-link save-resource
+save-project-image *system* *defined-resources* save-everything
+with-input-values with-inputs *export-formats* export-archive
+defresource export-application export-project make-queue queue unqueue
+queue-message queued-messages-p unqueue-message send-queue field-value
 random-direction random-choose *resources* load-font-resource
 save-object-resource initialize%super draw-string-solid read-box
 initialize-resource-table percent-of-time render-formatted-paragraph
