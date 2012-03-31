@@ -1691,6 +1691,9 @@ The order is (TOP LEFT RIGHT BOTTOM)."
     (destructuring-bind (top left right bottom) bounding-box
       (point-in-rectangle-p x y width height top left (- right left) (- bottom top)))))
 
+(define-method contained-in-bounding-box block (bounding-box)
+  (bounding-box-contains bounding-box (multiple-value-list (bounding-box self))))
+
 (define-method colliding-with block (thing)
   "Return non-nil if this block collides with THING."
   (multiple-value-bind (top left right bottom)
