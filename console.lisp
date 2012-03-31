@@ -704,6 +704,7 @@ becomes larger.")
 
 (defvar *window-x* 0)
 (defvar *window-y* 0)
+(defvar *window-z* 0)
 
 (defun window-pointer-x (&optional (x *pointer-x*))
   (+ x *window-x*))
@@ -711,16 +712,17 @@ becomes larger.")
 (defun window-pointer-y (&optional (y *pointer-y*))
   (+ y *window-y*))
   
-(defun transform-window (&optional (x0 0) (y0 0) (scale-x 1.0) (scale-y 1.0))
-  (setf *window-x* x0)
-  (setf *window-y* y0)
+(defun transform-window (&key (x 0) (y 0) (z 0) (scale-x 1.0) (scale-y 1.0) (scale-z 1.0))
+  (setf *window-x* x)
+  (setf *window-y* y)
+  (setf *window-z* z)
   ;; now move viewing volume
   (gl:matrix-mode :modelview)
   (gl:load-identity)
-  (gl:translate (- 0 x0)
-		(- 0 y0)
-		0)
-  (gl:scale scale-x scale-y 1))
+  (gl:translate (- 0 x)
+		(- 0 y)
+		(- 0 z))
+  (gl:scale scale-x scale-y scale-z))
 
 (defvar *resizable* t)
 

@@ -37,6 +37,7 @@
   (heading :initform 0.0)
   (height :initform 256)
   (width :initform 256)
+  (depth :initform 256)
   (was-key-repeat-p :initform nil)
   ;; objects and collisions
   (objects :initform nil :documentation "A hash table with all the world's objects.")
@@ -45,11 +46,14 @@
   ;; viewing window
   (window-x :initform 0)
   (window-y :initform 0)
+  (window-z :initform 0)
   (window-x0 :initform nil)
   (window-y0 :initform nil)
+  (window-z0 :initform nil)
   (window-scrolling-speed :initform 5)
   (window-scale-x :initform 1)
   (window-scale-y :initform 1)
+  (window-scale-z :initform 1)
   (projection-mode :initform :orthographic)
   ;; selection and region
   (selection :initform ()
@@ -138,17 +142,20 @@
 	  (+ %window-x *gl-screen-width*)
 	  (+ %window-y *gl-screen-height*)))
 
-(define-method move-window-to world (x y)
+(define-method move-window-to world (x y &optional z)
   (setf %window-x x 
-	%window-y y))
+	%window-y y)
+  (when z (setf %window-z z)))
 
-(define-method move-window world (dx dy)
+(define-method move-window world (dx dy &optional dz)
   (incf %window-x dx)
-  (incf %window-y dy))
+  (incf %window-y dy)
+  (when dz (setf %window-dz dz)))
 
-(define-method glide-window-to world (x y)
+(define-method glide-window-to world (x y &optional z)
   (setf %window-x0 x)
-  (setf %window-y0 y))
+  (setf %window-y0 y)
+  (when z (setf %window-z z)))
 
 (define-method glide-window-to-object world (object)
   (multiple-value-bind (top left right bottom) 
@@ -214,7 +221,10 @@
   (ecase %projection-mode 
     (:orthographic (project-orthographically))
     (:perspective (project-with-perspective)))
-  (transform-window %window-x %window-y %window-scale-x %window-scale-y))
+  (transform-window :x %window-x :y %window-y :z %window-z 
+		    :scale-x %window-scale-x 
+		    :scale-y %window-scale-y
+		    :scale-z %window-scale-z))
 
 (define-method emptyp world ()
   (or (null %objects)
