@@ -1034,6 +1034,11 @@ block found, or nil if none is found."
       (trim self))
     (start%super self)))
 
+(defun on-screen-p (thing)
+  (contained-in-bounding-box 
+   thing
+   (multiple-value-list (window-bounding-box (world)))))
+
 ;;; Serialization of worlds
 
 ;; (define-method before-serialize world ()
