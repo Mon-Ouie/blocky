@@ -83,8 +83,8 @@ make-object queue-head queue-max queue-count *sender*
 field-reference-p null-next object-eq *x11-color-data* object-name
 object-parent send send-super send-queue self opposite-direction
 opposite-heading object-address-string object step-in-direction
-direction-to plasma-rect subdivide-rect render-plasma add-hook
-run-hook queue-tail make-resource-link save-resource
+define-resource direction-to plasma-rect subdivide-rect render-plasma 
+add-hook run-hook queue-tail make-resource-link save-resource on-screen-p
 save-project-image *system* *defined-resources* save-everything
 with-input-values with-inputs *export-formats* export-archive
 defresource export-application export-project make-queue queue unqueue
