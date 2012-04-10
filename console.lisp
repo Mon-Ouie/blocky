@@ -671,7 +671,7 @@ unit of world space, so that more of the world shows if the window
 becomes larger.")
  
 (defparameter *z-near* 0)
-(defparameter *z-far* -100)
+(defparameter *z-far* 100)
 
 (defun open-viewport ()
   (gl:matrix-mode :projection)
@@ -692,14 +692,17 @@ becomes larger.")
   (gl:load-identity)
   (gl:ortho 0 *gl-screen-width* *gl-screen-height* 0 *z-near* *z-far*))
 
-(defun project-with-perspective (&optional (field-of-view 45))
+(defparameter *field-of-view* 45)
+
+(defun project-with-perspective (&key (field-of-view *field-of-view*) (depth *z-far*))
   (gl:enable :depth-test)
   (gl:clear-depth 1.0)
+  (gl:clear :color-buffer-bit)
   (gl:enable :texture-2d :blend)	
   (set-blending-mode :alpha)
   (gl:matrix-mode :projection)
   (gl:load-identity)
-  (glu:perspective field-of-view (/ *gl-screen-width* *gl-screen-height*) *z-near* *z-far*)
+  (glu:perspective field-of-view (/ *gl-screen-width* *gl-screen-height*) *z-near* depth)
   (gl:hint :perspective-correction-hint :nicest))
 
 (defvar *window-x* 0)
