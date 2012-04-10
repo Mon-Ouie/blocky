@@ -891,6 +891,15 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
   (move-to self x y)
   (setf %z z))
 
+(define-method rise block (distance)
+  (decf %z distance))
+
+(define-method fall block (distance)
+  (incf %z distance))
+  
+(define-method move-to-depth block (depth)
+  (setf %z depth))
+
 (define-method move-toward block 
     ((direction symbol :default :up) (steps number :initform 1))
     "Move this block STEPS steps in the direction given by KEYWORD.
@@ -1468,9 +1477,9 @@ The following block fields will control sprite drawing:
 
    %BLEND    Blending mode for OpenGL compositing.
              See the function `set-blending-mode' for a list of modes."
-  (with-fields (image x y width height blend opacity) self
+  (with-fields (image x y z width height blend opacity) self
     (if image 
-	(draw-image image x y 
+	(draw-image image x y :z z
 		    :blend blend :opacity opacity
 		    :height height :width width)
 	(progn (draw-patch self x y (+ x width) (+ y height))
