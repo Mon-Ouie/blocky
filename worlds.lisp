@@ -37,7 +37,8 @@
   (heading :initform 0.0)
   (height :initform 256)
   (width :initform 256)
-  (depth :initform 256)
+  (depth :initform *z-far*)
+  (field-of-view :initform *field-of-view*)
   (was-key-repeat-p :initform nil)
   ;; objects and collisions
   (objects :initform nil :documentation "A hash table with all the world's objects.")
@@ -220,7 +221,7 @@
 (define-method project-window world ()
   (ecase %projection-mode 
     (:orthographic (project-orthographically))
-    (:perspective (project-with-perspective)))
+    (:perspective (project-with-perspective :field-of-view %field-of-view :depth %depth)))
   (transform-window :x %window-x :y %window-y :z %window-z 
 		    :scale-x %window-scale-x 
 		    :scale-y %window-scale-y
@@ -242,7 +243,7 @@
 
 ;;; The object layer. 
 
-(define-method add-object world (object &optional x y)
+(define-method add-object world (object &optional x y (z 0))
   (with-world self
     (with-quadtree %quadtree
       (remove-thing-maybe self object)
@@ -251,8 +252,10 @@
 		     %objects)
 	    (find-uuid object))
       (when (and (numberp x) (numberp y))
-	(setf (field-value :x object) x
-	      (field-value :y object) y))
+	(setf (%x object) x
+	      (%y object) y))
+      (when (numberp z)
+	(setf (%z object) z))
       (clear-saved-location object)
       (quadtree-insert-maybe object)
       (after-place-hook object))))

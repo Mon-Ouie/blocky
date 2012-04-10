@@ -86,7 +86,7 @@ opposite-heading object-address-string object step-in-direction
 define-resource direction-to plasma-rect subdivide-rect render-plasma 
 add-hook run-hook queue-tail make-resource-link save-resource on-screen-p
 save-project-image *system* *defined-resources* save-everything
-with-input-values with-inputs *export-formats* export-archive
+with-input-values with-inputs *export-formats* export-archive 
 defresource export-application export-project make-queue queue unqueue
 queue-message queued-messages-p unqueue-message send-queue field-value
 random-direction random-choose *resources* load-font-resource
