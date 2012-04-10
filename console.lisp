@@ -1841,46 +1841,46 @@ so that it can be fed to the console."
 	;; 	 (resource-name resource)
 	;; 	 (type-of (resource-object resource))))))
 
+(defun file-name-extension (name)
+  (let ((pos (position #\. name :from-end t)))
+    (when (numberp pos)
+      (subseq name (1+ pos)))))
+
+(defparameter *resource-extensions*
+  '(("png" :image)
+    ("wav" :sample)
+    ("ogg" :music)))
+
+(defun resource-type-from-name (name)
+  (let ((extension (file-name-extension name)))
+    (when extension
+      (car (cdr (assoc extension *resource-extensions* :test 'equal))))))
+	   
+(defun load-resource-automatically (name)
+  (let ((type (resource-type-from-name name)))
+    (when type
+      (let ((resource (make-resource :name name :file name :type type)))
+	(prog1 resource
+	  (index-resource resource)
+	  (load-resource resource))))))
+
 (defun find-resource (name &optional noerror)
-  "Obtain the resource named NAME, performing any necessary loading
-and/or transformations. Unless NOERROR is non-nil, signal an error
-when NAME cannot be found."
+  "Obtain the resource named NAME, performing any necessary
+loading. Unless NOERROR is non-nil, signal an error when NAME cannot
+be found."
   ;; can we find the resource straight off? 
   (let ((res (gethash name *resources*)))
-    (cond ((resource-p res)
-	   ;; yes, load-on-demand
-	   (prog1 res
-	     (when (null (resource-object res))
-	       (load-resource res))))
-	  ;; no, is it an alias?
-	  ((stringp res)
-	   ;; look up the real one and make the alias map to the real resource
-	   (setf (gethash name *resources*) 
-		 (find-resource res)))
-	  ;; not found and not an alias. try to xform
-	  ((null res)
-	   (if (transformable-resource-p name)
-	       ;; ok. let's xform and cache the result
-	       (let ((xform (next-transformation name))
-		     (source-name (next-source name)))
-		 (setf (gethash name *resources*) 
-		       (if (null xform)
-			   (find-resource source-name)
-			   (destructuring-bind (operation . arguments) xform
-			     (let* ((xformer (getf *resource-transformations* 
-						   (make-keyword operation)))
-				    (source-res (find-resource source-name))
-				    (source-type (resource-type source-res))
-				    ;; (source (resource-object source-res))
-				    (xformed-resource (apply xformer source-res
-							     arguments)))
-			       (make-resource :name name 
-					      :type source-type
-					      :object xformed-resource))))))
-	       ;; can't xform. 
-	       (if noerror
-		   nil
-		   (error "Cannot find resource.")))))))
+    (if (resource-p res)
+	;; yes, return it and possibly load on demand
+	(prog1 res
+	  (when (null (resource-object res))
+	    (load-resource res)))
+	;; no, try auto loading based on the name
+	(or (load-resource-automatically name)
+	    ;; can't find and can't autoload
+	    (if noerror
+		nil
+		(error "Cannot find resource ~S" name))))))
 
 (defun find-resource-object (name &optional noerror)
   "Obtain the resource object named NAME, or signal an error if not
