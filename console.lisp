@@ -673,6 +673,12 @@ becomes larger.")
 (defparameter *z-near* 0)
 (defparameter *z-far* 100)
 
+(defvar *use-texture-blending* t)
+
+(defun enable-texture-blending ()
+;  (when *use-texture-blending*
+    (gl:enable :texture-2d :blend))
+
 (defun open-viewport ()
   (gl:matrix-mode :projection)
   (gl:load-identity)
@@ -686,7 +692,7 @@ becomes larger.")
 (defun project-orthographically ()
   (gl:disable :depth-test)
   (gl:clear :color-buffer-bit)
-  (gl:enable :texture-2d :blend)	
+  (enable-texture-blending)
   (set-blending-mode :alpha)
   (gl:matrix-mode :projection)
   (gl:load-identity)
@@ -698,7 +704,7 @@ becomes larger.")
   (gl:enable :depth-test)
   (gl:clear-depth 1.0)
   (gl:clear :color-buffer-bit)
-  (gl:enable :texture-2d :blend)	
+  (enable-texture-blending)
   (set-blending-mode :alpha)
   (gl:matrix-mode :projection)
   (gl:load-identity)
@@ -1444,19 +1450,23 @@ also the documentation for DESERIALIZE."
     (:additive2 (gl:blend-func :one :one))
     (:alpha (gl:blend-func :src-alpha :one-minus-src-alpha))))
 
+(defvar *default-texture-filter* :mipmap)
+
 (defun load-texture 
     (surface &key source-format (internal-format :rgba)
-		  (filter :mipmap))
+		  (filter *default-texture-filter*))
   ;; don't make any bogus textures
   (when *gl-window-open-p*
     (let ((texture (car (gl:gen-textures 1))))
       (gl:bind-texture :texture-2d texture)
       ;; set filtering parameters
-      (ecase filter 
+      (case filter
 	(:linear (gl:tex-parameter :texture-2d :texture-min-filter :linear)
 	 (gl:tex-parameter :texture-2d :texture-mag-filter :linear))
 	(:mipmap (gl:tex-parameter :texture-2d :generate-mipmap t) 
-	 (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear)))
+	 (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear))
+	(:nearest (gl:tex-parameter :texture-2d :texture-min-filter :nearest)
+	 (gl:tex-parameter :texture-2d :texture-mag-filter :nearest)))
       ;; set wrapping parameters
       (gl:tex-parameter :texture-2d :texture-wrap-r :clamp-to-edge)
       (gl:tex-parameter :texture-2d :texture-wrap-s :clamp-to-edge)
@@ -2038,7 +2048,7 @@ of the music."
 				&key (blend :alpha) (opacity 1.0) (vertex-color "white"))
   (if (null blend)
       (gl:disable :blend)
-      (progn (gl:enable :texture-2d :blend)	
+      (progn (enable-texture-blending)	
 	     (set-blending-mode blend)))
   (gl:bind-texture :texture-2d texture)
   (set-vertex-color vertex-color opacity)
