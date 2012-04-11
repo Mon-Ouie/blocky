@@ -650,6 +650,8 @@ slowdown. See also quadtree.lisp")
       (when highlight
 	(draw-highlight highlight)))))
 
+(define-method draw-overlays world ())
+
 (define-method draw world ()
   (with-world self
     (with-field-values (objects width height background-image background-color) self
@@ -673,8 +675,9 @@ slowdown. See also quadtree.lisp")
       ;; (if %parent
       ;; 	  (gl:pop-matrix)
       ;; possibly draw shell
-      (when *listener-open-p* 
-	(draw-shell-objects self)))))
+      (if *listener-open-p* 
+	  (draw-shell-objects self)
+	  (draw-overlays self)))))
   
 ;;; Simulation update
 
