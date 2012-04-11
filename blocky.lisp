@@ -83,11 +83,12 @@ make-object queue-head queue-max queue-count *sender*
 field-reference-p null-next object-eq *x11-color-data* object-name
 object-parent send send-super send-queue self opposite-direction
 opposite-heading object-address-string object step-in-direction
-define-resource direction-to plasma-rect subdivide-rect render-plasma 
-add-hook run-hook queue-tail make-resource-link save-resource on-screen-p
-save-project-image *system* *defined-resources* save-everything
-with-input-values with-inputs *export-formats* export-archive 
-defresource export-application export-project make-queue queue unqueue
+define-resource direction-to plasma-rect subdivide-rect render-plasma
+add-hook run-hook queue-tail make-resource-link save-resource
+on-screen-p save-project-image *system* *defined-resources*
+save-everything with-input-values with-inputs *export-formats*
+export-archive *use-texture-blending* defresource export-application
+*default-texture-filter* export-project make-queue queue unqueue
 queue-message queued-messages-p unqueue-message send-queue field-value
 random-direction random-choose *resources* load-font-resource
 save-object-resource initialize%super draw-string-solid read-box
