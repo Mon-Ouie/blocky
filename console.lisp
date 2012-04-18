@@ -2078,7 +2078,8 @@ of the music."
      (or width (sdl:width image))
      (or height (sdl:height image))
      (find-texture name)
-     :blend blend :opacity opacity)))
+     :blend blend 
+     :opacity (or *image-opacity* opacity))))
 
 ;;; Indicators
 
@@ -2190,8 +2191,7 @@ of the music."
 		 :font (find-resource-object font)
 		 :surface surface)
 	(gl:bind-texture :texture-2d texture)
-	(gl:tex-parameter :texture-2d :texture-min-filter :linear)
-	(gl:tex-parameter :texture-2d :texture-mag-filter :linear)
+	(use-filter *font-texture-filter*)
 	(sdl-base::with-pixel (buffer (sdl:fp surface))
 	  (gl:tex-image-2d :texture-2d 0 :alpha width height 0 :alpha :unsigned-byte (sdl-base::pixel-data buffer)))
 	(sdl:free surface)))))
