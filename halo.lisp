@@ -121,7 +121,8 @@
 
 (define-method tap drop (x0 y0)
   (unless (has-object (world) %target)
-    (add-object (world) %target)))
+    (add-object (world) %target)
+    (after-drop-hook %target)))
 
 (define-method update drop ()
   (when (%quadtree-node %target)
@@ -155,6 +156,7 @@
 (define-method drag move (x0 y0)
   (with-fields (positions) self
     (when (null positions)
+      ;; drag all selected objects
       (dolist (thing (cons %target (get-selection (world))))
 	(with-fields (x y) thing
 	  ;; store initial offset from pointer
