@@ -2421,7 +2421,7 @@ of the music."
      ,@body
      (shut-down)))
 
-(defun play (&optional (project *untitled-project-name*))
+(defun play-project (&optional (project *untitled-project-name*))
   (with-session
     (load-project-image project)
     (when (null *blocks*)
@@ -2451,6 +2451,20 @@ of the music."
   (with-session
     (start-alone (find-buffer *desktop*))
     (start-session)))
+
+;;; Editor transport control
+
+(defun pause ()
+  (prog1 nil (transport-pause (world))))
+
+(defun rewind ()
+  (prog1 nil (transport-rewind (world))))
+
+(defun play ()
+  (prog1 nil (transport-play (world))))
+
+;; (defun stop ()
+;;   (error "Not yet implemented."))
 
 ;; (defun create (project)
 ;;   (with-session
