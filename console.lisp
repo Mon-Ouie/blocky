@@ -2071,6 +2071,8 @@ of the music."
       (gl:tex-coord 0 0)
       (gl:vertex x y (- 0 z))))) ;; z
 
+(defvar *image-opacity* nil)
+
 (defun draw-image (name x y &key (z 0.0) (blend :alpha) (opacity 1.0) height width)
   (let ((image (find-resource-object name)))
     (draw-textured-rectangle
