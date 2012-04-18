@@ -708,7 +708,7 @@ becomes larger.")
   (set-blending-mode :alpha)
   (gl:matrix-mode :projection)
   (gl:load-identity)
-  (glu:perspective field-of-view (/ *gl-screen-width* *gl-screen-height*) *z-near* depth)
+  ;; (glu:perspective field-of-view (/ *gl-screen-width* *gl-screen-height*) *z-near* depth)
   (gl:hint :perspective-correction-hint :nicest))
 
 (defvar *window-x* 0)
