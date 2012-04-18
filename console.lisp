@@ -1451,6 +1451,17 @@ also the documentation for DESERIALIZE."
     (:alpha (gl:blend-func :src-alpha :one-minus-src-alpha))))
 
 (defvar *default-texture-filter* :mipmap)
+(defvar *font-texture-filter* :linear)
+
+(defun use-filter (filter)
+  ;; set filtering parameters
+  (case filter
+    (:linear (gl:tex-parameter :texture-2d :texture-min-filter :linear)
+     (gl:tex-parameter :texture-2d :texture-mag-filter :linear))
+    (:mipmap (gl:tex-parameter :texture-2d :generate-mipmap t) 
+     (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear))
+    (:nearest (gl:tex-parameter :texture-2d :texture-min-filter :nearest)
+     (gl:tex-parameter :texture-2d :texture-mag-filter :nearest))))
 
 (defun load-texture 
     (surface &key source-format (internal-format :rgba)
@@ -1459,14 +1470,8 @@ also the documentation for DESERIALIZE."
   (when *gl-window-open-p*
     (let ((texture (car (gl:gen-textures 1))))
       (gl:bind-texture :texture-2d texture)
-      ;; set filtering parameters
-      (case filter
-	(:linear (gl:tex-parameter :texture-2d :texture-min-filter :linear)
-	 (gl:tex-parameter :texture-2d :texture-mag-filter :linear))
-	(:mipmap (gl:tex-parameter :texture-2d :generate-mipmap t) 
-	 (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear))
-	(:nearest (gl:tex-parameter :texture-2d :texture-min-filter :nearest)
-	 (gl:tex-parameter :texture-2d :texture-mag-filter :nearest)))
+      ;; set up filtering
+      (use-filter filter)
       ;; set wrapping parameters
       (gl:tex-parameter :texture-2d :texture-wrap-r :clamp-to-edge)
       (gl:tex-parameter :texture-2d :texture-wrap-s :clamp-to-edge)
