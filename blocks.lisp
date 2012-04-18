@@ -2140,5 +2140,37 @@ inputs are evaluated."
   (:category :initform :system)
   (:orientation :initform :horizontal))
 
+;;; Pseudo quote
+
+(define-method after-drop-hook block ())
+
+(deflist capture
+    (category :initform :structure))
+
+(define-method initialize capture (thing)
+  (assert (blockyp thing))
+  (initialize%super self thing))
+
+(define-method update capture ())
+
+(define-method accept capture (thing))
+
+(define-method after-drop-hook capture ()
+  (let ((thing (first %inputs)))
+    (unplug self thing)
+    (add-object (world) thing)
+    (destroy self)))
+
+(define-method hit capture (mouse-x mouse-y) 
+  (with-fields (x y width height inputs) self
+    (when (within-extents mouse-x mouse-y x y
+			  (+ x width) (+ y height))
+      self)))
+
+(define-method pick capture () self)
+
+(defun capture (thing)
+  (new 'capture thing))
+
 ;;; blocks.lisp ends here
  
