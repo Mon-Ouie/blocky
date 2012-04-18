@@ -19,13 +19,21 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary:
-
-;; 
-
 ;;; Code:
 
 (require 'cl)
+(require 'slime)
+
+(defvar tweak-package :blocky)
+
+(defun tweak (&rest data)
+  (slime-eval `(tweak ,@data) tweak-package))
+
+(defmacro define-simple-tweak (keyword)
+  `(defun ,(intern (concat "blocky-" (symbol-name keyword)))
+       arglist
+     (tweak 
+
 
 
 
