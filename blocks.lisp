@@ -707,7 +707,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (define-method lose-focus block () nil)
 
 (define-method grab-focus block () 
-  (send :focus-on (world) self))
+  (send :focus-on (world) self :clear-selection nil))
 
 (define-method pick-focus block () self)
 
