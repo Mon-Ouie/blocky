@@ -89,16 +89,16 @@ on-screen-p save-project-image *system* *defined-resources*
 save-everything with-input-values with-inputs *export-formats*
 export-archive *use-texture-blending* defresource export-application
 *default-texture-filter* export-project make-queue queue unqueue
-queue-message queued-messages-p unqueue-message send-queue field-value
-random-direction random-choose *resources* load-font-resource
-save-object-resource initialize%super draw-string-solid read-box
-initialize-resource-table percent-of-time render-formatted-paragraph
-make-formatted-string draw-string-shaded set-blending-mode
-render-formatted-string render-formatted-line resource font-text-width
-write-sexp-to-file with-message-sender *message-sender*
-read-sexp-from-file with-fields with-field-values write-blx *grammar*
-one-of left-hand-side right-hand-side expansions generate
-send-event-to-blocks play-music halt-music seek-music
+*font-texture-filter* queue-message queued-messages-p unqueue-message
+send-queue field-value random-direction random-choose *resources*
+load-font-resource save-object-resource initialize%super
+draw-string-solid read-box initialize-resource-table percent-of-time
+render-formatted-paragraph make-formatted-string draw-string-shaded
+set-blending-mode render-formatted-string render-formatted-line
+resource font-text-width write-sexp-to-file with-message-sender
+*message-sender* read-sexp-from-file with-fields with-field-values
+write-blx *grammar* one-of left-hand-side right-hand-side expansions
+generate send-event-to-blocks play-music halt-music seek-music
 *joystick-mapping* play initialize-sound *generic-joystick-mapping*
 *joystick-button-symbols* draw-resource-image *event-handler-function*
 *use-sound* midpoint send-event self get-some-object-name
@@ -146,20 +146,21 @@ object-parent object-name object-fields define-method
 *joystick-dead-zone* define-prototype new object-p self percent-gray
 percent-grey *indicators* find-indicator-texture draw-indicator
 font-text-width transform-declaration-field-descriptor is-a
-compose-blank-fields make-field-initializer initialize
-initialize-prototypes initialize-blocky object-address-string
-draw-string make-tree draw-string-blended make-menu find-text-image
-make-text-image find-texture *default-super* clear-text-image-cache
-*token-types* verify *serif* *use-antialiased-text* *sans* *monospace*
-toggle-debug *debug-on-error* *block-categories* *block-colors* input
-paste arrange-beside arrange-below load-variable-resource translate
+compose-blank-fields make-field-initializer initialize pause play
+*image-opacity* rewind stop initialize-prototypes initialize-blocky
+play-project update-future object-address-string draw-string make-tree
+draw-string-blended make-menu find-text-image make-text-image
+find-texture *default-super* clear-text-image-cache *token-types*
+verify *serif* *use-antialiased-text* *sans* *monospace* toggle-debug
+*debug-on-error* *block-categories* *block-colors* input paste
+arrange-beside arrange-below load-variable-resource translate
 save-variable-resource *persistent-variables* with-new-world
 with-border with-blank-world with-world-prototype with-world
 remove-trailing-space *world-prototype* step-coordinates
 *default-frame-rate* make-field-accessor-forms save-excursion
 make-input-accessor-forms *persistent-variables-file-name* duplicate
 persistent-variables-file combine save-variables indicator-size
-draw-indicator load-variables *block-text-colors* defblock
+draw-indicator load-variables *block-text-colors* defblock capture
 make-input-accessor-macrolet-clause make-input-accessor-defun-forms
 input-reference-p input-block input-value *block-bold* *bold* *italic*
 *block-italic* define-block-macro))
