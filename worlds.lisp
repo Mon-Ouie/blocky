@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012  David O'Toole
 
-;; Author: David O'Toole %dto@ioforms.org
+;; Author: David O'Toole dto@ioforms.org
 ;; Keywords: 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -44,21 +44,24 @@
   (objects :initform nil :documentation "A hash table with all the world's objects.")
   (quadtree :initform nil)
   (quadtree-depth :initform nil)
-  ;; viewing window
+  ;; viewing window 
   (window-x :initform 0)
   (window-y :initform 0)
   (window-z :initform 0)
   (window-x0 :initform nil)
   (window-y0 :initform nil)
   (window-z0 :initform nil)
+  (horizontal-scrolling-margin :initform 1/4)
+  (vertical-scrolling-margin :initform 1/4)
   (window-scrolling-speed :initform 5)
   (window-scale-x :initform 1)
   (window-scale-y :initform 1)
   (window-scale-z :initform 1)
   (projection-mode :initform :orthographic)
-  ;; selection and region
-  (selection :initform ()
-  	     :documentation "List (subset) of selected blocks.")
+  (rewound-selection :initform nil)
+  (future :initform nil)
+  (future-steps :initform 32)
+  (future-step-interval :initform 8)
   (default-events :initform
 		  '(((:tab) :tab)
 		    ((:tab :shift) :backtab)
@@ -119,12 +122,48 @@
   `(let* ((*world* (find-uuid ,world)))
      ,@body))
 
-(define-method pause world ()
-  (setf %paused t))
+(define-method transport-pause world ()
+  (setf %paused t)
+  (setf %rewound-selection
+	(mapcar #'duplicate
+		(get-selection self))))
 
-(define-method resume world ()
-  (prog1 t (setf %paused nil)))
+(define-method transport-play world ()
+  (setf %paused nil)
+  (mapc #'destroy (get-selection self))
+  (dolist (each %rewound-selection)
+    (add-object (world) each))
+  (setf %rewound-selection nil))
 
+(define-method show-future world ()
+  (prog1 nil
+    (let ((selection (get-selection self)))
+      (let (future)
+	(dolist (thing selection)
+	  (remove-object self thing)
+	  (let (trail)
+	    (dotimes (i %future-steps)
+	      (let ((ghost (duplicate thing)))
+		(with-world self
+		  (with-quadtree %quadtree
+		    (add-object self ghost)
+		    (assert (%quadtree-node ghost))
+		    (message "FOOBAR")
+		    (dotimes (j (* i %future-step-interval))
+		      (update ghost)
+		      (quadtree-collide self ghost))))
+		(remove-object self ghost)
+		(push ghost trail)))
+	    (push trail future))
+	  (add-object self thing))
+	(setf %future future)))))
+
+(define-method clear-future world ()
+  (setf %future nil))
+
+;; (defun update-future ()
+;;   (when (%paused (world))
+		
 (defmacro define-world (name &body body)
   `(define-block (,name :super "BLOCKY:WORLD")
      ,@body))
@@ -169,8 +208,8 @@
 
 (define-method glide-follow world (object)
   (with-fields (window-x window-y width height) self
-    (let ((margin-x (* 1/4 *gl-screen-width*))
-	  (margin-y (* 1/4 *gl-screen-height*))
+    (let ((margin-x (* %horizontal-scrolling-margin *gl-screen-width*))
+	  (margin-y (* %vertical-scrolling-margin *gl-screen-height*))
 	  (object-x (field-value :x object))
 	  (object-y (field-value :y object)))
     ;; are we outside the "comfort zone"?
@@ -242,6 +281,8 @@
   (setf %objects (make-hash-table :test 'equal)))
 
 ;;; The object layer. 
+
+(defvar *object-placement-capture-hook*)
 
 (define-method add-object world (object &optional x y (z 0))
   (with-world self
@@ -592,7 +633,7 @@ slowdown. See also quadtree.lisp")
 (define-method enter-listener world ()
   (add-listener-maybe self)
   (setf %last-focus %focused-block)
-  (focus-on self *listener*)
+  (focus-on self *listener* :clear-selection nil)
   (when (null *listener-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
   (setf *listener-open-p* t)
   (enable-key-repeat))
@@ -623,14 +664,16 @@ slowdown. See also quadtree.lisp")
 
 (define-method draw-shell-objects world ()
   (with-world self
-    (with-fields (drag-start selection inputs drag focused-block
+    (with-fields (drag-start inputs drag focused-block
 			 highlight inputs modified hover
 			 ghost prompt) self
       ;; now start drawing the shell objects
       (mapc #'draw inputs)
-	;; ;; draw border around any selected blocks
-	;; (when (find block selection :test 'eq :key #'find-object)
-	;;   (draw-border block))
+      ;; draw any future
+      (when %future
+	(let ((*image-opacity* 0.2))
+	  (dolist (trail %future)
+	    (mapc #'draw trail))))
       ;; during dragging we draw the dragged block.
       (when drag 
 	(layout drag)
@@ -731,52 +774,20 @@ slowdown. See also quadtree.lisp")
     (mapc #'layout %inputs)
     (when *listener*
       (layout *listener*))))
-
-(define-method select world (block)
-  (with-world self
-    (with-fields (selection) self
-      (pushnew (find-uuid block) selection 
-	       :test 'equal))))
-;	  (select block))))))
-  
-(define-method select-if world (predicate)
-  (with-world self
-    (with-fields (selection inputs) self
-      (setf selection 
-	    (remove-if predicate inputs
-		       :key #'find-parent)))))
-  
-(define-method unselect world (block)
-  (with-world self
-    (with-fields (selection) self
-      (setf selection (delete block selection 
-			      :test 'eq :key #'find-parent)))))
   
 (define-method handle-event world (event)
-  (with-field-values (player quadtree focused-block selection) self
+  (with-field-values (player quadtree focused-block) self
     (with-world self
       (or (block%handle-event self event)
 	  (let ((thing
 		  (if *listener-open-p* 
-		      (or focused-block (first selection))
+		      focused-block
 		      player)))
 	      (prog1 t 
 		(when thing 
 		  (with-quadtree quadtree
 		    (handle-event thing event)))))))))
 
-		;; (cond
-		;;   ;; we're focused. send the event there
-		;;   ((and *listener-open-p* focused-block)
-		;;    (prog1 focused-block
-		;; 	 (assert (blockyp focused-block))))
-		;;   ;; only one block selected. use that.
-		;;   ((and *listener-open-p*
-		;; 	    (= 1 (length selection))
-		;; 	    (first selection)))
-		;;   ;; fall back to player
-		;;   (t player))))
-  
 ;;; Hit testing
 
 (define-method hit world (x y)
@@ -821,31 +832,33 @@ block found, or nil if none is found."
 (defparameter *minimum-drag-distance* 6)
   
 (define-method clear-halos world ()
-  (mapc #'destroy-halo (get-selection self)))
+  (mapc #'destroy-halo (get-objects self)))
 
-(define-method focus-on world (block)
+(define-method focus-on world (block &key (clear-selection t))
   ;; possible to pass nil
   (with-fields (focused-block) self
     (with-world self
       (let ((last-focus focused-block))
 	;; there's going to be a new focused block. 
 	;; tell the current one it's no longer focused.
-	(when (and last-focus
+	(when (and clear-selection last-focus
 		   ;; don't do this for same block
 		   (not (object-eq last-focus block)))
-	  (unless (holding-control) (destroy-halo last-focus))
 	  (lose-focus last-focus))
-      ;; now set up the new focus (possibly nil)
-      (setf focused-block (when block 
-			    (find-uuid 
-			     (pick-focus block))))
-      ;; sanity check
-      (assert (or (null focused-block)
-		  (blockyp focused-block)))
-      ;; now tell the block it has focus, but only if not the same
-      (when (and focused-block
-		 (not (object-eq last-focus focused-block)))
-	(focus block))))))
+	(when clear-selection
+	  (when (not (holding-control))
+	    (clear-halos self)))
+	;; now set up the new focus (possibly nil)
+	(setf focused-block (when block 
+			      (find-uuid 
+			       (pick-focus block))))
+	;; sanity check
+	(assert (or (null focused-block)
+		    (blockyp focused-block)))
+	;; now tell the block it has focus, but only if not the same
+	(when (and focused-block
+		   (not (object-eq last-focus focused-block)))
+	  (focus block))))))
 
 (define-method begin-drag world (mouse-x mouse-y block)
   (with-fields (drag drag-origin inputs drag-start ghost drag-offset) self
@@ -955,7 +968,7 @@ block found, or nil if none is found."
 (define-method release world (x y &optional button)
   (with-world self
     (with-fields 
-	(drag-offset drag-start hover selection drag click-start drag-button
+	(drag-offset drag-start hover drag click-start drag-button
 		     click-start-block drag-origin focused-block modified) self
       (if drag
 	  ;; we're dragging
@@ -988,11 +1001,11 @@ block found, or nil if none is found."
 	      ;; select the dropped block
 	      (progn 
 ;		(select self drag)
+;		(toggle-halo drag)
 		(setf focused-block (find-uuid drag)))))
 	  ;;
 	  ;; we were clicking instead of dragging
 	  (progn
-	    (setf selection nil)
 	    (when focused-block
 ;	      (select self focused-block)
 	      (with-world self 
