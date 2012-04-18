@@ -56,7 +56,14 @@
   (blocky-inspect-uuid (or (blocky-uuid-at-point)
 			   (blocky-uuid-on-this-line))))
 
-;;; Imenu support 
+(defun eval-in-cl (cl-expression-string &optional process-result-values)
+  (slime-eval-async `(swank:eval-and-grab-output ,cl-expression-string)
+    (lexical-let  ((here (current-buffer))
+                   (process-result-values process-result-values))
+      (lambda (result-values)
+	(when process-result-values
+	  (set-buffer here)
+	  (funcall process-result-values (rest result-values)))))))
 
 (defun blocky-insinuate-lisp ()
   (interactive)
@@ -76,7 +83,9 @@
 						       (zero-or-one "(")
 						       (group (one-or-more (or "-" (any word))))))
 					2))
-		(imenu-add-menubar-index))))
+		(imenu-add-menubar-index)))
+  (defadvice slime-compile-defun (after blocky activate)
+    (eval-in-cl "(blocky:update-parameters)")))
 
 (blocky-insinuate-lisp)
 

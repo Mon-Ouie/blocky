@@ -2463,6 +2463,9 @@ of the music."
 (defun play ()
   (prog1 nil (transport-play (world))))
 
+(defun update-parameters ()
+  (send :update-future (world)))
+
 ;; (defun stop ()
 ;;   (error "Not yet implemented."))
 

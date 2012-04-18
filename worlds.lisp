@@ -130,6 +130,7 @@
 
 (define-method transport-play world ()
   (setf %paused nil)
+  (clear-future self)
   (mapc #'destroy (get-selection self))
   (dolist (each %rewound-selection)
     (add-object (world) each))
@@ -148,22 +149,23 @@
 		  (with-quadtree %quadtree
 		    (add-object self ghost)
 		    (assert (%quadtree-node ghost))
-		    (message "FOOBAR")
 		    (dotimes (j (* i %future-step-interval))
 		      (update ghost)
-		      (quadtree-collide self ghost))))
+		      (run-tasks ghost)
+		      (quadtree-collide ghost))))
 		(remove-object self ghost)
 		(push ghost trail)))
 	    (push trail future))
-	  (add-object self thing))
+	  (add-object self thing)
+	  (make-halo thing))
 	(setf %future future)))))
 
 (define-method clear-future world ()
   (setf %future nil))
 
-;; (defun update-future ()
-;;   (when (%paused (world))
-		
+(define-method update-future world ()
+  (when %future (show-future self)))
+
 (defmacro define-world (name &body body)
   `(define-block (,name :super "BLOCKY:WORLD")
      ,@body))
