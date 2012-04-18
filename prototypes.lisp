@@ -1452,26 +1452,27 @@ objects after reconstruction, wherever present."
   (apply #'send-queue :initialize object args))
 
 (defun duplicate (original0)
-  (let ((original (find-object original0)))
-    (let ((duplicate 
-	    (make-object 
-	     :super (object-super original)
-	     :uuid (make-uuid))))
-      (prog1 duplicate
-	(initialize-method-cache duplicate)
-	(add-object-to-database duplicate)
-	;; copy any local field values
-	(let* ((fields (object-fields original))
-	       (fields0 fields)
-	       names)
-	  (if (hash-table-p fields)
-	      (setf names (loop for f being the hash-keys of fields collect f))
-	      (dolist (f fields)
-		(push (pop fields) names)
-		(pop fields)))
-	  (dolist (name names)
-	    (set-field-value name duplicate 
-			     (fref fields0 name))))))))
+  (when original0
+    (let ((original (find-object original0)))
+      (let ((duplicate 
+	      (make-object 
+	       :super (object-super original)
+	       :uuid (make-uuid))))
+	(prog1 duplicate
+	  (initialize-method-cache duplicate)
+	  (add-object-to-database duplicate)
+	  ;; copy any local field values
+	  (let* ((fields (object-fields original))
+		 (fields0 fields)
+		 names)
+	    (if (hash-table-p fields)
+		(setf names (loop for f being the hash-keys of fields collect f))
+		(dolist (f fields)
+		  (push (pop fields) names)
+		  (pop fields)))
+	    (dolist (name names)
+	      (set-field-value name duplicate 
+			       (fref fields0 name)))))))))
 
 ;;; Buffer pages 
 
