@@ -2435,8 +2435,8 @@ of the music."
 
 (defvar *buffer-history* nil)
 
-(defun browse (name)
-  (let ((page (find-buffer name)))
+(defun browse (name &optional prototype)
+  (let ((page (find-buffer name :prototype prototype)))
     (when page
       (push name *buffer-history*)
       (at-next-update (start-alone page)))))
@@ -2464,7 +2464,8 @@ of the music."
   (prog1 nil (transport-play (world))))
 
 (defun update-parameters ()
-  (send :update-future (world)))
+  (when (world)
+    (send :update-future (world))))
 
 ;; (defun stop ()
 ;;   (error "Not yet implemented."))
