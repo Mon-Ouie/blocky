@@ -344,10 +344,15 @@ non-nil to indicate that the block was accepted, nil otherwise."
   "When non-nil, the UUID of the current buffer object.")
 
 (define-method contains block (block)
-  (find (find-object block)
-	%inputs
-	:test 'eq
-	:key #'find-object))
+  (block finding
+    (dolist (this %inputs)
+      (when (object-eq block this)
+	(return-from finding this)))))
+
+  ;; (find (find-object block)
+  ;; 	%inputs
+  ;; 	:test 'eq
+  ;; 	:key #'find-object))
 
 (define-method input-position block (input)
   (assert (not (null input)))
@@ -435,13 +440,14 @@ non-nil to indicate that the block was accepted, nil otherwise."
       (after-unplug-hook self input))))
 
 (define-method unplug-from-parent block ()
-  (prog1 t
-    (with-fields (parent) self
-      (assert (not (null parent)))
-      (assert (contains parent self))
-      (unplug parent self)
-      (assert (not (contains parent self)))
-      (setf parent nil))))
+  (when %parent
+    (prog1 t
+      (with-fields (parent) self
+	(assert (not (null parent)))
+	(assert (contains parent self))
+	(unplug parent self)
+;	(assert (not (contains parent self)))
+	(setf parent nil)))))
 
 (define-method drop block (new-block &optional (dx 0) (dy 0))
   "Add a new object to the current world at the current position.
@@ -1936,6 +1942,8 @@ Note that the center-points of the objects are used for comparison."
 
 (defmacro later-while (test-expression &body subtask-expressions)
   `(later ,(make-task-form t test-expression subtask-expressions)))
+
+(define-method damage block (points) nil)
 
 ;;; A generic color swatch
 
