@@ -1072,11 +1072,8 @@ block found, or nil if none is found."
 
 ;;; Serialization of worlds
 
-;; (define-method before-serialize world ()
-;;   (with-fields (objects) self
-;;     (loop for id being the hash-keys of objects do
-;;       ;; don't serialize the cached object
-;;       (setf (gethash id objects) t))))
+(define-method before-serialize world ()
+  (clear-halos self))
 
 ;; (define-method after-serialize world ()
 ;;   (loop for id being the hash-keys of %objects do
@@ -1084,6 +1081,7 @@ block found, or nil if none is found."
 
 (define-method after-deserialize world ()
   (after-deserialize%super self)
+  (clear-drag-data self)
   (add-listener-maybe self :force))
 
 ;;; worlds.lisp ends here
