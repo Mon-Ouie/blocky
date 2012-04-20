@@ -33,7 +33,7 @@
   (category :initform :data)
   (x :initform 0)
   (y :initform 0)
-  (paused :initform nil)
+  (paused :initform t)
   (heading :initform 0.0)
   (height :initform 256)
   (width :initform 256)
