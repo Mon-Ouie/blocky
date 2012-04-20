@@ -1548,21 +1548,21 @@ objects after reconstruction, wherever present."
 (defun add-buffer (name object)
   (assert (blockyp object))
   (when (null *buffers*)
-    (initialize-buffer))
-  (prog1 (find-uuid object)
+    (initialize-buffers))
+  (prog1 nil ;; (find-uuid object)
     (setf (gethash 
 	   (or name (find-buffer-name object))
 	   *buffers*)
 	  (find-uuid object))))
 
-(defun find-buffer (name &optional (create t))
+(defun find-buffer (name &key (create t) prototype)
   (or (gethash name *buffers*)
       (if create
-	  (add-buffer name (new 'world :name name))
+	  (add-buffer name (new (or prototype 'world) :name name))
 	  (error "Cannot find buffer page ~S" name))))
 
 (defun find-world (name)
-  (find-buffer name nil))
+  (find-buffer name :create nil))
 
 ;;; Clipboard
 
