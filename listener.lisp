@@ -249,24 +249,25 @@
 (define-method draw-hover prompt ())
 
 (define-method tap prompt (mouse-x mouse-y)
-  (declare (ignore mouse-y))
-  (unless %read-only
-    (with-fields (x y width height clock point parent background
-		    line) self
-      ;; find the left edge of the data area
-      (let* ((left (+ x (label-width self) (dash 4)))
-	     (tx (- mouse-x left)))
-	;; which character was clicked?
-	(let ((click-index 
-		(block measuring
-		  (dotimes (ix (length line))
-		    (when (< tx (font-text-width 
-				 (subseq line 0 ix)
-				 *font*))
-		      (return-from measuring ix))))))
-	  (if (numberp click-index)
-	      (setf point click-index)
-	      (setf point (length line))))))))
+  ;(declare (ignore mouse-y))
+  (if %read-only
+      (tap%super self mouse-x mouse-y)
+      (with-fields (x y width height clock point parent background
+		      line) self
+	;; find the left edge of the data area
+	(let* ((left (+ x (label-width self) (dash 4)))
+	       (tx (- mouse-x left)))
+	  ;; which character was clicked?
+	  (let ((click-index 
+		  (block measuring
+		    (dotimes (ix (length line))
+		      (when (< tx (font-text-width 
+				   (subseq line 0 ix)
+				   *font*))
+			(return-from measuring ix))))))
+	    (if (numberp click-index)
+		(setf point click-index)
+		(setf point (length line))))))))
 
 (define-method layout prompt ())
 
