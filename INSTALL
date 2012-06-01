@@ -129,7 +129,7 @@ More instructions for Mac and Windows will be available soon.
       
       Then in SBCL:
 
-          (blocky:play "microxong")
+          (blocky:play-project "microxong")
 
 7. Getting help and reporting bugs 
 
