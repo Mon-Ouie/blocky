@@ -68,17 +68,6 @@ More instructions for Mac and Windows will be available soon.
    cd ~/src
    git clone git://github.com/dto/blocky.git 
 
-2a. (OPTIONAL) If you need to use the development branch of Blocky, do
-     this:
-  
-   cd ~/src/blocky
-   git checkout -b develop
-
-   (OPTIONAL) Similarly, if you need a release, use this:
-
-   git checkout -b release/0.989  
-     # replace 0.989 with desired version
-
 3. Install Quicklisp
     
     http://www.quicklisp.org/ It takes only a few moments to install
@@ -129,17 +118,10 @@ More instructions for Mac and Windows will be available soon.
       (push #p"/path/to/blocky/" asdf:*central-registry*)
       (asdf:load-system :blocky)
 
-      ;; run an example
-      (blocky:play "turtle")  ;; A GUI tutorial, with turtle and ladybug
-
-      ;; or run the GUI
-      
-      (blocky:blocky)
-
-6.   The work-in-progress game XALCYON is written with Blocky, and can
+6.   The work-in-progress game MICROXONG is written with Blocky, and can
      be downloaded via git:
 
-      	  git clone git@github.com:dto/xalcyon.blocky.git
+      	  git clone git@github.com:dto/microxong.git
 
       You should put the example somewhere where Blocky's
       *project-directories* setting will find it; your home directory
@@ -147,7 +129,7 @@ More instructions for Mac and Windows will be available soon.
       
       Then in SBCL:
 
-          (blocky:play "xalcyon")
+          (blocky:play "microxong")
 
 7. Getting help and reporting bugs 
 
