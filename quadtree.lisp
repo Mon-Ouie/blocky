@@ -242,12 +242,6 @@ NODE, if any."
 
 (defun quadtree-show (tree &optional object)
   (when tree
-      ;; (dolist (ob (quadtree-objects tree))
-      ;; 	(multiple-value-bind (top left right bottom) 
-      ;; 	    (bounding-box ob)
-      ;; 	  (draw-string (prin1-to-string *quadtree-depth*)
-      ;; 		       left top
-      ;; 		       :color "yellow")))
       (let ((bounding-box (quadtree-bounding-box tree)))
 	(destructuring-bind (top left right bottom) bounding-box
 	  (if (null object)
