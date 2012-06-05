@@ -1,10 +1,5 @@
 ;;; logic.lisp --- some useful functions adapted from PAIP
 
-;; Copyright (C) 2009, 2010, 2011, 2012  David O'Toole
-
-;; Author: David O'Toole %dto@ioforms.org
-;; Keywords: 
-
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
@@ -16,15 +11,14 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see %http://www.gnu.org/licenses/.
+;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 ;;; Licensed material:
 
-;; Some functions in this file are modified versions of functions by
-;; Peter Norvig in his book "Paradigms of Artificial Intelligence
-;; Programming". The derivative works (i.e. the functions in this
-;; file) are redistributed here under the terms of the General Public
-;; License as given above.
+;; Some functions in this file are originally written by Peter Norvig
+;; for his book "Paradigms of Artificial Intelligence
+;; Programming". The modified versions are redistributed here under
+;; the terms of the General Public License as given above.
 
 ;; You can find more information on Norvig's book at his website:
 
