@@ -1195,12 +1195,21 @@ resource is stored; see also `find-resource'."
 
 (defmacro defresource (&rest entries)
   (etypecase (first entries)
+    ;; it's just a name. auto-detect the type 
+    (string (prog1 (first entries)
+	      (find-resource-automatically (first entries))))
     ;; it's a single resource.
     (keyword (defresource-ex entries))
     ;; multiple resources are included.
     (list
      ;; return a list of strings
      `(list ,@(mapcar #'defresource-ex entries)))))
+
+(defmacro autoload (filename)
+  (assert (stringp filename))
+  `(load-resource
+    (find-resource
+     (defresource ,filename))))
 
 (defun find-project-path (project-name)
   "Return the current project path."
@@ -1864,20 +1873,23 @@ so that it can be fed to the console."
 (defparameter *resource-extensions*
   '(("png" :image)
     ("wav" :sample)
-    ("ogg" :music)))
+    ("ogg" :music)
+    ("lisp" :lisp)))
 
 (defun resource-type-from-name (name)
   (let ((extension (file-name-extension name)))
     (when extension
       (car (cdr (assoc extension *resource-extensions* :test 'equal))))))
 	   
-(defun load-resource-automatically (name)
+(defun find-resource-automatically (name)
   (let ((type (resource-type-from-name name)))
     (when type
       (let ((resource (make-resource :name name :file name :type type)))
 	(prog1 resource
-	  (index-resource resource)
-	  (load-resource resource))))))
+	  (index-resource resource))))))
+
+(defun load-resource-automatically (name)
+  (load-resource (find-resource-automatically name)))
 
 (defun find-resource (name &optional noerror)
   "Obtain the resource named NAME, performing any necessary
@@ -1891,7 +1903,7 @@ be found."
 	  (when (null (resource-object res))
 	    (load-resource res)))
 	;; no, try auto loading based on the name
-	(or (load-resource-automatically name)
+	(or (find-resource-automatically name)
 	    ;; can't find and can't autoload
 	    (if noerror
 		nil
