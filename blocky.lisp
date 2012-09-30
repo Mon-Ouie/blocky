@@ -67,7 +67,7 @@ define-block *screen-height* formatted-line-width find-world
 formatted-string-width get-color create-image draw-image blocky edit
 define-prototype has-field *target* with-target define-world
 set-field-options *user-joystick-profile* field-option-value
-index-resource *default-joystick-profile* joystick-profile
+index-resource *default-joystick-profile* joystick-profile visit
 find-project-path index-project load-image-resource load-lisp-resource
 *executable* *screen-height* player *screen-width* blockyp
 *nominal-screen-width* *nominal-screen-height* *gl-screen-width*
