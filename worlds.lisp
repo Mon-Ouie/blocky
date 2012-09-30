@@ -662,7 +662,7 @@ slowdown. See also quadtree.lisp")
 
 (define-method update-shell-objects world ()
   (mapc #'update %inputs)
-  (update *listener*))
+  (when *listener* (update *listener*)))
 
 (define-method draw-shell-objects world ()
   (with-world self
@@ -738,8 +738,9 @@ slowdown. See also quadtree.lisp")
 	(with-quadtree %quadtree
 	  ;; possibly run the objects
 	  (loop for object being the hash-values in %objects do
-	    (update object)
-	    (run-tasks object))
+	    (when object
+	      (update object)
+	      (run-tasks object)))
 	  ;; update window movement
 	  (let ((thing (or 
 			(when (holding-shift) drag) 

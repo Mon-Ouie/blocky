@@ -1589,22 +1589,23 @@ The following block fields will control sprite drawing:
   (invalidate-layout self))
 
 (define-method layout block () 
-  (if %image 
-      (resize-to-image self)
-      (with-fields (height width label) self
-	(with-field-values (x y inputs) self
-	  (let* ((left (+ x (label-width self)))
-		 (max-height (font-height *font*))
-		 (dash (dash 1)))
-	    (dolist (input inputs)
-	      (move-to input (+ left dash) y)
-	      (layout input)
-	      (setf max-height (max max-height (field-value :height input)))
-	      (incf left (dash 1 (field-value :width input))))
-	    ;; now update own dimensions
-	    (setf width (dash 1 (- left x)))
-	    (setf height (+  (if (null inputs)
-				     dash 0) max-height)))))))
+  (when %image 
+    (resize-to-image self)))
+
+     ;; (with-fields (height width label) self
+      ;; 	(with-field-values (x y inputs) self
+      ;; 	  (let* ((left (+ x (label-width self)))
+      ;; 		 (max-height (font-height *font*))
+      ;; 		 (dash (dash 1)))
+      ;; 	    (dolist (input inputs)
+      ;; 	      (move-to input (+ left dash) y)
+      ;; 	      (layout input)
+      ;; 	      (setf max-height (max max-height (field-value :height input)))
+      ;; 	      (incf left (dash 1 (field-value :width input))))
+      ;; 	    ;; now update own dimensions
+      ;; 	    (setf width (dash 1 (- left x)))
+      ;; 	    (setf height (+  (if (null inputs)
+      ;; 				     dash 0) max-height)))))))
 
 ;;; Sound 
 

@@ -2303,11 +2303,6 @@ of the music."
   (setf *project* nil)
   (sdl:push-quit-event))
 
-(defun reset (&optional (project-name "standard"))
-  (setf *quitting* nil)
-  (setf *project* project-name)
-  (sdl:push-quit-event))
-
 (defvar *library-search-paths-setup-hook* nil)
 
 (defun setup-library-search-paths ()
@@ -2426,6 +2421,10 @@ of the music."
   (setf *event-hook* nil)
   (sdl:quit-sdl)
   (setf *gl-window-open-p* nil))
+
+(defun reset ()
+  (shut-down)
+  (start-up))
 
 (defmacro with-session (&rest body)
   `(progn 
