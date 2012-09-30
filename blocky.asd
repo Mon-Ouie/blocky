@@ -8,7 +8,7 @@
 
 (asdf:defsystem blocky
   :name "blocky"
-  :version "0.98"
+  :version "0.991"
   :maintainer "David T O'Toole <dto@ioforms.org>"
   :author "David T O'Toole <dto@ioforms.org>"
   :license "General Public License (GPL) Version 3"
@@ -16,12 +16,10 @@
   :serial t
   :depends-on (:lispbuilder-sdl 
 	       :lispbuilder-sdl-image 
-	       ;; :lispbuilder-sdl-gfx
 	       :lispbuilder-sdl-ttf
 	       :lispbuilder-sdl-mixer
 	       :uuid
 	       :cl-fad
-	       ;; :cl-glu
 	       :cl-opengl)
   :components ((:file "blocky")
 	       (:file "rgb" :depends-on ("blocky"))
@@ -39,10 +37,4 @@
 	       (:file "worlds" :depends-on ("blocks"))
 	       (:file "syntax" :depends-on ("blocks"))
 	       (:file "browser" :depends-on ("syntax"))))
-;	       (:file "dance" :depends-on ("blocks"))
-;	       (:file "universe" :depends-on ("worlds"))
-;	       (:file "shell" :depends-on ("worlds"))
-;	       (:file "path")
-;	       (:file "windows" :depends-on ("syntax"))
-;	       (:file "meta" :depends-on ("syntax"))	       
 	       
