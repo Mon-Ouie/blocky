@@ -1,0 +1,164 @@
+
+* Reactopong
+
+Reactopong is a game of quick reactions and think-ahead strategy. An
+overheating particle reactor must be shut down. From a remote control
+viewing station, you guide unmanned robotic probes that can safely
+enter the reactor---one at a time. All nine procedurally-generated
+reactor chambers (i.e. game levels) must be shut down in order to
+avert nuclear disaster and complete the game.
+
+Various high-energy particles (alpha, beta, and gamma) are bouncing
+through the reactor; after a set number of bounces, a particle splits
+into two particles of the same type, both of which are moving a bit
+faster, and so on. 
+
+Particle types don't mix; each level is divided into up to three
+chambers, each with one type of particle reacting in it. If too many
+particles build up in any one chamber of the reactor, the reaction
+goes out of control, and you lose a life.
+
+If the probe comes into contact with any object or surface, it is
+immediately destroyed from heat. If all three available robotic probes
+are destroyed, there will be no way to stop the meltdown, and it's
+Game Over.
+
+The probe will be destroyed if it becomes too hot. The heat gauge will
+normally decrease slowly on its own, but it can be drained more
+quickly at a cooling vent (if any.) Colliding with a particle
+increases heat by about 35% of the gauge's width, meaning that you can
+only survive one or two occasional bumps. "Hot zones" are floating
+regions of intense temperature, and will increase heat relatively
+quickly as long as the player is in contact with them; passing through
+these clouds should be nearly a last resort. These clouds can overlap
+for additive effect.
+
+Your probe is trailed by a positronic filament (represented by a
+yellow line following your probe) designed to capture the bouncing
+particles. By sweeping the filament across the path of an oncoming
+particle, you can annihilate them and reduce the danger level. The
+tail is not overly long (this would make the game too easy) and cannot
+be extended. And, the particle still hurts you (with heat) if it
+collides with the robot probe (instead of the trail.)
+
+Each level takes up the entire screen; the only status displays are a
+row of three squares at the bottom left corner whose coloring
+indicates how many robotic arms are left, and a heat gauge. The
+central column is present in all levels, and so the center of the
+screen is both the entrance and exit point.
+
+The particles move faster than your probe, so you have to watch their
+(mostly) deterministic behavior and plan out your moves in advance.
+
+A level is mostly empty space with particles bouncing in it, but
+chamber sizes and positions will vary. New particles come periodically
+from guns, with one gun located in each chamber. The player must move
+dynamically between different chambers, avoiding walls and guns, in
+order to keep grabbing particles and preventing any chamber from going
+critical. If the player survives 2 minutes of particles without a
+meltdown, the level is completed, and the reactor doors begin (very
+slowly) closing as the level shuts down and an alarm sounds. The
+player must race to the exit (in the center of the screen) to move on
+to the next level.
+
+* 5200Xpong
+
+5200Xpong is a retro-remake of [[http://dto.github.com/notebook/xong.html][XONG]] with graphics, sound, and controls
+similar to those of an Intellivison or Atari 5200 game from the bygone
+era of 8-bit games, but with OpenGL transparency and scaling added to
+the mix. 
+
+You are a vulnerable white square that can move only in the four
+cardinal directions (using the arrow keys, numpad, or gamepad). Using
+the spacebar (or joystick button) you can fire a bullet in the
+direction you last moved. (This direction is indicated by a little dot
+on the player's sprite.) 
+
+One hit kills you, and completely ends your game---to win at MicroXONG
+you must reach the end without taking a single bullet from an enemy or
+touching a single hot zone. A successful game of SuperXONG should be
+able to be completed in less than 20 minutes. Player lives are
+disposable, and pressing ESCAPE after death will instantly begin a new
+game.
+
+You must infiltrate an enemy research facility with four increasingly
+difficult levels. Each level is semi-randomly generated as in a
+roguelike, but levels are not entirely grid-based. Your goal is to
+defeat all enemies, retrieve one or more encrypted data files, and
+transmit them back to your home base at a terminal located somewhere
+on each level. Each transmission results in a random bit of story
+being shown to the player in the form of a fictional email, and a
+story could be sketched in this way with a small library of these
+emails.
+
+Your character is trailed by a positronic filament "tail" (represented
+by a yellow line following your square) which can destroy bullets and
+certain other moving objects. By sweeping the filament across the path
+of an oncoming particle or bullet, you can annihilate them and reduce
+the danger level. The tail is not overly long (this would make the
+game too easy) and cannot be extended.
+
+An energy meter is shown at the bottom corner of the game window as a
+segmented horizontal bar with an E next to it. Energy is required to
+fire your bullets, and when your energy is too low, the tail shield
+will not function and you will be more vulnerable.
+
+You can regain energy by grabbing an "E" powerup (these should be
+somewhat scarce) or by absorbing particles with your tail.
+
+Your bullets bounce back and forth along a line (either horizontal or
+vertical.) You can catch your own bullets, which restores an
+equivalent amount of energy. So part of the strategy will be in
+destroying colorful blocks and/or objects in paddle-and-brick-game
+fashion.
+
+Your bullets don't directly kill enemies---instead you must trigger
+bombs when they pass by, or direct the enemies into incinerators.
+
+There are forcefield doors between some rooms that open when shot with
+a bullet, and close after a few seconds. Colliding with the forcefield
+kills you.
+
+Player speed should be 1 pixel when shift is held (use in danger areas.)
+
+* Voronoids
+
+In the game of Voronoids, a single player controls an interstellar
+combat ship from a 2-D overhead perspective. The world map is a
+“galactic grid” with each square having one of a number of
+procedurally generated level types (empty space, planet surface,
+clouds, enemy convoy, enemy star cruiser, starbase/trading post).
+(Levels can be simple, mostly open.)
+
+A randomly generated mission (between 10-30 minutes depending on
+difficulty) will have you visiting one or more areas, defeating
+enemies, or retrieving specific objects in order to win.
+
+The arrow keys (or WSAD) move the ship, and the mouse is used to aim
+and fire the weapon (as in Paradroid). Left clicking fires at the
+point under the mouse cursor; right-clicking (or shift-clicking)
+instead activates any object under the cursor. Objects can be picked
+up by flying over them.
+
+There are two resources that must be managed. ENERGY is used when you
+fire weapons or travel between sectors, and is also needed to activate
+certain objects in the game world. The game will end if your SHIELD
+rating drops to zero. In addition, a limited number of special items
+may be carried.
+
+There are three difficulty levels: BASIC, ADVANCED, and EXPERT. For
+BASIC, a mission should be about 10 minutes long; EXPERT games may be
+as long as 30 minutes. (Your character is not saved—the point is to
+experience different stories with disposable characters, with each
+story having a few discrete goals and an objectively scored outcome.)
+
+The sound will consist of subtle engine hisses and hums and quiet
+drones with contextual musical clues. I’m planning to use FM synthesis
+(Hexter) and also Milkytracker. Alarm sounds, flashing, status, deep
+bass engines.
+
+Collecting items, energy, and minerals will be a significant play
+activity, along with dogfights against 1-3 enemies at a time.
+
+* Infltr8r
+
