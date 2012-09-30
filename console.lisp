@@ -618,7 +618,7 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 (defun get-ticks ()
   (sdl:sdl-get-ticks))
 
-(defvar *dt* 20)
+(defvar *dt* 33)
 
 (defvar *next-update-hook* nil)
 
