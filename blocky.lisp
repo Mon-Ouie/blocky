@@ -22,6 +22,7 @@
 ;; Boston, MA 02110-1301, USA.
 
 ;; This program is dedicated to our beloved Yogi, who died 2006-10-06.
+;; Re-dedicated June 2012 to our beloved Cookie-Puss.
 
 ;;; Requirements:
 
