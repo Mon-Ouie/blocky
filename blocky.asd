@@ -35,6 +35,5 @@
 	       (:file "trees" :depends-on ("blocks"))
 	       (:file "listener" :depends-on ("blocks"))
 	       (:file "worlds" :depends-on ("blocks"))
-	       (:file "syntax" :depends-on ("blocks"))
-	       (:file "browser" :depends-on ("syntax"))))
+	       (:file "syntax" :depends-on ("blocks"))))
 	       
