@@ -53,6 +53,9 @@
 
 (defun world () *world*)
 
+(defun visit (&optional (world (world)))
+  (browse world))
+
 ;;; Keyboard state
 
 ;; (see also keys.lisp for the symbol listing)
@@ -1260,7 +1263,7 @@ resource is stored; see also `find-resource'."
 		(message "Finished creating directory ~A." dir)
 		(message "Finished creating project ~A." project)))))))
 
-(defun load-project-image (project &key folder (run t))
+(defun load-project-image (project &key folder (run t) without-database with-database)
   "Load the project named PROJECT. Load any resources marked with a
 non-nil :autoload property. This operation also sets the default
 object save directory. See also `save-object-resource')."
@@ -1288,8 +1291,12 @@ object save directory. See also `save-object-resource')."
   (run-hook '*after-load-project-hook*)
   ;; load objects
   (load-project-objects project)
-  (load-database)
-  (load-variables)
+  ;; TODO support :with-database arg as well
+  (unless without-database
+    (load-database)
+    (load-variables))
+  (when without-database
+    (message "Starting without database or variables loading, due to user command."))
   (message "Started up successfully. Indexed ~A resources." (hash-table-count *resources*))
   ;; save to recent list
   (pushnew project *recent-projects* :test 'equal))
@@ -2432,12 +2439,15 @@ of the music."
      ,@body
      (shut-down)))
 
-(defun play-project (&optional (project *untitled-project-name*))
-  (with-session
-    (load-project-image project)
-    (when (null *blocks*)
-      (start (new 'world)))
-    (start-session)))
+(defun play-project (&optional (project *untitled-project-name*) &rest parameters)
+  (destructuring-bind (&key without-database with-database) parameters
+    (with-session
+	(load-project-image project 
+			    :without-database without-database
+			    :with-database with-database)
+      (when (null *blocks*)
+	(start (new 'world)))
+      (start-session))))
 
 (defun edit (project)
   (with-session
