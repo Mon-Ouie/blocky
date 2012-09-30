@@ -2,7 +2,7 @@
                
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012  David O'Toole
 
-;; Author: David O'Toole <dto@blxorms.org>
+;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: multimedia, games
 ;; Version: 2.11
 
