@@ -73,6 +73,7 @@
 		    ((:v :control :shift) :paste-here)
 		    ((:g :control) :escape)
 		    ((:escape) :toggle-listener)
+		    ((:d :control) :drop-selection)
 		    ((:m :alt) :add-message)
 		    ((:s :alt) :add-statement)
 		    ((:v :alt) :add-variable)
@@ -82,7 +83,7 @@
 		    ))
   ;; prototype control
   (excluded-fields :initform
-		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :listener :drag :hover :highlight 
+		   '(:events :quadtree :click-start :click-start-block :drag-origin :player :drag-start :drag-offset :focused-block :listener :drag :hover :highlight 
 		     ;; shell objects are not saved:
 		     :inputs)
 		   :documentation "Don't serialize the menu bar.")
@@ -327,6 +328,14 @@
 (define-method drop-block world (object x y)
   (add-object self object)
   (move-to object x y))
+
+(define-method drop-object world (object)
+  (add-object self object)
+  (after-drop-hook object))
+
+(define-method drop-selection world ()
+  (dolist (each (get-selection self))
+    (drop-object self each)))
 
 (define-method add-at-pointer world (object)
   (add-block self object *pointer-x* *pointer-y* :prepend)
