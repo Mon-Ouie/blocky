@@ -30,6 +30,7 @@
   (player :documentation "The player object, if any.")
   (background-image :initform nil)
   (background-color :initform "white")
+  (redraw-player :initform t)
   (category :initform :data)
   (x :initform 0)
   (y :initform 0)
@@ -719,6 +720,9 @@ slowdown. See also quadtree.lisp")
 	  ;; only draw onscreen objects
 	  (when (colliding-with-bounding-box object box)
 	    (draw object))))
+      ;; possibly redraw player to ensure visibility.
+      (when (and %player %redraw-player)
+	(draw %player))
       ;; (if %parent
       ;; 	  (gl:pop-matrix)
       ;; possibly draw shell

@@ -120,9 +120,7 @@
 (define-handle drop :drop)
 
 (define-method tap drop (x0 y0)
-  (unless (has-object (world) %target)
-    (add-object (world) %target)
-    (after-drop-hook %target)))
+  (drop-selection (world)))
 
 (define-method update drop ()
   (when (%quadtree-node %target)
