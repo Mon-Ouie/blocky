@@ -40,6 +40,9 @@ to get an overview of the language syntax. Then look through
 BLOCKS.LISP and branch out from there. I've placed cross references
 wherever possible.
 
+Blocky is relatively stable at this point, but documentation is
+somewhat lacking.
+
 Emacs users may find BLOCKY.EL useful in making Emacs behave better
 while editing Blocky sources and game modules.
 
@@ -52,7 +55,6 @@ Here is a quick index of the various files:
 - keys.lisp: SDL key symbol translation table
 - math.lisp: bresenham's and other algorithms
 - logic.lisp: several CL tools adapted from PAIP
-- dance.lisp: rhythm tools for USB dance pads and other controllers
 - prototypes.lisp: a custom Self-like object system underlying Blocky
 - console.lisp: basic device and file operations for SDL, OpenGL, etc
 - blocks.lisp: core Blocky language model and default block behaviors
@@ -60,23 +62,18 @@ Here is a quick index of the various files:
 - windows.lisp: generic interactive viewer for buffers
 - text.lisp: generic emacs-like textbox editing control
 - trees.lisp: drop-down menus and tree tab widgets
-- listener.lisp: Lisp data entry and command processing
-- system.lisp: treating the system and session like an object
-- worlds.lisp: places where gameplay happens
-- shell.lisp: drag-and-drop enabled editor shell
+- listener.lisp: Lisp data entry, data objects, and command processing
+- worlds.lisp: simulation of interacting objects
 - path.lisp: A-star pathfinding on a grid
-- meta.lisp: visual macros for implementing blocky-in-blocky
-- library.lisp: standard blocks library
+- syntax.lisp: visual macros
 - blocky.el: emacs lisp configuration for editing blocky source
 - blocky.asd: ASDF system definition
 - blocky-init.lisp: user-specific startup configuration file for blocky
 - tasks.org: current task list and plans, in org-mode format
-- blocky.org: write-up of some future plans for Blocky
 - standard: directory with included fonts/images
-- turtle: hello world example
-- vomac: second example
 - build-unix.lisp: build script for unix
-- build-win32.lisp: build script for win32
+- build-win32.lisp: build script for win32 (obsolete)
 
 Blocky is (C) Copyright 2006-2012 by David T. O'Toole <dto@ioforms.org>
 This program is dedicated to our beloved Yogi, who died 2006-10-06.
+Re-dedicated June 2012 to our beloved Cookie-Puss.
