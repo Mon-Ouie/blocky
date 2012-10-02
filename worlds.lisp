@@ -329,8 +329,10 @@
   (add-object self object)
   (move-to object x y))
 
-(define-method drop-object world (object)
+(define-method drop-object world (object &optional x y)
   (add-object self object)
+  (when (and (numberp x) (numberp y))
+    (move-to object x y))
   (after-drop-hook object))
 
 (define-method drop-selection world ()
