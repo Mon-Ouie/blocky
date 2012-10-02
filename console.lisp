@@ -51,11 +51,6 @@
       (progn ,@body)
     (continue () :report "Continue"  )))
 
-(defun world () *world*)
-
-(defun visit (&optional (world (world)))
-  (browse world))
-
 ;;; Keyboard state
 
 ;; (see also keys.lisp for the symbol listing)
@@ -1200,7 +1195,7 @@ resource is stored; see also `find-resource'."
   (etypecase (first entries)
     ;; it's just a name. auto-detect the type 
     (string (prog1 (first entries)
-	      (find-resource-automatically (first entries))))
+	      (find-resource-automatically (first entries) (rest entries))))
     ;; it's a single resource.
     (keyword (defresource-ex entries))
     ;; multiple resources are included.
@@ -1888,10 +1883,10 @@ so that it can be fed to the console."
     (when extension
       (car (cdr (assoc extension *resource-extensions* :test 'equal))))))
 	   
-(defun find-resource-automatically (name)
+(defun find-resource-automatically (name &optional properties)
   (let ((type (resource-type-from-name name)))
     (when type
-      (let ((resource (make-resource :name name :file name :type type)))
+      (let ((resource (make-resource :name name :file name :type type :properties properties)))
 	(prog1 resource
 	  (index-resource resource))))))
 
@@ -2487,6 +2482,11 @@ of the music."
 (defun update-parameters ()
   (when (world)
     (send :update-future (world))))
+
+(defun world () *world*)
+
+(defun visit (&optional (world (world)))
+  (at-next-update (start-alone world)))
 
 ;; (defun stop ()
 ;;   (error "Not yet implemented."))
