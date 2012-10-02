@@ -1860,7 +1860,8 @@ so that it can be fed to the console."
     ;; fill in the object field by invoking the handler, if needed
     (when (null (resource-object resource))
       (setf (resource-object resource)
-	    (funcall handler resource)))
+	    (funcall handler resource))
+      (assert (resource-object resource)))
     (when (null (resource-object resource))
       (error "Failed to load resource ~S." (resource-name resource)))))
 	;; (message "Loaded resource ~S with result type ~S." 
@@ -1905,7 +1906,8 @@ be found."
 	  (when (null (resource-object res))
 	    (load-resource res)))
 	;; no, try auto loading based on the name
-	(or (find-resource-automatically name)
+	(or (let ((res (find-resource-automatically name)))
+	      (when res (prog1 res (load-resource res))))
 	    ;; can't find and can't autoload
 	    (if noerror
 		nil
@@ -1998,7 +2000,9 @@ of the music."
   "When sound is enabled, play the sample resource SAMPLE-NAME."
   (when *use-sound*
     (let ((resource (find-resource sample-name)))
+;      (load-resource resource)
       (assert (eq :sample (resource-type resource)))
+      (assert (not (null (resource-object resource))))
       (apply #'sdl-mixer:play-sample 
 	     (resource-object resource)
 	     args))))
