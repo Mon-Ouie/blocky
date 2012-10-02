@@ -15,6 +15,7 @@
 (setf *fullscreen* nil) ;; "nil" means "false"
 (setf *message-logging* t)
 (setf *user-keyboard-layout* :qwerty)
+(setf *debug-on-error* t)
 
 ;; Joystick configuration
 
