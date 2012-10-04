@@ -37,12 +37,13 @@
 halt-sample *dt* *copyright-notice* *author* *message-hook-functions*
 add-to-list modify-joystick-profile defproject start stop selection
 clear-clipboard copy-to-clipboard at-next-update *next-update-hook*
-autoload *already-serialized* browse back *update-function* *target*
-*blocks* shut-down later later-at later-when start-up seconds->frames
-keyboard-held-p keyboard-pressed-p holding-control transform-window
-*scale-output-to-window* keyboard-released-p *edit* with-font *font*
-find-heading keyboard-time-in-current-state pretty-string ugly-symbol
-*pointer-x* *pointer-y* is-joystick-event *self* is-raw-joystick-event
+eval-in-emacs autoload *already-serialized* browse back
+*update-function* *target* *blocks* shut-down later later-at
+later-when start-up seconds->frames keyboard-held-p keyboard-pressed-p
+holding-control transform-window *scale-output-to-window*
+keyboard-released-p *edit* with-font *font* find-heading
+keyboard-time-in-current-state pretty-string ugly-symbol *pointer-x*
+*pointer-y* is-joystick-event *self* is-raw-joystick-event
 keyboard-time-in-previous-state *updates* keyboard-down-p *buffers*
 keyboard-keys-down keyboard-modifier-down-p find-buffer find-world
 *socket-size* keyboard-modifiers draw-filled-circle draw-aa-circle

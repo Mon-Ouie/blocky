@@ -51,6 +51,14 @@
       (progn ,@body)
     (continue () :report "Continue"  )))
 
+;;; Evaluating code in Emacs (when available)
+
+(defun eval-in-emacs (expression)
+  (if (find-package :swank)
+      (let ((sym (intern "eval-in-emacs" (find-package :swank))))
+	(funcall sym expression))
+      (message "(eval-in-emacs) failed; swank/emacs not available?")))
+
 ;;; Keyboard state
 
 ;; (see also keys.lisp for the symbol listing)
