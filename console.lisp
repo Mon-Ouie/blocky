@@ -1722,10 +1722,13 @@ control the size of the individual frames or subimages."
 *joystick-dead-zone* *pointer-y* *resizable* *window-title* *buffers*
 *scale-output-to-window* *persistent-variables*))
 
-(defvar *persistent-variables* '(*frame-rate* *updates* *screen-width*
-*screen-height* *world* *blocks* *dt* *pointer-x* *author* 
-*project* *buffers* *scale-output-to-window* *pointer-y* *resizable*
-*window-title*
+(defvar *persistent-variables* '(*frame-rate* *updates* 
+				 
+				 ;; *screen-width* *screen-height*
+				 *world* *blocks* *dt* *pointer-x* *author* 
+				 *project* *buffers* *scale-output-to-window* 
+				 *pointer-y* *resizable*
+				 *window-title*
 				 ;; notice that THIS variable is also
 				 ;; persistent!  this is to avoid
 				 ;; unwanted behavior changes in
