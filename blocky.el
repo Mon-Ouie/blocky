@@ -24,37 +24,8 @@
 ;;; Code:
 
 (require 'rx)
-
-;;; Grabbing UUIDs and inspecting the corresponding objects
-
-(defvar blocky-uuid-regexp 
-  "[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]")
-
-(defun blocky-inspect-uuid (uuid)
-  (interactive "sInspect blocky UUID: ")
-  (if (null uuid)
-      (message "No UUID provided.")
-      (progn 
-	(assert (stringp uuid))
-	(slime-inspect
-	 (format "(blocky::find-object %S)" uuid)))))
-
-(defun blocky-uuid-at-point ()
-  (let ((thing (thing-at-point 'word)))
-    (when (and (not (null thing))
-	       (string-match blocky-uuid-regexp thing))
-      thing)))
-	  
-(defun blocky-uuid-on-this-line ()
-  (string-match blocky-uuid-regexp
-		(buffer-substring-no-properties
-		 (point-at-bol)
-		 (point-at-eol))))
-
-(defun blocky-inspect ()
-  (interactive)
-  (blocky-inspect-uuid (or (blocky-uuid-at-point)
-			   (blocky-uuid-on-this-line))))
+(require 'cl)
+(require 'color-theme-blocky)
 
 (defun eval-in-cl (cl-expression-string &optional process-result-values)
   (slime-eval-async `(swank:eval-and-grab-output ,cl-expression-string)
@@ -126,6 +97,115 @@
   (interactive)
   "Highlight the keywords used in prototype-oriented programming."
   (font-lock-add-keywords nil blocky-font-lock-keywords))
+
+;; Emacs glass frame is transparent
+
+(defun glass-initialize ()
+  (setq slime-enable-evaluate-in-emacs t))
+
+(defvar *glass-transparent-alpha* 50)
+(defvar *glass-opaque-alpha* 100)
+
+(defun glass-transparent ()
+  (interactive)
+  (set-frame-parameter nil 'alpha *glass-transparent-alpha*))
+
+(defun glass-opaque ()
+  (interactive)
+  (set-frame-parameter nil 'alpha *glass-opaque-alpha*))
+
+;;; Glass frame can be fixed on top of other windows
+
+(defvar *wm-toggle* 2)
+(defvar *wm-add* 1)
+(defvar *wm-remove* 0)
+
+(defun* glass-set-on-top-property (&optional frame (state *wm-toggle*))
+  (x-send-client-message
+   frame 0 frame "_NET_WM_STATE" 32
+   (list state "_NET_WM_STATE_ABOVE" 0 1)))
+
+(defun glass-on-top (&optional frame)
+  (glass-set-on-top-property frame *wm-add*))
+
+(defun glass-off-top (&optional frame)
+  (glass-set-on-top-property frame *wm-add*))
+
+;;; Without window-borders
+
+(defun make-hinted-frame (hints)
+   (let ((frame (make-frame '((visibility . nil)))))
+     (prog1 frame
+       (x-change-window-property "_MOTIF_WM_HINTS" hints ff
+                                 "_MOTIF_WM_HINTS" 32 t)
+       (make-frame-visible frame))))
+
+(defvar *wm-without-decoration* '(2 0 0 0 0))
+
+(defun make-frame-without-decoration ()
+  (interactive)
+  (make-hinted-frame *wm-without-decoration*))
+
+(defun glass-focus (&optional frame)
+  (redirect-frame-focus frame)
+  (raise-frame frame)
+  (make-frame-visible frame)
+  (select-frame frame)
+  (select-frame-set-input-focus frame))
+
+(make-variable-buffer-local (defvar *glass-local-mode-line-format* nil))
+
+(defvar *glass-frame* nil)
+
+(defun* glass-show (&optional (buffer (current-buffer)))
+  (let ((frame (make-frame-without-decoration)))
+    (setf *glass-frame* frame)
+    (delete-other-windows)
+    (switch-to-buffer buffer)
+    (setq indicate-buffer-boundaries 'left)
+    (setq *glass-local-mode-line-format* mode-line-format)
+    (setq mode-line-format nil)
+    (glass-transparent)
+    (glass-focus frame)
+    (glass-on-top)))
+    
+(defun* glass-hide ()
+    (when *glass-frame*
+      (when (null mode-line-format)
+	(setq mode-line-format *glass-local-mode-line-format*))
+      (delete-frame *glass-frame*)
+      (setf *glass-frame* nil)))
+
+;;; Grabbing UUIDs and inspecting the corresponding objects
+
+(defvar blocky-uuid-regexp 
+  "[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]")
+
+(defun blocky-inspect-uuid (uuid)
+  (interactive "sInspect blocky UUID: ")
+  (if (null uuid)
+      (message "No UUID provided.")
+      (progn 
+	(assert (stringp uuid))
+	(slime-inspect
+	 (format "(blocky::find-object %S)" uuid)))))
+
+(defun blocky-uuid-at-point ()
+  (let ((thing (thing-at-point 'word)))
+    (when (and (not (null thing))
+	       (string-match blocky-uuid-regexp thing))
+      thing)))
+	  
+(defun blocky-uuid-on-this-line ()
+  (string-match blocky-uuid-regexp
+		(buffer-substring-no-properties
+		 (point-at-bol)
+		 (point-at-eol))))
+
+(defun blocky-inspect ()
+  (interactive)
+  (blocky-inspect-uuid (or (blocky-uuid-at-point)
+			   (blocky-uuid-on-this-line))))
 
 (provide 'blocky)
 ;;; blocky.el ends here
