@@ -193,6 +193,19 @@
 	%window-y y)
   (when z (setf %window-z z)))
 
+(define-method move-window-to-object world (object)
+  (multiple-value-bind (top left right bottom) 
+      (bounding-box object)
+    (declare (ignore right bottom))
+    (move-window-to 
+     self 
+     (max 0 (- left (/ *gl-screen-width* 2)))
+     (max 0 (- top (/ *gl-screen-width* 2))))))
+
+(define-method move-window-to-player world ()
+  (when %player
+    (move-window-to-object self %player)))
+
 (define-method move-window world (dx dy &optional dz)
   (incf %window-x dx)
   (incf %window-y dy)
@@ -211,6 +224,10 @@
      self 
      (max 0 (- left (/ *gl-screen-width* 2)))
      (max 0 (- top (/ *gl-screen-width* 2))))))
+
+(define-method glide-window-to-player world ()
+  (when %player
+    (glide-window-to-object self %player)))
 
 (define-method glide-follow world (object)
   (with-fields (window-x window-y width height) self
