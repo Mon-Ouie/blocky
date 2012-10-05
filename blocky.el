@@ -117,8 +117,7 @@
 
 (defun glass-theme ()
   (when blocky-use-color-theme 
-    (require 'color-theme-blocky)
-    (color-theme-blocky)
+    (load "color-theme-blocky.el")
     (set-frame-font *glass-font*)))
 
 ;;; Glass frame can be fixed on top of other windows
