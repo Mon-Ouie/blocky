@@ -136,8 +136,10 @@
 (defun make-hinted-frame (hints)
    (let ((frame (make-frame '((visibility . nil)))))
      (prog1 frame
-       (x-change-window-property "_MOTIF_WM_HINTS" hints ff
-                                 "_MOTIF_WM_HINTS" 32 t)
+       (x-change-window-property 
+	"_MOTIF_WM_HINTS" hints 
+	frame
+	"_MOTIF_WM_HINTS" 32 t)
        (make-frame-visible frame))))
 
 (defvar *wm-without-decoration* '(2 0 0 0 0))
@@ -146,35 +148,57 @@
   (interactive)
   (make-hinted-frame *wm-without-decoration*))
 
-(defun glass-focus (&optional frame)
+(defvar *glass-frame* nil)
+
+(defun remove-scroll-bars (&optional off)
+  (interactive)
+  (modify-frame-parameters 
+   (selected-frame)
+   `((vertical-scroll-bars . ,(if off
+				  nil
+				  'left)))))
+
+(defun* make-glass-frame (&key width height)
+  (let ((frame (make-frame-without-decoration)))
+    (prog1 frame
+      (select-frame frame)
+      (remove-scroll-bars)
+      (when width (set-frame-width frame width))
+      (when height (set-frame-height frame height))
+      (menu-bar-mode -1)
+      (glass-transparent)
+      (glass-on-top))))
+
+(defun glass-raise (&optional frame)
   (redirect-frame-focus frame)
   (raise-frame frame)
   (make-frame-visible frame)
   (select-frame frame)
   (select-frame-set-input-focus frame))
 
-(make-variable-buffer-local (defvar *glass-local-mode-line-format* nil))
-
-(defvar *glass-frame* nil)
-
-(defun* glass-show (&optional (buffer (current-buffer)))
-  (let ((frame (make-frame-without-decoration)))
-    (setf *glass-frame* frame)
-    (delete-other-windows)
+(make-variable-buffer-local 
+ (defvar *glass-local-mode-line-format* nil))
+    
+(defun* glass-show (&key (buffer (current-buffer)) (width 80) (height 12))
+  (when (null *glass-frame*)
+    (setf *glass-frame* (make-glass-frame :width width :height height))
     (switch-to-buffer buffer)
     (setq indicate-buffer-boundaries 'left)
     (setq *glass-local-mode-line-format* mode-line-format)
     (setq mode-line-format nil)
-    (glass-transparent)
-    (glass-focus frame)
-    (glass-on-top)))
-    
+    (glass-raise *glass-frame*)))
+
 (defun* glass-hide ()
-    (when *glass-frame*
-      (when (null mode-line-format)
-	(setq mode-line-format *glass-local-mode-line-format*))
-      (delete-frame *glass-frame*)
-      (setf *glass-frame* nil)))
+  (when *glass-frame*
+    (when (null mode-line-format)
+      (setq mode-line-format *glass-local-mode-line-format*))
+    (lower-frame *glass-frame*)))
+
+(defun* glass-destroy ()
+  (when *glass-frame*
+    (glass-hide)
+    (delete-frame *glass-frame*)
+    (setf *glass-frame* nil)))
 
 ;;; Grabbing UUIDs and inspecting the corresponding objects
 
