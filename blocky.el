@@ -25,7 +25,8 @@
 
 (require 'rx)
 (require 'cl)
-(require 'color-theme-blocky)
+
+(defvar blocky-use-color-theme nil)
 
 (defun eval-in-cl (cl-expression-string &optional process-result-values)
   (slime-eval-async `(swank:eval-and-grab-output ,cl-expression-string)
@@ -103,8 +104,6 @@
 (defun glass-initialize ()
   (setq slime-enable-evaluate-in-emacs t))
 
-(glass-initialize)
-
 (defvar *glass-transparent-alpha* 55)
 (defvar *glass-opaque-alpha* 100)
 
@@ -117,8 +116,10 @@
 (defvar *glass-font* "Mono 8")
 
 (defun glass-theme ()
-  (color-theme-blocky)
-  (set-frame-font *glass-font*))
+  (when blocky-use-color-theme 
+    (require 'color-theme-blocky)
+    (color-theme-blocky)
+    (set-frame-font *glass-font*)))
 
 ;;; Glass frame can be fixed on top of other windows
 
