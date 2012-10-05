@@ -80,6 +80,7 @@
 		    ((:l :alt) :add-self)
 		    ((:f :alt) :add-field)
 		    ((:e :alt) :add-expression)
+		    ((:f12) :toggle-other-windows)
 		    ))
   ;; prototype control
   (excluded-fields :initform
@@ -118,6 +119,9 @@
   (method :initform nil)
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
+
+(define-method toggle-other-windows world ()
+  (glass-toggle))
 
 (defun selection ()
   (get-selection (world)))

@@ -55,9 +55,18 @@
 
 (defun eval-in-emacs (expression)
   (if (find-package :swank)
-      (let ((sym (intern "eval-in-emacs" (find-package :swank))))
+      (let ((sym (intern "EVAL-IN-EMACS" (find-package :swank))))
 	(funcall sym expression))
       (message "(eval-in-emacs) failed; swank/emacs not available?")))
+
+(defun glass-toggle ()
+  (eval-in-emacs '(glass-toggle)))
+
+(defun glass-show ()
+  (eval-in-emacs '(glass-show)))
+
+(defun glass-hide ()
+  (eval-in-emacs '(glass-hide)))
 
 ;;; Keyboard state
 

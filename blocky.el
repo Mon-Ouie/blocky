@@ -103,16 +103,22 @@
 (defun glass-initialize ()
   (setq slime-enable-evaluate-in-emacs t))
 
+(glass-initialize)
+
 (defvar *glass-transparent-alpha* 50)
 (defvar *glass-opaque-alpha* 100)
 
 (defun glass-transparent ()
-  (interactive)
   (set-frame-parameter nil 'alpha *glass-transparent-alpha*))
 
 (defun glass-opaque ()
-  (interactive)
   (set-frame-parameter nil 'alpha *glass-opaque-alpha*))
+
+(defvar *glass-font* "Mono 8")
+
+(defun glass-theme ()
+  (color-theme-blocky)
+  (set-frame-font *glass-font*))
 
 ;;; Glass frame can be fixed on top of other windows
 
@@ -129,7 +135,7 @@
   (glass-set-on-top-property frame *wm-add*))
 
 (defun glass-off-top (&optional frame)
-  (glass-set-on-top-property frame *wm-add*))
+  (glass-set-on-top-property frame *wm-remove*))
 
 ;;; Without window-borders
 
@@ -167,35 +173,54 @@
       (when height (set-frame-height frame height))
       (menu-bar-mode -1)
       (glass-transparent)
+      (glass-theme)
       (glass-on-top))))
+  
+(defvar *glass-showing* nil)
+
+(defun glass-live-p ()
+  (and *glass-frame* (frame-live-p *glass-frame*)))
 
 (defun glass-raise (&optional frame)
   (redirect-frame-focus frame)
   (raise-frame frame)
   (make-frame-visible frame)
   (select-frame frame)
+  (glass-on-top)
   (select-frame-set-input-focus frame))
 
 (make-variable-buffer-local 
  (defvar *glass-local-mode-line-format* nil))
-    
+  
 (defun* glass-show (&key (buffer (current-buffer)) (width 80) (height 12))
-  (when (null *glass-frame*)
-    (setf *glass-frame* (make-glass-frame :width width :height height))
-    (switch-to-buffer buffer)
-    (setq indicate-buffer-boundaries 'left)
-    (setq *glass-local-mode-line-format* mode-line-format)
-    (setq mode-line-format nil)
-    (glass-raise *glass-frame*)))
+  (interactive)
+  (when (not (glass-live-p))
+    (setf *glass-frame* (make-glass-frame :width width :height height)))
+  (glass-raise *glass-frame*)
+  (setf *glass-showing* t)
+  (switch-to-buffer buffer)
+  (setq indicate-buffer-boundaries 'left)
+  (setq *glass-local-mode-line-format* mode-line-format)
+  (setq mode-line-format nil))
 
 (defun* glass-hide ()
-  (when *glass-frame*
+  (interactive)
+  (when (glass-live-p)
     (when (null mode-line-format)
       (setq mode-line-format *glass-local-mode-line-format*))
-    (lower-frame *glass-frame*)))
+    (glass-off-top)
+    (lower-frame *glass-frame*)
+    (setf *glass-showing* nil)))
+
+(defun glass-toggle ()
+  (interactive)
+  (message "SHOWING: %S" *glass-showing*)
+  (if *glass-showing* (glass-hide) (glass-show)))
+
+(global-set-key [f12] 'glass-toggle)
 
 (defun* glass-destroy ()
-  (when *glass-frame*
+  (when (glass-live-p)
     (glass-hide)
     (delete-frame *glass-frame*)
     (setf *glass-frame* nil)))
@@ -230,6 +255,13 @@
   (interactive)
   (blocky-inspect-uuid (or (blocky-uuid-at-point)
 			   (blocky-uuid-on-this-line))))
+
+  ;; (set-frame-parameter nil 'background-mode 'dark)
+  ;; (set-frame-parameter nil 'background-color "gray40")
+  ;; (set-frame-parameter nil 'foreground-color "white")
+  ;; (set-frame-parameter nil 'border-color "gray20")
+  ;; (set-frame-parameter nil 'cursor-color "magenta"))
+
 
 (provide 'blocky)
 ;;; blocky.el ends here
