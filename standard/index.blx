@@ -126,7 +126,7 @@
 (:name "move" :type :image :file "move.png" :properties (:filter :linear))
 (:name "resize" :type :image :file "resize.png" :properties (:filter :linear))
 (:name "bang" :type :image :file "bang.png" :properties (:filter :linear))
-(:name "reference" :type :image :file "reference.png" :properties (:filter :linear))
+(:name "define" :type :image :file "define.png" :properties (:filter :linear))
 (:name "close" :type :image :file "close.png" :properties (:filter :linear))
 (:name "circle-flat-128" :type :image :file "circle-flat-128.png" :properties (:filter :linear))
 (:name "top-left-triangle-indicator" :type :image :file "top-left-triangle-indicator.png" :properties (:filter :linear))

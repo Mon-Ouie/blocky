@@ -1187,6 +1187,14 @@ slot value is inherited."
 	 (subseq name (1+ colon))
 	 name))))
 
+(defun prototype-variable-name (name)
+  (string-upcase 
+   (concatenate 'string "%%%" 
+		(let ((colon (position #\: name)))
+		  (if colon 
+		      (subseq name (1+ colon))
+		      name)))))
+
 (defmacro define-prototype (name
 			    (&key super 
 				  documentation
@@ -1258,6 +1266,10 @@ OPTIONS is a property list of field options. Valid keys are:
        ;; now add it to the dictionaries
        (add-prototype prototype)
        (add-object-to-database prototype)
+       ;; declare a variable so that SLIME can find the definition later
+       (defparameter ,(intern (prototype-variable-name prototype-id))
+;			      (find-package :blocky))
+	 uuid)
        ;; return the uuid and object
        (values uuid prototype))))
 

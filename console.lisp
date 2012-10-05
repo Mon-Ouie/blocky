@@ -2114,7 +2114,7 @@ of the music."
 (defparameter *indicators* 
   '(:asterisk :bang :top-left-triangle :bottom-right-triangle
     :down-triangle-open :down-triangle-closed :copy :paste :cut
-    :menu :collapse :move :resize :reference :close))
+    :menu :collapse :move :resize :define :close))
 
 (defparameter *indicator-images* 
   '(:asterisk "asterisk"
@@ -2131,7 +2131,7 @@ of the music."
     :drop "downright"
     :pick-up "upleft"
     :resize "resize"
-    :reference "reference"
+    :define "define" 
     :close "close"
     :bottom-right-triangle "bottom-right-triangle-indicator"))
 
@@ -2485,6 +2485,9 @@ of the music."
 
 (defun play ()
   (prog1 nil (transport-play (world))))
+
+(defun toggle-play ()
+  (prog1 nil (transport-toggle-play (world))))
 
 (defun update-parameters ()
   (when (world)

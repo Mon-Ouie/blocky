@@ -80,6 +80,7 @@
 		    ((:l :alt) :add-self)
 		    ((:f :alt) :add-field)
 		    ((:e :alt) :add-expression)
+		    ((:pause) :transport-toggle-play)
 		    ((:f12) :toggle-other-windows)
 		    ))
   ;; prototype control
@@ -148,6 +149,11 @@
   (dolist (each %rewound-selection)
     (add-object (world) each))
   (setf %rewound-selection nil))
+
+(define-method transport-toggle-play world ()
+  (if %paused 
+      (transport-play self)
+      (transport-pause self)))
 
 (define-method show-future world ()
   (prog1 nil

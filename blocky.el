@@ -210,16 +210,23 @@
   (when (glass-live-p)
     (when (null mode-line-format)
       (setq mode-line-format *glass-local-mode-line-format*))
-    (widen)
+;    (widen)
     (glass-off-top)
-    (lower-frame *glass-frame*)
+    ;; (lower-frame *glass-frame*)
+    ;; lower all frames
+    (mapc #'lower-frame (frame-list))
     (setf *glass-showing* nil)))
 
 (defun glass-toggle ()
   (interactive)
   (if *glass-showing* (glass-hide) (glass-show)))
 
+(defun glass-toggle-play ()
+  (interactive)
+  (eval-in-cl "(blocky:toggle-play)"))
+
 (global-set-key [f12] 'glass-toggle)
+(global-set-key [pause] 'glass-toggle-play)
 
 (defun* glass-destroy ()
   (when (glass-live-p)
@@ -228,10 +235,11 @@
     (setf *glass-frame* nil)))
 
 (defun glass-show-definition (name &rest params)
-  (apply #'glass-show params)
-  (slime-edit-definition name)
+  (ignore-errors 
+   (slime-edit-definition name))
   (narrow-to-defun)
-  (let ((height (max 8 (count-lines-region (point-min) (point-max)))))
+  (apply #'glass-show params)
+  (let ((height (min 16 (max 8 (count-lines (point-min) (point-max))))))
     (set-frame-height *glass-frame* height)))
 
 ;;; Grabbing UUIDs and inspecting the corresponding objects

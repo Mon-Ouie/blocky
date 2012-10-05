@@ -38,7 +38,7 @@
     :drop (0 1)
     :pick-up (2/6 1)
     :resize (1 1)
-    :reference (0 1/2)
+    :define (0 1/2)
     :close (1 0)
     :copy (1 2/4)
     :cut (1 1/4)
@@ -182,17 +182,12 @@
 	    (- x0 x)
 	    (- y0 y))))
 
-;;; References
+;;; Definitions
 
-(define-handle program :reference)
+(define-handle define :define)
 
-(define-method pick program ()
-  (let ((ref (new 'prog0 %target)))
-    (prog1 ref
-      (move-to ref *pointer-x* *pointer-y*))))
-
-(define-method tap program (x y)
-  (drop self (pick self)))
+(define-method tap define (x y)
+  (show-definition %target))
 
 ;;; Destroying objects
 
@@ -222,7 +217,7 @@
 ;;; The halo, which manages all the handles
 
 (defparameter *halo-handles* 
-  '(:evaluate :open-menu :drop :move :pick-up :resize :program :cut :copy :destroy))
+  '(:evaluate :open-menu :drop :move :pick-up :resize :define :cut :copy :destroy))
 
 (define-block halo target)
 

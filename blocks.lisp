@@ -982,14 +982,26 @@ state (position and heading) and restoring them afterward."
 
 ;;; Show methods in Emacs Glass
 
-(define-method show-definition block (method)
+(define-method show-method block (method)
   (let ((sym (definition method (find-object self))))
     (assert (symbolp sym))
     (let ((name (string-upcase 
-		 (format nil "~S::~S"
+		 (format nil "~A::~A"
 			 (package-name (symbol-package sym))
 			 (symbol-name sym)))))
-      (eval-in-emacs `(glass-show-definition ,name :x ,*pointer-x* :y ,*pointer-y*)))))
+      (eval-in-emacs `(glass-show-definition ,name)))))
+
+(define-method show-definition block ()
+  (let ((name 
+	  (concatenate 'string 
+		       (package-name *package*)
+		       "::"
+		       (prototype-variable-name 
+			(find-super-prototype-name self)))))
+    (message "SHOWING DEF ON CL SIDE: ~S" name)
+    (eval-in-emacs `(glass-show-definition ,name))))
+
+; (define-block foo a b c)
 
 ;;; Visibility
 
