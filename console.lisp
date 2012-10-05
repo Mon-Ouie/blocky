@@ -2489,9 +2489,9 @@ of the music."
 (defun toggle-play ()
   (prog1 nil (transport-toggle-play (world))))
 
-(defun update-parameters ()
-  (when (world)
-    (send :update-future (world))))
+(defun update-parameters () nil)
+  ;; (when (world)
+  ;;   (send :update-future (world))))
 
 (defun world () *world*)
 

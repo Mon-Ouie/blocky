@@ -776,6 +776,7 @@ slowdown. See also quadtree.lisp")
 ;;; Simulation update
 
 (define-method update world ()
+  (setf *world* (find-uuid self))
   (with-field-values (objects drag player) self
     ;; build quadtree if needed
     (when (null %quadtree)
