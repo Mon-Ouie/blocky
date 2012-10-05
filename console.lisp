@@ -51,23 +51,6 @@
       (progn ,@body)
     (continue () :report "Continue"  )))
 
-;;; Evaluating code in Emacs (when available)
-
-(defun eval-in-emacs (expression)
-  (if (find-package :swank)
-      (let ((sym (intern "EVAL-IN-EMACS" (find-package :swank))))
-	(funcall sym expression))
-      (message "(eval-in-emacs) failed; swank/emacs not available?")))
-
-(defun glass-toggle ()
-  (eval-in-emacs '(glass-toggle)))
-
-(defun glass-show ()
-  (eval-in-emacs '(glass-show)))
-
-(defun glass-hide ()
-  (eval-in-emacs '(glass-hide)))
-
 ;;; Keyboard state
 
 ;; (see also keys.lisp for the symbol listing)
@@ -2511,6 +2494,27 @@ of the music."
 
 (defun visit (&optional (world (world)))
   (at-next-update (start-alone world)))
+
+;;; Emacs integration
+
+(defun eval-in-emacs (expression)
+  (if (find-package :swank)
+      (let ((sym (intern "EVAL-IN-EMACS" (find-package :swank))))
+	(funcall sym expression))
+      (message "(eval-in-emacs) failed; swank/emacs not available?")))
+
+(defun glass-toggle ()
+  (eval-in-emacs '(glass-toggle)))
+
+(defun glass-show ()
+  (eval-in-emacs '(glass-show)))
+
+(defun glass-hide ()
+  (eval-in-emacs '(glass-hide)))
+
+(defun glass-show-at (x y)
+  (eval-in-emacs 
+   `(glass-show :x ,x :y ,y)))
 
 ;; (defun stop ()
 ;;   (error "Not yet implemented."))

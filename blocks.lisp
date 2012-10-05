@@ -980,6 +980,17 @@ state (position and heading) and restoring them afterward."
   "Compute the heading angle from this object to the player."
   (heading-to-thing self (get-player *world*)))
 
+;;; Show methods in Emacs Glass
+
+(define-method show-definition block (method)
+  (let ((sym (definition method (find-object self))))
+    (assert (symbolp sym))
+    (let ((name (string-upcase 
+		 (format nil "~S::~S"
+			 (package-name (symbol-package sym))
+			 (symbol-name sym)))))
+      (eval-in-emacs `(glass-show-definition ,name :x ,*pointer-x* :y ,*pointer-y*)))))
+
 ;;; Visibility
 
 (define-method show block ()

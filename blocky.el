@@ -105,7 +105,7 @@
 
 (glass-initialize)
 
-(defvar *glass-transparent-alpha* 50)
+(defvar *glass-transparent-alpha* 55)
 (defvar *glass-opaque-alpha* 100)
 
 (defun glass-transparent ()
@@ -192,10 +192,12 @@
 (make-variable-buffer-local 
  (defvar *glass-local-mode-line-format* nil))
   
-(defun* glass-show (&key (buffer (current-buffer)) (width 80) (height 12))
+(defun* glass-show (&key x y (buffer (current-buffer)) (width 80) (height 12))
   (interactive)
   (when (not (glass-live-p))
     (setf *glass-frame* (make-glass-frame :width width :height height)))
+  (when (and (numberp x) (numberp y))
+    (set-frame-position *glass-frame* (+ 40 x) (+ 40 y)))
   (glass-raise *glass-frame*)
   (setf *glass-showing* t)
   (switch-to-buffer buffer)
@@ -208,13 +210,13 @@
   (when (glass-live-p)
     (when (null mode-line-format)
       (setq mode-line-format *glass-local-mode-line-format*))
+    (widen)
     (glass-off-top)
     (lower-frame *glass-frame*)
     (setf *glass-showing* nil)))
 
 (defun glass-toggle ()
   (interactive)
-  (message "SHOWING: %S" *glass-showing*)
   (if *glass-showing* (glass-hide) (glass-show)))
 
 (global-set-key [f12] 'glass-toggle)
@@ -224,6 +226,13 @@
     (glass-hide)
     (delete-frame *glass-frame*)
     (setf *glass-frame* nil)))
+
+(defun glass-show-definition (name &rest params)
+  (apply #'glass-show params)
+  (slime-edit-definition name)
+  (narrow-to-defun)
+  (let ((height (max 8 (count-lines-region (point-min) (point-max)))))
+    (set-frame-height *glass-frame* height)))
 
 ;;; Grabbing UUIDs and inspecting the corresponding objects
 
@@ -261,7 +270,6 @@
   ;; (set-frame-parameter nil 'foreground-color "white")
   ;; (set-frame-parameter nil 'border-color "gray20")
   ;; (set-frame-parameter nil 'cursor-color "magenta"))
-
 
 (provide 'blocky)
 ;;; blocky.el ends here

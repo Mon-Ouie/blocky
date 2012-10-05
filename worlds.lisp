@@ -126,6 +126,11 @@
 (defun selection ()
   (get-selection (world)))
 
+(defun selected-object ()
+  (let ((sel (selection)))
+    (assert (consp sel))
+    (first sel)))
+
 (defmacro with-world (world &rest body)
   `(let* ((*world* (find-uuid ,world)))
      ,@body))
