@@ -229,15 +229,18 @@
 		       (clone (make-prototype-id handle) target))
 		 *halo-handles*)))
 
+(defun halo-minimum-height () (* 5 *handle-scale* (indicator-size)))
+(defun halo-minimum-width () (* 5 *handle-scale* (indicator-size)))
+
 (define-method layout halo ()
   (with-fields (x y width height) %target
     (let ((size (* *handle-scale* (indicator-size))))
       (setf %x (- x size))
       (setf %y (- y size))
-      ;; add twice the halo border to make sure
-      ;; we get clicks all the way to the right of the halo
-      (setf %width (+ width (* 2 size)))
-      (setf %height (+ height (* 2 size)))
+      ;; add twice the halo border to make sure we get clicks all the
+      ;; way to the right of the halo
+      (setf %width (max (+ width (* 2 size)) (halo-minimum-width)))
+      (setf %height (max (+ height (* 2 size)) (halo-minimum-height)))
       ;; now lay out the individual items
       (mapc #'layout %inputs))))
 
