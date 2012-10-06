@@ -22,10 +22,7 @@
 
 ;; Emacs glass frame is transparent
 
-(defun glass-initialize ()
-  (setq slime-enable-evaluate-in-emacs t))
-
-(defvar glass-transparent-alpha 55)
+(defvar glass-transparent-alpha 80)
 (defvar glass-opaque-alpha 100)
 
 (defun glass-transparent ()
@@ -34,35 +31,36 @@
 (defun glass-opaque ()
   (set-frame-parameter nil 'alpha glass-opaque-alpha))
 
-(defvar glass-font "Mono 8")
+(defvar glass-font nil)
 
-(defvar blocky-use-theme nil)
+(defvar glass-use-themes nil)
 
 (defun glass-theme ()
-  (when blocky-use-theme 
+  (when glass-use-themes
     (unless (custom-theme-p 'glass)
-      (load-theme 'glass :no-confirm :no-enable))
-    (enable-theme 'glass t)))
+      (load-theme 'glass :no-confirm :no-enable)
+      (enable-theme 'glass))))
 
 (defun glass-font ()
-  (set-frame-font glass-font))
+  (when glass-font 
+    (set-frame-font glass-font)))
 
 ;;; Glass frame can be fixed on top of other windows
 
-(defvar wm-toggle 2)
-(defvar wm-add 1)
-(defvar wm-remove 0)
+(defvar glass-wm-toggle 2)
+(defvar glass-wm-add 1)
+(defvar glass-wm-remove 0)
 
-(defun* glass-set-on-top-property (&optional frame (state wm-toggle))
+(defun* glass-set-on-top-property (&optional frame (state glass-wm-toggle))
   (x-send-client-message
    frame 0 frame "_NET_WM_STATE" 32
    (list state "_NET_WM_STATE_ABOVE" 0 1)))
 
 (defun glass-on-top (&optional frame)
-  (glass-set-on-top-property frame wm-add))
+  (glass-set-on-top-property frame glass-wm-add))
 
 (defun glass-off-top (&optional frame)
-  (glass-set-on-top-property frame wm-remove))
+  (glass-set-on-top-property frame glass-wm-remove))
 
 ;;; Without window-borders
 
@@ -75,13 +73,15 @@
 	"_MOTIF_WM_HINTS" 32 t)
        (make-frame-visible frame))))
 
-(defvar wm-without-decoration '(2 0 0 0 0))
+(defvar glass-wm-without-decoration '(2 0 0 0 0))
 
 (defun make-frame-without-decoration ()
   (interactive)
-  (make-hinted-frame wm-without-decoration))
+  (make-hinted-frame glass-wm-without-decoration))
 
 (defvar glass-frame nil)
+
+(defvar glass-use-special-frame nil)
 
 (defun* make-glass-frame (&key width height)
   (let ((frame (make-frame-without-decoration)))
@@ -91,7 +91,6 @@
       (when height (set-frame-height frame height))
       (menu-bar-mode -1)
       (glass-transparent)
-      (glass-theme)
       (glass-font)
       (glass-on-top))))
   
@@ -100,7 +99,10 @@
 (defun glass-live-p ()
   (and glass-frame (frame-live-p glass-frame)))
 
+(defvar glass-scroll-bar-mode nil)
+
 (defun glass-raise (&optional frame)
+  (setf glass-scroll-bar-mode scroll-bar-mode)
   (set-scroll-bar-mode 'nil)
   (redirect-frame-focus frame)
   (raise-frame frame)
@@ -118,27 +120,30 @@
     (setf glass-frame (make-glass-frame :width width :height height)))
   (when (and (numberp x) (numberp y))
     (set-frame-position glass-frame (+ 40 x) (+ 40 y)))
+  (glass-theme)
   (glass-raise glass-frame)
-  (setf glass-showing t)
   (switch-to-buffer buffer)
   (setq indicate-buffer-boundaries 'left)
-  (setq glass-local-mode-line-format mode-line-format)
-  (setq mode-line-format nil))
+  ;; (setq glass-local-mode-line-format mode-line-format)
+  ;; (setq mode-line-format nil)
+  (setf glass-showing t))
 
 (defun* glass-hide ()
   (interactive)
   (when (glass-live-p)
-    (when (null mode-line-format)
-      (setq mode-line-format glass-local-mode-line-format))
-;    (widen)
-    (glass-off-top)
+    ;; (when (null mode-line-format)
+    ;;   (setq mode-line-format glass-local-mode-line-format))
     ;; lower all frames
     (mapc #'lower-frame (frame-list))
-    (set-scroll-bar-mode 'left)
+    (when (buffer-narrowed-p) (widen))
+    (glass-off-top)
+    ;; restore previous scroll bars, if any
+    (set-scroll-bar-mode 'glass-scroll-bar-mode)
     (setf glass-showing nil)))
 
 (defun glass-toggle ()
   (interactive)
+  (when 
   (if glass-showing (glass-hide) (glass-show)))
 
 (defun glass-toggle-play ()
@@ -149,19 +154,22 @@
 (global-set-key [pause] 'glass-toggle-play)
 
 (defun* glass-destroy ()
+  (interactive)
   (when (glass-live-p)
     (glass-hide)
-    (delete-frame glass-frame)
-    (setf glass-frame nil)))
+    (delete-frame glass-frame))
+  (setf glass-frame nil))
 
 (defun glass-show-definition (name &rest params)
-  (ignore-errors 
-   (slime-edit-definition name))
-  (narrow-to-defun)
-  (apply #'glass-show params)
-  ;; try new fit-frame-to-buffer? also, buffer-narrowed-p
-  (let ((height (min 16 (max 8 (count-lines (point-min) (point-max))))))
-    (set-frame-height glass-frame height)))
+  (slime-edit-definition name)
+  (delete-other-windows)
+  (let ((mouse-autoselect-window nil))
+    (select-frame-set-input-focus (selected-frame)))
+  (when glass-use-special-frame 
+    (narrow-to-defun)
+    (apply #'glass-show params)
+    (let ((height (min 16 (max 8 (count-lines (point-min) (point-max))))))
+      (set-frame-height glass-frame height))))
 
 (provide 'glass)
 ;;; glass.el ends here
