@@ -229,7 +229,7 @@
      (erc-bold-face ((t ( ))))
      (erc-button ((t ( ))))
      (erc-command-indicator-face ((t ( ))))
-     (erc-current-nick-face ((t ( :foreground "red" :background "yellow" ))))
+     (erc-current-nick-face ((t (:foreground "red" :background "yellow" ))))
 ;     (erc-current-nick-face ((t (:foreground "cyan"))))
      (erc-dangerous-host-face ((t (:foreground "red"))))
      (erc-default-face ((t (:foreground "gray70"))))
