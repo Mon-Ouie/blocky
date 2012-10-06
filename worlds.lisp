@@ -81,6 +81,7 @@
 		    ((:f :alt) :add-field)
 		    ((:e :alt) :add-expression)
 		    ((:pause) :transport-toggle-play)
+		    ((:f10) :toggle-listener)
 		    ((:f12) :toggle-other-windows)
 		    ))
   ;; prototype control
