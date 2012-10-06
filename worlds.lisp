@@ -1041,11 +1041,8 @@ block found, or nil if none is found."
 		    (if %object-p
 			(move-to drag drop-x drop-y)
 			(if (null hover)
-			    ;; dropping on background. was it in %OBJECTS?
-			    (if (has-object self drag)
-				nil ;; do nothing, leave it where it is
-				;; otherwise move it back to the listener layer
-				(add-block self drag drop-x drop-y))
+			    ;; dropping on background. 
+			    (drop-object self drag)
 			    ;; dropping on another block
 			    (when (not (accept hover drag))
 			      ;; hovered block did not accept drag. 
