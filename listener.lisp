@@ -772,6 +772,11 @@
 	     (modeline-position-string
 	      (%window-x (world))
 	      (%window-y (world))))
-  (set-value %%mode "(normal)"))
+  (set-value %%mode
+	     (if (world)
+		 (if (%paused (world))
+		     "(paused)"
+		     "(playing)")
+		 "(empty)")))
 
 ;;; listener.lisp ends here
