@@ -143,8 +143,8 @@
 
 (defun glass-toggle ()
   (interactive)
-  (when 
-  (if glass-showing (glass-hide) (glass-show)))
+  (when glass-use-special-frame
+    (if glass-showing (glass-hide) (glass-show))))
 
 (defun glass-toggle-play ()
   (interactive)
