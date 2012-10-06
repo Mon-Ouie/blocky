@@ -26,8 +26,6 @@
 (require 'rx)
 (require 'cl)
 
-(defvar blocky-use-color-theme nil)
-
 (defun eval-in-cl (cl-expression-string &optional process-result-values)
   (slime-eval-async `(swank:eval-and-grab-output ,cl-expression-string)
     (lexical-let  ((here (current-buffer))
@@ -59,7 +57,7 @@
   (defadvice slime-compile-defun (after blocky activate)
     (eval-in-cl "(blocky:update-parameters)")))
 
-(blocky-insinuate-lisp)
+;; (blocky-insinuate-lisp)
 
 ;;; Font-locking
 
