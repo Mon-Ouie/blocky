@@ -1,18 +1,30 @@
-* TODO helping new people
+** TODO scroll level in editor with mouse wheel?* TODO helping new people
 ** TODO should initialize%super be called something else?
-** TODO alias called (invoke-next-method)
-
-** TODO Blocky basics list
+** TODO create alias called (invoke-next-method)
+** TODO fix autoload nonsense, use .asd? or allow loading blocky as lib...
+** TODO [#A] Blocky basics list
 *** TODO startup and general options
 *** TODO frame-rate, dt, height/width, sensible defaults
+*** TODO handling input etc
+**** TODO how to specify keys
 *** TODO important functions
 ** TODO [#A] Block basics
-**** TODO methods: pos, heading, create, destroy, move, resize, draw, play-sound
+**** TODO methods: pos, heading, create, destroy, move, resize, draw, play-sound, collide
 **** TODO distance-to-thing, heading-to-thing, etc
-**** TODO fields: opacity etc
-*** TODO world methods
-** TODO don't require player existence
+**** TODO document all important fields: opacity etc
+** TODO [#A] world basics: define, create, generate, scroll
+*** TODO don't require player existence
+** TODO how to categorize objects with tags and simple predicates
+** TODO defining new def-foo macros for consistently overriding something
 
+** TODO i should come up with extra help inside emacs. like M-x blocky-apropos
+** TODO i.e. M-x blocky-apropos RET collision-type RET  [14:10]
+
+** TODO making sure to super-initialize
+** TODO document plist-ish short form of define-block
+** TODO improve error handling when :initform keyword is missing
+** TODO properly scale coords when window is stretched
+** TODO document what :collision-type does
 
 * Reactopong
 
