@@ -1001,8 +1001,6 @@ state (position and heading) and restoring them afterward."
     (message "SHOWING DEF ON CL SIDE: ~S" name)
     (eval-in-emacs `(glass-show-definition ,name))))
 
-; (define-block foo a b c)
-
 ;;; Visibility
 
 (define-method show block ()

@@ -1,3 +1,18 @@
+* TODO helping new people
+** TODO should initialize%super be called something else?
+** TODO alias called (invoke-next-method)
+
+** TODO Blocky basics list
+*** TODO startup and general options
+*** TODO frame-rate, dt, height/width, sensible defaults
+*** TODO important functions
+** TODO [#A] Block basics
+**** TODO methods: pos, heading, create, destroy, move, resize, draw, play-sound
+**** TODO distance-to-thing, heading-to-thing, etc
+**** TODO fields: opacity etc
+*** TODO world methods
+** TODO don't require player existence
+
 
 * Reactopong
 
