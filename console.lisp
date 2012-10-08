@@ -659,8 +659,8 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 (defparameter *nominal-screen-width* 640 "Nominal width of the window, in pixels.")
 (defparameter *nominal-screen-height* 480 "Nominal height of the window, in pixels.")
 
-(defparameter *gl-screen-width* nil "Width of the window expressed in OpenGL coordinates.")
-(defparameter *gl-screen-height* nil "Height of the window expressed in OpenGL coordinates.")
+(defparameter *gl-screen-width* 640 "Width of the window expressed in OpenGL coordinates.")
+(defparameter *gl-screen-height* 480 "Height of the window expressed in OpenGL coordinates.")
 
 (defparameter *scale-output-to-window* nil
   "When non-nil, always show a fixed amount of the world when changing
@@ -1170,31 +1170,62 @@ resource is stored; see also `find-resource'."
 		   *resources*) 
 	  val)))
 
-(defun pre-index-resource (parameters)
-  (push parameters *pending-resources*))
+(defun defresource-expand-plist (plist)
+  (destructuring-bind 
+      (&key name type file properties &allow-other-keys) plist
+    (list :name name 
+	  :type (or type (resource-type-from-name name))
+	  :properties properties
+	  :file (or file name))))
 
-(defun defresource-ex (parameters)
-  (assert (keywordp (first parameters)))
-  `(prog1 ,(getf parameters :name)
-     (pre-index-resource parameters)))
+(defun thing-to-resource-plist (thing)
+  (when thing
+    (cond 
+      ;; for variables that are a list of defs
+      ((and (symbolp thing)
+	    (boundp thing))
+       (mapcar #'thing-to-resource-plist (symbol-value thing)))
+      ;; for plists
+      ((and (consp thing) 
+	    (keywordp (car thing)))
+       (defresource-expand-plist thing))
+      ;; for lists of defs
+      ((consp thing)
+       (mapcar #'thing-to-resource-plist thing))
+      ;; just the names 
+      ((stringp thing)
+       (defresource-expand-plist (list :name thing))))))
 
 (defmacro defresource (&rest entries)
-  (let ((es entries))
-    (etypecase (first es)
-      ;; it's just a name. auto-detect the type from filename
-      (string 
-       (let ((name (first es)))
-	 `(defresource-ex 
-	      '(:name ,name 
-		:file ,name
-		:type ,(resource-type-from-name name)
-		:properties ,@(rest entries)))))
-      ;; it's a single resource plist.
-      (keyword `(defresource-ex ,entries))
-      ;; multiple resources are included.
-      (list
-       ;; return a list of strings
-       `(mapcar #'defresource-ex ,entries)))))
+ 
+
+
+
+;; (defun defresource-1 (parameters)
+;;   (assert (keywordp (first parameters)))
+;;   `(prog1 ,(getf parameters :name)
+;;      (pre-index-resource parameters)))
+	   
+
+ ;; (let ((es entries))
+ ;;    (etypecase (first es)
+ ;;      ;; it's just a name. auto-detect the type from filename
+ ;;      (string 
+ ;;       (let ((name (first es)))
+ ;; 	 `(defresource-1 
+ ;; 	      '(:name ,name 
+ ;; 		:file ,name
+ ;; 		:type ,(resource-type-from-name name)
+ ;; 		:properties ,@(rest entries)))))
+ ;;      ;; it's a single resource plist.
+ ;;      (keyword `(defresource-1 ',entries))
+ ;;      ;; multiple resources are included.
+ ;;      (list
+ ;;       `(list
+ ;; 	 ;; return a list of strings
+ ;; 	 ,@(mapcar #'defresource-1 entries))))))
+	  
+  
 
 (defun find-project-path (project-name)
   "Return the current project path."
