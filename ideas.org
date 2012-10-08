@@ -1,3 +1,8 @@
+* Things for new people
+** TODO add M-p as pause toggle keybinding
+** TODO better error handling during halo actions
+** TODO upgrade PATHFINDING code
+** TODO document stuff like percent-of-time <--- other gen tools
 ** TODO scroll level in editor with mouse wheel?* TODO helping new people
 ** TODO should initialize%super be called something else?
 ** TODO create alias called (invoke-next-method)
@@ -25,6 +30,65 @@
 ** TODO improve error handling when :initform keyword is missing
 ** TODO properly scale coords when window is stretched
 ** TODO document what :collision-type does
+
+** TODO [#B] allow this: (play-project "foo" :with-database "shipped-game.blx" :with-variables ...)
+** TODO [#B] Scale pointer-x and pointer-y when window is resized
+
+** TODO indestructible colored particles magnetize (left-hand cling) to walls or float, do not break bricks
+** TODO they kill you too
+** TODO you have to dig them out from behind brick gaps
+** TODO you can only steer them with puck of same color
+** TODO channels for them to go to VENTS!
+
+** TODO [#B] grab/use bricks as bomb weapons? 
+** TODO [#B] switch to arrows and ZX for pick up / throw?
+
+** TODO method menus
+*** TODO making new lisp files for a new creature
+*** TODO menu for choosing methods
+
+** TODO [#C] primitive looking character talk balloon, i.e. reason for dying etc
+** TODO [#C] multi size/color brick areas 
+** TODO [#A] win condition: (while (some #'enemyp....
+
+
+* Original plong ideas (before football )
+
+** TODO zanac bestiary
+** TODO LEGEND TOLD OF ONE WHO WOULD DEFEAT "THE SYSTEM" WITHOUT BEING HIT BY A SINGLE ENEMY BULLET.
+** TODO [#C] tall levels, the way is always up. generate another level. 
+** TODO [#C] you start in bottom left corner, and must reach top right on each level, defeating all enemies. sometimes color match required.
+** TODO [#C] quickie twirly fleeing guy who fires heaps of bullets. 
+** TODO [#C] monitors should be able to eat through bricks (grow when they eat?)
+
+** TODO [#A] theme colors are not useful for locks; locks are always plain "8 crayon pack" colors as in original xong. 
+*** TODO green always radioactive? and 
+** TODO [#B] delay after catch, can't fire.
+** TODO [#B] Puck should return seek to center of guy, not corner.
+** TODO [#B] various color patterns in enemy end zone, you must fill it up by striking lock bricks
+** TODO [#B] when puck is destroyed, puck returns (after penalty delay) 
+** TODO [#B] enemy team players (occasional light blue good guy AI)... you must defend your goal!?
+** TODO [#B] Goal is gated room in center, instead of endzone?
+** TODO [#B] soccer goal at top or bottom of level, guarded by colored goalie(s), whistle+fireworks2600. must clear all 3.
+
+** TODO [#C] read gamefaqs and other design critiques of 8-bit games
+** TODO [#C] lines / tickmarks/ numbers on field. (use goals on left/right as in M-network Superchallenge football? "Future Football?"
+** TODO [#C] some way to minesweeper-psychically tell where exit is? maybe arrow blocks that tell you where exit is when you bustem?
+** TODO [#C] Stationary lock-bricks surrounded by blobs of one (different) color brick. 
+*** TODO [#C] one of them is the exit! (how to tell?) you can choose to go in, or look for items etc
+** TODO [#B] Black holes
+** TODO [#C] need database of named worlds (snippets, vaults, whole levels) to paste together as generated levels
+** TODO [#C] rescue sequence where you must defend a base or something, from incoming missiles
+** TODO [#C] show paren match in terminal
+** TODO [#C] Falling block levels (the blocks are locks)
+** TODO [#C] Boss vaults with internal brick-shields
+** TODO [#C] Radioactive deadly bricks
+** TODO [#C] Growing corruption freex
+** TODO [#C] warlords: gold, purple, green, wedgewd blue. then 3 shades of orange/brown for bricks
+
+** TODO 
+** TODO Blocky Demoscene Livecoding Synthesis with VM's
+
 
 * Reactopong
 
