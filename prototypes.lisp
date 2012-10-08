@@ -403,9 +403,7 @@ extended argument list ARGLIST."
 		   (setf (gethash key a) value)))
 	     b)))
 	       
-(defvar *make-prototype-id-package* nil)
-
-(defun make-prototype-id (thing &optional (package (find-package :blocky)) create) 
+(defun make-prototype-id (thing &optional (package (project-package)) create) 
   (let ((delimiter ":"))
     (if (null thing)
 	(error "Cannot make a prototype ID for nil.")
@@ -428,11 +426,12 @@ extended argument list ARGLIST."
 				;; override if so
 				"BLOCKY"
 				(package-name thing-package))))
-		(let ((name (concatenate 'string prefix delimiter (symbol-name thing))))
-		  (let ((proto (find-prototype name :noerror)))
-		    (if proto name
-			(if create name
-			    (concatenate 'string "BLOCKY" delimiter (symbol-name thing))))))))))))))
+		(concatenate 'string prefix delimiter (symbol-name thing))))))))))
+		  ;; (let ((proto (find-prototype name :noerror)))
+		  ;;   (if proto 
+		  ;; 	name
+		  ;; 	(if create name))
+		  ;; 	    (concatenate 'string "BLOCKY" delimiter (symbol-name thing))))))))))))))
   
 ;;; Object data structure
 
@@ -1241,16 +1240,23 @@ OPTIONS is a property list of field options. Valid keys are:
 			      declarations))
 	 (descriptors (mapcar #'transform-declaration 
 			      pre-descriptors))
-	 (prototype-id (make-prototype-id name (project-package-name) t))
+	 (prototype-id (make-prototype-id name (project-package-name) :create))
 	 (field-initializer-body (delete nil (mapcar #'make-field-initializer 
-						     descriptors)))
-	 (super-name (when super `(make-prototype-id ,super))))
+						     descriptors))))
     `(let* ((uuid (make-uuid))
 	    (fields (compose-blank-fields ',descriptors))
+	    (super-name (let ((ss ',super))
+			  (cond
+			    ((and ss (symbolp ss))
+			     (object-name (find-object ss)))
+			    ((stringp ss) ss))))
+	    ;; (super-name ,(typecase name
+	    ;; 		   (symbol `(make-prototype-id ,super (project-package-name) t))
+	    ;; 		   (string super))
 	    (prototype (make-object :fields fields
 				    :name ,prototype-id
 				    :uuid uuid
-				    :super (find-object ,super-name))))
+				    :super super-name)))
        ;; create the (%fieldname object) functions
        ,@(mapcan #'make-field-accessor-forms descriptors)
        (setf (fref fields :field-descriptors) ',descriptors)

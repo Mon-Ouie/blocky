@@ -93,7 +93,7 @@
 			      fields)
   (assert (symbolp name))
   (assert (stringp color))
-  `(define-block (,name :super :handle)
+  `(define-block (,name :super handle)
      (indicator :initform ,indicator)
      (color :initform ,color)
      (foreground-color :initform ,foreground-color)

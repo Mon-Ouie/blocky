@@ -127,11 +127,8 @@ either a symbol naming the field, or a list of the form (SYMBOL
       (list (destructuring-bind (name &key super) spec
 	      (setf name0 name)
 	      (when super (setf super0 super)))))
-    `(define-prototype ,name0 (:super ,(make-prototype-id super0 
-							  (if 
-							   (untitled-project-p) ;; are we compiling blocky?
-							   "BLOCKY"
-							  (project-package-name))))
+    `(define-prototype ,name0 
+	 (:super ,(make-prototype-id super0 (project-package-name) :create))
        (buffer-name :initform ,(verbose-symbol-name name0))
        ,@(if (keywordp (first args))
 	  (plist-to-descriptors args)
@@ -2159,7 +2156,7 @@ inputs are evaluated."
 ;  (freeze self))
 
 (defmacro deflist (name &rest body)
-  `(define-block (,name :super :list) ,@body))
+  `(define-block (,name :super list) ,@body))
 
 (defun null-block () (new 'list))
 

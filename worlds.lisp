@@ -188,7 +188,7 @@
   (when %future (show-future self)))
 
 (defmacro define-world (name &body body)
-  `(define-block (,name :super "BLOCKY:WORLD")
+  `(define-block (,name :super world)
      ,@body))
 
 (define-method get-objects world ()

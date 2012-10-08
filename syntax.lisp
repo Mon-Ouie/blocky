@@ -104,7 +104,7 @@
 
 ;;; Variables whose values are blocks
 
-(define-block (variable :super :list)
+(define-block (variable :super list)
   (name :initform nil)
   (category :initform :variables))
 
@@ -141,7 +141,7 @@
 ;;; Self reference
 
 (define-block-macro self
-    (:super :list
+    (:super list
      :fields
      ((category :initform :parameters))
      :inputs
@@ -166,7 +166,7 @@
 ;;; Field references (to self or other objects)
 
 (define-block-macro field 
-  (:super :list
+  (:super list
    :fields ((category :initform :fields)
 	    (orientation :initform :horizontal))
    :inputs (:target (new 'socket)
@@ -189,7 +189,7 @@
 ;;; Parameter declarations (ordinary variables refer to them)
 
 (define-block-macro parameter 
-    (:super :variable
+    (:super variable
      :fields ((category :initform :parameters))))
 
 ;;; Closure for parameterizing a tree
@@ -282,7 +282,7 @@
 ;;; Lisp value printer block
 
 (define-block-macro printer 
-    (:super :list
+    (:super list
      :fields 
      ((category :initform :data))
      :inputs 
@@ -304,7 +304,7 @@
 ;;; Generic message block
 
 (define-block-macro message 
-    (:super :list
+    (:super list
      :fields 
      ((orientation :initform :horizontal)
       (category :initform :message)
@@ -401,7 +401,7 @@
     %parent))
 
 (define-block-macro statement 
-    (:super :list
+    (:super list
      :fields 
      ((orientation :initform :horizontal)
       (category :initform :message)
@@ -423,7 +423,7 @@
 
 ;;; Palettes to tear cloned objects off of 
 
-(define-block (palette :super :list) 
+(define-block (palette :super list) 
     source
   (style :initform :rounded)
   (height :initform 100)

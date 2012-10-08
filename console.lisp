@@ -1066,29 +1066,28 @@ binary image.")
 (defun untitled-project-p (&optional (project *project*))
   (string= project *untitled*))
 
-(defun project-package-exists-p (project)
+(defun project-package (&optional (project (or *project* "BLOCKY")))
   (assert (not (null project)))
   (find-package (project-package-name (make-keyword project))))
 
 (defun define-project-package (project)
   (assert (stringp project))
-  (if (project-package-exists-p project)
-      (message "Not defining new package, because user-defined project package ~S already exists. Continuing..." *project-package-name*)
-      ;; define the new package
-      (setf *project* 
-	    project
-	    *project-package-name* 
-	    (make-keyword project)
-	    *package*
-	    (make-package (make-keyword project) :use '(:blocky :common-lisp)))))
-       
+  (unless (project-package project)
+    ;; define the new package
+    (setf *project* 
+	  project
+	  *project-package-name* 
+	  (make-keyword project)
+	  *package*
+	  (make-package (make-keyword project) :use '(:blocky :common-lisp)))))
+
 (defun in-project-package (project)
   (assert (not (null project)))
   (if (standard-project-p)
       (setf *package* (find-package :blocky))
       ;; find project-specific package
       (let ((package (project-package-name project)))
-        (assert (project-package-exists-p project))
+        (assert (project-package project))
 	(message "Found project package ~S." package)
 	(setf *package* (find-package package))
 	(message "Now in package ~S." package))))
