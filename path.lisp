@@ -237,42 +237,41 @@
   (delq nil 
 	(mapcar 
 	 (lambda (direction)
-	   (let* ((grid (path-grid path))
-		  (path-map (path-map path))
-		  (new-G (+ 1 (node-G node)))
-		  (step (step-in-direction 
-			(node-column node)
-			(node-row node)
-			direction))
-		  (r (first step))
-		  (c (second step))
-		  (successor nil))
-	     ;; 
-	     (if (bounds-check grid r c)
-		 (progn 
-		   (setf successor (grid-get path-map r c))
-		   
-		   (if (or 
-			;; always allow the goal square even when it's an obstacle.
-			(and (equal r goal-row) (equal c goal-column))
-			;; ignore non-walkable squares and closed squares,
-			(and (not (first-in-category (grid-get grid r c)
-							 :obstacle))
-			     (not (equal path-turn-number (node-closed successor)))))
-		       ;; if successor is open and existing path is better
-		       ;; or as good as new path, destroy the successor
-		       ;; if successor is not open, proceed 
-		       (if (equal path-turn-number (node-open successor))
-			   (if (< new-G (node-G successor))
-			       successor
-			     nil)
-			 successor)
-		     nil))
-	       nil)))
-	 *directions*)))
-	
-;; Now we come to the pathfinding algorithm itself. 
-
+	   (let ((grid (path-grid path))
+		 (path-map (path-map path))
+		 (new-G (+ 1 (node-G node)))
+		 (successor nil))
+	     (multiple-value-bind (r c) 
+		 (step-in-direction 
+		  (node-column node)
+		  (node-row node)
+		  direction)
+	       ;; 
+	       (if (array-in-bounds-p grid r c)
+		   (progn 
+		     (setf successor (aref path-map r c))
+		     
+		     (if (or 
+			  ;; always allow the goal square even when it's an obstacle.
+			  (and (equal r goal-row) (equal c goal-column))
+			  ;; ignore non-walkable squares and closed squares,
+			  (and (not (first-in-category (grid-get grid r c)
+						       :obstacle))
+			       (not (equal path-turn-number (node-closed successor)))))
+			 ;; if successor is open and existing path is better
+			 ;; or as good as new path, destroy the successor
+			 ;; if successor is not open, proceed 
+			 (if (equal path-turn-number (node-open successor))
+			     (if (< new-G (node-G successor))
+				 successor
+				 nil)
+			     successor)
+			 nil))
+		   nil)))
+	   *directions*))))
+  
+  ;; Now we come to the pathfinding algorithm itself. 
+  
 (defun find-path (path starting-row starting-column goal-row goal-column)
   "Find a path from the starting point to the goal in PATH using A*.
 Returns a list of directional keywords an AI can follow to reach
