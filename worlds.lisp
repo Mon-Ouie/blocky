@@ -28,6 +28,7 @@
   (variables :initform nil 
 	     :documentation "Hash table mapping values to values, local to the current world.")
   (player :documentation "The player object, if any.")
+  (followed-object :initform nil)
   (background-image :initform nil)
   (background-color :initform "white")
   (redraw-player :initform t)
@@ -244,6 +245,11 @@
 (define-method glide-window-to-player world ()
   (when %player
     (glide-window-to-object self %player)))
+
+(define-method follow-with-camera world (thing)
+  (assert (or (null thing) (blockyp thing)))
+  (setf %followed-object thing)
+  (glide-window-to-object self %followed-object))
 
 (define-method glide-follow world (object)
   (with-fields (window-x window-y width height) self
@@ -794,7 +800,8 @@ slowdown. See also quadtree.lisp")
 	      (run-tasks object)))
 	  ;; update window movement
 	  (let ((thing (or 
-			(when (holding-shift) drag) 
+			%followed-object
+			(when (holding-shift) drag)
 			player)))
 	    (when thing
 	      (glide-follow self thing)
@@ -811,6 +818,8 @@ slowdown. See also quadtree.lisp")
 	  (layout self)
 	  (layout-shell-objects self)
 	  (update-shell-objects self))))))
+
+
 
 ;;; Running a world as a script
 
