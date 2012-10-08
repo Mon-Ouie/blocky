@@ -1044,9 +1044,9 @@ This is where all saved objects are stored.")
 (defvar *executable* nil "Non-nil when running Blocky from a saved
 binary image.")
 
-(defparameter *untitled-project-name* "*untitled-project*")
+(defparameter *untitled* "BLOCKY")
 
-(defvar *project* *untitled-project-name*
+(defvar *project* *untitled*
   "The name of the current project.")
 
 (defvar *project-folder* nil)
@@ -1064,7 +1064,7 @@ binary image.")
   (string= "STANDARD" (string-upcase project)))
 
 (defun untitled-project-p (&optional (project *project*))
-  (string= project *untitled-project-name*))
+  (string= project *untitled*))
 
 (defun project-package-exists-p (project)
   (assert (not (null project)))
@@ -2407,7 +2407,7 @@ of the music."
   (initialize-clipboard-maybe :force)
   (initialize-buffers)
   (load-standard-resources)
-  (setf *project* *untitled-project-name*)
+  (setf *project* *untitled*)
   (sdl:enable-unicode)
   (enable-key-repeat))
 
@@ -2441,7 +2441,7 @@ of the music."
      ,@body
      (shut-down)))
 
-(defun play-project (&optional (project *untitled-project-name*) &rest parameters)
+(defun play-project (&optional (project *untitled*) &rest parameters)
   (destructuring-bind (&key without-database with-database) parameters
     (with-session
 	(load-project-image project 
@@ -2530,7 +2530,7 @@ of the music."
 ;;     (start (new 'world))
 ;;     (start-session)))
 
-;; (defun edit (&optional (project *untitled-project-name*) force-shell)
+;; (defun edit (&optional (project *untitled*) force-shell)
 ;;   (with-session
 ;;     (let ((*edit* t))
 ;;       (load-project-image project :no-error)

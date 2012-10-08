@@ -354,7 +354,8 @@ extended argument list ARGLIST."
 	      (object thing))))
       (prog1 result
 	(unless no-error
-	  (assert result))))))
+	  (when (null result)
+	    (error "Cannot find object: ~S" thing)))))))
       
 (defun find-super (object)
   (object-super (find-object object)))
@@ -421,10 +422,11 @@ extended argument list ARGLIST."
 		       (list (package-name package)
 			     delimiter thing))))
 	   ((symbolp thing)
-	    ;; check for things that are already in COMMON-LISP package
 	    (let ((thing-package (symbol-package thing)))
+	      ;; check if name is already in COMMON-LISP
 	      (let ((prefix (if (eq thing-package (find-package :common-lisp))
-				"BLOCKY" ;; override if so
+				;; override if so
+				"BLOCKY"
 				(package-name thing-package))))
 		(let ((name (concatenate 'string prefix delimiter (symbol-name thing))))
 		  (let ((proto (find-prototype name :noerror)))
