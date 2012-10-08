@@ -1,4 +1,4 @@
-;;; worlds.lisp --- squeakish spaces 
+;; worlds.lisp --- squeakish spaces 
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012  David O'Toole
 
@@ -1121,7 +1121,7 @@ block found, or nil if none is found."
   (with-world self
     (unless (emptyp self)
       (trim self))
-    (start%super self)))
+    (start-alone self)))
 
 (defun on-screen-p (thing)
   (contained-in-bounding-box 

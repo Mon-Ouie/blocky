@@ -41,7 +41,7 @@
 
 (defvar *gl-window-open-p* nil)
 
-(defvar *pending-autoload-resources* '())
+(defvar *pending-resources* '())
 
 (defun random-choose (set)
   (nth (random (length set)) set))
@@ -787,7 +787,7 @@ display."
     (scan-for-joysticks)
     (open-viewport)
     (project-orthographically)
-    (load-project-lisp "STANDARD")
+    (load-project-lisp "STANDARD") ;; TODO remove
     (run-hook '*after-startup-hook*)
     (message "Finished initializing Blocky for project ~A." *project*)
     (sdl:with-events ()
@@ -1049,48 +1049,15 @@ binary image.")
 (defvar *project* *untitled*
   "The name of the current project.")
 
-(defvar *project-folder* nil)
-
 (defvar *recent-projects* nil)
 
 ;;; Project packages
-
-(defvar *project-package-name* nil)
-
-(defun project-package-name (&optional (project-name *project*))
-  (make-keyword (or *project-package-name* project-name)))
 
 (defun standard-project-p (&optional (project *project*))
   (string= "STANDARD" (string-upcase project)))
 
 (defun untitled-project-p (&optional (project *project*))
   (string= project *untitled*))
-
-(defun project-package (&optional (project (or *project* "BLOCKY")))
-  (assert (not (null project)))
-  (find-package (project-package-name (make-keyword project))))
-
-(defun define-project-package (project)
-  (assert (stringp project))
-  (unless (project-package project)
-    ;; define the new package
-    (setf *project* 
-	  project
-	  *project-package-name* 
-	  (make-keyword project)
-	  *package*
-	  (make-package (make-keyword project) :use '(:blocky :common-lisp)))))
-
-(defun in-project-package (project)
-  (assert (not (null project)))
-  (if (standard-project-p)
-      (setf *package* (find-package :blocky))
-      ;; find project-specific package
-      (let ((package (project-package-name project)))
-        (assert (project-package project))
-	(message "Found project package ~S." package)
-	(setf *package* (find-package package))
-	(message "Now in package ~S." package))))
 
 ;;; The blocky installation dir
   
@@ -1150,7 +1117,9 @@ Directories are searched in list order.")
   "Search the `*project-directories*' path for a directory with the
 name 'PROJECT-NAME.blocky' Returns the pathname if found, otherwise
 nil."
-  (let ((dirs (cons (asdf:system-relative-pathname 'blocky "") *project-directories*)))
+  (let ((dirs (append (list (user-homedir-pathname)
+			    (asdf:system-relative-pathname 'blocky ""))
+		      *project-directories*)))
     (assert (stringp project))
     (or 
      (loop 
@@ -1172,6 +1141,22 @@ nil."
 	  (merge-pathnames (resource-file resource)
 			   (find-project-path *project*)))))
 
+(defun file-name-extension (name)
+  (let ((pos (position #\. name :from-end t)))
+    (when (numberp pos)
+      (subseq name (1+ pos)))))
+
+(defparameter *resource-extensions*
+  '(("png" :image)
+    ("wav" :sample)
+    ("ogg" :music)
+    ("lisp" :lisp)))
+
+(defun resource-type-from-name (name)
+  (let ((extension (file-name-extension name)))
+    (when extension
+      (car (cdr (assoc extension *resource-extensions* :test 'equal))))))
+
 (defun index-resource (resource)
   "Add the RESOURCE's record to the resource table.
 If a record with that name already exists, it is replaced.  However,
@@ -1185,28 +1170,31 @@ resource is stored; see also `find-resource'."
 		   *resources*) 
 	  val)))
 
+(defun pre-index-resource (parameters)
+  (push parameters *pending-resources*))
+
 (defun defresource-ex (parameters)
   (assert (keywordp (first parameters)))
   `(prog1 ,(getf parameters :name)
-     (index-resource (apply #'make-resource ',parameters))))
+     (pre-index-resource parameters)))
 
 (defmacro defresource (&rest entries)
-  (etypecase (first entries)
-    ;; it's just a name. auto-detect the type 
-    (string (prog1 (first entries)
-	      (find-resource-automatically (first entries) (rest entries))))
-    ;; it's a single resource.
-    (keyword (defresource-ex entries))
-    ;; multiple resources are included.
-    (list
-     ;; return a list of strings
-     `(list ,@(mapcar #'defresource-ex entries)))))
-
-(defmacro autoload (filename)
-  (assert (stringp filename))
-  `(load-resource
-    (find-resource
-     (defresource ,filename))))
+  (let ((es entries))
+    (etypecase (first es)
+      ;; it's just a name. auto-detect the type from filename
+      (string 
+       (let ((name (first es)))
+	 `(defresource-ex 
+	      '(:name ,name 
+		:file ,name
+		:type ,(resource-type-from-name name)
+		:properties ,@(rest entries)))))
+      ;; it's a single resource plist.
+      (keyword `(defresource-ex ,entries))
+      ;; multiple resources are included.
+      (list
+       ;; return a list of strings
+       `(mapcar #'defresource-ex ,entries)))))
 
 (defun find-project-path (project-name)
   "Return the current project path."
@@ -1257,56 +1245,35 @@ resource is stored; see also `find-resource'."
 		(message "Finished creating directory ~A." dir)
 		(message "Finished creating project ~A." project)))))))
 
-(defun load-project-image (project &key folder (run t) without-database with-database)
-  "Load the project named PROJECT. Load any resources marked with a
-non-nil :autoload property. This operation also sets the default
-object save directory. See also `save-object-resource')."
+(defun project-package ()
+  (find-package *project*))
+
+(defun load-project-image (project &key without-database with-database)
   (assert (stringp project))
   (message "Opening project: ~A" (string-upcase project))
-  (setf *project* project
-	*pending-autoload-resources* nil
-	*project-package-name* nil)
-  (if folder
-      (setf *project-folder* folder)
-      (setf *project-path* (search-project-path project)))
+  (setf *project* project)
+  (setf *project-path* (search-project-path project))
   ;; check path
   (message "Set project path to ~A" (namestring *project-path*)) 
-  (assert *project-path*)
-  ;; define package if necessary
-  (define-project-package project)
-  (in-project-package project)
-  ;; load everything else
+  ;; load any .blx files
   (index-project project)
-  (mapc #'load-resource (nreverse *pending-autoload-resources*))
-  (setf *pending-autoload-resources* nil)
-   ;; load any user-written lisp
-  (load-project-lisp project)
-  (when run (run-project-lisp project))
-  (run-hook '*after-load-project-hook*)
-  ;; load objects
-  (load-project-objects project)
+  ;; anything in the game
+  (while *pending-resources*
+    (index-resource (pop *pending-resources*)))
   ;; TODO support :with-database arg as well
   (unless without-database
     (load-database)
     (load-variables))
   (when without-database
     (message "Starting without database or variables loading, due to user command."))
-  (message "Started up successfully. Indexed ~A resources." (hash-table-count *resources*))
-  ;; save to recent list
-  (pushnew project *recent-projects* :test 'equal))
-
-(defun run-project-lisp (project)
-  (unless (or (untitled-project-p project)
-	      (standard-project-p project))
-    (message "Running project startup function...")
-    (let ((package (find-package (project-package-name project))))
-      (if package
-	  (let ((start-function (intern (string-upcase project) package)))
-	    (message "Checking for startup function ~S" start-function)
-	    (if (fboundp start-function)
-		(funcall start-function)
-		(message "No default startup function for: ~S. Continuing.." (string-upcase (symbol-name start-function)))))
-	  (message "Warning: No project package defined. Continuing...")))))
+  (message "Started up successfully. Indexed ~A resources." (hash-table-count *resources*)))
+ 
+(defun load-project (&optional (project *project*) parameters)
+  ;; don't load database by default
+  (destructuring-bind (&key (without-database t) with-database) parameters
+    (load-project-image project 
+			:without-database without-database
+			:with-database with-database)))
 
 (defun directory-is-project-p (dir)
   "Test whether a directory has the .blocky suffix."
@@ -1348,11 +1315,11 @@ table. File names are relative to the project PROJECT-NAME."
 	    (index-resource-file include-project (find-project-file include-project
 							  (resource-file res))))
 	  ;; we're indexing a single resource.
-	  (progn
-	    (index-resource res)
-	    ;; save the resource name for later autoloading, if needed
-	    (when (getf (resource-properties res) :autoload)
-	      (push res *pending-autoload-resources*)))))))
+	  (index-resource res)))))
+
+	    ;; ;; save the resource name for later autoloading, if needed
+	    ;; (when (getf (resource-properties res) :autoload)
+	    ;;   (push res *pending-resources*)))))))
 
 (defun index-project (project-name)
   "Add all the resources from the project PROJECT-NAME to the resource
@@ -1869,32 +1836,18 @@ so that it can be fed to the console."
 	;; (message "Loaded resource ~S with result type ~S." 
 	;; 	 (resource-name resource)
 	;; 	 (type-of (resource-object resource))))))
-
-(defun file-name-extension (name)
-  (let ((pos (position #\. name :from-end t)))
-    (when (numberp pos)
-      (subseq name (1+ pos)))))
-
-(defparameter *resource-extensions*
-  '(("png" :image)
-    ("wav" :sample)
-    ("ogg" :music)
-    ("lisp" :lisp)))
-
-(defun resource-type-from-name (name)
-  (let ((extension (file-name-extension name)))
-    (when extension
-      (car (cdr (assoc extension *resource-extensions* :test 'equal))))))
 	   
-(defun find-resource-automatically (name &optional properties)
-  (let ((type (resource-type-from-name name)))
-    (when type
-      (let ((resource (make-resource :name name :file name :type type :properties properties)))
-	(prog1 resource
-	  (index-resource resource))))))
+;; (defun make-file-resource-automatically (name &optional properties)
+;;   (let ((type (resource-type-from-name name)))
+;;     (make-resource :name name :file name :type type :properties properties)
 
-(defun load-resource-automatically (name)
-  (load-resource (find-resource-automatically name)))
+;; (defun index-resource-automatically (parameters)
+;;   (let ((res (make-file-resource-automatically name properties)))
+;;     (index-resource 
+;;      (or res (apply #'make-resource :name name 
+
+;; (defun load-resource-automatically (name)
+;;   (load-resource (index-resource-automatically name)))
 
 (defun find-resource (name &optional noerror)
   "Obtain the resource named NAME, performing any necessary
@@ -1907,13 +1860,9 @@ be found."
 	(prog1 res
 	  (when (null (resource-object res))
 	    (load-resource res)))
-	;; no, try auto loading based on the name
-	(or (let ((res (find-resource-automatically name)))
-	      (when res (prog1 res (load-resource res))))
-	    ;; can't find and can't autoload
-	    (if noerror
-		nil
-		(error "Cannot find resource ~S" name))))))
+	(if noerror
+	    nil
+	    (error "Cannot find resource ~S" name)))))
 
 (defun find-resource-object (name &optional noerror)
   "Obtain the resource object named NAME, or signal an error if not
@@ -2382,9 +2331,7 @@ of the music."
   ;; get going...
   (message "Starting Blocky...")
   (print-copyright-notice)
-  (setf *project-package-name* nil
-	;; *project-directories* (default-project-directories)
-	*blocks* nil
+  (setf *blocks* nil
 	*project-folder* nil
 	*world* nil
 	*project* nil
@@ -2440,19 +2387,20 @@ of the music."
      ,@body
      (shut-down)))
 
-(defun play-project (&optional (project *untitled*) &rest parameters)
-  (destructuring-bind (&key without-database with-database) parameters
-    (with-session
-	(load-project-image project 
-			    :without-database without-database
-			    :with-database with-database)
-      (when (null *blocks*)
-	(start (new 'world)))
-      (start-session))))
+;; (defun play-project (&optional (project *project*) &rest parameters)
+;;   ;; deprecated
+;;   (destructuring-bind (&key without-database with-database) parameters
+;;     (with-session
+;; 	(load-project-image project 
+;; 			    :without-database without-database
+;; 			    :with-database with-database)
+;;       (when (null *blocks*)
+;; 	(start (new 'world)))
+;;       (start-session))))
 
 (defun edit (project)
   (with-session
-      (load-project-image project :run nil)
+      (load-project-image project)
     (start-session)))
 
 (defvar *buffer-history* nil)

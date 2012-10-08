@@ -1240,7 +1240,7 @@ OPTIONS is a property list of field options. Valid keys are:
 			      declarations))
 	 (descriptors (mapcar #'transform-declaration 
 			      pre-descriptors))
-	 (prototype-id (make-prototype-id name (project-package-name) :create))
+	 (prototype-id (make-prototype-id name *project* :create))
 	 (field-initializer-body (delete nil (mapcar #'make-field-initializer 
 						     descriptors))))
     `(let* ((uuid (make-uuid))
@@ -1250,9 +1250,6 @@ OPTIONS is a property list of field options. Valid keys are:
 			    ((and ss (symbolp ss))
 			     (object-name (find-object ss)))
 			    ((stringp ss) ss))))
-	    ;; (super-name ,(typecase name
-	    ;; 		   (symbol `(make-prototype-id ,super (project-package-name) t))
-	    ;; 		   (string super))
 	    (prototype (make-object :fields fields
 				    :name ,prototype-id
 				    :uuid uuid

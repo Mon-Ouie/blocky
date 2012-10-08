@@ -128,7 +128,7 @@ either a symbol naming the field, or a list of the form (SYMBOL
 	      (setf name0 name)
 	      (when super (setf super0 super)))))
     `(define-prototype ,name0 
-	 (:super ,(make-prototype-id super0 (project-package-name) :create))
+	 (:super ,(make-prototype-id super0 *project* :create))
        (buffer-name :initform ,(verbose-symbol-name name0))
        ,@(if (keywordp (first args))
 	  (plist-to-descriptors args)
@@ -817,7 +817,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (defvar *make-block-package* nil)
 
 (defun make-block-package ()
-  (or (project-package-name) (find-package :blocky)))
+  (or *package* (find-package :blocky)))
 
 (defun make-block (sexp)
     "Expand VALUE specifying a block diagram into real blocks.
