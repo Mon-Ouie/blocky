@@ -43,6 +43,14 @@
 
 (defvar *pending-resources* '())
 
+(defun add-resource (plist)
+  (assert (and (consp plist))
+	  (keywordp (first plist)))
+  (push plist *pending-resources*))
+
+(defun add-resources (&rest plists)
+  (mapcar #'add-resource plists))
+
 (defun random-choose (set)
   (nth (random (length set)) set))
 
@@ -1135,7 +1143,7 @@ nil."
        (message "Cannot find project ~s in paths ~S. Try checking your *PROJECTS-DIRECTORIES* settings in the BLOCKY-INIT.LISP configuration file. Continuing..."
 		project dirs)))))
 
-(defun expand-file-name (resource)
+(defun set-resource-pathname (resource)
   (when (stringp (resource-file resource))
     (setf (resource-file resource)
 	  (merge-pathnames (resource-file resource)
@@ -1162,7 +1170,7 @@ nil."
 If a record with that name already exists, it is replaced.  However,
 if the resource is an :alias, just the string name of the target
 resource is stored; see also `find-resource'."
-  (expand-file-name resource)
+  (set-resource-pathname resource)
   (let ((val (if (eq :alias (resource-type resource))
 		 (resource-data resource)
 		 resource)))
@@ -1178,55 +1186,30 @@ resource is stored; see also `find-resource'."
 	  :properties properties
 	  :file (or file name))))
 
-(defun thing-to-resource-plist (thing)
-  (when thing
-    (cond 
-      ;; for variables that are a list of defs
-      ((and (symbolp thing)
-	    (boundp thing))
-       (mapcar #'thing-to-resource-plist (symbol-value thing)))
-      ;; for plists
-      ((and (consp thing) 
-	    (keywordp (car thing)))
-       (defresource-expand-plist thing))
-      ;; for lists of defs
-      ((consp thing)
-       (mapcar #'thing-to-resource-plist thing))
-      ;; just the names 
-      ((stringp thing)
-       (defresource-expand-plist (list :name thing))))))
-
-(defmacro defresource (&rest entries)
+(defmacro defresource (&body entries)
+  (let ((plists
+	  (cond
+	    ;; variable
+	    ((and (symbolp (first entries))
+		  (boundp (first entries)))
+	     (mapcar #'defresource-expand-plist 
+		     (symbol-value (first entries))))
+	    ;; short form: (defresource "file.ext" &rest PROPERTIES)
+	    ((stringp (first entries))
+	     (list 
+	      (defresource-expand-plist 
+		  (list :name (first entries)
+			:properties (rest entries)))))
+	    ;; inline: (defresource :name ...)
+	    ((keywordp (first entries))
+	     (list 
+	      (defresource-expand-plist entries)))
+	    ;; list of property lists
+	    ((every #'consp entries)
+	     (mapcar #'defresource-expand-plist entries)))))
+    `(eval-when (:load-toplevel)
+       (blocky:add-resources ',@plists))))
  
-
-
-
-;; (defun defresource-1 (parameters)
-;;   (assert (keywordp (first parameters)))
-;;   `(prog1 ,(getf parameters :name)
-;;      (pre-index-resource parameters)))
-	   
-
- ;; (let ((es entries))
- ;;    (etypecase (first es)
- ;;      ;; it's just a name. auto-detect the type from filename
- ;;      (string 
- ;;       (let ((name (first es)))
- ;; 	 `(defresource-1 
- ;; 	      '(:name ,name 
- ;; 		:file ,name
- ;; 		:type ,(resource-type-from-name name)
- ;; 		:properties ,@(rest entries)))))
- ;;      ;; it's a single resource plist.
- ;;      (keyword `(defresource-1 ',entries))
- ;;      ;; multiple resources are included.
- ;;      (list
- ;;       `(list
- ;; 	 ;; return a list of strings
- ;; 	 ,@(mapcar #'defresource-1 entries))))))
-	  
-  
-
 (defun find-project-path (project-name)
   "Return the current project path."
   (assert *project*)
@@ -1288,9 +1271,6 @@ resource is stored; see also `find-resource'."
   (message "Set project path to ~A" (namestring *project-path*)) 
   ;; load any .blx files
   (index-project project)
-  ;; anything in the game
-  (while *pending-resources*
-    (index-resource (pop *pending-resources*)))
   ;; TODO support :with-database arg as well
   (unless without-database
     (load-database)
@@ -1304,7 +1284,12 @@ resource is stored; see also `find-resource'."
   (destructuring-bind (&key (without-database t) with-database) parameters
     (load-project-image project 
 			:without-database without-database
-			:with-database with-database)))
+			:with-database with-database)
+    ;; load any pending resource defs
+    (message "RESOURCES: ~A" *pending-resources*)
+    (while *pending-resources*
+      (message "processing. ~A remaining" (length *pending-resources*))
+      (index-resource (apply #'make-resource (pop *pending-resources*))))))
 
 (defun directory-is-project-p (dir)
   "Test whether a directory has the .blocky suffix."
