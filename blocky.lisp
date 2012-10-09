@@ -50,31 +50,31 @@ keyboard-keys-down keyboard-modifier-down-p find-buffer find-world
 *socket-size* keyboard-modifiers draw-filled-circle draw-aa-circle
 get-keys make-block add-buffer find-buffer add-block remove-block
 with-quadtree *initialization-hook* hit-blocks quadtree-delete
-quadtree-insert build-quadtree quadtree-collide quadtree-show
-*quadtree* *quadtree-depth* split-string-on-lines message with-session
-start-session *prompt-sweden-keybindings* *prompt-qwerty-keybindings*
-*screen-width* transform-method-body roll-under initialize-colors
-*style* load-project-image create-project-image *standard-categories*
-*left-turn* bind-event *right-turn* left-turn right-turn roll
-bind-event-to-method *colors* enable-key-repeat disable-key-repeat
-get-color define-method *default-font* field-value set-field-value
-object-fields dispatch-event *user-init-file-name* distance
-icon-resource icon-image *directions* *opposites* *pending-resources*
-with-project project-orthographically project-with-perspective
-open-viewport find-resource-property compose-blank-fields font-width
-font-height find-object *windows* edit create blocky
-transform-field-reference define-block *screen-height*
-formatted-line-width find-world *clipboard* formatted-line-height
-formatted-string-height formatted-string-width get-color create-image
-draw-image blocky edit define-prototype has-field *target* with-target
-define-world set-field-options *user-joystick-profile*
-field-option-value index-resource *default-joystick-profile*
-joystick-profile visit find-project-path index-project
-load-image-resource load-lisp-resource *executable* *screen-height*
-player *screen-width* blockyp *nominal-screen-width*
-*nominal-screen-height* *gl-screen-width* *gl-screen-height*
-*message-function* dash holding-shift get-button-index
-message-to-standard-output reset-message-function
+add-resources quadtree-insert build-quadtree quadtree-collide
+quadtree-show *quadtree* *quadtree-depth* split-string-on-lines
+message with-session start-session *prompt-sweden-keybindings*
+*prompt-qwerty-keybindings* *screen-width* transform-method-body
+roll-under initialize-colors *style* load-project-image
+create-project-image *standard-categories* *left-turn* bind-event
+*right-turn* left-turn right-turn roll bind-event-to-method *colors*
+enable-key-repeat disable-key-repeat get-color define-method
+*default-font* field-value set-field-value object-fields
+dispatch-event *user-init-file-name* distance icon-resource icon-image
+*directions* *opposites* *pending-resources* with-project
+project-orthographically project-with-perspective open-viewport
+find-resource-property compose-blank-fields font-width font-height
+find-object *windows* edit create blocky transform-field-reference
+define-block *screen-height* formatted-line-width find-world
+*clipboard* formatted-line-height formatted-string-height
+formatted-string-width get-color create-image draw-image blocky edit
+define-prototype has-field *target* with-target define-world
+set-field-options *user-joystick-profile* field-option-value
+index-resource *default-joystick-profile* joystick-profile visit
+find-project-path index-project load-image-resource load-lisp-resource
+*executable* *screen-height* player *screen-width* blockyp
+*nominal-screen-width* *nominal-screen-height* *gl-screen-width*
+*gl-screen-height* *message-function* dash holding-shift
+get-button-index message-to-standard-output reset-message-function
 *make-prototype-id-package* lturn rturn ticks-per-beat radian-angle
 draw-textured-rectangle default-project-directories
 *resource-handlers* load-resource find-resource find-resource-object
