@@ -1171,12 +1171,9 @@ If a record with that name already exists, it is replaced.  However,
 if the resource is an :alias, just the string name of the target
 resource is stored; see also `find-resource'."
   (set-resource-pathname resource)
-  (let ((val (if (eq :alias (resource-type resource))
-		 (resource-data resource)
-		 resource)))
-    (setf (gethash (resource-name resource)
-		   *resources*) 
-	  val)))
+  (setf (gethash (resource-name resource)
+		 *resources*) 
+	resource))
 
 (defun defresource-expand-plist (plist)
   (destructuring-bind 
