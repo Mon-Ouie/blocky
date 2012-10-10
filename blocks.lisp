@@ -1770,7 +1770,7 @@ The order is (TOP LEFT RIGHT BOTTOM)."
   (assert (numberp heading))
   (setf %heading heading))
 
-(define-method distance-to-thing block (thing)
+(define-method distance-between block (thing)
   "Return the straight-line distance between here and THING.
 Note that the center-points of the objects are used for comparison."
   (multiple-value-bind (x0 y0) (center-point self)
@@ -1779,7 +1779,7 @@ Note that the center-points of the objects are used for comparison."
 
 (define-method distance-to-player block ()
   "Return the straight-line distance to the player."
-  (distance-to-thing self (get-player *world*)))
+  (distance-between self (get-player *world*)))
 
 ;; (defun uniquify-buffer-name (name)
 ;;   (let ((n 1)

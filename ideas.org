@@ -1,4 +1,5 @@
 * Things for new people
+** TODO fix minibuffer docs
 ** TODO add M-p as pause toggle keybinding
 ** TODO better error handling during halo actions
 ** TODO upgrade PATHFINDING code
