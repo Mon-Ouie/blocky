@@ -1284,9 +1284,9 @@ resource is stored; see also `find-resource'."
 			:with-database with-database)
     ;; load any pending resource defs
     (message "RESOURCES: ~A" *pending-resources*)
-    (while *pending-resources*
-      (message "processing. ~A remaining" (length *pending-resources*))
-      (index-resource (apply #'make-resource (pop *pending-resources*))))))
+    (dolist (plist *pending-resources*)
+      ;; (message "processing. ~A remaining" (length *pending-resources*))
+      (index-resource (apply #'make-resource plist)))))
 
 (defun directory-is-project-p (dir)
   "Test whether a directory has the .blocky suffix."
