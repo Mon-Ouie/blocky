@@ -217,7 +217,7 @@
 ;;; The halo, which manages all the handles
 
 (defparameter *halo-handles* 
-  '(:evaluate :open-menu :drop :move :pick-up :resize :define :cut :copy :destroy))
+  '(evaluate open-menu drop move pick-up resize define cut copy destroy))
 
 (define-block halo target)
 
