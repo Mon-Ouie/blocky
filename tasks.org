@@ -1,11 +1,3 @@
-* A.U.R.A.
-** TODO AAA production values all the way through
-** TODO manage oxygen, battery, ammo
-** TODO dual analog stick control
-** TODO z-depth fog, blur, and mask out a binocular circle, lensflare, liquid creatures w tentacles, projection
-** TODO more maneuverability on ground? indoor locales
-** TODO descend, lay nuke bomb, rise, detonate
-
 ** TODO [#A] MODELINE: more subtle handles/menus on the listener bar, show wiki page modeline etc
 ** TODO [#A] clickable project menu on modeline
 ** TODO [#A] clickable buffer id menu
@@ -69,14 +61,8 @@
 ** TODO [#B] Fix able to pull out system menus
 ** TODO [#B] create unified error handling dialog
 ** TODO [#B] explicit pull-up handle instead of auto-pullup
-** TODO [#B] Pretty sexy black rounded corner notifications
-**** TODO notifications and a "notify" function 
-**** TODO smile/frown emoticon status
-**** TODO simple ok notification box
-**** TODO generic question dialog box shortcut function
-** TODO [#B] buttons for toggle pin,freeze
 ** TODO [#B] hotkey for moving objects down into world
-** TODO [#B] visually indicate button blink
+** TODO [#B] visually indicate button click
 ** TODO [#B] better hlist packing
 ** TODO [#B] fix being able to pull out menu components
 ** TODO [#B] basic help

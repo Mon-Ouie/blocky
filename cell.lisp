@@ -1,6 +1,6 @@
-;;; windows.lisp --- an interactive block buffer editor
+;;; cell.lisp --- an interactive block buffer editor
 
-;; Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012  David O'Toole
+;; Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013  David O'Toole
 
 ;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: 
@@ -22,8 +22,9 @@
 
 (in-package :blocky)
 
-(define-block window
+(define-buffer window
   (buffer :initform nil :documentation "The buffer of objects to be displayed.")
+  (modified-p :initform nil)
   (rows :initform 10)
   (columns :initform 10) 
   (point-row :initform 0) 
@@ -56,12 +57,6 @@
 
 (defparameter *default-buffer-name* "*scratch*")
 
-(define-method initialize window (&optional (buffer *default-buffer-name*))
-  (with-fields (entry) self
-    (let ((buffer (find-buffer buffer)))
-      (initialize%super self)
-      (visit self buffer))))
-
 (define-method set-tool window (tool)
   "Set the current sheet's selected tool to TOOL."
   (assert (member tool %tool-methods))
@@ -76,10 +71,11 @@
 		      tool-methods))
       (say self (format nil "Changing tool operation to ~S" tool)))))
 
-(define-method set-modified window (&optional (value t))
-  (with-fields (buffer) self
-    (with-fields (name) buffer
-      (set-resource-modified-p name value))))
+(define-method set-modified-p window (&optional (value t))
+  (setf %modified-p value))
+
+(defun buffer-modified-p (&optional (buffer (current-buffer)))
+  %modified-p)
   
 (define-method apply-tool window (data)
   "Apply the current window's tool to the DATA."
@@ -88,8 +84,8 @@
     (send nil tool self data)))
 
 (define-method set-mark window ()
-  (setf %mark-row %point-row>
-	<mark-column %point-column)
+  (setf %mark-row %point-row
+	%mark-column %point-column)
   (say self (format nil "Mark set at (~S, ~S)." %mark-row %mark-column)))
    
 (define-method clear-mark window ()

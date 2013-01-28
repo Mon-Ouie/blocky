@@ -135,7 +135,7 @@
 	  ;; possibly adjust to stay onscreen 
 	  (when always-visible
 	    (multiple-value-bind (top left bottom right)
-		(window-bounding-box (world))
+		(window-bounding-box (current-buffer))
 	      (let ((overlap (- bottom  
 				(+ y height))))
 		(when (minusp overlap)

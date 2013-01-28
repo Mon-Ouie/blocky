@@ -121,11 +121,11 @@
   (make-keyword (evaluate (first %inputs))))
 
 (define-method << variable ((target block))
-  (setf (world-variable (variable-name self))
+  (setf (buffer-variable (variable-name self))
 	target))
 
 (define-method evaluate variable ()
-  (world-variable (variable-name self)))
+  (buffer-variable (variable-name self)))
 
 (define-method as-target variable ()
   (or (evaluate self) self))

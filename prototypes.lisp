@@ -1061,9 +1061,13 @@ was invoked."
 	   (defun ,defun-symbol (self ,@method-lambda-list)
 	     ,@(if documentation (list documentation))
 	     ,declaration2
-	     ,(if declaration 
-		  (rest body2)
-		  body2))
+	     ;; easily invoke next method without repeating name
+	     (macrolet ((next-method (&rest args)
+			  (append (list ',next-defun-symbol) args)))
+	       ;; paste transformed method code
+	       ,(if declaration 
+		    (rest body2)
+		    body2)))
 	   ;; store the method's function in the prototype's field
 	   (setf (field-value ,field-name prototype) ',defun-symbol)
 	   ;; add this method to the method dictionary
@@ -1575,11 +1579,8 @@ objects after reconstruction, wherever present."
 (defun find-buffer (name &key (create t) prototype)
   (or (gethash name *buffers*)
       (if create
-	  (add-buffer name (new (or prototype 'world) :name name))
+	  (add-buffer name (new (or prototype 'buffer) :name name))
 	  (error "Cannot find buffer page ~S" name))))
-
-(defun find-world (name)
-  (find-buffer name :create nil))
 
 ;;; Clipboard
 
@@ -1587,7 +1588,7 @@ objects after reconstruction, wherever present."
 
 (defun initialize-clipboard-maybe (&optional force)
   (when (or force (null *clipboard*))
-    (setf *clipboard* (new 'world))))
+    (setf *clipboard* (new 'buffer))))
 
 (defun clear-clipboard ()
   (initialize-clipboard-maybe :force))
@@ -1656,7 +1657,7 @@ objects after reconstruction, wherever present."
 ;; (find-super-prototype-name 'block)
 ;; (find-super-prototype-name 'entry)
 ;; (find-super-prototype-name 'integer)
-;; (find-super-prototype-name 'world)
+;; (find-super-prototype-name 'buffer)
 ;; (method-wiki-name 'move)
 ;; (method-wiki-name 'set-color "BLOCKY:COLOR")
 ;; (wiki-name-project "BLOCKY:BLOCK")

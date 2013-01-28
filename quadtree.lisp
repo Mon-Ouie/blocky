@@ -24,10 +24,10 @@
 
 (defvar *quadtree* nil)
 
-(defvar *world* nil
-"The current world object. Only one may be active at a time. See also
-worlds.lisp. Sprites and cells are free to send messages to `*world*'
-at any time, because `*world*' is always bound to the world containing
+(defvar *buffer* nil
+"The current buffer object. Only one may be active at a time. See also
+buffers.lisp. Sprites and cells are free to send messages to `*buffer*'
+at any time, because `*buffer*' is always bound to the buffer containing
 the object when the method is run.")
 
 (defmacro with-quadtree (quadtree &rest body)

@@ -398,7 +398,7 @@ calling TRACE-FUNCTION at each point of the line."
 ;;; Random midpoint displacement fractals, a.k.a. plasma
 
 ;; The following routines create random midpoint displacement fractals
-;; on a grid. This is useful for natural-looking world generation.
+;; on a grid. This is useful for natural-looking buffer generation.
 ;; See also http://en.wikipedia.org/wiki/Diamond-square_algorithm
 
 ;; My implementation is slow and needs to be improved.

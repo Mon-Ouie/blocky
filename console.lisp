@@ -661,8 +661,8 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 
 ;; The nominal size of of the window in pixels, in case we just want
 ;; to scale the scene to match the window instead of showing more of
-;; the world. If these are the same as the `*screen-' settings
-;; above, then more of the world will be shown when the window size
+;; the buffer. If these are the same as the `*screen-' settings
+;; above, then more of the buffer will be shown when the window size
 ;; increases.
 (defparameter *nominal-screen-width* 640 "Nominal width of the window, in pixels.")
 (defparameter *nominal-screen-height* 480 "Nominal height of the window, in pixels.")
@@ -671,9 +671,9 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 (defparameter *gl-screen-height* 480 "Height of the window expressed in OpenGL coordinates.")
 
 (defparameter *scale-output-to-window* nil
-  "When non-nil, always show a fixed amount of the world when changing
+  "When non-nil, always show a fixed amount of the buffer when changing
 window size. Otherwise (the default) one onscreen pixel equals one
-unit of world space, so that more of the world shows if the window
+unit of buffer space, so that more of the buffer shows if the window
 becomes larger.")
  
 (defparameter *z-near* 0)
@@ -1283,7 +1283,6 @@ resource is stored; see also `find-resource'."
 			:without-database without-database
 			:with-database with-database)
     ;; load any pending resource defs
-    (message "RESOURCES: ~A" *pending-resources*)
     (dolist (plist *pending-resources*)
       ;; (message "processing. ~A remaining" (length *pending-resources*))
       (index-resource (apply #'make-resource plist)))))
@@ -1696,7 +1695,7 @@ control the size of the individual frames or subimages."
   *user-joystick-profile* *joystick-axis-size* *joystick-dead-zone*))
 
 (defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
-*screen-height* *world* *blocks* *dt* *pointer-x* *author* *project*
+*screen-height* *buffer* *blocks* *dt* *pointer-x* *author* *project*
 *joystick-profile* *user-joystick-profile* *joystick-axis-size* 
 *joystick-dead-zone* *pointer-y* *resizable* *window-title* *buffers*
 *scale-output-to-window* *persistent-variables*))
@@ -1704,7 +1703,7 @@ control the size of the individual frames or subimages."
 (defvar *persistent-variables* '(*frame-rate* *updates* 
 				 
 				 ;; *screen-width* *screen-height*
-				 *world* *blocks* *dt* *pointer-x* *author* 
+				 *buffer* *blocks* *dt* *pointer-x* *author* 
 				 *project* *buffers* *scale-output-to-window* 
 				 *pointer-y* *resizable*
 				 *window-title*
@@ -2346,7 +2345,7 @@ of the music."
   (print-copyright-notice)
   (setf *blocks* nil
 	*project-folder* nil
-	*world* nil
+	*buffer* nil
 	*project* nil
 	*clipboard* nil
 	*event-hook* nil
@@ -2379,7 +2378,7 @@ of the music."
   (setf *buffers* nil)
   (sdl-mixer:halt-music)
   (sdl-mixer:close-audio t)
-  (setf *world* nil)
+  (setf *buffer* nil)
   (setf *project-folder* nil)
   (setf *blocks* nil)
   (setf *listener* nil)
@@ -2408,7 +2407,7 @@ of the music."
 ;; 			    :without-database without-database
 ;; 			    :with-database with-database)
 ;;       (when (null *blocks*)
-;; 	(start (new 'world)))
+;; 	(start (new 'buffer)))
 ;;       (start-session))))
 
 (defun edit (project)
@@ -2438,25 +2437,25 @@ of the music."
 ;;; Editor transport control
 
 (defun pause ()
-  (prog1 nil (transport-pause (world))))
+  (prog1 nil (transport-pause (current-buffer))))
 
 (defun rewind ()
-  (prog1 nil (transport-rewind (world))))
+  (prog1 nil (transport-rewind (current-buffer))))
 
 (defun play ()
-  (prog1 nil (transport-play (world))))
+  (prog1 nil (transport-play (current-buffer))))
 
 (defun toggle-play ()
-  (prog1 nil (transport-toggle-play (world))))
+  (prog1 nil (transport-toggle-play (current-buffer))))
 
 (defun update-parameters () nil)
-  ;; (when (world)
-  ;;   (send :update-future (world))))
+  ;; (when (current-buffer)
+  ;;   (send :update-future (current-buffer))))
 
-(defun world () *world*)
+(defun current-buffer () *buffer*)
 
-(defun visit (&optional (world (world)))
-  (at-next-update (start-alone world)))
+(defun visit (&optional (buffer (current-buffer)))
+  (at-next-update (start-alone buffer)))
 
 ;;; Emacs integration
 
@@ -2487,7 +2486,7 @@ of the music."
 ;;     (assert (stringp project))
 ;;     (create-project project)
 ;;     (load-project-image project)
-;;     (start (new 'world))
+;;     (start (new 'buffer))
 ;;     (start-session)))
 
 ;; (defun edit (&optional (project *untitled*) force-shell)
@@ -2495,7 +2494,7 @@ of the music."
 ;;     (let ((*edit* t))
 ;;       (load-project-image project :no-error)
 ;;       (when force-shell
-;; 	(start (new 'world)))
+;; 	(start (new 'buffer)))
 ;;       (start-session))))
 
 ;;; console.lisp ends here

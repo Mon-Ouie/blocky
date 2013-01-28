@@ -112,7 +112,7 @@
 
 (define-method tap open-menu (x y)
   (let ((menu (context-menu %target)))
-    (add-block (world) menu)
+    (add-block (current-buffer) menu)
     (move-to menu x y)))
 
 ;;; Dropping things down into the object layer
@@ -120,7 +120,7 @@
 (define-handle drop :drop)
 
 (define-method tap drop (x0 y0)
-  (drop-selection (world)))
+  (drop-selection (current-buffer)))
 
 (define-method update drop ()
   (when (%quadtree-node %target)
@@ -133,8 +133,8 @@
 (define-handle pick-up :pick-up)
 
 (define-method tap pick-up (x0 y0)
-  (unless (contains (world) %target)
-    (add-block (world) %target)))
+  (unless (contains (current-buffer) %target)
+    (add-block (current-buffer) %target)))
 
 (define-method update pick-up ()
   (when (null (%quadtree-node %target))
@@ -155,7 +155,7 @@
   (with-fields (positions) self
     (when (null positions)
       ;; drag all selected objects
-      (dolist (thing (cons %target (get-selection (world))))
+      (dolist (thing (cons %target (get-selection (current-buffer))))
 	(with-fields (x y) thing
 	  ;; store initial offset from pointer
 	  (push (list thing 
@@ -207,12 +207,12 @@
 (define-handle copy :copy)
 
 (define-method tap copy (x y)
-  (copy (world) (cons %target (get-selection (world)))))
+  (copy (current-buffer) (cons %target (get-selection (current-buffer)))))
 
 (define-handle cut :cut)
 
 (define-method tap cut (x y)
-  (cut (world) (cons %target (get-selection (world)))))
+  (cut (current-buffer) (cons %target (get-selection (current-buffer)))))
 
 ;;; The halo, which manages all the handles
 

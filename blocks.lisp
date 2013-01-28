@@ -272,7 +272,7 @@ initialized with BLOCKS as inputs."
   (when %halo (destroy %halo))
   (when %parent 
     (unplug-from-parent self))
-  (remove-thing-maybe (world) self)
+  (remove-thing-maybe (current-buffer) self)
   (setf %garbagep t))
 
 (define-method dismiss block ()
@@ -281,7 +281,7 @@ initialized with BLOCKS as inputs."
       (destroy self)))
 
 (define-method exit block ()
-  (remove-object *world* self))
+  (remove-object *buffer* self))
 
 (define-method make-duplicate block ()
   (duplicate self))
@@ -451,17 +451,17 @@ non-nil to indicate that the block was accepted, nil otherwise."
 	(setf parent nil)))))
 
 (define-method drop block (new-block &optional (dx 0) (dy 0))
-  "Add a new object to the current world at the current position.
+  "Add a new object to the current buffer at the current position.
 Optionally provide an x-offset DX and a y-offset DY.
 See also `drop-at'."
-  (add-object (world) new-block (+ %x dx) (+ %y dy)))
+  (add-object (current-buffer) new-block (+ %x dx) (+ %y dy)))
 
 (define-method drop-at block (new-block x y)
-  "Add the NEW-BLOCK to the current world at the location X,Y."
+  "Add the NEW-BLOCK to the current buffer at the location X,Y."
   (assert (and (numberp x) (numberp y)))
-  (add-object (world) new-block x y))
+  (add-object (current-buffer) new-block x y))
 
-(define-method clear-world-data block ()
+(define-method clear-buffer-data block ()
   (clear-saved-location self)
   (setf %quadtree-node nil)
   (setf %parent nil))
@@ -643,7 +643,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
 	  (keyword (bind-event-to-method self key mods result))
 	  (string (bind-event-to-text-insertion self key mods result)))))))
 
-;;; Pointer events (see also worlds.lisp)
+;;; Pointer events (see also buffers.lisp)
 
 (define-method select block () nil)
 
@@ -658,9 +658,9 @@ See `keys.lisp' for the full table of key and modifier symbols.
 	  (send (first methods) self)
 	  ;; multiple actions require a menu
 	  (let ((menu (context-menu self)))
-	    (add-block (world) menu)
+	    (add-block (current-buffer) menu)
 	    (move-to menu x y)
-	    (focus-on (world) menu))))))
+	    (focus-on (current-buffer) menu))))))
 
 (define-method scroll-tap block (x y)
   (declare (ignore x y))
@@ -701,7 +701,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
       (loop while this do
 	(setf next (%parent this))
 	(when (or (null next)
-		  (is-a 'world next))
+		  (is-a 'buffer next))
 	  (return-from searching this))
 	(setf this next)))))
 
@@ -714,7 +714,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (define-method lose-focus block () nil)
 
 (define-method grab-focus block () 
-  (send :focus-on (world) self :clear-selection nil))
+  (send :focus-on (current-buffer) self :clear-selection nil))
 
 (define-method pick-focus block () self)
 
@@ -725,7 +725,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (define-method make-halo block ()
   (when (null %halo)
     (setf %halo (new 'halo self))
-    (add-block (world) %halo)))
+    (add-block (current-buffer) %halo)))
 
 (define-method destroy-halo block ()
   (when %halo 
@@ -979,7 +979,7 @@ state (position and heading) and restoring them afterward."
 
 (define-method heading-to-player block ()
   "Compute the heading angle from this object to the player."
-  (heading-to-thing self (get-player *world*)))
+  (heading-to-thing self (get-player *buffer*)))
 
 ;;; Show methods in Emacs Glass
 
@@ -1577,7 +1577,7 @@ The following block fields will control sprite drawing:
 
 (define-method center block ()
   "Automatically center the block on the screen."
-  (with-fields (window-x window-y) *world*
+  (with-fields (window-x window-y) *buffer*
     (with-fields (x y width height) self
       (let ((center-x (+ window-x (/ *gl-screen-width* 2)))
 	    (center-y (+ window-y (/ *gl-screen-height* 2))))
@@ -1750,7 +1750,7 @@ The order is (TOP LEFT RIGHT BOTTOM)."
 
 (define-method direction-to-player block ()
   "Return the directional keyword naming the general direction to the player."
-  (direction-to-thing self (get-player *world*)))
+  (direction-to-thing self (get-player *buffer*)))
 
 (define-method heading-to-thing block (thing)
   "Return a heading (in radians) to THING."
@@ -1759,7 +1759,7 @@ The order is (TOP LEFT RIGHT BOTTOM)."
 
 (define-method heading-to-player block ()
   "The heading (in radians) to the player from this block."
-  (heading-to-thing self (get-player *world*)))
+  (heading-to-thing self (get-player *buffer*)))
 
 (define-method aim-at-thing block (thing)
   "Aim the current heading at the object THING."
@@ -1779,7 +1779,7 @@ Note that the center-points of the objects are used for comparison."
 
 (define-method distance-to-player block ()
   "Return the straight-line distance to the player."
-  (distance-between self (get-player *world*)))
+  (distance-between self (get-player *buffer*)))
 
 ;; (defun uniquify-buffer-name (name)
 ;;   (let ((n 1)
@@ -1795,9 +1795,9 @@ Note that the center-points of the objects are used for comparison."
   (setf %needs-layout t))
 
 (define-method invalidate-layout block ()
-  (let ((world (world)))
-    (when (and world (has-method :queue-layout world))
-      (queue-layout world))))
+  (let ((buffer (current-buffer)))
+    (when (and buffer (has-method :queue-layout buffer))
+      (queue-layout buffer))))
 
 (define-method bring-to-front block (block)
   (with-fields (inputs) self
@@ -1855,10 +1855,10 @@ Note that the center-points of the objects are used for comparison."
 
 (define-method tab block (&optional backward)
   (if *next-tab*
-      (focus-on (world) *next-tab*)
+      (focus-on (current-buffer) *next-tab*)
       (let ((index (position-within-parent self)))
 	(when (numberp index)
-	  (focus-on (world)
+	  (focus-on (current-buffer)
 		    (with-fields (inputs) %parent
 		      (nth (mod (+ index
 				   (if backward -1 1))
@@ -2189,7 +2189,7 @@ inputs are evaluated."
 (define-method after-drop-hook capture ()
   (let ((thing (first %inputs)))
     (unplug self thing)
-    (add-object (world) thing)
+    (add-object (current-buffer) thing)
     (destroy self)))
 
 (define-method hit capture (mouse-x mouse-y) 

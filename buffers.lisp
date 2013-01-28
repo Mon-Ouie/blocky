@@ -1,4 +1,4 @@
-;; worlds.lisp --- squeakish spaces 
+;; buffers.lisp --- squeakish spaces 
 
 ;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012  David O'Toole
 
@@ -24,9 +24,9 @@
 
 (defvar *listener-open-p* nil)
 
-(define-block world
+(define-block buffer
   (variables :initform nil 
-	     :documentation "Hash table mapping values to values, local to the current world.")
+	     :documentation "Hash table mapping values to values, local to the current buffer.")
   (player :documentation "The player object, if any.")
   (followed-object :initform nil)
   (background-image :initform nil)
@@ -43,7 +43,7 @@
   (field-of-view :initform *field-of-view*)
   (was-key-repeat-p :initform nil)
   ;; objects and collisions
-  (objects :initform nil :documentation "A hash table with all the world's objects.")
+  (objects :initform nil :documentation "A hash table with all the buffer's objects.")
   (quadtree :initform nil)
   (quadtree-depth :initform nil)
   ;; viewing window 
@@ -112,52 +112,55 @@
   (drag-origin :initform nil
 	       :documentation "The parent block originally holding the dragged block.")
   (object-p :initform nil
-		 :documentation "When non-nil, the dragged object is in the world.")
+		 :documentation "When non-nil, the dragged object is in the buffer.")
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
 	       :documentation "A cons (X . Y) of relative mouse click location on dragged block.")
-  ;; For buffer page worlds
   (prototype-name :initform nil)
   (method :initform nil)
   (modified :initform nil 
 	  :documentation "Non-nil when modified since last save."))
 
-(define-method toggle-other-windows world ()
+(defmacro define-buffer (name &body body)
+  `(define-block (,name :super buffer)
+     ,@body))
+
+(defmacro with-buffer (buffer &rest body)
+  `(let* ((*buffer* (find-uuid ,buffer)))
+     ,@body))
+
+(define-method toggle-other-windows buffer ()
   (glass-toggle))
 
 (defun selection ()
-  (get-selection (world)))
+  (get-selection (current-buffer)))
 
 (defun selected-object ()
   (let ((sel (selection)))
     (assert (consp sel))
     (first sel)))
 
-(defmacro with-world (world &rest body)
-  `(let* ((*world* (find-uuid ,world)))
-     ,@body))
-
-(define-method transport-pause world ()
+(define-method transport-pause buffer ()
   (setf %paused t)
   (setf %rewound-selection
 	(mapcar #'duplicate
 		(get-selection self))))
 
-(define-method transport-play world ()
+(define-method transport-play buffer ()
   (setf %paused nil)
   (clear-future self)
   (mapc #'destroy (get-selection self))
   (dolist (each %rewound-selection)
-    (add-object (world) each))
+    (add-object (current-buffer) each))
   (setf %rewound-selection nil))
 
-(define-method transport-toggle-play world ()
+(define-method transport-toggle-play buffer ()
   (if %paused 
       (transport-play self)
       (transport-pause self)))
 
-(define-method show-future world ()
+(define-method show-future buffer ()
   (prog1 nil
     (let ((selection (get-selection self)))
       (let (future)
@@ -166,7 +169,7 @@
 	  (let (trail)
 	    (dotimes (i %future-steps)
 	      (let ((ghost (duplicate thing)))
-		(with-world self
+		(with-buffer self
 		  (with-quadtree %quadtree
 		    (add-object self ghost)
 		    (assert (%quadtree-node ghost))
@@ -181,36 +184,32 @@
 	  (make-halo thing))
 	(setf %future future)))))
 
-(define-method clear-future world ()
+(define-method clear-future buffer ()
   (setf %future nil))
 
-(define-method update-future world ()
+(define-method update-future buffer ()
   (when %future (show-future self)))
 
-(defmacro define-world (name &body body)
-  `(define-block (,name :super world)
-     ,@body))
-
-(define-method get-objects world ()
+(define-method get-objects buffer ()
   (loop for object being the hash-values in %objects collect object))
 
-(define-method has-object world (thing)
+(define-method has-object buffer (thing)
   (gethash (find-uuid thing) %objects))
 
 ;; Defining and scrolling the screen viewing window
 
-(define-method window-bounding-box world ()
+(define-method window-bounding-box buffer ()
   (values %window-y 
 	  %window-x
 	  (+ %window-x *gl-screen-width*)
 	  (+ %window-y *gl-screen-height*)))
 
-(define-method move-window-to world (x y &optional z)
+(define-method move-window-to buffer (x y &optional z)
   (setf %window-x x 
 	%window-y y)
   (when z (setf %window-z z)))
 
-(define-method move-window-to-object world (object)
+(define-method move-window-to-object buffer (object)
   (multiple-value-bind (top left right bottom) 
       (bounding-box object)
     (declare (ignore right bottom))
@@ -219,21 +218,21 @@
      (max 0 (- left (/ *gl-screen-width* 2)))
      (max 0 (- top (/ *gl-screen-width* 2))))))
 
-(define-method move-window-to-player world ()
+(define-method move-window-to-player buffer ()
   (when %player
     (move-window-to-object self %player)))
 
-(define-method move-window world (dx dy &optional dz)
+(define-method move-window buffer (dx dy &optional dz)
   (incf %window-x dx)
   (incf %window-y dy)
   (when dz (setf %window-dz dz)))
 
-(define-method glide-window-to world (x y &optional z)
+(define-method glide-window-to buffer (x y &optional z)
   (setf %window-x0 x)
   (setf %window-y0 y)
   (when z (setf %window-z z)))
 
-(define-method glide-window-to-object world (object)
+(define-method glide-window-to-object buffer (object)
   (multiple-value-bind (top left right bottom) 
       (bounding-box object)
     (declare (ignore right bottom))
@@ -242,16 +241,16 @@
      (max 0 (- left (/ *gl-screen-width* 2)))
      (max 0 (- top (/ *gl-screen-width* 2))))))
 
-(define-method glide-window-to-player world ()
+(define-method glide-window-to-player buffer ()
   (when %player
     (glide-window-to-object self %player)))
 
-(define-method follow-with-camera world (thing)
+(define-method follow-with-camera buffer (thing)
   (assert (or (null thing) (blockyp thing)))
   (setf %followed-object thing)
   (glide-window-to-object self %followed-object))
 
-(define-method glide-follow world (object)
+(define-method glide-follow buffer (object)
   (with-fields (window-x window-y width height) self
     (let ((margin-x (* %horizontal-scrolling-margin *gl-screen-width*))
 	  (margin-y (* %vertical-scrolling-margin *gl-screen-height*))
@@ -284,7 +283,7 @@
 				   (- object-y 
 				      (truncate (/ *gl-screen-height* 2))))))))))
 
-(define-method update-window-glide world ()
+(define-method update-window-glide buffer ()
   (with-fields (window-x window-x0 window-y window-y0 window-scrolling-speed) self
     (labels ((nearby (a b)
 	       (> window-scrolling-speed (abs (- a b))))
@@ -298,11 +297,11 @@
 	    (setf window-y0 nil)
 	    (incf window-y (jump window-y window-y0)))))))
 
-(define-method scale-window world (&optional (window-scale-x 1.0) (window-scale-y 1.0))
+(define-method scale-window buffer (&optional (window-scale-x 1.0) (window-scale-y 1.0))
   (setf %window-scale-x window-scale-x)
   (setf %window-scale-y window-scale-y))
 
-(define-method project-window world ()
+(define-method project-window buffer ()
   (ecase %projection-mode 
     (:orthographic (project-orthographically))
     (:perspective (project-with-perspective :field-of-view %field-of-view :depth %depth)))
@@ -311,11 +310,11 @@
 		    :scale-y %window-scale-y
 		    :scale-z %window-scale-z))
 
-(define-method emptyp world ()
+(define-method emptyp buffer ()
   (or (null %objects)
       (zerop (hash-table-count %objects))))
 
-(define-method initialize world (&key name)
+(define-method initialize buffer (&key name)
   (initialize%super self)
   (setf %buffer-name name)
   (when name
@@ -329,8 +328,8 @@
 
 (defvar *object-placement-capture-hook*)
 
-(define-method add-object world (object &optional x y (z 0))
-  (with-world self
+(define-method add-object buffer (object &optional x y (z 0))
+  (with-buffer self
     (with-quadtree %quadtree
       (remove-thing-maybe self object)
       (assert (not (contains-object self object)))
@@ -346,128 +345,128 @@
       (quadtree-insert-maybe object)
       (after-place-hook object))))
       
-(define-method remove-object world (object)
+(define-method remove-object buffer (object)
   (remhash (find-uuid object) %objects)
   (when (%quadtree-node object)
     (quadtree-delete object)
     (setf (%quadtree-node object) nil)))
 
-(define-method remove-thing-maybe world (object)
-  (with-world self
+(define-method remove-thing-maybe buffer (object)
+  (with-buffer self
     (destroy-halo object)
     (when (gethash (find-uuid object) %objects)
       (remove-object self object))
     (when (%parent object)
       (unplug-from-parent object))))
 
-(define-method add-block world (object &optional x y prepend)
+(define-method add-block buffer (object &optional x y prepend)
   (remove-thing-maybe self object)
   (add-block%super self object x y))
 
-(define-method drop-block world (object x y)
+(define-method drop-block buffer (object x y)
   (add-object self object)
   (move-to object x y))
 
-(define-method drop-object world (object &optional x y)
+(define-method drop-object buffer (object &optional x y)
   (add-object self object)
   (when (and (numberp x) (numberp y))
     (move-to object x y))
   (after-drop-hook object))
 
-(define-method drop-selection world ()
+(define-method drop-selection buffer ()
   (dolist (each (get-selection self))
     (drop-object self each)))
 
-(define-method add-at-pointer world (object)
+(define-method add-at-pointer buffer (object)
   (add-block self object *pointer-x* *pointer-y* :prepend)
   (focus-on self object))
 
-(define-method add-message world ()
+(define-method add-message buffer ()
   (add-at-pointer self (new 'message)))
 
-(define-method add-statement world ()
+(define-method add-statement buffer ()
   (add-at-pointer self (new 'statement)))
 
-(define-method add-variable world ()
+(define-method add-variable buffer ()
   (add-at-pointer self (new 'variable)))
 
-(define-method add-expression world ()
+(define-method add-expression buffer ()
   (add-at-pointer self (new 'expression)))
 
-(define-method add-field world ()
+(define-method add-field buffer ()
   (add-at-pointer self (new 'field)))
 
-(define-method add-self world ()
+(define-method add-self buffer ()
   (add-at-pointer self (new 'self)))
 
-(define-method contains-object world (object)
+(define-method contains-object buffer (object)
   (gethash (find-uuid object) 
 	   %objects))
 
-(define-method destroy-block world (object)
+(define-method destroy-block buffer (object)
   (remhash (find-uuid object) %objects))
 
-;;; World-local variables
+;;; Buffer-local variables
 
-(define-method initialize-variables-maybe world () 
+(define-method initialize-variables-maybe buffer () 
   (when (null %variables) 
     (setf %variables (make-hash-table :test 'equal))
-    (setf (gethash "WORLD" %variables) self)))
+    (setf (gethash "BUFFER" %variables) self)))
 
-(define-method set-variable world (var value)
+(define-method set-variable buffer (var value)
   (initialize-variables-maybe self)
   (setf (gethash var %variables) value))
 
-(define-method get-variable world (var)
+(define-method get-variable buffer (var)
   (initialize-variables-maybe self)
   (gethash var %variables))
 
-(defun world-variable (var-name)
-  (get-variable (world) var-name))
+(defun buffer-variable (var-name)
+  (get-variable (current-buffer) var-name))
 
-(defun set-world-variable (var-name value)
-  (set-variable (world) var-name value))
+(defun set-buffer-variable (var-name value)
+  (set-variable (current-buffer) var-name value))
 
-(defsetf world-variable set-world-variable)
+(defsetf buffer-variable set-buffer-variable)
 
-(defmacro with-world-variables (vars &rest body)
+(defmacro with-buffer-variables (vars &rest body)
   (labels ((make-clause (sym)
-	     `(,sym (world-variable ,(make-keyword sym)))))
+	     `(,sym (buffer-variable ,(make-keyword sym)))))
     (let* ((symbols (mapcar #'make-non-keyword vars))
 	   (clauses (mapcar #'make-clause symbols)))
       `(symbol-macrolet ,clauses ,@body))))
 
-;;; About the player
+;;; About the player. deprecated.
 			        
-(define-method get-player world ()
+(define-method get-player buffer ()
   %player)
 
 (defun player ()
-  (get-player *world*))
+  (get-player *buffer*))
 
 (defun playerp (thing)
   (object-eq thing (player)))
 
-(define-method set-player world (player)
+(define-method set-player buffer (player)
   (setf %player (find-uuid player)))
   ;; (unless (contains-object self player)
   ;;   (add-object self player)))
 
-;;; Configuring the world's space and its quadtree indexing
+;;; Configuring the buffer's space and its quadtree indexing
 
-(defparameter *world-bounding-box-scale* 1.01
-  "Actual size of bounding box used for quadtree. The world is bordered
+(defparameter *buffer-bounding-box-scale* 1.01
+  "Actual size of bounding box used for quadtree. The buffer is bordered
 around on all sides by a thin margin designed to prevent objects near
 the edge of the universe piling up into the top quadrant and causing
 slowdown. See also quadtree.lisp")
 
-(define-method install-quadtree world ()
+(define-method install-quadtree buffer ()
   ;; make a box with a one-percent margin on all sides.
   ;; this margin helps edge objects not pile up in quadrants
   (let ((box (multiple-value-list
 	      (scale-bounding-box 
 	       (multiple-value-list (bounding-box self))
-	       *world-bounding-box-scale*))))
+	       *buffer-bounding-box-scale*))))
     (with-fields (quadtree) self
       (setf quadtree (build-quadtree 
 		      box 
@@ -478,7 +477,7 @@ slowdown. See also quadtree.lisp")
 	(when objects
 	  (quadtree-fill objects quadtree))))))
 
-(define-method resize world (new-height new-width)
+(define-method resize buffer (new-height new-width)
   (assert (and (plusp new-height)
 	       (plusp new-width)))
   (with-fields (height width quadtree objects) self
@@ -487,7 +486,7 @@ slowdown. See also quadtree.lisp")
     (when quadtree
       (install-quadtree self))))
 
-(define-method trim world ()
+(define-method trim buffer ()
   (prog1 self
     (let ((objects (get-objects self)))
       (when objects
@@ -495,7 +494,7 @@ slowdown. See also quadtree.lisp")
 	  ;; adjust bounding box so that all objects have positive coordinates
 	  (multiple-value-bind (top left right bottom)
 	      (find-bounding-box objects)
-	    ;; resize the world so that everything just fits
+	    ;; resize the buffer so that everything just fits
 	    (setf %x 0 %y 0)
 	    (resize self (- bottom top) (- right left))
 	    ;; move all the objects
@@ -506,46 +505,46 @@ slowdown. See also quadtree.lisp")
 
 ;;; Cut and paste
 
-(define-method get-selection world ()
+(define-method get-selection buffer ()
   (let ((all (append (get-objects self) %inputs)))
    (remove-if-not #'%halo all)))
 
-(define-method copy world (&optional objects0)
+(define-method copy buffer (&optional objects0)
   (let ((objects (or objects0 (get-selection self))))
     (clear-halos self)
     (when objects
-      (setf *clipboard* (new 'world))
+      (setf *clipboard* (new 'buffer))
       (dolist (object objects)
 	(let ((duplicate (duplicate object)))
-	  ;; don't keep references to anything in the (world)
-	  (clear-world-data duplicate)
+	  ;; don't keep references to anything in the (current-buffer)
+	  (clear-buffer-data duplicate)
 	  (add-object *clipboard* duplicate))))))
 
-(define-method cut world (&optional objects0)
-  (with-world self
+(define-method cut buffer (&optional objects0)
+  (with-buffer self
     (let ((objects (or objects0 (get-selection self))))
       (when objects
 	(clear-halos self)
-	(setf *clipboard* (new 'world))
+	(setf *clipboard* (new 'buffer))
 	(dolist (object objects)
 	  (with-quadtree %quadtree
 	    (remove-thing-maybe self object))
 	  (add-object *clipboard* object))))))
 
-(define-method paste-from world ((source block) (dx number :default 0) (dy number :default 0))
+(define-method paste-from buffer ((source block) (dx number :default 0) (dy number :default 0))
   (dolist (object (mapcar #'duplicate (get-objects source)))
     (with-fields (x y) object
-      (clear-world-data object)
-      (with-world self
+      (clear-buffer-data object)
+      (with-buffer self
 	(with-quadtree %quadtree
 	  (add-object self object)
 	  (move-to object (+ x dx) (+ y dy)))))))
   
-(define-method paste world ((dx number :default 0) (dy number :default 0))
+(define-method paste buffer ((dx number :default 0) (dy number :default 0))
   (paste-from self *clipboard* dx dy))
   
-(define-method paste-here world ()
-  (let ((temp (new 'world)))
+(define-method paste-here buffer ()
+  (let ((temp (new 'buffer)))
     (paste-from temp *clipboard*)
     (send :trim temp)
     (paste-from self temp
@@ -554,15 +553,15 @@ slowdown. See also quadtree.lisp")
 
 ;; (define-method paste-cut 
 
-;;; Algebraic operations on worlds and their contents
+;;; Algebraic operations on buffers and their contents
 
-(defvar *world-prototype* "BLOCKY:WORLD")
+(defvar *buffer-prototype* "BLOCKY:BUFFER")
 
-(defmacro with-world-prototype (world &rest body)
-  `(let ((*world-prototype* (find-super ,world)))
+(defmacro with-buffer-prototype (buffer &rest body)
+  `(let ((*buffer-prototype* (find-super ,buffer)))
      ,@body))
 
-(define-method adjust-bounding-box-maybe world ()
+(define-method adjust-bounding-box-maybe buffer ()
   (if (emptyp self)
       self
       (let ((objects-bounding-box 
@@ -577,25 +576,25 @@ slowdown. See also quadtree.lisp")
 		     objects-bounding-box)
 	      (resize self bottom right)))))))
 
-(defmacro with-new-world (&body body)
-  `(with-world (clone *world-prototype*) 
+(defmacro with-new-buffer (&body body)
+  `(with-buffer (clone *buffer-prototype*) 
      ,@body
-     (adjust-bounding-box-maybe (world))))
+     (adjust-bounding-box-maybe (current-buffer))))
 
-(defun translate (world dx dy)
-  (when world
+(defun translate (buffer dx dy)
+  (when buffer
     (assert (and (numberp dx) (numberp dy)))
-    (with-new-world 
-      (paste (world) world dx dy))))
+    (with-new-buffer 
+      (paste (current-buffer) buffer dx dy))))
 
-(defun combine (world1 world2)
-  (with-new-world 
-    (when (and world1 world2)
-      (dolist (object (nconc (get-objects world1)
-			     (get-objects world2)))
-	(add-object (world) object)))))
+(defun combine (buffer1 buffer2)
+  (with-new-buffer 
+    (when (and buffer1 buffer2)
+      (dolist (object (nconc (get-objects buffer1)
+			     (get-objects buffer2)))
+	(add-object (current-buffer) object)))))
 
-(define-method scale world (sx &optional sy)
+(define-method scale buffer (sx &optional sy)
   (let ((objects (get-objects self)))
     (dolist (object objects)
       (with-fields (x y width height) object
@@ -603,47 +602,47 @@ slowdown. See also quadtree.lisp")
 	(resize object (* width sx) (* height (or sy sx))))))
   (trim self))
 
-(define-method destroy-region world (bounding-box))
+(define-method destroy-region buffer (bounding-box))
 
-(defun vertical-extent (world)
-  (if (or (null world)
-	  (emptyp world))
+(defun vertical-extent (current-buffer)
+  (if (or (null buffer)
+	  (emptyp buffer))
       0
       (multiple-value-bind (top left right bottom)
-	  (bounding-box world)
+	  (bounding-box buffer)
 	(declare (ignore left right))
 	(- bottom top))))
 
-(defun horizontal-extent (world)
-  (if (or (null world)
-	  (emptyp world))
+(defun horizontal-extent (current-buffer)
+  (if (or (null buffer)
+	  (emptyp buffer))
       0
       (multiple-value-bind (top left right bottom)
-	  (bounding-box world)
+	  (bounding-box buffer)
 	(declare (ignore top bottom))
 	(- right left))))
   
-(defun arrange-below (&optional world1 world2)
-  (when (and world1 world2)
-    (combine world1
-	     (translate world2
+(defun arrange-below (&optional buffer1 buffer2)
+  (when (and buffer1 buffer2)
+    (combine buffer1
+	     (translate buffer2
 			0 
-			(field-value :height world1)))))
+			(field-value :height buffer1)))))
 
-(defun arrange-beside (&optional world1 world2)
-  (when (and world1 world2)
-    (combine world1 
-	     (translate world2
-			(field-value :width world1)
+(defun arrange-beside (&optional buffer1 buffer2)
+  (when (and buffer1 buffer2)
+    (combine buffer1 
+	     (translate buffer2
+			(field-value :width buffer1)
 			0))))
 
-(defun stack-vertically (&rest worlds)
-  (reduce #'arrange-below worlds :initial-value (with-new-world)))
+(defun stack-vertically (&rest buffers)
+  (reduce #'arrange-below buffers :initial-value (with-new-buffer)))
 
-(defun stack-horizontally (&rest worlds)
-  (reduce #'arrange-beside worlds :initial-value (with-new-world)))
+(defun stack-horizontally (&rest buffers)
+  (reduce #'arrange-beside buffers :initial-value (with-new-buffer)))
 
-(define-method flip-horizontally world ()
+(define-method flip-horizontally buffer ()
   (let ((objects (get-objects self)))
     (dolist (object objects)
       (with-fields (x y) object
@@ -651,41 +650,41 @@ slowdown. See also quadtree.lisp")
   ;; get rid of negative coordinates
   (trim self))
 
-(define-method flip-vertically world ()
+(define-method flip-vertically buffer ()
   (let ((objects (get-objects self)))
     (dolist (object objects)
       (with-fields (x y) object
 	(move-to object x (- y)))))
   (trim self))
 
-(define-method mirror-horizontally world ()
+(define-method mirror-horizontally buffer ()
   (stack-horizontally 
    self 
    (flip-horizontally (duplicate self))))
 
-(define-method mirror-vertically world ()
+(define-method mirror-vertically buffer ()
   (stack-vertically 
    self 
    (flip-vertically (duplicate self))))
 
-(defun with-border (border world)
-  (with-fields (height width) world
-    (with-new-world 
-      (paste (world) world border border) 
-      (resize (world)
+(defun with-border (border buffer)
+  (with-fields (height width) buffer
+    (with-new-buffer 
+      (paste (current-buffer) buffer border border) 
+      (resize (current-buffer)
 	      (+ height (* border 2))
 	      (+ width (* border 2))))))
 
-;;; The Shell is an optional layer of objects on top of the world
+;;; The Shell is an optional layer of objects on top of the buffer
 
-;; Including a system menu, editor, and controls for switching worlds
+;; Including a system menu, editor, and controls for switching buffers
 ;; and pages in the system. Maybe zooming out on a mega virtual desktop.
 
-(define-method add-listener-maybe world (&optional force)
+(define-method add-listener-maybe buffer (&optional force)
   (when (or force (null *listener*))
     (setf *listener* (new 'listener))))
 
-(define-method enter-listener world ()
+(define-method enter-listener buffer ()
   (add-listener-maybe self)
   (setf %last-focus %focused-block)
   (focus-on self *listener* :clear-selection nil)
@@ -693,7 +692,7 @@ slowdown. See also quadtree.lisp")
   (setf *listener-open-p* t)
   (enable-key-repeat))
   
-(define-method exit-listener world ()
+(define-method exit-listener buffer ()
   (when *listener-open-p*
     (add-listener-maybe self)
     (setf *listener-open-p* nil)
@@ -703,22 +702,22 @@ slowdown. See also quadtree.lisp")
       (disable-key-repeat))
     (setf %was-key-repeat-p nil)))
 
-(define-method toggle-listener world ()
+(define-method toggle-listener buffer ()
   (if *listener-open-p* 
       (exit-listener self)
       (enter-listener self)))
 
-(define-method grab-focus world ())
+(define-method grab-focus buffer ())
 
-(define-method layout-shell-objects world ()
+(define-method layout-shell-objects buffer ()
   (mapc #'layout %inputs))
 
-(define-method update-shell-objects world ()
+(define-method update-shell-objects buffer ()
   (mapc #'update %inputs)
   (when *listener* (update *listener*)))
 
-(define-method draw-shell-objects world ()
-  (with-world self
+(define-method draw-shell-objects buffer ()
+  (with-buffer self
     (with-fields (drag-start inputs drag focused-block
 			 highlight inputs modified hover
 			 ghost prompt) self
@@ -748,10 +747,10 @@ slowdown. See also quadtree.lisp")
       (when highlight
 	(draw-highlight highlight)))))
 
-(define-method draw-overlays world ())
+(define-method draw-overlays buffer ())
 
-(define-method draw world ()
-  (with-world self
+(define-method draw buffer ()
+  (with-buffer self
     (with-field-values (objects width height background-image background-color) self
       (unless %parent 
 	(project-window self))
@@ -782,15 +781,15 @@ slowdown. See also quadtree.lisp")
   
 ;;; Simulation update
 
-(define-method update world ()
-  (setf *world* (find-uuid self))
+(define-method update buffer ()
+  (setf *buffer* (find-uuid self))
   (with-field-values (objects drag player) self
     ;; build quadtree if needed
     (when (null %quadtree)
       (install-quadtree self))
     (assert %quadtree)
     (unless %paused
-      (with-world self
+      (with-buffer self
 	;; enable quadtree for collision detection
 	(with-quadtree %quadtree
 	  ;; possibly run the objects
@@ -812,7 +811,7 @@ slowdown. See also quadtree.lisp")
 	      (quadtree-collide object))))))
     ;; now outside the quadtree,
     ;; possibly update the shell layer
-    (with-world self
+    (with-buffer self
       (when *listener-open-p*
 	(with-quadtree nil
 	  (layout self)
@@ -821,16 +820,16 @@ slowdown. See also quadtree.lisp")
 
 
 
-;;; Running a world as a script
+;;; Running a buffer as a script
 
-(define-method evaluate world ()
+(define-method evaluate buffer ()
   (prog1 self
-    (with-world self
+    (with-buffer self
       (mapc #'evaluate %inputs))))
 
-(define-method layout world ()
+(define-method layout buffer ()
   ;; take over the entire GL window
-  (with-world self
+  (with-buffer self
     ;; (setf %x 0 %y 0)
 	  ;; %width *gl-screen-width* 
 	  ;; %height *gl-screen-height*)
@@ -838,9 +837,9 @@ slowdown. See also quadtree.lisp")
     (when *listener*
       (layout *listener*))))
   
-(define-method handle-event world (event)
+(define-method handle-event buffer (event)
   (with-field-values (player quadtree focused-block) self
-    (with-world self
+    (with-buffer self
       (or (block%handle-event self event)
 	  (let ((thing
 		  (if *listener-open-p* 
@@ -853,20 +852,20 @@ slowdown. See also quadtree.lisp")
 
 ;;; Hit testing
 
-(define-method hit world (x y)
+(define-method hit buffer (x y)
   ;; return self no matter where mouse is, so that we get to process
   ;; all the events.
   (declare (ignore x y))
   self)
 
-(define-method hit-inputs world (x y)
-  "Recursively search the blocks in this world for a block
+(define-method hit-inputs buffer (x y)
+  "Recursively search the blocks in this buffer for a block
 intersecting the point X,Y. We have to search the top-level blocks
 starting at the end of `%INPUTS' and going backward, because the
 blocks are drawn in list order (i.e. the topmost blocks for
 mousing-over are at the end of the list.) The return value is the
 block found, or nil if none is found."
-  (with-world self 
+  (with-buffer self 
     (with-quadtree %quadtree
       (labels ((try (b)
 		 (when b
@@ -883,7 +882,7 @@ block found, or nil if none is found."
 				   :from-end t)))
 		    (when parent
 		      (try parent)))
-		  ;; try world objects
+		  ;; try buffer objects
 		  (block trying
 		    (loop for object being the hash-values of %objects
 			  do (let ((result (try object)))
@@ -894,13 +893,13 @@ block found, or nil if none is found."
   
 (defparameter *minimum-drag-distance* 6)
   
-(define-method clear-halos world ()
+(define-method clear-halos buffer ()
   (mapc #'destroy-halo (get-objects self)))
 
-(define-method focus-on world (block &key (clear-selection t))
+(define-method focus-on buffer (block &key (clear-selection t))
   ;; possible to pass nil
   (with-fields (focused-block) self
-    (with-world self
+    (with-buffer self
       (let ((last-focus focused-block))
 	;; there's going to be a new focused block. 
 	;; tell the current one it's no longer focused.
@@ -923,9 +922,9 @@ block found, or nil if none is found."
 		   (not (object-eq last-focus focused-block)))
 	  (focus block))))))
 
-(define-method begin-drag world (mouse-x mouse-y block)
+(define-method begin-drag buffer (mouse-x mouse-y block)
   (with-fields (drag drag-origin inputs drag-start ghost drag-offset) self
-    (with-world self
+    (with-buffer self
       (setf drag (as-drag block mouse-x mouse-y))
       (setf drag-origin (find-parent drag))
       (when drag-origin
@@ -947,9 +946,9 @@ block found, or nil if none is found."
 	      (setf drag-start (cons dx dy))
 	      (setf drag-offset (cons x-offset y-offset)))))))))
 
-(define-method drag-maybe world (x y)
+(define-method drag-maybe buffer (x y)
   ;; require some actual mouse movement to initiate a drag
-  (with-world self
+  (with-buffer self
     (with-fields (focused-block drag-button click-start click-start-block) self
       (when click-start
 	(destructuring-bind (x1 . y1) click-start
@@ -968,10 +967,10 @@ block found, or nil if none is found."
 		(setf click-start nil)
 		(setf click-start-block nil)))))))))
 
-(define-method handle-point-motion world (mouse-x mouse-y)
+(define-method handle-point-motion buffer (mouse-x mouse-y)
   (with-fields (inputs hover highlight click-start drag-offset quadtree
 		       drag-start drag) self
-    (with-world self
+    (with-buffer self
       (with-quadtree quadtree
 	(setf hover nil)
 	(drag-maybe self mouse-x mouse-y)
@@ -991,10 +990,10 @@ block found, or nil if none is found."
 	      (setf highlight (find-uuid (hit-inputs self mouse-x mouse-y)))))))))
     ;; (when (null highlight)
   ;;   (when *listener*
-  ;;     (with-world self (close-menus *listener*))))))))
+  ;;     (with-buffer self (close-menus *listener*))))))))
 
-(define-method press world (x y &optional button)
-  (with-world self
+(define-method press buffer (x y &optional button)
+  (with-buffer self
     (with-fields (click-start drag-button click-start-block
 			      focused-block) self
       ;; now find what we're touching
@@ -1015,7 +1014,7 @@ block found, or nil if none is found."
 	      ;; focused, as in the case of the Listener
 	      (focus-on self block)))))))
 
-(define-method clear-drag-data world ()
+(define-method clear-drag-data buffer ()
   (setf %drag-start nil
 	%drag-offset nil
 	%object-p nil
@@ -1028,8 +1027,8 @@ block found, or nil if none is found."
 	%click-start-block nil
 	%click-start nil))
   
-(define-method release world (x y &optional button)
-  (with-world self
+(define-method release buffer (x y &optional button)
+  (with-buffer self
     (with-fields 
 	(drag-offset drag-start hover drag click-start drag-button
 		     click-start-block drag-origin focused-block modified) self
@@ -1068,7 +1067,7 @@ block found, or nil if none is found."
 	  (progn
 	    (when focused-block
 ;	      (select self focused-block)
-	      (with-world self 
+	      (with-buffer self 
 		(cond
 		  ;; right click and alt click are equivalent
 		  ((or (= button 3)
@@ -1104,21 +1103,21 @@ block found, or nil if none is found."
       (clear-drag-data self)
       (invalidate-layout self))))
 
-(define-method tab world (&optional backward)
+(define-method tab buffer (&optional backward)
   (when %focused-block
-    (with-world self
+    (with-buffer self
       (tab %focused-block backward))))
 
-(define-method backtab world ()
+(define-method backtab buffer ()
   (tab self :backward))
   
-(define-method escape world ()
-  (with-world self
+(define-method escape buffer ()
+  (with-buffer self
     (focus-on self nil)
     (setf %selection nil)))
 
-(define-method start world ()
-  (with-world self
+(define-method start buffer ()
+  (with-buffer self
     (unless (emptyp self)
       (trim self))
     (start-alone self)))
@@ -1126,20 +1125,20 @@ block found, or nil if none is found."
 (defun on-screen-p (thing)
   (contained-in-bounding-box 
    thing
-   (multiple-value-list (window-bounding-box (world)))))
+   (multiple-value-list (window-bounding-box (current-buffer)))))
 
-;;; Serialization of worlds
+;;; Serialization of buffers
 
-(define-method before-serialize world ()
+(define-method before-serialize buffer ()
   (clear-halos self))
 
-;; (define-method after-serialize world ()
+;; (define-method after-serialize buffer ()
 ;;   (loop for id being the hash-keys of %objects do
 ;;     (setf (gethash id %objects) (find-object id))))
 
-(define-method after-deserialize world ()
+(define-method after-deserialize buffer ()
   (after-deserialize%super self)
   (clear-drag-data self)
   (add-listener-maybe self :force))
 
-;;; worlds.lisp ends here
+;;; buffers.lisp ends here

@@ -46,7 +46,7 @@ keyboard-held-p keyboard-pressed-p holding-control transform-window
 find-heading keyboard-time-in-current-state pretty-string ugly-symbol
 *pointer-x* *pointer-y* is-joystick-event *self* is-raw-joystick-event
 keyboard-time-in-previous-state *updates* keyboard-down-p *buffers*
-keyboard-keys-down keyboard-modifier-down-p find-buffer find-world
+keyboard-keys-down keyboard-modifier-down-p find-buffer find-buffer
 *socket-size* keyboard-modifiers draw-filled-circle draw-aa-circle
 get-keys make-block add-buffer find-buffer add-block remove-block
 with-quadtree *initialization-hook* hit-blocks quadtree-delete
@@ -64,10 +64,10 @@ dispatch-event *user-init-file-name* distance icon-resource icon-image
 project-orthographically project-with-perspective open-viewport
 find-resource-property compose-blank-fields font-width font-height
 find-object *windows* edit create blocky transform-field-reference
-define-block *screen-height* formatted-line-width find-world
+define-block *screen-height* formatted-line-width find-buffer
 *clipboard* formatted-line-height formatted-string-height
 formatted-string-width get-color create-image draw-image blocky edit
-define-prototype has-field *target* with-target define-world
+define-prototype has-field *target* with-target define-buffer
 set-field-options *user-joystick-profile* field-option-value
 index-resource *default-joystick-profile* joystick-profile visit
 find-project-path index-project load-image-resource load-lisp-resource
@@ -78,7 +78,7 @@ get-button-index message-to-standard-output reset-message-function
 *make-prototype-id-package* lturn rturn ticks-per-beat radian-angle
 draw-textured-rectangle default-project-directories
 *resource-handlers* load-resource find-resource find-resource-object
-*colors* *world* make-directory-maybe load-user-init-file
+*colors* *buffer* make-directory-maybe load-user-init-file
 *project-directories* resource-to-plist *osx* *linux* make-resource
 make-object-resource make-event *blocks* bind-event-to-text-insertion
 make-field-initializer clone make-field-initializer-body
@@ -112,7 +112,7 @@ find-directories find-all-projects *project* transform-tree
 *after-startup-hook* draw-line operation-symbol message-symbol
 play-sample set-music-volume draw-pixel *user-keyboard-layout*
 *fullscreen* draw-circle set-field-option-value load-project
-field-options world *frame-rate* set-resource-system-p
+field-options current-buffer *frame-rate* set-resource-system-p
 *blx-file-extension* *project* *project-path* *window-title*
 *window-position* restartably *message-logging* update-parameters
 joystick-axis-pressed-p joystick-axis-value joystick-axis-raw-value
@@ -130,7 +130,7 @@ draw-box *resizable* *resize-hook* draw-rectangle playerp
 *after-load-project-hook* *mission* mission-variable find-bounding-box
 combine stack-vertically set-mission-variable horizontal-extent
 vertical-extent flip-horizontally flip-vertically mirror-horizontally
-mirror-vertically world with-mission-locals with-empty-world
+mirror-vertically buffer with-mission-locals with-empty-buffer
 define-turtle stack-horizontally *background-color* combine-beside
 combine-below get-ticks *block-font* quit reset seek-music
 make-keyword object field-value make-queue find-parent set-field-value
@@ -158,9 +158,9 @@ find-texture *default-super* clear-text-image-cache *token-types*
 verify *serif* *use-antialiased-text* *sans* *monospace* toggle-debug
 *debug-on-error* *block-categories* *block-colors* input paste
 arrange-beside arrange-below load-variable-resource translate
-save-variable-resource *persistent-variables* with-new-world
-with-border with-blank-world with-world-prototype with-world
-remove-trailing-space *world-prototype* step-coordinates
+save-variable-resource *persistent-variables* with-new-buffer
+with-border with-blank-buffer with-buffer-prototype with-buffer
+remove-trailing-space *buffer-prototype* step-coordinates
 *default-frame-rate* make-field-accessor-forms save-excursion
 make-input-accessor-forms *persistent-variables-file-name* duplicate
 persistent-variables-file combine save-variables indicator-size

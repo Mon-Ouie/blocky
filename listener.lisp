@@ -295,7 +295,7 @@
 			 (:inactive 
 			  (find-color 
 			   (or 
-			    (unless (is-a 'world %parent)
+			    (unless (is-a 'buffer %parent)
 			      %parent)
 			    self) :shadow)))))))
 
@@ -556,7 +556,7 @@
   ;; print any error output
   (when (and (stringp %error-output)
 	     (plusp (length %error-output)))
-    (add-block (world) (new 'text %error-output) *pointer-x* *pointer-y*)))
+    (add-block (current-buffer) (new 'text %error-output) *pointer-x* *pointer-y*)))
 
 ;;; Easily defining new entry blocks
 
@@ -686,8 +686,8 @@
       (incf height (field-value :height element))
       (callf max width (dash 2 (field-value :width element))))
     ;; now compute proper positions and re-layout
-    (let* ((x (%window-x (world)))
-	   (y0 (+ (%window-y (world))
+    (let* ((x (%window-x (current-buffer)))
+	   (y0 (+ (%window-y (current-buffer))
 		 *gl-screen-height*))
 	   (y (- y0 height (dash 3))))
       (dolist (element inputs)
@@ -767,14 +767,14 @@
 
 (define-method update modeline ()
   (set-value %%project-id *project*)
-  (set-value %%buffer-id (%buffer-name (world)))
+  (set-value %%buffer-id (%buffer-name (current-buffer)))
   (set-value %%position
 	     (modeline-position-string
-	      (%window-x (world))
-	      (%window-y (world))))
+	      (%window-x (current-buffer))
+	      (%window-y (current-buffer))))
   (set-value %%mode
-	     (if (world)
-		 (if (%paused (world))
+	     (if (current-buffer)
+		 (if (%paused (current-buffer))
 		     "(paused)"
 		     "(playing)")
 		 "(empty)")))

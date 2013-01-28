@@ -30,7 +30,7 @@
 (in-package :blocky)
 
 (defstruct path
-  world ;; Pointer to associated world. 
+  buffer ;; Pointer to associated buffer. 
   grid ;; Array of pathfinding data nodes.
   heap ;; Heap array of open pathfinding nodes.
   end ;; Pointer to last heap array position.
@@ -50,9 +50,9 @@
   open ; equal to path's path-turn-number when on open list
   )
 
-(defun create-path (&key height width world)
-  (assert (object-p world))
-  (let ((path (make-path :world world
+(defun create-path (&key height width buffer)
+  (assert (object-p buffer))
+  (let ((path (make-path :buffer buffer
 			 :grid (make-array (list height width))
 			 :heap (make-array (* height width))
 			 :turn 1 :end 0)))

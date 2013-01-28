@@ -54,7 +54,7 @@
 (define-method handle-event text (event)
   (handle-text-event self event))
 
-(define-method set-buffer text (buffer)
+(define-method set-buffer text (current-buffer)
   (setf %buffer buffer))
 
 (define-method get-buffer-as-string text ()
