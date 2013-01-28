@@ -118,18 +118,16 @@ More instructions for Mac and Windows will be available soon.
       (push #p"/path/to/blocky/" asdf:*central-registry*)
       (asdf:load-system :blocky)
 
-6.   The work-in-progress game MICROXONG is written with Blocky, and can
+6.   The work-in-progress game PLONG is written with Blocky, and can
      be downloaded via git:
 
-      	  git clone git@github.com:dto/microxong.git
+      	  git clone git@github.com:dto/plong.git
 
-      You should put the example somewhere where Blocky's
-      *project-directories* setting will find it; your home directory
-      is a good candidate if you don't want to change the setup.
-      
       Then in SBCL:
-
-          (blocky:play-project "microxong")
+      
+      (push #p"~/plong/" asdf:*central-registry*)
+      (asdf:load-system :plong)
+      (plong:plong)
 
 7. Getting help and reporting bugs 
 

@@ -1,6 +1,6 @@
 #+TITLE: Plan for implementing buffers and major modes in BLOCKY
 
-* TODO http://c2.com/cgi/wiki?ForthMacro
+* TODO bpolhttp://c2.com/cgi/wiki?ForthMacro
 * TODO forthmode. the stack is composed of blocks, and the current buffer line is the stack!
 *** http://c2.com/cgi/wiki?ColorForthQuickStart
 *** http://concatenative.org/wiki/view/Concatenative%20language
