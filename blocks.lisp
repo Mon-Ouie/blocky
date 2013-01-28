@@ -707,7 +707,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
 
 (define-method after-place-hook block () nil)
 
-;;; Focus events (see also shell.lisp)
+;;; Focus events (see also buffers.lisp)
 
 (define-method focus block () nil)
 
@@ -1469,7 +1469,7 @@ dropped.")
 
 (define-method draw-hover block ()
   "Draw something to indicate that this object can recieve a drop.
-See shell.lisp for more on the implementation of drag-and-drop."
+See buffers.lisp for more on the implementation of drag-and-drop."
   (with-fields (x y width height inputs) self
     (draw-box x y width height
 	      :color *hover-color* :alpha *hover-alpha*)

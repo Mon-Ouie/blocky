@@ -1,6 +1,6 @@
-;;; cell.lisp --- an interactive block buffer editor
+;;; shell.lisp --- an interactive block buffer editor
 
-;; Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013  David O'Toole
+;; Copyright (C) 2007-2013 David O'Toole
 
 ;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: 
@@ -22,9 +22,9 @@
 
 (in-package :blocky)
 
-(define-buffer window
-  (buffer :initform nil :documentation "The buffer of objects to be displayed.")
+(define-buffer shell
   (modified-p :initform nil)
+  (alignment :initform nil)
   (rows :initform 10)
   (columns :initform 10) 
   (point-row :initform 0) 
@@ -37,8 +37,8 @@
   (origin-column :initform 0 :documentation "Column number of top-left displayed cell.")
   (origin-height :initform nil)
   (origin-width :initform nil)
-  (column-widths :documentation "A vector of integers where v(x) is the pixel width of window column x.")
-  (row-heights :documentation "A vector of integers where v(x) is the pixel height of window row x.")
+  (column-widths :documentation "A vector of integers where v(x) is the pixel width of shell column x.")
+  (row-heights :documentation "A vector of integers where v(x) is the pixel height of shell row x.")
   (column-styles :documentation "A vector of property lists used to customize the appearance of columns.")
   (row-spacing :initform 1 :documentation "Number of pixels to add between rows.")
   (zebra-stripes :documentation "When non-nil, zebra stripes are drawn.")
@@ -46,8 +46,8 @@
   (border-style :initform t :documentation "When non-nil, draw cell borders.")
   (draw-blanks :initform t :documentation "When non-nil, draw blank cells.")
   (header-style :initform t :documentation "When non-nil, draw row and column headers.")
-  (header-line :initform nil :documentation "Formatted line to be displayed at top of window above spreadsheet.")
-  (status-line :initform nil :documentation "Formatted line to be displayed at bottom of window below spreadsheet.")
+  (header-line :initform nil :documentation "Formatted line to be displayed at top of shell above spreadsheet.")
+  (status-line :initform nil :documentation "Formatted line to be displayed at bottom of shell below spreadsheet.")
   (scroll-margin :initform 0)
   (display-style :initform :label)
   (cursor-color :initform "yellow")
@@ -57,42 +57,39 @@
 
 (defparameter *default-buffer-name* "*scratch*")
 
-(define-method set-tool window (tool)
+(define-method set-tool shell (tool)
   "Set the current sheet's selected tool to TOOL."
   (assert (member tool %tool-methods))
   (setf %tool tool))
 
-(define-method next-tool window ()
+(define-method next-tool shell ()
   "Switch to the next available tool." 
   (with-fields (tool tool-methods) self
     (let ((pos (position tool tool-methods)))
       (assert pos)
       (setf tool (nth (mod (1+ pos) (length tool-methods))
-		      tool-methods))
-      (say self (format nil "Changing tool operation to ~S" tool)))))
+		      tool-methods)))))
 
-(define-method set-modified-p window (&optional (value t))
+(define-method set-modified-p shell (&optional (value t))
   (setf %modified-p value))
 
 (defun buffer-modified-p (&optional (buffer (current-buffer)))
-  %modified-p)
+  (%modified-p buffer))
   
-(define-method apply-tool window (data)
-  "Apply the current window's tool to the DATA."
+(define-method apply-tool shell (data)
+  "Apply the current shell's tool to the DATA."
   (set-modified self)
   (with-fields (tool tool-methods) self
-    (send nil tool self data)))
+    (send tool self data)))
 
-(define-method set-mark window ()
+(define-method set-mark shell ()
   (setf %mark-row %point-row
-	%mark-column %point-column)
-  (say self (format nil "Mark set at (~S, ~S)." %mark-row %mark-column)))
+	%mark-column %point-column))
    
-(define-method clear-mark window ()
-  (setf %mark-row nil %mark-column nil)
-  (say self "Mark cleared."))
+(define-method clear-mark shell ()
+  (setf %mark-row nil %mark-column nil))
 
-(define-method mark-region window ()
+(define-method mark-region shell ()
   (with-fields (mark-row mark-column point-row point-column) self
     (if (and (integerp mark-row) (integerp mark-column))
 	(values (min mark-row point-row)
@@ -101,39 +98,25 @@
 		(max mark-column point-column))
 	(values nil nil nil nil))))
 
-(define-method visit window (&optional (buffer *default-buffer-name*))
-  "Visit the buffer BUFFER with the current window. If BUFFER is a =buffer=
-object, visit it and add the buffer to the buffer collection. If BUFFER is a
-string, visit the named buffer. If the named buffer does not exist, a
-default buffer is created. If BUFFER is a list, it is interpreted as a
-buffer address, and a new buffer is generated according to that address.
-See also CREATE-BUFFER."
-  (let ((buffer (find-buffer buffer)))
-    (assert (object-p buffer))
-    (setf %buffer-name (field-value :name buffer))
-    (say self (format nil "Visiting buffer ~S" %buffer-name))
-    (set-resource-modified-p %buffer-name t)
-    (setf %buffer buffer)
-    (install-keybindings self)
-    (setf %rows (field-value :height buffer))
-    (setf %columns (field-value :width buffer))
-    (assert (integerp %rows))
-    (assert (integerp %columns))
-    (setf %point-row 0)
-    (setf %point-column 0)
-    (clear-mark self)
-    (setf %point-column (min %columns %point-column))
-    (setf %point-row (min %rows %point-row))
-    (setf %point-column (min %columns %point-column))
-    (setf %column-widths (make-array (+ 1 %columns) :initial-element 0)
-	  %row-heights (make-array (+ 1 %rows) :initial-element 0)
-	  %column-styles (make-array (+ 1 %columns))
-	  %row-styles (make-array (+ 1 %rows)))
-    (layout self)))
+(define-method initialize shell (&optional (buffer-name *default-buffer-name*))
+  (initialize%super self :name buffer)
+  (install-keybindings self)
+  ;; (setf %rows (field-value :height buffer))
+  ;; (setf %columns (field-value :width buffer))
+  ;; (assert (integerp %rows))
+  ;; (assert (integerp %columns))
+  (setf %point-row 0)
+  (setf %point-column 0)
+  (clear-mark self)
+  (setf %point-column (min %columns %point-column))
+  (setf %point-row (min %rows %point-row))
+  (setf %point-column (min %columns %point-column))
+  (setf %column-widths (make-array (+ 1 %columns) :initial-element 0)
+	%row-heights (make-array (+ 1 %rows) :initial-element 0)
+	%column-styles (make-array (+ 1 %columns))
+	%row-styles (make-array (+ 1 %rows))))
 
-(defparameter *blank-cell-string* '(" ........ "))
-
-(define-method layout window ()
+(define-method layout shell ()
   (with-field-values (rows columns display-style buffer
 			   column-widths row-heights) self
     (when buffer
@@ -164,45 +147,7 @@ See also CREATE-BUFFER."
 (defparameter *even-columns-format* '(:background "gray50" :foreground "gray10"))
 (defparameter *odd-columns-format* '(:background "gray45" :foreground "gray10"))
 
-(define-method handle-event window (event)
-  ;; possibly forward event to current cell. used for the event cell, see below.
-  (prog1
-      (if (or (and (equal "RETURN" (first event))
-		   (equal :control (second event)))
-	      (equal "ESCAPE" (first event)))
-	  (send-parent self :initialize self)
-	  (let* ((cell (selected-cell self))
-		 (widget (when cell (field-value :widget cell))))
-	    (cond ((and cell (has-method :handle-key cell))
-		   (or (handle-key cell event)
-		       (send-parent self :handle-key self event)))
-		  ((and widget %entered)
-		   (prog1 nil (handle-key widget event)))
-		  (t (send-parent self :handle-key self event)))))
-    (layout self)))
-
-(define-method hit window (x0 y0) 
-  (with-field-values (row-heights column-widths origin-row origin-column rows columns x y width height)
-      self
-    (when (within-extents x0 y0 x y (+ x width) (+ y height))
-      (let* ((x %x)
-	     (y %y)
-	     (selected-column 
-	      (loop for column from origin-column to columns
-		    do (incf x (aref column-widths column))
-		    when (> x x0) return column))
-	     (selected-row 
-	      (loop for row from origin-row to rows
-		    do (incf y (aref row-heights row))
-		    when (> y y0) return row)))
-	(when (and (integerp selected-column) (integerp selected-row))
-	  (when (array-in-bounds-p (field-value :grid %buffer)
-				 selected-row selected-column)
-	    (prog1 t
-	      (setf %point-row selected-row
-		    %point-column selected-column))))))))
-  
-(define-method draw window ()
+(define-method draw shell ()
   (when %buffer
     (with-field-values (point-row point-column row-heights buffer buffer-name 
 				   origin-row origin-column header-line status-line
@@ -355,7 +300,7 @@ See also CREATE-BUFFER."
 		       (notany #'null (list x0 y0 x1 y1)))
 	      (draw-region self x0 y0 (- x1 x0) (- y1 y0)))))))))
   
-(define-method scroll window ()
+(define-method scroll shell ()
   (with-fields (point-row point-column origin-row origin-column scroll-margin
 			   origin-height origin-width buffer rows columns) self
     (when (or 
@@ -385,7 +330,7 @@ See also CREATE-BUFFER."
 		      (- point-row
 			 (truncate (/ origin-height 2)))))))))
 
-(define-method draw-cursor window (x y width height)
+(define-method draw-cursor shell (x y width height)
   (with-fields (cursor-color cursor-blink-color cursor-blink-clock focused) self
     (decf cursor-blink-clock)
     (when (minusp cursor-blink-clock)
@@ -397,13 +342,13 @@ See also CREATE-BUFFER."
 		     cursor-blink-color)))
       (draw-rectangle x y width height :color color :destination %image))))
 
-(define-method draw-mark window (x y width height)
+(define-method draw-mark shell (x y width height)
   (draw-rectangle x y width height :color "white" :destination %image))
 
-(define-method draw-region window (x y width height)
+(define-method draw-region shell (x y width height)
   (draw-rectangle x y width height :color "cyan" :destination %image))
   
-(define-method move-cursor window (direction)
+(define-method move-cursor shell (direction)
   "Move the cursor one step in DIRECTION. 
 DIRECTION is one of :up :down :right :left."
   (unless %entered
@@ -427,36 +372,36 @@ DIRECTION is one of :up :down :right :left."
 	;; possibly scroll
 	(scroll self)))))
   
-(define-method move-cursor-up window ()
+(define-method move-cursor-up shell ()
   (move-cursor self :up))
 
-(define-method move-cursor-down window ()
+(define-method move-cursor-down shell ()
   (move-cursor self :down))
 
-(define-method move-cursor-left window ()
+(define-method move-cursor-left shell ()
   (move-cursor self :left))
 
-(define-method move-cursor-right window ()
+(define-method move-cursor-right shell ()
   (move-cursor self :right))
 
-(define-method move-end-of-line window ()
+(define-method move-end-of-line shell ()
   (unless %entered
     (setf %point-column (1- %columns))
     (scroll self)))
 
-(define-method move-beginning-of-line window ()
+(define-method move-beginning-of-line shell ()
   (unless %entered
     (setf %point-column 0)
     (scroll self)))
 
-(define-method move-end-of-column window ()
+(define-method move-end-of-column shell ()
   (unless %entered
     (setf %point-row (1- %rows))
     (scroll self)))
 
-(define-method move-beginning-of-column window ()
+(define-method move-beginning-of-column shell ()
   (unless %entered
     (setf %point-row 0)
     (scroll self)))
 
-;;; windows.lisp ends here
+;;; shell.lisp ends here

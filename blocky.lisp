@@ -113,13 +113,13 @@ find-directories find-all-projects *project* transform-tree
 play-sample set-music-volume draw-pixel *user-keyboard-layout*
 *fullscreen* draw-circle set-field-option-value load-project
 field-options current-buffer *frame-rate* set-resource-system-p
-*blx-file-extension* *project* *project-path* *window-title*
-*window-position* restartably *message-logging* update-parameters
-joystick-axis-pressed-p joystick-axis-value joystick-axis-raw-value
-analog-stick-heading find-heading analog-stick-pressure
-*joystick-axis-size* *joystick-axis-dead-zone* *event-hook*
-left-analog-stick-heading left-analog-stick-pressure *message-history*
-right-analog-stick-heading joystick-button-pressed-p
+next-method *blx-file-extension* *project* *project-path*
+*window-title* *window-position* restartably *message-logging*
+update-parameters joystick-axis-pressed-p joystick-axis-value
+joystick-axis-raw-value analog-stick-heading find-heading
+analog-stick-pressure *joystick-axis-size* *joystick-axis-dead-zone*
+*event-hook* left-analog-stick-heading left-analog-stick-pressure
+*message-history* right-analog-stick-heading joystick-button-pressed-p
 analog-stick-pressed-p left-analog-stick-pressed-p
 right-analog-stick-pressed-p right-analog-stick-pressure
 initialize-console joystick-axis-value poll-joystick-button

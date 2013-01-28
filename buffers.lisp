@@ -1,6 +1,6 @@
 ;; buffers.lisp --- squeakish spaces 
 
-;; Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012  David O'Toole
+;; Copyright (C) 2006-2013  David O'Toole
 
 ;; Author: David O'Toole dto@ioforms.org
 ;; Keywords: 
@@ -27,11 +27,11 @@
 (define-block buffer
   (variables :initform nil 
 	     :documentation "Hash table mapping values to values, local to the current buffer.")
-  (player :documentation "The player object, if any.")
+  (cursor :documentation "The cursor object, if any.")
   (followed-object :initform nil)
   (background-image :initform nil)
   (background-color :initform "white")
-  (redraw-player :initform t)
+  (redraw-cursor :initform t)
   (category :initform :data)
   (x :initform 0)
   (y :initform 0)
@@ -88,7 +88,7 @@
   ;; prototype control
   (excluded-fields :initform
 		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :listener :drag :hover :highlight 
-		     ;; shell objects are not saved:
+		     ;; overlay objects are not saved:
 		     :inputs)
 		   :documentation "Don't serialize the menu bar.")
   (field-collection-type :initform :hash)
@@ -116,11 +116,7 @@
   (drag-start :initform nil
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
-	       :documentation "A cons (X . Y) of relative mouse click location on dragged block.")
-  (prototype-name :initform nil)
-  (method :initform nil)
-  (modified :initform nil 
-	  :documentation "Non-nil when modified since last save."))
+	       :documentation "A cons (X . Y) of relative mouse click location on dragged block."))
 
 (defmacro define-buffer (name &body body)
   `(define-block (,name :super buffer)
@@ -141,60 +137,22 @@
     (assert (consp sel))
     (first sel)))
 
-(define-method transport-pause buffer ()
-  (setf %paused t)
-  (setf %rewound-selection
-	(mapcar #'duplicate
-		(get-selection self))))
-
-(define-method transport-play buffer ()
-  (setf %paused nil)
-  (clear-future self)
-  (mapc #'destroy (get-selection self))
-  (dolist (each %rewound-selection)
-    (add-object (current-buffer) each))
-  (setf %rewound-selection nil))
-
-(define-method transport-toggle-play buffer ()
-  (if %paused 
-      (transport-play self)
-      (transport-pause self)))
-
-(define-method show-future buffer ()
-  (prog1 nil
-    (let ((selection (get-selection self)))
-      (let (future)
-	(dolist (thing selection)
-	  (remove-object self thing)
-	  (let (trail)
-	    (dotimes (i %future-steps)
-	      (let ((ghost (duplicate thing)))
-		(with-buffer self
-		  (with-quadtree %quadtree
-		    (add-object self ghost)
-		    (assert (%quadtree-node ghost))
-		    (dotimes (j (* i %future-step-interval))
-		      (update ghost)
-		      (run-tasks ghost)
-		      (quadtree-collide ghost))))
-		(remove-object self ghost)
-		(push ghost trail)))
-	    (push trail future))
-	  (add-object self thing)
-	  (make-halo thing))
-	(setf %future future)))))
-
-(define-method clear-future buffer ()
-  (setf %future nil))
-
-(define-method update-future buffer ()
-  (when %future (show-future self)))
-
 (define-method get-objects buffer ()
   (loop for object being the hash-values in %objects collect object))
 
 (define-method has-object buffer (thing)
   (gethash (find-uuid thing) %objects))
+
+(define-method emptyp buffer ()
+  (or (null %objects)
+      (zerop (hash-table-count %objects))))
+
+(define-method initialize buffer (&key name)
+  (initialize%super self)
+  (setf %objects (make-hash-table :test 'equal))
+  (setf %buffer-name name)
+  (when name
+    (add-buffer name self)))
 
 ;; Defining and scrolling the screen viewing window
 
@@ -218,9 +176,9 @@
      (max 0 (- left (/ *gl-screen-width* 2)))
      (max 0 (- top (/ *gl-screen-width* 2))))))
 
-(define-method move-window-to-player buffer ()
-  (when %player
-    (move-window-to-object self %player)))
+(define-method move-window-to-cursor buffer ()
+  (when %cursor
+    (move-window-to-object self %cursor)))
 
 (define-method move-window buffer (dx dy &optional dz)
   (incf %window-x dx)
@@ -241,9 +199,9 @@
      (max 0 (- left (/ *gl-screen-width* 2)))
      (max 0 (- top (/ *gl-screen-width* 2))))))
 
-(define-method glide-window-to-player buffer ()
-  (when %player
-    (glide-window-to-object self %player)))
+(define-method glide-window-to-cursor buffer ()
+  (when %cursor
+    (glide-window-to-object self %cursor)))
 
 (define-method follow-with-camera buffer (thing)
   (assert (or (null thing) (blockyp thing)))
@@ -310,21 +268,58 @@
 		    :scale-y %window-scale-y
 		    :scale-z %window-scale-z))
 
-(define-method emptyp buffer ()
-  (or (null %objects)
-      (zerop (hash-table-count %objects))))
+;;; Transport control
 
-(define-method initialize buffer (&key name)
-  (initialize%super self)
-  (setf %buffer-name name)
-  (when name
-    (setf %prototype-name (buffer-name-prototype name))
-    (setf %method (buffer-name-method name))
-    (add-buffer name self))
-  (setf %ghost (new 'block))
-  (setf %objects (make-hash-table :test 'equal)))
+(define-method transport-pause buffer ()
+  (setf %paused t)
+  (setf %rewound-selection
+	(mapcar #'duplicate
+		(get-selection self))))
 
-;;; The object layer. 
+(define-method transport-play buffer ()
+  (setf %paused nil)
+  (clear-future self)
+  (mapc #'destroy (get-selection self))
+  (dolist (each %rewound-selection)
+    (add-object (current-buffer) each))
+  (setf %rewound-selection nil))
+
+(define-method transport-toggle-play buffer ()
+  (if %paused 
+      (transport-play self)
+      (transport-pause self)))
+
+(define-method show-future buffer ()
+  (prog1 nil
+    (let ((selection (get-selection self)))
+      (let (future)
+	(dolist (thing selection)
+	  (remove-object self thing)
+	  (let (trail)
+	    (dotimes (i %future-steps)
+	      (let ((ghost (duplicate thing)))
+		(with-buffer self
+		  (with-quadtree %quadtree
+		    (add-object self ghost)
+		    (assert (%quadtree-node ghost))
+		    (dotimes (j (* i %future-step-interval))
+		      (update ghost)
+		      (run-tasks ghost)
+		      (quadtree-collide ghost))))
+		(remove-object self ghost)
+		(push ghost trail)))
+	    (push trail future))
+	  (add-object self thing)
+	  (make-halo thing))
+	(setf %future future)))))
+
+(define-method clear-future buffer ()
+  (setf %future nil))
+
+(define-method update-future buffer ()
+  (when %future (show-future self)))
+
+;;; The object layer holds the contents of the buffer.
 
 (defvar *object-placement-capture-hook*)
 
@@ -436,21 +431,21 @@
 	   (clauses (mapcar #'make-clause symbols)))
       `(symbol-macrolet ,clauses ,@body))))
 
-;;; About the player. deprecated.
+;;; About the cursor. deprecated.
 			        
-(define-method get-player buffer ()
-  %player)
+(define-method get-cursor buffer ()
+  %cursor)
 
-(defun player ()
-  (get-player *buffer*))
+(defun cursor ()
+  (get-cursor (current-buffer)))
 
-(defun playerp (thing)
-  (object-eq thing (player)))
+(defun cursorp (thing)
+  (object-eq thing (cursor)))
 
-(define-method set-player buffer (player)
-  (setf %player (find-uuid player)))
-  ;; (unless (contains-object self player)
-  ;;   (add-object self player)))
+(define-method set-cursor buffer (cursor)
+  (setf %cursor (find-uuid cursor)))
+  ;; (unless (contains-object self cursor)
+  ;;   (add-object self cursor)))
 
 ;;; Configuring the buffer's space and its quadtree indexing
 
@@ -675,7 +670,7 @@ slowdown. See also quadtree.lisp")
 	      (+ height (* border 2))
 	      (+ width (* border 2))))))
 
-;;; The Shell is an optional layer of objects on top of the buffer
+;;; The Overlay is an optional layer of objects on top of the buffer
 
 ;; Including a system menu, editor, and controls for switching buffers
 ;; and pages in the system. Maybe zooming out on a mega virtual desktop.
@@ -709,19 +704,19 @@ slowdown. See also quadtree.lisp")
 
 (define-method grab-focus buffer ())
 
-(define-method layout-shell-objects buffer ()
+(define-method layout-overlay-objects buffer ()
   (mapc #'layout %inputs))
 
-(define-method update-shell-objects buffer ()
+(define-method update-overlay-objects buffer ()
   (mapc #'update %inputs)
   (when *listener* (update *listener*)))
 
-(define-method draw-shell-objects buffer ()
+(define-method draw-overlay-objects buffer ()
   (with-buffer self
     (with-fields (drag-start inputs drag focused-block
-			 highlight inputs modified hover
+			 highlight inputs hover
 			 ghost prompt) self
-      ;; now start drawing the shell objects
+      ;; now start drawing the overlay objects
       (mapc #'draw inputs)
       ;; draw any future
       (when %future
@@ -769,21 +764,21 @@ slowdown. See also quadtree.lisp")
 	  ;; only draw onscreen objects
 	  (when (colliding-with-bounding-box object box)
 	    (draw object))))
-      ;; possibly redraw player to ensure visibility.
-      (when (and %player %redraw-player)
-	(draw %player))
+      ;; possibly redraw cursor to ensure visibility.
+      (when (and %cursor %redraw-cursor)
+	(draw %cursor))
       ;; (if %parent
       ;; 	  (gl:pop-matrix)
-      ;; possibly draw shell
+      ;; possibly draw overlay
       (if *listener-open-p* 
-	  (draw-shell-objects self)
+	  (draw-overlay-objects self)
 	  (draw-overlays self)))))
   
 ;;; Simulation update
 
 (define-method update buffer ()
   (setf *buffer* (find-uuid self))
-  (with-field-values (objects drag player) self
+  (with-field-values (objects drag cursor) self
     ;; build quadtree if needed
     (when (null %quadtree)
       (install-quadtree self))
@@ -801,7 +796,7 @@ slowdown. See also quadtree.lisp")
 	  (let ((thing (or 
 			%followed-object
 			(when (holding-shift) drag)
-			player)))
+			cursor)))
 	    (when thing
 	      (glide-follow self thing)
 	      (update-window-glide self)))
@@ -810,17 +805,13 @@ slowdown. See also quadtree.lisp")
 	    (unless (eq :passive (field-value :collision-type object))
 	      (quadtree-collide object))))))
     ;; now outside the quadtree,
-    ;; possibly update the shell layer
+    ;; possibly update the overlay layer
     (with-buffer self
       (when *listener-open-p*
 	(with-quadtree nil
 	  (layout self)
-	  (layout-shell-objects self)
-	  (update-shell-objects self))))))
-
-
-
-;;; Running a buffer as a script
+	  (layout-overlay-objects self)
+	  (update-overlay-objects self))))))
 
 (define-method evaluate buffer ()
   (prog1 self
@@ -838,13 +829,13 @@ slowdown. See also quadtree.lisp")
       (layout *listener*))))
   
 (define-method handle-event buffer (event)
-  (with-field-values (player quadtree focused-block) self
+  (with-field-values (cursor quadtree focused-block) self
     (with-buffer self
       (or (block%handle-event self event)
 	  (let ((thing
 		  (if *listener-open-p* 
 		      focused-block
-		      player)))
+		      cursor)))
 	      (prog1 t 
 		(when thing 
 		  (with-quadtree quadtree
@@ -1031,7 +1022,7 @@ block found, or nil if none is found."
   (with-buffer self
     (with-fields 
 	(drag-offset drag-start hover drag click-start drag-button
-		     click-start-block drag-origin focused-block modified) self
+		     click-start-block drag-origin focused-block) self
       (if drag
 	  ;; we're dragging
 	  (destructuring-bind (x0 . y0) drag-offset
@@ -1055,7 +1046,7 @@ block found, or nil if none is found."
 			    ;; dropping on another block
 			    (when (not (accept hover drag))
 			      ;; hovered block did not accept drag. 
-			      ;; drop it back in the shell.
+			      ;; drop it back in the overlay layer.
 			      (add-block self drag drop-x drop-y))))))
 	      ;; select the dropped block
 	      (progn 

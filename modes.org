@@ -1,10 +1,17 @@
 #+TITLE: Plan for implementing buffers and major modes in BLOCKY
-* TODO fundamental-mode is the basic mode
-* TODO rename Worlds to Buffers
-* TODO cell mode. spreadsheet
-* VISUAL PROGRAMMING WITH THE KEYBOARD. doesn't have to be mouse. 
+
+* TODO http://c2.com/cgi/wiki?ForthMacro
+* TODO forthmode. the stack is composed of blocks, and the current buffer line is the stack!
+*** http://c2.com/cgi/wiki?ColorForthQuickStart
+*** http://concatenative.org/wiki/view/Concatenative%20language
+*** prefix concat: http://sparist.github.com/Om/
+*** http://concatenative.org/wiki/view/Concatenative%20language
+*** TODO DICTIONARY of items. how to define new items.
+* VISUAL PROGRAMMING WITH THE KEYBOARD. visiprog does not require mouse.
+** TODO define the widgetbuffer thing as an embeddable block, not a whole buffer type?
+** TODO come up with basic scenarios of things to be typed in to make a game
 *** dialog boxes are hard. instead use keyboard with auto-completion and suggestions like in emacs.
-refactor text buffer widget to allow dynamic blockification of plain
+refactor text buffer widget to allow dynamic inline blockification of plain
 english text, by default, new typed characters are in "text widget"
 but this can be changed, as well as can the creation parameters for
 the current block. like Bold Italic.
@@ -12,6 +19,7 @@ the current block. like Bold Italic.
 *** TODO try something where you type in natural language commands
 *** TODO simple concatenative syntax, possibly like Forth. look up colorforth, demo tools
 *** TODO Review "THINKING FORTH"
+*** TODO somehow incorporate red eevstars / linkdmode 
 *** TODO but can add LISP parentheses at any time
 *** TODO after each character
 ** TODO [#B] use a macrolet to allow (next-method -->  (apply (get-next-method) ...)
@@ -23,4 +31,31 @@ the current block. like Bold Italic.
 ** TODO Review GoF design patterns
 ** TODO review other .org file ideas in repo
 ** TODO [#B] buttons for toggle pin,freeze
+
+
+* Archived Entries
+** DONE fundamental-mode is the basic mode
+   CLOSED: [2013-01-28 Mon 11:17]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-01-28 Mon 12:17
+   :ARCHIVE_FILE: ~/blocky/modes.org
+   :ARCHIVE_CATEGORY: modes
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE rename Worlds to Buffers
+   CLOSED: [2013-01-28 Mon 11:17]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-01-28 Mon 12:17
+   :ARCHIVE_FILE: ~/blocky/modes.org
+   :ARCHIVE_CATEGORY: modes
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE rename world%player to buffer%cursor <--- cursor receives messages
+   CLOSED: [2013-01-28 Mon 12:16]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-01-28 Mon 12:17
+   :ARCHIVE_FILE: ~/blocky/modes.org
+   :ARCHIVE_CATEGORY: modes
+   :ARCHIVE_TODO: DONE
+   :END:
 
