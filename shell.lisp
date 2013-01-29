@@ -20,6 +20,8 @@
 
 (in-package :blocky)
 
+(defparameter *logo-height* 26)
+
 (define-block shell
   ;; a list of lists of blocks
   (lines :initform nil)
@@ -245,5 +247,181 @@
 	(incf y0 h0)
 	(setf x0 x)
 	(setf h0 0)))))
+
+;;; Modeline
+
+(defun-memo modeline-position-string (x y)
+    (:key #'identity :test 'equal :validator #'identity)
+  (format nil "X:~S Y:~S" x y))
+
+(define-block-macro modeline
+    (:super list
+     :fields 
+     ((orientation :initform :horizontal)
+      (no-background :initform t))
+     :inputs (:project-id (new 'string :read-only t)
+	      :buffer-id (new 'string :read-only t)
+	      :position (new 'string :read-only t)
+	      :mode (new 'string :read-only t))))
+
+(define-method update modeline ()
+  (set-value %%project-id *project*)
+  (set-value %%buffer-id (%buffer-name (current-buffer)))
+  (set-value %%position
+	     (modeline-position-string
+	      (%window-x (current-buffer))
+	      (%window-y (current-buffer))))
+  (set-value %%mode
+	     (if (current-buffer)
+		 (if (%paused (current-buffer))
+		     "(paused)"
+		     "(playing)")
+		 "(empty)")))
+
+;;; Custom data entry for Listener. See also basic.lisp 
+
+(define-block (listener-prompt :super prompt)
+  (operation :initform :prompt)
+  (background :initform nil)
+  output)
+
+(define-method debug-on-error listener-prompt ()
+  (setf *debug-on-error* t))
+
+(define-method print-on-error listener-prompt ()
+  (setf *debug-on-error* nil))
+
+(define-method initialize listener-prompt (&optional output)
+  (next-method self)
+  (print-on-error self)
+  (setf %output output))
+
+(define-method set-output listener-prompt (output)
+  (setf %output output))
+
+(define-method can-pick listener-prompt () t)
+
+(define-method pick listener-prompt ()
+  %parent)
+
+(define-method do-sexp listener-prompt (sexp)
+  (with-fields (output) self
+    (assert output)
+    (let ((container (get-parent output)))
+      (assert container)
+      (let ((result (eval (first sexp))))
+	(let ((new-block 
+		;; is it a block?
+		(if (blockyp result)
+		    result
+		    ;; no, make a new block from the data
+		    (when result (make-block result)))))
+	  ;; spit out result block, if any
+	  (when new-block 
+	    (accept container new-block)
+	    (unpin new-block)))))))
+
+(define-method label-width listener-prompt ()
+  (dash 2 (font-text-width *default-prompt-string* *font*)))
+
+(define-method do-after-evaluate listener-prompt ()
+  ;; print any error output
+  (when (and %parent (stringp %error-output)
+	     (plusp (length %error-output)))
+    (accept %parent (new 'text %error-output))))
+
+;;; The Listener is a pop-up Lisp command prompt.
+
+(define-block (listener :super list)
+  (temporary :initform t)
+  (display-lines :initform 12))
+
+(defparameter *minimum-listener-width* 200)
+
+(define-method initialize listener ()
+  (with-fields (image inputs) self
+    (let ((prompt (new 'listener-prompt self))
+	  (modeline (new 'modeline)))
+      (list%initialize self)
+      (set-output prompt prompt)
+      (setf inputs (list modeline prompt))
+      (set-parent prompt self)
+      (set-parent modeline self)
+      (pin prompt)
+      (pin modeline))))
+
+(define-method layout listener ()
+  (with-fields (height width parent inputs) self
+    ;; start by calculating current height
+    (setf height (font-height *font*))
+    (setf width 0)
+    ;; update all child dimensions
+    (dolist (element inputs)
+      (layout element)
+      (incf height (field-value :height element))
+      (callf max width (dash 2 (field-value :width element))))
+    ;; now compute proper positions and re-layout
+    (let* ((x (%window-x (current-buffer)))
+	   (y0 (+ (%window-y (current-buffer))
+		 *gl-screen-height*))
+	   (y (- y0 height (dash 3))))
+      (dolist (element inputs)
+	(decf y0 (field-value :height element))
+	(move-to element x y0)
+	(layout element))
+      (setf %y y)
+      (setf %x x)
+      ;;  a little extra room at the top and sides
+      (incf height (dash 3)))))
+      ;; ;; move to the right spot to keep the bottom on the bottom.
+      ;; (setf y (- y0 (dash 1))))))
+
+(define-method get-prompt listener ()
+  (second %inputs))
+ 
+(define-method evaluate listener ()
+  (evaluate (get-prompt self)))
+
+(define-method focus listener ()
+  (grab-focus (get-prompt self)))
+
+(define-method debug-on-error listener ()
+  (debug-on-error (get-prompt self)))
+
+(define-method print-on-error listener ()
+  (print-on-error (get-prompt self)))
+
+(define-method accept listener (input &optional prepend)
+  (declare (ignore prepend))
+  (with-fields (inputs scrollback-length) self
+    (assert (not (null inputs))) ;; we always have a prompt
+    (prog1 t
+      (assert (valid-connection-p self input))
+      (let ((len (length inputs)))
+	;; (when (> len scrollback-length)
+	;;   ;; drop last item in scrollback
+	;;   (setf inputs (subseq inputs 0 (1- len))))
+	;; set parent if necessary 
+	(adopt self input)
+	(setf inputs 
+	      (nconc (list (first inputs) 
+			   (second inputs)
+			   input)
+		     (nthcdr 2 inputs)))))))
+
+(define-method draw listener ()
+  (with-fields (inputs x y height width) self
+    (draw-box x y *gl-screen-width* height :color "black" :alpha 0.3)
+;    (draw-patch self x y (+ x width) (+ y height))
+    (if (null inputs)
+	(draw-label-string self *null-display-string*)
+	(mapc #'draw inputs))
+    (draw-image "blocky" 
+		x
+		(- (+ y height)
+		   -2
+		   (+ *logo-height*)
+		   (%height (first inputs)))
+		:height *logo-height* :width *logo-height*)))
 
 ;;; shell.lisp ends here

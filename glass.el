@@ -20,6 +20,8 @@
 
 ;;; Code:
 
+(require 'cl)
+
 ;; Emacs glass frame is transparent
 
 (defvar glass-transparent-alpha 80)

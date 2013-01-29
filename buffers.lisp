@@ -919,6 +919,7 @@ block found, or nil if none is found."
 
 (define-method begin-drag buffer (mouse-x mouse-y block)
   (with-fields (drag drag-origin inputs drag-start ghost drag-offset) self
+    (when (null ghost) (setf ghost (new 'block)))
     (with-buffer self
       (setf drag (as-drag block mouse-x mouse-y))
       (setf drag-origin (find-parent drag))
