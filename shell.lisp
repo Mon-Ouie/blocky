@@ -36,6 +36,7 @@
   (cursor-blink-color :initform "magenta")
   (cursor-blink-clock :initform 0)
   ;;
+  (spacing :initform 2)
   (row-spacing :initform 1 :documentation "Number of pixels to add between rows.")
   (mark-row :initform nil)
   (mark-column :initform nil)
@@ -72,7 +73,7 @@
 
 (define-method initialize shell ()
   (initialize%super self)
-  (setf %lines (list (new %blank)))
+  (setf %lines (list (list (new %blank))))
   ;; see command implementations below
   (install-text-keybindings self)
   (setf %point-row 0)

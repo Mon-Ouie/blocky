@@ -115,6 +115,7 @@ play-sample set-music-volume draw-pixel *user-keyboard-layout*
 field-options current-buffer *frame-rate* set-resource-system-p
 next-method *blx-file-extension* *project* *project-path*
 *window-title* *window-position* restartably *message-logging*
+shell
 update-parameters joystick-axis-pressed-p joystick-axis-value
 joystick-axis-raw-value analog-stick-heading find-heading
 analog-stick-pressure *joystick-axis-size* *joystick-axis-dead-zone*
