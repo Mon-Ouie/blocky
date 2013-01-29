@@ -21,6 +21,7 @@
 (in-package :blocky)
 
 (defparameter *logo-height* 26)
+(defparameter *form-cursor-blink-time* 10)
 
 (define-block shell
   ;; a list of lists of blocks
@@ -94,6 +95,10 @@
 
 (define-method draw-region shell (x y width height)
   (draw-rectangle x y width height :color "cyan" :destination %image))
+
+(define-method draw shell ()
+  (dolist (line %lines)
+    (mapc #'draw line)))
   
 ;;; Emulate the feel of emacs text properties buffers
 

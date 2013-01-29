@@ -817,7 +817,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (defvar *make-block-package* nil)
 
 (defun make-block-package ()
-  (or *package* (find-package :blocky)))
+  (or (project-package) (find-package :blocky)))
 
 (defun make-block (sexp)
     "Expand VALUE specifying a block diagram into real blocks.

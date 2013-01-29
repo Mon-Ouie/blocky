@@ -1,10 +1,6 @@
 #+TITLE: Plan for implementing buffers and major modes in BLOCKY
 
-** TODO list of lines. a line is a list of blocks
-** TODO abstract over the lists with a row,col accessor
-** TODO change existing editing commands to use row,col abstraction, as far as is necessary
-
-
+** TODO fix listener make-block-package issue
 ** TODO define the block shell as an embeddable richtext block you can type in, emacs-style
 ** TODO arrows only nav within object---use control-arrow 
 ** TODO ??delete only deletes within an object---use control-delete to "break" the text of the previous block?xs?
