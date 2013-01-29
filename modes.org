@@ -1,27 +1,32 @@
 #+TITLE: Plan for implementing buffers and major modes in BLOCKY
 
-* TODO bpolhttp://c2.com/cgi/wiki?ForthMacro
+** TODO define the block shell as an embeddable richtext block you can type in, emacs-style
+** TODO arrows only nav within object---use control-arrow 
+** TODO delete only deletes within an object---use control-delete to "break" the text of the previous block
+** TODO attempt to blockify after each spacebar
+** TODO ROBOT BALL NEW DROP
+** TODO DICTIONARY of words. how to define new words
+** TODO emulate natural language
+** TODO come up with basic scenarios of things to be typed in to make a game
+** TODO anything-el-style completion
 * TODO forthmode. the stack is composed of blocks, and the current buffer line is the stack!
 *** http://c2.com/cgi/wiki?ColorForthQuickStart
 *** http://concatenative.org/wiki/view/Concatenative%20language
 *** prefix concat: http://sparist.github.com/Om/
 *** http://concatenative.org/wiki/view/Concatenative%20language
-*** TODO DICTIONARY of items. how to define new items.
+* TODO http://c2.com/cgi/wiki?ForthMacro
+http://grobots.sourceforge.net/
 * VISUAL PROGRAMMING WITH THE KEYBOARD. visiprog does not require mouse.
-** TODO define the widgetbuffer thing as an embeddable block, not a whole buffer type?
-** TODO come up with basic scenarios of things to be typed in to make a game
 *** dialog boxes are hard. instead use keyboard with auto-completion and suggestions like in emacs.
 refactor text buffer widget to allow dynamic inline blockification of plain
 english text, by default, new typed characters are in "text widget"
 but this can be changed, as well as can the creation parameters for
 the current block. like Bold Italic.
 ** TODO combine features from the Listener and text buffer into an emacsy thing
-*** TODO try something where you type in natural language commands
 *** TODO simple concatenative syntax, possibly like Forth. look up colorforth, demo tools
 *** TODO Review "THINKING FORTH"
 *** TODO somehow incorporate red eevstars / linkdmode 
 *** TODO but can add LISP parentheses at any time
-*** TODO after each character
 ** TODO [#B] use a macrolet to allow (next-method -->  (apply (get-next-method) ...)
 ** TODO [#B] Pretty sexy black rounded corner notifications
 **** TODO notifications and a "notify" function 

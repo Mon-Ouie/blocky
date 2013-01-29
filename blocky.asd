@@ -31,10 +31,8 @@
 	       (:file "console" :depends-on ("prototypes" "quadtree"))
 	       (:file "blocks" :depends-on ("console"))
 	       (:file "halo" :depends-on ("blocks"))
-	       (:file "text" :depends-on ("blocks"))
 	       (:file "trees" :depends-on ("blocks"))
-	       (:file "listener" :depends-on ("blocks"))
-	       (:file "buffers" :depends-on ("blocks"))
 	       (:file "shell" :depends-on ("blocks"))
+	       (:file "buffers" :depends-on ("blocks"))
 	       (:file "syntax" :depends-on ("blocks"))))
 	       
