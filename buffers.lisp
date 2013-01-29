@@ -20,14 +20,15 @@
 
 (in-package :blocky)
 
-(defvar *listener* nil)
+(defvar *overlay* nil)
 
-(defvar *listener-open-p* nil)
+(defvar *overlay-open-p* nil)
 
 (define-block buffer
   (variables :initform nil 
 	     :documentation "Hash table mapping values to values, local to the current buffer.")
   (cursor :documentation "The cursor object, if any.")
+  (modified-p :initform nil)
   (followed-object :initform nil)
   (background-image :initform nil)
   (background-color :initform "white")
@@ -67,13 +68,13 @@
   (default-events :initform
 		  '(((:tab) :tab)
 		    ((:tab :shift) :backtab)
-		    ((:x :alt) :enter-listener)
+		    ((:x :alt) :enter-overlay)
 		    ((:x :control) :cut)
 		    ((:c :control) :copy)
 		    ((:v :control) :paste)
 		    ((:v :control :shift) :paste-here)
 		    ((:g :control) :escape)
-		    ((:escape) :toggle-listener)
+		    ((:escape) :toggle-overlay)
 		    ((:d :control) :drop-selection)
 		    ((:m :alt) :add-message)
 		    ((:s :alt) :add-statement)
@@ -82,12 +83,12 @@
 		    ((:f :alt) :add-field)
 		    ((:e :alt) :add-expression)
 		    ((:pause) :transport-toggle-play)
-		    ((:f10) :toggle-listener)
+		    ((:f10) :toggle-overlay)
 		    ((:f12) :toggle-other-windows)
 		    ))
   ;; prototype control
   (excluded-fields :initform
-		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :listener :drag :hover :highlight 
+		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :overlay :drag :hover :highlight 
 		     ;; overlay objects are not saved:
 		     :inputs)
 		   :documentation "Don't serialize the menu bar.")
@@ -128,6 +129,12 @@
 
 (define-method toggle-other-windows buffer ()
   (glass-toggle))
+
+(define-method set-modified-p buffer (&optional (value t))
+  (setf %modified-p value))
+
+(defun buffer-modified-p (&optional (buffer (current-buffer)))
+  (%modified-p buffer))
 
 (defun selection ()
   (get-selection (current-buffer)))
@@ -672,35 +679,32 @@ slowdown. See also quadtree.lisp")
 
 ;;; The Overlay is an optional layer of objects on top of the buffer
 
-;; Including a system menu, editor, and controls for switching buffers
-;; and pages in the system. Maybe zooming out on a mega virtual desktop.
+(define-method add-overlay-maybe buffer (&optional force)
+  (when (or force (null *overlay*))
+    (setf *overlay* (new 'listener))))
 
-(define-method add-listener-maybe buffer (&optional force)
-  (when (or force (null *listener*))
-    (setf *listener* (new 'listener))))
-
-(define-method enter-listener buffer ()
-  (add-listener-maybe self)
+(define-method enter-overlay buffer ()
+  (add-overlay-maybe self)
   (setf %last-focus %focused-block)
-  (focus-on self *listener* :clear-selection nil)
-  (when (null *listener-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
-  (setf *listener-open-p* t)
+  (focus-on self *overlay* :clear-selection nil)
+  (when (null *overlay-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
+  (setf *overlay-open-p* t)
   (enable-key-repeat))
   
-(define-method exit-listener buffer ()
-  (when *listener-open-p*
-    (add-listener-maybe self)
-    (setf *listener-open-p* nil)
+(define-method exit-overlay buffer ()
+  (when *overlay-open-p*
+    (add-overlay-maybe self)
+    (setf *overlay-open-p* nil)
     (focus-on self %last-focus)
     (setf %last-focus nil)
     (unless %was-key-repeat-p 
       (disable-key-repeat))
     (setf %was-key-repeat-p nil)))
 
-(define-method toggle-listener buffer ()
-  (if *listener-open-p* 
-      (exit-listener self)
-      (enter-listener self)))
+(define-method toggle-overlay buffer ()
+  (if *overlay-open-p* 
+      (exit-overlay self)
+      (enter-overlay self)))
 
 (define-method grab-focus buffer ())
 
@@ -709,7 +713,7 @@ slowdown. See also quadtree.lisp")
 
 (define-method update-overlay-objects buffer ()
   (mapc #'update %inputs)
-  (when *listener* (update *listener*)))
+  (when *overlay* (update *overlay*)))
 
 (define-method draw-overlay-objects buffer ()
   (with-buffer self
@@ -733,8 +737,8 @@ slowdown. See also quadtree.lisp")
 	(when hover 
 	  (draw-hover hover))
 	(draw drag))
-      (when *listener*
-	(draw *listener*))
+      (when *overlay*
+	(draw *overlay*))
       ;; draw focus
       (when focused-block
 	(assert (blockyp focused-block))
@@ -770,7 +774,7 @@ slowdown. See also quadtree.lisp")
       ;; (if %parent
       ;; 	  (gl:pop-matrix)
       ;; possibly draw overlay
-      (if *listener-open-p* 
+      (if *overlay-open-p* 
 	  (draw-overlay-objects self)
 	  (draw-overlays self)))))
   
@@ -807,7 +811,7 @@ slowdown. See also quadtree.lisp")
     ;; now outside the quadtree,
     ;; possibly update the overlay layer
     (with-buffer self
-      (when *listener-open-p*
+      (when *overlay-open-p*
 	(with-quadtree nil
 	  (layout self)
 	  (layout-overlay-objects self)
@@ -825,15 +829,15 @@ slowdown. See also quadtree.lisp")
 	  ;; %width *gl-screen-width* 
 	  ;; %height *gl-screen-height*)
     (mapc #'layout %inputs)
-    (when *listener*
-      (layout *listener*))))
+    (when *overlay*
+      (layout *overlay*))))
   
 (define-method handle-event buffer (event)
   (with-field-values (cursor quadtree focused-block) self
     (with-buffer self
       (or (block%handle-event self event)
 	  (let ((thing
-		  (if *listener-open-p* 
+		  (if *overlay-open-p* 
 		      focused-block
 		      cursor)))
 	      (prog1 t 
@@ -861,12 +865,12 @@ block found, or nil if none is found."
       (labels ((try (b)
 		 (when b
 		   (hit b x y))))
-	;; check listener and inputs first
+	;; check overlay and inputs first
 	(let* ((object-p nil)
 	       (result 
 		 (or 
-		  (when *listener-open-p* 
-		    (try *listener*))
+		  (when *overlay-open-p* 
+		    (try *overlay*))
 		  (let ((parent 
 			  (find-if #'try 
 				   %inputs
@@ -980,8 +984,8 @@ block found, or nil if none is found."
 	    (progn
 	      (setf highlight (find-uuid (hit-inputs self mouse-x mouse-y)))))))))
     ;; (when (null highlight)
-  ;;   (when *listener*
-  ;;     (with-buffer self (close-menus *listener*))))))))
+  ;;   (when *overlay*
+  ;;     (with-buffer self (close-menus *overlay*))))))))
 
 (define-method press buffer (x y &optional button)
   (with-buffer self
@@ -995,14 +999,14 @@ block found, or nil if none is found."
 	(setf %object-p object-p)
 	(if (null block)
 	    (focus-on self nil)
-	    ;; (when *listener-open-p*
-	    ;; 	(exit-listener self)))
+	    ;; (when *overlay-open-p*
+	    ;; 	(exit-overlay self)))
 	    (progn 
 	      (setf click-start (cons x y))
 	      (setf click-start-block (find-uuid block))
 	      (setf drag-button button)
 	      ;; now focus; this might cause another block to be
-	      ;; focused, as in the case of the Listener
+	      ;; focused, as in the case of the Overlay
 	      (focus-on self block)))))))
 
 (define-method clear-drag-data buffer ()
@@ -1130,6 +1134,6 @@ block found, or nil if none is found."
 (define-method after-deserialize buffer ()
   (after-deserialize%super self)
   (clear-drag-data self)
-  (add-listener-maybe self :force))
+  (add-overlay-maybe self :force))
 
 ;;; buffers.lisp ends here

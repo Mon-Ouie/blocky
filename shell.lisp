@@ -20,97 +20,10 @@
 
 (in-package :blocky)
 
-;;; Modeline
-
-(defun-memo modeline-position-string (x y)
-    (:key #'identity :test 'equal :validator #'identity)
-  (format nil "X:~S Y:~S" x y))
-
-(define-block-macro modeline
-    (:super list
-     :fields 
-     ((orientation :initform :horizontal)
-      (no-background :initform t))
-     :inputs (:project-id (new 'string :read-only t)
-	      :buffer-id (new 'string :read-only t)
-	      :position (new 'string :read-only t)
-	      :mode (new 'string :read-only t))))
-
-(define-method update modeline ()
-  (set-value %%project-id *project*)
-  (set-value %%buffer-id (%buffer-name (current-buffer)))
-  (set-value %%position
-	     (modeline-position-string
-	      (%window-x (current-buffer))
-	      (%window-y (current-buffer))))
-  (set-value %%mode
-	     (if (current-buffer)
-		 (if (%paused (current-buffer))
-		     "(paused)"
-		     "(playing)")
-		 "(empty)")))
-
-;;; Lisp listener prompt that makes active Lisp blocks out of what you type.
-
-(define-block (listener-prompt :super prompt)
-  (operation :initform :prompt)
-  (background :initform nil)
-  (methods :initform '(:debug-on-error :print-on-error))
-  output)
-
-(define-method debug-on-error listener-prompt ()
-  (setf *debug-on-error* t))
-
-(define-method print-on-error listener-prompt ()
-  (setf *debug-on-error* nil))
-
-(define-method initialize listener-prompt (&optional output)
-  (next-method self)
-  (print-on-error self)
-  (setf %output output))
-
-(define-method set-output listener-prompt (output)
-  (setf %output output))
-
-(define-method can-pick listener-prompt () t)
-
-(define-method pick listener-prompt ()
-  %parent)
-
-(define-method do-sexp listener-prompt (sexp)
-  (with-fields (output) self
-    (assert output)
-    (let ((container (get-parent output)))
-      (assert container)
-      (let ((result (eval (first sexp))))
-	(let ((new-block 
-		;; is it a block?
-		(if (blockyp result)
-		    result
-		    ;; no, make a new block from the data
-		    (when result (make-block result)))))
-	  ;; spit out result block, if any
-	  (when new-block 
-	    (accept container new-block)
-	    (unpin new-block)))))))
-
-(define-method label-width listener-prompt ()
-  (dash 2 (font-text-width *default-prompt-string* *font*)))
-
-(define-method do-after-evaluate listener-prompt ()
-  ;; print any error output
-  (when (and %parent (stringp %error-output)
-	     (plusp (length %error-output)))
-    (accept %parent (new 'text %error-output))))
-
-;;; Putting it all together into a multiline blocks editor
-
 (define-block shell
   (modified-p :initform nil)
   (point-row :initform 0) 
   (point-column :initform 0)
-  (mark-row :initform nil)
-  (mark-column :initform nil)
   (cursor-color :initform "yellow")
   (cursor-blink-color :initform "magenta")
   (cursor-blink-clock :initform 0)
@@ -120,6 +33,9 @@
   (origin-width :initform nil)
 
   (row-spacing :initform 1 :documentation "Number of pixels to add between rows.")
+
+  (mark-row :initform nil)
+  (mark-column :initform nil)
 
   (alignment :initform nil)
   (rows :initform 10)
@@ -138,12 +54,6 @@
   (status-line :initform nil :documentation "Formatted line to be displayed at bottom of shell below spreadsheet."))
 
 (defparameter *default-buffer-name* "*scratch*")
-
-(define-method set-modified-p shell (&optional (value t))
-  (setf %modified-p value))
-
-(defun buffer-modified-p (&optional (buffer (current-buffer)))
-  (%modified-p buffer))
   
 (define-method set-mark shell ()
   (setf %mark-row %point-row
