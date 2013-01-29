@@ -1257,7 +1257,7 @@ resource is stored; see also `find-resource'."
 		(message "Finished creating project ~A." project)))))))
 
 (defun project-package ()
-  (find-package *project*))
+  (find-package (make-keyword *project*)))2
 
 (defun load-project-image (project &key without-database with-database)
   (assert (stringp project))

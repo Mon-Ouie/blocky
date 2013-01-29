@@ -72,34 +72,15 @@
 
 (define-method initialize shell ()
   (initialize%super self)
+  (setf %lines (list (new %blank)))
   ;; see command implementations below
   (install-text-keybindings self)
   (setf %point-row 0)
   (setf %point-column 0)
   (clear-mark self))
 
-(define-method draw-cursor shell (x y width height)
-  (with-fields (cursor-color cursor-blink-color cursor-blink-clock focused) self
-    (decf cursor-blink-clock)
-    (when (minusp cursor-blink-clock)
-      (setf cursor-blink-clock *form-cursor-blink-time*))
-    (let ((color (if (or (null focused)
-			 (< (truncate (/ *form-cursor-blink-time* 2))
-			    cursor-blink-clock))
-		     cursor-color
-		     cursor-blink-color)))
-      (draw-rectangle x y width height :color color :destination %image))))
+(define-method pick shell () self)
 
-(define-method draw-mark shell (x y width height)
-  (draw-rectangle x y width height :color "white" :destination %image))
-
-(define-method draw-region shell (x y width height)
-  (draw-rectangle x y width height :color "cyan" :destination %image))
-
-(define-method draw shell ()
-  (dolist (line %lines)
-    (mapc #'draw line)))
-  
 ;;; Emulate the feel of emacs text properties buffers
 
 ;; Here we move over complete blocks, not characters.
@@ -117,6 +98,12 @@
 (define-method end-of-buffer shell ()
   (setf %point-row (1- (length %lines)))
   (end-of-line self))
+
+(define-method current-line shell ()
+  (nth %point-row %lines))
+
+(define-method thing-at-point shell ()
+  (nth %point-column (current-line self)))
 
 (define-method forward-char shell ()
   (with-fields (lines point-row point-column) self
@@ -197,12 +184,9 @@
 			       remainder))
 	    (decf point-column))))))
     
-(define-method get-current-line shell ()
-  (nth %point-row %lines))
-
 (define-method end-of-line-p shell ()
   (= %point-column
-     (1- (length (get-current-line self)))))
+     (1- (length (current-line self)))))
 
 (define-method beginning-of-line-p shell ()
   (= %point-column 0))
@@ -235,6 +219,13 @@
 	  (forward-char self)
 	  (backward-delete-char self)))))
 
+(define-method handle-event shell (event)
+  (let ((thing (thing-at-point self)))
+    (or (and thing (handle-event thing event))
+	(next-method self event))))
+
+;;; Drawing the shell
+
 (define-method layout shell ()
   (with-fields (width height x y lines spacing) self
     (setf width 0 height 0)
@@ -253,6 +244,28 @@
 	(setf x0 x)
 	(setf h0 0)))))
 
+(define-method draw-cursor shell (x y width height)
+  (with-fields (cursor-color cursor-blink-color cursor-blink-clock focused) self
+    (decf cursor-blink-clock)
+    (when (minusp cursor-blink-clock)
+      (setf cursor-blink-clock *form-cursor-blink-time*))
+    (let ((color (if (or (null focused)
+			 (< (truncate (/ *form-cursor-blink-time* 2))
+			    cursor-blink-clock))
+		     cursor-color
+		     cursor-blink-color)))
+      (draw-rectangle x y width height :color color :destination %image))))
+
+(define-method draw-mark shell (x y width height)
+  (draw-rectangle x y width height :color "white" :destination %image))
+
+(define-method draw-region shell (x y width height)
+  (draw-rectangle x y width height :color "cyan" :destination %image))
+
+(define-method draw shell ()
+  (dolist (line %lines)
+    (mapc #'draw line)))
+  
 ;;; Modeline
 
 (defun-memo modeline-position-string (x y)
