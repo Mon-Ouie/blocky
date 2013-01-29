@@ -276,9 +276,9 @@ initialized with BLOCKS as inputs."
   (setf %garbagep t))
 
 (define-method dismiss block ()
-  (if (windowp %parent)
-      (dismiss %parent)
-      (destroy self)))
+  ;; (if (windowp %parent)
+  ;;     (dismiss %parent)
+      (destroy self))
 
 (define-method exit block ()
   (remove-object *buffer* self))
@@ -958,9 +958,9 @@ away from this object, in the angle HEADING."
     (multiple-value-bind (x0 y0) (center-point self)
       (find-heading x0 y0 x1 y1))))
 
-(define-method heading-to-player block ()
-  "Compute the heading angle from this object to the player."
-  (heading-to-thing self (get-player *buffer*)))
+(define-method heading-to-cursor block ()
+  "Compute the heading angle from this object to the cursor."
+  (heading-to-thing self (get-cursor *buffer*)))
 
 ;;; Show methods in Emacs Glass
 
@@ -1729,18 +1729,18 @@ The order is (TOP LEFT RIGHT BOTTOM)."
   (with-fields (x y) thing
     (direction-to %x %y x y)))
 
-(define-method direction-to-player block ()
-  "Return the directional keyword naming the general direction to the player."
-  (direction-to-thing self (get-player *buffer*)))
+(define-method direction-to-cursor block ()
+  "Return the directional keyword naming the general direction to the cursor."
+  (direction-to-thing self (get-cursor *buffer*)))
 
 (define-method heading-to-thing block (thing)
   "Return a heading (in radians) to THING."
   (with-fields (x y) thing
     (find-heading %x %y x y)))
 
-(define-method heading-to-player block ()
-  "The heading (in radians) to the player from this block."
-  (heading-to-thing self (get-player *buffer*)))
+(define-method heading-to-cursor block ()
+  "The heading (in radians) to the cursor from this block."
+  (heading-to-thing self (get-cursor *buffer*)))
 
 (define-method aim-at-thing block (thing)
   "Aim the current heading at the object THING."
@@ -1758,9 +1758,9 @@ Note that the center-points of the objects are used for comparison."
     (multiple-value-bind (x y) (center-point thing)
       (distance x0 y0 x y))))
 
-(define-method distance-to-player block ()
-  "Return the straight-line distance to the player."
-  (distance-between self (get-player *buffer*)))
+(define-method distance-to-cursor block ()
+  "Return the straight-line distance to the cursor."
+  (distance-between self (get-cursor *buffer*)))
 
 ;; (defun uniquify-buffer-name (name)
 ;;   (let ((n 1)

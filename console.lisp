@@ -2344,7 +2344,6 @@ of the music."
   (message "Starting Blocky...")
   (print-copyright-notice)
   (setf *blocks* nil
-	*project-folder* nil
 	*buffer* nil
 	*project* nil
 	*clipboard* nil
@@ -2379,7 +2378,6 @@ of the music."
   (sdl-mixer:halt-music)
   (sdl-mixer:close-audio t)
   (setf *buffer* nil)
-  (setf *project-folder* nil)
   (setf *blocks* nil)
   (setf *overlay* nil)
   (setf *clipboard* nil)
