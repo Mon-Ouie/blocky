@@ -1,6 +1,6 @@
 ;;; shell.lisp --- interactive multimedia forthlike repl/editor
 
-;; Copyright (C) 2011, 2012  David O'Toole
+;; Copyright (C) 2011, 2012, 2013  David O'Toole
 
 ;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: 
@@ -21,40 +21,36 @@
 (in-package :blocky)
 
 (define-block shell
-  (modified-p :initform nil)
+  ;; a list of lists of blocks
+  (lines :initform nil)
+  ;; "point" is the location of the selected block.
   (point-row :initform 0) 
   (point-column :initform 0)
+  ;; what block type to use for new blanks
+  (blank :initform 'string)
+  ;; the cursor shows where point is
   (cursor-color :initform "yellow")
   (cursor-blink-color :initform "magenta")
   (cursor-blink-clock :initform 0)
-  (origin-row :initform 0 :documentation "Row number of top-left displayed cell.") 
-  (origin-column :initform 0 :documentation "Column number of top-left displayed cell.")
-  (origin-height :initform nil)
-  (origin-width :initform nil)
-
+  ;;
   (row-spacing :initform 1 :documentation "Number of pixels to add between rows.")
-
   (mark-row :initform nil)
   (mark-column :initform nil)
+  (alignment :initform nil))
 
-  (alignment :initform nil)
-  (rows :initform 10)
-  (columns :initform 10) 
-  (column-widths :documentation "A vector of integers where v(x) is the pixel width of shell column x.")
-  (row-heights :documentation "A vector of integers where v(x) is the pixel height of shell row x.")
+  ;; (rows :initform 10)
+  ;; (columns :initform 10) 
+  ;; (column-widths :documentation "A vector of integers where v(x) is the pixel width of shell column x.")
+  ;; (row-heights :documentation "A vector of integers where v(x) is the pixel height of shell row x.")
+  ;; (row-styles :documentation "A vector of property lists used to customize the appearance of rows.")
+  ;; (column-styles :documentation "A vector of property lists used to customize the appearance of columns.")
+  ;; (zebra-stripes :documentation "When non-nil, zebra stripes are drawn.")
+  ;; (border-style :initform t :documentation "When non-nil, draw cell borders.")
+  ;; (draw-blanks :initform t :documentation "When non-nil, draw blank cells.")
+  ;; (header-style :initform t :documentation "When non-nil, draw row and column headers.")
+  ;; (header-line :initform nil :documentation "Formatted line to be displayed at top of shell above spreadsheet.")
+  ;; (status-line :initform nil :documentation "Formatted line to be displayed at bottom of shell below spreadsheet."))
 
-  (row-styles :documentation "A vector of property lists used to customize the appearance of rows.")
-  (column-styles :documentation "A vector of property lists used to customize the appearance of columns.")
-  (zebra-stripes :documentation "When non-nil, zebra stripes are drawn.")
-  (border-style :initform t :documentation "When non-nil, draw cell borders.")
-  (draw-blanks :initform t :documentation "When non-nil, draw blank cells.")
-
-  (header-style :initform t :documentation "When non-nil, draw row and column headers.")
-  (header-line :initform nil :documentation "Formatted line to be displayed at top of shell above spreadsheet.")
-  (status-line :initform nil :documentation "Formatted line to be displayed at bottom of shell below spreadsheet."))
-
-(defparameter *default-buffer-name* "*scratch*")
-  
 (define-method set-mark shell ()
   (setf %mark-row %point-row
 	%mark-column %point-column))
@@ -71,250 +67,13 @@
 		(max mark-column point-column))
 	(values nil nil nil nil))))
 
-(define-method initialize shell (&optional (buffer-name *default-buffer-name*))
-  (initialize%super self :name buffer)
-  (install-keybindings self)
+(define-method initialize shell ()
+  (initialize%super self)
+  ;; see command implementations below
+  (install-text-keybindings self)
   (setf %point-row 0)
   (setf %point-column 0)
-  (clear-mark self)
-  (setf %point-column (min %columns %point-column))
-  (setf %point-row (min %rows %point-row))
-  (setf %point-column (min %columns %point-column))
-  (setf %column-widths (make-array (+ 1 %columns) :initial-element 0)
-	%row-heights (make-array (+ 1 %rows) :initial-element 0)
-	%column-styles (make-array (+ 1 %columns))
-	%row-styles (make-array (+ 1 %rows))))
-
-(define-method layout-horizontally shell ()
-  (with-fields (x y height spacing width inputs dash) self
-    (flet ((ldash (&rest args) (apply #'+ %spacing args)))
-      (let ((x0 (+ x spacing))
-	    (y0 (ldash y))
-	    (line-height (font-height *font*)))
-	(setf height (ldash line-height))
-	(setf width (dash 2))
-	(dolist (element inputs)
-	  (move-to element x0 y0)
-	  (layout element)
-	  (setf height (max height (+ (ldash) (field-value :height element))))
-	  (incf x0 (field-value :width element))
-	  (incf width (field-value :width element)))
-;	  (incf width spacing))
-	(incf height spacing)))))
-
-(define-method layout shell ()
-  (with-field-values (rows columns display-style buffer
-			   column-widths row-heights) self
-    (when buffer
-      (with-field-values (grid) buffer
-	(let ((height 0)
-	      (width 0)
-	      cell location)
-	  (labels ((update-height (row pixels)
-		     (setf (aref row-heights row)
-			   (max (aref row-heights row) pixels)))
-		   (update-width (column pixels)
-		     (setf (aref column-widths column)
-			   (max (aref column-widths column) pixels))))
-	    ;; reset geometry
-	    (dotimes (row rows)
-	      (update-height row 0))
-	    (dotimes (column columns)
-	      (update-width column 0))
-	    ;; now measure
-	    (dotimes (row rows)
-	      (dotimes (column columns)
-		(setf location (aref grid row column))
-		(when (and location (not (zerop (fill-pointer location))))
-		  (setf cell (aref location (- (fill-pointer location) 1)))
-		  (update-height row (height cell))
-		  (update-width column (width cell)))))))))))
-
-(defparameter *even-columns-format* '(:background "gray50" :foreground "gray10"))
-(defparameter *odd-columns-format* '(:background "gray45" :foreground "gray10"))
-
-(define-method draw shell ()
-  (when %buffer
-    (with-field-values (point-row point-column row-heights buffer buffer-name 
-				   origin-row origin-column header-line status-line
-				   mark-row mark-column width height
-				   display-style header-style tool tool-methods entered focused
-				   row-spacing rows columns draw-blanks column-widths) self
-      (when %computing (compute self))
-;;      (layout self)
-      (let* ((image %image)
-	     (widget-width %width)
-	     (widget-height %height)
-	     (rightmost-visible-column
-	      (block searching
-		(let ((width 0))
-		  (loop for column from origin-column to columns 
-			do (incf width (aref column-widths column))
-			   (when (> width widget-width)
-			     (return-from searching (- column 1))))
-		  (return-from searching (- columns 1)))))
-	     (bottom-visible-row
-	      (block searching
-		(let ((height (if (and header-line header-style)
-				  (formatted-line-height header-line)
-				  0)))
-		  (loop for row from origin-row to rows 
-			do (incf height (aref row-heights row))
-			   (when (> height widget-height)
-			     (return-from searching (- row 1))))
-		  (return-from searching (- rows 1)))))
-	     (x 0) 
-	     (y 0)
-	     (cursor-dimensions nil)
-	     (mark-dimensions nil))
-	;; store some geometry
-	(setf %origin-width (- rightmost-visible-column origin-column))
-	(setf %origin-height (- bottom-visible-row origin-row))
-	;; see if current cell has a tooltip
-	;; (let ((selected-cell (cell-at self point-row point-column)))
-	;;   (when (object-p selected-cell)
-	;;     (setf header-line (field-value :tooltip selected-cell))))
-	;; draw header line with tooltip, if any
-	(multiple-value-bind (top left bottom right) (mark-region self)
-	  (let ((x0 0)
-		(y0 0)
-		pending-draws
-		(x1 width)
-		(y1 height))
-	    (when (and header-line header-style)
-	      (render-formatted-line header-line 0 y :destination image)
-	      (incf y (formatted-line-height header-line)))
-	    ;; TODO column header, if any
-	    ;; (message "GEOMETRY: ~S" (list :origin-row origin-row
-	    ;; 			      :origin-column origin-column
-	    ;; 			      :right rightmost-visible-column
-	    ;; 			      :bottom bottom-visible-row))
-	    (loop for row from origin-row to bottom-visible-row do
-	      (setf x 0)
-	      (loop for column from origin-column to rightmost-visible-column do
-		(let ((column-width (aref column-widths column))
-		      (row-height (aref row-heights row))
-		      (cell (cell-at self row column)))
-		  ;; possibly set up region drawing info
-		  (when (equal row top)
-		    (setf y0 y))
-		  (when (equal row bottom)
-		    (setf y1 (+ y row-height)))
-		  (when (equal column left)
-		    (setf x0 x))
-		  (when (equal column right)
-		    (setf x1 (+ x column-width)))
-		  ;; render the cell
-		  (if (null cell)
-		      (when draw-blanks
-			(draw-box x y 
-				  column-width 
-				  row-height  
-				  :stroke-color "gray30"
-				  :color (if (evenp column) "gray50" "gray45")
-				  :destination image))
-		      ;; see also cells.lisp
-		      (progn 
-			(ecase display-style
-			  (:label (render cell image x y column-width))
-			  (:image (if (in-category cell :drawn)
-				     (push (list cell x y) pending-draws)
-				     (when (field-value :image cell)
-				       (draw-image (find-resource-object 
-						    (field-value :image cell)) x y :destination image)))))
-			(when entered
-			  (draw-rectangle x y 
-					  column-width 
-					  row-height
-					  :color "red"
-					  :destination image))))
-		  ;; visually indicate edges of map with a yellow line
-		  (let ((iwid 2))
-		    (when (= rightmost-visible-column (- columns 1) column)
-		      (draw-box (+ x column-width) y iwid row-height :stroke-color "yellow" :color "yellow"
-				:destination image))
-		    (when (= 0 column)
-		      (draw-box 0 y iwid row-height :stroke-color "yellow" :color "yellow"
-				:destination image))
-		    (when (= bottom-visible-row row (- rows 1))
-		      (draw-box x (+ y row-height) column-width iwid :stroke-color "yellow" :color "yellow"
-				:destination image))
-		    (when (= 0 row)
-		      (draw-box x 0 column-width iwid :stroke-color "yellow" :color "yellow"
-				:destination image)))
-		  ;; possibly save cursor and mark drawing info for this cell
-		  (when (and (= row point-row) (= column point-column))
-		    (setf cursor-dimensions (list x y column-width row-height)))
-		  (when (and (integerp mark-row) (integerp mark-column) (= row mark-row) (= column mark-column))
-		    (setf mark-dimensions (list x y column-width row-height)))
-		  ;; move to next column right
-		  (incf x (aref column-widths column))))
-	      ;; move to next row down ;; TODO fix row-spacing
-	      (incf y (+ (if (eq :image display-style)
-			     0 0) (aref row-heights row))))
-	    ;; draw any pending drawn cells
-	    (dolist (args pending-draws)
-	      (destructuring-bind (cell x y) args
-		(draw cell x y image)))
-	    ;; create status line
-	    ;; TODO break this formatting out into variables
-	    (setf status-line
-		  (list 
-		   (list (format nil " ( ~A )     " buffer-name) :foreground (if focused "yellow" "white")
-			 :background (if focused "red" "blue"))
-		   (list (format nil "  ~A (~S, ~S) ~Sx~S "
-				 tool point-row point-column rows columns)
-			 :foreground "white"
-			 :background "gray20")))
-	    ;; draw status line
-	    (when status-line 
-	      (let* ((ht (formatted-line-height status-line))
-		     (sy (- %height 1 ht)))
-		(draw-box 0 sy %width ht :color "gray20" 
-			  :stroke-color "gray20" :destination image)
-		(render-formatted-line status-line 
-				       0 sy 
-				       :destination image)))
-	    ;; render cursor and mark, if any 
-	    (when cursor-dimensions
-	      (destructuring-bind (x y w h) cursor-dimensions
-	      (draw-cursor self x y w h)))
-	    (when mark-dimensions
-	      (destructuring-bind (x y w h) mark-dimensions
-		(draw-mark self x y w h)))
-	    (when (and (integerp mark-row) (integerp mark-column)
-		       (notany #'null (list x0 y0 x1 y1)))
-	      (draw-region self x0 y0 (- x1 x0) (- y1 y0)))))))))
-  
-(define-method scroll shell ()
-  (with-fields (point-row point-column origin-row origin-column scroll-margin
-			   origin-height origin-width buffer rows columns) self
-    (when (or 
-	   ;; too far left
-	   (> (+ origin-column scroll-margin) 
-	      point-column)
-	   ;; too far right
-	   (> point-column
-	      (- (+ origin-column origin-width)
-		 scroll-margin))
-	   ;; too far up
-	   (> (+ origin-row scroll-margin) 
-	      point-row)
-	   ;; too far down 
-	   (> point-row 
-	      (- (+ origin-row origin-height)
-		 scroll-margin)))
-      ;; yes. recenter.
-      (setf origin-column
-	    (max 0
-		 (min (- columns origin-width)
-		      (- point-column 
-			 (truncate (/ origin-width 2))))))
-      (setf origin-row
-	    (max 0 
-		 (min (- rows origin-height)
-		      (- point-row
-			 (truncate (/ origin-height 2)))))))))
+  (clear-mark self))
 
 (define-method draw-cursor shell (x y width height)
   (with-fields (cursor-color cursor-blink-color cursor-blink-clock focused) self
@@ -334,60 +93,157 @@
 (define-method draw-region shell (x y width height)
   (draw-rectangle x y width height :color "cyan" :destination %image))
   
-(define-method move-cursor shell (direction)
-  "Move the cursor one step in DIRECTION. 
-DIRECTION is one of :up :down :right :left."
-  (unless %entered
-    (with-field-values (point-row point-column rows columns) self
-      (let ((cursor (list point-row point-column)))
-	(setf cursor (ecase direction
-		       (:up (if (= 0 point-row)
-				(list (- point-row 1) point-column)
-				cursor))
-		       (:left (if (= 0 point-column)
-				  (list point-row (- point-column 1))
-				  cursor))
-		       (:down (if (< point-row (- rows 1))
-				  (list (+ point-row 1) point-column)
-				  cursor))
-		       (:right (if (< point-column (- columns 1))
-				   (list point-row (+ point-column 1))
-				   cursor))))
-	(destructuring-bind (r c) cursor
-	  (setf %point-row r %point-column c))
-	;; possibly scroll
-	(scroll self)))))
-  
-(define-method move-cursor-up shell ()
-  (move-cursor self :up))
+;;; Emulate the feel of emacs text properties buffers
 
-(define-method move-cursor-down shell ()
-  (move-cursor self :down))
+;; Here we move over complete blocks, not characters.
+;; Individual character movement is accomplished by the focused block methods.
 
-(define-method move-cursor-left shell ()
-  (move-cursor self :left))
+(define-method end-of-line shell ()
+  (setf %point-column (length (nth %point-row %lines))))
 
-(define-method move-cursor-right shell ()
-  (move-cursor self :right))
+(define-method beginning-of-line shell ()
+  (setf %point-column 0))
 
-(define-method move-end-of-line shell ()
-  (unless %entered
-    (setf %point-column (1- %columns))
-    (scroll self)))
+(define-method beginning-of-buffer shell ()
+  (setf %point-row 0 %point-column 0))
 
-(define-method move-beginning-of-line shell ()
-  (unless %entered
-    (setf %point-column 0)
-    (scroll self)))
+(define-method end-of-buffer shell ()
+  (setf %point-row (1- (length %lines)))
+  (end-of-line self))
 
-(define-method move-end-of-column shell ()
-  (unless %entered
-    (setf %point-row (1- %rows))
-    (scroll self)))
+(define-method forward-char shell ()
+  (with-fields (lines point-row point-column) self
+    (setf point-column (min (1+ point-column)
+			    (length (nth point-row lines))))))
 
-(define-method move-beginning-of-column shell ()
-  (unless %entered
-    (setf %point-row 0)
-    (scroll self)))
+(define-method backward-char shell ()
+  (with-fields (lines point-row point-column) self
+    (setf point-column (max 0 (1- point-column)))))
+
+(define-method next-line shell ()
+  (with-fields (lines point-row point-column) self
+    (setf point-row (min (1+ point-row)
+			 (1- (length lines))))
+    (setf point-column (min point-column 
+			    (length (nth point-row lines))))))
+
+(define-method previous-line shell ()
+  (with-fields (lines point-row point-column) self
+    (setf point-row (max 0 (1- point-row)))
+    (setf point-column (min point-column
+			    (length (nth point-row lines))))))
+
+(define-method newline shell ()
+  (with-fields (lines blank point-row point-column) self
+    (if (null lines)
+	(push (list (new blank)) lines)
+	(if (and (= point-row (length lines))
+		 (= point-column (length (nth point-row lines))))
+	    ;; at end of content
+	    (progn (setf lines (append lines (list (new blank))))
+		   (incf point-row)
+		   (setf point-column 0))
+	    ;; insert line break
+	    (let* ((line (nth point-row lines))
+		   (line-remainder (subseq line point-column))
+		   (lines-remainder (nthcdr (1+ point-row) lines)))
+	      ;; truncate current line
+	      (setf (nth point-row lines) 
+		    (subseq line 0 point-column))
+	      ;; insert new line
+	      (if (= 0 point-row)
+		  (setf (cdr lines)
+			(cons line-remainder (cdr lines)))
+		  (setf (cdr (nthcdr (- point-row 1) lines))
+			(cons (nth point-row lines)
+			      (cons line-remainder lines-remainder))))
+	      ;; move to new line
+	      (incf point-row)			
+	      (setf point-column 0))))))
+
+(define-method backward-delete-char shell ()
+  (with-fields (lines point-row point-column) self
+    (if (and (= 0 point-column) 
+	     (not (= 0 point-row)))
+	(progn 
+	  ;;
+	  ;; we need to remove a line break.
+	  (let ((line (nth (- point-row 1) lines))
+		(next-line (nth (+ point-row 1) lines))
+		(len (length lines)))
+	    (setf lines (append (subseq lines 0 (- point-row 1))
+				 (list (concatenate 'string line (nth point-row lines)))
+				 (subseq lines (min len (+ point-row 1)))))
+	    ;; (setf (cdr (nthcdr (- point-row 1) lines))
+	    ;; 	  (nth (+ point-row 1) lines))
+	    ;;
+	    ;; move cursor too
+	    (decf point-row)
+	    (setf point-column (length line))))
+	;; otherwise, delete within current line.
+	(when (not (= 0 point-column))
+	  (let* ((line (nth point-row lines))
+		 (remainder (subseq line point-column)))
+	    (setf (nth point-row lines)
+		  (concatenate 'string 
+			       (subseq line 0 (- point-column 1))
+			       remainder))
+	    (decf point-column))))))
+    
+(define-method get-current-line shell ()
+  (nth %point-row %lines))
+
+(define-method end-of-line-p shell ()
+  (= %point-column
+     (1- (length (get-current-line self)))))
+
+(define-method beginning-of-line-p shell ()
+  (= %point-column 0))
+
+(define-method top-of-lines-p shell ()
+  (= %point-row 0)) 
+
+(define-method bottom-of-lines-p shell ()
+  (= %point-row
+     (1- (length %lines))))
+
+(define-method beginning-of-lines-p shell ()
+  (and (beginning-of-line-p self)
+       (top-of-lines-p self)))
+
+(define-method end-of-lines-p shell ()
+  (and (end-of-line-p self)
+       (bottom-of-lines-p self)))
+
+(define-method delete-char shell ()
+  (with-fields (lines point-row point-column) self
+    (if (end-of-line-p self)
+	;; just remove line break
+	(unless (bottom-of-lines-p self)
+	  (next-line self)
+	  (beginning-of-line self)
+	  (backward-delete-char self))
+	;; remove a character
+	(progn 
+	  (forward-char self)
+	  (backward-delete-char self)))))
+
+(define-method layout shell ()
+  (with-fields (width height x y lines spacing) self
+    (setf width 0 height 0)
+    (let ((y0 y)
+	  (x0 x)
+	  (h0 0))
+      (dolist (line lines)
+	(dolist (thing line)
+	  (move-to thing x0 y0)
+	  (layout thing)
+	  (incf x0 (+ (%width thing) spacing))
+	  (setf h0 (max h0 (%height thing))))
+	(setf width (max width (- x0 x)))
+	(incf height h0)
+	(incf y0 h0)
+	(setf x0 x)
+	(setf h0 0)))))
 
 ;;; shell.lisp ends here

@@ -32,8 +32,9 @@
 	       (:file "blocks" :depends-on ("console"))
 	       (:file "halo" :depends-on ("blocks"))
 	       (:file "trees" :depends-on ("blocks"))
-	       (:file "atoms" :depends-on ("blocks"))
-	       (:file "shell" :depends-on ("atoms"))
+	       (:file "basic" :depends-on ("blocks"))
+	       (:file "text" :depends-on ("blocks"))
+	       (:file "shell" :depends-on ("basic"))
 	       (:file "buffers" :depends-on ("blocks"))
 	       (:file "syntax" :depends-on ("blocks"))))
 	       

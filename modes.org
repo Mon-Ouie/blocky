@@ -1,15 +1,22 @@
 #+TITLE: Plan for implementing buffers and major modes in BLOCKY
 
+** TODO list of lines. a line is a list of blocks
+** TODO abstract over the lists with a row,col accessor
+** TODO change existing editing commands to use row,col abstraction, as far as is necessary
+
+
 ** TODO define the block shell as an embeddable richtext block you can type in, emacs-style
 ** TODO arrows only nav within object---use control-arrow 
-** TODO delete only deletes within an object---use control-delete to "break" the text of the previous block
+** TODO ??delete only deletes within an object---use control-delete to "break" the text of the previous block?xs?
 ** TODO attempt to blockify after each spacebar
+** TODO forth primitives for accessing blocky
 ** TODO ROBOT BALL NEW DROP
 ** TODO DICTIONARY of words. how to define new words
 ** TODO emulate natural language
 ** TODO come up with basic scenarios of things to be typed in to make a game
 ** TODO anything-el-style completion
 * TODO forthmode. the stack is composed of blocks, and the current buffer line is the stack!
+*** TODO can illustrate, showing execution on successive lines
 *** http://c2.com/cgi/wiki?ColorForthQuickStart
 *** http://concatenative.org/wiki/view/Concatenative%20language
 *** prefix concat: http://sparist.github.com/Om/

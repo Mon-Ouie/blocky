@@ -1,4 +1,4 @@
-;; buffers.lisp --- squeakish spaces 
+;; buffers.lisp --- squeakish lispspaces 
 
 ;; Copyright (C) 2006-2013  David O'Toole
 
@@ -604,9 +604,9 @@ slowdown. See also quadtree.lisp")
 	(resize object (* width sx) (* height (or sy sx))))))
   (trim self))
 
-(define-method destroy-region buffer (bounding-box))
+;(define-method destroy-region buffer (bounding-box))
 
-(defun vertical-extent (current-buffer)
+(defun vertical-extent (buffer)
   (if (or (null buffer)
 	  (emptyp buffer))
       0
@@ -615,7 +615,7 @@ slowdown. See also quadtree.lisp")
 	(declare (ignore left right))
 	(- bottom top))))
 
-(defun horizontal-extent (current-buffer)
+(defun horizontal-extent (buffer)
   (if (or (null buffer)
 	  (emptyp buffer))
       0
@@ -717,7 +717,7 @@ slowdown. See also quadtree.lisp")
 
 (define-method draw-overlay-objects buffer ()
   (with-buffer self
-    (with-fields (drag-start inputs drag focused-block
+    (with-fields (drag-start drag focused-block
 			 highlight inputs hover
 			 ghost prompt) self
       ;; now start drawing the overlay objects
@@ -1126,10 +1126,6 @@ block found, or nil if none is found."
 
 (define-method before-serialize buffer ()
   (clear-halos self))
-
-;; (define-method after-serialize buffer ()
-;;   (loop for id being the hash-keys of %objects do
-;;     (setf (gethash id %objects) (find-object id))))
 
 (define-method after-deserialize buffer ()
   (after-deserialize%super self)

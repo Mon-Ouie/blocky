@@ -44,8 +44,8 @@
 (defvar *pending-resources* '())
 
 (defun add-resource (plist)
-  (assert (and (consp plist))
-	  (keywordp (first plist)))
+  (assert (and (consp plist)
+	       (keywordp (first plist))))
   (push plist *pending-resources*))
 
 (defun add-resources (&rest plists)
@@ -2349,7 +2349,7 @@ of the music."
 	*project* nil
 	*clipboard* nil
 	*event-hook* nil
-	*listener* nil
+	*overlay* nil
 	*message-hook-functions* nil
 	*window-title* "Blocky"
 	*updates* 0
@@ -2381,7 +2381,7 @@ of the music."
   (setf *buffer* nil)
   (setf *project-folder* nil)
   (setf *blocks* nil)
-  (setf *listener* nil)
+  (setf *overlay* nil)
   (setf *clipboard* nil)
   (setf *dt* nil)
   (setf *frame-rate* *default-frame-rate*)

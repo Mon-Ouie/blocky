@@ -794,7 +794,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
        (= 1 (length spec))
        (null (first spec))))
 
-;; see also the definition of "entry" blocks in listener.lisp
+;; see also the definition of "entry" blocks in basic.lisp
 
 (defparameter *builtin-entry-types* 
   '(integer float string symbol number))
@@ -807,9 +807,9 @@ See `keys.lisp' for the full table of key and modifier symbols.
 	 (type-specifier 
 	   (if (member head-type *builtin-entry-types* :test 'equal)
 			     head-type data-type)))
-    ;; see also listener.lisp for more on data entry blocks
+    ;; see also basic.lisp for more on data entry blocks
     (typecase datum
-      ;; see also the definition of "string" blocks in listener.lisp
+      ;; see also the definition of "string" blocks in basic.lisp
       (string (new 'string :value datum))
       (symbol (new 'symbol :value datum))
       (otherwise (new 'entry :value datum :type-specifier type-specifier)))))
@@ -954,22 +954,6 @@ away from this object, in the angle HEADING."
 (define-method backward block ((distance number :default 1))
   "Move this object DISTANCE units away from its current heading."
   (move self (- (* 2 pi) %heading) distance))
-
-(defmacro save-excursion (object &body body)
-  "Evaluate the forms in BODY, on OBJECT, saving the turtle
-state (position and heading) and restoring them afterward."
-  (let ((x (gensym))
-	(y (gensym))
-	(heading (gensym))
-	(turtle (gensym)))
-    `(let* ((,turtle ,object)
-	    (,x (field-value :x ,turtle))
-	    (,y (field-value :y ,turtle))
-	    (,heading (field-value :heading ,turtle)))
-       ,@body
-       (move-to ,turtle ,x ,y)
-       (setf (field-value :heading ,turtle) ,heading)
-       (values ,x ,y ,heading))))
 
 (define-method heading-to-thing block (thing)
   "Compute the heading angle from this object to the other object THING."

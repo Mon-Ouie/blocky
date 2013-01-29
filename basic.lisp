@@ -1,4 +1,4 @@
-;;; atoms.el --- interactive blocks for basic lisp data types
+;;; basic.lisp --- interactive blocks for basic lisp data types
 
 ;; Copyright (C) 2013  David O'Toole
 
@@ -678,4 +678,4 @@
 	     (plusp (length %error-output)))
     (accept %parent (new 'text %error-output))))
 
-;;; atoms.lisp ends here
+;;; basic.lisp ends here
