@@ -421,8 +421,10 @@ extended argument list ARGLIST."
 			     delimiter thing))))
 	   ((symbolp thing)
 	    (let ((thing-package (symbol-package thing)))
-	      ;; check if name is already in COMMON-LISP
+	      ;; check if name is already in Blocky
 	      (let ((prefix (if (eq thing-package (find-package :common-lisp))
+	      ;; (let ((prefix (if (find-prototype (concatenate 'string "BLOCKY"
+	      ;; 						     (symbol-name thing)))
 				;; override if so
 				"BLOCKY"
 				(package-name thing-package))))
@@ -1277,7 +1279,6 @@ OPTIONS is a property list of field options. Valid keys are:
        (add-object-to-database prototype)
        ;; declare a variable so that SLIME can find the definition later
        (defparameter ,(intern (prototype-variable-name prototype-id))
-;			      (find-package :blocky))
 	 uuid)
        ;; return the uuid and object
        (values uuid prototype))))

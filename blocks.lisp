@@ -832,10 +832,7 @@ and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
 	     (destructuring-bind (proto &rest arguments) spec
 	       (let ((prototype 		       
 		      (find-prototype 
-		       (make-prototype-id proto 
-					  ;; wait, is this wrong? wrong prototype?
-					  (or (make-block-package)
-					      (find-package "BLOCKY")))))
+		       (make-prototype-id proto)))
 		     (arg-blocks (mapcar #'make-block arguments)))
 		 ;; (message "arg-blocks ~S" (list (length arg-blocks)
 		 ;; 				(mapcar #'find-uuid arg-blocks)))
