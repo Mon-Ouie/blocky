@@ -84,14 +84,19 @@
 	;; it's an embedded list. push it.
 	(cons 
 	 (push body *stack*))
+	;; it's a data literal. push it
+	(string (push body *stack*))
+	(number (push body *stack*))
+	(character (push body *stack*))
 	;; it's a function word (i.e. a primitive)
 	(symbol 
 	 (assert (fboundp word))
 	 ;; grab arguments and invoke function
-	 (let ((arguments (word-arguments definition)))
+	 (let ((arguments (word-arguments definition))
+	       (values nil))
 	   (dotimes (n (length arguments))
-	     (push (pop *stack*) arguments))
-	   (apply body (nreverse arguments))))
+	     (push (pop *stack*) values))
+	   (apply body (nreverse values))))
 	;; it's a forth definition
 	(vector
 	 (map nil #'execute-word body))))))
@@ -109,15 +114,20 @@
 (defun execute-program-string (string)
   (execute-program (program-from-string string)))
 
-
-;; (defmacro define-function-word (name arguments &optional symbol)
-;;   `(setf (word-definition ',name)
-;; 	 (make-word :name ',name
-;; 		    :arguments ',arguments
-;; 		    ;; point to the function
-;; 		    :body ',(or symbol name))))
-;; (define-function-word + (a b))
-;; (define-function-word concatenate (a b))
-
+;; (define-word foo () (format t " foo ") (push 3 *stack*))
+;; (define-word bar () (format t " bar ") (push 5 *stack*))
+;; (define-word baz (a b) (format t " baz ") (push (+ a b) *stack*))
+;; *stack*
+;; (execute-word 'foo)
+;; *stack*
+;; (execute-word 'bar)
+;; *stack*
+;; (execute-word 'baz)
+;; *stack*
+;; (setf *stack* nil)
+;; *stack*
+;; (execute-program-string "foo bar baz")
+;; (execute-program-string "define quux foo bar baz")
+;; (execute-program-string "quux")
   
 ;;; forth.lisp ends here
