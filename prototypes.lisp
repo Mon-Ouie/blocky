@@ -38,6 +38,11 @@
 
 (in-package :blocky)
 
+(defun split-string-on-lines (string)
+  (with-input-from-string (stream string)
+    (loop for line = (read-line stream nil)
+	  while line collect line)))
+
 (defvar *debug-on-error* t)
 
 (defvar *author* nil)
@@ -1496,11 +1501,9 @@ objects after reconstruction, wherever present."
 	      (set-field-value name duplicate 
 			       (fref fields0 name)))))))))
 
-;;; Buffer pages 
+;;; Buffer list
 
 (defvar *buffers* nil)
-
-(defvar *desktop* "desktop:")
 
 (defun initialize-buffers ()
   (setf *buffers* 
@@ -1621,50 +1624,94 @@ objects after reconstruction, wherever present."
 (defmethod print-object ((foo blocky:object) stream)
   (print-blx foo stream))
 
-;;; Brute force debugging
-    
-(defun blocky-trace-all ()
-  (do-external-symbols (sym (find-package :blocky))
-    (when (fboundp sym)
-      (ignore-errors (eval `(trace ,sym))))))
+;;; Forth-style concatenative word-language 
 
-(defun blocky-untrace-all ()
-  (do-external-symbols (sym (find-package :blocky))
-    (when (fboundp sym)
-      (ignore-errors (eval `(untrace ,sym))))))
+(defvar *words* nil)
 
-;;; Printing a block
+(defun initialize-words ()
+  ;; words are symbols so we use 'eq
+  (setf *words* (make-hash-table :test 'eq)))
 
-(defun print-block (B)
-  (let (fields)
-    (flet ((add-field (field value)
-	     (push (list field value) fields)))
-      (typecase B
-	(blocky:object 
-	 (let ((f2 (object-fields B)))
-	   (etypecase f2
-	     (hash-table (maphash #'add-field f2))
-	     (list (setf fields f2)))
-	   (cons (get-some-object-name B) fields)))
-	(list (mapcar #'print-block B))
-	(otherwise B)))))
+(initialize-words)
 
-(defun split-string-on-lines (string)
-  (with-input-from-string (stream string)
-    (loop for line = (read-line stream nil)
-	  while line collect line)))
+(defvar *stack* nil)
 
-;; (prototype-wiki-name (new 'turtle))
-;; (find-super-prototype-name 'block)
-;; (find-super-prototype-name 'entry)
-;; (find-super-prototype-name 'integer)
-;; (find-super-prototype-name 'buffer)
-;; (method-wiki-name 'move)
-;; (method-wiki-name 'set-color "BLOCKY:COLOR")
-;; (wiki-name-project "BLOCKY:BLOCK")
-;; (wiki-name-prototype "BLOCKY:ENTRY")
-;; (wiki-name-prototype "BLOCKY:BLOCK:MOVE")
-;; (wiki-name-method "BLOCKY:BLOCK:DRAW")
-;; (wiki-name-method "BLOCKY:BLOCK:DRAW")
+(defvar *program* nil)
+
+(defstruct word name body properties arguments)
+
+(defun word-definition (word)
+  (cond ((symbolp word)
+	 (gethash word *words))
+	((word-p word) word)))
+
+(defun (setf word-definition) (name definition)
+  (assert (not (null name)))
+  (assert (symbolp name)) 
+  (assert (not (keywordp name)))
+  ;; (assert (or (word-p definition)
+  ;; 	      (listp definition)))
+  (setf (gethash name *words*) definition))
+
+(defmacro define-function-word (name arguments &optional symbol)
+  `(setf (word-definition ',name)
+	 (make-word :name ',name
+		    :arguments ',arguments
+		    ;; point to the function
+		    :body ',(or symbol name))))
+
+(defmacro define-word (name arguments &body body)
+  `(progn 
+     (define-function-word ,name ,arguments
+       (defun ,name ,arguments ,@body))
+     (export ',name)))
+
+(define-word define ()
+  ;; grab remainder of input as definition
+  (destructuring-bind (name &rest definition) *program*
+    ;; definitions are stored as vectors
+    (setf (word-definition name) (apply #'vector definition))
+    (setf *program* nil)))
+
+(define-function-word + (a b))
+(define-function-word concatenate (a b))
+
+(defun execute-word (word)
+  (let ((definition (word-definition word)))
+    (when (null definition) (error "Unknown word: ~A" word))
+    (let ((body (word-body definition)))
+      (etypecase body
+	;; it's an embedded list. push it.
+	(cons 
+	 (push body *stack*))
+	;; it's a function word (i.e. a primitive)
+	(symbol 
+	 (assert (fboundp symbol))
+	 ;; grab arguments and invoke function
+	 (dotimes (n (length (word-arguments definition)))
+	   (push (pop *stack*) arguments))
+	 (apply body (nreverse arguments)))
+	;; it's a forth definition
+	(vector
+	 (map nil #'execute-word body))))))
+
+(defun execute-program (program)
+  (let ((*program* program))
+    (loop while *program* 
+	  do (execute-word (pop *program*)))))
+
+(defun execute-program-string (string)
+  (execute-program
+   (with-input-from-string (stream string)
+     (loop for sexp = (read stream nil)
+	   while sexp collect sexp))))
+  
+	   
+;; (defun define-word 
+
+;; (defun forget-word 
+
+
+
 
 ;;; prototypes.lisp ends here

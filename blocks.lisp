@@ -1383,10 +1383,10 @@ drawn. If DARK is non-nil, paint a darker region."
       )))
 
 (define-method draw-patch block (x0 y0 x1 y1 
-				    &key depressed dark socket color)
+				    &key depressed dark socket color (style *style*))
   "Draw a Blocky notation patch in the current `*style*'.
 Places its top left corner at (X0 Y0), bottom right at (X1 Y1)."
-  (let ((draw-function (ecase *style*
+  (let ((draw-function (ecase style
 			 (:rounded #'draw-rounded-patch)
 			 (:flat #'draw-flat-patch))))
     (funcall draw-function self
@@ -1502,9 +1502,9 @@ The following block fields will control sprite drawing:
 		   (+ y height dash)
 		   :color color))))
 
-(define-method draw-background block ()
+(define-method draw-background block (&key color)
   (with-fields (x y width height) self
-    (draw-patch self x y (+ x width) (+ y height))))
+    (draw-patch self x y (+ x width) (+ y height) :color color)))
 
 (define-method draw-ghost block ()
   (with-fields (x y width height) self

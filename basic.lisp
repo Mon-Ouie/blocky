@@ -452,7 +452,7 @@
 
 (define-method draw entry (&optional nolabel)
   (with-fields (x y options read-only 
-		  text-color width 
+		  text-color width background
 		  parent height line) self
     (let ((label-width (label-width self))
 	  (line-width (font-text-width line *font*)))
@@ -462,7 +462,8 @@
 	  (when (plusp (length %label))
 	    (draw-label self))
 	  ;; draw shaded area for input
-	  (unless read-only
+	  (when (or (not background)
+		    (not read-only))
 	    (draw-input-area self :inactive)
 	    ;; draw indicators
 	    (draw-indicators self :inactive)))

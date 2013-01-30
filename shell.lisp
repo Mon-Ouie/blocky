@@ -20,6 +20,25 @@
 
 (in-package :blocky)
 
+;;; Plain text entry for shell
+
+(defentry shell-string stringp ""
+  (background :initform nil))
+
+(define-method read-expression shell-string (input-string)
+  ;; pass-through; don't read string at all.
+  input-string)
+
+(define-method do-sexp shell-string (sexp)
+  (assert (stringp sexp))
+  (setf %value sexp)
+  (when %parent (child-updated %parent self)))
+ 
+(define-method set-value shell-string (value)
+  (when (stringp value)
+    (setf %value value)
+    (setf %line value)))
+
 (defparameter *logo-height* 26)
 (defparameter *form-cursor-blink-time* 10)
 
@@ -30,7 +49,7 @@
   (point-row :initform 0) 
   (point-column :initform 0)
   ;; what block type to use for new blanks
-  (blank :initform 'string)
+  (blank :initform 'shell-string)
   ;; the cursor shows where point is
   (cursor-color :initform "yellow")
   (cursor-blink-color :initform "magenta")
@@ -264,6 +283,7 @@
   (draw-rectangle x y width height :color "cyan" :destination %image))
 
 (define-method draw shell ()
+  (draw-background self :color "white" :style :rounded)
   (dolist (line %lines)
     (mapc #'draw line)))
   

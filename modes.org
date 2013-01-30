@@ -1,13 +1,36 @@
 #+TITLE: Plan for implementing buffers and major modes in BLOCKY
 
-** TODO fix listener make-block-package issue
+** TODO dictionary of words
+** TODO primitive words for accessing blocky
+** TODO executing single words
+** TODO executing sequences of words (use the lisp reader)
+*** TODO use lisp reader to read embedded lists that are pushed onto stack as a whole
+** TODO defining new words
+** TODO variables
+
+** TODO attempt to blockify after each spacebar
+
+
+** TODO white rounded rectangle background 
+** TODO black text
+
+** TODO notes on concatenative syntax
+<dto> concatenative syntax is much simpler.  [11:02]
+<dto> so imagine
+<dto> :: ROBOT KICK BALL NEW SELF DROP  [11:04]
+<dto> i.e. :: A B means define method B for object A  
+<dto> then "BALL NEW" pushes a new ball onto the stack
+<dto> SELF pushes the current robot
+<dto> DROP makes the SELF drop the new BALL into the world
+<dto> that sort of thing. with a good set of words to cover the Blocky
+      featureset, this could be really much simpler than all the drag and drop
+      i'd been doing in the Smalltalk Elements / MIT Scratch style of
+      syntax. which is very mousey and nesty
 ** TODO define the block shell as an embeddable richtext block you can type in, emacs-style
 ** TODO arrows only nav within object---use control-arrow 
 ** TODO ??delete only deletes within an object---use control-delete to "break" the text of the previous block?xs?
-** TODO attempt to blockify after each spacebar
-** TODO forth primitives for accessing blocky
+** TODO black text w/o borders
 ** TODO ROBOT BALL NEW DROP
-** TODO DICTIONARY of words. how to define new words
 ** TODO emulate natural language
 ** TODO come up with basic scenarios of things to be typed in to make a game
 ** TODO anything-el-style completion
@@ -62,6 +85,14 @@ the current block. like Bold Italic.
    CLOSED: [2013-01-28 Mon 12:16]
    :PROPERTIES:
    :ARCHIVE_TIME: 2013-01-28 Mon 12:17
+   :ARCHIVE_FILE: ~/blocky/modes.org
+   :ARCHIVE_CATEGORY: modes
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE fix listener make-block-package issue
+   CLOSED: [2013-01-29 Tue 10:07]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-01-29 Tue 10:08
    :ARCHIVE_FILE: ~/blocky/modes.org
    :ARCHIVE_CATEGORY: modes
    :ARCHIVE_TODO: DONE
