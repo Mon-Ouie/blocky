@@ -27,6 +27,7 @@
 	       (:file "math" :depends-on ("blocky"))
 	       (:file "logic" :depends-on ("blocky"))
 	       (:file "prototypes" :depends-on ("blocky"))
+	       (:file "forth" :depends-on ("prototypes"))
 	       (:file "quadtree" :depends-on ("blocky"))
 	       (:file "console" :depends-on ("prototypes" "quadtree"))
 	       (:file "blocks" :depends-on ("console"))
