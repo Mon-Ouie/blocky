@@ -72,7 +72,7 @@
     (when (vectorp (word-body definition))
       (remhash word *words*))))
 
-(defun forget-all-words ()
+(define-word forget-all-words ()
   (loop for word being the hash-keys of *words*
 	do (forget-word word)))
 
@@ -81,13 +81,12 @@
     (when (null definition) (error "Unknown word: ~A" word))
     (let ((body (word-body definition)))
       (etypecase body
-	;; it's an embedded list. push it.
-	(cons 
+	;; it's a literal. push it
+	((or cons string number character)
 	 (push body *stack*))
-	;; it's a data literal. push it
-	(string (push body *stack*))
-	(number (push body *stack*))
-	(character (push body *stack*))
+	;; it's a forth definition. execute it.
+	(vector
+	 (map nil #'execute-word body))
 	;; it's a function word (i.e. a primitive)
 	(symbol 
 	 (assert (fboundp word))
@@ -96,10 +95,7 @@
 	       (values nil))
 	   (dotimes (n (length arguments))
 	     (push (pop *stack*) values))
-	   (apply body (nreverse values))))
-	;; it's a forth definition
-	(vector
-	 (map nil #'execute-word body))))))
+	   (apply body (nreverse values))))))))
 
 (defun execute-program (program)
   (let ((*program* program))

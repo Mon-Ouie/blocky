@@ -1,18 +1,12 @@
 #+TITLE: Plan for implementing buffers and major modes in BLOCKY
 
-** TODO dictionary of words
-** TODO primitive words for accessing blocky
-** TODO executing single words
-** TODO executing sequences of words (use the lisp reader)
-*** TODO use lisp reader to read embedded lists that are pushed onto stack as a whole
-** TODO defining new words
+** TODO words for defining blocks and methods
+** TODO self words
+** TODO primitive words for accessing blocky console/block features
 ** TODO variables
-
-** TODO attempt to blockify after each spacebar
-
-
 ** TODO white rounded rectangle background 
 ** TODO black text
+** TODO attempt to blockify after each spacebar
 
 ** TODO notes on concatenative syntax
 <dto> concatenative syntax is much simpler.  [11:02]
@@ -93,6 +87,42 @@ the current block. like Bold Italic.
    CLOSED: [2013-01-29 Tue 10:07]
    :PROPERTIES:
    :ARCHIVE_TIME: 2013-01-29 Tue 10:08
+   :ARCHIVE_FILE: ~/blocky/modes.org
+   :ARCHIVE_CATEGORY: modes
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE defining new words
+   CLOSED: [2013-01-29 Tue 23:06]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-01-29 Tue 23:06
+   :ARCHIVE_FILE: ~/blocky/modes.org
+   :ARCHIVE_CATEGORY: modes
+   :ARCHIVE_TODO: DONE
+   :END:
+
+** DONE executing single words
+   CLOSED: [2013-01-29 Tue 23:06]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-01-29 Tue 23:06
+   :ARCHIVE_FILE: ~/blocky/modes.org
+   :ARCHIVE_CATEGORY: modes
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE executing sequences of words (use the lisp reader)
+   CLOSED: [2013-01-29 Tue 23:06]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-01-29 Tue 23:06
+   :ARCHIVE_FILE: ~/blocky/modes.org
+   :ARCHIVE_CATEGORY: modes
+   :ARCHIVE_TODO: DONE
+   :END:
+*** DONE use lisp reader to read embedded lists that are pushed onto stack as a whole
+    CLOSED: [2013-01-29 Tue 23:06]
+
+** DONE dictionary of words
+   CLOSED: [2013-01-29 Tue 23:06]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-01-29 Tue 23:06
    :ARCHIVE_FILE: ~/blocky/modes.org
    :ARCHIVE_CATEGORY: modes
    :ARCHIVE_TODO: DONE
