@@ -2184,5 +2184,6 @@ inputs are evaluated."
 (defun capture (thing)
   (new 'capture thing))
 
+
 ;;; blocks.lisp ends here
  

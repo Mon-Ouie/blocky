@@ -21,10 +21,12 @@
 (in-package :blocky)
 
 (defvar *words* nil)
-
 (defvar *stack* nil)
-
 (defvar *program* nil)
+(defvar *self* nil)
+
+(defun fpush (x) (push x *stack*))
+(defun fpop () (pop *stack*))
 
 (defun initialize-words ()
   ;; words are symbols so we use 'eq
@@ -38,34 +40,40 @@
   (gethash word *words*))
 
 (defun set-word-definition (name definition)
-  (format t "WORD DEF ~S ~S" name definition)
   (assert (not (null name)))
   (assert (symbolp name)) 
   (assert (not (keywordp name)))
-  ;; (assert (or (word-p definition)
-  ;; 	      (listp definition)))
   (setf (gethash name *words*) definition))
 
 (defmacro define-word (name arguments &body body)
-  `(progn 
-     (defun ,name ,arguments ,@body)
-     (set-word-definition 
-      ',name
-      (make-word :name ',name
-		 :arguments ',arguments
-		 :body ',name))
-     (export ',name)))
+  "Define a primitive word called NAME.
+The BODY-forms execute later when the word NAME is executed.
+The ARGUMENTS (if any) are auto-pulled from the stack."
+  `(set-word-definition 
+    ,name
+    (make-word :name ',name
+	       :arguments ',arguments
+	       :body #'(lambda ,arguments ,@body))))
+
+(defun define-program-word (name program)
+  "Define a word as a sequence of words."
+  (set-word-definition 
+   name
+   (make-word :name name
+	      ;; forth definitions are stored as vectors
+	      :body (apply #'vector program))))
 
 (define-word define ()
   ;; grab remainder of input as definition
   (destructuring-bind (name &rest definition) *program*
-    ;; forth definitions are stored as vectors
-    (set-word-definition 
-     name
-     (make-word :name name
-		:body (apply #'vector definition)))
+    ;; do definition
+    (define-program-word name definition)
     ;; stop parsing.
     (setf *program* nil)))
+
+(define-word block () (fpush (find-uuid "BLOCKY:BLOCK")))
+
+(define-word new () (fpush (new (fpop))))
 
 (define-word forget-word (word)
   (let ((definition (word-definition word)))
@@ -88,8 +96,7 @@
 	(vector
 	 (map nil #'execute-word body))
 	;; it's a function word (i.e. a primitive)
-	(symbol 
-	 (assert (fboundp word))
+	(function
 	 ;; grab arguments and invoke function
 	 (let ((arguments (word-arguments definition))
 	       (values nil))

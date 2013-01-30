@@ -1,9 +1,23 @@
-#+TITLE: Plan for implementing buffers and major modes in BLOCKY
+** TODO "self (foo bar baz) do" === "foo bar baz"
+** TODO "
+** TODO "robot new (10 10 goto show) do" === "robot new this 10 10 goto show"
+** TODO "robot new (:x :y goto show) do"
+** TODO 
+robot new this 
+15 !x 20 !y
+:x :y goto
+show
+** TODO auto-define words for all methods
+** TODO auto-define words for fields, save/load value
 
-** TODO words for defining blocks and methods
-** TODO self words
+** TODO word to define METHOD on SELF 
+** TODO word to EXTEND another block 
+** TODO keywords for :begin :end , words can seek in *program* to find keywords 
+
 ** TODO primitive words for accessing blocky console/block features
+
 ** TODO variables
+
 ** TODO white rounded rectangle background 
 ** TODO black text
 ** TODO attempt to blockify after each spacebar

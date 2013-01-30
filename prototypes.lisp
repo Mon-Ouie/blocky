@@ -723,8 +723,6 @@ upon binding."
 (defmacro with-forward-message-handler (form &body body)
   `(let ((*forward-message-handler* ,form)) ,@body))
 
-(defvar *self* nil)
-
 (defun send (method thing &rest args)
   "Invoke the method identified by the keyword METHOD on the OBJECT with ARGS.
 If the method is not found, attempt to forward the message."
