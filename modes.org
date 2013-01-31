@@ -4,9 +4,19 @@
 ** TODO "robot new (:x :y goto show) do"
 ** TODO 
 robot new this 
-15 !x 20 !y
-:x :y goto
+15 :x 20 :y
+%x %y goto
 show
+self new
+
+prototype 
+
+a robot with (hp weapons inventory) is a block 
+
+to move a robot with (direction) do ... end
+
+to fire a robot do ... end
+
 ** TODO auto-define words for all methods
 ** TODO auto-define words for fields, save/load value
 

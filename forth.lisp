@@ -27,6 +27,8 @@
 
 (defun fpush (x) (push x *stack*))
 (defun fpop () (pop *stack*))
+(defun next-word (when *program* (first *program*)))
+(defun grab-next-word () (pop *program*))
 
 (defun initialize-words ()
   ;; words are symbols so we use 'eq
@@ -55,7 +57,7 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 	       :arguments ',arguments
 	       :body #'(lambda ,arguments ,@body))))
 
-(defun define-program-word (name program)
+(defun define-program-word (name &rest program)
   "Define a word as a sequence of words."
   (set-word-definition 
    name
@@ -63,51 +65,120 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 	      ;; forth definitions are stored as vectors
 	      :body (apply #'vector program))))
 
-(define-word define ()
-  ;; grab remainder of input as definition
-  (destructuring-bind (name &rest definition) *program*
-    ;; do definition
-    (define-program-word name definition)
-    ;; stop parsing.
-    (setf *program* nil)))
+(define-word end ())
 
-(define-word block () (fpush (find-uuid "BLOCKY:BLOCK")))
+(defun endp (word) (eq 'end word))
+
+(defun grab-until-end ()
+  (let (words word)
+    (block grabbing
+      (loop while *program* do 
+	(setf word (grab-next-word))
+	(if (endp word)
+	    (return-from grabbing)
+	    (push word words))))
+    (nreverse words)))
+
+;; defining words in source
+
+(define-word define ()
+  (destructuring-bind (name &rest definition) 
+      (grab-until-end)
+    (define-program-word name definition)))
+
+;; articles quote the next word
+
+(define-word a () (fpush (grab-next-word)))
+(define-word an () (fpush (grab-next-word)))
+(define-word with () (fpush (grab-next-word)))
+(define-word to () (fpush (grab-next-word)))
+
+(defun drop-article ()
+  (grab-next-word))
+
+;; the defining copula
+
+(define-word is (name)
+  (drop-article)
+  (let* ((super (grab-next-word))
+	 (fields (when (consp (first *stack*))
+		   (fpop))))
+    (eval `(define-block (,name :super ,super) ,@fields))))
+
+;; behaviors
+
+(define-word do ()
+  (let* ((arguments (if (consp (first *stack*))
+			(fpop)))
+	 (super (fpop))
+	 (method (fpop))
+	 (body (grab-until-end)))
+    (eval `(define-method ,method ,super ,arguments ,@body))))
+
+;; verbs
 
 (define-word new () (fpush (new (fpop))))
+(define-word this () (setf *this* (fpop)))
+(define-word self () (fpush *this*))
 
-(define-word forget-word (word)
+      
+      
+      
+	 
+
+
+(defun forget-word (word)
   (let ((definition (word-definition word)))
     (when (vectorp (word-body definition))
       (remhash word *words*))))
 
-(define-word forget-all-words ()
+(define-word forget (word)
+  (forget-word word))
+
+(defun forget-all-words ()
   (loop for word being the hash-keys of *words*
 	do (forget-word word)))
 
 (defun execute-word (word)
   (let ((definition (word-definition word)))
-    (when (null definition) (error "Unknown word: ~A" word))
-    (let ((body (word-body definition)))
-      (etypecase body
-	;; it's a literal. push it
-	((or cons string number character)
-	 (push body *stack*))
-	;; it's a forth definition. execute it.
-	(vector
-	 (map nil #'execute-word body))
-	;; it's a function word (i.e. a primitive)
-	(function
-	 ;; grab arguments and invoke function
-	 (let ((arguments (word-arguments definition))
-	       (values nil))
-	   (dotimes (n (length arguments))
-	     (push (pop *stack*) values))
-	   (apply body (nreverse values))))))))
-
+    (if (null definition)
+	;; unknown symbol. 
+	;; check to see if it's a field read/write
+	(cond 
+	  ;; write field
+	  ((keywordp word)
+	   (setf (field-value word *this*) 
+		 (fpop)))
+	  ;; read field
+	  ((field-reference-p word)
+	   (fpush (field-value
+		   ,(make-keyword
+		     ;; strip percent sign 
+		     (subseq (symbol-name symbol) 1))
+		   *this*)))
+	  ;; not a field reference.
+	  ((t (error "Cannot execute unknown word: ~A" word))))
+	;; it's a defined word. process the body.
+	(let ((body (word-body definition)))
+	  (etypecase body
+	    ;; it's a literal. push it
+	    ((or cons string number character)
+	     (push body *stack*))
+	    ;; it's a forth definition. execute it.
+	    (vector
+	     (map nil #'execute-word body))
+	    ;; it's a function word (i.e. a primitive)
+	    (function
+	     ;; grab arguments (if any) and invoke primitive function
+	     (let (arguments)
+	       (dotimes (n (length (word-arguments definition)))
+		 (push (fpop) values))
+	       (apply body (nreverse values)))))))))
+  
 (defun execute-program (program)
-  (let ((*program* program))
-    (loop while *program* 
-	  do (execute-word (pop *program*)))))
+    (let ((*program* program))
+      (loop while *program* 
+	    do (execute-word (grab-next-word)))))
 
 (defun program-from-string (string)
   (with-input-from-string (stream string)
@@ -116,6 +187,18 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 
 (defun execute-program-string (string)
   (execute-program (program-from-string string)))
+
+;;; Words for creating new prototypes
+
+
+
+;; (defmacro define-block-word (word)
+;;   `(define-word ,word () 
+;;      (fpush (find-prototype ',word))))
+
+;; (define-block-word block)
+;; (define-block-word buffer)
+;; etc
 
 ;; (define-word foo () (format t " foo ") (push 3 *stack*))
 ;; (define-word bar () (format t " bar ") (push 5 *stack*))
@@ -132,5 +215,8 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 ;; (execute-program-string "foo bar baz")
 ;; (execute-program-string "define quux foo bar baz")
 ;; (execute-program-string "quux")
+;; *stack*
+;; (setf *stack* nil)
+;; (execute-program '(quux 100 baz))
   
 ;;; forth.lisp ends here
