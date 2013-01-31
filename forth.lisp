@@ -29,7 +29,9 @@
 (defun next-word () (when *program* (first *program*)))
 (defun grab-next-word () (pop *program*))
 
-(defun end-marker-p (word) (eq 'end word))
+(defun end-marker-p (word) 
+  (and (symbolp word)
+       (string= "END" (symbol-name word))))
 
 (defun grab-until-end ()
   (let (words word)
@@ -73,8 +75,8 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
   (set-word-definition 
    name
    (make-word :name name
-	      ;; forth definitions are stored as vectors
-	      :body (coerce program 'vector))))
+	      ;; forth definitions are stored as lists
+	      :body program)))
 
 ;; defining words in source
 
@@ -87,7 +89,7 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 
 (defun forget-word (word)
   (let ((definition (word-definition word)))
-    (when (vectorp (word-body definition))
+    (when (consp (word-body definition))
       (remhash word *words*))))
 
 (define-word forget (word)
@@ -127,8 +129,10 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 	    (let ((body (word-body definition)))
 	      (etypecase body
 		;; it's a forth definition. execute it.
-		(vector
-		 (map nil #'execute-word body))
+		(cons
+		 (let ((*program* body))
+		   (loop while *program*
+			 do (execute-word (pop *program*)))))
 		;; it's a function word (i.e. a primitive)
 		(function
 		 ;; grab arguments (if any) and invoke primitive function
@@ -150,10 +154,14 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 (defun execute-program-string (string)
   (execute-program (program-from-string string)))
 
+(defmacro forth (&rest words)
+  `(execute-program ',words))
+
 ;;; Object-orientation
 
 (define-word new () (fpush (new (fpop))))
 (define-word self () (fpush *self*))
+(define-word this () (setf *self* (fpop)))
 
 ;; articles quote the next word.
 ;; examples:
@@ -183,10 +191,10 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 		   (fpop))))
     (eval `(define-block (,name :super ,super) ,@fields))))
 
-;; invoking a word without any arguments.
+;; invoking a method without any arguments.
 
-(define-word send (thing method)
-  (send method thing))
+(define-word send (method)
+  (send (make-keyword method) *self*))
 
 ;; the "to...does...end" idiom defines behavior for verbs.
 ;; examples: 
@@ -201,31 +209,28 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 	 (method (fpop))
 	 (body (grab-until-end)))
     ;; define a self-verb shortcut
-    (execute-program `(define ,method self the ,method send end))
+    (execute-program `(define ,method the ,method send end))
     ;; install the method
+    (format t "BODY: ~A" body)
     (eval `(define-method ,method ,super ()
 	     (execute-program ',body)))))
 
-;; (forget-all-words)
-;; (setf *stack* nil)
-;; (define-word foo () (format t " foo ") (push 3 *stack*))
-;; (define-word bar () (format t " bar ") (push 5 *stack*))
-;; (define-word baz (a b) (format t " baz ") (push (+ a b) *stack*))
-;; *stack*
-;; (execute-word 'foo)
-;; *stack*
-;; (execute-word 'bar)
-;; *stack*
-;; (execute-word 'baz)
-;; *stack*
-;; (setf *stack* nil)
-;; *stack*
-;; (execute-program-string "foo bar baz")
-;; (execute-program-string "define quux foo bar baz")
-;; (execute-program-string "quux")
-;; (word-definition 'quux)
-;; *stack*
-;; (setf *stack* nil)
-;; (execute-program '(quux 100 baz))
+;; '
+;; (progn 
+;;   (forget-all-words)
+;;   (setf *stack* nil)
+;;   (define-word foo () (format t " foo ") (push 3 *stack*))
+;;   (define-word bar () (format t " bar ") (push 5 *stack*))
+;;   (define-word baz (a b) (format t " baz ") (push (+ a b) *stack*))
+;;   (define-word yell () (format t "WOOHOO!!"))
+;;   (execute-program-string "foo bar baz")
+;;   (execute-program-string "define quux foo bar baz")
+;;   (execute-program-string "quux")
+;;   (execute-program '(quux 100 baz))
+;;   (forth quux 100 baz)
+;;   (forth a robot is a block)
+;;   (forth to fire a robot does quux 200 baz yell end)
+;;   (forth a robot new)
+;;   (forth a robot new this fire))
   
 ;;; forth.lisp ends here
