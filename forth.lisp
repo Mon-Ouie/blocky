@@ -108,17 +108,17 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 	(cond 
 	  ;; write field
 	  ((keywordp word)
-	   (setf (field-value word *this*) 
+	   (setf (field-value word *self*) 
 		 (fpop)))
 	  ;; read field
 	  ((field-reference-p word)
 	   (fpush (field-value
 		   (make-keyword
 		    ;; strip percent sign 
-		    (subseq (symbol-name symbol) 1))
-		   *this*)))
+		    (subseq (symbol-name word) 1))
+		   *self*)))
 	  ;; not a field reference.
-	  ((t (error "Cannot execute unknown word: ~A" word))))
+	  (t (error "Cannot execute unknown word: ~A" word)))
 	;;
 	;; found the word in the dictionary. execute the body.
 	(let ((body (word-body definition)))
@@ -134,8 +134,8 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 	     ;; grab arguments (if any) and invoke primitive function
 	     (let (arguments)
 	       (dotimes (n (length (word-arguments definition)))
-		 (push (fpop) values))
-	       (apply body (nreverse values)))))))))
+		 (push (fpop) arguments))
+	       (apply body (nreverse arguments)))))))))
   
 (defun execute-program (program)
     (let ((*program* program))
@@ -153,8 +153,8 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 ;;; Object-orientation
 
 (define-word new () (fpush (new (fpop))))
-(define-word this () (setf *this* (fpop)))
-(define-word self () (fpush *this*))
+(define-word this () (setf *self* (fpop)))
+(define-word self () (fpush *self*))
 
 ;; articles quote the next word.
 ;; examples:
