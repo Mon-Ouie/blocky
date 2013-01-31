@@ -23,12 +23,23 @@
 (defvar *words* nil)
 (defvar *stack* nil)
 (defvar *program* nil)
-(defvar *self* nil)
 
 (defun fpush (x) (push x *stack*))
 (defun fpop () (pop *stack*))
 (defun next-word () (when *program* (first *program*)))
 (defun grab-next-word () (pop *program*))
+
+(defun end-marker-p (word) (eq 'end word))
+
+(defun grab-until-end ()
+  (let (words word)
+    (block grabbing
+      (loop while *program* do 
+	(setf word (grab-next-word))
+	(if (end-marker-p word)
+	    (return-from grabbing)
+	    (push word words))))
+    (nreverse words)))
 
 (defun initialize-words ()
   ;; words are symbols so we use 'eq
@@ -57,25 +68,13 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 	       :arguments ',arguments
 	       :body #'(lambda ,arguments ,@body))))
 
-(defun define-program-word (name &rest program)
+(defun define-program-word (name program)
   "Define a word as a sequence of words."
   (set-word-definition 
    name
    (make-word :name name
 	      ;; forth definitions are stored as vectors
-	      :body (apply #'vector program))))
-
-(defun end-marker-p (word) (eq 'end word))
-
-(defun grab-until-end ()
-  (let (words word)
-    (block grabbing
-      (loop while *program* do 
-	(setf word (grab-next-word))
-	(if (end-marker-p word)
-	    (return-from grabbing)
-	    (push word words))))
-    (nreverse words)))
+	      :body (coerce program 'vector))))
 
 ;; defining words in source
 
@@ -101,41 +100,42 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 ;;; The interpreter
 
 (defun execute-word (word)
-  (let ((definition (word-definition word)))
-    (if (null definition)
-	;; unknown symbol. 
-	;; check to see if it's a field read/write
-	(cond 
-	  ;; write field
-	  ((keywordp word)
-	   (setf (field-value word *self*) 
-		 (fpop)))
-	  ;; read field
-	  ((field-reference-p word)
-	   (fpush (field-value
-		   (make-keyword
-		    ;; strip percent sign 
-		    (subseq (symbol-name word) 1))
-		   *self*)))
-	  ;; not a field reference.
-	  (t (error "Cannot execute unknown word: ~A" word)))
-	;;
-	;; found the word in the dictionary. execute the body.
-	(let ((body (word-body definition)))
-	  (etypecase body
-	    ;; it's a literal. push it
-	    ((or cons string number character)
-	     (push body *stack*))
-	    ;; it's a forth definition. execute it.
-	    (vector
-	     (map nil #'execute-word body))
-	    ;; it's a function word (i.e. a primitive)
-	    (function
-	     ;; grab arguments (if any) and invoke primitive function
-	     (let (arguments)
-	       (dotimes (n (length (word-arguments definition)))
-		 (push (fpop) arguments))
-	       (apply body (nreverse arguments)))))))))
+  (if (typep word '(or cons string number character))
+      ;; it's a literal. push it
+      (push word *stack*)
+      ;; otherwise try looking it up.
+      (let ((definition (word-definition word)))
+	(if (null definition)
+	    ;; unknown symbol. 
+	    ;; check to see if it's a field read/write
+	    (cond 
+	      ;; write field
+	      ((keywordp word)
+	       (setf (field-value word *self*) 
+		     (fpop)))
+	      ;; read field
+	      ((field-reference-p word)
+	       (fpush (field-value
+		       (make-keyword
+			;; strip percent sign 
+			(subseq (symbol-name word) 1))
+		       *self*)))
+	      ;; not a field reference.
+	      (t (error "Cannot execute unknown word: ~A" word)))
+	    ;;
+	    ;; found a definition. execute the body.
+	    (let ((body (word-body definition)))
+	      (etypecase body
+		;; it's a forth definition. execute it.
+		(vector
+		 (map nil #'execute-word body))
+		;; it's a function word (i.e. a primitive)
+		(function
+		 ;; grab arguments (if any) and invoke primitive function
+		 (let (arguments)
+		   (dotimes (n (length (word-arguments definition)))
+		     (push (fpop) arguments))
+		   (apply body (nreverse arguments))))))))))
   
 (defun execute-program (program)
     (let ((*program* program))
@@ -153,7 +153,6 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 ;;; Object-orientation
 
 (define-word new () (fpush (new (fpop))))
-(define-word this () (setf *self* (fpop)))
 (define-word self () (fpush *self*))
 
 ;; articles quote the next word.
@@ -207,6 +206,8 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
     (eval `(define-method ,method ,super ()
 	     (execute-program ',body)))))
 
+;; (forget-all-words)
+;; (setf *stack* nil)
 ;; (define-word foo () (format t " foo ") (push 3 *stack*))
 ;; (define-word bar () (format t " bar ") (push 5 *stack*))
 ;; (define-word baz (a b) (format t " baz ") (push (+ a b) *stack*))
@@ -222,6 +223,7 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 ;; (execute-program-string "foo bar baz")
 ;; (execute-program-string "define quux foo bar baz")
 ;; (execute-program-string "quux")
+;; (word-definition 'quux)
 ;; *stack*
 ;; (setf *stack* nil)
 ;; (execute-program '(quux 100 baz))

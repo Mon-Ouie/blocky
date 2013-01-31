@@ -38,6 +38,8 @@
 
 (in-package :blocky)
 
+(defvar *self* nil)
+
 (defun split-string-on-lines (string)
   (with-input-from-string (stream string)
     (loop for line = (read-line stream nil)
@@ -731,7 +733,8 @@ If the method is not found, attempt to forward the message."
     (when (not (object-p object))
       (error "Cannot send message to non-object: ~A. Did you forget the `self' argument?" object))
     ;; check the cache
-    (let ((func (method-cache-lookup object method)))
+    (let ((func (method-cache-lookup object method))
+	  (*self* object))
       (if func
 	  ;; cache hit. invoke the method and finish up.
 	  (apply func object args)
