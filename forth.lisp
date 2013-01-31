@@ -33,6 +33,10 @@
   (and (symbolp word)
        (string= "END" (symbol-name word))))
 
+(defun else-marker-p (word) 
+  (and (symbolp word)
+       (string= "ELSE" (symbol-name word))))
+
 (defun grab-until-end ()
   (let (words word)
     (block grabbing
@@ -81,6 +85,7 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 ;; defining words in source
 
 (define-word end () nil)
+(define-word else () nil)
 
 (define-word define ()
   (destructuring-bind (name &rest definition) 
@@ -156,6 +161,23 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 
 (defmacro forth (&rest words)
   `(execute-program ',words))
+
+;;; Control flow
+
+(define-word not (boolean)
+  (fpush (if boolean nil t)))
+
+(define-word if (boolean then else)
+  (execute-program (if boolean then else)))
+
+(define-word each (elements body)
+  (dolist (element elements)
+    (fpush element)
+    (execute-program body)))
+
+;; TODO map, filter
+
+;; (define-word reduce (elements initial-value body)
 
 ;;; Object-orientation
 
