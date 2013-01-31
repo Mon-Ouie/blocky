@@ -27,7 +27,7 @@
 
 (defun fpush (x) (push x *stack*))
 (defun fpop () (pop *stack*))
-(defun next-word (when *program* (first *program*)))
+(defun next-word () (when *program* (first *program*)))
 (defun grab-next-word () (pop *program*))
 
 (defun initialize-words ()
@@ -52,7 +52,7 @@
 The BODY-forms execute later when the word NAME is executed.
 The ARGUMENTS (if any) are auto-pulled from the stack."
   `(set-word-definition 
-    ,name
+    ',name
     (make-word :name ',name
 	       :arguments ',arguments
 	       :body #'(lambda ,arguments ,@body))))
@@ -65,67 +65,26 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 	      ;; forth definitions are stored as vectors
 	      :body (apply #'vector program))))
 
-(define-word end ())
-
-(defun endp (word) (eq 'end word))
+(defun end-marker-p (word) (eq 'end word))
 
 (defun grab-until-end ()
   (let (words word)
     (block grabbing
       (loop while *program* do 
 	(setf word (grab-next-word))
-	(if (endp word)
+	(if (end-marker-p word)
 	    (return-from grabbing)
 	    (push word words))))
     (nreverse words)))
 
 ;; defining words in source
 
+(define-word end () nil)
+
 (define-word define ()
   (destructuring-bind (name &rest definition) 
       (grab-until-end)
     (define-program-word name definition)))
-
-;; articles quote the next word
-
-(define-word a () (fpush (grab-next-word)))
-(define-word an () (fpush (grab-next-word)))
-(define-word with () (fpush (grab-next-word)))
-(define-word to () (fpush (grab-next-word)))
-
-(defun drop-article ()
-  (grab-next-word))
-
-;; the defining copula
-
-(define-word is (name)
-  (drop-article)
-  (let* ((super (grab-next-word))
-	 (fields (when (consp (first *stack*))
-		   (fpop))))
-    (eval `(define-block (,name :super ,super) ,@fields))))
-
-;; behaviors
-
-(define-word do ()
-  (let* ((arguments (if (consp (first *stack*))
-			(fpop)))
-	 (super (fpop))
-	 (method (fpop))
-	 (body (grab-until-end)))
-    (eval `(define-method ,method ,super ,arguments ,@body))))
-
-;; verbs
-
-(define-word new () (fpush (new (fpop))))
-(define-word this () (setf *this* (fpop)))
-(define-word self () (fpush *this*))
-
-      
-      
-      
-	 
-
 
 (defun forget-word (word)
   (let ((definition (word-definition word)))
@@ -138,6 +97,8 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 (defun forget-all-words ()
   (loop for word being the hash-keys of *words*
 	do (forget-word word)))
+
+;;; The interpreter
 
 (defun execute-word (word)
   (let ((definition (word-definition word)))
@@ -152,13 +113,14 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 	  ;; read field
 	  ((field-reference-p word)
 	   (fpush (field-value
-		   ,(make-keyword
-		     ;; strip percent sign 
-		     (subseq (symbol-name symbol) 1))
+		   (make-keyword
+		    ;; strip percent sign 
+		    (subseq (symbol-name symbol) 1))
 		   *this*)))
 	  ;; not a field reference.
 	  ((t (error "Cannot execute unknown word: ~A" word))))
-	;; it's a defined word. process the body.
+	;;
+	;; found the word in the dictionary. execute the body.
 	(let ((body (word-body definition)))
 	  (etypecase body
 	    ;; it's a literal. push it
@@ -188,17 +150,62 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 (defun execute-program-string (string)
   (execute-program (program-from-string string)))
 
-;;; Words for creating new prototypes
+;;; Object-orientation
 
+(define-word new () (fpush (new (fpop))))
+(define-word this () (setf *this* (fpop)))
+(define-word self () (fpush *this*))
 
+;; articles quote the next word.
+;; examples:
+;;    "a block"
+;;    "a robot"
+;;    "with (1 2 3)"
 
-;; (defmacro define-block-word (word)
-;;   `(define-word ,word () 
-;;      (fpush (find-prototype ',word))))
+(define-word a () (fpush (grab-next-word)))
+(define-word an () (fpush (grab-next-word)))
+(define-word the () (fpush (grab-next-word)))
+(define-word with () (fpush (grab-next-word)))
+(define-word to () (fpush (grab-next-word)))
 
-;; (define-block-word block)
-;; (define-block-word buffer)
-;; etc
+(defun drop-article ()
+  (grab-next-word))
+
+;; the copula "is" defines new objects from old.
+;; examples: 
+;;     "a robot is a block"
+;;     "a robot with (health bullets inventory) is a block"
+;;     "an enemy is a robot"
+
+(define-word is (name)
+  (drop-article)
+  (let* ((super (grab-next-word))
+	 (fields (when (consp (first *stack*))
+		   (fpop))))
+    (eval `(define-block (,name :super ,super) ,@fields))))
+
+;; invoking a word without any arguments.
+
+(define-word send (thing method)
+  (send method thing))
+
+;; the "to...does...end" idiom defines behavior for verbs.
+;; examples: 
+;;    "to fire a robot with (direction) does ... end"
+;;    "to destroy an enemy does ... end"
+
+(define-word does ()
+  ;; ignore argument list for now
+  (when (consp (first *stack*))
+    (fpop))
+  (let* ((super (fpop))
+	 (method (fpop))
+	 (body (grab-until-end)))
+    ;; define a self-verb shortcut
+    (execute-program `(define ,method self the ,method send end))
+    ;; install the method
+    (eval `(define-method ,method ,super ()
+	     (execute-program ',body)))))
 
 ;; (define-word foo () (format t " foo ") (push 3 *stack*))
 ;; (define-word bar () (format t " bar ") (push 5 *stack*))

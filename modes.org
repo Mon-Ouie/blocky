@@ -9,13 +9,11 @@ robot new this
 show
 self new
 
-prototype 
-
 a robot with (hp weapons inventory) is a block 
 
-to move a robot with (direction) do ... end
+to move a robot with (direction) does ... end
 
-to fire a robot do ... end
+to fire a robot does ... end
 
 ** TODO auto-define words for all methods
 ** TODO auto-define words for fields, save/load value
