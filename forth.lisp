@@ -33,10 +33,6 @@
   (and (symbolp word)
        (string= "END" (symbol-name word))))
 
-(defun else-marker-p (word) 
-  (and (symbolp word)
-       (string= "ELSE" (symbol-name word))))
-
 (defun grab-until-end ()
   (let (words word)
     (block grabbing
@@ -85,7 +81,6 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 ;; defining words in source
 
 (define-word end () nil)
-(define-word else () nil)
 
 (define-word define ()
   (destructuring-bind (name &rest definition) 
@@ -109,7 +104,7 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 (defun execute-word (word)
   (if (typep word '(or cons string number character))
       ;; it's a literal. push it
-      (push word *stack*)
+      (pushf word)
       ;; otherwise try looking it up.
       (let ((definition (word-definition word)))
 	(if (null definition)
@@ -175,8 +170,8 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
     (fpush element)
     (execute-program body)))
 
-;; TODO map, filter
-
+;; (define-word map (elements body)
+;; (define-word filter (elements body)
 ;; (define-word reduce (elements initial-value body)
 
 ;;; Object-orientation
@@ -218,12 +213,12 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 (define-word send (method)
   (send (make-keyword method) *self*))
 
-;; the "to...does...end" idiom defines behavior for verbs.
+;; the "to...do...end" idiom defines behavior for verbs.
 ;; examples: 
-;;    "to fire a robot with (direction) does ... end"
-;;    "to destroy an enemy does ... end"
+;;    "to fire a robot with (direction) do ... end"
+;;    "to destroy an enemy do ... end"
 
-(define-word does ()
+(define-word do ()
   ;; ignore argument list for now
   (when (consp (first *stack*))
     (fpop))
@@ -251,7 +246,7 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 ;;   (execute-program '(quux 100 baz))
 ;;   (forth quux 100 baz)
 ;;   (forth a robot is a block)
-;;   (forth to fire a robot does quux 200 baz yell end)
+;;   (forth to fire a robot do quux 200 baz yell end)
 ;;   (forth a robot new)
 ;;   (forth a robot new this fire))
   
