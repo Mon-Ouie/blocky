@@ -57,11 +57,10 @@
 (defun set-word-definition (name definition)
   (assert (not (null name)))
   (assert (symbolp name)) 
-  (assert (not (keywordp name)))
   (setf (gethash name *words*) definition))
 
 (defmacro define-word (name arguments &body body)
-  "Define a primitive word called NAME.
+  "Define a primitive word called NAME with Lisp code.
 The BODY-forms execute later when the word NAME is executed.
 The ARGUMENTS (if any) are auto-pulled from the stack."
   `(set-word-definition 
@@ -104,27 +103,11 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 (defun execute-word (word)
   (if (typep word '(or cons string number character))
       ;; it's a literal. push it
-      (pushf word)
+      (fpush word)
       ;; otherwise try looking it up.
       (let ((definition (word-definition word)))
 	(if (null definition)
-	    ;; unknown symbol. 
-	    ;; check to see if it's a field read/write
-	    (cond 
-	      ;; write field
-	      ((keywordp word)
-	       (setf (field-value word *self*) 
-		     (fpop)))
-	      ;; read field
-	      ((field-reference-p word)
-	       (fpush (field-value
-		       (make-keyword
-			;; strip percent sign 
-			(subseq (symbol-name word) 1))
-		       *self*)))
-	      ;; not a field reference.
-	      (t (error "Cannot execute unknown word: ~A" word)))
-	    ;;
+	    (error "Cannot execute unknown word: ~A" word)
 	    ;; found a definition. execute the body.
 	    (let ((body (word-body definition)))
 	      (etypecase body
@@ -141,7 +124,7 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 		     (push (fpop) arguments))
 		   (apply body (nreverse arguments))))))))))
   
-(defun execute-program (program)
+(defun execute (program)
     (let ((*program* program))
       (loop while *program* 
 	    do (execute-word (grab-next-word)))))
@@ -151,11 +134,11 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
     (loop for sexp = (read stream nil)
 	  while sexp collect sexp)))
 
-(defun execute-program-string (string)
-  (execute-program (program-from-string string)))
+(defun execute-string (string)
+  (execute (program-from-string string)))
 
 (defmacro forth (&rest words)
-  `(execute-program ',words))
+  `(execute ',words))
 
 ;;; Control flow
 
@@ -163,16 +146,33 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
   (fpush (if boolean nil t)))
 
 (define-word if (boolean then else)
-  (execute-program (if boolean then else)))
+  (execute (if boolean then else)))
 
 (define-word each (elements body)
   (dolist (element elements)
     (fpush element)
-    (execute-program body)))
+    (execute body)))
 
 ;; (define-word map (elements body)
 ;; (define-word filter (elements body)
 ;; (define-word reduce (elements initial-value body)
+
+;;; Accessing fields. See also `define-block'.
+
+(defun define-field-accessor-words (input)
+  (dolist (name (mapcar #'make-keyword input))
+    ;; :foo pushes value of field FOO on the stack
+    (execute `(define ,name 
+		the ,name get))
+    ;; !bar sets field BAR to value on top of stack
+    (execute `(define ,(intern (concatenate 'string "!" (symbol-name name)))
+		the ,name set))))
+
+(define-word get (field)
+  (fpush (field-value field *self*)))
+
+(define-word set (field)
+  (setf (field-value field *self*) (fpop)))
 
 ;;; Object-orientation
 
@@ -208,10 +208,21 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 		   (fpop))))
     (eval `(define-block (,name :super ,super) ,@fields))))
 
-;; invoking a method without any arguments.
+;; invoking a Blocky method without any arguments.
 
 (define-word send (method)
   (send (make-keyword method) *self*))
+
+;; invoking a Forth method
+
+(define-word call (method object)
+  (execute (field-value (make-keyword method) object)))
+
+;; telling  object to invoke one of its methods
+
+(define-word tell (program object)
+  (let ((*self* object))
+    (execute program)))
 
 ;; the "to...do...end" idiom defines behavior for verbs.
 ;; examples: 
@@ -225,12 +236,23 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
   (let* ((super (fpop))
 	 (method (fpop))
 	 (body (grab-until-end)))
-    ;; define a self-verb shortcut
-    (execute-program `(define ,method the ,method send end))
-    ;; install the method
-    (format t "BODY: ~A" body)
-    (eval `(define-method ,method ,super ()
-	     (execute-program ',body)))))
+    ;; define a self-verb shortcut 
+    (execute `(define ,method the ,method self call end))
+    ;; install the forth definition in the prototype
+    (setf (field-value (make-keyword method)
+		       (find-object super))
+	  body)))
+
+;;; start stop initialize destroy remove copy tag tag? here there it
+;;; me untag contains? drop drop-at event update move forward left
+;;; right backward show hide menu draw animate scale animate image
+;;; draw resize center play collide colliding? head distance frames
+;;; seconds later damage enter exit pop !heading !tags !parent !x !y
+;;; !z !blend !opacity !width !height !depth !image
+
+;; example:  "explode1.png" draw ("explode2.png" draw) 0.1 seconds later
+;;   (destroy) enemy tell 
+
 
 ;; '
 ;; (progn 
@@ -240,10 +262,10 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 ;;   (define-word bar () (format t " bar ") (push 5 *stack*))
 ;;   (define-word baz (a b) (format t " baz ") (push (+ a b) *stack*))
 ;;   (define-word yell () (format t "WOOHOO!!"))
-;;   (execute-program-string "foo bar baz")
-;;   (execute-program-string "define quux foo bar baz")
-;;   (execute-program-string "quux")
-;;   (execute-program '(quux 100 baz))
+;;   (execute-string "foo bar baz")
+;;   (execute-string "define quux foo bar baz")
+;;   (execute-string "quux")
+;;   (execute '(quux 100 baz))
 ;;   (forth quux 100 baz)
 ;;   (forth a robot is a block)
 ;;   (forth to fire a robot do quux 200 baz yell end)
