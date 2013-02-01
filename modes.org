@@ -1,32 +1,22 @@
-** TODO "self (foo bar baz) do" === "foo bar baz"
-** TODO "
-** TODO "robot new (10 10 goto show) do" === "robot new this 10 10 goto show"
-** TODO "robot new (:x :y goto show) do"
-
-** TODO just store forth definitions in object fields, as methods?
-
+** TODO [#A] IN-ENGINE INTERACTIVE FORTH BUFFERS. DO IT.
+*** TODO implement words as you go and implement a little example game
+*** TODO rename add-object/remove-object to insert/delete... a notion of Point
+*** TODO add documentation for words, and a nice dictionary formatter thing
+*** TODO show the stack, why not?
+*** TODO white rounded rectangle background 
+*** TODO black text
+*** TODO attempt to blockify after each spacebar
+*** TODO define the block shell as an embeddable richtext block you can type in, emacs-style
+**** TODO arrows only nav within object---use control-arrow 
+**** TODO ??delete only deletes within an object---use control-delete to "break" the text of the previous block?xs?
+**** TODO black text w/o borders
+**** TODO anything-el-style completion
 ** TODO [#A] primitive words for accessing blocky console/block features
 
-** TODO words for accessing incoming arguments? 
+** TODO [#B] come up with basic scenarios of things to be typed in to make a game
 
-** TODO come up with basic scenarios of things to be typed in to make a game
+** TODO [#C] words for accessing incoming arguments? not really needed. just list !y !x at the beginning to pop values
 
-** TODO variables
-
-** TODO white rounded rectangle background 
-** TODO black text
-** TODO attempt to blockify after each spacebar
-
-** TODO notes on concatenative syntax
-<dto> that sort of thing. with a good set of words to cover the Blocky
-      featureset, this could be really much simpler than all the drag and drop
-      i'd been doing in the Smalltalk Elements / MIT Scratch style of
-      syntax. which is very mousey and nesty
-** TODO define the block shell as an embeddable richtext block you can type in, emacs-style
-** TODO arrows only nav within object---use control-arrow 
-** TODO ??delete only deletes within an object---use control-delete to "break" the text of the previous block?xs?
-** TODO black text w/o borders
-** TODO anything-el-style completion
 * TODO forthmode. the stack is composed of blocks, and the current buffer line is the stack!
 *** TODO can illustrate, showing execution on successive lines
 *** http://c2.com/cgi/wiki?ColorForthQuickStart
@@ -43,10 +33,14 @@ but this can be changed, as well as can the creation parameters for
 the current block. like Bold Italic.
 ** TODO combine features from the Listener and text buffer into an emacsy thing
 *** TODO simple concatenative syntax, possibly like Forth. look up colorforth, demo tools
-*** TODO Review "THINKING FORTH"
+*** DONE Review "THINKING FORTH"
+    CLOSED: [2013-02-01 Fri 01:54]
 *** TODO somehow incorporate red eevstars / linkdmode 
-*** TODO but can add LISP parentheses at any time
-** TODO [#B] use a macrolet to allow (next-method -->  (apply (get-next-method) ...)
+*** DONE but can add LISP parentheses at any time
+    CLOSED: [2013-02-01 Fri 01:54]
+** DONE [#B] use a macrolet to allow (next-method -->  (apply (get-next-method) ...)
+   CLOSED: [2013-02-01 Fri 01:54]
+
 ** TODO [#B] Pretty sexy black rounded corner notifications
 **** TODO notifications and a "notify" function 
 **** TODO smile/frown emoticon status
@@ -125,5 +119,12 @@ the current block. like Bold Italic.
    :ARCHIVE_FILE: ~/blocky/modes.org
    :ARCHIVE_CATEGORY: modes
    :ARCHIVE_TODO: DONE
+   :END:
+** TODO just store forth definitions in object fields, as methods?
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-01 Fri 01:51
+   :ARCHIVE_FILE: ~/blocky/modes.org
+   :ARCHIVE_CATEGORY: modes
+   :ARCHIVE_TODO: TODO
    :END:
 

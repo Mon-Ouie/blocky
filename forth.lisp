@@ -24,8 +24,8 @@
 (defvar *stack* nil)
 (defvar *program* nil)
 
-(defun fpush (x) (push x *stack*))
-(defun fpop () (pop *stack*))
+(defun pushf (x) (push x *stack*))
+(defun popf () (pop *stack*))
 (defun next-word () (when *program* (first *program*)))
 (defun grab-next-word () (pop *program*))
 
@@ -62,7 +62,8 @@
 (defmacro define-word (name arguments &body body)
   "Define a primitive word called NAME with Lisp code.
 The BODY-forms execute later when the word NAME is executed.
-The ARGUMENTS (if any) are auto-pulled from the stack."
+The ARGUMENTS (if any) are auto-pulled from the stack by the 
+interpreter."
   `(set-word-definition 
     ',name
     (make-word :name ',name
@@ -101,9 +102,9 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 ;;; The interpreter
 
 (defun execute-word (word)
-  (if (typep word '(or cons string number character))
+  (if (typep word '(or cons string number character keyword))
       ;; it's a literal. push it
-      (fpush word)
+      (pushf word)
       ;; otherwise try looking it up.
       (let ((definition (word-definition word)))
 	(if (null definition)
@@ -121,7 +122,7 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 		 ;; grab arguments (if any) and invoke primitive function
 		 (let (arguments)
 		   (dotimes (n (length (word-arguments definition)))
-		     (push (fpop) arguments))
+		     (push (popf) arguments))
 		   (apply body (nreverse arguments))))))))))
   
 (defun execute (program)
@@ -137,48 +138,54 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 (defun execute-string (string)
   (execute (program-from-string string)))
 
+(define-word evalf (body)
+  (execute body)
+  (popf))
+
 (defmacro forth (&rest words)
   `(execute ',words))
 
 ;;; Control flow
 
 (define-word not (boolean)
-  (fpush (if boolean nil t)))
+  (pushf (if boolean nil t)))
 
 (define-word if (boolean then else)
   (execute (if boolean then else)))
 
+(define-word every? (expressions)
+  (pushf (every #'evalf expressions)))
+
+(define-word notany? (expressions)
+  (pushf (notany #'evalf expressions)))
+
+(define-word some? (expressions)
+  (pushf (some #'evalf expressions)))
+
 (define-word each (elements body)
   (dolist (element elements)
-    (fpush element)
+    (pushf element)
     (execute body)))
 
-;; (define-word map (elements body)
-;; (define-word filter (elements body)
-;; (define-word reduce (elements initial-value body)
+(define-word map (elements body)
+  (pushf (mapcar #'evalf elements)))
+
+(define-word filter (elements body)
+  (pushf (remove-if-not #'evalf elements)))
 
 ;;; Accessing fields. See also `define-block'.
 
-(defun define-field-accessor-words (input)
-  (dolist (name (mapcar #'make-keyword input))
-    ;; :foo pushes value of field FOO on the stack
-    (execute `(define ,name 
-		the ,name get))
-    ;; !bar sets field BAR to value on top of stack
-    (execute `(define ,(intern (concatenate 'string "!" (symbol-name name)))
-		the ,name set))))
+(define-word @ (field)
+  (pushf (field-value field *self*)))
 
-(define-word get (field)
-  (fpush (field-value field *self*)))
-
-(define-word set (field)
-  (setf (field-value field *self*) (fpop)))
+(define-word ! (field)
+  (setf (field-value field *self*) (popf)))
 
 ;;; Object-orientation
 
-(define-word new () (fpush (new (fpop))))
-(define-word self () (fpush *self*))
-(define-word this () (setf *self* (fpop)))
+(define-word new () (pushf (new (popf))))
+(define-word self () (pushf *self*))
+(define-word this () (setf *self* (popf)))
 
 ;; articles quote the next word.
 ;; examples:
@@ -186,11 +193,11 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 ;;    "a robot"
 ;;    "with (1 2 3)"
 
-(define-word a () (fpush (grab-next-word)))
-(define-word an () (fpush (grab-next-word)))
-(define-word the () (fpush (grab-next-word)))
-(define-word with () (fpush (grab-next-word)))
-(define-word to () (fpush (grab-next-word)))
+(define-word a () (pushf (grab-next-word)))
+(define-word an () (pushf (grab-next-word)))
+(define-word the () (pushf (grab-next-word)))
+(define-word with () (pushf (grab-next-word)))
+(define-word to () (pushf (grab-next-word)))
 
 (defun drop-article ()
   (grab-next-word))
@@ -205,7 +212,7 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
   (drop-article)
   (let* ((super (grab-next-word))
 	 (fields (when (consp (first *stack*))
-		   (fpop))))
+		   (popf))))
     (eval `(define-block (,name :super ,super) ,@fields))))
 
 ;; invoking a Blocky method without any arguments.
@@ -213,12 +220,12 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 (define-word send (method)
   (send (make-keyword method) *self*))
 
-;; invoking a Forth method
+;; invoking a Forth method stored in the object.
 
 (define-word call (method object)
   (execute (field-value (make-keyword method) object)))
 
-;; telling  object to invoke one of its methods
+;; telling an object to invoke one of its methods
 
 (define-word tell (program object)
   (let ((*self* object))
@@ -232,9 +239,9 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 (define-word do ()
   ;; ignore argument list for now
   (when (consp (first *stack*))
-    (fpop))
-  (let* ((super (fpop))
-	 (method (fpop))
+    (popf))
+  (let* ((super (popf))
+	 (method (popf))
 	 (body (grab-until-end)))
     ;; define a self-verb shortcut 
     (execute `(define ,method the ,method self call end))
@@ -243,12 +250,118 @@ The ARGUMENTS (if any) are auto-pulled from the stack."
 		       (find-object super))
 	  body)))
 
-;;; start stop initialize destroy remove copy tag tag? here there it
-;;; me untag contains? drop drop-at event update move forward left
-;;; right backward show hide menu draw animate scale animate image
-;;; draw resize center play collide colliding? head distance frames
-;;; seconds later damage enter exit pop !heading !tags !parent !x !y
-;;; !z !blend !opacity !width !height !depth !image
+;;; further operations
+
+(define-word zero? (number) (pushf (zerop number)))
+(define-word even? (number) (pushf (evenp number)))
+(define-word odd? (number) (pushf (oddp number)))
+(define-word plus? (number) (pushf (plusp number)))
+(define-word minus? (number) (pushf (minusp number)))
+
+(define-word incr (field) 
+  (assert (keywordp field))
+  (pushf (incf (field-value field *self*))))
+
+(define-word decr (field) 
+  (assert (keywordp field))
+  (pushf (decf (field-value field *self*))))
+
+(define-word + (a b)
+  (pushf (+ (execute a) (execute b))))
+
+(define-word start () (start *self*))
+(define-word stop () (stop *self*))
+(define-word insert () (add-object *buffer* *self*))
+(define-word delete () (remove-*self*-maybe *buffer* *self*))
+(define-word destroy () (destroy *self*))
+(define-word display (image) (change-image *self* image))
+(define-word show () (show *self*))
+(define-word hide () (hide *self*))
+(define-word visible? () (pushf (visiblep self)))
+(define-word play (sound) (play-sound *self* sound))
+(define-word music (music) (play-music *self* music))
+
+(define-word goto (x y) (move-to *self* x y))
+
+(define-word move (heading distance) 
+  (move *self* heading distance))
+
+(define-word forward () (pushf (field-value :heading *self*)))
+(define-word backward () (pushf (- (* 2 pi) (field-value :heading *self*))))
+
+(define-word toward (thing) 
+  (pushf (heading-to-thing *self* thing))
+  (pushf (distance-to-thing *self* thing)))
+	 
+(define-word left (deg) (pushf (- (radian-angle deg))))
+(define-word right (deg) (pushf (radian-angle deg)))
+
+(define-word aim (heading)
+  (setf (field-value :heading *self*)
+	heading))
+
+(forth define here :x @ :y @)
+
+(define-word center () 
+  (multiple-value-bind (x y)
+      (center-point *self*)
+    (pushf x) 
+    (pushf y)))
+
+(define-word leftward () 
+  (multiple-value-bind (x y)
+      (left-of *self*)
+    (pushf x) 
+    (pushf y)))
+
+(define-word rightward () 
+  (multiple-value-bind (x y)
+      (right-of *self*)
+    (pushf x) 
+    (pushf y)))
+
+(define-word above () 
+  (multiple-value-bind (x y)
+      (above *self*)
+    (pushf x) 
+    (pushf y)))
+
+(define-word below () 
+  (multiple-value-bind (x y)
+      (below *self*)
+    (pushf x) 
+    (pushf y)))
+
+(define-word scale (x y)
+  (scale *self* x y))
+
+(define-word colliding? (thing)
+  (pushf (colliding-with *self* thing)))
+
+
+;;; define forget end not if each map filter reduce get set a an the
+;;; is with to send call tell is do zero? even? odd? plus? minus?
+;;; new self this timer incr decr task
+
+;;; start stop initialize destroy remove duplicate tag tag? here there
+;;; it me untag contains? drop drop-at event update move forward left
+;;; right backward show hide menu draw image draw resize center play
+;;; collide colliding? head distance frames seconds later damage enter
+;;; exit pop !heading !tags !parent !x !y !z !blend !opacity !width
+;;; !height !depth !image path find
+
+;;; resource choose random pressed? released? button key modifier
+;;; control? alt? shift? report hook pointer-x pointer-y pointer
+;;; joystick analog right-stick left-stick axis pressure heading
+;;; right-stick? left-stick? joystick? !frame-rate ticks dt !dt
+;;; blending filtering viewport window-x window-y window-z qwerty
+;;; azerty qwertz dvorak save load project file font text lisp image
+;;; music sample quad texture line box circle rectangle disc quit
+;;; reset visit buffer open close 
+
+;;; buffer new name switch modified? window follow glide scale pause
+;;; unpause select unselect selection all none cut copy paste move
+;;; future present now insert delete trim clipboard here there at-pointer 
 
 ;; example:  "explode1.png" draw ("explode2.png" draw) 0.1 seconds later
 ;;   (destroy) enemy tell 

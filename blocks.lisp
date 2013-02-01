@@ -127,14 +127,14 @@ either a symbol naming the field, or a list of the form (SYMBOL
       (list (destructuring-bind (name &key super) spec
 	      (setf name0 name)
 	      (when super (setf super0 super)))))
-    ;; make fields accessible from Forth
-    (define-field-accessor-words 
-	(etypecase (first args)
-	  (keyword (mapcar #'first (plist-to-descriptors args)))
-	  (cons (mapcar #'(lambda (x)
-			    (if (consp x) (first x) x))
-			args))
-	  (symbol args)))
+    ;; ;; make fields accessible from Forth
+    ;; (define-field-accessor-words 
+    ;; 	(etypecase (first args)
+    ;; 	  (keyword (mapcar #'first (plist-to-descriptors args)))
+    ;; 	  (cons (mapcar #'(lambda (x)
+    ;; 			    (if (consp x) (first x) x))
+    ;; 			args))
+    ;; 	  (symbol args)))
     ;; install the definition.
     `(define-prototype ,name0 
 	 (:super ,(make-prototype-id super0 *project* :create))
