@@ -20,10 +20,6 @@
 
 (in-package :blocky)
 
-(defvar *overlay* nil)
-
-(defvar *overlay-open-p* nil)
-
 (define-block buffer
   (variables :initform nil 
 	     :documentation "Hash table mapping values to values, local to the current buffer.")

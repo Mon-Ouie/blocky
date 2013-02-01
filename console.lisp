@@ -39,6 +39,10 @@
 
 (in-package :blocky) 
 
+(defvar *overlay* nil)
+
+(defvar *overlay-open-p* nil)
+
 (defvar *gl-window-open-p* nil)
 
 (defvar *pending-resources* '())
@@ -1123,8 +1127,7 @@ Directories are searched in list order.")
 
 (defun search-project-path (project)
   "Search the `*project-directories*' path for a directory with the
-name 'PROJECT-NAME.blocky' Returns the pathname if found, otherwise
-nil."
+name PROJECT. Returns the pathname if found, otherwise nil."
   (let ((dirs (append (list (user-homedir-pathname)
 			    (asdf:system-relative-pathname 'blocky ""))
 		      *project-directories*)))
@@ -1158,7 +1161,8 @@ nil."
   '(("png" :image)
     ("wav" :sample)
     ("ogg" :music)
-    ("lisp" :lisp)))
+    ("lisp" :lisp)
+    ("ttf" :ttf)))
 
 (defun resource-type-from-name (name)
   (let ((extension (file-name-extension name)))
@@ -1183,29 +1187,31 @@ resource is stored; see also `find-resource'."
 	  :properties properties
 	  :file (or file name))))
 
-(defmacro defresource (&body entries)
-  (let ((plists
-	  (cond
-	    ;; variable
-	    ((and (symbolp (first entries))
-		  (boundp (first entries)))
-	     (mapcar #'defresource-expand-plist 
-		     (symbol-value (first entries))))
-	    ;; short form: (defresource "file.ext" &rest PROPERTIES)
-	    ((stringp (first entries))
-	     (list 
-	      (defresource-expand-plist 
-		  (list :name (first entries)
-			:properties (rest entries)))))
-	    ;; inline: (defresource :name ...)
-	    ((keywordp (first entries))
-	     (list 
-	      (defresource-expand-plist entries)))
-	    ;; list of property lists
-	    ((every #'consp entries)
-	     (mapcar #'defresource-expand-plist entries)))))
-    `(eval-when (:load-toplevel)
-       (blocky:add-resources ',@plists))))
+(defmacro resource-entries-to-plists (entries)
+  (cond
+    ;; variable
+    ((and (symbolp (first entries))
+	  (boundp (first entries)))
+     (mapcar #'defresource-expand-plist 
+	     (symbol-value (first entries))))
+    ;; short form: (defresource "file.ext" &rest PROPERTIES)
+    ((stringp (first entries))
+     (list 
+      (defresource-expand-plist 
+	  (list :name (first entries)
+		:properties (rest entries)))))
+    ;; inline: (defresource :name ...)
+    ((keywordp (first entries))
+     (list 
+      (defresource-expand-plist entries)))
+    ;; list of property lists
+    ((every #'consp entries)
+     (mapcar #'defresource-expand-plist entries))))
+
+(defmacro defresource (&rest entries)
+  `(eval-when (:load-toplevel)
+     (blocky:add-resources 
+      (resource-entries-to-plists ',entries))))
  
 (defun find-project-path (project-name)
   "Return the current project path."
@@ -1345,7 +1351,9 @@ table."
 
 ;;; Standard resource names
 
-(defvar *default-font* "default-font")
+(defvar *font* "font")
+
+(defvar *color* "black")
 
 ;;; Creating, saving, and loading object resources in BLX files
 
@@ -2119,7 +2127,7 @@ of the music."
 
 ;; A bitmap font resource looks like this:
 
-;; (:name "default-font" 
+;; (:name "font" 
 ;;        :type :font 
 ;;        :properties (:height 14 :width 7) ;; monospace only
 ;;        :data "7x14")
@@ -2205,8 +2213,8 @@ of the music."
       (gl-color-values color)
     (gl:color red green blue alpha)))
 
-(defun draw-string (string x y &key (color "black")
-				    (font *default-font*)
+(defun draw-string (string x y &key (color *color*)
+				    (font *font*)
 				    (z 0))
   (let ((texture (find-text-image font string)))
     (multiple-value-bind (width height) 
@@ -2429,7 +2437,7 @@ of the music."
 
 (defun blocky ()
   (with-session
-    (start-alone (find-buffer *desktop*))
+;    (start-alone (find-buffer *desktop*))
     (start-session)))
 
 ;;; Editor transport control

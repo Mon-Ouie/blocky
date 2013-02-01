@@ -57,24 +57,24 @@ message with-session start-session *prompt-sweden-keybindings*
 roll-under initialize-colors *style* load-project-image
 create-project-image *standard-categories* *left-turn* bind-event
 *right-turn* left-turn right-turn roll bind-event-to-method *colors*
-enable-key-repeat disable-key-repeat get-color define-method
-*default-font* field-value set-field-value object-fields
-dispatch-event *user-init-file-name* distance icon-resource icon-image
-*directions* *opposites* *pending-resources* with-project
-project-orthographically project-with-perspective open-viewport
-find-resource-property compose-blank-fields font-width font-height
-find-object *windows* edit create blocky transform-field-reference
-define-block *screen-height* formatted-line-width find-buffer
-*clipboard* formatted-line-height formatted-string-height
-formatted-string-width get-color create-image draw-image blocky edit
-define-prototype has-field *target* with-target define-buffer
-set-field-options *user-joystick-profile* field-option-value
-index-resource *default-joystick-profile* joystick-profile visit
-find-project-path index-project load-image-resource load-lisp-resource
-*executable* *screen-height* player *screen-width* blockyp
-*nominal-screen-width* *nominal-screen-height* *gl-screen-width*
-*gl-screen-height* *message-function* dash holding-shift
-get-button-index message-to-standard-output reset-message-function
+enable-key-repeat disable-key-repeat get-color define-method *font*
+field-value set-field-value object-fields dispatch-event
+*user-init-file-name* distance icon-resource icon-image *directions*
+*opposites* *pending-resources* with-project project-orthographically
+project-with-perspective open-viewport find-resource-property
+compose-blank-fields font-width font-height find-object *windows* edit
+create blocky transform-field-reference define-block *screen-height*
+formatted-line-width find-buffer *clipboard* formatted-line-height
+formatted-string-height formatted-string-width get-color create-image
+draw-image blocky edit define-prototype has-field *target* with-target
+define-buffer set-field-options *user-joystick-profile*
+field-option-value index-resource *default-joystick-profile*
+joystick-profile visit find-project-path index-project
+load-image-resource load-lisp-resource *executable* *screen-height*
+player *screen-width* blockyp *nominal-screen-width*
+*nominal-screen-height* *gl-screen-width* *gl-screen-height*
+*message-function* dash holding-shift get-button-index
+message-to-standard-output reset-message-function
 *make-prototype-id-package* lturn rturn ticks-per-beat radian-angle
 draw-textured-rectangle default-project-directories
 *resource-handlers* load-resource find-resource find-resource-object
@@ -114,13 +114,14 @@ play-sample set-music-volume draw-pixel *user-keyboard-layout*
 *fullscreen* draw-circle set-field-option-value load-project
 field-options current-buffer *frame-rate* set-resource-system-p
 next-method *blx-file-extension* *project* *project-path*
-*window-title* *window-position* restartably *message-logging*
-shell
-update-parameters joystick-axis-pressed-p joystick-axis-value
-joystick-axis-raw-value analog-stick-heading find-heading
-analog-stick-pressure *joystick-axis-size* *joystick-axis-dead-zone*
-*event-hook* left-analog-stick-heading left-analog-stick-pressure
-*message-history* right-analog-stick-heading joystick-button-pressed-p
+*window-title* *window-position* restartably *message-logging* shell
+use-filter set-blending-mode pushf popf define-word forget-word
+forget-all-words execute-word execute execute-string update-parameters
+joystick-axis-pressed-p joystick-axis-value joystick-axis-raw-value
+analog-stick-heading find-heading analog-stick-pressure evalf forth
+*joystick-axis-size* *joystick-axis-dead-zone* *event-hook*
+left-analog-stick-heading left-analog-stick-pressure *message-history*
+right-analog-stick-heading joystick-button-pressed-p
 analog-stick-pressed-p left-analog-stick-pressed-p
 right-analog-stick-pressed-p right-analog-stick-pressure
 initialize-console joystick-axis-value poll-joystick-button

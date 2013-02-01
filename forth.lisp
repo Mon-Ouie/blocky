@@ -57,7 +57,9 @@
 (defun set-word-definition (name definition)
   (assert (not (null name)))
   (assert (symbolp name)) 
-  (setf (gethash name *words*) definition))
+  (setf (gethash name *words*) definition)
+  (unless (fboundp name)
+    (export name)))
 
 (defmacro define-word (name arguments &body body)
   "Define a primitive word called NAME with Lisp code.
@@ -132,8 +134,9 @@ interpreter."
 
 (defun program-from-string (string)
   (with-input-from-string (stream string)
-    (loop for sexp = (read stream nil)
-	  while sexp collect sexp)))
+    (let ((*read-eval* nil))
+      (loop for sexp = (read stream nil)
+	    while sexp collect sexp))))
 
 (defun execute-string (string)
   (execute (program-from-string string)))
@@ -260,26 +263,41 @@ interpreter."
 
 (define-word incr (field) 
   (assert (keywordp field))
-  (pushf (incf (field-value field *self*))))
+  (incf (field-value field *self*)))
 
 (define-word decr (field) 
   (assert (keywordp field))
-  (pushf (decf (field-value field *self*))))
+  (decf (field-value field *self*)))
 
 (define-word + (a b)
-  (pushf (+ (execute a) (execute b))))
+  (pushf (+ (evalf a) (evalf b))))
+(define-word - (a b)
+  (pushf (- (evalf a) (evalf b))))
+(define-word / (a b)
+  (pushf (/ (evalf a) (evalf b))))
+(define-word * (a b)
+  (pushf (* (evalf a) (evalf b))))
 
 (define-word start () (start *self*))
 (define-word stop () (stop *self*))
-(define-word insert () (add-object *buffer* *self*))
-(define-word delete () (remove-*self*-maybe *buffer* *self*))
+
+(define-word insert () (add-object (current-buffer) *self*))
+(define-word delete () (remove-thing-maybe (current-buffer) *self*))
 (define-word destroy () (destroy *self*))
 (define-word display (image) (change-image *self* image))
 (define-word show () (show *self*))
 (define-word hide () (hide *self*))
 (define-word visible? () (pushf (visiblep self)))
-(define-word play (sound) (play-sound *self* sound))
-(define-word music (music) (play-music *self* music))
+
+(define-word play (name)
+  (let ((res (find-resource name)))
+    (ecase (resource-type res)
+      (:music (play-music name))
+      (:sample (play-sample name)))))
+
+(define-word loop-music (music) (play-music music :loop t))
+(define-word stop-music () (halt-music))
+(define-word fade-music (ms) (halt-music ms))
 
 (define-word goto (x y) (move-to *self* x y))
 
@@ -290,8 +308,10 @@ interpreter."
 (define-word backward () (pushf (- (* 2 pi) (field-value :heading *self*))))
 
 (define-word toward (thing) 
-  (pushf (heading-to-thing *self* thing))
-  (pushf (distance-to-thing *self* thing)))
+  (pushf (heading-to-thing *self* thing)))
+
+(define-word distance (thing)
+  (pushf (distance-between *self* thing)))
 	 
 (define-word left (deg) (pushf (- (radian-angle deg))))
 (define-word right (deg) (pushf (radian-angle deg)))
@@ -299,6 +319,17 @@ interpreter."
 (define-word aim (heading)
   (setf (field-value :heading *self*)
 	heading))
+
+;; examples: 
+;;   90 left aim
+;;   30 80 goto
+;;   forward 10 move
+;;   backward aim
+;;   enemy toward aim
+;;   enemy toward 2 move
+
+(define-word drop (thing x y)
+  (drop-at *self* thing x y))
 
 (forth define here :x @ :y @)
 
@@ -332,11 +363,95 @@ interpreter."
     (pushf x) 
     (pushf y)))
 
+;; examples:
+;;     bullet new here drop
+;;     above goto
+;;     bomb new below drop above goto
+
 (define-word scale (x y)
   (scale *self* x y))
 
 (define-word colliding? (thing)
   (pushf (colliding-with *self* thing)))
+
+; (define-word time () (pushf *frames*))
+
+(define-word frames (x) (pushf (truncate x)))
+(define-word seconds (x) (pushf (seconds->frames x)))
+
+(define-word resource ()
+  (blocky:add-resources (resource-entries-to-plists (grab-until-end))))
+
+(forth define image resource)
+(forth define sample resource)
+(forth define music resource)
+(forth define ttf resource)
+
+;; examples:
+;;    image "player.png"
+;;    sample "stomp.wav" :volume 20
+;;    music "party.ogg" :volume 100
+;;    ttf "DejaVuSans.ttf" :size 12
+;;       define myfont "DejaVuSans.ttf" end
+
+(define-word blending (mode) (blocky:set-blending-mode mode))
+(define-word filtering (mode) (blocky:use-filter mode))
+(define-word color (color) (setf *color* color))
+(define-word font (font) (setf *font* font))
+(define-word write (string x y) (draw-string string x y))
+
+;; examples:
+;;     :additive blending
+;;     :alpha blending
+;;     :linear filtering
+;;     :nearest filtering
+;;     "white" color "sans-mono-10" font 
+;;     "here i am" below write
+;;     "blue" color "another caption" above write 
+
+(define-word buffer () (pushf (current-buffer)))
+(define-word visit (buffer) (visit buffer))
+
+(define-word screen (height width)
+  (setf *screen-height* height *screen-width* width))
+(define-word without-stretch () (setf *scale-output-to-window* nil))
+(define-word with-stretch () (setf *scale-output-to-window* t))
+(define-word with-antialiased-text () (setf *use-antialiased-text* t))
+(define-word without-antialiased-text () (setf *use-antialiased-text* nil))
+(define-word without-key-repeat () (disable-key-repeat))
+(define-word !frame-rate (n) (set-frame-rate n))
+(define-word !timestep (n) (setf *dt* n))
+
+(define-word create () 
+  (let ((project (next-word)))
+    (create-project-image 
+     (if (keywordp project) 
+	 (string-downcase (symbol-name project))
+	 project))))
+
+(define-word open (project)
+  (load-project 
+   (if (keywordp project) 
+       (string-downcase (symbol-name project))
+       project)))
+
+(define-word project () (pushf *project*))
+
+(define-word save ()
+  (save-project-image))
+
+(define-word close ()
+  (save-project-image)
+  (reset))
+
+(define-word quit () (shut-down))
+
+;; example: 
+;;     create "myproject"
+;;     open
+
+;; (define-word view (x y height width)
+
 
 
 ;;; define forget end not if each map filter reduce get set a an the
@@ -352,12 +467,13 @@ interpreter."
 
 ;;; resource choose random pressed? released? button key modifier
 ;;; control? alt? shift? report hook pointer-x pointer-y pointer
+;;; !frame-rate ticks dt !dt blending filtering viewport window-x
+;;; window-y window-z qwerty azerty qwertz dvorak save load project
+;;; file font text lisp image music sample quad texture line box
+;;; circle rectangle disc quit reset visit buffer open close
+
 ;;; joystick analog right-stick left-stick axis pressure heading
-;;; right-stick? left-stick? joystick? !frame-rate ticks dt !dt
-;;; blending filtering viewport window-x window-y window-z qwerty
-;;; azerty qwertz dvorak save load project file font text lisp image
-;;; music sample quad texture line box circle rectangle disc quit
-;;; reset visit buffer open close 
+;;; right-stick? left-stick? joystick?
 
 ;;; buffer new name switch modified? window follow glide scale pause
 ;;; unpause select unselect selection all none cut copy paste move

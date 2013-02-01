@@ -1,21 +1,19 @@
-** TODO [#A] IN-ENGINE INTERACTIVE FORTH BUFFERS. DO IT.
+** TODO [#A] IN-ENGINE INTERACTIVE LIVECODING IN FORTH.
+** TODO show MESSAGE output on screen
 *** TODO implement words as you go and implement a little example game
-*** TODO rename add-object/remove-object to insert/delete... a notion of Point
-*** TODO add documentation for words, and a nice dictionary formatter thing
-*** TODO show the stack, why not?
-*** TODO white rounded rectangle background 
-*** TODO black text
-*** TODO attempt to blockify after each spacebar
-*** TODO define the block shell as an embeddable richtext block you can type in, emacs-style
+** TODO [#B] come up with basic scenarios of things to be typed in to make a game
+** TODO [#C] rename add-object/remove-object to insert/delete... a notion of Point
+** TODO [#C] words for accessing incoming arguments? not really needed. just list !y !x at the beginning to pop values
+** TODO define the block shell as an embeddable richtext block you can type in, emacs-style
 **** TODO arrows only nav within object---use control-arrow 
 **** TODO ??delete only deletes within an object---use control-delete to "break" the text of the previous block?xs?
 **** TODO black text w/o borders
 **** TODO anything-el-style completion
-** TODO [#A] primitive words for accessing blocky console/block features
+**** TODO show the stack, why not?
+**** TODO white rounded rectangle background 
+**** TODO black text
+*** TODO add documentation for words, and a nice dictionary formatter thing
 
-** TODO [#B] come up with basic scenarios of things to be typed in to make a game
-
-** TODO [#C] words for accessing incoming arguments? not really needed. just list !y !x at the beginning to pop values
 
 * TODO forthmode. the stack is composed of blocks, and the current buffer line is the stack!
 *** TODO can illustrate, showing execution on successive lines
