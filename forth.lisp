@@ -171,7 +171,10 @@ interpreter."
     (execute body)))
 
 (define-word map (elements body)
-  (pushf (mapcar #'evalf elements)))
+  (pushf (mapcar #'(lambda (x)
+		     (pushf x)
+		     (evalf body))
+		 elements)))
 
 (define-word filter (elements body)
   (pushf (remove-if-not #'evalf elements)))
@@ -295,7 +298,8 @@ interpreter."
       (:music (play-music name))
       (:sample (play-sample name)))))
 
-(define-word loop-music (music) (play-music music :loop t))
+(define-word playing (music) (play-music music :loop t))
+
 (define-word stop-music () (halt-music))
 (define-word fade-music (ms) (halt-music ms))
 
@@ -332,55 +336,41 @@ interpreter."
   (drop-at *self* thing x y))
 
 (forth define here :x @ :y @)
+(forth define center :x @ 2 / :y @ 2 /)
 
-(define-word center () 
-  (multiple-value-bind (x y)
-      (center-point *self*)
-    (pushf x) 
-    (pushf y)))
+(define-word leftward (x y)
+  (execute `(,x :width @ - ,y))) 
 
-(define-word leftward () 
-  (multiple-value-bind (x y)
-      (left-of *self*)
-    (pushf x) 
-    (pushf y)))
+(define-word rightward (x y)
+  (execute `(,x :width @ + ,y))) 
 
-(define-word rightward () 
-  (multiple-value-bind (x y)
-      (right-of *self*)
-    (pushf x) 
-    (pushf y)))
+(define-word above (x y)
+  (execute `(,x ,y :height @ -)))
 
-(define-word above () 
-  (multiple-value-bind (x y)
-      (above *self*)
-    (pushf x) 
-    (pushf y)))
-
-(define-word below () 
-  (multiple-value-bind (x y)
-      (below *self*)
-    (pushf x) 
-    (pushf y)))
+(define-word below (x y)
+  (execute `(,x ,y :height @ +)))
 
 ;; examples:
 ;;     bullet new here drop
-;;     above goto
-;;     bomb new below drop above goto
+;;     here above goto
+;;     bomb new center drop above goto
 
-(define-word scale (x y)
-  (scale *self* x y))
-
-(define-word colliding? (thing)
-  (pushf (colliding-with *self* thing)))
-
-; (define-word time () (pushf *frames*))
-
+(define-word now () (pushf *updates*))
+(define-word later (frames) (pushf (+ (truncate frames) *updates*)))
 (define-word frames (x) (pushf (truncate x)))
 (define-word seconds (x) (pushf (seconds->frames x)))
 
+;; examples:
+;;     now :started !
+;;     10 frames later
+;;     2.5 seconds later
+
 (define-word resource ()
-  (blocky:add-resources (resource-entries-to-plists (grab-until-end))))
+  (blocky:add-resources
+   (resource-entries-to-plists
+    ;; grab name and properties
+    (cons (grab-next-word) 
+	  (grab-next-word)))))
 
 (forth define image resource)
 (forth define sample resource)
@@ -388,11 +378,11 @@ interpreter."
 (forth define ttf resource)
 
 ;; examples:
-;;    image "player.png"
-;;    sample "stomp.wav" :volume 20
-;;    music "party.ogg" :volume 100
-;;    ttf "DejaVuSans.ttf" :size 12
-;;       define myfont "DejaVuSans.ttf" end
+;;    image "player.png" ()
+;;    sample "stomp.wav" (:volume 20)
+;;    music "party.ogg" (:volume 100) 
+;;    ttf "DejaVuSans.ttf" (:size 12)
+;;    define myfont "DejaVuSans.ttf" end
 
 (define-word blending (mode) (blocky:set-blending-mode mode))
 (define-word filtering (mode) (blocky:use-filter mode))
@@ -406,8 +396,8 @@ interpreter."
 ;;     :linear filtering
 ;;     :nearest filtering
 ;;     "white" color "sans-mono-10" font 
-;;     "here i am" below write
-;;     "blue" color "another caption" above write 
+;;     "here i am" here below write
+;;     "blue" color "another caption" center above write 
 
 (define-word buffer () (pushf (current-buffer)))
 (define-word visit (buffer) (visit buffer))
@@ -422,20 +412,24 @@ interpreter."
 (define-word !frame-rate (n) (set-frame-rate n))
 (define-word !timestep (n) (setf *dt* n))
 
-(define-word create () 
+(define-word scale (x y)
+  (scale *self* x y))
+
+(define-word colliding? (thing)
+  (pushf (colliding-with *self* thing)))
+
+(define-word project () 
   (let ((project (next-word)))
     (create-project-image 
      (if (keywordp project) 
 	 (string-downcase (symbol-name project))
 	 project))))
 
-(define-word open (project)
+(define-word load (project)
   (load-project 
    (if (keywordp project) 
        (string-downcase (symbol-name project))
        project)))
-
-(define-word project () (pushf *project*))
 
 (define-word save ()
   (save-project-image))
