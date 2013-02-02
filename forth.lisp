@@ -184,13 +184,22 @@ interpreter."
 (define-word filter (elements body)
   (pushf (remove-if-not #'evalf elements)))
 
-;;; Accessing fields. See also `define-block'.
+;;; Accessing fields and local variables.
 
-(define-word @ (field)
-  (pushf (field-value field *self*)))
+(define-word @ (var)
+  (multiple-value-bind (value present-p)
+      (buffer-variable var)
+    (pushf 
+     (if present-p
+	 (buffer-variable var)
+	 (field-value var *self*)))))
 
-(define-word ! (field)
-  (setf (field-value field *self*) (popf)))
+(define-word ! (var)
+  (multiple-value-bind (value present-p)
+      (buffer-variable var)
+    (if present-p
+	(set-buffer-variable var (popf))
+	(setf (field-value var *self*) (popf)))))
 
 ;;; Object-orientation
 
@@ -202,12 +211,10 @@ interpreter."
 ;; examples:
 ;;    "a block"
 ;;    "a robot"
-;;    "with (1 2 3)"
 
 (define-word a () (pushf (grab-next-word)))
 (define-word an () (pushf (grab-next-word)))
 (define-word the () (pushf (grab-next-word)))
-(define-word with () (pushf (grab-next-word)))
 (define-word to () (pushf (grab-next-word)))
 
 (defun drop-article ()
@@ -216,7 +223,7 @@ interpreter."
 ;; the copula "is" defines new objects from old.
 ;; examples: 
 ;;     "a robot is a block"
-;;     "a robot with (health bullets inventory) is a block"
+;;     "a robot having (health bullets inventory) is a block"
 ;;     "an enemy is a robot"
 
 (define-word is (name)
@@ -245,7 +252,7 @@ interpreter."
 
 ;; the "to...do...end" idiom defines behavior for verbs.
 ;; examples: 
-;;    "to fire a robot with (direction) do ... end"
+;;    "to fire a robot having (direction) do ... end"
 ;;    "to destroy an enemy do ... end"
 
 (define-word do ()

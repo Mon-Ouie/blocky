@@ -3,12 +3,26 @@
 *** TODO how to set a local variable with !
 *** TODO set prompt's THIS-context to named object with a command
 *** TODO send it words from the minibuffer 
-*** TODO how to do anything in the minibuffer
+*** TODO how to do ANYTHING in the minibuffer 
+*** TODO consistent set of function keys for executing global words
+*** TODO think about the bottom-up workflow. review the language design.
+*** TODO implement SEE to show a definition's body
+*** TODO implement AS to change 
 
-robot new 
-local bob ! 
+a robot having (bullets hp) is a block
 
+to initialize a robot do 
+0 :hp ! 
+10 :bullets !
+"robot.png" display 
+end
 
+to fire a robot do
+bullet new drop 
+
+local :bob
+robot new :bob ! 
+:bob with 20 20 move fire
 
 *** -------------------------------------------------------
 *** click the real BOB to insert var reference!
