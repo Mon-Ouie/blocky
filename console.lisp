@@ -39,9 +39,9 @@
 
 (in-package :blocky) 
 
-(defvar *overlay* nil)
+(defvar *minibuffer* nil)
 
-(defvar *overlay-open-p* nil)
+(defvar *minibuffer-open-p* nil)
 
 (defvar *gl-window-open-p* nil)
 
@@ -2353,7 +2353,7 @@ of the music."
 	*project* nil
 	*clipboard* nil
 	*event-hook* nil
-	*overlay* nil
+	*minibuffer* nil
 	*message-hook-functions* nil
 	*window-title* "Blocky"
 	*updates* 0
@@ -2384,7 +2384,7 @@ of the music."
   (sdl-mixer:close-audio t)
   (setf *buffer* nil)
   (setf *blocks* nil)
-  (setf *overlay* nil)
+  (setf *minibuffer* nil)
   (setf *clipboard* nil)
   (setf *dt* nil)
   (setf *frame-rate* *default-frame-rate*)
@@ -2467,7 +2467,7 @@ of the music."
   (with-buffer (find-buffer "*scratch*" :create t)
     (prog1 (current-buffer)
       ;; (add-object (current-buffer) (new 'text *scratch-message*))
-      (enter-overlay (current-buffer)))))
+      (enter-minibuffer (current-buffer)))))
 
 (defun blocky ()
   (with-session

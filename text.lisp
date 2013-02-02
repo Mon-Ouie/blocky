@@ -1,4 +1,4 @@
-;;; text.lisp --- a rich text control
+;;; text.lisp --- a simple text control
 
 ;; Copyright (C) 2008-2013  David O'Toole
 

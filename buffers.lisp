@@ -64,22 +64,22 @@
   (default-events :initform
 		  '(((:tab) :tab)
 		    ((:tab :shift) :backtab)
-		    ((:x :alt) :enter-overlay)
+		    ((:x :alt) :enter-minibuffer)
 		    ((:x :control) :cut)
 		    ((:c :control) :copy)
 		    ((:v :control) :paste)
 		    ((:v :control :shift) :paste-here)
 		    ((:g :control) :escape)
-		    ((:escape) :toggle-overlay)
+		    ((:escape) :toggle-minibuffer)
 		    ((:d :control) :drop-selection)
 		    ((:pause) :transport-toggle-play)
-		    ((:f10) :toggle-overlay)
+		    ((:f10) :toggle-minibuffer)
 		    ((:f12) :toggle-other-windows)
 		    ))
   ;; prototype control
   (excluded-fields :initform
-		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :overlay :drag :hover :highlight 
-		     ;; overlay objects are not saved:
+		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :minibuffer :drag :hover :highlight 
+		     ;; minibuffer objects are not saved:
 		     :inputs)
 		   :documentation "Don't serialize the menu bar.")
   (field-collection-type :initform :hash)
@@ -649,50 +649,50 @@ slowdown. See also quadtree.lisp")
 	      (+ height (* border 2))
 	      (+ width (* border 2))))))
 
-;;; The Overlay is an optional layer of objects on top of the buffer
+;;; The Minibuffer is an optional layer of objects on top of the buffer
 
-(define-method add-overlay-maybe buffer (&optional force)
-  (when (or force (null *overlay*))
-    (setf *overlay* (new 'minibuffer))))
+(define-method add-minibuffer-maybe buffer (&optional force)
+  (when (or force (null *minibuffer*))
+    (setf *minibuffer* (new 'minibuffer))))
 
-(define-method enter-overlay buffer ()
-  (add-overlay-maybe self)
+(define-method enter-minibuffer buffer ()
+  (add-minibuffer-maybe self)
   (setf %last-focus %focused-block)
-  (focus-on self *overlay* :clear-selection nil)
-  (when (null *overlay-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
-  (setf *overlay-open-p* t)
+  (focus-on self *minibuffer* :clear-selection nil)
+  (when (null *minibuffer-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
+  (setf *minibuffer-open-p* t)
   (enable-key-repeat))
   
-(define-method exit-overlay buffer ()
-  (when *overlay-open-p*
-    (add-overlay-maybe self)
-    (setf *overlay-open-p* nil)
+(define-method exit-minibuffer buffer ()
+  (when *minibuffer-open-p*
+    (add-minibuffer-maybe self)
+    (setf *minibuffer-open-p* nil)
     (focus-on self %last-focus)
     (setf %last-focus nil)
     (unless %was-key-repeat-p 
       (disable-key-repeat))
     (setf %was-key-repeat-p nil)))
 
-(define-method toggle-overlay buffer ()
-  (if *overlay-open-p* 
-      (exit-overlay self)
-      (enter-overlay self)))
+(define-method toggle-minibuffer buffer ()
+  (if *minibuffer-open-p* 
+      (exit-minibuffer self)
+      (enter-minibuffer self)))
 
 (define-method grab-focus buffer ())
 
-(define-method layout-overlay-objects buffer ()
+(define-method layout-minibuffer-objects buffer ()
   (mapc #'layout %inputs))
 
-(define-method update-overlay-objects buffer ()
+(define-method update-minibuffer-objects buffer ()
   (mapc #'update %inputs)
-  (when *overlay* (update *overlay*)))
+  (when *minibuffer* (update *minibuffer*)))
 
-(define-method draw-overlay-objects buffer ()
+(define-method draw-minibuffer-objects buffer ()
   (with-buffer self
     (with-fields (drag-start drag focused-block
 			 highlight inputs hover
 			 ghost prompt) self
-      ;; now start drawing the overlay objects
+      ;; now start drawing the minibuffer objects
       (mapc #'draw inputs)
       ;; draw any future
       (when %future
@@ -709,8 +709,8 @@ slowdown. See also quadtree.lisp")
 	(when hover 
 	  (draw-hover hover))
 	(draw drag))
-      (when *overlay*
-	(draw *overlay*))
+      (when *minibuffer*
+	(draw *minibuffer*))
       ;; draw focus
       (when focused-block
 	(assert (blockyp focused-block))
@@ -718,7 +718,7 @@ slowdown. See also quadtree.lisp")
       (when highlight
 	(draw-highlight highlight)))))
 
-(define-method draw-overlays buffer ())
+(define-method draw-minibuffers buffer ())
 
 (define-method draw buffer ()
   (with-buffer self
@@ -745,10 +745,10 @@ slowdown. See also quadtree.lisp")
 	(draw %cursor))
       ;; (if %parent
       ;; 	  (gl:pop-matrix)
-      ;; possibly draw overlay
-      (if *overlay-open-p* 
-	  (draw-overlay-objects self)
-	  (draw-overlays self)))))
+      ;; possibly draw minibuffer
+      (if *minibuffer-open-p* 
+	  (draw-minibuffer-objects self)
+	  (draw-minibuffers self)))))
   
 ;;; Simulation update
 
@@ -781,13 +781,13 @@ slowdown. See also quadtree.lisp")
 	    (unless (eq :passive (field-value :collision-type object))
 	      (quadtree-collide object))))))
     ;; now outside the quadtree,
-    ;; possibly update the overlay layer
+    ;; possibly update the minibuffer layer
     (with-buffer self
-      (when *overlay-open-p*
+      (when *minibuffer-open-p*
 	(with-quadtree nil
 	  (layout self)
-	  (layout-overlay-objects self)
-	  (update-overlay-objects self))))))
+	  (layout-minibuffer-objects self)
+	  (update-minibuffer-objects self))))))
 
 (define-method evaluate buffer ()
   (prog1 self
@@ -801,15 +801,15 @@ slowdown. See also quadtree.lisp")
 	  ;; %width *gl-screen-width* 
 	  ;; %height *gl-screen-height*)
     (mapc #'layout %inputs)
-    (when *overlay*
-      (layout *overlay*))))
+    (when *minibuffer*
+      (layout *minibuffer*))))
   
 (define-method handle-event buffer (event)
   (with-field-values (cursor quadtree focused-block) self
     (with-buffer self
       (or (block%handle-event self event)
 	  (let ((thing
-		  (if *overlay-open-p* 
+		  (if *minibuffer-open-p* 
 		      focused-block
 		      cursor)))
 	      (prog1 t 
@@ -837,12 +837,12 @@ block found, or nil if none is found."
       (labels ((try (b)
 		 (when b
 		   (hit b x y))))
-	;; check overlay and inputs first
+	;; check minibuffer and inputs first
 	(let* ((object-p nil)
 	       (result 
 		 (or 
-		  (when *overlay-open-p* 
-		    (try *overlay*))
+		  (when *minibuffer-open-p* 
+		    (try *minibuffer*))
 		  (let ((parent 
 			  (find-if #'try 
 				   %inputs
@@ -957,8 +957,8 @@ block found, or nil if none is found."
 	    (progn
 	      (setf highlight (find-uuid (hit-inputs self mouse-x mouse-y)))))))))
     ;; (when (null highlight)
-  ;;   (when *overlay*
-  ;;     (with-buffer self (close-menus *overlay*))))))))
+  ;;   (when *minibuffer*
+  ;;     (with-buffer self (close-menus *minibuffer*))))))))
 
 (define-method press buffer (x y &optional button)
   (with-buffer self
@@ -972,14 +972,14 @@ block found, or nil if none is found."
 	(setf %object-p object-p)
 	(if (null block)
 	    (focus-on self nil)
-	    ;; (when *overlay-open-p*
-	    ;; 	(exit-overlay self)))
+	    ;; (when *minibuffer-open-p*
+	    ;; 	(exit-minibuffer self)))
 	    (progn 
 	      (setf click-start (cons x y))
 	      (setf click-start-block (find-uuid block))
 	      (setf drag-button button)
 	      ;; now focus; this might cause another block to be
-	      ;; focused, as in the case of the Overlay
+	      ;; focused, as in the case of the Minibuffer
 	      (focus-on self block)))))))
 
 (define-method clear-drag-data buffer ()
@@ -1023,7 +1023,7 @@ block found, or nil if none is found."
 			    ;; dropping on another block
 			    (when (not (accept hover drag))
 			      ;; hovered block did not accept drag. 
-			      ;; drop it back in the overlay layer.
+			      ;; drop it back in the minibuffer layer.
 			      (add-block self drag drop-x drop-y))))))
 	      ;; select the dropped block
 	      (progn 
@@ -1103,6 +1103,6 @@ block found, or nil if none is found."
 (define-method after-deserialize buffer ()
   (after-deserialize%super self)
   (clear-drag-data self)
-  (add-overlay-maybe self :force))
+  (add-minibuffer-maybe self :force))
 
 ;;; buffers.lisp ends here

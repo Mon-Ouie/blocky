@@ -1,4 +1,4 @@
-;;; shell.lisp --- interactive multimedia forthlike repl/editor
+;;; program.lisp --- interactive multimedia forthlike repl/editor
 
 ;; Copyright (C) 2011, 2012, 2013  David O'Toole
 
@@ -20,7 +20,7 @@
 
 (in-package :blocky)
 
-;;; Plain text entry for shell
+;;; Plain text entry for program
 
 (defentry word stringp ""
   (background :initform nil))
@@ -45,14 +45,12 @@
 
 (defparameter *form-cursor-blink-time* 10)
 
-(define-block shell
+(define-block program
   ;; a list of lists of blocks
   (lines :initform nil)
   ;; "point" is the location of the selected block.
   (point-row :initform 0) 
   (point-column :initform 0)
-  ;; what block type to use for new blanks
-  (blank :initform 'word)
   ;; the cursor shows where point is
   (cursor-color :initform "yellow")
   (cursor-blink-color :initform "magenta")
@@ -67,25 +65,25 @@
 
   ;; (rows :initform 10)
   ;; (columns :initform 10) 
-  ;; (column-widths :documentation "A vector of integers where v(x) is the pixel width of shell column x.")
-  ;; (row-heights :documentation "A vector of integers where v(x) is the pixel height of shell row x.")
+  ;; (column-widths :documentation "A vector of integers where v(x) is the pixel width of program column x.")
+  ;; (row-heights :documentation "A vector of integers where v(x) is the pixel height of program row x.")
   ;; (row-styles :documentation "A vector of property lists used to customize the appearance of rows.")
   ;; (column-styles :documentation "A vector of property lists used to customize the appearance of columns.")
   ;; (zebra-stripes :documentation "When non-nil, zebra stripes are drawn.")
   ;; (border-style :initform t :documentation "When non-nil, draw cell borders.")
   ;; (draw-blanks :initform t :documentation "When non-nil, draw blank cells.")
   ;; (header-style :initform t :documentation "When non-nil, draw row and column headers.")
-  ;; (header-line :initform nil :documentation "Formatted line to be displayed at top of shell above spreadsheet.")
-  ;; (status-line :initform nil :documentation "Formatted line to be displayed at bottom of shell below spreadsheet."))
+  ;; (header-line :initform nil :documentation "Formatted line to be displayed at top of program above spreadsheet.")
+  ;; (status-line :initform nil :documentation "Formatted line to be displayed at bottom of program below spreadsheet."))
 
-(define-method set-mark shell ()
+(define-method set-mark program ()
   (setf %mark-row %point-row
 	%mark-column %point-column))
    
-(define-method clear-mark shell ()
+(define-method clear-mark program ()
   (setf %mark-row nil %mark-column nil))
 
-(define-method mark-region shell ()
+(define-method mark-region program ()
   (with-fields (mark-row mark-column point-row point-column) self
     (if (and (integerp mark-row) (integerp mark-column))
 	(values (min mark-row point-row)
@@ -94,71 +92,71 @@
 		(max mark-column point-column))
 	(values nil nil nil nil))))
 
-(define-method initialize shell ()
+(define-method initialize program ()
   (initialize%super self)
-  (setf %lines (list (list (new %blank))))
+  (setf %lines (list (list (new 'word))))
   ;; see command implementations below
   (install-text-keybindings self)
   (setf %point-row 0)
   (setf %point-column 0)
   (clear-mark self))
 
-(define-method pick shell () self)
+(define-method pick program () self)
 
 ;;; Emulate the feel of emacs text properties buffers
 
 ;; Here we move over complete blocks, not characters.
 ;; Individual character movement is accomplished by the focused block methods.
 
-(define-method end-of-line shell ()
+(define-method end-of-line program ()
   (setf %point-column (length (nth %point-row %lines))))
 
-(define-method beginning-of-line shell ()
+(define-method beginning-of-line program ()
   (setf %point-column 0))
 
-(define-method beginning-of-buffer shell ()
+(define-method beginning-of-buffer program ()
   (setf %point-row 0 %point-column 0))
 
-(define-method end-of-buffer shell ()
+(define-method end-of-buffer program ()
   (setf %point-row (1- (length %lines)))
   (end-of-line self))
 
-(define-method current-line shell ()
+(define-method current-line program ()
   (nth %point-row %lines))
 
-(define-method thing-at-point shell ()
+(define-method thing-at-point program ()
   (nth %point-column (current-line self)))
 
-(define-method forward-char shell ()
+(define-method forward-word program ()
   (with-fields (lines point-row point-column) self
     (setf point-column (min (1+ point-column)
 			    (length (nth point-row lines))))))
 
-(define-method backward-char shell ()
+(define-method backward-word program ()
   (with-fields (lines point-row point-column) self
     (setf point-column (max 0 (1- point-column)))))
 
-(define-method next-line shell ()
+(define-method next-line program ()
   (with-fields (lines point-row point-column) self
     (setf point-row (min (1+ point-row)
 			 (1- (length lines))))
     (setf point-column (min point-column 
 			    (length (nth point-row lines))))))
 
-(define-method previous-line shell ()
+(define-method previous-line program ()
   (with-fields (lines point-row point-column) self
     (setf point-row (max 0 (1- point-row)))
     (setf point-column (min point-column
 			    (length (nth point-row lines))))))
 
-(define-method newline shell ()
-  (with-fields (lines blank point-row point-column) self
+(define-method newline program ()
+  (with-fields (lines point-row point-column) self
     (if (null lines)
-	(push (list (new blank)) lines)
+	(push (list (new 'word)) lines)
 	(if (and (= point-row (length lines))
 		 (= point-column (length (nth point-row lines))))
 	    ;; at end of content
-	    (progn (setf lines (append lines (list (new blank))))
+	    (progn (setf lines (append lines (list (new 'word))))
 		   (incf point-row)
 		   (setf point-column 0))
 	    ;; insert line break
@@ -179,7 +177,7 @@
 	      (incf point-row)			
 	      (setf point-column 0))))))
 
-(define-method backward-delete-char shell ()
+(define-method backward-delete-word program ()
   (with-fields (lines point-row point-column) self
     (if (and (= 0 point-column) 
 	     (not (= 0 point-row)))
@@ -208,49 +206,53 @@
 			       remainder))
 	    (decf point-column))))))
     
-(define-method end-of-line-p shell ()
+(define-method end-of-line-p program ()
   (= %point-column
      (1- (length (current-line self)))))
 
-(define-method beginning-of-line-p shell ()
+(define-method beginning-of-line-p program ()
   (= %point-column 0))
 
-(define-method top-of-lines-p shell ()
+(define-method top-of-lines-p program ()
   (= %point-row 0)) 
 
-(define-method bottom-of-lines-p shell ()
+(define-method bottom-of-lines-p program ()
   (= %point-row
      (1- (length %lines))))
 
-(define-method beginning-of-lines-p shell ()
+(define-method beginning-of-lines-p program ()
   (and (beginning-of-line-p self)
        (top-of-lines-p self)))
 
-(define-method end-of-lines-p shell ()
+(define-method end-of-lines-p program ()
   (and (end-of-line-p self)
        (bottom-of-lines-p self)))
 
-(define-method delete-char shell ()
+(define-method delete-word program ()
   (with-fields (lines point-row point-column) self
     (if (end-of-line-p self)
-	;; just remove line break
+	;; just remove line break between words
 	(unless (bottom-of-lines-p self)
 	  (next-line self)
 	  (beginning-of-line self)
-	  (backward-delete-char self))
-	;; remove a character
+	  (backward-delete-word self))
+	;; remove a word
 	(progn 
-	  (forward-char self)
-	  (backward-delete-char self)))))
+	  (forward-word self)
+	  (backward-delete-word self)))))
 
-(define-method handle-event shell (event)
+(define-method handle-event program (event)
   (let ((thing (thing-at-point self)))
-    (or (and thing (handle-event thing event))
-	(next-method self event))))
+    (prog1 
+	(or (next-method self event)
+	    ;; we didn't handle it here. try the focused widget 
+	    (and thing (handle-event thing event)))
+      ;; whatever happened, focus the widget at point
+      (grab-focus thing))))
 
-;;; Drawing the shell
+;;; Drawing the program
 
-(define-method layout shell ()
+(define-method layout program ()
   (with-fields (width height x y lines spacing) self
     (setf width 0 height 0)
     (let ((y0 y)
@@ -268,7 +270,7 @@
 	(setf x0 x)
 	(setf h0 0)))))
 
-(define-method draw-cursor shell (x y width height)
+(define-method draw-cursor program (x y width height)
   (with-fields (cursor-color cursor-blink-color cursor-blink-clock focused) self
     (decf cursor-blink-clock)
     (when (minusp cursor-blink-clock)
@@ -280,181 +282,15 @@
 		     cursor-blink-color)))
       (draw-rectangle x y width height :color color :destination %image))))
 
-(define-method draw-mark shell (x y width height)
+(define-method draw-mark program (x y width height)
   (draw-rectangle x y width height :color "white" :destination %image))
 
-(define-method draw-region shell (x y width height)
+(define-method draw-region program (x y width height)
   (draw-rectangle x y width height :color "cyan" :destination %image))
 
-(define-method draw shell ()
+(define-method draw program ()
   (draw-background self :color "white" :style :rounded)
   (dolist (line %lines)
     (mapc #'draw line)))
   
-;;; Modeline
-
-(defun-memo modeline-position-string (x y)
-    (:key #'identity :test 'equal :validator #'identity)
-  (format nil "X:~S Y:~S" x y))
-
-(define-block-macro modeline
-    (:super list
-     :fields 
-     ((orientation :initform :horizontal)
-      (no-background :initform t))
-     :inputs (:project-id (new 'string :read-only t)
-	      :buffer-id (new 'string :read-only t)
-	      :position (new 'string :read-only t)
-	      :mode (new 'string :read-only t))))
-
-(define-method update modeline ()
-  (set-value %%project-id *project*)
-  (set-value %%buffer-id (%buffer-name (current-buffer)))
-  (set-value %%position
-	     (modeline-position-string
-	      (%window-x (current-buffer))
-	      (%window-y (current-buffer))))
-  (set-value %%mode
-	     (if (current-buffer)
-		 (if (%paused (current-buffer))
-		     "(paused)"
-		     "(playing)")
-		 "(empty)")))
-
-;;; Custom data entry for Minibuffer. See also basic.lisp 
-
-(define-block (minibuffer-prompt :super prompt)
-  (operation :initform :prompt)
-  (background :initform nil)
-  output)
-
-(define-method debug-on-error minibuffer-prompt ()
-  (setf *debug-on-error* t))
-
-(define-method print-on-error minibuffer-prompt ()
-  (setf *debug-on-error* nil))
-
-(define-method initialize minibuffer-prompt (&optional output)
-  (next-method self)
-  (print-on-error self)
-  (setf %output output))
-
-(define-method set-output minibuffer-prompt (output)
-  (setf %output output))
-
-(define-method can-pick minibuffer-prompt () t)
-
-(define-method pick minibuffer-prompt ()
-  %parent)
-
-(define-method do-sexp minibuffer-prompt (sexp)
-  (with-fields (output) self
-    (assert output)
-    (let ((container (get-parent output)))
-      (assert container)
-      (execute sexp)
-      (let ((new-block 
-	      (when *stack* (make-block (cons 'hlist *stack*)))))
-	  ;; spit out result block, if any
-	  (when new-block 
-	    (accept container new-block)
-	    (unpin new-block))))))
-
-(define-method label-width minibuffer-prompt ()
-  (dash 2 (font-text-width *default-prompt-string* *font*)))
-
-(define-method do-after-evaluate minibuffer-prompt ()
-  ;; print any error output
-  (when (and %parent (stringp %error-output)
-	     (plusp (length %error-output)))
-    (accept %parent (new 'text %error-output))))
-
-;;; The Minibuffer is a pop-up command shell and Forth prompt. Only
-;;; shows one line, like in Emacs.
-
-(define-block (minibuffer :super list)
-  (temporary :initform t)
-  (display-lines :initform 12))
-
-(defparameter *minimum-minibuffer-width* 200)
-
-(define-method initialize minibuffer ()
-  (with-fields (image inputs) self
-    (let ((prompt (new 'minibuffer-prompt self))
-	  (modeline (new 'modeline)))
-      (list%initialize self)
-      (set-output prompt prompt)
-      (setf inputs (list modeline prompt))
-      (set-parent prompt self)
-      (set-parent modeline self)
-      (pin prompt)
-      (pin modeline))))
-
-(define-method layout minibuffer ()
-  (with-fields (height width parent inputs) self
-    ;; start by calculating current height
-    (setf height (font-height *font*))
-    (setf width 0)
-    ;; update all child dimensions
-    (dolist (element inputs)
-      (layout element)
-      (incf height (field-value :height element))
-      (callf max width (dash 2 (field-value :width element))))
-    ;; now compute proper positions and re-layout
-    (let* ((x (%window-x (current-buffer)))
-	   (y0 (+ (%window-y (current-buffer))
-		 *gl-screen-height*))
-	   (y (- y0 height (dash 3))))
-      (dolist (element inputs)
-	(decf y0 (field-value :height element))
-	(move-to element x y0)
-	(layout element))
-      (setf %y y)
-      (setf %x x)
-      ;;  a little extra room at the top and sides
-      (incf height (dash 3)))))
-      ;; ;; move to the right spot to keep the bottom on the bottom.
-      ;; (setf y (- y0 (dash 1))))))
-
-(define-method get-prompt minibuffer ()
-  (second %inputs))
- 
-(define-method evaluate minibuffer ()
-  (evaluate (get-prompt self)))
-
-(define-method focus minibuffer ()
-  (grab-focus (get-prompt self)))
-
-(define-method debug-on-error minibuffer ()
-  (debug-on-error (get-prompt self)))
-
-(define-method print-on-error minibuffer ()
-  (print-on-error (get-prompt self)))
-
-(define-method accept minibuffer (input &optional prepend)
-  (declare (ignore prepend))
-  (with-fields (inputs scrollback-length) self
-    (assert (not (null inputs))) ;; we always have a prompt
-    (prog1 t
-      (assert (valid-connection-p self input))
-      (let ((len (length inputs)))
-	;; (when (> len scrollback-length)
-	;;   ;; drop last item in scrollback
-	;;   (setf inputs (subseq inputs 0 (1- len))))
-	;; set parent if necessary 
-	(adopt self input)
-	(setf inputs 
-	      (nconc (list (first inputs) 
-			   (second inputs)
-			   input)
-		     (nthcdr 2 inputs)))))))
-
-(define-method draw minibuffer ()
-  (with-fields (inputs x y height width) self
-    (draw-box x y *gl-screen-width* height :color "black" :alpha 0.3)
-;    (draw-patch self x y (+ x width) (+ y height))
-    (if (null inputs)
-	(draw-label-string self *null-display-string*)
-	(mapc #'draw inputs))))
-
-;;; shell.lisp ends here
+;;; program.lisp ends here

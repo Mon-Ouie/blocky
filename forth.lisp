@@ -410,7 +410,7 @@ interpreter."
 (define-word buffer () 
   (let ((name (grab-next-word)))
     (assert (stringp name))
-    (pushf 
+    (pushf (find-buffer name :create t))))
 
 (define-word visit (buffer) (visit buffer))
 

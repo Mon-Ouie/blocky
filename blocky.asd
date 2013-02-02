@@ -36,7 +36,8 @@
 	       (:file "trees" :depends-on ("blocks"))
 	       (:file "basic" :depends-on ("blocks"))
 	       (:file "text" :depends-on ("blocks"))
-	       (:file "shell" :depends-on ("basic"))
+	       (:file "minibuffer" :depends-on ("basic"))
+	       (:file "program" :depends-on ("basic"))
 	       (:file "buffers" :depends-on ("blocks"))))
 	       ;; (:file "syntax" :depends-on ("blocks"))))
 	       
