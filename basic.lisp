@@ -33,11 +33,13 @@
 
 (defparameter *default-prompt-text-color* "white")
 (defparameter *default-prompt-outside-text-color* "gray20")
-(defparameter *default-prompt-label-color* "gray20")
+
+(defparameter *default-prompt-label-color* "white")
 
 (defparameter *default-entry-text-color* "white")
 (defparameter *default-entry-label-color* "white")
-(defparameter *default-prompt-string* "     ")
+;(defparameter *default-prompt-string* "     ")
+(defparameter *default-prompt-string* "Command: ")
 
 (defparameter *default-prompt-margin* 4)
 
@@ -131,7 +133,7 @@
 			(find-package :blocky)))
 	 (*make-prototype-id-package* *package*))
     (handler-case 
-	(read-from-string (concatenate 'string "(" input-string ")"))
+	(program-from-string input-string)
       (condition (c)
 	(format *error-output* "~S" c)))))
 

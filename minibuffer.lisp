@@ -147,6 +147,9 @@
 
 (define-method get-prompt minibuffer ()
   (second %inputs))
+
+(define-method enter minibuffer ()
+  (enter (get-prompt self)))
  
 (define-method evaluate minibuffer ()
   (evaluate (get-prompt self)))
@@ -180,10 +183,7 @@
 
 (define-method draw minibuffer ()
   (with-fields (inputs x y height width) self
-    (draw-box x y *gl-screen-width* height :color "black" :alpha 0.3)
-;    (draw-patch self x y (+ x width) (+ y height))
-    (if (null inputs)
-	(draw-label-string self *null-display-string*)
-	(mapc #'draw inputs))))
+    (draw-box x y *gl-screen-width* height :color "gray20" :alpha 0.5)
+    (mapc #'draw inputs)))
 
 ;;; minibuffer.lisp ends here

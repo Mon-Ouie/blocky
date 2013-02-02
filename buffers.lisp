@@ -62,17 +62,17 @@
   (future-steps :initform 32)
   (future-step-interval :initform 8)
   (default-events :initform
-		  '(((:pause) :transport-toggle-play)))
+		  '(((:pause) :transport-toggle-play)
 		  ;; '(((:tab) :tab)
 		  ;;   ((:tab :shift) :backtab)
-		  ;;   ((:x :alt) :enter-minibuffer)
-		  ;;   ((:x :control) :cut)
-		  ;;   ((:c :control) :copy)
-		  ;;   ((:v :control) :paste)
-		  ;;   ((:v :control :shift) :paste-here)
-		  ;;   ((:g :control) :escape)
-		  ;;   ((:escape) :toggle-minibuffer)
-		  ;;   ((:d :control) :drop-selection)
+		    ((:x :alt) :enter-minibuffer)
+		    ((:x :control) :cut)
+		    ((:c :control) :copy)
+		    ((:v :control) :paste)
+		    ((:v :control :shift) :paste-here)
+		    ((:g :control) :escape)
+		    ((:escape) :escape)
+		    ((:d :control) :drop-selection)))
 		    ;; ((:f10) :toggle-minibuffer)
 		    ;; ((:f12) :toggle-other-windows)
 		    ;; ))
@@ -656,12 +656,13 @@ slowdown. See also quadtree.lisp")
     (setf *minibuffer* (new 'minibuffer))))
 
 (define-method enter-minibuffer buffer ()
-  (add-minibuffer-maybe self)
-  (setf %last-focus %focused-block)
-  (focus-on self *minibuffer* :clear-selection nil)
-  (when (null *minibuffer-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
-  (setf *minibuffer-open-p* t)
-  (enable-key-repeat))
+  (when (not *minibuffer-open-p*)
+    (add-minibuffer-maybe self)
+    (setf %last-focus %focused-block)
+    (focus-on self *minibuffer* :clear-selection nil)
+    (when (null *minibuffer-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
+    (setf *minibuffer-open-p* t)
+    (enable-key-repeat)))
   
 (define-method exit-minibuffer buffer ()
   (when *minibuffer-open-p*
@@ -747,7 +748,10 @@ slowdown. See also quadtree.lisp")
       ;; draw focus
       (when focused-block
 	(assert (blockyp focused-block))
-	(draw-focus focused-block)))))
+	(draw-focus focused-block))
+      (if *minibuffer-open-p* 
+      	  (draw-minibuffer-objects self)
+      	  (draw-minibuffers self)))))
       ;; (if %parent
       ;; 	  (gl:pop-matrix)
       ;; possibly draw minibuffer
@@ -1026,10 +1030,11 @@ block found, or nil if none is found."
 			    ;; dropping on background. 
 			    (drop-object self drag)
 			    ;; dropping on another block
-			    (when (not (accept hover drag))
-			      ;; hovered block did not accept drag. 
-			      ;; drop it back in the minibuffer layer.
-			      (add-block self drag drop-x drop-y))))))
+			    (if (accept hover drag)
+				(invalidate-layout hover)
+				;; hovered block did not accept drag. 
+				;; drop it back in the minibuffer layer.
+				(add-block self drag drop-x drop-y))))))
 	      ;; select the dropped block
 	      (progn 
 ;		(select self drag)
@@ -1086,8 +1091,9 @@ block found, or nil if none is found."
   
 (define-method escape buffer ()
   (with-buffer self
-    (focus-on self nil)
-    (setf %selection nil)))
+    (exit-minibuffer self)))
+    ;; (focus-on self nil)
+    ;; (setf %selection nil)))
 
 (define-method start buffer ()
   (with-buffer self

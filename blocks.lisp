@@ -536,7 +536,7 @@ function."
   (unless (joystick-event-p event)
     (with-fields (events) self
       (destructuring-bind (key . unicode) (first event)
-	(when (or (block%handle-event self (cons key (rest event)))
+	(when (or (block%handle-event self event)
 		  ;; treat non-alt-control Unicode characters as self-inserting
 		  (when 
 		      (and (not (eq :return key))
@@ -616,10 +616,11 @@ See `keys.lisp' for the full table of key and modifier symbols.
     (:delete nil :delete-char)
     (:d (:control) :delete-char)
     (:a (:control) :beginning-of-line)
-    (:e (:control) :end-of-line)))
+    (:e (:control) :end-of-line)
+    (:return nil :enter)))
+
     ;; (:delete (:alt) :delete-word)
     ;; (:d (:alt) :delete-word)
-    ;; (:return nil :enter)
     ;; (:x (:control) :exit)
     ;; (:g (:control) :exit)
     ;; (:escape nil :exit)

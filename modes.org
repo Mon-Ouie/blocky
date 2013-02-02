@@ -1,10 +1,21 @@
-* TODO [#A] IN-ENGINE INTERACTIVE LIVECODING IN FORTH.
-CURSOR. can i type words into the buffer anywhere and create stuff? YES
-WHOLE window is SHELL
-can click existing words to insert them at point??
-can run whole buffer
+** TODO [#B] INTERACTIVE LIVECODING.
+*** TODO how to create a named object (buffer local variable)
+*** TODO how to set a local variable with !
+*** TODO set prompt's THIS-context to named object with a command
+*** TODO send it words from the minibuffer 
+*** TODO how to do anything in the minibuffer
 
-** TODO [#A] create PROGRAM when you click on the background, delete it if nothing was typed
+robot new 
+local bob ! 
+
+
+
+*** -------------------------------------------------------
+*** click the real BOB to insert var reference!
+
+
+
+* TODO [#A] create PROGRAM when you click on the background, delete it if nothing was typed
 *** TODO [#A] do this at 0,0 when creating a new buffer
 **** TODO [#A] AlWAYS-RUN flag makes block immune to PAUSE state, default is NIL but is T for UI stuff
 **** TODO [#B] keep minibuffer. 
@@ -22,8 +33,6 @@ can run whole buffer
 ** TODO show stack and MESSAGE output on screen
 *** TODO show top items of STACK in modeline/panel
 
-
-** TODO [#B] come up with basic scenarios of things to be typed in to make a game
 ** TODO [#C] rename add-object/remove-object to insert/delete... a notion of Point
 ** TODO [#C] words for accessing incoming arguments? not really needed. just list !y !x at the beginning to pop values
 ** TODO define the block shell as an embeddable richtext block you can type in, emacs-style
@@ -36,13 +45,19 @@ can run whole buffer
 **** TODO black text
 *** TODO add documentation for words, and a nice dictionary formatter thing
 
-
 * TODO forthmode. the stack is composed of blocks, and the current buffer line is the stack!
 *** TODO can illustrate, showing execution on successive lines
 *** http://c2.com/cgi/wiki?ColorForthQuickStart
 *** http://concatenative.org/wiki/view/Concatenative%20language
 *** prefix concat: http://sparist.github.com/Om/
 *** http://concatenative.org/wiki/view/Concatenative%20language
+
+
+* TODO [#A] IN-ENGINE INTERACTIVE LIVECODING IN FORTH.
+CURSOR. can i type words into the buffer anywhere and create stuff? YES
+WHOLE window is SHELL
+can click existing words to insert them at point??
+can run whole buffer
 * TODO http://c2.com/cgi/wiki?ForthMacro
 http://grobots.sourceforge.net/
 * VISUAL PROGRAMMING WITH THE KEYBOARD. visiprog does not require mouse.

@@ -234,7 +234,8 @@ interpreter."
 ;; invoking a Forth method stored in the object.
 
 (define-word call (method object)
-  (execute (field-value (make-keyword method) object)))
+  (let ((*self* object))
+    (execute (field-value (make-keyword method) object))))
 
 ;; telling an object to invoke one of its methods
 
@@ -421,8 +422,8 @@ interpreter."
 (define-word with-antialiased-text () (setf *use-antialiased-text* t))
 (define-word without-antialiased-text () (setf *use-antialiased-text* nil))
 (define-word without-key-repeat () (disable-key-repeat))
-(define-word !frame-rate (n) (set-frame-rate n))
-(define-word !timestep (n) (setf *dt* n))
+(define-word frame-rate! (n) (set-frame-rate n))
+(define-word timestep! (n) (setf *dt* n))
 
 (define-word scale (x y)
   (scale *self* x y))
@@ -460,8 +461,6 @@ interpreter."
 ;;     open
 
 ;; (define-word view (x y height width)
-
-
 
 ;;; define forget end not if each map filter reduce get set a an the
 ;;; is with to send call tell is do zero? even? odd? plus? minus?
