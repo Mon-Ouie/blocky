@@ -72,12 +72,6 @@
 		    ((:g :control) :escape)
 		    ((:escape) :toggle-overlay)
 		    ((:d :control) :drop-selection)
-		    ((:m :alt) :add-message)
-		    ((:s :alt) :add-statement)
-		    ((:v :alt) :add-variable)
-		    ((:l :alt) :add-self)
-		    ((:f :alt) :add-field)
-		    ((:e :alt) :add-expression)
 		    ((:pause) :transport-toggle-play)
 		    ((:f10) :toggle-overlay)
 		    ((:f12) :toggle-other-windows)
@@ -379,24 +373,6 @@
   (add-block self object *pointer-x* *pointer-y* :prepend)
   (focus-on self object))
 
-(define-method add-message buffer ()
-  (add-at-pointer self (new 'message)))
-
-(define-method add-statement buffer ()
-  (add-at-pointer self (new 'statement)))
-
-(define-method add-variable buffer ()
-  (add-at-pointer self (new 'variable)))
-
-(define-method add-expression buffer ()
-  (add-at-pointer self (new 'expression)))
-
-(define-method add-field buffer ()
-  (add-at-pointer self (new 'field)))
-
-(define-method add-self buffer ()
-  (add-at-pointer self (new 'self)))
-
 (define-method contains-object buffer (object)
   (gethash (find-uuid object) 
 	   %objects))
@@ -677,7 +653,7 @@ slowdown. See also quadtree.lisp")
 
 (define-method add-overlay-maybe buffer (&optional force)
   (when (or force (null *overlay*))
-    (setf *overlay* (new 'listener))))
+    (setf *overlay* (new 'minibuffer))))
 
 (define-method enter-overlay buffer ()
   (add-overlay-maybe self)

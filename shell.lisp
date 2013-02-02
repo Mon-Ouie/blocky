@@ -321,33 +321,33 @@
 		     "(playing)")
 		 "(empty)")))
 
-;;; Custom data entry for Listener. See also basic.lisp 
+;;; Custom data entry for Minibuffer. See also basic.lisp 
 
-(define-block (listener-prompt :super prompt)
+(define-block (minibuffer-prompt :super prompt)
   (operation :initform :prompt)
   (background :initform nil)
   output)
 
-(define-method debug-on-error listener-prompt ()
+(define-method debug-on-error minibuffer-prompt ()
   (setf *debug-on-error* t))
 
-(define-method print-on-error listener-prompt ()
+(define-method print-on-error minibuffer-prompt ()
   (setf *debug-on-error* nil))
 
-(define-method initialize listener-prompt (&optional output)
+(define-method initialize minibuffer-prompt (&optional output)
   (next-method self)
   (print-on-error self)
   (setf %output output))
 
-(define-method set-output listener-prompt (output)
+(define-method set-output minibuffer-prompt (output)
   (setf %output output))
 
-(define-method can-pick listener-prompt () t)
+(define-method can-pick minibuffer-prompt () t)
 
-(define-method pick listener-prompt ()
+(define-method pick minibuffer-prompt ()
   %parent)
 
-(define-method do-sexp listener-prompt (sexp)
+(define-method do-sexp minibuffer-prompt (sexp)
   (with-fields (output) self
     (assert output)
     (let ((container (get-parent output)))
@@ -360,26 +360,27 @@
 	    (accept container new-block)
 	    (unpin new-block))))))
 
-(define-method label-width listener-prompt ()
+(define-method label-width minibuffer-prompt ()
   (dash 2 (font-text-width *default-prompt-string* *font*)))
 
-(define-method do-after-evaluate listener-prompt ()
+(define-method do-after-evaluate minibuffer-prompt ()
   ;; print any error output
   (when (and %parent (stringp %error-output)
 	     (plusp (length %error-output)))
     (accept %parent (new 'text %error-output))))
 
-;;; The Listener is a pop-up command shell and Forth prompt.
+;;; The Minibuffer is a pop-up command shell and Forth prompt. Only
+;;; shows one line, like in Emacs.
 
-(define-block (listener :super list)
+(define-block (minibuffer :super list)
   (temporary :initform t)
   (display-lines :initform 12))
 
-(defparameter *minimum-listener-width* 200)
+(defparameter *minimum-minibuffer-width* 200)
 
-(define-method initialize listener ()
+(define-method initialize minibuffer ()
   (with-fields (image inputs) self
-    (let ((prompt (new 'listener-prompt self))
+    (let ((prompt (new 'minibuffer-prompt self))
 	  (modeline (new 'modeline)))
       (list%initialize self)
       (set-output prompt prompt)
@@ -389,7 +390,7 @@
       (pin prompt)
       (pin modeline))))
 
-(define-method layout listener ()
+(define-method layout minibuffer ()
   (with-fields (height width parent inputs) self
     ;; start by calculating current height
     (setf height (font-height *font*))
@@ -415,22 +416,22 @@
       ;; ;; move to the right spot to keep the bottom on the bottom.
       ;; (setf y (- y0 (dash 1))))))
 
-(define-method get-prompt listener ()
+(define-method get-prompt minibuffer ()
   (second %inputs))
  
-(define-method evaluate listener ()
+(define-method evaluate minibuffer ()
   (evaluate (get-prompt self)))
 
-(define-method focus listener ()
+(define-method focus minibuffer ()
   (grab-focus (get-prompt self)))
 
-(define-method debug-on-error listener ()
+(define-method debug-on-error minibuffer ()
   (debug-on-error (get-prompt self)))
 
-(define-method print-on-error listener ()
+(define-method print-on-error minibuffer ()
   (print-on-error (get-prompt self)))
 
-(define-method accept listener (input &optional prepend)
+(define-method accept minibuffer (input &optional prepend)
   (declare (ignore prepend))
   (with-fields (inputs scrollback-length) self
     (assert (not (null inputs))) ;; we always have a prompt
@@ -448,7 +449,7 @@
 			   input)
 		     (nthcdr 2 inputs)))))))
 
-(define-method draw listener ()
+(define-method draw minibuffer ()
   (with-fields (inputs x y height width) self
     (draw-box x y *gl-screen-width* height :color "black" :alpha 0.3)
 ;    (draw-patch self x y (+ x width) (+ y height))

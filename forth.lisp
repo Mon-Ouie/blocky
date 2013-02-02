@@ -404,7 +404,14 @@ interpreter."
 ;;     "here i am" here below write
 ;;     "blue" color "another caption" center above write 
 
-(define-word buffer () (pushf (current-buffer)))
+(define-word current-buffer () 
+  (pushf (current-buffer)))
+
+(define-word buffer () 
+  (let ((name (grab-next-word)))
+    (assert (stringp name))
+    (pushf 
+
 (define-word visit (buffer) (visit buffer))
 
 (define-word screen (height width)

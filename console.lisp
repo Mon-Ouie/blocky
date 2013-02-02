@@ -39,8 +39,6 @@
 
 (in-package :blocky) 
 
-(defvar *scratch* "*scratch*")
-
 (defvar *overlay* nil)
 
 (defvar *overlay-open-p* nil)
@@ -2434,9 +2432,46 @@ of the music."
       (at-next-update 
        (start-alone (find-buffer name))))))
 
+(defparameter *scratch-message*
+"
+;; Welcome to the Blocky multimedia programming language.
+;; Copyright (C) 2006-2013 by David T O'Toole <dto@ioforms.org>
+;; http://blocky.io/
+
+;; This program is free software: you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation. Type \"COPYRIGHT\" and
+;; then press the ENTER key to see the full copyright notice.
+
+;; This scratch buffer is for text notes and for typing
+;; commands. Below are some example commands; try typing a command and
+;; then press the ENTER key to execute it.
+
+;; to get help on using Blocky:
+;;    HELP
+;; to see the copyright notices:
+;;    COPYRIGHT                
+;; to create a new project: 
+;;    PROJECT \"new-project-name\"
+;; to load a project:
+;;    LOAD \"existing-project-name\"
+;; to create a new buffer:
+;;    BUFFER \"new-buffer-name\"
+;; to save the current project:
+;;    SAVE 
+;; to browse the available words:
+;;    DICTIONARY
+")
+
+(defun make-scratch-buffer ()
+  (with-buffer (find-buffer "*scratch*" :create t)
+    (prog1 (current-buffer)
+      ;; (add-object (current-buffer) (new 'text *scratch-message*))
+      (enter-overlay (current-buffer)))))
+
 (defun blocky ()
   (with-session
-    (start-alone (find-buffer *scratch* :create t))
+    (start-alone (make-scratch-buffer))
     (start-session)))
 
 ;;; Editor transport control
