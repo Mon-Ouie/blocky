@@ -8,6 +8,7 @@
 *** TODO think about the bottom-up workflow. review the language design.
 *** TODO implement SEE to show a definition's body
 *** TODO implement AS to change 
+*** TODO [#B] add context sensitive help: describe <WORD>
 
 a robot having (bullets hp) is a block
 

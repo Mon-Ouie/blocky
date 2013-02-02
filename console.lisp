@@ -2354,6 +2354,7 @@ of the music."
 	*clipboard* nil
 	*event-hook* nil
 	*minibuffer* nil
+	*minibuffer-open-p* nil
 	*message-hook-functions* nil
 	*window-title* "Blocky"
 	*updates* 0
@@ -2385,6 +2386,7 @@ of the music."
   (setf *buffer* nil)
   (setf *blocks* nil)
   (setf *minibuffer* nil)
+  (setf *minibuffer-open-p* nil)
   (setf *clipboard* nil)
   (setf *dt* nil)
   (setf *frame-rate* *default-frame-rate*)
