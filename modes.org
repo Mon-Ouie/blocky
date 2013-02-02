@@ -1,13 +1,27 @@
-** TODO [#A] IN-ENGINE INTERACTIVE LIVECODING IN FORTH.
+* TODO [#A] IN-ENGINE INTERACTIVE LIVECODING IN FORTH.
 CURSOR. can i type words into the buffer anywhere and create stuff? YES
 WHOLE window is SHELL
 can click existing words to insert them at point??
 can run whole buffer
 
+** TODO [#A] SHELL is a widget that can be arranged in the buffer with test objects
+** TODO [#A] create shell when you click on the background, delete it if nothing was typed
+*** TODO [#A] do this at 0,0 when creating a new buffer
+**** TODO [#A] AlWAYS-RUN flag makes block immune to PAUSE state, default is NIL but is T for UI stuff
+**** TODO [#A] get rid of minibuffer permanently?
+** TODO SHELL widget instantiates as a blinking cursor 
+*** TODO 
+
+** TODO [#B] auto-blockify words within it
+** TODO [#B] allow deletion/edit to "break" blockified word
+** TODO shell auto-blockifies
+** TODO EXECUTE BUFFERs! to re-do all defs
+
 ** TODO able to click/grab/edit/copy blockified forth commands
 
 ** TODO show stack and MESSAGE output on screen
 *** TODO show top items of STACK in modeline/panel
+
 
 ** TODO [#B] come up with basic scenarios of things to be typed in to make a game
 ** TODO [#C] rename add-object/remove-object to insert/delete... a notion of Point
@@ -37,6 +51,7 @@ refactor text buffer widget to allow dynamic inline blockification of plain
 english text, by default, new typed characters are in "text widget"
 but this can be changed, as well as can the creation parameters for
 the current block. like Bold Italic.
+
 ** TODO combine features from the Listener and text buffer into an emacsy thing
 *** TODO simple concatenative syntax, possibly like Forth. look up colorforth, demo tools
 *** DONE Review "THINKING FORTH"
