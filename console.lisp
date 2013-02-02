@@ -1348,7 +1348,7 @@ table."
 
 ;;; Standard resource names
 
-(defvar *font* "font")
+(defvar *font* "sans-mono-12")
 
 (defvar *color* "black")
 
@@ -2478,6 +2478,7 @@ of the music."
 	(program (new 'program)))
     (visit buffer)
     (add-object buffer program)
+    (setf *font* "sans-mono-bold-12")
     (grab-focus program)))
 ;;      (enter-minibuffer (current-buffer)))))
 

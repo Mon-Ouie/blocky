@@ -21,8 +21,10 @@
 (in-package :blocky)
 
 (defparameter *program-keybindings*
-  '((:a (:control) :beginning-of-line)
-    (:e (:control) :end-of-line)
+  '(
+    ;; (:a (:control) :beginning-of-line)
+    ;; (:e (:control) :end-of-line)
+
     (:f (:alt) :forward-word)
     (:b (:alt) :backward-word)
     (:k (:control) :clear-line)
@@ -118,6 +120,16 @@
 
 (define-method pick program () self)
 
+(define-method hit program (x y)
+  (with-fields (lines) self
+    (labels ((try (it)
+	       (hit it x y)))
+      (block trying
+	(dolist (line lines)
+	  (let ((result (some #'try line)))
+	    (when result
+	      (return-from trying result))))))))
+
 ;;; Emulate the feel of emacs text properties buffers
 
 ;; Here we move over complete blocks, not characters.
@@ -168,15 +180,17 @@
   (with-fields (lines point-row point-column) self
     (if (null lines)
 	(push (list (new 'word)) lines)
-	(if (and (= point-row (length lines))
-		 (= point-column (length (nth point-row lines))))
+	(if (and (= point-row (1- (length lines)))
+		 (= point-column (1- (length (nth point-row lines)))))
 	    ;; at end of content
-	    (progn (setf lines (append lines (list (new 'word))))
+	    (progn (setf lines (append lines (list (list (new 'word)))))
 		   (incf point-row)
 		   (setf point-column 0))
 	    ;; insert line break
 	    (let* ((line (nth point-row lines))
-		   (line-remainder (subseq line point-column))
+		   (line-remainder 
+		     (or (subseq line point-column)
+			 (list (new 'word))))
 		   (lines-remainder (nthcdr (1+ point-row) lines)))
 	      ;; truncate current line
 	      (setf (nth point-row lines) 
