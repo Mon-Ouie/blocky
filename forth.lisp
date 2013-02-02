@@ -52,12 +52,12 @@
 (defstruct word name body properties arguments)
 
 (defun word-definition (word)
-  (gethash word *words*))
+  (gethash (make-keyword word) *words*))
 
 (defun set-word-definition (name definition)
   (assert (not (null name)))
   (assert (symbolp name)) 
-  (setf (gethash name *words*) definition)
+  (setf (gethash (make-keyword name) *words*) definition)
   (unless (fboundp name)
     (export name)))
 
@@ -141,7 +141,7 @@ interpreter."
 (defun execute-string (string)
   (execute (program-from-string string)))
 
-(define-word evalf (body)
+(defun evalf (body)
   (execute body)
   (popf))
 
@@ -290,7 +290,7 @@ interpreter."
 (define-word display (image) (change-image *self* image))
 (define-word show () (show *self*))
 (define-word hide () (hide *self*))
-(define-word visible? () (pushf (visiblep self)))
+(define-word visible? () (pushf (visiblep *self*)))
 
 (define-word play (name)
   (let ((res (find-resource name)))
@@ -362,7 +362,7 @@ interpreter."
 
 ;; examples:
 ;;     now :started !
-;;     10 frames later
+;;     10 frames later (
 ;;     2.5 seconds later
 
 (define-word resource ()

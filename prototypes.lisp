@@ -390,7 +390,7 @@ extended argument list ARGLIST."
 
 ;;; Utility functions
 
-(defun make-keyword (S)
+(defun-memo make-keyword (S) (:test 'eq) 
   "Make the symbol or string S into a keyword symbol."
   (etypecase S
     (string (intern (string-upcase S) :keyword))
