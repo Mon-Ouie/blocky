@@ -20,6 +20,30 @@
 
 (in-package :blocky)
 
+(defparameter *program-keybindings*
+  '((:a (:control) :beginning-of-line)
+    (:e (:control) :end-of-line)
+    (:f (:alt) :forward-word)
+    (:b (:alt) :backward-word)
+    (:k (:control) :clear-line)
+    (:backspace (:alt) :backward-delete-word)
+    (:delete (:alt) :delete-word)
+    (:d (:alt) :delete-word)
+    (:return nil :enter)
+    (:x (:control) :exit)
+    (:g (:control) :exit)
+    (:escape nil :exit)
+    (:p (:control) :previous-line)
+    (:n (:control) :next-line)
+    (:p (:alt) :previous-line)
+    (:n (:alt) :next-line)
+    (:up nil :previous-line)
+    (:down nil :next-line)
+    (:left (:alt) :backward-word)
+    (:right (:alt) :forward-word)
+    (:home nil :beginning-of-line)
+    (:end nil :end-of-line)))
+
 ;;; Plain text entry for program
 
 (defentry word stringp ""
@@ -43,7 +67,7 @@
   (let ((*read-eval* nil)) 
     (read-from-string %value)))
 
-(defparameter *form-cursor-blink-time* 10)
+(defparameter *cursor-blink-time* 10)
 
 (define-block program
   ;; a list of lists of blocks
@@ -63,19 +87,6 @@
   (mark-column :initform nil)
   (alignment :initform nil))
 
-  ;; (rows :initform 10)
-  ;; (columns :initform 10) 
-  ;; (column-widths :documentation "A vector of integers where v(x) is the pixel width of program column x.")
-  ;; (row-heights :documentation "A vector of integers where v(x) is the pixel height of program row x.")
-  ;; (row-styles :documentation "A vector of property lists used to customize the appearance of rows.")
-  ;; (column-styles :documentation "A vector of property lists used to customize the appearance of columns.")
-  ;; (zebra-stripes :documentation "When non-nil, zebra stripes are drawn.")
-  ;; (border-style :initform t :documentation "When non-nil, draw cell borders.")
-  ;; (draw-blanks :initform t :documentation "When non-nil, draw blank cells.")
-  ;; (header-style :initform t :documentation "When non-nil, draw row and column headers.")
-  ;; (header-line :initform nil :documentation "Formatted line to be displayed at top of program above spreadsheet.")
-  ;; (status-line :initform nil :documentation "Formatted line to be displayed at bottom of program below spreadsheet."))
-
 (define-method set-mark program ()
   (setf %mark-row %point-row
 	%mark-column %point-column))
@@ -94,9 +105,10 @@
 
 (define-method initialize program ()
   (initialize%super self)
+  ;; start out with a simple blank
   (setf %lines (list (list (new 'word))))
   ;; see command implementations below
-  (install-text-keybindings self)
+  (install-text-keybindings self *program-keybindings*)
   (setf %point-row 0)
   (setf %point-column 0)
   (clear-mark self))
@@ -243,12 +255,11 @@
 
 (define-method handle-event program (event)
   (let ((thing (thing-at-point self)))
-    (prog1 
-	(or (next-method self event)
-	    ;; we didn't handle it here. try the focused widget 
-	    (and thing (handle-event thing event)))
-      ;; whatever happened, focus the widget at point
-      (grab-focus thing))))
+    (let ((result 
+	    (or (handle-event%super self event)
+		(and thing (handle-event thing event)))))
+      (prog1 result 
+	(when result (grab-focus thing))))))
 
 ;;; Drawing the program
 
@@ -274,9 +285,9 @@
   (with-fields (cursor-color cursor-blink-color cursor-blink-clock focused) self
     (decf cursor-blink-clock)
     (when (minusp cursor-blink-clock)
-      (setf cursor-blink-clock *form-cursor-blink-time*))
+      (setf cursor-blink-clock *cursor-blink-time*))
     (let ((color (if (or (null focused)
-			 (< (truncate (/ *form-cursor-blink-time* 2))
+			 (< (truncate (/ *cursor-blink-time* 2))
 			    cursor-blink-clock))
 		     cursor-color
 		     cursor-blink-color)))
@@ -289,8 +300,19 @@
   (draw-rectangle x y width height :color "cyan" :destination %image))
 
 (define-method draw program ()
-  (draw-background self :color "white" :style :rounded)
+  ;; (with-style :rounded (draw-background self :color "white"))
   (dolist (line %lines)
     (mapc #'draw line)))
+
+(define-method draw-focus program ()
+  (draw-focus (thing-at-point self)))
+
+(define-method tap program (x y)
+  (grab-focus self))
+  
+(define-method update program ()
+  (dolist (line %lines)
+    (mapc #'update line))
+  (layout self))
   
 ;;; program.lisp ends here

@@ -4,15 +4,13 @@ WHOLE window is SHELL
 can click existing words to insert them at point??
 can run whole buffer
 
-** TODO rename SHELL to SCRIPT? or something similar. CODE? SENTENCE?
-
-** TODO [#A] SHELL is a widget that can be arranged in the buffer with test objects
-** TODO [#A] create shell when you click on the background, delete it if nothing was typed
+** TODO [#A] create PROGRAM when you click on the background, delete it if nothing was typed
 *** TODO [#A] do this at 0,0 when creating a new buffer
 **** TODO [#A] AlWAYS-RUN flag makes block immune to PAUSE state, default is NIL but is T for UI stuff
 **** TODO [#B] keep minibuffer. 
-** TODO SHELL widget instantiates as a blinking cursor 
-*** TODO 
+** TODO [#A] PROGRAM is a widget that can be arranged in the buffer with test objects
+** TODO Program widget instantiates as a blinking cursor 
+** TODO 
 
 ** TODO [#B] auto-blockify words within it
 ** TODO [#B] allow deletion/edit to "break" blockified word

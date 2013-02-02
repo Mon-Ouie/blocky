@@ -62,20 +62,20 @@
   (future-steps :initform 32)
   (future-step-interval :initform 8)
   (default-events :initform
-		  '(((:tab) :tab)
-		    ((:tab :shift) :backtab)
-		    ((:x :alt) :enter-minibuffer)
-		    ((:x :control) :cut)
-		    ((:c :control) :copy)
-		    ((:v :control) :paste)
-		    ((:v :control :shift) :paste-here)
-		    ((:g :control) :escape)
-		    ((:escape) :toggle-minibuffer)
-		    ((:d :control) :drop-selection)
-		    ((:pause) :transport-toggle-play)
-		    ((:f10) :toggle-minibuffer)
-		    ((:f12) :toggle-other-windows)
-		    ))
+		  '(((:pause) :transport-toggle-play)))
+		  ;; '(((:tab) :tab)
+		  ;;   ((:tab :shift) :backtab)
+		  ;;   ((:x :alt) :enter-minibuffer)
+		  ;;   ((:x :control) :cut)
+		  ;;   ((:c :control) :copy)
+		  ;;   ((:v :control) :paste)
+		  ;;   ((:v :control :shift) :paste-here)
+		  ;;   ((:g :control) :escape)
+		  ;;   ((:escape) :toggle-minibuffer)
+		  ;;   ((:d :control) :drop-selection)
+		    ;; ((:f10) :toggle-minibuffer)
+		    ;; ((:f12) :toggle-other-windows)
+		    ;; ))
   ;; prototype control
   (excluded-fields :initform
 		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :minibuffer :drag :hover :highlight 
@@ -722,7 +722,8 @@ slowdown. See also quadtree.lisp")
 
 (define-method draw buffer ()
   (with-buffer self
-    (with-field-values (objects width height background-image background-color) self
+    (with-field-values (objects width focused-block height
+				background-image background-color) self
       (unless %parent 
 	(project-window self))
       ;; (when %parent 
@@ -743,12 +744,16 @@ slowdown. See also quadtree.lisp")
       ;; possibly redraw cursor to ensure visibility.
       (when (and %cursor %redraw-cursor)
 	(draw %cursor))
+      ;; draw focus
+      (when focused-block
+	(assert (blockyp focused-block))
+	(draw-focus focused-block)))))
       ;; (if %parent
       ;; 	  (gl:pop-matrix)
       ;; possibly draw minibuffer
-      (if *minibuffer-open-p* 
-	  (draw-minibuffer-objects self)
-	  (draw-minibuffers self)))))
+      ;; (if *minibuffer-open-p* 
+      ;; 	  (draw-minibuffer-objects self)
+      ;; 	  (draw-minibuffers self)))))
   
 ;;; Simulation update
 
@@ -808,10 +813,10 @@ slowdown. See also quadtree.lisp")
   (with-field-values (cursor quadtree focused-block) self
     (with-buffer self
       (or (block%handle-event self event)
-	  (let ((thing
-		  (if *minibuffer-open-p* 
-		      focused-block
-		      cursor)))
+	  (let ((thing focused-block))
+		  ;; (if *minibuffer-open-p* 
+		  ;;     focused-block
+		  ;;     cursor)))
 	      (prog1 t 
 		(when thing 
 		  (with-quadtree quadtree

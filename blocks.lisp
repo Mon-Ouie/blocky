@@ -63,6 +63,7 @@ Web at:
   (cursor-clock :initform 0)
   ;; general information
   (inputs :initform nil)
+  (focused-p :initform nil)
   (buffer-name :initform nil)
   (read-only :initform nil)
   (input-names :initform nil)
@@ -601,29 +602,19 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (defvar *graphic-characters* "`~!@#$%^&*()_-+={[}]|\:;\"'<,>.?/")
 
 (defparameter *text-qwerty-keybindings*
-  '((:a (:control) :beginning-of-line)
-    (:e (:control) :end-of-line)
-    (:f (:control) :forward-char)
+  '((:f (:control) :forward-char)
     (:b (:control) :backward-char)
-    (:f (:alt) :forward-word)
-    (:b (:alt) :backward-word)
     (:right nil :forward-char)
     (:left nil :backward-char)
-    (:k (:control) :clear-line)
     (:backspace nil :backward-delete-char)
-    (:backspace (:alt) :backward-delete-word)
     (:delete nil :delete-char)
-    (:delete (:alt) :delete-word)
-    (:d (:control) :delete-char)
-    (:d (:alt) :delete-word)
-    (:return nil :enter)
-    (:x (:control) :exit)
-    (:g (:control) :exit)
-    (:escape nil :exit)
-    (:p (:control) :previous-line)
-    (:n (:control) :next-line)
-    (:p (:alt) :previous-line)
-    (:n (:alt) :next-line)))
+    (:d (:control) :delete-char)))
+    ;; (:delete (:alt) :delete-word)
+    ;; (:d (:alt) :delete-word)
+    ;; (:return nil :enter)
+    ;; (:x (:control) :exit)
+    ;; (:g (:control) :exit)
+    ;; (:escape nil :exit)
 
 (defparameter *arrow-key-text-navigation-keybindings*
   '(
@@ -651,11 +642,11 @@ See `keys.lisp' for the full table of key and modifier symbols.
 		(keybinding-event binding)
 		(keybinding-action binding))))
         
-(define-method install-text-keybindings block ()
+(define-method install-text-keybindings block (&optional (keybindings *text-qwerty-keybindings*))
   ;; install UI keys that will vary by locale
   (with-fields (events) self
     (setf events (make-hash-table :test 'equal))
-    (dolist (binding *text-qwerty-keybindings*)
+    (dolist (binding keybindings)
       (destructuring-bind (key mods result) binding
 	(etypecase result
 	  (keyword (bind-event-to-method self key mods result))
@@ -717,9 +708,9 @@ See `keys.lisp' for the full table of key and modifier symbols.
 
 ;;; Focus events (see also buffers.lisp)
 
-(define-method focus block () nil)
+(define-method focus block () (setf %focused-p t))
 
-(define-method lose-focus block () nil)
+(define-method lose-focus block () (setf %focused-p nil))
 
 (define-method grab-focus block () 
   (send :focus-on (current-buffer) self :clear-selection nil))

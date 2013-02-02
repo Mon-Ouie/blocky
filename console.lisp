@@ -2463,15 +2463,27 @@ of the music."
 ;;    DICTIONARY
 ")
 
+(defun current-buffer () *buffer*)
+
+(defun visit (thing)
+  (let ((buffer (if (blockyp thing) 
+		    thing
+		    (find-buffer thing :create t))))
+    (push buffer *buffer-history*)
+    (setf *buffer* buffer)
+    (at-next-update (start-alone buffer))))
+
 (defun make-scratch-buffer ()
-  (with-buffer (find-buffer "*scratch*" :create t)
-    (prog1 (current-buffer)
-      ;; (add-object (current-buffer) (new 'text *scratch-message*))
-      (enter-minibuffer (current-buffer)))))
+  (let ((buffer (find-buffer "*scratch*" :create t))
+	(program (new 'program)))
+    (visit buffer)
+    (add-object buffer program)
+    (grab-focus program)))
+;;      (enter-minibuffer (current-buffer)))))
 
 (defun blocky ()
   (with-session
-    (start-alone (make-scratch-buffer))
+    (make-scratch-buffer)
     (start-session)))
 
 ;;; Editor transport control
@@ -2491,13 +2503,6 @@ of the music."
 (defun update-parameters () nil)
   ;; (when (current-buffer)
   ;;   (send :update-future (current-buffer))))
-
-(defun current-buffer () *buffer*)
-
-(defun visit (name)
-  (let ((buffer (find-buffer name :create t)))
-    (push name *buffer-history*)
-    (at-next-update (start-alone buffer))))
 
 ;;; Emacs integration
 
