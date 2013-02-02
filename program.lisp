@@ -113,6 +113,9 @@
   (setf %point-column 0)
   (clear-mark self))
 
+(define-method enter program ()
+  (newline self))
+
 (define-method pick program () self)
 
 ;;; Emulate the feel of emacs text properties buffers
@@ -256,8 +259,8 @@
 (define-method handle-event program (event)
   (let ((thing (thing-at-point self)))
     (let ((result 
-	    (or (handle-event%super self event)
-		(and thing (handle-event thing event)))))
+	    (or (and thing (handle-event thing event))
+		(block%handle-event self event))))
       (prog1 result 
 	(when result (grab-focus thing))))))
 

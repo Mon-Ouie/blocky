@@ -530,16 +530,22 @@ any)."
 	    (values nil nil))))))
 
 (define-method handle-text-event block (event)
-  "Look up events as with `handle-event', but insert unhandled keypresses
-as Unicode characters via the `insert' function."
+  "Look up events as with `handle-event', but insert
+unhandled/unmodified keypresses as Unicode characters via the `insert'
+function."
   (unless (joystick-event-p event)
     (with-fields (events) self
       (destructuring-bind (key . unicode) (first event)
 	(when (or (block%handle-event self (cons key (rest event)))
-		  ;; treat Unicode characters as self-inserting
-		  (when unicode
-		    (send :insert self unicode)))
-	  (invalidate-layout self))))))
+		  ;; treat non-alt-control Unicode characters as self-inserting
+		  (when 
+		      (and (not (eq :return key))
+			   unicode 
+			   (not (member :alt (rest event)))
+			   (not (member :control (rest event))))
+		    (prog1 t
+		      (send :insert self unicode))))
+	  (prog1 t (invalidate-layout self)))))))
   
 (defun bind-event-to-method (block event-name modifiers method-name)
   "Arrange for METHOD-NAME to be sent as a message to this object
