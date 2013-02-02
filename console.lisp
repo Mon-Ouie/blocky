@@ -39,6 +39,8 @@
 
 (in-package :blocky) 
 
+(defvar *scratch* "*scratch*")
+
 (defvar *overlay* nil)
 
 (defvar *overlay-open-p* nil)
@@ -2434,7 +2436,7 @@ of the music."
 
 (defun blocky ()
   (with-session
-;    (start-alone (find-buffer *desktop*))
+    (start-alone (find-buffer *scratch* :create t))
     (start-session)))
 
 ;;; Editor transport control
@@ -2457,8 +2459,10 @@ of the music."
 
 (defun current-buffer () *buffer*)
 
-(defun visit (&optional (buffer (current-buffer)))
-  (at-next-update (start-alone buffer)))
+(defun visit (name)
+  (let ((buffer (find-buffer name :create t)))
+    (push name *buffer-history*)
+    (at-next-update (start-alone buffer))))
 
 ;;; Emacs integration
 

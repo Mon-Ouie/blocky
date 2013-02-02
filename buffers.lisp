@@ -27,7 +27,7 @@
   (modified-p :initform nil)
   (followed-object :initform nil)
   (background-image :initform nil)
-  (background-color :initform "white")
+  (background-color :initform nil)
   (redraw-cursor :initform t)
   (category :initform :data)
   (x :initform 0)

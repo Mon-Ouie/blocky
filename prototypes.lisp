@@ -1575,7 +1575,7 @@ objects after reconstruction, wherever present."
   (assert (blockyp object))
   (when (null *buffers*)
     (initialize-buffers))
-  (prog1 nil ;; (find-uuid object)
+  (prog1 (find-uuid object)
     (setf (gethash 
 	   (or name (find-buffer-name object))
 	   *buffers*)

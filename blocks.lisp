@@ -605,8 +605,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
     (:e (:control) :end-of-line)
     (:f (:control) :forward-char)
     (:b (:control) :backward-char)
-    (:home nil :beginning-of-line)
-    (:end nil :end-of-line)
+    (:f (:alt) :forward-word)
+    (:b (:alt) :backward-word)
     (:right nil :forward-char)
     (:left nil :backward-char)
     (:k (:control) :clear-line)
@@ -623,10 +623,17 @@ See `keys.lisp' for the full table of key and modifier symbols.
     (:down nil :forward-history)))
 
 (defparameter *arrow-key-text-navigation-keybindings*
-  '((:up nil :previous-line)
+  '(
+    (:up nil :previous-line)
     (:down nil :next-line)
     (:left nil :backward-char)
-    (:right nil :forward-char))) 
+    (:right nil :forward-char)
+    (:up (:alt) :previous-line)
+    (:down (:alt) :next-line)
+    (:left (:alt) :backward-word)
+    (:right (:alt) :forward-word)
+    (:home nil :beginning-of-line)
+    (:end nil :end-of-line)))
 
 (defun keybinding-event (binding)
   (cons (first binding)
@@ -655,20 +662,10 @@ See `keys.lisp' for the full table of key and modifier symbols.
 
 (define-method select block () nil)
 
-(define-method tap block (x y)
-  (toggle-halo self))
+(define-method tap block (x y))
 
 (define-method alternate-tap block (x y)
-  (with-fields (methods) self
-    (when methods
-      (if (= 1 (length methods))
-	  ;; just do the action if there's only one
-	  (send (first methods) self)
-	  ;; multiple actions require a menu
-	  (let ((menu (context-menu self)))
-	    (add-block (current-buffer) menu)
-	    (move-to menu x y)
-	    (focus-on (current-buffer) menu))))))
+  (toggle-halo self))
 
 (define-method scroll-tap block (x y)
   (declare (ignore x y))

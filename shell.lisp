@@ -22,24 +22,27 @@
 
 ;;; Plain text entry for shell
 
-(defentry shell-string stringp ""
+(defentry word stringp ""
   (background :initform nil))
 
-(define-method read-expression shell-string (input-string)
+(define-method read-expression word (input-string)
   ;; pass-through; don't read string at all.
   input-string)
 
-(define-method do-sexp shell-string (sexp)
+(define-method do-sexp word (sexp)
   (assert (stringp sexp))
   (setf %value sexp)
   (when %parent (child-updated %parent self)))
  
-(define-method set-value shell-string (value)
-  (when (stringp value)
-    (setf %value value)
-    (setf %line value)))
+(define-method set-value word (value)
+  (assert (stringp value))
+  (setf %value value)
+  (setf %line value))
 
-(defparameter *logo-height* 26)
+(define-method forth-value word ()
+  (let ((*read-eval* nil)) 
+    (read-from-string %value)))
+
 (defparameter *form-cursor-blink-time* 10)
 
 (define-block shell
@@ -49,11 +52,12 @@
   (point-row :initform 0) 
   (point-column :initform 0)
   ;; what block type to use for new blanks
-  (blank :initform 'shell-string)
+  (blank :initform 'word)
   ;; the cursor shows where point is
   (cursor-color :initform "yellow")
   (cursor-blink-color :initform "magenta")
   (cursor-blink-clock :initform 0)
+  (cursor-alpha :initform 0.6)
   ;;
   (spacing :initform 2)
   (row-spacing :initform 1 :documentation "Number of pixels to add between rows.")
@@ -348,17 +352,13 @@
     (assert output)
     (let ((container (get-parent output)))
       (assert container)
-      (let ((result (eval (first sexp))))
-	(let ((new-block 
-		;; is it a block?
-		(if (blockyp result)
-		    result
-		    ;; no, make a new block from the data
-		    (when result (make-block result)))))
+      (execute sexp)
+      (let ((new-block 
+	      (when *stack* (make-block (cons 'hlist *stack*)))))
 	  ;; spit out result block, if any
 	  (when new-block 
 	    (accept container new-block)
-	    (unpin new-block)))))))
+	    (unpin new-block))))))
 
 (define-method label-width listener-prompt ()
   (dash 2 (font-text-width *default-prompt-string* *font*)))
@@ -369,7 +369,7 @@
 	     (plusp (length %error-output)))
     (accept %parent (new 'text %error-output))))
 
-;;; The Listener is a pop-up Lisp command prompt.
+;;; The Listener is a pop-up command shell and Forth prompt.
 
 (define-block (listener :super list)
   (temporary :initform t)
@@ -454,13 +454,6 @@
 ;    (draw-patch self x y (+ x width) (+ y height))
     (if (null inputs)
 	(draw-label-string self *null-display-string*)
-	(mapc #'draw inputs))
-    (draw-image "blocky" 
-		x
-		(- (+ y height)
-		   -2
-		   (+ *logo-height*)
-		   (%height (first inputs)))
-		:height *logo-height* :width *logo-height*)))
+	(mapc #'draw inputs))))
 
 ;;; shell.lisp ends here

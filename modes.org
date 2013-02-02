@@ -1,6 +1,14 @@
 ** TODO [#A] IN-ENGINE INTERACTIVE LIVECODING IN FORTH.
-** TODO show MESSAGE output on screen
-*** TODO implement words as you go and implement a little example game
+CURSOR. can i type words into the buffer anywhere and create stuff? YES
+WHOLE window is SHELL
+can click existing words to insert them at point??
+can run whole buffer
+
+** TODO able to click/grab/edit/copy blockified forth commands
+
+** TODO show stack and MESSAGE output on screen
+*** TODO show top items of STACK in modeline/panel
+
 ** TODO [#B] come up with basic scenarios of things to be typed in to make a game
 ** TODO [#C] rename add-object/remove-object to insert/delete... a notion of Point
 ** TODO [#C] words for accessing incoming arguments? not really needed. just list !y !x at the beginning to pop values

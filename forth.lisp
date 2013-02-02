@@ -134,7 +134,8 @@ interpreter."
 
 (defun program-from-string (string)
   (with-input-from-string (stream string)
-    (let ((*read-eval* nil))
+    (let ((*read-eval* nil)
+	  (*package* (project-package)))
       (loop for sexp = (read stream nil)
 	    while sexp collect sexp))))
 
@@ -147,6 +148,10 @@ interpreter."
 
 (defmacro forth (&rest words)
   `(execute ',words))
+
+(define-word pop () (popf))
+(define-word dup (thing) (pushf thing) (pushf thing))
+(define-word swap (a b) (pushf b) (pushf a))
 
 ;;; Control flow
 
@@ -439,6 +444,9 @@ interpreter."
   (reset))
 
 (define-word quit () (shut-down))
+
+(define-word debug () (setf *debug-on-error* t))
+(define-word nodebug () (setf *debug-on-error* nil))
 
 ;; example: 
 ;;     create "myproject"
