@@ -1,10 +1,6 @@
-** TODO watch fluxus / schemebricks videos.
-*** TODO define-block word <--- visual syntax
-*** TODO if a word is dropped onto a word, insert it before the target in the list
-*** TODO click together words visually
-*** TODO right side scrollable word/phrase palette
-*** TODO click to open word halo, control-click or right-click to execute
-*** TODO use existing list UI's, just allow lists of words.
+
+*** TODO change minibuffer into right side scrollable word/phrase palette
+*** TODO click to highlight word, control-click or right-click to execute
 *** TODO show stack in sidebar
 *** TODO f9 or escape to toggle sidebar
 *** TODO flash cursor colors for active drop
@@ -16,16 +12,15 @@ http://www.pawfal.org/dave/index.cgi?Projects/BetablockerDS
 . http://www.pawfal.org/dave/blog/2012/10/scheme-bricks-2/
 
 
+*** TODO able to click/grab/edit/copy blockified forth commands
+*** TODO consistent set of function keys for executing global words
+
+
 *** TODO ??? cancel the general buffer editor thing. do it later.
 ** TODO [#B] INTERACTIVE LIVECODING.
-*** DONE how to create a named object (buffer local variable)
-    CLOSED: [2013-02-03 Sun 02:47]
-*** DONE how to set a local variable with !
-    CLOSED: [2013-02-03 Sun 02:47]
 *** TODO set prompt's THIS-context to named object with a command
 *** TODO send it words from the minibuffer 
 *** TODO how to do ANYTHING in the minibuffer 
-*** TODO consistent set of function keys for executing global words
 *** TODO think about the bottom-up workflow. review the language design.
 *** TODO implement SEE to show a definition's body
 *** TODO implement AS to change 
@@ -52,22 +47,16 @@ robot new :bob !
 *** -------------------------------------------------------
 *** click the real BOB to insert var reference!
 
-
-
 * TODO [#A] create PROGRAM when you click on the background, delete it if nothing was typed
+
+
 *** TODO [#A] do this at 0,0 when creating a new buffer
 **** TODO [#A] AlWAYS-RUN flag makes block immune to PAUSE state, default is NIL but is T for UI stuff
 **** TODO [#B] keep minibuffer. 
 ** TODO [#A] PROGRAM is a widget that can be arranged in the buffer with test objects
 ** TODO Program widget instantiates as a blinking cursor 
-** TODO 
 
-** TODO [#B] auto-blockify words within it
-** TODO [#B] allow deletion/edit to "break" blockified word
-** TODO shell auto-blockifies
 ** TODO EXECUTE BUFFERs! to re-do all defs
-
-** TODO able to click/grab/edit/copy blockified forth commands
 
 ** TODO show stack and MESSAGE output on screen
 *** TODO show top items of STACK in modeline/panel
@@ -201,5 +190,63 @@ the current block. like Bold Italic.
    :ARCHIVE_FILE: ~/blocky/modes.org
    :ARCHIVE_CATEGORY: modes
    :ARCHIVE_TODO: TODO
+   :END:
+** DONE watch fluxus / schemebricks videos.
+   CLOSED: [2013-02-03 Sun 05:22]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-03 Sun 05:24
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE define-block word <--- visual syntax
+   CLOSED: [2013-02-03 Sun 05:22]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-03 Sun 05:24
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE if a word is dropped onto a word, insert it before the target in the list
+   CLOSED: [2013-02-03 Sun 05:22]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-03 Sun 05:24
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE click together words visually
+   CLOSED: [2013-02-03 Sun 05:22]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-03 Sun 05:24
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE use existing list UI's, just allow lists of words.
+   CLOSED: [2013-02-03 Sun 05:24]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-03 Sun 05:24
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE how to create a named object (buffer local variable)
+   CLOSED: [2013-02-03 Sun 02:47]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-03 Sun 05:24
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_OLPATH: INTERACTIVE LIVECODING.
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE how to set a local variable with !
+   CLOSED: [2013-02-03 Sun 02:47]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-03 Sun 05:24
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_OLPATH: INTERACTIVE LIVECODING.
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
    :END:
 
