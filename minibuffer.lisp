@@ -30,11 +30,12 @@
     (:super list
      :fields 
      ((orientation :initform :horizontal)
+      (spacing :initform 4)
       (no-background :initform t))
-     :inputs (:project-id (new 'string :read-only t)
-	      :buffer-id (new 'string :read-only t)
-	      :position (new 'string :read-only t)
-	      :mode (new 'string :read-only t))))
+     :inputs (:project-id (new 'label :read-only t)
+	      :buffer-id (new 'label :read-only t)
+	      :position (new 'label :read-only t)
+	      :mode (new 'label :read-only t))))
 
 (define-method update modeline ()
   (set-value %%project-id *project*)
@@ -82,12 +83,14 @@
     (let ((container (get-parent output)))
       (assert container)
       (execute sexp)
-      (let ((new-block 
-	      (when *stack* (make-block (cons 'hlist *stack*)))))
-	  ;; spit out result block, if any
-	  (when new-block 
-	    (accept container new-block)
-	    (unpin new-block))))))
+      ;; add command words
+      (accept container (wordify sexp)))))
+      ;; ;; possibly show stack output
+      ;; (let ((new-block 
+      ;; 	      (when *stack* (wordify *stack*))))
+      ;; 	  ;; spit out result block, if any
+      ;; 	  (when new-block 
+      ;; 	    (accept container new-block))))))
 
 (define-method label-width minibuffer-prompt ()
   (dash 2 (font-text-width *default-prompt-string* *font*)))

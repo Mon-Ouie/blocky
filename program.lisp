@@ -46,29 +46,6 @@
     (:home nil :beginning-of-line)
     (:end nil :end-of-line)))
 
-;;; Plain text entry for program
-
-(defentry word stringp ""
-  (background :initform nil))
-
-(define-method read-expression word (input-string)
-  ;; pass-through; don't read string at all.
-  input-string)
-
-(define-method do-sexp word (sexp)
-  (assert (stringp sexp))
-  (setf %value sexp)
-  (when %parent (child-updated %parent self)))
- 
-(define-method set-value word (value)
-  (assert (stringp value))
-  (setf %value value)
-  (setf %line value))
-
-(define-method forth-value word ()
-  (let ((*read-eval* nil)) 
-    (read-from-string %value)))
-
 (defparameter *cursor-blink-time* 10)
 
 (define-block program

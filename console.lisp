@@ -2477,13 +2477,10 @@ of the music."
     (at-next-update (start-alone buffer))))
 
 (defun make-scratch-buffer ()
-  (let ((buffer (find-buffer "*scratch*" :create t))
-	(program (new 'program)))
+  (let ((buffer (find-buffer "*scratch*" :create t)))
     (visit buffer)
-    (add-object buffer program)
     (setf *font* "sans-mono-bold-12")
-    (grab-focus program)))
-;;      (enter-minibuffer (current-buffer)))))
+    (enter-minibuffer (current-buffer))))
 
 (defun blocky ()
   (with-session

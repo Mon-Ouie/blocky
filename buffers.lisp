@@ -1027,8 +1027,10 @@ block found, or nil if none is found."
 		    (if %object-p
 			(move-to drag drop-x drop-y)
 			(if (null hover)
-			    ;; dropping on background. 
-			    (drop-object self drag)
+			    ;; back in minibuffer
+			    (add-block self drag drop-x drop-y)
+			    ;; ;; dropping on background. 
+			    ;; (drop-object self drag)
 			    ;; dropping on another block
 			    (if (accept hover drag)
 				(invalidate-layout hover)

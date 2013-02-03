@@ -18,11 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary:
-
 (in-package :blocky)
-
-;;; Code:
 
 ;;; Command prompt block
 
@@ -51,6 +47,7 @@
   (point :initform 0 :documentation "Integer index of cursor within prompt line.")
   (line :initform "" :documentation "Currently edited command line.")
   (background :initform t)
+  (methods :initform '(:toggle-read-only))
   (error-output :initform "")
   (minimum-width :initform 100)
   (text-color :initform *default-prompt-text-color*)
@@ -97,11 +94,6 @@
 			    string
 			    (subseq %line %point)))
   (incf %point (length string)))
-  ;; ;; if the insertion ends with a period, also execute the command
-  ;; ;; line.
-  ;; (when (string= "." (subseq string (1- (length string))))
-  ;;   (setf %line (subseq string 0 (1- (length string))))
-  ;;   (execute self)))
 
 (define-method backward-delete-char prompt ()
   (when (< 0 %point) 
@@ -123,19 +115,12 @@
 		  " ~A") line)))
 
 (define-method do-sexp prompt (sexp))
-  ;; (with-fields (receiver) self
-  ;;   (destructuring-bind (operation &rest arguments) sexp
-  ;;     (apply #'send (make-keyword operation) 
-  ;; 	     receiver (mapcar #'eval arguments)))))
 
 (define-method read-expression prompt (input-string)
-  (let* ((*package* (or (find-package (make-block-package))
-			(find-package :blocky)))
-	 (*make-prototype-id-package* *package*))
-    (handler-case 
-	(program-from-string input-string)
-      (condition (c)
-	(format *error-output* "~S" c)))))
+  (handler-case 
+      (program-from-string input-string)
+    (condition (c)
+      (format *error-output* "~S" c))))
 
 (define-method print-expression prompt (sexp)
   (format nil "~S" sexp))
@@ -143,8 +128,7 @@
 (define-method enter prompt (&optional no-clear)
   (labels ((print-it (c) 
 	     (message "~A" c)))
-    (let* ((*read-eval* nil)
-	   (line %line)
+    (let* ((line %line)
 	   (sexp (read-expression self line)))
       (unless no-clear (clear-line self))
       (with-output-to-string (*standard-output*)
@@ -362,17 +346,22 @@
 		     :color %text-color
 		     :font *font*)))))
 
-;;; General-purpose data entry block based on the prompt block.
+;;; General-purpose data entry block
+
+(defun wordp (x) (has-tag x :word))
 
 (define-block (entry :super prompt)
+  (tags :initform '(:word))
   (category :initform :data)
-  (methods :initform '(:toggle-read-only))
   (locked :initform nil)
   (pinned :initform nil)
   (minimum-width :initform 10)
   (text-color :initform *default-entry-text-color*)
   (label-color :initform *default-entry-label-color*)
   type-specifier value)
+
+(define-method alternate-tap entry (x y)
+  (execute-word %value))
 
 (define-method initialize entry 
     (&key value type-specifier options label label-color parent locked
@@ -388,20 +377,23 @@
   ;; fill in the input box with the value
   (setf %line (if (null value)
 		  ""
-		  (if (stringp value)
-		      ;; no extraneous quotes unless it's a general sexp entry
-		      value
-		      (format nil "~S" value))))
+		  (format nil "~S" value)))
+		  ;; (if (stringp value)
+		  ;;     ;; no extraneous quotes unless it's a general sexp entry
+		  ;;     value
+		  ;;     (format nil "~S" value))))
   (setf %label 
 	(or label 
 	    (getf options :label)))
   (when label-color (setf %label-color label-color)))
 
+(define-method set-read-only entry (&optional (value t))
+  (setf %read-only value))
+
 (define-method evaluate entry ()
   %value)
 
 (define-method set-value entry (value)
-  (message "VALUE: ~S" value)
   (setf %value value)
   (setf %line (prin1-to-string value)))
 
@@ -525,18 +517,22 @@
   ;; update the entry value if the user mouses away
   (enter self))
 
-;;; Dropping expressions onto argument inputs
+;;; Dropping expressions into lists
+
+(defun make-phrase (&rest contents) 
+  (let ((phrase (apply #'new 'list contents)))
+    (prog1 phrase
+      (setf (%orientation phrase) :horizontal)
+      (setf (%spacing phrase) 0))))
+
+(defun phrasep (x) (is-a 'list x))
 
 (define-method accept entry (thing)
   (with-fields (parent) self
-    (when (is-a 'arguments parent)
+    (when (phrasep parent)
       (prog1 t
 	(let ((index (position-within-parent self)))
-	  (send :replace-widget parent index
-		(send :schema-widget parent 
-		      (nth index (%schema parent))
-		      :input thing
-		      :force-socket t)))))))
+	  (insert-before parent index thing))))))
 		      
 ;;; Allow dragging the parent block more easily
 
@@ -549,10 +545,6 @@
 
 (define-method type-check entry (datum)
   (typep datum %type-specifier))
-  ;; (with-fields (type-specifier) self
-  ;;   (etypecase type-specifier
-  ;;     (symbol (funcall type-specifier datum))
-  ;;     (list (typep datum type-specifier)))))
 
 (define-method do-after-evaluate entry ()
   ;; print any error output
@@ -576,29 +568,49 @@
   (category :initform :data))
 (defentry positive-integer (integer 1 *) 1)
 (defentry non-negative-integer (integer 0 *) 0)
-
+(defentry string stringp "")
 (defentry expression t nil 
   (category :initform :expression))
 
 (define-method evaluate expression ()
   (eval (get-value self)))
 
-;;; Plain text entry, as a string
-
-(defentry string stringp "")
-
-(define-method read-expression string (input-string)
+;;; String display
+ 
+(defentry label stringp "")
+ 
+(define-method read-expression label (input-string)
   ;; pass-through; don't read string at all.
   input-string)
-
-(define-method do-sexp string (sexp)
+ 
+(define-method do-sexp label (sexp)
   (assert (stringp sexp))
   (setf %value sexp)
   (when %parent (child-updated %parent self)))
- 
-(define-method set-value string (value)
+
+(define-method set-value label (value)
   (when (stringp value)
     (setf %value value)
     (setf %line value)))
+
+;;; Creating word blocks from S-expressions
+ 
+(defparameter *builtin-entry-types* 
+  '(integer float string symbol number))
+ 
+(defun data-block (datum)
+  (let* ((data-type (type-of datum))
+	 (head-type (if (listp data-type)
+			(first data-type)
+			data-type))
+	 (type-specifier 
+	   (if (member head-type *builtin-entry-types* :test 'equal)
+			     head-type data-type)))
+    ;; see also basic.lisp for more on data entry blocks
+    (typecase datum
+      (string (new 'string :value datum))
+      (symbol (new 'symbol :value datum))
+      (number (new 'number :value datum))
+      (otherwise (new 'expression :value datum)))))
 
 ;;; basic.lisp ends here

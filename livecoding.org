@@ -1,11 +1,12 @@
-** TODO watch fluxus / schemebricks videos. 
+** TODO watch fluxus / schemebricks videos.
 *** TODO define-block word <--- visual syntax
 *** TODO if a word is dropped onto a word, insert it before the target in the list
-*** TODO click together words, or type them
+*** TODO click together words visually
 *** TODO right side scrollable word/phrase palette
 *** TODO click to open word halo, control-click or right-click to execute
 *** TODO use existing list UI's, just allow lists of words.
-*** TODO auto-blockify typed words. don't need to break.
+*** TODO show stack in sidebar
+*** TODO f9 or escape to toggle sidebar
 *** TODO flash cursor colors for active drop
 <dto> and the sidebar could be dynamically changed according to context. such
       as if you ask for the list of available buffers, a series of sentences
@@ -15,12 +16,12 @@ http://www.pawfal.org/dave/index.cgi?Projects/BetablockerDS
 . http://www.pawfal.org/dave/blog/2012/10/scheme-bricks-2/
 
 
-
-
 *** TODO ??? cancel the general buffer editor thing. do it later.
 ** TODO [#B] INTERACTIVE LIVECODING.
-*** TODO how to create a named object (buffer local variable)
-*** TODO how to set a local variable with !
+*** DONE how to create a named object (buffer local variable)
+    CLOSED: [2013-02-03 Sun 02:47]
+*** DONE how to set a local variable with !
+    CLOSED: [2013-02-03 Sun 02:47]
 *** TODO set prompt's THIS-context to named object with a command
 *** TODO send it words from the minibuffer 
 *** TODO how to do ANYTHING in the minibuffer 

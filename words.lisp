@@ -1,4 +1,4 @@
-;;; forth.lisp --- forth-style concatenative word language for Blocky
+;;; words.lisp --- forth-style concatenative word language for Blocky
 
 ;; Copyright (C) 2013  David O'Toole
 
@@ -61,21 +61,36 @@
   (assert (symbolp name)) 
   (initialize-words-maybe)
   (setf (gethash (make-keyword name) *words*) definition))
-  ;; (unless (fboundp name)
-  ;;   (export name)))
+
+(defun set-word-property (word property value)
+  (let ((def (word-definition word)))
+    (assert (not (null def)))
+    (setf (getf (word-properties def) property)
+	  value)))
+
+(defun set-word-properties (entries)
+  (dolist (entry entries)
+    (apply #'set-word-property entry)))
 
 (defun forget-word (word)
   (let ((definition (word-definition word)))
     (when (consp (word-body definition))
       (remhash word *words*))))
 
+(defun forget-all-words ()
+  (loop for word being the hash-keys of *words*
+	do (forget-word word)))
+
 (defun primitive-word-p (word)
   (getf (word-properties
 	 (word-definition word))
 	:primitive))
 
+(defun reset-forth-stack ()
+  (setf *stack* nil *program* nil))
+
 (defun reset-forth-interpreter ()
-  (setf *stack* nil *program* nil)
+  (reset-forth-stack)
   (loop for word being the hash-keys of *words* do
     (unless (primitive-word-p word)
       (forget-word word))))
@@ -111,10 +126,6 @@ interpreter."
 
 (define-word forget (word)
   (forget-word word))
-
-(defun forget-all-words ()
-  (loop for word being the hash-keys of *words*
-	do (forget-word word)))
 
 ;;; The interpreter
 
@@ -163,6 +174,20 @@ interpreter."
 
 (defmacro forth (&rest words)
   `(execute ',words))
+		    
+(defun wordify (sexp)
+  (cond
+    ;; pass-through already created objects
+    ((blockyp sexp)
+     sexp) 
+    ;; lists become phrases
+    ((consp sexp)
+     (apply #'make-phrase (mapcar #'wordify sexp)))
+    ;; base case
+    ((not (null sexp)) 
+     (data-block sexp))))
+
+;;; Data flow
 
 (define-word pop () (popf))
 (define-word dup (thing) (pushf thing) (pushf thing))
@@ -541,4 +566,4 @@ interpreter."
 ;;   (forth a robot new)
 ;;   (forth a robot new this fire))
   
-;;; forth.lisp ends here
+;;; words.lisp ends here

@@ -437,7 +437,9 @@ non-nil to indicate that the block was accepted, nil otherwise."
   (set-parent thing self)
   (setf (input self n) thing))
 
-(define-method after-unplug-hook block (input))
+(define-method after-unplug-hook block (parent))
+  ;; (setf %parent nil)
+  ;; (add-object (current-buffer) self))
 
 (define-method unplug block (input)
   "Disconnect the block INPUT from this block."
@@ -447,7 +449,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
       (setf inputs 
 	    (delete input inputs 
 		    :test 'eq :key #'find-object))
-      (after-unplug-hook self input))))
+      (after-unplug-hook input self))))
 
 (define-method unplug-from-parent block ()
   (when %parent
@@ -786,83 +788,6 @@ See `keys.lisp' for the full table of key and modifier symbols.
   "Update the simulation one step forward in time."
   (mapc #'update %inputs))
    
-;;; Creating blocks from S-expressions
- 
-(defun action-spec-p (spec)
-  (and (listp spec)
-       (symbolp (first spec))))
-
-(defun list-spec-p (spec)
-    (and (not (null spec))
-	 (listp spec)))
-
-(defun null-block-spec-p (spec)
-  (and (not (null spec))
-       (listp spec)
-       (= 1 (length spec))
-       (null (first spec))))
-
-;; see also the definition of "entry" blocks in basic.lisp
-
-(defparameter *builtin-entry-types* 
-  '(integer float string symbol number))
- 
-(defun data-block (datum)
-  (let* ((data-type (type-of datum))
-	 (head-type (if (listp data-type)
-			(first data-type)
-			data-type))
-	 (type-specifier 
-	   (if (member head-type *builtin-entry-types* :test 'equal)
-			     head-type data-type)))
-    ;; see also basic.lisp for more on data entry blocks
-    (typecase datum
-      ;; see also the definition of "string" blocks in basic.lisp
-      (string (new 'string :value datum))
-      (symbol (new 'symbol :value datum))
-      (otherwise (new 'entry :value datum :type-specifier type-specifier)))))
-		    
-(defvar *make-block-package* nil)
-
-(defun make-block-package ()
-  (or (project-package) (find-package :blocky)))
-
-(defun make-block (sexp)
-    "Expand VALUE specifying a block diagram into real blocks.
-SEXP is of the form:
-
-  (BLOCK-NAME ARG1 ARG2 ... ARGN)
-
-Where BLOCK-NAME is the name of a prototype defined with `define-block'
-and ARG1-ARGN are numbers, symbols, strings, or nested SEXPS."
-  ;; use labels because we need to call make-block from inside
-  (labels ((action-block (spec)
-	     (destructuring-bind (proto &rest arguments) spec
-	       (let ((prototype 		       
-		      (find-prototype 
-		       (make-prototype-id proto)))
-		     (arg-blocks (mapcar #'make-block arguments)))
-		 ;; (message "arg-blocks ~S" (list (length arg-blocks)
-		 ;; 				(mapcar #'find-uuid arg-blocks)))
-		 (apply #'clone prototype arg-blocks))))
-	   (list-block (items)
-	     (apply #'clone "BLOCKY:LIST" (mapcar #'make-block items))))
-    (let ((result 
-	    (cond ((null-block-spec-p sexp)
-		   (null-block))
-		  ((blockyp sexp) ;; catch UUIDs etc
-		   sexp)
-		  ((stringp sexp)
-		   (new 'string :value sexp))
-		  ((action-spec-p sexp)
-		   (action-block sexp))
-		  ((list-spec-p sexp)
-		   (list-block sexp))
-		  ((not (null sexp)) (data-block sexp)))))
-      (prog1 result
-	(when result
-	  (add-object-to-database (find-object result)))))))
-
 ;;; Block movement
 
 (define-method save-location block ()
@@ -1955,7 +1880,7 @@ Note that the center-points of the objects are used for comparison."
 (defmacro later-while (test-expression &body subtask-expressions)
   `(later ,(make-task-form t test-expression subtask-expressions)))
 
-(define-method damage block (points) nil)
+(define-method after-drop-hook block ())
 
 ;;; A generic color swatch
 
@@ -2011,14 +1936,6 @@ Note that the center-points of the objects are used for comparison."
   "Return the computed result of this block.  By default, all the
 inputs are evaluated."
   (mapcar #'recompile %inputs))
-  ;; (prog1 self
-  ;;   (evaluate-inputs self)))
-
-;; (define-method can-pick list ()
-;;   (not %pinned))
-
-;; (define-method pick list ()
-;;   )
 
 (defparameter *null-display-string* "   ")
 
@@ -2032,7 +1949,7 @@ inputs are evaluated."
 	  (:horizontal :vertical)
 	  (:vertical :horizontal))))
 
-(define-method can-accept block () 
+(define-method can-accept list () 
   (not %frozen))
 
 (define-method accept list (input &optional prepend)
@@ -2123,6 +2040,13 @@ inputs are evaluated."
 	  (:horizontal (layout-horizontally self))
 	  (:vertical (layout-vertically self))))))
 
+(define-method insert-before list (index object)
+  (with-fields (inputs) self
+    (setf inputs
+	  (append (subseq inputs 0 index)
+		  (list object)
+		  (subseq inputs index)))))
+
 (define-method draw-header list () 0)
 
 (define-method draw list ()
@@ -2133,12 +2057,6 @@ inputs are evaluated."
 	(draw-label-string self *null-display-string*)
 	(dolist (each inputs)
 	  (draw each)))))
-  ;; (when (not %frozen)
-  ;;   (draw-indicator :bottom-right-triangle 
-  ;; 		    (+ %x %width (dash -4))
-  ;; 		    (+ %y %height (dash -4))
-  ;; 		    :color "white"
-  ;; 		    :scale 1.5)))
 
 (define-method initialize list (&rest blocks)
   (apply #'block%initialize self blocks))
@@ -2149,49 +2067,12 @@ inputs are evaluated."
 
 (defun null-block () (new 'list))
 
+;;; Horizontal list
+
 (defun hlist (&rest args)
   (let ((list (apply #'new 'list args)))
     (prog1 list 
       (setf (field-value :orientation list) :horizontal))))
-
-;;; Horizontal list
-
-(define-block (hlist :super list)
-  (:category :initform :system)
-  (:orientation :initform :horizontal))
-
-;;; Pseudo quote
-
-(define-method after-drop-hook block ())
-
-(deflist capture
-    (category :initform :structure))
-
-(define-method initialize capture (thing)
-  (assert (blockyp thing))
-  (initialize%super self thing))
-
-(define-method update capture ())
-
-(define-method accept capture (thing))
-
-(define-method after-drop-hook capture ()
-  (let ((thing (first %inputs)))
-    (unplug self thing)
-    (add-object (current-buffer) thing)
-    (destroy self)))
-
-(define-method hit capture (mouse-x mouse-y) 
-  (with-fields (x y width height inputs) self
-    (when (within-extents mouse-x mouse-y x y
-			  (+ x width) (+ y height))
-      self)))
-
-(define-method pick capture () self)
-
-(defun capture (thing)
-  (new 'capture thing))
-
 
 ;;; blocks.lisp ends here
  
