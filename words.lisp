@@ -405,7 +405,7 @@ interpreter."
 (define-word center ()
   (with-fields (x y width height) *self*
     (pushf (+ x (/ width 2)))
-    (pushf (+ y (/ height 2)))
+    (pushf (+ y (/ height 2)))))
 
 (define-word leftward (x y)
   (execute `(,x :width @ - ,y))) 
@@ -486,7 +486,7 @@ interpreter."
 (define-word without-antialiased-text () (setf *use-antialiased-text* nil))
 (define-word without-key-repeat () (disable-key-repeat))
 (define-word frame-rate! (n) (set-frame-rate n))
-(define-word timestep! (n) (setf *dt* n))
+;; (define-word timestep! (n) (setf *dt* n))
 
 (define-word scale (x y)
   (scale *self* x y))
@@ -509,6 +509,7 @@ interpreter."
 
 (define-word save ()
   (save-project-image))
+
 
 (define-word close ()
   (save-project-image)
