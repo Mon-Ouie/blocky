@@ -398,8 +398,14 @@ interpreter."
 (define-word drop (thing x y)
   (drop-at *self* thing x y))
 
-(forth define here :x @ :y @)
-(forth define center :x @ 2 / :y @ 2 /)
+(define-word here ()
+  (pushf (%x *self*))
+  (pushf (%y *self*)))
+
+(define-word center ()
+  (with-fields (x y width height) *self*
+    (pushf (+ x (/ width 2)))
+    (pushf (+ y (/ height 2)))
 
 (define-word leftward (x y)
   (execute `(,x :width @ - ,y))) 
@@ -435,10 +441,10 @@ interpreter."
     (cons (grab-next-word) 
 	  (grab-next-word)))))
 
-(forth define image resource)
-(forth define sample resource)
-(forth define music resource)
-(forth define ttf resource)
+(define-word image () (execute '(resource)))
+(define-word sample () (execute '(resource)))
+(define-word music () (execute '(resource)))
+(define-word ttf () (execute '(resource)))
 
 ;; examples:
 ;;    image "player.png" ()

@@ -377,7 +377,11 @@
   ;; fill in the input box with the value
   (setf %line (if (null value)
 		  ""
-		  (format nil "~S" value)))
+		  ;; don't print symbol package names
+		  (if (and (symbolp value)
+			   (not (keywordp value)))
+		      (symbol-name value)
+		      (format nil "~S" value))))
 		  ;; (if (stringp value)
 		  ;;     ;; no extraneous quotes unless it's a general sexp entry
 		  ;;     value
@@ -608,8 +612,9 @@
 			     head-type data-type)))
     ;; see also basic.lisp for more on data entry blocks
     (typecase datum
+      ;; symbols not editable by default
+      (symbol (new 'symbol :value datum :read-only t))
       (string (new 'string :value datum))
-      (symbol (new 'symbol :value datum))
       (number (new 'number :value datum))
       (otherwise (new 'expression :value datum)))))
 
