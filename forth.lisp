@@ -43,23 +43,42 @@
 	    (push word words))))
     (nreverse words)))
 
-(defun initialize-words ()
-  ;; words are symbols so we use 'eq
-  (setf *words* (make-hash-table :test 'eq)))
+(defun initialize-words-maybe (&optional force)
+  (when (or force (null *words*))
+    ;; words are symbols so we use 'eq
+    (setf *words* (make-hash-table :test 'eq))))
 
-(initialize-words)
+(initialize-words-maybe)
 
 (defstruct word name body properties arguments)
 
 (defun word-definition (word)
+  (initialize-words-maybe)
   (gethash (make-keyword word) *words*))
 
 (defun set-word-definition (name definition)
   (assert (not (null name)))
   (assert (symbolp name)) 
-  (setf (gethash (make-keyword name) *words*) definition)
-  (unless (fboundp name)
-    (export name)))
+  (initialize-words-maybe)
+  (setf (gethash (make-keyword name) *words*) definition))
+  ;; (unless (fboundp name)
+  ;;   (export name)))
+
+(defun forget-word (word)
+  (let ((definition (word-definition word)))
+    (when (consp (word-body definition))
+      (remhash word *words*))))
+
+(defun primitive-word-p (word)
+  (getf (word-properties
+	 (word-definition word))
+	:primitive))
+
+(defun reset-forth-interpreter ()
+  (setf *stack* nil *program* nil)
+  (loop for word being the hash-keys of *words* do
+    (unless (primitive-word-p word)
+      (forget-word word))))
 
 (defmacro define-word (name arguments &body body)
   "Define a primitive word called NAME with Lisp code.
@@ -70,10 +89,11 @@ interpreter."
     ',name
     (make-word :name ',name
 	       :arguments ',arguments
+	       :properties '(:primitive t)
 	       :body #'(lambda ,arguments ,@body))))
 
 (defun define-program-word (name program)
-  "Define a word as a sequence of words."
+  "Define a word as a non-primitive sequence of words."
   (set-word-definition 
    name
    (make-word :name name
@@ -88,11 +108,6 @@ interpreter."
   (destructuring-bind (name &rest definition) 
       (grab-until-end)
     (define-program-word name definition)))
-
-(defun forget-word (word)
-  (let ((definition (word-definition word)))
-    (when (consp (word-body definition))
-      (remhash word *words*))))
 
 (define-word forget (word)
   (forget-word word))
@@ -186,6 +201,9 @@ interpreter."
 
 ;;; Accessing fields and local variables.
 
+(define-word local ()
+  (set-buffer-variable (grab-next-word) nil))
+
 (define-word @ (var)
   (multiple-value-bind (value present-p)
       (buffer-variable var)
@@ -205,7 +223,7 @@ interpreter."
 
 (define-word new () (pushf (new (popf))))
 (define-word self () (pushf *self*))
-(define-word this () (setf *self* (popf)))
+(define-word with () (setf *self* (popf)))
 
 ;; articles quote the next word.
 ;; examples:
@@ -321,8 +339,15 @@ interpreter."
 (define-word move (heading distance) 
   (move *self* heading distance))
 
+(define-word pi () (pushf pi))
+
+(define-word degrees (n)
+  (pushf (radian-angle n)))
+
+(define-word radians ())
+
 (define-word forward () (pushf (field-value :heading *self*)))
-(define-word backward () (pushf (- (* 2 pi) (field-value :heading *self*))))
+(define-word backward () (pushf (- pi (field-value :heading *self*))))
 
 (define-word toward (thing) 
   (pushf (heading-to-thing *self* thing)))
@@ -330,15 +355,15 @@ interpreter."
 (define-word distance (thing)
   (pushf (distance-between *self* thing)))
 	 
-(define-word left (deg) (pushf (- (radian-angle deg))))
-(define-word right (deg) (pushf (radian-angle deg)))
+(define-word left (angle) (pushf (- angle)))
+(define-word right (angle) (pushf angle))
 
 (define-word aim (heading)
   (setf (field-value :heading *self*)
 	heading))
 
 ;; examples: 
-;;   90 left aim
+;;   90 degrees left aim
 ;;   30 80 goto
 ;;   forward 10 move
 ;;   backward aim

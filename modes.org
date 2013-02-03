@@ -1,3 +1,23 @@
+** TODO watch fluxus / schemebricks videos. 
+*** TODO define-block word <--- visual syntax
+*** TODO if a word is dropped onto a word, insert it before the target in the list
+*** TODO click together words, or type them
+*** TODO right side scrollable word/phrase palette
+*** TODO click to open word halo, control-click or right-click to execute
+*** TODO use existing list UI's, just allow lists of words.
+*** TODO auto-blockify typed words. don't need to break.
+*** TODO flash cursor colors for active drop
+<dto> and the sidebar could be dynamically changed according to context. such
+      as if you ask for the list of available buffers, a series of sentences
+      could pop up in the right side
+ah i like the idea of Minimizing word defs that you're not editing.
+http://www.pawfal.org/dave/index.cgi?Projects/BetablockerDS
+. http://www.pawfal.org/dave/blog/2012/10/scheme-bricks-2/
+
+
+
+
+*** TODO ??? cancel the general buffer editor thing. do it later.
 ** TODO [#B] INTERACTIVE LIVECODING.
 *** TODO how to create a named object (buffer local variable)
 *** TODO how to set a local variable with !
@@ -9,6 +29,8 @@
 *** TODO implement SEE to show a definition's body
 *** TODO implement AS to change 
 *** TODO [#B] add context sensitive help: describe <WORD>
+*** TODO sine/cosine
+*** TODO [#B] word menu, traditional application menu bar
 
 a robot having (bullets hp) is a block
 
@@ -20,6 +42,7 @@ end
 
 to fire a robot do
 bullet new drop 
+end
 
 local :bob
 robot new :bob ! 

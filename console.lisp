@@ -2350,7 +2350,7 @@ of the music."
   (print-copyright-notice)
   (setf *blocks* nil
 	*buffer* nil
-	*project* nil
+ 	*project* nil
 	*clipboard* nil
 	*event-hook* nil
 	*minibuffer* nil
@@ -2360,6 +2360,7 @@ of the music."
 	*updates* 0
 	*resizable* t
 	*random-state* (make-random-state t))
+  (reset-forth-interpreter)
   (sdl:init-sdl :video t :audio t :joystick t)
   (load-user-init-file) ;; this step may override *project-directories* and so on 
   (initialize-resource-table)
