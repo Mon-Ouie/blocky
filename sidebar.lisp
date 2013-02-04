@@ -30,6 +30,12 @@
   (row :initform 0)
   (displayed-rows :initform 0))
 
+;; (defparameter *sidebar-phrases*
+;;   '((define "" 
+
+;; (defun all-sidebar-phrases ()
+;;   (append 
+
 (define-method initialize sidebar ()
   (with-fields (inputs) self
     (setf inputs (mapcar #'make-phrase (all-words)))
@@ -81,15 +87,18 @@
 (define-method draw-hover sidebar ())
 
 (define-method pick sidebar ()
-  (labels ((try (it)
-	     (hit it (window-pointer-x) (window-pointer-y))))
-    (let ((word (some #'try (subseq %inputs %row (+ %row %displayed-rows)))))
-      (when word
-	(let ((word2 (duplicate word)))
-	  (setf (%parent word2) nil)
-	  word2)))))
-
-(define-method draw sidebar ()
+  (let ((x (window-pointer-x))
+	(y (window-pointer-y)))
+    (labels ((try (it)
+	       (hit it x y)))
+      (let ((word (some #'try (subseq %inputs %row (+ %row %displayed-rows)))))
+	(when word
+	  (let ((word2 (duplicate-phrase word)))
+	    (setf (%parent word2) nil)
+	    (move-to word2 (%x word) (%y word))
+	     word2))))))
+    
+    (define-method draw sidebar ()
   (with-fields (inputs row displayed-rows x y height width) self
     (draw-box x y width height :color "gray20" :alpha 0.5)
     (dotimes (n displayed-rows)

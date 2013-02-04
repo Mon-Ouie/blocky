@@ -441,16 +441,8 @@
   (unless %locked
     (setf %read-only (if %read-only nil t))))
 
-(define-method label-width entry ()
-  (dash 1 (font-text-width (label-string self) *font*)))
-
-(define-method draw-label entry ()
-  (when %label
-    (draw-string %label
-		 (+ (dash 1 %x))
-		    *text-baseline*
-		 :color (find-color self :foreground)
-		 :font *font*)))
+(define-method label-width entry () 0)
+(define-method draw-label entry ())
 		 
 (define-method draw entry (&optional nolabel)
   (with-fields (x y options read-only 
@@ -486,7 +478,7 @@
       (let ((*text-baseline* (+ y (dash 1))))
 	(unless (zerop (length line))
 	  (draw-string line
-		       (+ (dash 1 x) (label-width self))
+		       (dash 1 x)
 		       *text-baseline*
 		       :color *default-prompt-text-color*
 		       :font *font*))
@@ -494,14 +486,14 @@
 	(update-cursor-clock self)
 	(draw-cursor self 
 		     :x-offset
-		     (dash 2 (font-text-width (label-string self) *font*))
+		     (dash 1)
 		     :blink t)))))
   
 (define-method draw-point entry ()
   (with-fields (x y width height) self
     (draw-box x y width height 
-	      :color  (random-choose '("cyan" "magenta"))
-	      :alpha 0.4)))
+	      :color "white"
+	      :alpha (min 0.7 (+ 0.2 (sin (/ *updates* 2)))))))
 
 (define-method do-sexp entry (sexp)
   (with-fields (value type-specifier parent) self

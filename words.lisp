@@ -207,11 +207,16 @@ interpreter."
     ((not (null sexp)) 
      (data-block sexp))))
 
-;; (defun compile-phrase (phrase)
-;;   (assert (phrasep
-;;   (with-fields (inputs) phrase
-;;     (if (phrasep (first inputs))
-;; 	(apply #'append 
+(defun compile-phrase (phrase)
+  (with-fields (inputs) phrase
+    (if (phrasep phrase)
+	(if (phrasep (first inputs))
+	    (mapcar #'compile-phrase inputs)
+	    (mapcar #'%value inputs))
+	(%value phrase))))
+
+(defun duplicate-phrase (phrase)
+  (make-phrase (compile-phrase phrase)))
 
 (defun all-words ()
   (initialize-words-maybe)

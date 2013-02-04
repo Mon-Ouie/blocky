@@ -1,15 +1,12 @@
+*** TODO add basic datatypes and other phrases to the sidebar dictionary list
+
 *** TODO flesh out generic word-and-body block for things like "define"
 **** TODO  draw paragraph as a scheme-bricks-style bracket
 ***** TODO shades of gray for nesting, not color
 
-*** TODO be able to blockify  ((DEFINE "") (.....) (....))
-    And then get back DEFINE name FOO BAR BAZ END
-**** TODO simplify defining objects and methods ... overload DEFINE?
-
 *** TODO sentence block is mostly invisible itself, small handle
 **** TODO tap/drag selects whole sentence by default
 **** TODO middle mouse button to override and select by "raw hit"
-*** TODO add basic datatypes and other phrases to the sidebar dictionary list
 
 *** TODO left-drag to move blocks
 *** TODO click to select block
@@ -317,4 +314,14 @@ the current block. like Bold Italic.
    :ARCHIVE_CATEGORY: livecoding
    :ARCHIVE_TODO: DONE
    :END:
+
+** TODO be able to blockify  ((DEFINE "") (.....) (....))
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-04 Mon 04:07
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: TODO
+   :END:
+   And then get back DEFINE name FOO BAR BAZ END
+*** TODO simplify defining objects and methods ... overload DEFINE?
 
