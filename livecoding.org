@@ -1,18 +1,31 @@
+*** TODO review videos.
+*** TODO add basic datatypes to the list
 
-*** DONE prompt goes back to executing words and showing one stack output.
-    CLOSED: [2013-02-03 Sun 22:59]
-*** TODO change minibuffer into right side scrollable word/phrase palette
-*** TODO pops up when you go to top right corner w mouse?
-**** TODO alphabetical order dictionary
-**** TODO mousewheel capable!
-*** TODO f9 or escape to toggle sidebar
+*** TODO generic word-and-body block for things like "define"
+**** TODO simplify defining objects and methods ... overload DEFINE?
+
+
+*** TODO sidebar pops up when you go near right edge
+*** TODO left-drag to move blocks
+*** TODO click to select block
+**** TODO selected block highlights in sine oscillating white/gray or color
+*** TODO x to execute selected word/block
+*** TODO control-click to execute block without selecting
+*** TODO delete deletes selected block
+*** TODO c copy of selected block 
+*** TODO undo and redo
+*** TODO sentence block is mostly invisible itself, small handle
+**** TODO tap/drag selects whole sentence by default
+**** TODO middle mouse button to override and select by "raw hit"
+
+*** TODO control-r to rotate orientation of selected block
+*** TODO merge sentences/bodies when dropping sentence
+
+*** TODO improved block appearance with schemebricks-style typing
 
 *** TODO make music with blockyforth ... ambient at first.
 
 *** TODO able to click/grab/edit/copy blockified forth commands
-
-*** TODO generic word-and-body block for things like "define"
-**** TODO simplify defining objects and methods ... overload DEFINE?
 
 *** TODO [#B] show stack in sidebar
 *** TODO every-frame
@@ -265,5 +278,39 @@ the current block. like Bold Italic.
    :ARCHIVE_FILE: ~/blocky/livecoding.org
    :ARCHIVE_CATEGORY: livecoding
    :ARCHIVE_TODO: TODO
+   :END:
+** DONE prompt goes back to executing words and showing one stack output.
+   CLOSED: [2013-02-03 Sun 22:59]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-04 Mon 00:48
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE change minibuffer into right side scrollable word/phrase palette
+   CLOSED: [2013-02-04 Mon 00:48]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-04 Mon 00:48
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE alphabetical order dictionary
+   CLOSED: [2013-02-04 Mon 00:48]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-04 Mon 00:48
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_OLPATH: pops up when you go to top right corner w mouse?
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
+   :END:
+** DONE mousewheel capable!
+   CLOSED: [2013-02-04 Mon 00:48]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-04 Mon 00:48
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_OLPATH: pops up when you go to top right corner w mouse?
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
    :END:
 
