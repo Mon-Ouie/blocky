@@ -174,18 +174,44 @@ interpreter."
 
 (defmacro forth (&rest words)
   `(execute ',words))
-		    
-(defun wordify (sexp)
+
+(defun make-sentence (contents) 
+  (let ((phrase (apply #'new 'list contents)))
+    (prog1 phrase
+      (setf (%orientation phrase) :horizontal)
+      (setf (%dash phrase) 1)
+      (setf (%spacing phrase) 0))))
+
+(defun make-paragraph (contents) 
+  (let ((body (apply #'new 'list contents)))
+    (prog1 body
+      (setf (%orientation body) :vertical)
+      (setf (%dash body) 1)
+      (setf (%spacing body) 0))))
+
+(defun phrasep (x) (is-a 'list x))
+
+(defun make-phrase (sexp)
   (cond
     ;; pass-through already created objects
     ((blockyp sexp)
      sexp) 
     ;; lists become phrases
     ((consp sexp)
-     (apply #'make-phrase (mapcar #'wordify sexp)))
+     (funcall 
+      (if (consp (first sexp))
+	  #'make-paragraph
+	  #'make-sentence)
+      (mapcar #'make-phrase sexp)))
     ;; base case
     ((not (null sexp)) 
      (data-block sexp))))
+
+;; (defun compile-phrase (phrase)
+;;   (assert (phrasep
+;;   (with-fields (inputs) phrase
+;;     (if (phrasep (first inputs))
+;; 	(apply #'append 
 
 (defun all-words ()
   (initialize-words-maybe)

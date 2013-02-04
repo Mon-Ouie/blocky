@@ -39,6 +39,8 @@
 
 (in-package :blocky) 
 
+(defsetf point set-point)
+
 (defvar *sidebar* nil)
 
 (defvar *sidebar-open-p* nil)

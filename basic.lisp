@@ -346,7 +346,7 @@
 		     :color %text-color
 		     :font *font*)))))
 
-;;; General-purpose data entry block
+;;; General-purpose data entry block for any type of word
 
 (defun wordp (x) (has-tag x :word))
 
@@ -360,8 +360,27 @@
   (label-color :initform *default-entry-label-color*)
   type-specifier value)
 
+(define-method tap entry (x y)
+  (setf (point) self))
+
+(define-method scroll-tap entry (x y))
+
+(define-method start-editing entry ()
+  (set-read-only self nil)
+  (grab-focus self))
+
+(define-method finish-editing entry ()
+  (set-read-only self t))
+
 (define-method alternate-tap entry (x y)
-  (execute-word %value))
+  (start-editing self))
+
+(define-method do-after-evaluate entry ()
+  (finish-editing self))
+
+(define-method lose-focus entry ()
+  ;; update the entry value if the user mouses away
+  (enter self))
 
 (define-method initialize entry 
     (&key value type-specifier options label label-color parent locked
@@ -417,17 +436,6 @@
   
 (define-method pick entry ()
   (if %pinned %parent self))
-
-;; (define-method can-pick entry () 
-;;   (if (is-a 'arguments %parent)
-;;       t
-;;       (can-pick%super self)))
-
-;; (define-method can-pick entry () 
-;; (define-method pick entry ()
-;;   (if (is-a 'arguments %parent)
-;;       %parent
-;;       (pick%super self)))
       
 (define-method toggle-read-only entry ()
   (unless %locked
@@ -444,12 +452,6 @@
 		 :color (find-color self :foreground)
 		 :font *font*)))
 		 
-  ;; (draw-string (label-string self)
-  ;; 	       (dash 1 %x)
-  ;; 	       (+ %y (dash 1))
-  ;; 	       :color %label-color
-  ;; 	       :font *font*))
-
 (define-method draw entry (&optional nolabel)
   (with-fields (x y options read-only 
 		  text-color width background
@@ -463,10 +465,11 @@
 	    (draw-label self))
 	  ;; draw shaded area for input
 	  (when (or (not background)
+		    (not (phrasep %parent))
 		    (not read-only))
-	    (draw-input-area self :inactive)
-	    ;; draw indicators
-	    (draw-indicators self :inactive)))
+	    (draw-input-area self :inactive)))
+	    ;; ;; draw indicators
+	    ;; (draw-indicators self :inactive)))
 	;; draw current input string
 	(when (null line) (setf line ""))
 	(unless (zerop (length line))
@@ -494,6 +497,12 @@
 		     (dash 2 (font-text-width (label-string self) *font*))
 		     :blink t)))))
   
+(define-method draw-point entry ()
+  (with-fields (x y width height) self
+    (draw-box x y width height 
+	      :color  (random-choose '("cyan" "magenta"))
+	      :alpha 0.4)))
+
 (define-method do-sexp entry (sexp)
   (with-fields (value type-specifier parent) self
     (assert (and (listp sexp) (= 1 (length sexp))))
@@ -511,25 +520,13 @@
 
 (define-method layout entry ()
   (with-fields (height width value line) self
-    (setf height (+ (* 1 *dash*) (font-height *font*)))
-    (setf width (+ (* 2 *dash*)
+    (setf height (+ 1 (* 1 *dash*) (font-height *font*)))
+    (setf width (+ 1 (* 2 *dash*)
 		   (label-width self)
 		   (max %minimum-width
 			(font-text-width line *font*))))))
 
-(define-method lose-focus entry ()
-  ;; update the entry value if the user mouses away
-  (enter self))
-
-;;; Dropping expressions into lists
-
-(defun make-phrase (&rest contents) 
-  (let ((phrase (apply #'new 'list contents)))
-    (prog1 phrase
-      (setf (%orientation phrase) :horizontal)
-      (setf (%spacing phrase) 0))))
-
-(defun phrasep (x) (is-a 'list x))
+;;; Dropping words into phrases
 
 (define-method accept entry (thing)
   (with-fields (parent) self
@@ -550,11 +547,10 @@
 (define-method type-check entry (datum)
   (typep datum %type-specifier))
 
-(define-method do-after-evaluate entry ()
-  ;; print any error output
-  (when (and (stringp %error-output)
-	     (plusp (length %error-output)))
-    (add-block (current-buffer) (new 'text %error-output) *pointer-x* *pointer-y*)))
+;; ;; print any error output
+;;   (when (and (stringp %error-output)
+;; 	     (plusp (length %error-output)))
+;;     (add-block (current-buffer) (new 'text %error-output) *pointer-x* *pointer-y*)))
 
 ;;; Easily defining new entry blocks
 

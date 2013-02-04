@@ -1,24 +1,28 @@
-*** TODO review videos.
-*** TODO add basic datatypes to the list
+*** TODO flesh out generic word-and-body block for things like "define"
+**** TODO  draw paragraph as a scheme-bricks-style bracket
+***** TODO shades of gray for nesting, not color
 
-*** TODO generic word-and-body block for things like "define"
+*** TODO be able to blockify  ((DEFINE "") (.....) (....))
+    And then get back DEFINE name FOO BAR BAZ END
 **** TODO simplify defining objects and methods ... overload DEFINE?
 
-
-*** TODO sidebar pops up when you go near right edge
-*** TODO left-drag to move blocks
-*** TODO click to select block
-**** TODO selected block highlights in sine oscillating white/gray or color
-*** TODO x to execute selected word/block
-*** TODO control-click to execute block without selecting
-*** TODO delete deletes selected block
-*** TODO c copy of selected block 
-*** TODO undo and redo
 *** TODO sentence block is mostly invisible itself, small handle
 **** TODO tap/drag selects whole sentence by default
 **** TODO middle mouse button to override and select by "raw hit"
+*** TODO add basic datatypes and other phrases to the sidebar dictionary list
 
-*** TODO control-r to rotate orientation of selected block
+*** TODO left-drag to move blocks
+*** TODO click to select block
+*** TODO right click to edit block text (where applicable)
+**** TODO selected block highlights in sine oscillating white/gray or color
+*** TODO sidebar pops up when you go near right edge, or use mouse wheel
+*** TODO x to execute selected word/block
+*** TODO control-click to execute block without selecting
+*** TODO delete deletes selected block
+*** TODO c puts copy of selected block at mouse pointer
+*** TODO undo and redo
+
+*** TODO control-r to ro [[horizontal]] tate orientation of selected block
 *** TODO merge sentences/bodies when dropping sentence
 
 *** TODO improved block appearance with schemebricks-style typing

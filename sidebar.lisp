@@ -21,7 +21,7 @@
 (in-package :blocky)
 
 (defparameter *sidebar-enter-sensitivity* 12)
-(defparameter *sidebar-minimum-width* 220)
+(defparameter *sidebar-minimum-width* 180)
 (defparameter *sidebar-margin* 16)
 (defparameter *sidebar-spacing* 3)
 (defparameter *sidebar-scroll-speed* 3)
@@ -32,7 +32,7 @@
 
 (define-method initialize sidebar ()
   (with-fields (inputs) self
-    (setf inputs (mapcar #'wordify (all-words)))
+    (setf inputs (mapcar #'make-phrase (all-words)))
     (dolist (input inputs)
       (setf (%parent input) self))))
 

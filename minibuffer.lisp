@@ -85,13 +85,13 @@
       (execute sexp)
       ;; eval and possibly stack output
       (let ((new-block 
-      	      (when *stack* (wordify *stack*))))
+      	      (when *stack* (make-phrase *stack*))))
       	  ;; spit out result block, if any
       	  (when new-block 
       	    (accept container new-block))))))
 
       ;; ;; add command words
-      ;; (accept container (wordify sexp)))))
+      ;; (accept container ( sexp)))))
 
 (define-method label-width minibuffer-prompt ()
   (dash 2 (font-text-width *default-prompt-string* *font*)))

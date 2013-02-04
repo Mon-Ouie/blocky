@@ -23,7 +23,8 @@
 (define-block buffer
   (variables :initform nil 
 	     :documentation "Hash table mapping values to values, local to the current buffer.")
-  (cursor :documentation "The cursor object, if any.")
+  (cursor :initform nil)
+  (point :initform nil :documentation "The currently highlighted word.")
   (modified-p :initform nil)
   (followed-object :initform nil)
   (background-image :initform nil)
@@ -79,7 +80,7 @@
   ;; prototype control
   (excluded-fields :initform
 		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :sidebar :drag :hover :highlight 
-		     ;; sidebar objects are not saved:
+		     ;; program objects are not saved:
 		     :inputs)
 		   :documentation "Don't serialize the menu bar.")
   (field-collection-type :initform :hash)
@@ -150,6 +151,12 @@
   (setf %buffer-name name)
   (when name
     (add-buffer name self)))
+
+(defun point ()
+  (%point (current-buffer)))
+
+(defun set-point (word)
+  (setf (%point (current-buffer)) word))
 
 ;; Defining and scrolling the screen viewing window
 
@@ -649,7 +656,7 @@ slowdown. See also quadtree.lisp")
 	      (+ height (* border 2))
 	      (+ width (* border 2))))))
 
-;;; The Sidebar is an optional layer of objects on top of the buffer
+;;; The Program is an optional layer of objects on top of the buffer
 
 (define-method add-sidebar-maybe buffer (&optional force)
   (when (or force (null *sidebar*))
@@ -681,19 +688,18 @@ slowdown. See also quadtree.lisp")
 
 (define-method grab-focus buffer ())
 
-(define-method layout-sidebar-objects buffer ()
+(define-method layout-program-objects buffer ()
   (mapc #'layout %inputs))
 
-(define-method update-sidebar-objects buffer ()
-  (mapc #'update %inputs)
-  (when *sidebar* (update *sidebar*)))
+(define-method update-program-objects buffer ()
+  (mapc #'update %inputs))
 
-(define-method draw-sidebar-objects buffer ()
+(define-method draw-program-objects buffer ()
   (with-buffer self
     (with-fields (drag-start drag focused-block
-			 highlight inputs hover
+			 highlight inputs hover point
 			 ghost prompt) self
-      ;; now start drawing the sidebar objects
+      ;; now start drawing the program objects
       (mapc #'draw inputs)
       ;; draw any future
       (when %future
@@ -717,9 +723,10 @@ slowdown. See also quadtree.lisp")
 	(assert (blockyp focused-block))
 	(draw-focus focused-block))
       (when highlight
-	(draw-highlight highlight)))))
+	(draw-highlight highlight))
+      (when point (draw-point point)))))
 
-(define-method draw-sidebars buffer ())
+(define-method draw-programs buffer ())
 
 (define-method draw buffer ()
   (with-buffer self
@@ -750,8 +757,8 @@ slowdown. See also quadtree.lisp")
 	(assert (blockyp focused-block))
 	(draw-focus focused-block))
       (if *sidebar-open-p* 
-      	  (draw-sidebar-objects self)
-      	  (draw-sidebars self)))))
+      	  (draw-program-objects self)
+      	  (draw-programs self)))))
       ;; (if %parent
       ;; 	  (gl:pop-matrix)
       ;; possibly draw sidebar
@@ -790,13 +797,14 @@ slowdown. See also quadtree.lisp")
 	    (unless (eq :passive (field-value :collision-type object))
 	      (quadtree-collide object))))))
     ;; now outside the quadtree,
-    ;; possibly update the sidebar layer
+    ;; possibly update the program layer
     (with-buffer self
       (when *sidebar-open-p*
 	(with-quadtree nil
 	  (layout self)
-	  (layout-sidebar-objects self)
-	  (update-sidebar-objects self))))))
+	  (layout-program-objects self)
+	  (update-program-objects self)
+	  (when *sidebar* (update *sidebar*)))))))
 
 (define-method evaluate buffer ()
   (prog1 self
@@ -1027,7 +1035,7 @@ block found, or nil if none is found."
 		    (if %object-p
 			(move-to drag drop-x drop-y)
 			(if (null hover)
-			    ;; back in sidebar
+			    ;; back in program
 			    (add-block self drag drop-x drop-y)
 			    ;; ;; dropping on background. 
 			    ;; (drop-object self drag)
@@ -1035,7 +1043,7 @@ block found, or nil if none is found."
 			    (if (accept hover drag)
 				(invalidate-layout hover)
 				;; hovered block did not accept drag. 
-				;; drop it back in the sidebar layer.
+				;; drop it back in the program layer.
 				(add-block self drag drop-x drop-y))))))
 	      ;; select the dropped block
 	      (progn 

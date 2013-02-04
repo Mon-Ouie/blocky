@@ -1066,7 +1066,7 @@ you want to align a group of text items across layouts.")
     :menu "white"
     :hover "red"
     :socket "gray60"
-    :data "gray50"
+    :data "gray30"
     :structure "gray50"
     :comment "khaki1"
     :looks "purple"
