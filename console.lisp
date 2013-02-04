@@ -39,9 +39,9 @@
 
 (in-package :blocky) 
 
-(defvar *minibuffer* nil)
+(defvar *sidebar* nil)
 
-(defvar *minibuffer-open-p* nil)
+(defvar *sidebar-open-p* nil)
 
 (defvar *gl-window-open-p* nil)
 
@@ -2353,8 +2353,8 @@ of the music."
  	*project* nil
 	*clipboard* nil
 	*event-hook* nil
-	*minibuffer* nil
-	*minibuffer-open-p* nil
+	*sidebar* nil
+	*sidebar-open-p* nil
 	*message-hook-functions* nil
 	*window-title* "Blocky"
 	*updates* 0
@@ -2386,8 +2386,8 @@ of the music."
   (sdl-mixer:close-audio t)
   (setf *buffer* nil)
   (setf *blocks* nil)
-  (setf *minibuffer* nil)
-  (setf *minibuffer-open-p* nil)
+  (setf *sidebar* nil)
+  (setf *sidebar-open-p* nil)
   (setf *clipboard* nil)
   (setf *dt* nil)
   (setf *frame-rate* *default-frame-rate*)
@@ -2479,8 +2479,8 @@ of the music."
 (defun make-scratch-buffer ()
   (let ((buffer (find-buffer "*scratch*" :create t)))
     (visit buffer)
-    (setf *font* "sans-mono-bold-12")
-    (enter-minibuffer (current-buffer))))
+    (setf *font* "sans-mono-12")
+    (enter-sidebar (current-buffer))))
 
 (defun blocky ()
   (with-session

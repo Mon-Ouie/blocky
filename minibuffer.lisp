@@ -83,14 +83,15 @@
     (let ((container (get-parent output)))
       (assert container)
       (execute sexp)
-      ;; add command words
-      (accept container (wordify sexp)))))
-      ;; ;; possibly show stack output
-      ;; (let ((new-block 
-      ;; 	      (when *stack* (wordify *stack*))))
-      ;; 	  ;; spit out result block, if any
-      ;; 	  (when new-block 
-      ;; 	    (accept container new-block))))))
+      ;; eval and possibly stack output
+      (let ((new-block 
+      	      (when *stack* (wordify *stack*))))
+      	  ;; spit out result block, if any
+      	  (when new-block 
+      	    (accept container new-block))))))
+
+      ;; ;; add command words
+      ;; (accept container (wordify sexp)))))
 
 (define-method label-width minibuffer-prompt ()
   (dash 2 (font-text-width *default-prompt-string* *font*)))

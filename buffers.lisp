@@ -65,7 +65,7 @@
 		  '(((:pause) :transport-toggle-play)
 		  ;; '(((:tab) :tab)
 		  ;;   ((:tab :shift) :backtab)
-		    ((:x :alt) :enter-minibuffer)
+		    ((:x :alt) :enter-sidebar)
 		    ((:x :control) :cut)
 		    ((:c :control) :copy)
 		    ((:v :control) :paste)
@@ -73,13 +73,13 @@
 		    ((:g :control) :escape)
 		    ((:escape) :escape)
 		    ((:d :control) :drop-selection)))
-		    ;; ((:f10) :toggle-minibuffer)
+		    ;; ((:f10) :toggle-sidebar)
 		    ;; ((:f12) :toggle-other-windows)
 		    ;; ))
   ;; prototype control
   (excluded-fields :initform
-		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :minibuffer :drag :hover :highlight 
-		     ;; minibuffer objects are not saved:
+		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :sidebar :drag :hover :highlight 
+		     ;; sidebar objects are not saved:
 		     :inputs)
 		   :documentation "Don't serialize the menu bar.")
   (field-collection-type :initform :hash)
@@ -649,51 +649,51 @@ slowdown. See also quadtree.lisp")
 	      (+ height (* border 2))
 	      (+ width (* border 2))))))
 
-;;; The Minibuffer is an optional layer of objects on top of the buffer
+;;; The Sidebar is an optional layer of objects on top of the buffer
 
-(define-method add-minibuffer-maybe buffer (&optional force)
-  (when (or force (null *minibuffer*))
-    (setf *minibuffer* (new 'minibuffer))))
+(define-method add-sidebar-maybe buffer (&optional force)
+  (when (or force (null *sidebar*))
+    (setf *sidebar* (new 'sidebar))))
 
-(define-method enter-minibuffer buffer ()
-  (when (not *minibuffer-open-p*)
-    (add-minibuffer-maybe self)
+(define-method enter-sidebar buffer ()
+  (when (not *sidebar-open-p*)
+    (add-sidebar-maybe self)
     (setf %last-focus %focused-block)
-    (focus-on self *minibuffer* :clear-selection nil)
-    (when (null *minibuffer-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
-    (setf *minibuffer-open-p* t)
+    (focus-on self *sidebar* :clear-selection nil)
+    (when (null *sidebar-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
+    (setf *sidebar-open-p* t)
     (enable-key-repeat)))
   
-(define-method exit-minibuffer buffer ()
-  (when *minibuffer-open-p*
-    (add-minibuffer-maybe self)
-    (setf *minibuffer-open-p* nil)
+(define-method exit-sidebar buffer ()
+  (when *sidebar-open-p*
+    (add-sidebar-maybe self)
+    (setf *sidebar-open-p* nil)
     (focus-on self %last-focus)
     (setf %last-focus nil)
     (unless %was-key-repeat-p 
       (disable-key-repeat))
     (setf %was-key-repeat-p nil)))
 
-(define-method toggle-minibuffer buffer ()
-  (if *minibuffer-open-p* 
-      (exit-minibuffer self)
-      (enter-minibuffer self)))
+(define-method toggle-sidebar buffer ()
+  (if *sidebar-open-p* 
+      (exit-sidebar self)
+      (enter-sidebar self)))
 
 (define-method grab-focus buffer ())
 
-(define-method layout-minibuffer-objects buffer ()
+(define-method layout-sidebar-objects buffer ()
   (mapc #'layout %inputs))
 
-(define-method update-minibuffer-objects buffer ()
+(define-method update-sidebar-objects buffer ()
   (mapc #'update %inputs)
-  (when *minibuffer* (update *minibuffer*)))
+  (when *sidebar* (update *sidebar*)))
 
-(define-method draw-minibuffer-objects buffer ()
+(define-method draw-sidebar-objects buffer ()
   (with-buffer self
     (with-fields (drag-start drag focused-block
 			 highlight inputs hover
 			 ghost prompt) self
-      ;; now start drawing the minibuffer objects
+      ;; now start drawing the sidebar objects
       (mapc #'draw inputs)
       ;; draw any future
       (when %future
@@ -710,8 +710,8 @@ slowdown. See also quadtree.lisp")
 	(when hover 
 	  (draw-hover hover))
 	(draw drag))
-      (when *minibuffer*
-	(draw *minibuffer*))
+      (when *sidebar*
+	(draw *sidebar*))
       ;; draw focus
       (when focused-block
 	(assert (blockyp focused-block))
@@ -719,7 +719,7 @@ slowdown. See also quadtree.lisp")
       (when highlight
 	(draw-highlight highlight)))))
 
-(define-method draw-minibuffers buffer ())
+(define-method draw-sidebars buffer ())
 
 (define-method draw buffer ()
   (with-buffer self
@@ -749,15 +749,15 @@ slowdown. See also quadtree.lisp")
       (when focused-block
 	(assert (blockyp focused-block))
 	(draw-focus focused-block))
-      (if *minibuffer-open-p* 
-      	  (draw-minibuffer-objects self)
-      	  (draw-minibuffers self)))))
+      (if *sidebar-open-p* 
+      	  (draw-sidebar-objects self)
+      	  (draw-sidebars self)))))
       ;; (if %parent
       ;; 	  (gl:pop-matrix)
-      ;; possibly draw minibuffer
-      ;; (if *minibuffer-open-p* 
-      ;; 	  (draw-minibuffer-objects self)
-      ;; 	  (draw-minibuffers self)))))
+      ;; possibly draw sidebar
+      ;; (if *sidebar-open-p* 
+      ;; 	  (draw-sidebar-objects self)
+      ;; 	  (draw-sidebars self)))))
   
 ;;; Simulation update
 
@@ -790,13 +790,13 @@ slowdown. See also quadtree.lisp")
 	    (unless (eq :passive (field-value :collision-type object))
 	      (quadtree-collide object))))))
     ;; now outside the quadtree,
-    ;; possibly update the minibuffer layer
+    ;; possibly update the sidebar layer
     (with-buffer self
-      (when *minibuffer-open-p*
+      (when *sidebar-open-p*
 	(with-quadtree nil
 	  (layout self)
-	  (layout-minibuffer-objects self)
-	  (update-minibuffer-objects self))))))
+	  (layout-sidebar-objects self)
+	  (update-sidebar-objects self))))))
 
 (define-method evaluate buffer ()
   (prog1 self
@@ -810,15 +810,15 @@ slowdown. See also quadtree.lisp")
 	  ;; %width *gl-screen-width* 
 	  ;; %height *gl-screen-height*)
     (mapc #'layout %inputs)
-    (when *minibuffer*
-      (layout *minibuffer*))))
+    (when *sidebar*
+      (layout *sidebar*))))
   
 (define-method handle-event buffer (event)
   (with-field-values (cursor quadtree focused-block) self
     (with-buffer self
       (or (block%handle-event self event)
 	  (let ((thing focused-block))
-		  ;; (if *minibuffer-open-p* 
+		  ;; (if *sidebar-open-p* 
 		  ;;     focused-block
 		  ;;     cursor)))
 	      (prog1 t 
@@ -846,12 +846,12 @@ block found, or nil if none is found."
       (labels ((try (b)
 		 (when b
 		   (hit b x y))))
-	;; check minibuffer and inputs first
+	;; check sidebar and inputs first
 	(let* ((object-p nil)
 	       (result 
 		 (or 
-		  (when *minibuffer-open-p* 
-		    (try *minibuffer*))
+		  (when *sidebar-open-p* 
+		    (try *sidebar*))
 		  (let ((parent 
 			  (find-if #'try 
 				   %inputs
@@ -966,8 +966,8 @@ block found, or nil if none is found."
 	    (progn
 	      (setf highlight (find-uuid (hit-inputs self mouse-x mouse-y)))))))))
     ;; (when (null highlight)
-  ;;   (when *minibuffer*
-  ;;     (with-buffer self (close-menus *minibuffer*))))))))
+  ;;   (when *sidebar*
+  ;;     (with-buffer self (close-menus *sidebar*))))))))
 
 (define-method press buffer (x y &optional button)
   (with-buffer self
@@ -981,14 +981,14 @@ block found, or nil if none is found."
 	(setf %object-p object-p)
 	(if (null block)
 	    (focus-on self nil)
-	    ;; (when *minibuffer-open-p*
-	    ;; 	(exit-minibuffer self)))
+	    ;; (when *sidebar-open-p*
+	    ;; 	(exit-sidebar self)))
 	    (progn 
 	      (setf click-start (cons x y))
 	      (setf click-start-block (find-uuid block))
 	      (setf drag-button button)
 	      ;; now focus; this might cause another block to be
-	      ;; focused, as in the case of the Minibuffer
+	      ;; focused, as in the case of the Sidebar
 	      (focus-on self block)))))))
 
 (define-method clear-drag-data buffer ()
@@ -1027,7 +1027,7 @@ block found, or nil if none is found."
 		    (if %object-p
 			(move-to drag drop-x drop-y)
 			(if (null hover)
-			    ;; back in minibuffer
+			    ;; back in sidebar
 			    (add-block self drag drop-x drop-y)
 			    ;; ;; dropping on background. 
 			    ;; (drop-object self drag)
@@ -1035,7 +1035,7 @@ block found, or nil if none is found."
 			    (if (accept hover drag)
 				(invalidate-layout hover)
 				;; hovered block did not accept drag. 
-				;; drop it back in the minibuffer layer.
+				;; drop it back in the sidebar layer.
 				(add-block self drag drop-x drop-y))))))
 	      ;; select the dropped block
 	      (progn 
@@ -1093,7 +1093,7 @@ block found, or nil if none is found."
   
 (define-method escape buffer ()
   (with-buffer self
-    (exit-minibuffer self)))
+    (exit-sidebar self)))
     ;; (focus-on self nil)
     ;; (setf %selection nil)))
 
@@ -1116,6 +1116,6 @@ block found, or nil if none is found."
 (define-method after-deserialize buffer ()
   (after-deserialize%super self)
   (clear-drag-data self)
-  (add-minibuffer-maybe self :force))
+  (add-sidebar-maybe self :force))
 
 ;;; buffers.lisp ends here

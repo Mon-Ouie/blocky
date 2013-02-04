@@ -187,6 +187,12 @@ interpreter."
     ((not (null sexp)) 
      (data-block sexp))))
 
+(defun all-words ()
+  (initialize-words-maybe)
+  (let ((words (loop for word being the hash-values of *words* 
+		     collect (word-name word))))
+    (sort words #'string<)))
+
 ;;; Data flow
 
 (define-word pop () (popf))
@@ -287,7 +293,7 @@ interpreter."
   (let ((*self* object))
     (execute (field-value (make-keyword method) object))))
 
-;; telling an object to invoke one of its methods
+;; telling an object to execute a program
 
 (define-word tell (program object)
   (let ((*self* object))
@@ -480,11 +486,11 @@ interpreter."
 
 (define-word screen (height width)
   (setf *screen-height* height *screen-width* width))
-(define-word without-stretch () (setf *scale-output-to-window* nil))
-(define-word with-stretch () (setf *scale-output-to-window* t))
-(define-word with-antialiased-text () (setf *use-antialiased-text* t))
-(define-word without-antialiased-text () (setf *use-antialiased-text* nil))
-(define-word without-key-repeat () (disable-key-repeat))
+(define-word no-stretch () (setf *scale-output-to-window* nil))
+(define-word stretch () (setf *scale-output-to-window* t))
+(define-word antialiased-text () (setf *use-antialiased-text* t))
+(define-word no-antialiased-text () (setf *use-antialiased-text* nil))
+(define-word no-key-repeat () (disable-key-repeat))
 (define-word frame-rate! (n) (set-frame-rate n))
 ;; (define-word timestep! (n) (setf *dt* n))
 
@@ -509,7 +515,6 @@ interpreter."
 
 (define-word save ()
   (save-project-image))
-
 
 (define-word close ()
   (save-project-image)
