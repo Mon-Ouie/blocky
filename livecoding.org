@@ -19,6 +19,13 @@
 *** TODO merge sentences/bodies when dropping sentence
 *** TODO equivalent of scheme's "every-frame"
 
+*** TODO gracefull error handling with pop up notifications
+
+
+*** TODO check out RodgerTheGreat's Deep Mako game
+https://github.com/JohnEarnest/Mako/blob/master/games/Deep/Deep.fs
+once you've built maker by running the ant script in the root
+of the project you can build and run deep via "./maker games/Deep/Deep.fs --run"
 *** DONE be able to blockify  ((DEFINE "") (.....) (....))
     CLOSED: [2013-02-04 Mon 15:25]
     And then get back DEFINE name FOO BAR BAZ END
