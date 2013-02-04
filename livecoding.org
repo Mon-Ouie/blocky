@@ -1,17 +1,9 @@
-*** TODO add basic datatypes and other phrases to the sidebar dictionary list
+*** TODO add numbers, strings, and compound phrases to the sidebar dictionary list
 
 *** TODO flesh out generic word-and-body block for things like "define"
-**** TODO  draw paragraph as a scheme-bricks-style bracket
+**** TODO draw paragraph as a scheme-bricks-style bracket
 ***** TODO shades of gray for nesting, not color
 
-*** TODO sentence block is mostly invisible itself, small handle
-**** TODO tap/drag selects whole sentence by default
-**** TODO middle mouse button to override and select by "raw hit"
-
-*** TODO left-drag to move blocks
-*** TODO click to select block
-*** TODO right click to edit block text (where applicable)
-**** TODO selected block highlights in sine oscillating white/gray or color
 *** TODO sidebar pops up when you go near right edge, or use mouse wheel
 *** TODO x to execute selected word/block
 *** TODO control-click to execute block without selecting
@@ -19,20 +11,41 @@
 *** TODO c puts copy of selected block at mouse pointer
 *** TODO undo and redo
 
+*** TODO sentence block is mostly invisible itself, small handle
+**** TODO tap/drag selects whole sentence by default
+**** TODO middle mouse button to override and select by "raw hit"
+
 *** TODO control-r to ro [[horizontal]] tate orientation of selected block
 *** TODO merge sentences/bodies when dropping sentence
+*** TODO equivalent of scheme's "every-frame"
 
-*** TODO improved block appearance with schemebricks-style typing
+*** DONE be able to blockify  ((DEFINE "") (.....) (....))
+    CLOSED: [2013-02-04 Mon 15:25]
+    And then get back DEFINE name FOO BAR BAZ END
+
+*** DONE left-drag to move blocks
+    CLOSED: [2013-02-04 Mon 15:22]
+*** DONE click to select block
+    CLOSED: [2013-02-04 Mon 15:23]
+*** DONE right click to edit block text (where applicable)
+    CLOSED: [2013-02-04 Mon 15:23]
+**** DONE selected block highlights in sine oscillating white/gray or color
+     CLOSED: [2013-02-04 Mon 15:23]
+*** DONE prompt goes back to executing words and showing one stack output.
+    CLOSED: [2013-02-03 Sun 22:59]
+*** DONE change minibuffer into right side scrollable word/phrase palette
+    CLOSED: [2013-02-04 Mon 00:48]
+*** DONE alphabetical order dictionary
+    CLOSED: [2013-02-04 Mon 00:48]
+*** DONE mousewheel capable!
+*** DONE improved block appearance with schemebricks-style typing
+    CLOSED: [2013-02-04 Mon 15:25]
 
 *** TODO make music with blockyforth ... ambient at first.
-
 *** TODO able to click/grab/edit/copy blockified forth commands
-
 *** TODO [#B] show stack in sidebar
-*** TODO every-frame
 *** TODO consistent set of function keys for executing global words
 *** TODO try true fullscreen
-
 *** TODO flash cursor colors for active drop
 <dto> and the sidebar could be dynamically changed according to context. such
       as if you ask for the list of available buffers, a series of sentences
@@ -280,48 +293,4 @@ the current block. like Bold Italic.
    :ARCHIVE_CATEGORY: livecoding
    :ARCHIVE_TODO: TODO
    :END:
-** DONE prompt goes back to executing words and showing one stack output.
-   CLOSED: [2013-02-03 Sun 22:59]
-   :PROPERTIES:
-   :ARCHIVE_TIME: 2013-02-04 Mon 00:48
-   :ARCHIVE_FILE: ~/blocky/livecoding.org
-   :ARCHIVE_CATEGORY: livecoding
-   :ARCHIVE_TODO: DONE
-   :END:
-** DONE change minibuffer into right side scrollable word/phrase palette
-   CLOSED: [2013-02-04 Mon 00:48]
-   :PROPERTIES:
-   :ARCHIVE_TIME: 2013-02-04 Mon 00:48
-   :ARCHIVE_FILE: ~/blocky/livecoding.org
-   :ARCHIVE_CATEGORY: livecoding
-   :ARCHIVE_TODO: DONE
-   :END:
-** DONE alphabetical order dictionary
-   CLOSED: [2013-02-04 Mon 00:48]
-   :PROPERTIES:
-   :ARCHIVE_TIME: 2013-02-04 Mon 00:48
-   :ARCHIVE_FILE: ~/blocky/livecoding.org
-   :ARCHIVE_OLPATH: pops up when you go to top right corner w mouse?
-   :ARCHIVE_CATEGORY: livecoding
-   :ARCHIVE_TODO: DONE
-   :END:
-** DONE mousewheel capable!
-   CLOSED: [2013-02-04 Mon 00:48]
-   :PROPERTIES:
-   :ARCHIVE_TIME: 2013-02-04 Mon 00:48
-   :ARCHIVE_FILE: ~/blocky/livecoding.org
-   :ARCHIVE_OLPATH: pops up when you go to top right corner w mouse?
-   :ARCHIVE_CATEGORY: livecoding
-   :ARCHIVE_TODO: DONE
-   :END:
-
-** TODO be able to blockify  ((DEFINE "") (.....) (....))
-   :PROPERTIES:
-   :ARCHIVE_TIME: 2013-02-04 Mon 04:07
-   :ARCHIVE_FILE: ~/blocky/livecoding.org
-   :ARCHIVE_CATEGORY: livecoding
-   :ARCHIVE_TODO: TODO
-   :END:
-   And then get back DEFINE name FOO BAR BAZ END
-*** TODO simplify defining objects and methods ... overload DEFINE?
 
