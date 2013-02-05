@@ -253,7 +253,7 @@ interpreter."
 (define-word define ()
   (destructuring-bind (type name &rest definition) 
       (grab-until-end)
-    (ecase (make-keyword name)
+    (ecase (make-keyword type)
       (:word (define-program-word name definition))
       (:method (define-method-word name definition))
       (:block (let ((super (pop definition))
@@ -581,20 +581,19 @@ interpreter."
 
 ;; '
 ;; (progn 
-;;   (forget-all-words)
+
 ;;   (setf *stack* nil)
-;;   (define-word foo () (format t " foo ") (push 3 *stack*))
-;;   (define-word bar () (format t " bar ") (push 5 *stack*))
-;;   (define-word baz (a b) (format t " baz ") (push (+ a b) *stack*))
+;;   (define-word foo () (format t " foo ") (pushf 3))
+;;   (define-word bar () (format t " bar ") (pushf 5))
+;;   (define-word baz (a b) (format t " baz ") (pushf (+ a b)))
 ;;   (define-word yell () (format t "WOOHOO!!"))
 ;;   (execute-string "foo bar baz")
-;;   (execute-string "define quux foo bar baz")
+;;   *stack*
+;;   (execute-string "define word quux foo bar baz")
 ;;   (execute-string "quux")
 ;;   (execute '(quux 100 baz))
 ;;   (forth quux 100 baz)
-;;   (forth a robot is a block)
-;;   (forth to fire a robot do quux 200 baz yell end)
-;;   (forth a robot new)
-;;   (forth a robot new this fire))
+
+;;   
   
 ;;; words.lisp ends here
