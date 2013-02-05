@@ -27,5 +27,8 @@
 
 (in-package :blocky)
 
+(define-foreign-library mikmod
+  (:unix ".so"))
+
 
 ;;; mikmod.lisp ends here

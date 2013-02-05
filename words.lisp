@@ -115,17 +115,25 @@ interpreter."
 	      ;; forth definitions are stored as lists
 	      :body program)))
 
-;; defining words in source
-
-(define-word end () nil)
-
-(define-word define ()
-  (destructuring-bind (name &rest definition) 
-      (grab-until-end)
-    (define-program-word name definition)))
-
 (define-word forget (word)
   (forget-word word))
+
+;; invoking a Blocky method without any arguments.
+
+(define-word send (method)
+  (send (make-keyword method) *self*))
+
+;; invoking a Forth method stored in the object.
+
+(define-word call (method object)
+  (let ((*self* object))
+    (execute (field-value (make-keyword method) object))))
+
+;; telling an object to execute a program
+
+(define-word tell (program object)
+  (let ((*self* object))
+    (execute program)))
 
 ;;; The interpreter
 
@@ -224,6 +232,35 @@ interpreter."
 		     collect (word-name word))))
     (sort words #'string<)))
 
+;; defining words in source
+
+(define-word end () nil)
+
+(defmacro define-block-word (name super fields)
+  `(progn 
+     (define-block (,name :super ,super) ,@fields)
+     (define-word ,name () (pushf (find-object ',name)))))
+
+(defun define-method-word (method definition)
+  (destructuring-bind (super &rest words) definition
+    (eval `(define-word ,method () 
+	     (execute (field-value ,(make-keyword method) *self*))))
+    ;; install the forth definition in the prototype
+    (setf (field-value (make-keyword method)
+		       (find-object super))
+	  words)))
+
+(define-word define ()
+  (destructuring-bind (type name &rest definition) 
+      (grab-until-end)
+    (ecase (make-keyword name)
+      (:word (define-program-word name definition))
+      (:method (define-method-word name definition))
+      (:block (let ((super (pop definition))
+		    (fields (when (consp (first definition))
+			      (pop definition))))
+		(eval `(define-block-word ,name ,super ,fields)))))))
+
 ;;; Data flow
 
 (define-word pop () (popf))
@@ -299,55 +336,6 @@ interpreter."
 
 (defun drop-article ()
   (grab-next-word))
-
-;; the copula "is" defines new objects from old.
-;; examples: 
-;;     "a robot is a block"
-;;     "a robot having (health bullets inventory) is a block"
-;;     "an enemy is a robot"
-
-(define-word is (name)
-  (drop-article)
-  (let* ((super (grab-next-word))
-	 (fields (when (consp (first *stack*))
-		   (popf))))
-    (eval `(define-block (,name :super ,super) ,@fields))))
-
-;; invoking a Blocky method without any arguments.
-
-(define-word send (method)
-  (send (make-keyword method) *self*))
-
-;; invoking a Forth method stored in the object.
-
-(define-word call (method object)
-  (let ((*self* object))
-    (execute (field-value (make-keyword method) object))))
-
-;; telling an object to execute a program
-
-(define-word tell (program object)
-  (let ((*self* object))
-    (execute program)))
-
-;; the "to...do...end" idiom defines behavior for verbs.
-;; examples: 
-;;    "to fire a robot having (direction) do ... end"
-;;    "to destroy an enemy do ... end"
-
-(define-word do ()
-  ;; ignore argument list for now
-  (when (consp (first *stack*))
-    (popf))
-  (let* ((super (popf))
-	 (method (popf))
-	 (body (grab-until-end)))
-    ;; define a self-verb shortcut 
-    (execute `(define ,method the ,method self call end))
-    ;; install the forth definition in the prototype
-    (setf (field-value (make-keyword method)
-		       (find-object super))
-	  body)))
 
 ;;; further operations
 

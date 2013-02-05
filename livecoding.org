@@ -1,8 +1,12 @@
+*** TODO define word, define block, define method
+
 *** TODO add numbers, strings, and compound phrases to the sidebar dictionary list
 
 *** TODO flesh out generic word-and-body block for things like "define"
 **** TODO draw paragraph as a scheme-bricks-style bracket
 ***** TODO shades of gray for nesting, not color
+*** TODO pin and/or lock first row of widgets, can be collapsed like tree
+
 
 *** TODO sidebar pops up when you go near right edge, or use mouse wheel
 *** TODO x to execute selected word/block
@@ -15,11 +19,14 @@
 **** TODO tap/drag selects whole sentence by default
 **** TODO middle mouse button to override and select by "raw hit"
 
-*** TODO control-r to ro [[horizontal]] tate orientation of selected block
+*** TODO control-r to rotate orientation of selected block
 *** TODO merge sentences/bodies when dropping sentence
 *** TODO equivalent of scheme's "every-frame"
 
 *** TODO gracefull error handling with pop up notifications
+
+*** TODO REMIX MY GAME AUDIO/MUSIC BY MAKING FUCKED TONAL SAMPLes! via Mikmod???
+*** TODO sample milkytracker shiz
 
 
 *** TODO check out RodgerTheGreat's Deep Mako game

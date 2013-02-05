@@ -1168,6 +1168,9 @@ name PROJECT. Returns the pathname if found, otherwise nil."
     (when extension
       (car (cdr (assoc extension *resource-extensions* :test 'equal))))))
 
+(defun sample-filename-p (name) 
+  (eq :sample (resource-type-from-name name)))
+
 (defun index-resource (resource)
   "Add the RESOURCE's record to the resource table.
 If a record with that name already exists, it is replaced.  However,
@@ -1307,6 +1310,11 @@ resource is stored; see also `find-resource'."
 	      (subseq s 0 (1- (length s))))
 	  (mapcar #'namestring
 		  (directory (concatenate 'string (namestring dir) "/*/")))))
+
+(defun directory-files (dir)
+  (sort (mapcar #'namestring
+		(directory (concatenate 'string (namestring dir) "/*/")))
+	 #'string<))
 
 (defun find-projects-in-directory (dir)
   "Search DIR for projects and return a list of their names."
