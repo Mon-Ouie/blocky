@@ -253,13 +253,14 @@ interpreter."
 (define-word define ()
   (destructuring-bind (type name &rest definition) 
       (grab-until-end)
-    (ecase (make-keyword type)
-      (:word (define-program-word name definition))
-      (:method (define-method-word name definition))
-      (:block (let ((super (pop definition))
-		    (fields (when (consp (first definition))
-			      (pop definition))))
-		(eval `(define-block-word ,name ,super ,fields)))))))
+    (or (case (make-keyword type)
+	  (:word (define-program-word name definition))
+	  (:method (define-method-word name definition)))
+	;; define a new block with the word after DEFINE as its parent
+	(let ((super type)
+	      (fields (when (consp (first definition))
+			(pop definition))))
+	  (eval `(define-block-word ,name ,super ,fields))))))
 
 ;;; Data flow
 
@@ -593,6 +594,11 @@ interpreter."
 ;;   (execute-string "quux")
 ;;   (execute '(quux 100 baz))
 ;;   (forth quux 100 baz)
+
+;;   (forth define block robot (bullets hp) end) 
+;;   (forth define method fire robot "KABOOM!" quux)
+;;   (forth define robot vobot (shield) end)
+
 
 ;;   
   

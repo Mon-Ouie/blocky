@@ -2,7 +2,7 @@
 
 *** TODO add numbers, strings, and compound phrases to the sidebar dictionary list
 
-*** TODO flesh out generic word-and-body block for things like "define"
+*** TODO flesh out generic word-and-body-and-END block for things like "define", where END is implicit
 **** TODO draw paragraph as a scheme-bricks-style bracket
 ***** TODO shades of gray for nesting, not color
 *** TODO pin and/or lock first row of widgets, can be collapsed like tree
