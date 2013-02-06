@@ -1,4 +1,4 @@
-;; buffers.lisp --- squeakish lispspaces 
+;;; buffers.lisp --- squeakish lispspaces 
 
 ;; Copyright (C) 2006-2013  David O'Toole
 
@@ -64,17 +64,19 @@
   (future-step-interval :initform 8)
   (default-events :initform
 		  '(((:pause) :transport-toggle-play)
-		    ((:e) :edit-word)
-		    ((:x) :exec)
-		    ((:d) :delete-word)
-		    ((:c) :copy-word)
-		    ((:v) :paste)
+		    ((:e :control) :edit-word)
+		    ((:x :control) :exec)
+		    ((:d :control) :delete-word)
+		    ((:c :control) :copy-word)
+		    ((:p :control) :paste)
 		    ((:return) :enter)
 		    ((:escape) :cancel)
-		    ((:x :control) :cut)
-		    ((:c :control) :copy)
-		    ((:v :control) :paste)
-		    ((:v :control :shift) :paste-here)
+		    ((:f1) :help)
+		    ((:h :control) :help)
+		    ;; ((:x :control) :cut)
+		    ;; ((:c :control) :copy)
+		    ;; ((:v :control) :paste)
+		    ;; ((:v :control :shift) :paste-here)
 		    ((:g :control) :escape)
 		    ((:d :control) :drop-selection)))
 		    ;; ((:f10) :toggle-sidebar)
@@ -727,7 +729,9 @@ slowdown. See also quadtree.lisp")
 	(draw-focus focused-block))
       (when highlight
 	(draw-highlight highlight))
-      (when point (draw-point point)))))
+      (when (and point (read-only-p point))
+	(draw-point point)))))
+
 
 (define-method draw-programs buffer ())
 
@@ -1056,43 +1060,51 @@ block found, or nil if none is found."
 	  ;;
 	  ;; we were clicking instead of dragging
 	  (progn
-	    (when focused-block
-;	      (select self focused-block)
+	    (let ((it (or focused-block self)))
+	      ;; clicks that don't hit an object are sent to self
 	      (with-buffer self 
 		(cond
-		  ;; right click and alt click are equivalent
+		  ;; right click and control click are equivalent
 		  ((or (= button 3)
-		       (and (holding-alt) (= button 1)))
-		   (alternate-tap focused-block x y))
-		  ;; scroll wheel click and shift click are equivalent
+		       (and (holding-control) (= button 1)))
+		   (alternate-tap it x y))
+		  ;; scroll wheel (middle) click and shift click are equivalent
 		  ((or (= button 2)
 		       (and (holding-shift) (= button 1)))
-		   (scroll-tap focused-block x y))
-		  ;; vertical scrolling
+		   (scroll-tap it x y))
+		  ;; vertical scrolling with mousewheel
 		  ((= button 4)
-		   (scroll-up focused-block))
+		   (scroll-up it))
 		  ((= button 5)
-		   (scroll-down focused-block))
-		  ;; hold shift for horizontal scrolling
+		   (scroll-down it))
+		  ;; horizontal scrolling with shift-mousewheel
 		  ((and (= button 4)
 		        (holding-shift))
-		   (scroll-left focused-block))
+		   (scroll-left it))
 		  ((and (= button 5)
 		        (holding-shift))
-		   (scroll-right focused-block))
+		   (scroll-right it))
 		  ;; plain old click
 		  (t 
-		   (tap focused-block x y))))
+		   (tap it x y))))
 		;;(select self focused-block))
 	      (setf click-start nil))))
-      ;; close any ephemeral menus
-      (dolist (input %inputs)
-	(when (and (menup input)
-		   (not (object-eq focused-block input)))
-	  (destroy input)))
       ;; clean up bookeeping
       (clear-drag-data self)
       (invalidate-layout self))))
+
+(define-method tap buffer (x y) ())
+
+(define-method alternate-tap buffer (x y)
+  (let ((entry (new 'expression)))
+    (add-at-pointer self entry)
+    (setf %point entry)))
+
+(define-method scroll-tap buffer (x y))
+(define-method scroll-up buffer ())
+(define-method scroll-down buffer ())
+(define-method scroll-left buffer ())
+(define-method scroll-right buffer ())
 
 (define-method tab buffer (&optional backward)
   (when %focused-block
@@ -1103,7 +1115,9 @@ block found, or nil if none is found."
   (tab self :backward))
   
 (define-method exec buffer ()
-  (when %point (execute (%value %point))))
+  (when (and %point
+	     (%value %point))
+    (execute (list (%value %point)))))
 
 (define-method delete-word buffer ())
 
@@ -1140,5 +1154,32 @@ block found, or nil if none is found."
   (after-deserialize%super self)
   (clear-drag-data self)
   (add-sidebar-maybe self :force))
+
+;;; Help
+
+(defparameter *help-message*
+"welcome to blocky.
+
+making new objects: 
+    right-click the background, 
+    type an expression, press <return>.
+  or,
+    drag from sidebar (see below)
+left-click to select an object.
+left-click-and-drag to move objects.
+<control>-X or right-click to execute objects.
+<control>-E to edit.
+<return> saves edit changes.
+<escape> cancels editing.
+<control>-D to delete object.
+the sidebar is accessible on the right side.
+you can drag new objects from the sidebar.
+use the mouse wheel to scroll the sidebar.
+")
+
+(define-method help buffer ()
+  (let ((help (new 'text *help-message*)))
+    (add-object self help)
+    (move-to help 20 20)))
 
 ;;; buffers.lisp ends here

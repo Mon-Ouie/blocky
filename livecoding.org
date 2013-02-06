@@ -1,3 +1,9 @@
+*** TODO control or right-click on background to create a word cursor.
+*** TODO remove it if nothing typed.
+
+
+*** TODO howto select/execute a paragraph block
+*** TODO inline typing of block words
 *** TODO flesh out generic word-and-body-and-END block for things like "define", where END is implicit
 **** TODO pin and/or lock first row of widgets, can be collapsed like tree
 **** TODO draw paragraph as a scheme-bricks-style bracket

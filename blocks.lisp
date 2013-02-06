@@ -192,6 +192,8 @@ events."
 (define-method toggle-read-only block ()
   (setf %read-only (if %read-only nil t)))
 
+(define-method read-only-p block () %read-only)
+
 (define-method set-read-only block (&optional (read-only t))
   (setf %read-only read-only))
 
@@ -394,7 +396,7 @@ non-nil to indicate that the block was accepted, nil otherwise."
   %parent)
 
 (define-method find-parent block ()
-  (find-uuid %parent))
+  (when %parent (find-uuid %parent)))
 
 (defun valid-connection-p (sink source)
   (assert (or sink source))
@@ -754,7 +756,6 @@ See `keys.lisp' for the full table of key and modifier symbols.
   (move-to self x y))
 
 (define-method as-drag block (x y)
-  (declare (ignore x y)) 
   self)
 
 (define-method as-target block () self)
@@ -993,8 +994,7 @@ all the time."
 (define-method evaluate block () self)
 
 (define-method recompile block ()
-  `(progn 
-     ,@(mapcar #'recompile %inputs)))
+  (mapcar #'recompile %inputs))
 
 (defun count-tree (tree)
   "Return the number of blocks enclosed in this block, including the
@@ -1057,7 +1057,7 @@ you want to align a group of text items across layouts.")
 (defparameter *block-colors*
   '(:motion "cornflower blue"
     :system "gray50"
-    :expression "gray80"
+    :expression "gray60"
     :button "orange"
     :terminal "gray25"
     :event "gray80"
@@ -1108,7 +1108,7 @@ you want to align a group of text items across layouts.")
     :event "gray70"
     :socket "gray90"
     :data "gray25"
-    :expression "gray90"
+    :expression "gray50"
     :fields "DarkOrchid"
     :menu "gray80"
     :terminal "gray21"

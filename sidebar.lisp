@@ -104,9 +104,10 @@
 	       (hit it x y)))
       (let* ((pos (position-if #'try candidates))
 	     (phrase (when pos (nth pos candidates))))
+	(when phrase
 	  (let ((phrase2 (duplicate-phrase phrase)))
 	    (prog1 phrase2
-	      (move-to phrase2 (%x phrase) (%y phrase))))))))
+	      (move-to phrase2 (%x phrase) (%y phrase)))))))))
     
 (define-method draw sidebar ()
   (with-fields (inputs row displayed-rows x y height width) self

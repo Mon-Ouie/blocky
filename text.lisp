@@ -132,7 +132,6 @@
 		   (newline self))))
   ;; (setf %buffer (reverse *message-history*)))
 
-
 (define-method initialize text (&optional buffer)
   (initialize%super self)
   (when (null buffer)
@@ -143,6 +142,7 @@
     (setf %buffer buffer))
   (when (null (has-local-value :buffer self))
     (setf %buffer (list "")))
+  (layout self)
   (install-text-keybindings self)
   (install-keybindings self *arrow-key-text-navigation-keybindings*))
 

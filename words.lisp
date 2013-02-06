@@ -191,65 +191,11 @@ interpreter."
 (defmacro forth (&rest words)
   `(execute ',words))
 
-(defun make-sentence (contents) 
-  (let ((phrase (apply #'new 'list contents)))
-    (prog1 phrase
-      (setf (%orientation phrase) :horizontal)
-      (setf (%no-background phrase) t)
-      (setf (%dash phrase) 1)
-      (setf (%spacing phrase) 0))))
-
-(defun make-paragraph (contents) 
-  (let ((body (apply #'new 'list contents)))
-    (prog1 body
-      (update-parent-links body)
-      (mapc #'update-parent-links contents)
-      (freeze (first (%inputs body)))
-      (setf (%orientation body) :vertical)
-      (setf (%dash body) 1)
-      (setf (%spacing body) 0))))
-
-(defun phrasep (x) (is-a 'list x))
-
-(defun make-phrase (sexp)
-  (cond
-    ;; pass-through already created objects
-    ((blockyp sexp)
-     sexp) 
-    ;; lists become phrases
-    ((consp sexp)
-     (funcall 
-      (if (consp (first sexp))
-	  #'make-paragraph
-	  #'make-sentence)
-      (mapcar #'make-phrase sexp)))
-    ;; 
-    ((eq '&body sexp)
-     (make-sentence nil))
-    ;; 
-    ((null sexp)
-     (new 'symbol))
-    ;; base case
-    (t (data-block sexp))))
-
-(defun compile-phrase (phrase)
-  (with-fields (inputs) phrase
-    (if (phrasep phrase)
-	(if (phrasep (first inputs))
-	    (mapcar #'compile-phrase inputs)
-	    (mapcar #'%value inputs))
-	(%value phrase))))
-
-(defun duplicate-phrase (phrase)
-  (make-phrase (compile-phrase phrase)))
-
 (defun all-words ()
   (initialize-words-maybe)
   (let ((words (loop for word being the hash-values of *words* 
 		     collect (word-name word))))
     (sort words #'string<)))
-
-;; defining words in source
 
 (define-word end () nil)
 
