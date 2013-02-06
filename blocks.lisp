@@ -33,9 +33,7 @@
 		(symbol (symbol-name thing))
 		(string thing))))
     (string-downcase 
-     (substitute #\Space #\- 
-		 (string-trim " " name)
-		 ))))
+     (string-trim " " name))))
 
 (defun-memo ugly-symbol (string)
     (:key #'first :test 'equal :validator #'identity)

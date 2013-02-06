@@ -64,15 +64,18 @@
   (future-step-interval :initform 8)
   (default-events :initform
 		  '(((:pause) :transport-toggle-play)
-		  ;; '(((:tab) :tab)
-		  ;;   ((:tab :shift) :backtab)
-		    ((:x :alt) :enter-sidebar)
+		    ((:e) :edit-word)
+		    ((:x) :exec)
+		    ((:d) :delete-word)
+		    ((:c) :copy-word)
+		    ((:v) :paste)
+		    ((:return) :enter)
+		    ((:escape) :cancel)
 		    ((:x :control) :cut)
 		    ((:c :control) :copy)
 		    ((:v :control) :paste)
 		    ((:v :control :shift) :paste-here)
 		    ((:g :control) :escape)
-		    ((:escape) :escape)
 		    ((:d :control) :drop-selection)))
 		    ;; ((:f10) :toggle-sidebar)
 		    ;; ((:f12) :toggle-other-windows)
@@ -1099,11 +1102,23 @@ block found, or nil if none is found."
 (define-method backtab buffer ()
   (tab self :backward))
   
-(define-method escape buffer ()
-  (with-buffer self
-    (exit-sidebar self)))
-    ;; (focus-on self nil)
-    ;; (setf %selection nil)))
+(define-method exec buffer ()
+  (when %point (execute (%value %point))))
+
+(define-method delete-word buffer ())
+
+(define-method copy-word buffer ()
+  (when %point 
+    (add-at-pointer self (duplicate-phrase %point))))
+
+(define-method edit-word buffer ()
+  (when %point (start-editing %point)))
+
+(define-method cancel buffer ()
+  (when %point (cancel-editing %point)))
+
+(define-method enter buffer ()
+  (when %point (finish-editing %point)))
 
 (define-method start buffer ()
   (with-buffer self

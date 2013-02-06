@@ -56,11 +56,19 @@
   (initialize-words-maybe)
   (gethash (make-keyword word) *words*))
 
+(defparameter *after-define-functions* nil)
+
+(defun run-after-define-functions (word)
+  (dolist (func *after-define-functions*)
+    (funcall func word)))
+
 (defun set-word-definition (name definition)
   (assert (not (null name)))
   (assert (symbolp name)) 
   (initialize-words-maybe)
-  (setf (gethash (make-keyword name) *words*) definition))
+  (prog1 (setf (gethash (make-keyword name) *words*) 
+	       definition)
+    (run-after-define-functions name)))
 
 (defun set-word-property (word property value)
   (let ((def (word-definition word)))
@@ -187,12 +195,16 @@ interpreter."
   (let ((phrase (apply #'new 'list contents)))
     (prog1 phrase
       (setf (%orientation phrase) :horizontal)
+      (setf (%no-background phrase) t)
       (setf (%dash phrase) 1)
       (setf (%spacing phrase) 0))))
 
 (defun make-paragraph (contents) 
   (let ((body (apply #'new 'list contents)))
     (prog1 body
+      (update-parent-links body)
+      (mapc #'update-parent-links contents)
+      (freeze (first (%inputs body)))
       (setf (%orientation body) :vertical)
       (setf (%dash body) 1)
       (setf (%spacing body) 0))))
@@ -211,9 +223,14 @@ interpreter."
 	  #'make-paragraph
 	  #'make-sentence)
       (mapcar #'make-phrase sexp)))
+    ;; 
+    ((eq '&body sexp)
+     (make-sentence nil))
+    ;; 
+    ((null sexp)
+     (new 'symbol))
     ;; base case
-    ((not (null sexp)) 
-     (data-block sexp))))
+    (t (data-block sexp))))
 
 (defun compile-phrase (phrase)
   (with-fields (inputs) phrase
@@ -578,10 +595,6 @@ interpreter."
 
 ;; example:  "explode1.png" draw ("explode2.png" draw) 0.1 seconds later
 ;;   (destroy) enemy tell 
-
-
-;; '
-;; (progn 
 
 ;;   (setf *stack* nil)
 ;;   (define-word foo () (format t " foo ") (pushf 3))

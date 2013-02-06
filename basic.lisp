@@ -20,8 +20,6 @@
 
 (in-package :blocky)
 
-;;; Command prompt block
-
 (defparameter *socket-size* 16)
 (defparameter *active-prompt-color* "red")
 (defparameter *inactive-prompt-color* "gray10")
@@ -64,6 +62,10 @@
 (define-method unfreeze list ()
   (setf %frozen nil)
   (mapc #'unpin %inputs))
+
+;; (define-method pick list ()
+;;   (if %parent
+;;       (if (phrasep %parent)
 
 (define-method evaluate list () 
   (mapcar #'evaluate %inputs))
@@ -442,9 +444,9 @@ inputs are evaluated."
     (let ((label-width (label-width self))
 	  (line-width (font-text-width line *font*)))
       (draw-box (dash 0.5 x label-width)
-		(dash 1 y)
+		(dash 0.2 y)
 		(dash 2 line-width)
-		(+ 1 (font-height *font*))
+		(dash 0.3 (font-height *font*))
 		:color (ecase state
 			 (:active *active-prompt-color*)
 			 (:inactive 
@@ -521,6 +523,7 @@ inputs are evaluated."
 (defun wordp (x) (has-tag x :word))
 
 (define-block (entry :super prompt)
+  (old-line :initform nil) 
   (tags :initform '(:word))
   (category :initform :data)
   (locked :initform nil)
@@ -537,20 +540,23 @@ inputs are evaluated."
 
 (define-method start-editing entry ()
   (set-read-only self nil)
+  (setf %old-line (copy-tree %line))
   (grab-focus self))
 
 (define-method finish-editing entry ()
+  (setf %old-line nil)
   (set-read-only self t))
 
+(define-method cancel-editing entry ()
+  (when %old-line
+    (setf %line (copy-tree %old-line))))
+
 (define-method alternate-tap entry (x y)
-  (start-editing self))
+  (execute (list %value)))
 
-(define-method do-after-evaluate entry ()
-  (finish-editing self))
-
-(define-method lose-focus entry ()
-  ;; update the entry value if the user mouses away
-  (enter self))
+(define-method as-drag entry (x y)
+  (declare (ignore x y)) 
+  (pick self))
 
 (define-method initialize entry 
     (&key value type-specifier options label label-color parent locked
@@ -567,10 +573,11 @@ inputs are evaluated."
   (setf %line (if (null value)
 		  ""
 		  ;; don't print symbol package names
-		  (if (and (symbolp value)
-			   (not (keywordp value)))
-		      (symbol-name value)
-		      (format nil "~S" value))))
+		  (pretty-string
+		   (if (and (symbolp value)
+			    (not (keywordp value)))
+		       (symbol-name value)
+		       (format nil "~S" value)))))
 		  ;; (if (stringp value)
 		  ;;     ;; no extraneous quotes unless it's a general sexp entry
 		  ;;     value
@@ -602,10 +609,10 @@ inputs are evaluated."
       ""))
 
 (define-method can-pick entry () 
-  (not %pinned))
+  t)
   
 (define-method pick entry ()
-  (if %pinned %parent self))
+  (if %pinned (pick %parent) self))
       
 (define-method toggle-read-only entry ()
   (unless %locked
@@ -761,19 +768,10 @@ inputs are evaluated."
   '(integer float string symbol number))
  
 (defun data-block (datum)
-  (let* ((data-type (type-of datum))
-	 (head-type (if (listp data-type)
-			(first data-type)
-			data-type))
-	 (type-specifier 
-	   (if (member head-type *builtin-entry-types* :test 'equal)
-			     head-type data-type)))
-    ;; see also basic.lisp for more on data entry blocks
-    (typecase datum
-      ;; symbols not editable by default
-      (symbol (new 'symbol :value datum :read-only t))
-      (string (new 'string :value datum))
-      (number (new 'number :value datum))
-      (otherwise (new 'expression :value datum)))))
+  (typecase datum
+    (symbol (new 'symbol :value datum :read-only t))
+    (string (new 'string :value datum :read-only t))
+    (number (new 'number :value datum :read-only t))
+    (otherwise (new 'expression :value datum :read-only t))))
 
 ;;; basic.lisp ends here

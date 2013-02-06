@@ -1,41 +1,20 @@
-*** TODO define word, define block, define method
-
-*** TODO add numbers, strings, and compound phrases to the sidebar dictionary list
-
 *** TODO flesh out generic word-and-body-and-END block for things like "define", where END is implicit
+**** TODO pin and/or lock first row of widgets, can be collapsed like tree
 **** TODO draw paragraph as a scheme-bricks-style bracket
 ***** TODO shades of gray for nesting, not color
-*** TODO pin and/or lock first row of widgets, can be collapsed like tree
-
+*** TODO x to execute selected word/block
+*** TODO right-click or control-click to execute block without selecting
 
 *** TODO sidebar pops up when you go near right edge, or use mouse wheel
-*** TODO x to execute selected word/block
-*** TODO control-click to execute block without selecting
-*** TODO delete deletes selected block
+*** TODO delete or C-d deletes selected block
 *** TODO c puts copy of selected block at mouse pointer
 *** TODO undo and redo
-
-*** TODO sentence block is mostly invisible itself, small handle
-**** TODO tap/drag selects whole sentence by default
-**** TODO middle mouse button to override and select by "raw hit"
 
 *** TODO control-r to rotate orientation of selected block
 *** TODO merge sentences/bodies when dropping sentence
 *** TODO equivalent of scheme's "every-frame"
 
-*** TODO gracefull error handling with pop up notifications
-
-*** TODO REMIX MY GAME AUDIO/MUSIC BY MAKING FUCKED TONAL SAMPLes! via Mikmod???
-*** TODO sample milkytracker shiz
-
-
-*** TODO check out RodgerTheGreat's Deep Mako game
-https://github.com/JohnEarnest/Mako/blob/master/games/Deep/Deep.fs
-once you've built maker by running the ant script in the root
-of the project you can build and run deep via "./maker games/Deep/Deep.fs --run"
-*** DONE be able to blockify  ((DEFINE "") (.....) (....))
-    CLOSED: [2013-02-04 Mon 15:25]
-    And then get back DEFINE name FOO BAR BAZ END
+*** TODO graceful error handling with pop up notifications
 
 *** DONE left-drag to move blocks
     CLOSED: [2013-02-04 Mon 15:22]
@@ -303,6 +282,42 @@ the current block. like Bold Italic.
 ** TODO click to highlight word, control-click or right-click to execute
    :PROPERTIES:
    :ARCHIVE_TIME: 2013-02-03 Sun 07:11
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: TODO
+   :END:
+
+
+** TODO check out RodgerTheGreat's Deep Mako game
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-05 Tue 18:48
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: TODO
+   :END:
+https://github.com/JohnEarnest/Mako/blob/master/games/Deep/Deep.fs
+once you've built maker by running the ant script in the root
+of the project you can build and run deep via "./maker games/Deep/Deep.fs --run"
+** DONE be able to blockify  ((DEFINE "") (.....) (....))
+   CLOSED: [2013-02-04 Mon 15:25]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-05 Tue 18:48
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
+   :END:
+   And then get back DEFINE name FOO BAR BAZ END
+** DONE define word, define block, define method
+   CLOSED: [2013-02-05 Tue 16:56]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-05 Tue 18:52
+   :ARCHIVE_FILE: ~/blocky/livecoding.org
+   :ARCHIVE_CATEGORY: livecoding
+   :ARCHIVE_TODO: DONE
+   :END:
+** TODO add numbers, strings, and compound phrases to the sidebar dictionary list
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2013-02-05 Tue 18:52
    :ARCHIVE_FILE: ~/blocky/livecoding.org
    :ARCHIVE_CATEGORY: livecoding
    :ARCHIVE_TODO: TODO

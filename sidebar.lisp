@@ -30,17 +30,27 @@
   (row :initform 0)
   (displayed-rows :initform 0))
 
-;; (defparameter *sidebar-phrases*
-;;   '((define "" 
+(defparameter *sidebar-phrases*
+  '(((define word nil) &body)
+    ((define block nil) &body)
+    ((define method :name block &body))))
 
-;; (defun all-sidebar-phrases ()
-;;   (append 
+(defun all-sidebar-phrases ()
+  (append *sidebar-phrases* (all-words)))
 
 (define-method initialize sidebar ()
   (with-fields (inputs) self
-    (setf inputs (mapcar #'make-phrase (all-words)))
+    (setf inputs (mapcar #'make-phrase (all-sidebar-phrases)))
     (dolist (input inputs)
       (setf (%parent input) self))))
+
+(define-method add-phrase sidebar (phrase)
+  (push phrase %inputs))
+
+(add-hook '*after-define-functions*
+	  #'(lambda (word)
+	      (when *sidebar* 
+		(add-phrase *sidebar* (make-phrase word)))))
 
 (define-method scroll-up block ()
   (with-fields (inputs row) self
@@ -88,19 +98,19 @@
 
 (define-method pick sidebar ()
   (let ((x (window-pointer-x))
-	(y (window-pointer-y)))
+	(y (window-pointer-y))
+	(candidates (subseq %inputs %row (+ %row %displayed-rows))))
     (labels ((try (it)
 	       (hit it x y)))
-      (let ((word (some #'try (subseq %inputs %row (+ %row %displayed-rows)))))
-	(when word
-	  (let ((word2 (duplicate-phrase word)))
-	    (setf (%parent word2) nil)
-	    (move-to word2 (%x word) (%y word))
-	     word2))))))
+      (let* ((pos (position-if #'try candidates))
+	     (phrase (when pos (nth pos candidates))))
+	  (let ((phrase2 (duplicate-phrase phrase)))
+	    (prog1 phrase2
+	      (move-to phrase2 (%x phrase) (%y phrase))))))))
     
-    (define-method draw sidebar ()
+(define-method draw sidebar ()
   (with-fields (inputs row displayed-rows x y height width) self
-    (draw-box x y width height :color "gray20" :alpha 0.5)
+    (draw-box x y width height :color "gray30" :alpha 0.5)
     (dotimes (n displayed-rows)
       (draw (nth (+ n row) inputs)))))
 
