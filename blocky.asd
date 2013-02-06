@@ -30,11 +30,11 @@
 	       (:file "quadtree" :depends-on ("blocky"))
 	       (:file "console" :depends-on ("prototypes" "quadtree" "rgb" "keys" "math" "logic"))
 	       (:file "blocks" :depends-on ("console"))
+	       (:file "text" :depends-on ("blocks"))
 	       (:file "phrase" :depends-on ("blocks"))
-	       (:file "entry" :depends-on ("phrase"))
+	       (:file "entry" :depends-on ("phrase" "text"))
 	       (:file "words" :depends-on ("entry"))
 	       (:file "halo" :depends-on ("phrase"))
-	       (:file "text" :depends-on ("blocks"))
 	       (:file "sidebar" :depends-on ("entry"))
 	       (:file "buffers" :depends-on ("entry" "text"))))
 

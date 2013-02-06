@@ -28,11 +28,14 @@
 
 (defparameter *text-minimum-width* 80) 
 
+(defparameter *text-monospace* "sans-mono-bold-11")
+
 (define-block text
   (methods :initform '(:page-up :page-down :center :resize-to-fit :view-messages))
-  (font :initform *monospace*)
+  (font :initform *text-monospace*)
   (buffer :initform nil)
   (category :initform :comment)
+  (timeout :initform nil)
   (read-only :initform nil)
   (bordered :initform nil)
   (indicator :initform nil)
@@ -77,8 +80,12 @@
   (assert (eq :color (resource-type (find-resource color))))
   (setf %foreground-color color))
 
-;; (define-method update text ()
-;;   (layout self))
+(define-method update text ()
+  (layout self)
+  (when (integerp %timeout)
+    (decf %timeout)
+    (unless (plusp %timeout)
+      (destroy self))))
 
 (define-method page-up text ()
   "Scroll up one page, only when %max-displayed-lines is set."
@@ -126,6 +133,7 @@
 
 (define-method view-messages text ()
   (setf %auto-fit nil)
+  (setf %max-displayed-lines 3)
   (add-to-list '*message-hook-functions* 
 	       #'(lambda (string)
 		   (insert-string self string)
@@ -305,6 +313,42 @@
       (dolist (line lines)
 	(callf max width (dash 4 (font-text-width line font)))))))
 
+(defvar *notification* nil)
+
+(defvar *use-notifications* nil)
+
+(defmacro with-notifications (&body body)
+  `(let ((*use-notifications* t)) ,@body))
+
+(define-method notify-style text (&optional (timeout (seconds->frames 10.0)))
+  (setf %timeout timeout)
+  (setf %category :system)
+  (layout self)
+  (move-to self 4 (+ (window-y) (- *gl-screen-height* %height 4))))
+
+(defun recent-messages (&optional (n 5))
+    (nreverse (subseq *message-history* 0 
+		      (min n (length *message-history*)))))
+
+(defun notify-message (lines)
+  (let ((notification (new 'text lines)))
+    (notify-style notification)
+    ;; remove any existing notification
+    (when *notification*
+      (remove-object (current-buffer) *notification*)
+      (setf *notification* notification))
+    (add-block (current-buffer) notification)))
+
+(defun notify-message-maybe ()
+  (when *use-notifications*
+    (notify-message (recent-messages))))
+
+(defun notify (string &rest args)
+  (apply #'message string args)
+  (notify-message (recent-messages)))
+
+(add-hook '*message-hook* #'notify-message-maybe)
+
 (defparameter *text-cursor-width* 2)
 
 (define-method draw text ()
@@ -325,27 +369,25 @@
 	  (dolist (line lines)
 	    (when (plusp (length line))
 	      (draw-string line x0 y0 
-			   :font font :color %foreground-color))
+			   :font font :color (find-color self :foreground)))
 	    (incf y0 line-height)))))))
       ;; ;; possibly draw emblem
       ;; (draw-emblem self))))
 
-(define-method draw-focus text ()
-  ;; draw cursor
-  ;; TODO fix %point-row to be drawn relative pos in scrolling
-  (with-fields (buffer width parent height) self
-    (with-field-values (x y font point-row) self
-      (when (null %read-only)
-	(let* ((line-height (font-height font))
-	       (current-line (nth point-row buffer))
-	       (cursor-width *text-cursor-width*)
-	       (x1 (+ x *text-margin*
-		      (font-text-width (subseq current-line 0 %point-column)
-				       font)))
-	       (y1 (+ y *text-margin*
-		      (* point-row (font-height font)))))
-	  (draw-cursor-glyph self x1 y1 cursor-width line-height 
-			     :blink t))))))
+;; (define-method draw-focus text ()
+;;   (with-fields (buffer width parent height) self
+;;     (with-field-values (x y font point-row) self
+;;       (when (null %read-only)
+;; 	(let* ((line-height (font-height font))
+;; 	       (current-line (nth point-row buffer))
+;; 	       (cursor-width *text-cursor-width*)
+;; 	       (x1 (+ x *text-margin*
+;; 		      (font-text-width (subseq current-line 0 %point-column)
+;; 				       font)))
+;; 	       (y1 (+ y *text-margin*
+;; 		      (* point-row (font-height font)))))
+;; 	  (draw-cursor-glyph self x1 y1 cursor-width line-height 
+;; 			     :blink t))))))
 
 (define-method draw-hover text () nil)
 	  

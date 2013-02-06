@@ -151,7 +151,7 @@
 (defun reset-message-function ()
   (setf *message-function* #'message-to-standard-output))
 
-(defvar *message-hook-functions* nil)
+(defvar *message-hook* nil)
 
 (defvar *message-history* nil)
 
@@ -162,8 +162,8 @@ this output is disabled."
     (let ((message-string (apply #'format nil format-string args)))
       (when *message-logging* 
 	(funcall *message-function* message-string))
-      (dolist (hook *message-hook-functions*)
-	(funcall hook message-string))
+      (dolist (hook *message-hook*)
+	(funcall hook))
       (push message-string *message-history*)))
 
 ;;; Sequence numbers
@@ -764,7 +764,7 @@ becomes larger.")
 We want to process all inputs, update the game state, then update the
 display."
   (let ((fps (make-instance 'sdl:fps-mixed 
-			    :dt (setf *dt* (or *dt* (truncate (/ 1000 *frame-rate*)))))))
+			    :dt (setf *dt* (truncate (/ 1000 *frame-rate*))))))
     (message "Simulation update time set to ~d milliseconds." *dt*)
     (message "Creating OpenGL window...")
     (cond (*fullscreen*
@@ -1358,7 +1358,7 @@ table."
 
 ;;; Standard resource names
 
-(defvar *font* "sans-mono-12")
+(defparameter *font* "sans-mono-bold-11")
 
 (defvar *color* "black")
 
@@ -2361,11 +2361,12 @@ of the music."
   (setf *blocks* nil
 	*buffer* nil
  	*project* nil
+	*notification* nil
 	*clipboard* nil
 	*event-hook* nil
 	*sidebar* nil
 	*sidebar-open-p* nil
-	*message-hook-functions* nil
+	*message-hook* nil
 	*window-title* "Blocky"
 	*updates* 0
 	*resizable* t
@@ -2399,7 +2400,6 @@ of the music."
   (setf *sidebar* nil)
   (setf *sidebar-open-p* nil)
   (setf *clipboard* nil)
-  (setf *dt* nil)
   (setf *frame-rate* *default-frame-rate*)
   (setf *event-hook* nil)
   (sdl:quit-sdl)
@@ -2445,37 +2445,6 @@ of the music."
       (at-next-update 
        (start-alone (find-buffer name))))))
 
-(defparameter *scratch-message*
-"
-;; Welcome to the Blocky multimedia programming language.
-;; Copyright (C) 2006-2013 by David T O'Toole <dto@ioforms.org>
-;; http://blocky.io/
-
-;; This program is free software: you can redistribute it and/or
-;; modify it under the terms of the GNU General Public License as
-;; published by the Free Software Foundation. Type \"COPYRIGHT\" and
-;; then press the ENTER key to see the full copyright notice.
-
-;; This scratch buffer is for text notes and for typing
-;; commands. Below are some example commands; try typing a command and
-;; then press the ENTER key to execute it.
-
-;; to get help on using Blocky:
-;;    HELP
-;; to see the copyright notices:
-;;    COPYRIGHT                
-;; to create a new project: 
-;;    PROJECT \"new-project-name\"
-;; to load a project:
-;;    LOAD \"existing-project-name\"
-;; to create a new buffer:
-;;    BUFFER \"new-buffer-name\"
-;; to save the current project:
-;;    SAVE 
-;; to browse the available words:
-;;    DICTIONARY
-")
-
 (defun current-buffer () *buffer*)
 
 (defun visit (thing)
@@ -2489,7 +2458,9 @@ of the music."
 (defun make-scratch-buffer ()
   (let ((buffer (find-buffer "*scratch*" :create t)))
     (visit buffer)
-    (setf *font* "sans-mono-12")
+    (setf *font* "sans-mono-11")
+    (message "Welcome to Blocky. Press F1 for help.")
+    (show-messages (current-buffer))
     (enter-sidebar (current-buffer))))
 
 (defun blocky ()

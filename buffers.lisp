@@ -68,6 +68,9 @@
 		    ((:x :control) :exec)
 		    ((:d :control) :delete-word)
 		    ((:c :control) :copy-word)
+		    ((:c :alt) :clear-stack)
+		    ((:s :alt) :show-stack)
+		    ((:m :alt) :show-messages)
 		    ((:p :control) :paste)
 		    ((:return) :enter)
 		    ((:escape) :cancel)
@@ -164,6 +167,9 @@
   (setf (%point (current-buffer)) word))
 
 ;; Defining and scrolling the screen viewing window
+
+(defun window-y () (%window-y (current-buffer)))
+(defun window-x () (%window-x (current-buffer)))
 
 (define-method window-bounding-box buffer ()
   (values %window-y 
@@ -1131,6 +1137,16 @@ block found, or nil if none is found."
 (define-method cancel buffer ()
   (when %point (cancel-editing %point)))
 
+(define-method show-stack buffer ()
+  (notify (format nil "~S" *stack*)))
+
+(define-method show-messages buffer ()
+  (notify-message (recent-messages 6)))
+
+(define-method clear-stack buffer ()
+  (setf *stack* nil)
+  (notify "Stack cleared."))
+
 (define-method enter buffer ()
   (when %point (finish-editing %point)))
 
@@ -1160,21 +1176,33 @@ block found, or nil if none is found."
 (defparameter *help-message*
 "welcome to blocky.
 
-making new objects: 
-    right-click the background, 
-    type an expression, press <return>.
-  or,
-    drag from sidebar (see below)
 left-click to select an object.
 left-click-and-drag to move objects.
+
+right-click the background
+to create an object by typing.
+then press <return>.  
+
+or, you can drag new objects from the sidebar.
+ (the sidebar pops up when you mouse to the right edge of the
+  workspace. use the mouse wheel to scroll the sidebar through the
+  list of available phrases.)
+
 <control>-X or right-click to execute objects.
 <control>-E to edit.
 <return> saves edit changes.
 <escape> cancels editing.
 <control>-D to delete object.
-the sidebar is accessible on the right side.
-you can drag new objects from the sidebar.
-use the mouse wheel to scroll the sidebar.
+<alt>-S to show the stack
+<alt>-C to clear the stack
+<alt>-M to show system messages
+
+Try maximizing the window for better results.
+There isn't much to do just yet. Sorry.
+
+To remove this help window, right click 
+it, and then click the X button in the 
+top right corner.
 ")
 
 (define-method help buffer ()

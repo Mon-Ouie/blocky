@@ -1020,9 +1020,6 @@ current block. Used for taking a count of all the nodes in a tree."
 (defparameter *block-font* "sans-11"
   "Name of the font used in drawing block labels and input data.")
 
-(defparameter *font* *block-font*
-  "Name of the current font used for drawing.")
-
 (defparameter *block-bold* "sans-bold-11")
 
 (defmacro with-font (font &rest body)
@@ -1036,7 +1033,7 @@ current block. Used for taking a count of all the nodes in a tree."
 (defparameter *serif* "serif-11"
   "Name of the default serif font.")
 
-(defparameter *monospace* "sans-mono-10"
+(defparameter *monospace* "sans-mono-12"
   "Name of the default monospace (fixed-width) font.")
 
 (defvar *dash* 3
@@ -1056,7 +1053,7 @@ you want to align a group of text items across layouts.")
 
 (defparameter *block-colors*
   '(:motion "cornflower blue"
-    :system "gray50"
+    :system "gray40"
     :expression "gray60"
     :button "orange"
     :terminal "gray25"

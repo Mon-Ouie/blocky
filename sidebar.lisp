@@ -21,7 +21,7 @@
 (in-package :blocky)
 
 (defparameter *sidebar-enter-sensitivity* 12)
-(defparameter *sidebar-minimum-width* 180)
+(defparameter *sidebar-minimum-width* 200)
 (defparameter *sidebar-margin* 16)
 (defparameter *sidebar-spacing* 3)
 (defparameter *sidebar-scroll-speed* 3)
@@ -109,11 +109,15 @@
 	    (prog1 phrase2
 	      (move-to phrase2 (%x phrase) (%y phrase)))))))))
     
+(defparameter *sidebar-always-visible* nil)
+
 (define-method draw sidebar ()
   (with-fields (inputs row displayed-rows x y height width) self
-    (draw-box x y width height :color "gray30" :alpha 0.5)
-    (dotimes (n displayed-rows)
-      (draw (nth (+ n row) inputs)))))
+    (when (or *sidebar-always-visible* 
+	      (hit self (window-pointer-x) (window-pointer-y)))
+      (draw-box x y width height :color "gray30" :alpha 0.5)
+      (dotimes (n displayed-rows)
+	(draw (nth (+ n row) inputs))))))
 
 (define-method update sidebar ())
 
