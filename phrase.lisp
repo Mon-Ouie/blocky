@@ -197,7 +197,7 @@
   (let ((phrase (apply #'new 'phrase contents)))
     (prog1 phrase
       (update-parent-links phrase)
-      (freeze (first (%inputs phrase)))
+      (freeze (first (%inputs phrase))) ;; wait, is this wrong? 
       (with-fields (orientation no-background dash spacing) phrase
 	(setf orientation :vertical)
 	(setf dash 1)

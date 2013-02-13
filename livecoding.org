@@ -1,7 +1,5 @@
-*** TODO control or right-click on background to create a word cursor.
-*** TODO remove it if nothing typed.
-
-
+*** TODO connecting of block words into phrases 
+ 
 *** TODO howto select/execute a paragraph block
 *** TODO inline typing of block words
 *** TODO flesh out generic word-and-body-and-END block for things like "define", where END is implicit
@@ -22,6 +20,10 @@
 
 *** TODO graceful error handling with pop up notifications
 
+*** DONE control or right-click on background to create a word cursor.
+    CLOSED: [2013-02-06 Wed 14:17]
+*** DONE remove it if nothing typed.
+    CLOSED: [2013-02-06 Wed 14:17]
 *** DONE left-drag to move blocks
     CLOSED: [2013-02-04 Mon 15:22]
 *** DONE click to select block
@@ -40,7 +42,8 @@
 *** DONE improved block appearance with schemebricks-style typing
     CLOSED: [2013-02-04 Mon 15:25]
 
-*** TODO make music with blockyforth ... ambient at first.
+*
+** TODO make music with blockyforth ... ambient at first.
 *** TODO able to click/grab/edit/copy blockified forth commands
 *** TODO [#B] show stack in sidebar
 *** TODO consistent set of function keys for executing global words

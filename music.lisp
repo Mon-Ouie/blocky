@@ -47,17 +47,10 @@ SAMPLE has not yet been assigned a number, assign it."
 	number
       (import-sample sample))))
 
-(defun directory-samples (dir)
-  (remove-if-not #'sample-filename-p 
-		 (directory-files dir)))
-
-(defun project-samples ()
-  (directory-samples (project-directory)))
-
-(defun load-all-samples (project)
-  (setf *next-sample-number* 1)
-  (setf *samples* nil)
-  (mapcar #'import-sample (project-samples)))
+;; (defun load-all-samples (project)
+;;   (setf *next-sample-number* 1)
+;;   (setf *samples* nil)
+;;   (mapcar #'import-sample (project-samples)))
 
 ;;; Generators
 

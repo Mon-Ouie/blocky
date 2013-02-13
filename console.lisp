@@ -1160,6 +1160,7 @@ name PROJECT. Returns the pathname if found, otherwise nil."
   '(("png" :image)
     ("wav" :sample)
     ("ogg" :music)
+    ("xm" :music)
     ("lisp" :lisp)
     ("ttf" :ttf)))
 
@@ -1181,7 +1182,7 @@ resource is stored; see also `find-resource'."
 		 *resources*) 
 	resource))
 
-(defun defresource-expand-plist (plist)
+(defun expand-resource-description (plist)
   (destructuring-bind 
       (&key name type file properties &allow-other-keys) plist
     (list :name name 
@@ -1194,30 +1195,45 @@ resource is stored; see also `find-resource'."
     ;; variable
     ((and (symbolp (first entries))
 	  (boundp (first entries)))
-     (mapcar #'defresource-expand-plist 
+     (mapcar #'expand-resource-description 
 	     (symbol-value (first entries))))
     ;; short form: (defresource "file.ext" &rest PROPERTIES)
     ((stringp (first entries))
      (list 
-      (defresource-expand-plist 
+      (expand-resource-description 
 	  (list :name (first entries)
 		:properties (rest entries)))))
     ;; inline: (defresource :name ...)
     ((keywordp (first entries))
      (list 
-      (defresource-expand-plist entries)))
+      (expand-resource-description entries)))
     ;; list of property lists
     ((every #'consp entries)
-     (mapcar #'defresource-expand-plist entries))))
+     (mapcar #'expand-resource-description entries))))
 
 (defmacro defresource (&rest entries)
   `(eval-when (:load-toplevel)
      (blocky:add-resources 
       (resource-entries-to-plists ',entries))))
+
+(defun directory-samples (dir)
+  (remove-if-not #'sample-filename-p 
+		 (directory-files dir)))
+
+(defun project-samples ()
+  (directory-samples (find-project-path)))
+
+(defun add-file-resource (filename)
+  (add-resource (expand-resource-description 
+		 (list filename))))
+
+(defun load-all-samples ()
+  (dolist (sample (project-samples))
+    (add-file-resource sample)))
  
-(defun find-project-path (project-name)
+(defun find-project-path (&optional (project-name *project*))
   "Return the current project path."
-  (assert *project*)
+  (assert (not (null project-name)))
   (or *project-path*
       (search-project-path project-name)))
 
@@ -1988,6 +2004,12 @@ of the music."
 (defun halt-sample (channel &rest args)
   (when *use-sound*
     (apply #'sdl-mixer:halt-sample :channel channel args)))
+
+(defun set-sample-volume (sample volume)
+  (when *use-sound*
+    (load-sample-resource (find-resource sample))
+    (let ((chunk (find-resource-object sample)))
+      (setf (sdl-mixer:sample-volume chunk) volume))))
 
 (defun initialize-sound ()
   ;; try opening sound

@@ -343,6 +343,12 @@ interpreter."
       (:music (play-music name))
       (:sample (play-sample name)))))
 
+(define-word volume! (sample volume)
+  (set-sample-volume sample volume))
+
+(define-word load-all-samples ()
+  (load-all-samples))
+
 (define-word playing (music) (play-music music :loop t))
 
 (define-word stop-music () (halt-music))

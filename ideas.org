@@ -91,6 +91,77 @@
 ** TODO Blocky Demoscene Livecoding Synthesis with VM's
 
 
+* TODO OBSOOLETE DESIGN
+*** TODO seek the ball, contact it
+*** TODO contact bricks, you can bash them with the button or throw them at the ball carrier or other competitors for the ball
+*** TODO can't pick up colored base bricks, must break with ball
+*** TODO if i just kicked the ball, i'm the ball carrier, whose name is displayed
+*** TODO if i run into another player, choose a new direction (how?)
+*** TODO seek the ball carrier and try to bump him
+*** TODO fumble! ball carrier sends ball flying and staggers a little
+*** TODO [#B] don't require world to have player
+*** TODO [#B] bricks should speed up the ball so that it's easier to get the ball back and tunnel thru.
+**** TODO ball speed indicated by pitch of beep at kick time
+*** TODO [#C] omega race corner bumpers for the ball
+*** TODO [#C] better kick sounds (one normal, one strong)
+*** TODO [#C] player can "block" other player to slow him down (keep him from getting ball carrier). press button
+** TODO Implement goals, offense/defense
+**** TODO GREEN: follow QB (simple seek for now, pathfinding later)
+*** TODO [#B] a player's "base" is his pile of bricks with the goal inside. 
+**** TODO parts of the goal can be exposed by attacks. 
+*** TODO [#B] when a player's goal is hit 3 times, he is out for the rest of the game.
+*** TODO [#B] finish porting path.lisp; any player can have a path
+*** TODO [#B] when both players on a team are knocked out of the game, they lose the game. 
+**** TODO GOLD: PLAYER 1 
+**** TODO GREEN: PLAYER 2 or, FRIEND AI 
+**** TODO BLUE AND PURPLE: AI only (until netplay is implemented)
+*** TODO [#C] later: rain/snow play with inertia, parts of field turning to mush
+*** TODO [#C] two human player versus each other (each with AI teammate)
+
+*** TODO [#C] WOW. http://www.atariage.com/2600/archives/combat_asm/index.html
+*** DONE [#A] camera follows ball
+    CLOSED: [2012-10-08 Mon 02:39]
+
+*** DONE [#A] refine auto-kick to work better when player is on top of ball.
+    CLOSED: [2012-10-08 Mon 02:13]
+**** DONE kick causes ball to ignore kicker collisions for a limited time
+     CLOSED: [2012-10-08 Mon 02:13]
+
+*** DONE [#C] check out add's https://github.com/gpadd/cl-h12rl
+    CLOSED: [2012-10-08 Mon 00:46]
+
+*** DONE [#C] analyze what the 2600 AI does by playing game 28 or 43 (difficult)
+    CLOSED: [2012-10-08 Mon 00:55]
+**** TODO http://www.atariage.com/manual_html_page.html?SoftwareLabelID=73
+**** TODO imitate referee lines on side of tv
+** DONE there is only one football, a white square
+   CLOSED: [2012-10-08 Mon 00:40]
+** DONE the football can break any brick and it bounces like puck, but slows down over time like a 2600 kick
+   CLOSED: [2012-10-08 Mon 00:40]
+** DONE auto-kick when push against ball
+   CLOSED: [2012-10-08 Mon 00:38]
+** DONE dude foot sounds
+   CLOSED: [2012-10-06 Sat 20:57]
+** DONE work with only green field for now.
+   CLOSED: [2012-10-06 Sat 21:17]
+** DONE green background like a field
+   CLOSED: [2012-10-06 Sat 21:17]
+** DONE [#A] control-r for reset
+   CLOSED: [2012-10-08 Mon 00:41]
+
+* Archived Entries
+
+** DONE indicate (paused) in listener
+   CLOSED: [2012-10-06 Sat 06:35]
+   :PROPERTIES:
+   :ARCHIVE_TIME: 2012-10-06 Sat 19:29
+   :ARCHIVE_FILE: ~/plong/plong.org
+   :ARCHIVE_OLPATH: Tasks
+   :ARCHIVE_CATEGORY: plong
+   :ARCHIVE_TODO: DONE
+   :END:
+
+
 * Reactopong
 
 Reactopong is a game of quick reactions and think-ahead strategy. An
