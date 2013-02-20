@@ -51,10 +51,10 @@
 
 (defun add-resource (plist)
   (assert (and (consp plist)
-	       (keywordp (first plist))))
+  	       (keywordp (first plist))))
   (push plist *pending-resources*))
 
-(defun add-resources (&rest plists)
+(defun add-resources (plists)
   (mapcar #'add-resource plists))
 
 (defun random-choose (set)
@@ -1190,7 +1190,7 @@ resource is stored; see also `find-resource'."
 	  :properties properties
 	  :file (or file name))))
 
-(defmacro resource-entries-to-plists (entries)
+(defun resource-entries-to-plists (entries)
   (cond
     ;; variable
     ((and (symbolp (first entries))
