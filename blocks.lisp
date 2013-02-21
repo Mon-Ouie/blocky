@@ -884,11 +884,15 @@ away from this object, in the angle HEADING."
   "Move this object DISTANCE units away from its current heading."
   (move self (- (* 2 pi) %heading) distance))
 
-(define-method heading-to-thing block (thing)
+(define-method heading-to-thing2 block (thing)
   "Compute the heading angle from this object to the other object THING."
   (multiple-value-bind (x1 y1) (center-point thing)
     (multiple-value-bind (x0 y0) (center-point self)
       (find-heading x0 y0 x1 y1))))
+
+(define-method heading-to-thing block (thing)
+  (multiple-value-bind (x0 y0) (center-point thing)
+    (find-heading %x %y x0 y0)))
 
 (define-method heading-to-cursor block ()
   "Compute the heading angle from this object to the cursor."
