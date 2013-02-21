@@ -27,11 +27,10 @@
   (format nil "X:~S Y:~S" x y))
 
 (define-block-macro modeline
-    (:super list
+    (:super phrase
      :fields 
      ((orientation :initform :horizontal)
-      (spacing :initform 4)
-      (no-background :initform t))
+      (spacing :initform 4))
      :inputs (:project-id (new 'label :read-only t)
 	      :buffer-id (new 'label :read-only t)
 	      :position (new 'label :read-only t)
@@ -39,7 +38,7 @@
 
 (define-method update modeline ()
   (set-value %%project-id *project*)
-  (set-value %%buffer-id (%buffer-name (current-buffer)))
+  (set-value %%buffer-id (%name (current-buffer)))
   (set-value %%position
 	     (modeline-position-string
 	      (%window-x (current-buffer))
@@ -105,7 +104,7 @@
 ;;; The Minibuffer is a pop-up command program and Forth prompt. Only
 ;;; shows one line, like in Emacs.
 
-(define-block (minibuffer :super list)
+(define-block (minibuffer :super phrase)
   (temporary :initform t)
   (display-lines :initform 12))
 
@@ -115,7 +114,7 @@
   (with-fields (image inputs) self
     (let ((prompt (new 'minibuffer-prompt self))
 	  (modeline (new 'modeline)))
-      (list%initialize self)
+      (initialize%super self)
       (set-output prompt prompt)
       (setf inputs (list modeline prompt))
       (set-parent prompt self)

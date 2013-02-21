@@ -128,7 +128,7 @@ initialize-console joystick-axis-value poll-joystick-button
 joystick-button-state reset-joysticks *device-profiles*
 button-to-symbol symbol-to-button find-device-profile set-screen-width
 *play-args* set-screen-height genseq save-objects enable-timer
-draw-box *resizable* *resize-hook* draw-rectangle cursorp
+draw-box *resizable* *resize-hook* draw-rectangle cursorp switch-to-buffer
 *after-load-project-hook* *mission* mission-variable find-bounding-box
 combine stack-vertically set-mission-variable horizontal-extent
 vertical-extent flip-horizontally flip-vertically mirror-horizontally

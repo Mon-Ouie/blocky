@@ -28,6 +28,7 @@
 
 (define-block sidebar
   (row :initform 0)
+  (modeline :initform nil)
   (displayed-rows :initform 0))
 
 (defparameter *sidebar-phrases*
@@ -39,8 +40,9 @@
   (append *sidebar-phrases* (all-words)))
 
 (define-method initialize sidebar ()
+  (setf %modeline (new 'modeline))
   (with-fields (inputs) self
-    (setf inputs (mapcar #'make-phrase (all-sidebar-phrases)))
+    (setf inputs (mapcar #'make-phrase (all-words)))
     (dolist (input inputs)
       (setf (%parent input) self))))
 
@@ -52,17 +54,19 @@
 	      (when *sidebar* 
 		(add-phrase *sidebar* (make-phrase word)))))
 
-(define-method scroll-up block ()
+(define-method scroll-up sidebar ()
   (with-fields (inputs row) self
     (decf row *sidebar-scroll-speed*)
     (setf row (max 0 row))))
 
-(define-method scroll-down block ()
+(define-method scroll-down sidebar ()
   (with-fields (inputs row) self
     (incf row *sidebar-scroll-speed*)
     (setf row (min row (1- (length inputs))))))
 
 (define-method layout sidebar ()
+  (move-to %modeline (window-x) (window-y))
+  (layout %modeline)
   (with-fields (height width displayed-rows parent inputs row) self
     ;; use the right side of the screen.
     (let* ((x0 (+ (%window-x (current-buffer))
@@ -109,7 +113,7 @@
 	    (prog1 phrase2
 	      (move-to phrase2 (%x phrase) (%y phrase)))))))))
     
-(defparameter *sidebar-always-visible* nil)
+(defparameter *sidebar-always-visible* t)
 
 (define-method draw sidebar ()
   (with-fields (inputs row displayed-rows x y height width) self
@@ -117,8 +121,11 @@
 	      (hit self (window-pointer-x) (window-pointer-y)))
       (draw-box x y width height :color "gray30" :alpha 0.5)
       (dotimes (n displayed-rows)
-	(draw (nth (+ n row) inputs))))))
+	(draw (nth (+ n row) inputs))))
+    (draw %modeline)))
 
-(define-method update sidebar ())
+(define-method update sidebar ()
+  (update %modeline)
+  )
 
 ;;; sidebar.lisp ends here

@@ -1511,13 +1511,8 @@ objects after reconstruction, wherever present."
 	(make-hash-table :test 'equal)))
 
 (initialize-buffers)
-
-(defun find-buffer-name (thing)
-  (when (blockyp thing)
-    ;; see also blocks.lisp
-    (send :buffer thing)))
     
-(defparameter *buffer-delimiter* #\:)
+(defparameter *buffer-delimiter* #\*)
 
 (defun special-buffer-name-p (name)
   (position *buffer-delimiter* name))
@@ -1576,16 +1571,18 @@ objects after reconstruction, wherever present."
   (when (null *buffers*)
     (initialize-buffers))
   (prog1 (find-uuid object)
-    (setf (gethash 
-	   (or name (find-buffer-name object))
-	   *buffers*)
+    (setf (gethash name *buffers*)
 	  (find-uuid object))))
 
-(defun find-buffer (name &key (create t) prototype)
+(defun find-buffer (name &key create prototype noerror)
   (or (gethash name *buffers*)
       (if create
 	  (add-buffer name (new (or prototype 'buffer) :name name))
-	  (error "Cannot find buffer page ~S" name))))
+	  (unless noerror
+	    (error "Cannot find buffer ~S" name)))))
+
+(defun kill-buffer (name)
+  (remhash name *buffers*))
 
 ;;; Clipboard
 

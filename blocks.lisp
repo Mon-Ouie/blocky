@@ -1694,16 +1694,6 @@ Note that the center-points of the objects are used for comparison."
   "Return the straight-line distance to the cursor."
   (distance-between self (get-cursor *buffer*)))
 
-;; (defun uniquify-buffer-name (name)
-;;   (let ((n 1)
-;; 	(name0 name))
-;;     (block naming
-;;       (loop while name0 do
-;; 	(if (get-buffer name0)
-;; 	    (setf name0 (format nil "~A.~S" name n)
-;; 		  n (1+ n))
-;; 	    (return-from naming name0))))))
-
 (define-method queue-layout block ()
   (setf %needs-layout t))
 

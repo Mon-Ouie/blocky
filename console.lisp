@@ -2469,11 +2469,16 @@ of the music."
 
 (defun current-buffer () *buffer*)
 
-(defun visit (thing)
+(defun switch-to-buffer (thing)
+  ;; accept both names and buffers
   (let ((buffer (if (blockyp thing) 
-		    thing
+		    ;; give it a unique name
+		    (prog1 thing 
+		      (rename thing 
+			      (make-buffer-name (%name thing))))
+		    ;; just create a new buffer
 		    (find-buffer thing :create t))))
-    (push buffer *buffer-history*)
+    (push (%name buffer) *buffer-history*)
     (setf *buffer* buffer)
     (at-next-update (start-alone buffer))))
 

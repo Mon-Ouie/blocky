@@ -21,6 +21,7 @@
 (in-package :blocky)
 
 (define-block buffer
+  (name :initform nil)
   (variables :initform nil 
 	     :documentation "Hash table mapping values to values, local to the current buffer.")
   (cursor :initform nil)
@@ -80,9 +81,9 @@
 		    ;; ((:c :control) :copy)
 		    ;; ((:v :control) :paste)
 		    ;; ((:v :control :shift) :paste-here)
+		    ((:f9) :toggle-sidebar)
 		    ((:g :control) :escape)
 		    ((:d :control) :drop-selection)))
-		    ;; ((:f10) :toggle-sidebar)
 		    ;; ((:f12) :toggle-other-windows)
 		    ;; ))
   ;; prototype control
@@ -117,6 +118,19 @@
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
 	       :documentation "A cons (X . Y) of relative mouse click location on dragged block."))
+
+(defun uniquify-buffer-name (name)
+  (let ((n 1)
+	(name0 name))
+    (block naming
+      (loop while name0 do
+	(if (find-buffer name0 :noerror t)
+	    (setf name0 (format nil "~A<~S>" name n)
+		  n (1+ n))
+	    (return-from naming name0))))))
+
+(defun make-buffer-name (name)
+  (uniquify-buffer-name (or name "*untitled*")))
 
 (defmacro define-buffer (name &body body)
   `(define-block (,name :super buffer)
@@ -159,6 +173,13 @@
   (setf %buffer-name name)
   (when name
     (add-buffer name self)))
+
+(define-method rename buffer (name)
+  (assert (stringp name))
+  (when (find-buffer name :noerror t)
+    (kill-buffer name))
+  (setf %name name)
+  (add-buffer name self))
 
 (defun point ()
   (%point (current-buffer)))
@@ -671,7 +692,8 @@ slowdown. See also quadtree.lisp")
 
 (define-method add-sidebar-maybe buffer (&optional force)
   (when (or force (null *sidebar*))
-    (setf *sidebar* (new 'sidebar))))
+    (setf *sidebar* 
+	  (new 'sidebar))))
 
 (define-method enter-sidebar buffer ()
   (when (not *sidebar-open-p*)
@@ -738,7 +760,6 @@ slowdown. See also quadtree.lisp")
       (when (and point (read-only-p point))
 	(draw-point point)))))
 
-
 (define-method draw-programs buffer ())
 
 (define-method draw buffer ()
@@ -765,13 +786,15 @@ slowdown. See also quadtree.lisp")
       ;; possibly redraw cursor to ensure visibility.
       (when (and %cursor %redraw-cursor)
 	(draw %cursor))
-      ;; draw focus
-      (when focused-block
-	(assert (blockyp focused-block))
-	(draw-focus focused-block))
+      ;; draw any overlays
       (if *sidebar-open-p* 
       	  (draw-program-objects self)
       	  (draw-programs self)))))
+      ;; ;; draw focus
+      ;; (when focused-block
+      ;; 	(assert (blockyp focused-block))
+      ;; 	(draw-focus focused-block))
+      ;; )))
       ;; (if %parent
       ;; 	  (gl:pop-matrix)
       ;; possibly draw sidebar
@@ -782,7 +805,7 @@ slowdown. See also quadtree.lisp")
 ;;; Simulation update
 
 (define-method update buffer ()
-  (setf *buffer* (find-uuid self))
+  ;; (setf *buffer* (find-uuid self))
   (with-field-values (objects drag cursor) self
     ;; build quadtree if needed
     (when (null %quadtree)
@@ -838,10 +861,10 @@ slowdown. See also quadtree.lisp")
   (with-field-values (cursor quadtree focused-block) self
     (with-buffer self
       (or (block%handle-event self event)
-	  (let ((thing focused-block))
-		  ;; (if *sidebar-open-p* 
-		  ;;     focused-block
-		  ;;     cursor)))
+	  (let ((thing 
+		  (if *sidebar-open-p* 
+		      focused-block
+		      cursor)))
 	      (prog1 t 
 		(when thing 
 		  (with-quadtree quadtree
