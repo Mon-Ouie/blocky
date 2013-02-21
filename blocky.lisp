@@ -71,7 +71,7 @@ define-buffer set-field-options *user-joystick-profile*
 field-option-value index-resource *default-joystick-profile*
 joystick-profile visit find-project-path index-project
 load-image-resource load-lisp-resource *executable* *screen-height*
-player *screen-width* blockyp *nominal-screen-width*
+cursor *screen-width* blockyp *nominal-screen-width*
 *nominal-screen-height* *gl-screen-width* *gl-screen-height*
 *message-function* dash holding-shift get-button-index
 message-to-standard-output reset-message-function
@@ -128,7 +128,7 @@ initialize-console joystick-axis-value poll-joystick-button
 joystick-button-state reset-joysticks *device-profiles*
 button-to-symbol symbol-to-button find-device-profile set-screen-width
 *play-args* set-screen-height genseq save-objects enable-timer
-draw-box *resizable* *resize-hook* draw-rectangle playerp
+draw-box *resizable* *resize-hook* draw-rectangle cursorp
 *after-load-project-hook* *mission* mission-variable find-bounding-box
 combine stack-vertically set-mission-variable horizontal-extent
 vertical-extent flip-horizontally flip-vertically mirror-horizontally

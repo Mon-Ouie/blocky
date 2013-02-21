@@ -1881,29 +1881,29 @@ Note that the center-points of the objects are used for comparison."
 
 (define-method after-drop-hook block ())
 
-;;; A generic color swatch
+;; ;;; A generic color swatch
 
-(define-block color 
-  :pinned nil
-  :methods '(:set-color)
-  :name "gray50"
-  :width (dash 20) :height (dash 20))
+;; (define-block color 
+;;   :pinned nil
+;;   :methods '(:set-color)
+;;   :name "gray50"
+;;   :width (dash 20) :height (dash 20))
 
-(define-method set-color color
-    ((name string :default "gray50"))
-  (setf %name name))
+;; (define-method set-color color
+;;     ((name string :default "gray50"))
+;;   (setf %name name))
 
-(define-method draw color ()
-  (with-fields (x y width height red green blue) self
-    (with-style :rounded
-      (draw-patch self x y (+ x width) (+ y height)
-		  :color %name))))
+;; (define-method draw color ()
+;;   (with-fields (x y width height red green blue) self
+;;     (with-style :rounded
+;;       (draw-patch self x y (+ x width) (+ y height)
+;; 		  :color %name))))
 
-(define-method layout color ())
+;; (define-method layout color ())
 
-(define-method initialize color (&optional (name "gray50"))
-  (initialize%super self)
-  (setf %name name))
+;; (define-method initialize color (&optional (name "gray50"))
+;;   (initialize%super self)
+;;   (setf %name name))
 
 ;;; blocks.lisp ends here
  
