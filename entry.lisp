@@ -356,8 +356,11 @@
   type-specifier value)
 
 (define-method alternate-tap entry (x y)
-  (with-notifications 
-      (execute (list %value))))
+  (toggle-halo self))
+
+;; (define-method alternate-tap entry (x y)
+;;   (with-notifications 
+;;       (execute (list %value))))
 
 (define-method tap entry (x y)
   (setf (point) self))

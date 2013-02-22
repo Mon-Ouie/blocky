@@ -175,8 +175,8 @@
 	(dolist (each inputs)
 	  (draw each)))))
 
-(define-method alternate-tap phrase (x y)
-  (execute (recompile self)))
+;; (define-method alternate-tap phrase (x y)
+;;   (execute (recompile self)))
 
 (defmacro defphrase (name &rest body)
   `(define-block (,name :super phrase) ,@body))
