@@ -38,10 +38,10 @@
     :drop (0 1)
     :pick-up (2/6 1)
     :resize (1 1)
-    :define (0 1/2)
+    :define (0 0)
     :close (1 0)
-    :copy (1 2/4)
-    :cut (1 1/4)
+    :copy (0 1/3)
+    :cut (1 1/3)
     :bottom-right-triangle (1 1)))
 
 (define-block handle target indicator color foreground-color)
@@ -101,7 +101,7 @@
 
 ;;; Evaluation
 
-(define-handle evaluate :bang)
+(define-handle evaluate :define)
 
 (define-method tap evaluate (x y)
   (evaluate %target))
@@ -217,7 +217,7 @@
 ;;; The halo, which manages all the handles
 
 (defparameter *halo-handles* 
-  '(evaluate open-menu drop move pick-up resize define cut copy destroy))
+  '(evaluate drop move pick-up resize cut copy destroy))
 
 (define-block halo target)
 
@@ -256,7 +256,7 @@
 (define-method scroll-tap halo (x y)
   (toggle-halo %target))
 	  
-(define-method tap halo (x y)
+(define-method alternate-tap halo (x y)
   (destroy-halo %target))
 
 (define-method draw-hover halo ())
