@@ -1071,10 +1071,12 @@ block found, or nil if none is found."
 		    (if %object-p
 			(move-to drag drop-x drop-y)
 			(if (null hover)
-			    ;; back in program
-			    (add-block self drag drop-x drop-y)
-			    ;; ;; dropping on background. 
-			    ;; (drop-object self drag)
+			    ;; ok, what layer does it go in?
+			    (if (%quadtree-node drag)
+				;; gameworld
+				(drop-object self drag)
+				;; sidebar
+				(add-block self drag drop-x drop-y))
 			    ;; dropping on another block
 			    (if (accept hover drag)
 				(invalidate-layout hover)
@@ -1202,20 +1204,23 @@ block found, or nil if none is found."
 left-click to select an object.
 left-click-and-drag to move objects.
 
+right-click objects to open a \"halo menu\".
+
 right-click the background
 to create an object by typing.
 then press <return>.  
 
-or, you can drag new objects from the sidebar.
- (the sidebar pops up when you mouse to the right edge of the
-  workspace. use the mouse wheel to scroll the sidebar through the
-  list of available phrases.)
+or, you can drag new objects from the sidebar. (at right)
 
-<control>-X or right-click to execute objects.
+use the mouse wheel to scroll the sidebar through the
+list of available phrases.)
+
+<control>-X to execute objects.
 <control>-E to edit.
 <return> saves edit changes.
 <escape> cancels editing.
 <control>-D to delete object.
+
 <alt>-S to show the stack
 <alt>-C to clear the stack
 <alt>-M to show system messages
