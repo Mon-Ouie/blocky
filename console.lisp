@@ -41,9 +41,9 @@
 
 (defsetf point set-point)
 
-(defvar *sidebar* nil)
+(defvar *minibuffer* nil)
 
-(defvar *sidebar-open-p* nil)
+(defvar *minibuffer-open-p* nil)
 
 (defvar *gl-window-open-p* nil)
 
@@ -2386,8 +2386,8 @@ of the music."
 	*notification* nil
 	*clipboard* nil
 	*event-hook* nil
-	*sidebar* nil
-	*sidebar-open-p* nil
+	*minibuffer* nil
+	*minibuffer-open-p* nil
 	*message-hook* nil
 	*window-title* "Blocky"
 	*updates* 0
@@ -2404,6 +2404,7 @@ of the music."
   (initialize-clipboard-maybe :force)
   (initialize-buffers)
   (load-standard-resources)
+  (setf *next-update-hook* nil)
   (setf *project* *untitled*)
   (sdl:enable-unicode)
   (enable-key-repeat))
@@ -2419,8 +2420,9 @@ of the music."
   (sdl-mixer:close-audio t)
   (setf *buffer* nil)
   (setf *blocks* nil)
-  (setf *sidebar* nil)
-  (setf *sidebar-open-p* nil)
+  (setf *next-update-hook* nil)
+  (setf *minibuffer* nil)
+  (setf *minibuffer-open-p* nil)
   (setf *clipboard* nil)
   (setf *frame-rate* *default-frame-rate*)
   (setf *event-hook* nil)
@@ -2484,11 +2486,10 @@ of the music."
 
 (defun make-scratch-buffer ()
   (let ((buffer (find-buffer "*scratch*" :create t)))
-    (visit buffer)
+    (switch-to-buffer buffer)
     (setf *font* "sans-mono-11")
     (message "Welcome to Blocky. Press F1 for help.")
-    (show-messages (current-buffer))
-    (enter-sidebar (current-buffer))))
+    (enter-minibuffer (current-buffer))))
 
 (defun blocky ()
   (with-session

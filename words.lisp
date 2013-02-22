@@ -185,7 +185,7 @@ interpreter."
   (execute (program-from-string string)))
 
 (defun evalf (body)
-  (execute body)
+  (execute (list body))
   (popf))
 
 (defmacro forth (&rest words)

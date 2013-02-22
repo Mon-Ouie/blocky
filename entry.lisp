@@ -33,7 +33,7 @@
 (defparameter *default-entry-text-color* "white")
 (defparameter *default-entry-label-color* "white")
 
-(defparameter *default-prompt-string* "Command: ")
+(defparameter *default-prompt-string* "M-x: ")
 
 (defparameter *default-prompt-margin* 4)
 

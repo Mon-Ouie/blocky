@@ -30,6 +30,7 @@
     (:super phrase
      :fields 
      ((orientation :initform :horizontal)
+      (no-background :initform t)
       (spacing :initform 4))
      :inputs (:project-id (new 'label :read-only t)
 	      :buffer-id (new 'label :read-only t)
@@ -38,7 +39,7 @@
 
 (define-method update modeline ()
   (set-value %%project-id *project*)
-  (set-value %%buffer-id (%name (current-buffer)))
+  (set-value %%buffer-id (or (%name (current-buffer)) "nil"))
   (set-value %%position
 	     (modeline-position-string
 	      (%window-x (current-buffer))
@@ -50,10 +51,9 @@
 		     "(playing)")
 		 "(empty)")))
 
-;;; Custom data entry for Minibuffer. See also basic.lisp 
+;;; Custom data entry for Minibuffer. See also entry.lisp 
 
-(define-block (minibuffer-prompt :super prompt)
-  (operation :initform :prompt)
+(define-block (minibuffer-prompt :super entry)
   (background :initform nil)
   output)
 
@@ -63,25 +63,25 @@
 (define-method print-on-error minibuffer-prompt ()
   (setf *debug-on-error* nil))
 
-(define-method initialize minibuffer-prompt (&optional output)
-  (next-method self)
-  (print-on-error self)
-  (setf %output output))
-
 (define-method set-output minibuffer-prompt (output)
   (setf %output output))
 
-(define-method can-pick minibuffer-prompt () t)
+(define-method can-pick minibuffer-prompt () nil)
 
 (define-method pick minibuffer-prompt ()
   %parent)
+
+(define-method enter minibuffer-prompt (&optional no-clear)
+  (prompt%enter self))
 
 (define-method do-sexp minibuffer-prompt (sexp)
   (with-fields (output) self
     (assert output)
     (let ((container (get-parent output)))
       (assert container)
-      (execute sexp)
+      (if (consp (first sexp))
+	  (eval (first sexp))
+	  (execute sexp))
       ;; eval and possibly stack output
       (let ((new-block 
       	      (when *stack* (make-phrase *stack*))))
@@ -89,11 +89,11 @@
       	  (when new-block 
       	    (accept container new-block))))))
 
-      ;; ;; add command words
-      ;; (accept container ( sexp)))))
+(define-method lose-focus minibuffer-prompt ()
+  (cancel-editing self))
 
-(define-method label-width minibuffer-prompt ()
-  (dash 2 (font-text-width *default-prompt-string* *font*)))
+;; (define-method label-width minibuffer-prompt ()
+;;   (dash 2 (font-text-width *default-prompt-string* *font*)))
 
 (define-method do-after-evaluate minibuffer-prompt ()
   ;; print any error output
@@ -112,7 +112,7 @@
 
 (define-method initialize minibuffer ()
   (with-fields (image inputs) self
-    (let ((prompt (new 'minibuffer-prompt self))
+    (let ((prompt (new 'minibuffer-prompt))
 	  (modeline (new 'modeline)))
       (initialize%super self)
       (set-output prompt prompt)
@@ -151,6 +151,9 @@
 (define-method get-prompt minibuffer ()
   (second %inputs))
 
+(defun minibuffer-prompt ()
+  (when *minibuffer* (get-prompt *minibuffer*)))
+
 (define-method enter minibuffer ()
   (enter (get-prompt self)))
  
@@ -166,27 +169,31 @@
 (define-method print-on-error minibuffer ()
   (print-on-error (get-prompt self)))
 
+(defparameter *minibuffer-rows* 6)
+
 (define-method accept minibuffer (input &optional prepend)
   (declare (ignore prepend))
-  (with-fields (inputs scrollback-length) self
+  (with-fields (inputs) self
     (assert (not (null inputs))) ;; we always have a prompt
     (prog1 t
       (assert (valid-connection-p self input))
+      ;; set parent if necessary 
+      (adopt self input)
+      (setf inputs 
+	    (nconc (list (first inputs) 
+			 (second inputs)
+			 input)
+		   (nthcdr 2 inputs)))
+      ;; drop last item in scrollback
       (let ((len (length inputs)))
-	;; (when (> len scrollback-length)
-	;;   ;; drop last item in scrollback
-	;;   (setf inputs (subseq inputs 0 (1- len))))
-	;; set parent if necessary 
-	(adopt self input)
-	(setf inputs 
-	      (nconc (list (first inputs) 
-			   (second inputs)
-			   input)
-		     (nthcdr 2 inputs)))))))
+	(when (> len *minibuffer-rows*)
+	  (setf inputs (subseq inputs 0 (1- len))))))))
+
+(defparameter *minibuffer-background-color* "gray20")
 
 (define-method draw minibuffer ()
   (with-fields (inputs x y height width) self
-    (draw-box x y *gl-screen-width* height :color "gray20" :alpha 0.5)
+    (draw-box x y *gl-screen-width* height :color *minibuffer-background-color*)
     (mapc #'draw inputs)))
 
 ;;; minibuffer.lisp ends here

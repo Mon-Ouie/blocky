@@ -65,30 +65,33 @@
   (future-step-interval :initform 8)
   (default-events :initform
 		  '(((:pause) :transport-toggle-play)
-		    ((:e :control) :edit-word)
-		    ((:x :control) :exec)
-		    ((:d :control) :delete-word)
-		    ((:c :control) :copy-word)
+		    ;; ((:e :alt) :edit-word)
+		    ;; ((:x :control) :exec)
+		    ;; ((:d :control) :delete-word)
+		    ;; ((:c :control) :copy-word)
+		    ((:x :alt) :toggle-minibuffer)
+		    ((:g :control) :cancel)
 		    ((:c :alt) :clear-stack)
 		    ((:s :alt) :show-stack)
 		    ((:m :alt) :show-messages)
 		    ((:p :control) :paste)
-		    ((:return) :enter)
+;		    ((:return) :enter)
 		    ((:escape) :cancel)
 		    ((:f1) :help)
 		    ((:h :control) :help)
-		    ;; ((:x :control) :cut)
-		    ;; ((:c :control) :copy)
-		    ;; ((:v :control) :paste)
-		    ;; ((:v :control :shift) :paste-here)
-		    ((:f9) :toggle-sidebar)
+		    ((:x :control) :cut)
+		    ((:c :control) :copy)
+		    ((:v :control) :paste)
+		    ((:v :control :shift) :paste-here)
+		    ((:f9) :toggle-minibuffer)
+		    ((:f12) :transport-toggle-play)
 		    ((:g :control) :escape)
 		    ((:d :control) :drop-selection)))
 		    ;; ((:f12) :toggle-other-windows)
 		    ;; ))
   ;; prototype control
   (excluded-fields :initform
-		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :sidebar :drag :hover :highlight 
+		   '(:events :quadtree :click-start :click-start-block :drag-origin :drag-start :drag-offset :focused-block :minibuffer :drag :hover :highlight 
 		     ;; program objects are not saved:
 		     :inputs)
 		   :documentation "Don't serialize the menu bar.")
@@ -690,34 +693,34 @@ slowdown. See also quadtree.lisp")
 
 ;;; The Program is an optional layer of objects on top of the buffer
 
-(define-method add-sidebar-maybe buffer (&optional force)
-  (when (or force (null *sidebar*))
-    (setf *sidebar* 
-	  (new 'sidebar))))
+(define-method add-minibuffer-maybe buffer (&optional force)
+  (when (or force (null *minibuffer*))
+    (setf *minibuffer* 
+	  (new 'minibuffer))))
 
-(define-method enter-sidebar buffer ()
-  (when (not *sidebar-open-p*)
-    (add-sidebar-maybe self)
+(define-method enter-minibuffer buffer ()
+  (when (not *minibuffer-open-p*)
+    (add-minibuffer-maybe self)
     (setf %last-focus %focused-block)
-    (focus-on self *sidebar* :clear-selection nil)
-    (when (null *sidebar-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
-    (setf *sidebar-open-p* t)
+    (focus-on self (minibuffer-prompt) :clear-selection nil)
+    (when (null *minibuffer-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
+    (setf *minibuffer-open-p* t)
     (enable-key-repeat)))
   
-(define-method exit-sidebar buffer ()
-  (when *sidebar-open-p*
-    (add-sidebar-maybe self)
-    (setf *sidebar-open-p* nil)
+(define-method exit-minibuffer buffer ()
+  (when *minibuffer-open-p*
+    ;; (add-minibuffer-maybe self)
+    (setf *minibuffer-open-p* nil)
     (focus-on self %last-focus)
     (setf %last-focus nil)
     (unless %was-key-repeat-p 
       (disable-key-repeat))
     (setf %was-key-repeat-p nil)))
 
-(define-method toggle-sidebar buffer ()
-  (if *sidebar-open-p* 
-      (exit-sidebar self)
-      (enter-sidebar self)))
+(define-method toggle-minibuffer buffer ()
+  (if *minibuffer-open-p* 
+      (exit-minibuffer self)
+      (enter-minibuffer self)))
 
 (define-method grab-focus buffer ())
 
@@ -749,14 +752,17 @@ slowdown. See also quadtree.lisp")
 	(when hover 
 	  (draw-hover hover))
 	(draw drag))
-      (when *sidebar*
-	(draw *sidebar*))
+      (when *minibuffer*
+	(draw *minibuffer*))
       ;; draw focus
       (when focused-block
 	(assert (blockyp focused-block))
 	(draw-focus focused-block))
-      (when highlight
-	(draw-highlight highlight))
+      ;; 
+      ;; (when *minibuffer*
+      ;; 	(draw-focus (minibuffer-prompt)))
+      ;; (when highlight
+      ;; 	(draw-highlight highlight))
       (when (and point (read-only-p point))
 	(draw-point point)))))
 
@@ -787,7 +793,7 @@ slowdown. See also quadtree.lisp")
       (when (and %cursor %redraw-cursor)
 	(draw %cursor))
       ;; draw any overlays
-      (if *sidebar-open-p* 
+      (if *minibuffer-open-p* 
       	  (draw-program-objects self)
       	  (draw-programs self)))))
       ;; ;; draw focus
@@ -797,10 +803,10 @@ slowdown. See also quadtree.lisp")
       ;; )))
       ;; (if %parent
       ;; 	  (gl:pop-matrix)
-      ;; possibly draw sidebar
-      ;; (if *sidebar-open-p* 
-      ;; 	  (draw-sidebar-objects self)
-      ;; 	  (draw-sidebars self)))))
+      ;; possibly draw minibuffer
+      ;; (if *minibuffer-open-p* 
+      ;; 	  (draw-minibuffer-objects self)
+      ;; 	  (draw-minibuffers self)))))
   
 ;;; Simulation update
 
@@ -835,12 +841,12 @@ slowdown. See also quadtree.lisp")
     ;; now outside the quadtree,
     ;; possibly update the program layer
     (with-buffer self
-      (when *sidebar-open-p*
+      (when *minibuffer-open-p*
 	(with-quadtree nil
 	  (layout self)
 	  (layout-program-objects self)
 	  (update-program-objects self)
-	  (when *sidebar* (update *sidebar*)))))))
+	  (when *minibuffer* (update *minibuffer*)))))))
 
 (define-method evaluate buffer ()
   (prog1 self
@@ -854,15 +860,15 @@ slowdown. See also quadtree.lisp")
 	  ;; %width *gl-screen-width* 
 	  ;; %height *gl-screen-height*)
     (mapc #'layout %inputs)
-    (when *sidebar*
-      (layout *sidebar*))))
+    (when *minibuffer*
+      (layout *minibuffer*))))
   
 (define-method handle-event buffer (event)
   (with-field-values (cursor quadtree focused-block) self
     (with-buffer self
       (or (block%handle-event self event)
 	  (let ((thing 
-		  (if *sidebar-open-p* 
+		  (if *minibuffer-open-p* 
 		      focused-block
 		      cursor)))
 	      (prog1 t 
@@ -890,12 +896,12 @@ block found, or nil if none is found."
       (labels ((try (b)
 		 (when b
 		   (hit b x y))))
-	;; check sidebar and inputs first
+	;; check minibuffer and inputs first
 	(let* ((object-p nil)
 	       (result 
 		 (or 
-		  (when *sidebar-open-p* 
-		    (try *sidebar*))
+		  (when *minibuffer-open-p* 
+		    (try *minibuffer*))
 		  (let ((parent 
 			  (find-if #'try 
 				   %inputs
@@ -1010,8 +1016,8 @@ block found, or nil if none is found."
 	    (progn
 	      (setf highlight (find-uuid (hit-inputs self mouse-x mouse-y)))))))))
     ;; (when (null highlight)
-  ;;   (when *sidebar*
-  ;;     (with-buffer self (close-menus *sidebar*))))))))
+  ;;   (when *minibuffer*
+  ;;     (with-buffer self (close-menus *minibuffer*))))))))
 
 (define-method press buffer (x y &optional button)
   (with-buffer self
@@ -1025,14 +1031,14 @@ block found, or nil if none is found."
 	(setf %object-p object-p)
 	(if (null block)
 	    (focus-on self nil)
-	    ;; (when *sidebar-open-p*
-	    ;; 	(exit-sidebar self)))
+	    ;; (when *minibuffer-open-p*
+	    ;; 	(exit-minibuffer self)))
 	    (progn 
 	      (setf click-start (cons x y))
 	      (setf click-start-block (find-uuid block))
 	      (setf drag-button button)
 	      ;; now focus; this might cause another block to be
-	      ;; focused, as in the case of the Sidebar
+	      ;; focused, as in the case of the Minibuffer
 	      (focus-on self block)))))))
 
 (define-method clear-drag-data buffer ()
@@ -1075,7 +1081,7 @@ block found, or nil if none is found."
 			    (if (%quadtree-node drag)
 				;; gameworld
 				(drop-object self drag)
-				;; sidebar
+				;; minibuffer
 				(add-block self drag drop-x drop-y))
 			    ;; dropping on another block
 			    (if (accept hover drag)
@@ -1162,6 +1168,9 @@ block found, or nil if none is found."
 (define-method cancel buffer ()
   (when %point (cancel-editing %point)))
 
+(define-method escape buffer ()
+  (exit-minibuffer self))
+
 (define-method show-stack buffer ()
   (notify (format nil "~S" *stack*)))
 
@@ -1172,8 +1181,8 @@ block found, or nil if none is found."
   (setf *stack* nil)
   (notify "Stack cleared."))
 
-(define-method enter buffer ()
-  (when %point (finish-editing %point)))
+;; (define-method enter buffer ()
+;;   (when %point (finish-editing %point)))
 
 (define-method start buffer ()
   (with-buffer self
@@ -1194,7 +1203,7 @@ block found, or nil if none is found."
 (define-method after-deserialize buffer ()
   (after-deserialize%super self)
   (clear-drag-data self)
-  (add-sidebar-maybe self :force))
+  (add-minibuffer-maybe self :force))
 
 ;;; Help
 

@@ -28,7 +28,7 @@
 
 (define-block sidebar
   (row :initform 0)
-  (modeline :initform nil)
+  (minibuffer :initform nil)
   (displayed-rows :initform 0))
 
 (defparameter *sidebar-phrases*
@@ -40,7 +40,7 @@
   (append *sidebar-phrases* (all-words)))
 
 (define-method initialize sidebar ()
-  (setf %modeline (new 'modeline))
+  (setf %minibuffer (new 'minibuffer))
   (with-fields (inputs) self
     (setf inputs (mapcar #'make-phrase (all-words)))
     (dolist (input inputs)
@@ -65,8 +65,8 @@
     (setf row (min row (1- (length inputs))))))
 
 (define-method layout sidebar ()
-  (move-to %modeline (window-x) (window-y))
-  (layout %modeline)
+  ;; (move-to %minibuffer (window-x) (window-y))
+  (layout %minibuffer)
   (with-fields (height width displayed-rows parent inputs row) self
     ;; use the right side of the screen.
     (let* ((x0 (+ (%window-x (current-buffer))
@@ -113,7 +113,7 @@
 	    (prog1 phrase2
 	      (move-to phrase2 (%x phrase) (%y phrase)))))))))
     
-(defparameter *sidebar-always-visible* t)
+(defparameter *sidebar-always-visible* nil)
 
 (define-method draw sidebar ()
   (with-fields (inputs row displayed-rows x y height width) self
@@ -122,10 +122,10 @@
       (draw-box x y width height :color "gray30" :alpha 0.5)
       (dotimes (n displayed-rows)
 	(draw (nth (+ n row) inputs))))
-    (draw %modeline)))
+    (draw %minibuffer)))
 
 (define-method update sidebar ()
-  (update %modeline)
+  (update %minibuffer)
   )
 
 ;;; sidebar.lisp ends here
