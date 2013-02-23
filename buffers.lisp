@@ -69,7 +69,7 @@
 		    ;; ((:x :control) :exec)
 		    ;; ((:d :control) :delete-word)
 		    ;; ((:c :control) :copy-word)
-		    ((:x :alt) :toggle-minibuffer)
+		    ((:x :alt) :command-prompt)
 		    ((:g :control) :cancel)
 		    ((:c :alt) :clear-stack)
 		    ((:s :alt) :show-stack)
@@ -159,6 +159,9 @@
   (let ((sel (selection)))
     (assert (consp sel))
     (first sel)))
+
+(defun clear-selection ()
+  (clear-halos (current-buffer)))
 
 (define-method get-objects buffer ()
   (loop for object being the hash-values in %objects collect object))
@@ -387,7 +390,6 @@
 
 (define-method remove-thing-maybe buffer (object)
   (with-buffer self
-    (destroy-halo object)
     (when (gethash (find-uuid object) %objects)
       (remove-object self object))
     (when (%parent object)
@@ -711,11 +713,15 @@ slowdown. See also quadtree.lisp")
     (setf *minibuffer-open-p* t)
     (enable-key-repeat)))
   
+(define-method command-prompt buffer () 
+  (enter-minibuffer self)
+  (focus-on self (minibuffer-prompt) :clear-selection nil))
+
 (define-method exit-minibuffer buffer ()
   (when *minibuffer-open-p*
     ;; (add-minibuffer-maybe self)
     (setf *minibuffer-open-p* nil)
-    (focus-on self %last-focus)
+    (focus-on self %last-focus :clear-selection nil)
     (setf %last-focus nil)
     (unless %was-key-repeat-p 
       (disable-key-repeat))
@@ -883,13 +889,16 @@ slowdown. See also quadtree.lisp")
     (with-buffer self
       (or (block%handle-event self event)
 	  (let ((thing 
-		  (if *minibuffer-open-p* 
-		      focused-block
-		      cursor)))
+		  focused-block))
+		  ;; (if *minibuffer-open-p* 
+		  ;;     focused-block
+		  ;;     cursor)))
 	      (prog1 t 
 		(when thing 
 		  (with-quadtree quadtree
-		    (handle-event thing event)))))))))
+		    (handle-event thing event)
+		    (clear-deleted-objects self)
+		    ))))))))
 
 ;;; Hit testing
 
@@ -943,26 +952,27 @@ block found, or nil if none is found."
   (with-fields (focused-block) self
     (with-buffer self
       (let ((last-focus focused-block))
-	;; there's going to be a new focused block. 
-	;; tell the current one it's no longer focused.
-	(when (and clear-selection last-focus
-		   ;; don't do this for same block
-		   (not (object-eq last-focus block)))
-	  (lose-focus last-focus))
-	;; (when clear-selection
-	;;   (when (not (holding-control))
-	;;     (clear-halos self)))
-	;; now set up the new focus (possibly nil)
-	(setf focused-block (when block 
-			      (find-uuid 
-			       (pick-focus block))))
-	;; sanity check
-	(assert (or (null focused-block)
-		    (blockyp focused-block)))
-	;; now tell the block it has focus, but only if not the same
-	(when (and focused-block
-		   (not (object-eq last-focus focused-block)))
-	  (focus block))))))
+	(if (null block)
+	    (progn (when last-focus (lose-focus last-focus))
+		   (setf focused-block nil))
+	    ;; don't do this for same block
+	    (when (not (object-eq last-focus block))
+	      ;; there's going to be a new focused block. 
+	      ;; tell the current one it's no longer focused.
+	      (when (and clear-selection last-focus)
+		(lose-focus last-focus))
+	      ;; now set up the new focus (possibly nil)
+	      (setf focused-block (when block 
+				    (find-uuid 
+				     (pick-focus block))))
+	      ;; clean up if object destroyed itself after losing focus
+	      (when (and last-focus (not (blockyp last-focus)))
+		(setf last-focus nil))
+	      ;; now tell the block it has focus, but only if not the same
+	      (when (if last-focus 
+			(not (object-eq last-focus focused-block))
+			t)
+		(focus block))))))))
 
 (define-method begin-drag buffer (mouse-x mouse-y block)
   (with-fields (drag drag-origin inputs drag-start ghost drag-offset) self
@@ -1154,8 +1164,8 @@ block found, or nil if none is found."
 
 (define-method alternate-tap buffer (x y)
   (let ((entry (new 'expression)))
-    (add-at-pointer self entry)
-    (setf %point entry)))
+    (add-at-pointer self entry)))
+;    (setf %point entry)))
 
 (define-method scroll-tap buffer (x y))
 
