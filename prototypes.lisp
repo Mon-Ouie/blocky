@@ -1369,7 +1369,7 @@ named in the field %EXCLUDED-FIELDS will be ignored."
 	     (cons (serialize (car object)) ;; it's a dotted pair
 		   (serialize (cdr object)))))
 	;; leave strings and uuids alone
-	(string object)
+	(string (copy-tree object))
 	;; pass other vectors
 	(vector (map 'vector #'serialize object))
 	;; flatten blocky objects
