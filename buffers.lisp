@@ -412,7 +412,11 @@
     (drop-object self each)))
 
 (define-method add-at-pointer buffer (object)
-  (add-block self object *pointer-x* *pointer-y* :prepend)
+  (layout object)
+  (add-block self object 
+	      (window-pointer-x) 
+	      (- (window-pointer-y) (%height object))
+	      :prepend)
   (focus-on self object))
 
 (define-method contains-object buffer (object)
@@ -1104,8 +1108,10 @@ block found, or nil if none is found."
 	  ;;
 	  ;; we were clicking instead of dragging
 	  (progn
-	    (let ((it (or focused-block self)))
-	      ;; clicks that don't hit an object are sent to self
+	    ;; clicks that don't hit an object are sent to self
+	    ;; (if you hold shift, they are ALWAYS sent to buffer)
+	    (let ((it (if (holding-shift) self
+			  (or focused-block self))))
 	      (with-buffer self 
 		(cond
 		  ;; right click and control click are equivalent

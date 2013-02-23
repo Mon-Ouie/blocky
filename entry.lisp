@@ -425,9 +425,6 @@
 (define-method set-read-only entry (&optional (value t))
   (setf %read-only value))
 
-(define-method evaluate entry ()
-  %value)
-
 (define-method set-value entry (value)
   (setf %value value)
   (setf %line (prin1-to-string value)))
@@ -521,6 +518,23 @@
 (define-method enter entry ()
   (unless %read-only
     (enter%super self :no-clear)))
+
+(define-method evaluate-here entry ()
+  (finish-editing self)
+  (let ((output (eval %value)))
+    (multiple-value-bind (x y) (below self)
+      (drop-object (current-buffer)
+		   (if (blockyp output)
+		       output
+		       (make-phrase (list output)))
+		   x y))))
+
+(define-method evaluate-here-and-die entry ()
+  (evaluate-here self)
+  (destroy self))
+
+(define-method evaluate entry ()
+  %value)
 
 (define-method layout entry ()
   (with-fields (height width value line) self
