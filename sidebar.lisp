@@ -65,7 +65,7 @@
     (setf row (min row (1- (length inputs))))))
 
 (define-method layout sidebar ()
-  ;; (move-to %minibuffer (window-x) (window-y))
+  (move-to %minibuffer (window-x) (window-y))
   (layout %minibuffer)
   (with-fields (height width displayed-rows parent inputs row) self
     ;; use the right side of the screen.

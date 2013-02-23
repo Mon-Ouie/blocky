@@ -619,9 +619,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
     (:d (:control) :delete-char)
     (:a (:control) :beginning-of-line)
     (:e (:control) :end-of-line)
-    (:return (:shift) :evaluate-here)
+    (:return nil :evaluate-here)
     (:return (:control) :evaluate-here-and-die)
-    (:return nil :enter)
     ;; (:delete (:alt) :delete-word)
     ;; (:d (:alt) :delete-word)
     (:x (:control) :exit)
@@ -997,6 +996,8 @@ all the time."
     results))
 
 (define-method evaluate block () self)
+
+(define-method evaluate-here block ())
 
 (define-method recompile block ()
   (mapcar #'recompile %inputs))

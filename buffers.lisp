@@ -732,7 +732,8 @@ slowdown. See also quadtree.lisp")
   (mapc #'layout %inputs))
 
 (define-method update-program-objects buffer ()
-  (mapc #'update %inputs))
+  (mapc #'update %inputs)
+  (update *minibuffer*))
 
 (define-method draw-program-objects buffer ()
   (with-buffer self
@@ -814,6 +815,15 @@ slowdown. See also quadtree.lisp")
   
 ;;; Simulation update
 
+(define-method clear-deleted-objects buffer ()
+  ;; clean up any deleted objects
+  (when (not (blockyp %drag)) (setf %drag nil))
+  (when (not (blockyp %point)) (setf %point nil))
+  (when (not (blockyp %drag-origin)) (setf %drag-origin nil))
+  (when (not (blockyp %hover)) (setf %hover nil))
+  (when (not (blockyp %focused-block)) (setf %focused-block nil))
+  (when (not (blockyp %last-focus)) (setf %last-focus nil)))
+
 (define-method update buffer ()
   ;; (setf *buffer* (find-uuid self))
   (with-field-values (objects drag cursor) self
@@ -851,13 +861,7 @@ slowdown. See also quadtree.lisp")
 	  (layout-program-objects self)
 	  (update-program-objects self)
 	  (when *minibuffer* (update *minibuffer*))
-	  ;; clean up any deleted objects
-	  (when (not (blockyp %drag)) (setf %drag nil))
-	  (when (not (blockyp %point)) (setf %point nil))
-	  (when (not (blockyp %drag-origin)) (setf %drag-origin nil))
-	  (when (not (blockyp %hover)) (setf %hover nil))
-	  (when (not (blockyp %focused-block)) (setf %focused-block nil))
-	  (when (not (blockyp %last-focus)) (setf %last-focus nil)))))))
+	  (clear-deleted-objects self))))))
 	    
 (define-method evaluate buffer ()
   (prog1 self
@@ -934,6 +938,7 @@ block found, or nil if none is found."
   (mapc #'destroy-halo (get-objects self)))
 
 (define-method focus-on buffer (block &key (clear-selection t))
+  (clear-deleted-objects self)
   ;; possible to pass nil
   (with-fields (focused-block) self
     (with-buffer self
@@ -1143,6 +1148,8 @@ block found, or nil if none is found."
       (clear-drag-data self)
       (invalidate-layout self))))
 
+;; SHIFT-click actions for buffers
+
 (define-method tap buffer (x y) ())
 
 (define-method alternate-tap buffer (x y)
@@ -1151,6 +1158,7 @@ block found, or nil if none is found."
     (setf %point entry)))
 
 (define-method scroll-tap buffer (x y))
+
 (define-method scroll-up buffer ())
 (define-method scroll-down buffer ())
 (define-method scroll-left buffer ())
@@ -1194,8 +1202,11 @@ block found, or nil if none is found."
   (setf *stack* nil)
   (notify "Stack cleared."))
 
-;; (define-method enter buffer ()
-;;   (when %point (finish-editing %point)))
+(define-method enter buffer ()
+  (if (blockyp %point)
+      (progn (finish-editing %point)
+	     (evaluate-here %point))
+      (setf %point nil)))
 
 (define-method start buffer ()
   (with-buffer self

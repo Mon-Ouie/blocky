@@ -362,15 +362,17 @@
 ;;   (with-notifications 
 ;;       (execute (list %value))))
 
-(define-method tap entry (x y)
-  (setf (point) self))
-
 (define-method scroll-tap entry (x y))
 
 (define-method start-editing entry ()
   (set-read-only self nil)
   (setf %old-line (copy-tree %line))
   (grab-focus self))
+
+(define-method tap entry (x y)
+  (setf (point) self)
+  (start-editing self)
+  (prompt%tap self x y))
 
 (define-method finish-editing entry ()
   (setf %old-line nil)
@@ -502,7 +504,7 @@
   (with-fields (x y width height) self
     (draw-box x y width height 
 	      :color "white"
-	      :alpha (min 0.7 (+ 0.2 (sin (/ *updates* 2)))))))
+	      :alpha (min 0.45 (+ 0.2 (sin (/ *updates* 2)))))))
 
 (define-method do-sexp entry (sexp)
   (with-fields (value type-specifier parent) self

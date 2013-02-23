@@ -38,6 +38,7 @@
 	      :mode (new 'label :read-only t))))
 
 (define-method update modeline ()
+  (mapc #'pin %inputs)
   (set-value %%project-id *project*)
   (set-value %%buffer-id (or (%name (current-buffer)) "nil"))
   (set-value %%position
@@ -74,23 +75,23 @@
 (define-method enter minibuffer-prompt (&optional no-clear)
   (prompt%enter self))
 
+(define-method evaluate-here minibuffer-prompt ()
+  (prompt%enter self))
+
 (define-method do-sexp minibuffer-prompt (sexp)
   (with-fields (output) self
     (assert output)
     (let ((container (get-parent output))
 	  (result nil))
       (assert container)
-      ;; always allow lisp expressions
-      (if (consp (first sexp))
-	  (setf result (eval (first sexp)))
-	  (execute sexp))
-      ;; eval 
+      ;; execute lisp expressions
+      (setf result (eval (first sexp)))
+      ;; do something with result
       (let ((new-block 
 	      (if result
 		  (if (blockyp result)
 		      result
-		      (make-phrase result))
-		  (when *stack* (make-phrase *stack*)))))
+		      (new 'expression :value result)))))
       	  ;; spit out result block, if any
       	  (when new-block 
       	    (accept container new-block))))))

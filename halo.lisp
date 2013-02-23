@@ -104,7 +104,7 @@
 (define-handle evaluate :define)
 
 (define-method tap evaluate (x y)
-  (evaluate %target))
+  (evaluate-here %target))
 
 ;;; Getting a context menu
 

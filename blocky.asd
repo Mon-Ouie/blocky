@@ -34,9 +34,9 @@
 	       (:file "phrase" :depends-on ("blocks"))
 	       (:file "entry" :depends-on ("phrase" "text"))
 	       (:file "words" :depends-on ("entry"))
-	       (:file "minibuffer" :depends-on ("words"))
 	       (:file "halo" :depends-on ("phrase"))
 	       (:file "sidebar" :depends-on ("entry"))
+	       (:file "minibuffer" :depends-on ("sidebar"))
 	       (:file "buffers" :depends-on ("entry" "text"))))
 
 	       ;; (:file "syntax" :depends-on ("blocks"))))
