@@ -200,7 +200,7 @@
 
 (define-method draw minibuffer ()
   (with-fields (inputs x y height width) self
-    (draw-box x y *gl-screen-width* height :color *minibuffer-background-color*)
+    (draw-box (window-x) y *gl-screen-width* height :color *minibuffer-background-color*)
     (mapc #'draw inputs)))
 
 ;;; minibuffer.lisp ends here
