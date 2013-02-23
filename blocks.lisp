@@ -282,7 +282,7 @@ initialized with BLOCKS as inputs."
   (when %parent 
     (unplug-from-parent self))
   (remove-thing-maybe (current-buffer) self)
-  (setf %garbagep t))
+  (remove-object-from-database self))
 
 (define-method dismiss block ()
   ;; (if (windowp %parent)
@@ -633,8 +633,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
     (:down nil :next-line)
     (:left nil :backward-char)
     (:right nil :forward-char)
-    ;; (:up (:alt) :previous-line)
-    ;; (:down (:alt) :next-line)
+    (:up (:alt) :previous-line)
+    (:down (:alt) :next-line)
     (:left (:alt) :backward-word)
     (:right (:alt) :forward-word)
     (:home nil :beginning-of-line)

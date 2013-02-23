@@ -471,7 +471,7 @@ interpreter."
     (assert (stringp name))
     (pushf (find-buffer name :create t))))
 
-(define-word visit (buffer) (visit buffer))
+(define-word switch-to-buffer (buffer) (switch-to-buffer buffer))
 
 (define-word screen (height width)
   (setf *screen-height* height *screen-width* width))

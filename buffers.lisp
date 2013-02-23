@@ -846,7 +846,14 @@ slowdown. See also quadtree.lisp")
 	  (layout self)
 	  (layout-program-objects self)
 	  (update-program-objects self)
-	  (when *minibuffer* (update *minibuffer*)))))))
+	  (when *minibuffer* (update *minibuffer*))
+	  ;; clean up any deleted objects
+	  (when (not (blockyp %drag)) (setf %drag nil))
+	  (when (not (blockyp %drag-origin)) (setf %drag-origin nil))
+	  (when (not (blockyp %hover)) (setf %hover nil))
+	  (when (not (blockyp %focused-block)) (setf %focused-block nil))
+	  (when (not (blockyp %last-focus)) (setf %last-focus nil)))))))
+	    
 
 (define-method evaluate buffer ()
   (prog1 self
@@ -933,9 +940,9 @@ block found, or nil if none is found."
 		   ;; don't do this for same block
 		   (not (object-eq last-focus block)))
 	  (lose-focus last-focus))
-	(when clear-selection
-	  (when (not (holding-control))
-	    (clear-halos self)))
+	;; (when clear-selection
+	;;   (when (not (holding-control))
+	;;     (clear-halos self)))
 	;; now set up the new focus (possibly nil)
 	(setf focused-block (when block 
 			      (find-uuid 

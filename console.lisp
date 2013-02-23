@@ -1311,6 +1311,14 @@ resource is stored; see also `find-resource'."
       ;; (message "processing. ~A remaining" (length *pending-resources*))
       (index-resource (apply #'make-resource plist)))))
 
+(defun play-project (&optional (project *project*))
+  (with-session
+    (load-project-image project)
+    ;; load any pending resource defs
+    (dolist (plist *pending-resources*)
+      (index-resource (apply #'make-resource plist)))
+    (start-session)))
+  
 (defun directory-is-project-p (dir)
   "Test whether a directory has the .blocky suffix."
   (let ((index-filename (concatenate 'string
