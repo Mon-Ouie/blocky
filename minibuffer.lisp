@@ -131,8 +131,7 @@
 
 (define-method layout minibuffer ()
   (with-fields (height width parent inputs) self
-    ;; start by calculating current height
-    (setf height (font-height *font*))
+    (setf height 0)
     (setf width 0)
     ;; update all child dimensions
     (dolist (element inputs)
@@ -140,7 +139,7 @@
       (incf height (field-value :height element))
       (callf max width (dash 2 (field-value :width element))))
     ;; now compute proper positions and re-layout
-    (let* ((x (%window-x (current-buffer)))
+    (let* ((x (+ (dash 1) (%window-x (current-buffer))))
 	   (y0 (+ (%window-y (current-buffer))
 		 *gl-screen-height*))
 	   (y (- y0 height (dash 3))))
@@ -168,15 +167,11 @@
   (evaluate (get-prompt self)))
 
 (define-method focus minibuffer ()
-  (grab-focus (get-prompt self)))
+  (let ((prompt (get-prompt self)))
+    (set-read-only prompt nil)
+    (grab-focus prompt)))
 
-(define-method debug-on-error minibuffer ()
-  (debug-on-error (get-prompt self)))
-
-(define-method print-on-error minibuffer ()
-  (print-on-error (get-prompt self)))
-
-(defparameter *minibuffer-rows* 6)
+(defparameter *minibuffer-rows* 9)
 
 (define-method accept minibuffer (input &optional prepend)
   (declare (ignore prepend))
