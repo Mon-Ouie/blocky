@@ -81,7 +81,7 @@ Some of the OpenGL functions in console.lisp are derived from code in
 Bart Botta's CL-OPENGL tutorials; see http://3bb.cc/tutorials/cl-opengl/
 
 This program includes the free DejaVu fonts family in the subdirectory
-./standard.blocky/. For more information, see the file named
+./standard/. For more information, see the file named
 DEJAVU-FONTS-LICENSE in that subdirectory.
 
 Please see the included text file CREDITS for more information on the
