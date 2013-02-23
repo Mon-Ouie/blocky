@@ -816,7 +816,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (define-method move-to block 
     ((x number :default 0) (y number :default 0))
   "Move this block to a new (X Y) location."
-  (save-location self)
+  (when %quadtree-node (save-location self))
   (quadtree-delete-maybe self)
   (setf %x x %y y)
   (quadtree-insert-maybe self))

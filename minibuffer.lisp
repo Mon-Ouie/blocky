@@ -83,18 +83,25 @@
     (assert output)
     (let ((container (get-parent output))
 	  (result nil))
-      (assert container)
-      ;; execute lisp expressions
-      (setf result (eval (first sexp)))
-      ;; do something with result
-      (let ((new-block 
-	      (if result
-		  (if (blockyp result)
-		      result
-		      (new 'expression :value result)))))
+      (assert (blockyp container))
+      ;; output messages too
+      (let ((*message-function* 
+	      #'(lambda (text)
+		  (format t "~A" text)
+		  (accept container (new 'label :line text)))))
+	;; execute lisp expressions
+	(setf result (eval (first sexp)))
+	;; we didn't crash, at least. output the reusable sexp
+	(accept container (new 'expression :line %last-line))
+	;; do something with result
+	(let ((new-block 
+		(if result
+		    (if (blockyp result)
+			result
+			(new 'expression :value result)))))
       	  ;; spit out result block, if any
       	  (when new-block 
-      	    (accept container new-block))))))
+      	    (accept container new-block)))))))
 
 (define-method lose-focus minibuffer-prompt ()
   (cancel-editing self))
