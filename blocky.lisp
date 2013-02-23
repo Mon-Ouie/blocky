@@ -89,7 +89,7 @@ object-parent send send-super send-queue self opposite-direction
 opposite-heading object-address-string object step-in-direction
 define-resource direction-to plasma-rect subdivide-rect render-plasma
 add-hook run-hook queue-tail make-resource-link save-resource
-on-screen-p save-project-image *system* *defined-resources*
+on-screen-p save-project-image *system* *defined-resources* save-project
 save-everything with-input-values with-inputs *export-formats*
 export-archive *use-texture-blending* defresource export-application
 *default-texture-filter* export-project make-queue queue unqueue

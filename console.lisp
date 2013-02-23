@@ -1433,7 +1433,7 @@ OBJECT as the resource data."
 	  (setf (resource-file link) (namestring pathname)
 		(resource-data link) nil)))))
 
-(defun save-project-image (&optional force)
+(defun save-project (&optional force)
   (let ((*already-serialized* (make-hash-table :test 'equal)))
     (let (index)
       (if (or (standard-project-p)
