@@ -1570,7 +1570,7 @@ objects after reconstruction, wherever present."
   (assert (blockyp object))
   (when (null *buffers*)
     (initialize-buffers))
-  (prog1 (find-uuid object)
+  (prog1 t
     (setf (gethash name *buffers*)
 	  (find-uuid object))))
 
