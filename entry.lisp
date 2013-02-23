@@ -45,6 +45,7 @@
   (read-only :initform t)
   (point :initform 0 :documentation "Integer index of cursor within prompt line.")
   (line :initform "" :documentation "Currently edited command line.")
+  (last-line :initform nil)
   (background :initform t)
   (methods :initform '(:toggle-read-only))
   (error-output :initform "")
@@ -129,10 +130,12 @@
 	     (message "~A" c)))
     (let* ((line %line)
 	   (sexp (read-expression self line)))
+      (setf %last-line line)
       (unless no-clear (clear-line self))
       (with-output-to-string (*standard-output*)
-	(when sexp (do-sexp self sexp))))
-    (do-after-evaluate self)))
+	(when sexp (do-sexp self sexp)))
+      (queue line %history)
+      (do-after-evaluate self))))
 
 ;; (setf %error-output
 ;; (if *debug-on-error*
@@ -370,7 +373,7 @@
   (grab-focus self))
 
 (define-method tap entry (x y)
-  (setf (point) self)
+;  (setf (point) self)
   (start-editing self)
   (prompt%tap self x y))
 
@@ -396,7 +399,7 @@
   (if %pinned (phrase-root self) self))
 
 (define-method initialize entry 
-    (&key value type-specifier options label label-color parent locked
+    (&key value type-specifier options label label-color parent locked line
     read-only)
   (initialize%super self)
   ;(assert (and value type-specifier))
@@ -406,19 +409,20 @@
 	%locked locked
 	%read-only read-only
 	%value value)
-  ;; fill in the input box with the value
-  (setf %line (if (null value)
-		  ""
-		  ;; don't print symbol package names
-		  (pretty-string
-		   (if (and (symbolp value)
-			    (not (keywordp value)))
-		       (symbol-name value)
-		       (format nil "~S" value)))))
-		  ;; (if (stringp value)
-		  ;;     ;; no extraneous quotes unless it's a general sexp entry
-		  ;;     value
-		  ;;     (format nil "~S" value))))
+  ;; fill in the input box with the value, unless LINE was provided
+  (if line
+      (progn
+	(setf %line line)
+	(setf %value (read-from-string line)))
+      (setf %line 
+	    (if (null value)
+		""
+		;; don't print symbol package names
+		(pretty-string
+		 (if (and (symbolp value)
+			  (not (keywordp value)))
+		     (symbol-name value)
+		     (format nil "~S" value))))))
   (setf %label 
 	(or label 
 	    (getf options :label)))

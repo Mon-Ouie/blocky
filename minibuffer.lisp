@@ -58,10 +58,10 @@
   (background :initform nil)
   output)
 
-(define-method debug-on-error minibuffer-prompt ()
+(defun debug-on-error ()
   (setf *debug-on-error* t))
 
-(define-method print-on-error minibuffer-prompt ()
+(defun print-on-error ()
   (setf *debug-on-error* nil))
 
 (define-method set-output minibuffer-prompt (output)
