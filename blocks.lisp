@@ -612,6 +612,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (defparameter *text-qwerty-keybindings*
   '((:f (:control) :forward-char)
     (:b (:control) :backward-char)
+    (:n (:alt) :forward-history)
+    (:p (:alt) :backward-history)
     (:right nil :forward-char)
     (:left nil :backward-char)
     (:backspace nil :backward-delete-char)
