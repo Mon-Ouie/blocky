@@ -503,10 +503,10 @@ interpreter."
        project)))
 
 (define-word save ()
-  (save-project-image))
+  (save-project))
 
 (define-word close ()
-  (save-project-image)
+  (save-project)
   (reset))
 
 (define-word quit () (shut-down))

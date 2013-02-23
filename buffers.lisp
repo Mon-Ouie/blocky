@@ -170,7 +170,7 @@
   (or (null %objects)
       (zerop (hash-table-count %objects))))
 
-(define-method initialize buffer (&key name)
+(define-method initialize buffer (&optional name)
   (initialize%super self)
   (setf %objects (make-hash-table :test 'equal))
   (setf %buffer-name name)
@@ -853,12 +853,12 @@ slowdown. See also quadtree.lisp")
 	  (when *minibuffer* (update *minibuffer*))
 	  ;; clean up any deleted objects
 	  (when (not (blockyp %drag)) (setf %drag nil))
+	  (when (not (blockyp %point)) (setf %point nil))
 	  (when (not (blockyp %drag-origin)) (setf %drag-origin nil))
 	  (when (not (blockyp %hover)) (setf %hover nil))
 	  (when (not (blockyp %focused-block)) (setf %focused-block nil))
 	  (when (not (blockyp %last-focus)) (setf %last-focus nil)))))))
 	    
-
 (define-method evaluate buffer ()
   (prog1 self
     (with-buffer self

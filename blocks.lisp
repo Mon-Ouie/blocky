@@ -619,13 +619,14 @@ See `keys.lisp' for the full table of key and modifier symbols.
     (:d (:control) :delete-char)
     (:a (:control) :beginning-of-line)
     (:e (:control) :end-of-line)
-    (:return nil :enter)))
-
+    (:return (:shift) :evaluate-here)
+    (:return (:control) :evaluate-here-and-die)
+    (:return nil :enter)
     ;; (:delete (:alt) :delete-word)
     ;; (:d (:alt) :delete-word)
-    ;; (:x (:control) :exit)
-    ;; (:g (:control) :exit)
-    ;; (:escape nil :exit)
+    (:x (:control) :exit)
+    (:g (:control) :exit)
+    (:escape nil :exit)))
 
 (defparameter *arrow-key-text-navigation-keybindings*
   '(
@@ -738,9 +739,9 @@ See `keys.lisp' for the full table of key and modifier symbols.
     (add-block (current-buffer) %halo)))
 
 (define-method destroy-halo block ()
-  (when %halo 
-    (destroy %halo)
-    (setf %halo nil)))
+  (when (blockyp %halo)
+    (destroy %halo))
+  (setf %halo nil))
 
 (define-method toggle-halo block (&optional force)
   (if %halo
