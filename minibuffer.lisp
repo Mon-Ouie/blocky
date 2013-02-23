@@ -77,14 +77,20 @@
 (define-method do-sexp minibuffer-prompt (sexp)
   (with-fields (output) self
     (assert output)
-    (let ((container (get-parent output)))
+    (let ((container (get-parent output))
+	  (result nil))
       (assert container)
+      ;; always allow lisp expressions
       (if (consp (first sexp))
-	  (eval (first sexp))
+	  (setf result (eval (first sexp)))
 	  (execute sexp))
-      ;; eval and possibly stack output
+      ;; eval 
       (let ((new-block 
-      	      (when *stack* (make-phrase *stack*))))
+	      (if result
+		  (if (blockyp result)
+		      result
+		      (make-phrase result))
+		  (when *stack* (make-phrase *stack*)))))
       	  ;; spit out result block, if any
       	  (when new-block 
       	    (accept container new-block))))))
