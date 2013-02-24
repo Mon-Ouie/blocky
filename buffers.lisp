@@ -1249,38 +1249,27 @@ block found, or nil if none is found."
 ;;; Help
 
 (defparameter *help-message*
-"welcome to blocky.
+"Welcome to Blocky. 
 
-left-click to select an object.
-left-click-and-drag to move objects.
+Left-click-and-drag to move objects. Right-click objects to select
+them, which opens a \"halo menu\" with operation handles.
 
-right-click objects to open a \"halo menu\".
+Right click multiple objects to select. Use the Move handle to move
+multiple objects.  Destroy handle deletes objects.  Lambda handle
+executes objects. 
 
-right-click the background
-to create an object by typing.
-then press <return>.  
+Alt-X to type in a Lisp command in the \"minibuffer\", or right-click
+the background to create an object by typing, then press <return>.
 
-or, you can drag new objects from the sidebar. (at right)
+Other keybindings:
 
-use the mouse wheel to scroll the sidebar through the
-list of available phrases.)
+Copy: Control-C    Cut:  Control-X    Paste: Control-V
+Paste at pointer: Shift-Control-V
+Toggle minibuffer view: F9     Pause/unpause: F12
 
-<control>-X to execute objects.
-<control>-E to edit.
-<return> saves edit changes.
-<escape> cancels editing.
-<control>-D to delete object.
+See sidebar for more commands to try. 
 
-<alt>-S to show the stack
-<alt>-C to clear the stack
-<alt>-M to show system messages
-
-Try maximizing the window for better results.
-There isn't much to do just yet. Sorry.
-
-To remove this help window, right click 
-it, and then click the X button in the 
-top right corner.
+Try enlarging the window for better results.
 ")
 
 (define-method help buffer ()

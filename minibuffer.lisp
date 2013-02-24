@@ -199,7 +199,10 @@
       ;; drop last item in scrollback
       (let ((len (length inputs)))
 	(when (> len *minibuffer-rows*)
-	  (setf inputs (subseq inputs 0 (1- len))))))))
+	  (setf inputs (subseq inputs 0 (1- len)))))
+      ;; 
+      (add-item %sidebar (duplicate-safely input)))))
+
 
 (defparameter *minibuffer-background-color* "gray20")
 

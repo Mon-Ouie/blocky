@@ -58,8 +58,10 @@
     (dolist (input inputs)
       (setf (%parent input) self))))
 
-(define-method add-phrase sidebar (phrase)
-  (push phrase %inputs))
+(define-method add-item sidebar (item)
+  ;; (push item %inputs))
+  (setf %inputs
+  	(append %inputs (list item))))
 
 ;; (add-hook '*after-define-functions*
 ;; 	  #'(lambda (word)
@@ -114,6 +116,7 @@
 (defun duplicate-safely (thing)
   (let ((dupe (duplicate thing)))
     (prog1 dupe
+      (setf (%quadtree-node dupe) nil)
       (setf (%parent dupe) nil))))
 
 (define-method pick sidebar (&optional nodup)
@@ -140,7 +143,7 @@
   (with-fields (inputs row displayed-rows x y height width) self
     (when (or *always-show-sidebar* 
 	      (hit self (window-pointer-x) (window-pointer-y)))
-      (draw-box x y width height :color "gray30" :alpha 0.5)
+      (draw-box x y width height :color "gray30")
       (dotimes (n displayed-rows)
 	(draw (nth (+ n row) inputs))))))
 

@@ -209,7 +209,7 @@ NODE, if any."
   (quadtree-map-collisions 
    (multiple-value-list (bounding-box object))
    #'(lambda (thing)
-       (when (and (blockyp thing) 
+       (when (and (blockyp thing) (blockyp object)
 		  (field-value :collision-type thing)
 		  (colliding-with object thing)
 		  (not (object-eq object thing)))
