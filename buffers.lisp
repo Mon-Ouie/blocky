@@ -82,7 +82,7 @@
 		    ((:x :control) :cut)
 		    ((:c :control) :copy)
 		    ((:v :control) :paste)
-		    ((:v :control :shift) :paste-at-pointer)
+		    ((:v :control :shift) :paste-here)
 		    ((:f9) :toggle-minibuffer)
 		    ((:f12) :transport-toggle-play)
 		    ((:g :control) :escape)
@@ -161,7 +161,8 @@
     (first sel)))
 
 (defun clear-selection ()
-  (clear-halos (current-buffer)))
+  (clear-halos (current-buffer))
+  (clear-deleted-objects (current-buffer)))
 
 (define-method get-objects buffer ()
   (loop for object being the hash-values in %objects collect object))
@@ -572,6 +573,9 @@ slowdown. See also quadtree.lisp")
     (paste-from self temp
 		(window-pointer-x)
 		(window-pointer-y))))
+
+(define-method paste-here buffer ()
+  (paste-at-pointer self))
 
 (defun paste-as-new-buffer ()
   (let ((temp (new 'buffer "*new-buffer*")))

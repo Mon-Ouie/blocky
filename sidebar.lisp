@@ -21,7 +21,7 @@
 (in-package :blocky)
 
 (defparameter *sidebar-enter-sensitivity* 12)
-(defparameter *sidebar-minimum-width* 200)
+(defparameter *sidebar-minimum-width* 220)
 (defparameter *sidebar-margin* 16)
 (defparameter *sidebar-spacing* 3)
 (defparameter *sidebar-scroll-speed* 3)
