@@ -2547,6 +2547,8 @@ of the music."
   (eval-in-emacs 
    `(glass-show :x ,x :y ,y)))
 
+(defun exit-blocky () (shut-down))
+
 ;; (defun stop ()
 ;;   (error "Not yet implemented."))
 

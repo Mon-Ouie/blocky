@@ -119,6 +119,7 @@
 ;;; shows one line, like in Emacs.
 
 (define-block (minibuffer :super phrase)
+  (sidebar :initform nil)
   (temporary :initform t)
   (display-lines :initform 12))
 
@@ -133,10 +134,12 @@
       (setf inputs (list modeline prompt))
       (set-parent prompt self)
       (set-parent modeline self)
+      (setf %sidebar (new 'sidebar))
       (pin prompt)
       (pin modeline))))
 
 (define-method layout minibuffer ()
+  (layout %sidebar)
   (with-fields (height width parent inputs) self
     (setf height 0)
     (setf width 0)
@@ -203,6 +206,13 @@
 (define-method draw minibuffer ()
   (with-fields (inputs x y height width) self
     (draw-box (window-x) y *gl-screen-width* height :color *minibuffer-background-color*)
-    (mapc #'draw inputs)))
+    (mapc #'draw inputs)
+    (draw %sidebar)))
+
+(define-method hit minibuffer (x y)
+  (or (hit %sidebar x y)
+      (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
+	self)))
+
 
 ;;; minibuffer.lisp ends here

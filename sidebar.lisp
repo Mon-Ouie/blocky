@@ -28,31 +28,43 @@
 
 (define-block sidebar
   (row :initform 0)
-  (minibuffer :initform nil)
   (displayed-rows :initform 0))
-
-(defparameter *sidebar-phrases*
-  '(((define word nil) &body)
-    ((define block nil) &body)
-    ((define method :name block &body))))
+(defparameter *sidebar-menu* 
+  '("(clear-selection)"
+    "(copy)"
+    "(cut)"
+    "(paste)"
+    "(paste-at-pointer)"
+    "(paste-as-new-buffer)"
+    "(paste-from \"\" 0 0)"
+    "(trim (current-buffer))"
+    "(rename (current-buffer) \"\")"
+    "(switch-to-buffer \"\")"
+    "(save-project) "
+    "(load-project \"\")"
+    "(make-project \"\")"
+    "(exit)"))
 
 (defun all-sidebar-phrases ()
-  (append *sidebar-phrases* (all-words)))
+  (append *sidebar-menu* (all-words)))
+
+(defun make-menu-expression (string)
+  (assert (stringp string))
+  (new 'expression :line string))
 
 (define-method initialize sidebar ()
-  (setf %minibuffer (new 'minibuffer))
   (with-fields (inputs) self
-    (setf inputs (mapcar #'make-phrase (all-words)))
+    (setf inputs (mapcar #'make-menu-expression *sidebar-menu*))
     (dolist (input inputs)
       (setf (%parent input) self))))
 
 (define-method add-phrase sidebar (phrase)
   (push phrase %inputs))
 
-(add-hook '*after-define-functions*
-	  #'(lambda (word)
-	      (when *sidebar* 
-		(add-phrase *sidebar* (make-phrase word)))))
+;; (add-hook '*after-define-functions*
+;; 	  #'(lambda (word)
+;; 	      (when *sidebar* 
+;; 		(add-phrase *sidebar* (make-phrase word)))))
 
 (define-method scroll-up sidebar ()
   (with-fields (inputs row) self
@@ -65,8 +77,6 @@
     (setf row (min row (1- (length inputs))))))
 
 (define-method layout sidebar ()
-  (move-to %minibuffer (window-x) (window-y))
-  (layout %minibuffer)
   (with-fields (height width displayed-rows parent inputs row) self
     ;; use the right side of the screen.
     (let* ((x0 (+ (%window-x (current-buffer))
@@ -89,6 +99,7 @@
 	  (layout element)
 	  (move-to element x y)
 	  (incf y (%height element))
+	  (setf width (max width (%width element)))
 	  (if (> y ymax)
 	      (return)
 	      (incf displayed-rows)))))))
@@ -100,7 +111,12 @@
 (define-method can-pick sidebar () t)
 (define-method draw-hover sidebar ())
 
-(define-method pick sidebar ()
+(defun duplicate-safely (thing)
+  (let ((dupe (duplicate thing)))
+    (prog1 dupe
+      (setf (%parent dupe) nil))))
+
+(define-method pick sidebar (&optional nodup)
   (let ((x (window-pointer-x))
 	(y (window-pointer-y))
 	(candidates (subseq %inputs %row (+ %row %displayed-rows))))
@@ -109,23 +125,23 @@
       (let* ((pos (position-if #'try candidates))
 	     (phrase (when pos (nth pos candidates))))
 	(when phrase
-	  (let ((phrase2 (duplicate-phrase phrase)))
-	    (prog1 phrase2
-	      (move-to phrase2 (%x phrase) (%y phrase)))))))))
-    
-(defparameter *sidebar-always-visible* nil)
+	  (if nodup phrase
+	      (let ((phrase2 (duplicate-safely phrase)))
+		(prog1 phrase2
+		  (move-to phrase2 (%x phrase) (%y phrase))))))))))
+
+(define-method tap sidebar (x y)
+  (let ((thing (pick self :nodup)))
+    (when thing (evaluate-here thing))))
+  
+(defparameter *always-show-sidebar* nil)
 
 (define-method draw sidebar ()
   (with-fields (inputs row displayed-rows x y height width) self
-    (when (or *sidebar-always-visible* 
+    (when (or *always-show-sidebar* 
 	      (hit self (window-pointer-x) (window-pointer-y)))
       (draw-box x y width height :color "gray30" :alpha 0.5)
       (dotimes (n displayed-rows)
-	(draw (nth (+ n row) inputs))))
-    (draw %minibuffer)))
-
-(define-method update sidebar ()
-  (update %minibuffer)
-  )
+	(draw (nth (+ n row) inputs))))))
 
 ;;; sidebar.lisp ends here

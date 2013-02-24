@@ -74,7 +74,7 @@
 		    ((:c :alt) :clear-stack)
 		    ((:s :alt) :show-stack)
 		    ((:m :alt) :show-messages)
-		    ((:p :control) :paste)
+;		    ((:p :control) :paste)
 ;		    ((:return) :enter)
 		    ((:escape) :cancel)
 		    ((:f1) :help)
@@ -82,7 +82,7 @@
 		    ((:x :control) :cut)
 		    ((:c :control) :copy)
 		    ((:v :control) :paste)
-		    ((:v :control :shift) :paste-here)
+		    ((:v :control :shift) :paste-at-pointer)
 		    ((:f9) :toggle-minibuffer)
 		    ((:f12) :transport-toggle-play)
 		    ((:g :control) :escape)
@@ -178,7 +178,7 @@
   (setf %objects (make-hash-table :test 'equal))
   (setf %buffer-name name)
   (when name
-    (add-buffer name self)))
+    (add-buffer (make-buffer-name name) self)))
 
 (define-method rename buffer (name)
   (assert (stringp name))
@@ -368,8 +368,8 @@
 (define-method add-object buffer (object &optional x y (z 0))
   (with-buffer self
     (with-quadtree %quadtree
-      (remove-thing-maybe self object)
-      (assert (not (contains-object self object)))
+      ;; (remove-thing-maybe self object)
+      ;; (assert (not (contains-object self object)))
       (setf (gethash (find-uuid object)
 		     %objects)
 	    (find-uuid object))
@@ -385,8 +385,7 @@
 (define-method remove-object buffer (object)
   (destroy-halo object)
   (when (%quadtree-node object)
-    (quadtree-delete object)
-    (setf (%quadtree-node object) nil))
+    (quadtree-delete-maybe object))
   (remhash (find-uuid object) %objects))
 
 (define-method remove-thing-maybe buffer (object)
@@ -532,7 +531,7 @@ slowdown. See also quadtree.lisp")
   (let ((all (append (get-objects self) %inputs)))
    (remove-if-not #'%halo all)))
 
-(define-method copy buffer (&optional objects0)
+(defun copy (&optional (self (current-buffer)) objects0)
   (let ((objects (or objects0 (get-selection self))))
     (clear-halos self)
     (when objects
@@ -543,36 +542,42 @@ slowdown. See also quadtree.lisp")
 	  (clear-buffer-data duplicate)
 	  (add-object *clipboard* duplicate))))))
 
-(define-method cut buffer (&optional objects0)
+(defun cut (&optional (self (current-buffer)) objects0)
   (with-buffer self
     (let ((objects (or objects0 (get-selection self))))
       (when objects
 	(clear-halos self)
 	(setf *clipboard* (new 'buffer))
 	(dolist (object objects)
-	  (with-quadtree %quadtree
+	  (with-quadtree (%quadtree self)
 	    (remove-thing-maybe self object))
 	  (add-object *clipboard* object))))))
 
-(define-method paste-from buffer ((source block) (dx number :default 0) (dy number :default 0))
+(defun paste-from (self source &optional (dx 0) (dy 0))
   (dolist (object (mapcar #'duplicate (get-objects source)))
     (with-fields (x y) object
       (clear-buffer-data object)
       (with-buffer self
-	(with-quadtree %quadtree
+	(with-quadtree (%quadtree self)
 	  (add-object self object)
 	  (move-to object (+ x dx) (+ y dy)))))))
   
-(define-method paste buffer ((dx number :default 0) (dy number :default 0))
+(defun paste (&optional (self (current-buffer)) (dx 0) (dy 0))
   (paste-from self *clipboard* dx dy))
   
-(define-method paste-here buffer ()
+(defun paste-at-pointer (&optional (self (current-buffer)))
   (let ((temp (new 'buffer)))
     (paste-from temp *clipboard*)
     (send :trim temp)
     (paste-from self temp
 		(window-pointer-x)
 		(window-pointer-y))))
+
+(defun paste-as-new-buffer ()
+  (let ((temp (new 'buffer "*new-buffer*")))
+    (paste-from temp *clipboard*)
+    (trim temp)
+    (switch-to-buffer temp)))
 
 ;; (define-method paste-cut 
 
@@ -608,7 +613,7 @@ slowdown. See also quadtree.lisp")
   (when buffer
     (assert (and (numberp dx) (numberp dy)))
     (with-new-buffer 
-      (paste (current-buffer) buffer dx dy))))
+      (paste-from (current-buffer) buffer dx dy))))
 
 (defun combine (buffer1 buffer2)
   (with-new-buffer 
@@ -693,7 +698,7 @@ slowdown. See also quadtree.lisp")
 (defun with-border (border buffer)
   (with-fields (height width) buffer
     (with-new-buffer 
-      (paste (current-buffer) buffer border border) 
+      (paste-from (current-buffer) buffer border border) 
       (resize (current-buffer)
 	      (+ height (* border 2))
 	      (+ width (* border 2))))))
@@ -802,7 +807,7 @@ slowdown. See also quadtree.lisp")
 	  (when (colliding-with-bounding-box object box)
 	    (draw object))))
       ;; possibly redraw cursor to ensure visibility.
-      (when (and %cursor %redraw-cursor)
+      (when (and (blockyp %cursor) %redraw-cursor)
 	(draw %cursor))
       ;; draw any overlays
       (if *minibuffer-open-p* 
@@ -824,6 +829,7 @@ slowdown. See also quadtree.lisp")
 
 (define-method clear-deleted-objects buffer ()
   ;; clean up any deleted objects
+  (when (not (blockyp %cursor)) (setf %cursor nil))
   (when (not (blockyp %drag)) (setf %drag nil))
   (when (not (blockyp %point)) (setf %point nil))
   (when (not (blockyp %drag-origin)) (setf %drag-origin nil))
@@ -1107,15 +1113,15 @@ block found, or nil if none is found."
 			    ;; ok, what layer does it go in?
 			    (if (%quadtree-node drag)
 				;; gameworld
-				(drop-object self drag)
+				(add-object self drag drop-x drop-y)
 				;; minibuffer
-				(add-block self drag drop-x drop-y))
+				(add-object self drag drop-x drop-y))
 			    ;; dropping on another block
 			    (if (accept hover drag)
 				(invalidate-layout hover)
 				;; hovered block did not accept drag. 
 				;; drop it back in the program layer.
-				(add-block self drag drop-x drop-y))))))
+				(add-object self drag drop-x drop-y))))))
 	      ;; select the dropped block
 	      (progn 
 ;		(select self drag)
