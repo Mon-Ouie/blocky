@@ -383,10 +383,11 @@
       (after-place-hook object))))
       
 (define-method remove-object buffer (object)
-  (remhash (find-uuid object) %objects)
+  (destroy-halo object)
   (when (%quadtree-node object)
     (quadtree-delete object)
-    (setf (%quadtree-node object) nil)))
+    (setf (%quadtree-node object) nil))
+  (remhash (find-uuid object) %objects))
 
 (define-method remove-thing-maybe buffer (object)
   (with-buffer self

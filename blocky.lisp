@@ -35,35 +35,37 @@
   (:use :common-lisp) 
   (:export null-block *frequency* *output-chunksize* *output-channels*
 halt-sample *dt* *copyright-notice* *author* *message-hook-functions*
-add-to-list modify-joystick-profile defproject start stop selection
-clear-clipboard copy-to-clipboard at-next-update *next-update-hook*
-eval-in-emacs autoload *already-serialized* browse back
-selected-object prototype-variable-name *update-function* *target*
-toggle-play *blocks* shut-down later later-at toggle-glass glass-show
-glass-hide glass-show-at later-when start-up seconds->frames
-keyboard-held-p keyboard-pressed-p holding-control transform-window
-*scale-output-to-window* keyboard-released-p *edit* with-font *font*
-find-heading keyboard-time-in-current-state pretty-string ugly-symbol
-*pointer-x* *pointer-y* is-joystick-event *self* is-raw-joystick-event
-keyboard-time-in-previous-state *updates* keyboard-down-p *buffers*
-keyboard-keys-down keyboard-modifier-down-p find-buffer find-buffer
-*socket-size* keyboard-modifiers draw-filled-circle draw-aa-circle
-get-keys make-block add-buffer find-buffer add-block remove-block
-with-quadtree *initialization-hook* hit-blocks quadtree-delete
-add-resources quadtree-insert build-quadtree quadtree-collide
-quadtree-show *quadtree* *quadtree-depth* split-string-on-lines
-message with-session start-session *prompt-sweden-keybindings*
-*prompt-qwerty-keybindings* *screen-width* transform-method-body
-roll-under initialize-colors *style* load-project-image
-create-project-image *standard-categories* *left-turn* bind-event
-*right-turn* left-turn right-turn roll bind-event-to-method *colors*
-enable-key-repeat disable-key-repeat get-color define-method *font*
-field-value set-field-value object-fields dispatch-event
-*user-init-file-name* distance icon-resource icon-image *directions*
-*opposites* *pending-resources* with-project project-orthographically
-project-with-perspective open-viewport find-resource-property
-compose-blank-fields font-width font-height find-object *windows* edit
-create blocky transform-field-reference define-block *screen-height*
+exit-blocky add-to-list modify-joystick-profile defproject start stop
+selection cut copy paste paste-here clear-clipboard copy-to-clipboard
+paste-at-pointer at-next-update *next-update-hook* eval-in-emacs
+autoload *already-serialized* browse back selected-object
+*always-show-sidebar* prototype-variable-name *update-function*
+*target* toggle-play *blocks* shut-down later later-at toggle-glass
+glass-show glass-hide glass-show-at later-when start-up
+seconds->frames keyboard-held-p keyboard-pressed-p holding-control
+transform-window *scale-output-to-window* keyboard-released-p *edit*
+with-font *font* find-heading keyboard-time-in-current-state
+pretty-string ugly-symbol *pointer-x* *pointer-y* is-joystick-event
+*self* is-raw-joystick-event keyboard-time-in-previous-state *updates*
+keyboard-down-p *buffers* keyboard-keys-down keyboard-modifier-down-p
+find-buffer find-buffer *socket-size* keyboard-modifiers
+draw-filled-circle draw-aa-circle get-keys make-block add-buffer
+find-buffer add-block remove-block with-quadtree *initialization-hook*
+hit-blocks quadtree-delete add-resources quadtree-insert
+build-quadtree quadtree-collide quadtree-show *quadtree*
+*quadtree-depth* split-string-on-lines message with-session
+start-session *prompt-sweden-keybindings* *prompt-qwerty-keybindings*
+*screen-width* transform-method-body roll-under initialize-colors
+*style* load-project-image create-project-image *standard-categories*
+*left-turn* bind-event *right-turn* left-turn right-turn roll
+bind-event-to-method *colors* enable-key-repeat disable-key-repeat
+get-color define-method *font* field-value set-field-value
+object-fields dispatch-event *user-init-file-name* distance
+icon-resource icon-image *directions* *opposites* *pending-resources*
+with-project project-orthographically project-with-perspective
+open-viewport find-resource-property compose-blank-fields font-width
+font-height find-object *windows* edit create blocky
+transform-field-reference define-block *screen-height*
 formatted-line-width find-buffer *clipboard* formatted-line-height
 formatted-string-height formatted-string-width get-color create-image
 draw-image blocky edit define-prototype has-field *target* with-target
@@ -89,9 +91,10 @@ object-parent send send-super send-queue self opposite-direction
 opposite-heading object-address-string object step-in-direction
 define-resource direction-to plasma-rect subdivide-rect render-plasma
 add-hook run-hook queue-tail make-resource-link save-resource
-on-screen-p save-project-image *system* *defined-resources* save-project
-save-everything with-input-values with-inputs *export-formats* clear-selection
-export-archive *use-texture-blending* defresource export-application
+on-screen-p save-project-image *system* *defined-resources*
+save-project save-everything with-input-values with-inputs
+*export-formats* clear-selection export-archive *use-texture-blending*
+defresource export-application paste-as-new-buffer
 *default-texture-filter* export-project make-queue queue unqueue
 *font-texture-filter* queue-message queued-messages-p unqueue-message
 send-queue field-value random-direction random-choose *resources*
