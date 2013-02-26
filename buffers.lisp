@@ -164,6 +164,12 @@
   (clear-halos (current-buffer))
   (clear-deleted-objects (current-buffer)))
 
+(defun select-all ()
+  (clear-halos (current-buffer))
+  (loop for thing being the hash-values in 
+	(%objects (current-buffer))
+	do (make-halo thing)))
+
 (define-method get-objects buffer ()
   (loop for object being the hash-values in %objects collect object))
 
