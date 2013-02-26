@@ -137,7 +137,7 @@
   (let ((thing (pick self :nodup)))
     (when thing (evaluate-here thing))))
   
-(defparameter *always-show-sidebar* nil)
+(defparameter *always-show-sidebar* t)
 
 (define-method draw sidebar ()
   (with-fields (inputs row displayed-rows x y height width) self
