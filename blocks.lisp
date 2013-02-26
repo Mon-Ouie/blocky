@@ -275,6 +275,8 @@ initialized with BLOCKS as inputs."
     (unplug-from-parent self))
   (remove-thing-maybe (current-buffer) self)
   (setf %garbagep t)
+  (when %quadtree-node 
+    (quadtree-delete self %quadtree-node))
   (remove-object-from-database self))
 
 (define-method dismiss block ()
@@ -1376,6 +1378,14 @@ scale. See also "
 dropped.")
 
 (defparameter *hover-alpha* 0.8)
+
+(define-method draw-cursor block ()
+  (draw-indicator :drop
+		  (- %x (dash 1)) 
+		  (- %y (dash 1))
+		  :color "white"
+		  :scale *handle-scale*
+		  :background "gray70"))
 
 (define-method draw-hover block ()
   "Draw something to indicate that this object can recieve a drop.

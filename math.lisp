@@ -102,6 +102,18 @@ DIRECTION."
   (nth (random (length *directions*))
        *directions*))
 
+(defun direction-heading (direction)
+  (radian-angle
+   (ecase direction
+     (:up -90)
+     (:down 90)
+     (:right 0)
+     (:left 180)
+     (:upright -45)
+     (:upleft -135) 
+     (:downright 45)
+     (:downleft 135))))
+
 (defun step-in-direction (x y direction &optional (n 1))
   "Return the point X Y moved by n squares in DIRECTION."
   (ecase direction

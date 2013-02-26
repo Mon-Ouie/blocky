@@ -191,7 +191,7 @@
 
 (defun clear-selection ()
   (clear-halos (current-buffer))
-  (clear-deleted-objects (current-buffer)))
+  (clear-deleted-program-objects (current-buffer)))
 
 (defun select-all ()
   (clear-halos (current-buffer))
@@ -200,7 +200,8 @@
 	do (make-halo thing)))
 
 (define-method get-objects buffer ()
-  (loop for object being the hash-values in %objects collect object))
+  (loop for object being the hash-values in %objects 
+	when (blockyp object) collect object))
 
 (define-method has-object buffer (thing)
   (gethash (find-uuid thing) %objects))
@@ -225,6 +226,9 @@
     (prog1 nil
       (dolist (each (region-objects self))
 	(destroy each)))))
+
+(define-method destroy-selection buffer ()
+  (prog1 nil (mapc #'destroy (selection))))
 
 (define-method emptyp buffer ()
   (or (null %objects)
@@ -840,17 +844,18 @@ slowdown. See also quadtree.lisp")
 	(draw drag))
       (when *minibuffer*
 	(draw *minibuffer*))
+      (draw-cursor %cursor)
       ;; draw focus
       (when focused-block
-	(assert (blockyp focused-block))
-	(draw-focus focused-block))
+	(when (blockyp focused-block))
+	(draw-focus focused-block)))))
       ;; 
-      ;; (when *minibuffer*
-      ;; 	(draw-focus (minibuffer-prompt)))
-      ;; (when highlight
-      ;; 	(draw-highlight highlight))
-      (when (and point (read-only-p point))
-	(draw-point point)))))
+      ;; ;; (when *minibuffer*
+      ;; ;; 	(draw-focus (minibuffer-prompt)))
+      ;; ;; (when highlight
+      ;; ;; 	(draw-highlight highlight))
+      ;; (when (and point (read-only-p point))
+      ;; 	(draw-point point)))))
 
 (define-method draw-programs buffer ())
 
@@ -898,7 +903,7 @@ slowdown. See also quadtree.lisp")
   
 ;;; Simulation update
 
-(define-method clear-deleted-objects buffer ()
+(define-method clear-deleted-program-objects buffer ()
   ;; clean up any deleted objects
   (when (not (blockyp %cursor)) (setf %cursor nil))
   (when (not (blockyp %drag)) (setf %drag nil))
@@ -908,8 +913,11 @@ slowdown. See also quadtree.lisp")
   (when (not (blockyp %focused-block)) (setf %focused-block nil))
   (when (not (blockyp %last-focus)) (setf %last-focus nil)))
 
+(define-method clear-deleted-objects buffer ()
+  (loop for object being the hash-keys of %objects 
+	do (unless (blockyp object) (remhash object %objects))))
+
 (define-method update buffer ()
-  ;; (setf *buffer* (find-uuid self))
   (with-field-values (objects drag cursor) self
     ;; build quadtree if needed
     (when (null %quadtree)
@@ -921,9 +929,13 @@ slowdown. See also quadtree.lisp")
 	(with-quadtree %quadtree
 	  ;; possibly run the objects
 	  (loop for object being the hash-values in %objects do
-	    (when object
-	      (update object)
-	      (run-tasks object)))
+	    (if (blockyp object) 
+		(progn 
+		  (update object)
+		  ;; might have been destroyed during update.
+		  (when (blockyp object)
+		    (run-tasks object)))
+		(remhash object %objects)))
 	  ;; update window movement
 	  (let ((thing (or 
 			%followed-object
@@ -945,7 +957,7 @@ slowdown. See also quadtree.lisp")
 	  (layout-program-objects self)
 	  (update-program-objects self)
 	  (when *minibuffer* (update *minibuffer*))
-	  (clear-deleted-objects self))))))
+	  (clear-deleted-program-objects self))))))
 	    
 (define-method evaluate buffer ()
   (prog1 self
@@ -975,7 +987,7 @@ slowdown. See also quadtree.lisp")
 		(when thing 
 		  (with-quadtree quadtree
 		    (handle-event thing event)
-		    (clear-deleted-objects self)
+		    (clear-deleted-program-objects self)
 		    ))))))))
 
 ;;; Hit testing
@@ -1025,7 +1037,7 @@ block found, or nil if none is found."
   (mapc #'destroy-halo (get-objects self)))
 
 (define-method focus-on buffer (block &key (clear-selection t))
-  (clear-deleted-objects self)
+  (clear-deleted-program-objects self)
   ;; possible to pass nil
   (with-fields (focused-block) self
     (with-buffer self
@@ -1327,6 +1339,8 @@ block found, or nil if none is found."
 (define-method after-deserialize buffer ()
   (after-deserialize%super self)
   (clear-drag-data self)
+  (clear-deleted-program-objects self)
+;;  (cl ear-deleted-objects self)
   (add-minibuffer-maybe self :force))
 
 ;;; Help

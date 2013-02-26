@@ -39,9 +39,9 @@ exit-blocky add-to-list modify-joystick-profile defproject start stop
 selection cut copy paste paste-here clear-clipboard copy-to-clipboard
 paste-at-pointer at-next-update *next-update-hook* eval-in-emacs
 autoload *already-serialized* browse back selected-object
-*always-show-sidebar* prototype-variable-name *update-function* kill-buffer
-*target* toggle-play *blocks* shut-down later later-at toggle-glass
-glass-show glass-hide glass-show-at later-when start-up
+*always-show-sidebar* prototype-variable-name *update-function*
+kill-buffer *target* toggle-play *blocks* shut-down later later-at
+toggle-glass glass-show glass-hide glass-show-at later-when start-up
 seconds->frames keyboard-held-p keyboard-pressed-p holding-control
 transform-window *scale-output-to-window* keyboard-released-p *edit*
 with-font *font* find-heading keyboard-time-in-current-state
@@ -160,17 +160,18 @@ compose-blank-fields make-field-initializer initialize pause play
 *image-opacity* rewind stop initialize-prototypes initialize-blocky
 load-project update-future object-address-string draw-string make-tree
 draw-string-blended make-menu find-text-image make-text-image
-find-texture *default-super* clear-text-image-cache *token-types*
-verify *serif* *use-antialiased-text* *sans* *monospace* toggle-debug
-*debug-on-error* *block-categories* *block-colors* input paste
-arrange-beside arrange-below load-variable-resource translate
-save-variable-resource *persistent-variables* with-new-buffer
-with-border with-blank-buffer with-buffer-prototype with-buffer
-remove-trailing-space *buffer-prototype* step-coordinates
-*default-frame-rate* make-field-accessor-forms save-excursion
-make-input-accessor-forms *persistent-variables-file-name* duplicate
-persistent-variables-file combine save-variables indicator-size
-draw-indicator load-variables *block-text-colors* defblock capture
+find-texture *default-super* clear-text-image-cache *token-types* text
+direction-heading verify *serif* *use-antialiased-text* *sans*
+*monospace* toggle-debug *debug-on-error* *block-categories*
+*block-colors* input paste arrange-beside arrange-below
+load-variable-resource translate save-variable-resource
+*persistent-variables* with-new-buffer with-border with-blank-buffer
+with-buffer-prototype with-buffer remove-trailing-space
+*buffer-prototype* step-coordinates *default-frame-rate*
+make-field-accessor-forms save-excursion make-input-accessor-forms
+*persistent-variables-file-name* duplicate persistent-variables-file
+combine save-variables indicator-size draw-indicator load-variables
+*block-text-colors* defblock capture
 make-input-accessor-macrolet-clause make-input-accessor-defun-forms
 input-reference-p input-block input-value *block-bold* *bold* *italic*
 *block-italic* define-block-macro))
