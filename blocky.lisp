@@ -39,7 +39,7 @@ exit-blocky add-to-list modify-joystick-profile defproject start stop
 selection cut copy paste paste-here clear-clipboard copy-to-clipboard
 paste-at-pointer at-next-update *next-update-hook* eval-in-emacs
 autoload *already-serialized* browse back selected-object
-*always-show-sidebar* prototype-variable-name *update-function*
+*always-show-sidebar* prototype-variable-name *update-function* kill-buffer
 *target* toggle-play *blocks* shut-down later later-at toggle-glass
 glass-show glass-hide glass-show-at later-when start-up
 seconds->frames keyboard-held-p keyboard-pressed-p holding-control
@@ -92,7 +92,7 @@ opposite-heading object-address-string object step-in-direction
 define-resource direction-to plasma-rect subdivide-rect render-plasma
 add-hook run-hook queue-tail make-resource-link save-resource
 on-screen-p save-project-image *system* *defined-resources*
-save-project save-everything with-input-values with-inputs
+save-project save-everything with-input-values with-inputs select-all
 *export-formats* clear-selection export-archive *use-texture-blending*
 defresource export-application paste-as-new-buffer
 *default-texture-filter* export-project make-queue queue unqueue
