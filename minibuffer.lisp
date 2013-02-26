@@ -164,6 +164,10 @@
       ;; ;; move to the right spot to keep the bottom on the bottom.
       ;; (setf y (- y0 (dash 1))))))
 
+(define-method update minibuffer ()
+  (update (first %inputs))
+  (update (second %inputs)))
+
 (define-method get-prompt minibuffer ()
   (second %inputs))
 
