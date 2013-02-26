@@ -156,7 +156,7 @@
 (define-method draw-region buffer ()
   (when (consp %region)
     (destructuring-bind (x y width height) %region
-      (draw-box x y width height :color "white" :alpha (max 0.2 (+ 0.3 (sin (/ *updates* 2))))))))
+      (draw-box x y width height :color "gray60" :alpha (max 0.2 (+ 0.2 (sin (/ *updates* 2))))))))
 
 (define-method clear-region buffer ()
   (setf %region nil %region-start nil))
@@ -216,7 +216,15 @@
   (when %region
     (clear-selection)
     (dolist (each (region-objects self))
-      (make-halo each))))
+      (make-halo each))
+    (clear-region self)))
+
+(define-method destroy-region buffer ()
+  (when %region
+    (clear-selection)
+    (prog1 nil
+      (dolist (each (region-objects self))
+	(destroy each)))))
 
 (define-method emptyp buffer ()
   (or (null %objects)
@@ -1165,6 +1173,7 @@ block found, or nil if none is found."
 		     region-start region click-start-block drag-origin
 		     focused-block) self
       (end-region self)
+      (select-region self)
       (if drag
 	  ;; we're dragging
 	  (destructuring-bind (x0 . y0) drag-offset

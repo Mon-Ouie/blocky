@@ -26,6 +26,10 @@
     (:key #'identity :test 'equal :validator #'identity)
   (format nil "X:~S Y:~S" x y))
 
+(defun-memo modeline-database-string (local global)
+    (:key #'identity :test 'equal :validator #'identity)
+  (format nil "~S/~S objects" local global))
+
 (define-block-macro modeline
     (:super phrase
      :fields 
@@ -35,14 +39,15 @@
      :inputs (:project-id (new 'label :read-only t)
 	      :buffer-id (new 'label :read-only t)
 	      :position (new 'label :read-only t)
-	      :objects (new 'label :read-only t)
-	      :mode (new 'label :read-only t))))
+	      :mode (new 'label :read-only t)
+	      :objects (new 'label :read-only t))))
 
 (define-method update modeline ()
   (mapc #'pin %inputs)
   (set-value %%project-id *project*)
   (set-value %%buffer-id (or (%buffer-name (current-buffer)) "nil"))
-  (set-value %%objects (format nil "~S" (hash-table-count *database*)))
+  (set-value %%objects (modeline-database-string (hash-table-count (%objects (current-buffer)))
+						 (hash-table-count *database*)))
   (set-value %%position
 	     (modeline-position-string
 	      (%window-x (current-buffer))

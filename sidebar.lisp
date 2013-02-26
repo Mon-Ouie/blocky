@@ -56,10 +56,12 @@
   (with-fields (inputs) self
     (setf inputs (mapcar #'make-menu-expression *sidebar-menu*))
     (dolist (input inputs)
+      (setf (%garbagep input) t)
       (setf (%parent input) self))))
 
 (define-method add-item sidebar (item)
   ;; (push item %inputs))
+  (setf (%garbagep item) t)
   (setf %inputs
   	(append %inputs (list item))))
 
