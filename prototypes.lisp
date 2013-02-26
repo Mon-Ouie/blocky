@@ -1571,6 +1571,7 @@ objects after reconstruction, wherever present."
   (when (null *buffers*)
     (initialize-buffers))
   (prog1 t
+    (setf (field-value :buffer-name object) name)
     (setf (gethash name *buffers*)
 	  (find-uuid object))))
 

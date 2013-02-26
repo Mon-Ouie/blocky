@@ -40,7 +40,7 @@
 (define-method update modeline ()
   (mapc #'pin %inputs)
   (set-value %%project-id *project*)
-  (set-value %%buffer-id (or (%name (current-buffer)) "nil"))
+  (set-value %%buffer-id (or (%buffer-name (current-buffer)) "nil"))
   (set-value %%position
 	     (modeline-position-string
 	      (%window-x (current-buffer))

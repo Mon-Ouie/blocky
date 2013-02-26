@@ -79,9 +79,9 @@
 		    ((:escape) :cancel)
 		    ((:f1) :help)
 		    ((:h :control) :help)
-		    ((:x :control) :cut)
-		    ((:c :control) :copy)
-		    ((:v :control) :paste)
+		    ((:x :control) :edit-cut)
+		    ((:c :control) :edit-copy)
+		    ((:v :control) :edit-paste)
 		    ((:v :control :shift) :paste-here)
 		    ((:f9) :toggle-minibuffer)
 		    ((:f12) :transport-toggle-play)
@@ -183,15 +183,15 @@
 (define-method initialize buffer (&optional name)
   (initialize%super self)
   (setf %objects (make-hash-table :test 'equal))
-  (setf %buffer-name name)
   (when name
-    (add-buffer (make-buffer-name name) self)))
+    (let ((buffer-name (make-buffer-name name)))
+      (setf %buffer-name buffer-name)
+      (add-buffer buffer-name self))))
 
 (define-method rename buffer (name)
   (assert (stringp name))
   (when (find-buffer name :noerror t)
     (kill-buffer name))
-  (setf %name name)
   (add-buffer name self))
 
 (defun point ()
@@ -582,6 +582,15 @@ slowdown. See also quadtree.lisp")
 
 (define-method paste-here buffer ()
   (paste-at-pointer self))
+
+(define-method edit-cut buffer ()
+  (cut))
+
+(define-method edit-paste buffer ()
+  (paste))
+
+(define-method edit-copy buffer ()
+  (copy))
 
 (defun paste-as-new-buffer ()
   (let ((temp (new 'buffer "*new-buffer*")))

@@ -2485,10 +2485,7 @@ of the music."
 (defun switch-to-buffer (thing)
   ;; accept both names and buffers
   (let ((buffer (if (blockyp thing) 
-		    ;; give it a unique name
-		    (prog1 thing 
-		      (rename thing 
-			      (make-buffer-name (%name thing))))
+		    thing
 		    ;; just create a new buffer
 		    (find-buffer thing :create t))))
     (push (%name buffer) *buffer-history*)
