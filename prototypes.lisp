@@ -1368,8 +1368,8 @@ named in the field %EXCLUDED-FIELDS will be ignored."
 	     (mapcar #'serialize object)
 	     (cons (serialize (car object)) ;; it's a dotted pair
 		   (serialize (cdr object)))))
-	;; leave strings and uuids alone
-	(string (copy-tree object))
+	;; leave strings and uuids alone (but only use simple strings)
+	(string (coerce (copy-tree object) 'simple-string))
 	;; pass other vectors
 	(vector (map 'vector #'serialize object))
 	;; flatten blocky objects

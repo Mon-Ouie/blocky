@@ -32,8 +32,10 @@
   (let ((name (etypecase thing
 		(symbol (symbol-name thing))
 		(string thing))))
-    (string-downcase 
-     (string-trim " " name))))
+    (coerce 
+     (string-downcase 
+      (string-trim " " name))
+     'simple-string)))
 
 (defun-memo ugly-symbol (string)
     (:key #'first :test 'equal :validator #'identity)

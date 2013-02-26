@@ -154,7 +154,6 @@
 ;; 	(print-it c))))
 ;; (queue line %history))))
 
-
 (define-method newline prompt ()
   (enter self))
 
@@ -412,21 +411,22 @@
   ;; fill in the input box with the value, unless LINE was provided
   (if line
       (progn
-	(setf %line line)
+	(setf %line (coerce line 'simple-string))
 	(setf %value (read-from-string line)))
       (setf %line 
 	    (if (null value)
 		""
-		;; don't print symbol package names
-		(pretty-string
-		 (if (and (symbolp value)
-			  (not (keywordp value)))
-		     (symbol-name value)
-		     (format nil "~S" value))))))
+		  (format nil "~S" value))))
   (setf %label 
 	(or label 
 	    (getf options :label)))
   (when label-color (setf %label-color label-color)))
+
+		;; (pretty-string
+		;;  (if (and (symbolp value)
+		;; 	  (not (keywordp value)))
+		;;      (symbol-name value)
+		;;      (format nil "~S" value))))))
 
 (define-method set-read-only entry (&optional (value t))
   (setf %read-only value))
