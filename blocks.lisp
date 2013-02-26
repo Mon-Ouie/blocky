@@ -164,16 +164,6 @@ areas.")
 (define-method get-field block (field)
   (field-value field (evaluate self)))
 
-;;; Buffer pages
-
-(define-method get-buffer-name block () %buffer-name)
-
-(define-method set-buffer-name block ((name string))
-  (setf %buffer-name name))
-
-(define-method buffer block ()
-  (find-buffer %buffer-name))
-
 ;;; Adding blocks to the simulation
 
 (define-method start block ()
