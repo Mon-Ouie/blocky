@@ -1792,7 +1792,8 @@ Note that the center-points of the objects are used for comparison."
   (setf %finished t))
 
 (define-method evaluate task ()
-  (apply #'send %method %target %arguments))
+  (when (blockyp %target)
+    (apply #'send %method %target %arguments)))
 
 (define-method running task ()
   (with-fields (method target arguments clock finished) self
