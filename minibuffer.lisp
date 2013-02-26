@@ -35,12 +35,14 @@
      :inputs (:project-id (new 'label :read-only t)
 	      :buffer-id (new 'label :read-only t)
 	      :position (new 'label :read-only t)
+	      :objects (new 'label :read-only t)
 	      :mode (new 'label :read-only t))))
 
 (define-method update modeline ()
   (mapc #'pin %inputs)
   (set-value %%project-id *project*)
   (set-value %%buffer-id (or (%buffer-name (current-buffer)) "nil"))
+  (set-value %%objects (format nil "~S" (hash-table-count *database*)))
   (set-value %%position
 	     (modeline-position-string
 	      (%window-x (current-buffer))
@@ -203,6 +205,8 @@
       ;; drop last item in scrollback
       (let ((len (length inputs)))
 	(when (> len *minibuffer-rows*)
+	  (dolist (item (subseq inputs *minibuffer-rows*))
+	    (destroy item))
 	  (setf inputs (subseq inputs 0 (1- len)))))
       ;; 
       (add-item %sidebar (duplicate-safely input)))))

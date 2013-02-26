@@ -96,6 +96,9 @@
 		     :inputs)
 		   :documentation "Don't serialize the menu bar.")
   (field-collection-type :initform :hash)
+  ;; rectangle-select
+  (region :initform nil)
+  (region-start :initform nil)
   ;; dragging info
   (drag :initform nil 
   	:documentation "Block being dragged, if any.")
@@ -131,6 +134,32 @@
 	    (setf name0 (format nil "~A<~S>" name n)
 		  n (1+ n))
 	    (return-from naming name0))))))
+
+(define-method begin-region buffer ()
+  (setf %region-start (list (window-pointer-x) (window-pointer-y))))
+
+(define-method update-region buffer ()
+  (when %region-start
+    (let ((x (window-pointer-x))
+	  (y (window-pointer-y)))
+      (destructuring-bind (x0 y0) %region-start
+	;; always normalize it
+	(setf %region
+	      (list (min x x0)
+		    (min y y0)
+		    (abs (- x x0))
+		    (abs (- y y0))))))))
+
+(define-method end-region buffer ()
+  (setf %region-start nil))
+	
+(define-method draw-region buffer ()
+  (when (consp %region)
+    (destructuring-bind (x y width height) %region
+      (draw-box x y width height :color "white" :alpha (max 0.2 (+ 0.3 (sin (/ *updates* 2))))))))
+
+(define-method clear-region buffer ()
+  (setf %region nil %region-start nil))
 
 (defun make-buffer-name (name)
   (uniquify-buffer-name (or name "*untitled*")))
@@ -175,6 +204,19 @@
 
 (define-method has-object buffer (thing)
   (gethash (find-uuid thing) %objects))
+
+(define-method region-objects buffer ()
+  (when %region
+    (destructuring-bind (x y width height) %region
+      (loop for thing being the hash-values of %objects
+	    when (colliding-with-rectangle thing y x width height)
+	      collect thing))))
+
+(define-method select-region buffer ()
+  (when %region
+    (clear-selection)
+    (dolist (each (region-objects self))
+      (make-halo each))))
 
 (define-method emptyp buffer ()
   (or (null %objects)
@@ -828,6 +870,8 @@ slowdown. See also quadtree.lisp")
       ;; possibly redraw cursor to ensure visibility.
       (when (and (blockyp %cursor) %redraw-cursor)
 	(draw %cursor))
+      ;; draw region if needed
+      (when %region (draw-region self))
       ;; draw any overlays
       (if *minibuffer-open-p* 
       	  (draw-program-objects self)
@@ -877,7 +921,7 @@ slowdown. See also quadtree.lisp")
 			%followed-object
 			(when (holding-shift) drag)
 			cursor)))
-	    (when thing
+	    (when (blockyp thing)
 	      (glide-follow self thing)
 	      (update-window-glide self)))
 	  ;; detect collisions
@@ -1048,8 +1092,11 @@ block found, or nil if none is found."
 
 (define-method handle-point-motion buffer (mouse-x mouse-y)
   (with-fields (inputs hover highlight click-start drag-offset quadtree
+		       region-start region
 		       drag-start drag) self
     (with-buffer self
+      (when region-start
+	(update-region self))
       (with-quadtree quadtree
 	(setf hover nil)
 	(drag-maybe self mouse-x mouse-y)
@@ -1074,29 +1121,34 @@ block found, or nil if none is found."
 (define-method press buffer (x y &optional button)
   (with-buffer self
     (with-fields (click-start drag-button click-start-block
-			      focused-block) self
-      ;; now find what we're touching
-      (assert (or (null focused-block)
-		  (blockyp focused-block)))
-      (multiple-value-bind (block object-p)
-	  (hit-inputs self x y)
-	(setf %object-p object-p)
-	(if (null block)
-	    (focus-on self nil)
-	    ;; (when *minibuffer-open-p*
-	    ;; 	(exit-minibuffer self)))
-	    (progn 
-	      (setf click-start (cons x y))
-	      (setf click-start-block (find-uuid block))
-	      (setf drag-button button)
-	      ;; now focus; this might cause another block to be
-	      ;; focused, as in the case of the Minibuffer
-	      (focus-on self block)))))))
-
-(define-method clear-drag-data buffer ()
-  (setf %drag-start nil
-	%drag-offset nil
-	%object-p nil
+			      region-start region focused-block) self
+      ;; region select
+      (if (holding-shift)
+	  (begin-region self)
+	  ;; or, regular select.
+	  ;; now find what we're touching
+	  (progn
+	    (assert (or (null focused-block)
+			(blockyp focused-block)))
+	    (multiple-value-bind (block object-p)
+		(hit-inputs self x y)
+	      (setf %object-p object-p)
+	      (if (null block)
+		  (focus-on self nil)
+		  ;; (when *minibuffer-open-p*
+		  ;; 	(exit-minibuffer self)))
+		  (progn 
+		    (setf click-start (cons x y))
+		    (setf click-start-block (find-uuid block))
+		    (setf drag-button button)
+		    ;; now focus; this might cause another block to be
+		    ;; focused, as in the case of the Minibuffer
+		    (focus-on self block)))))))))
+  
+  (define-method clear-drag-data buffer ()
+    (setf %drag-start nil
+	  %drag-offset nil
+	  %object-p nil
 	%drag-origin nil
 	%drag-button nil
 	%drag nil
@@ -1110,7 +1162,9 @@ block found, or nil if none is found."
   (with-buffer self
     (with-fields 
 	(drag-offset drag-start hover drag click-start drag-button
-		     click-start-block drag-origin focused-block) self
+		     region-start region click-start-block drag-origin
+		     focused-block) self
+      (end-region self)
       (if drag
 	  ;; we're dragging
 	  (destructuring-bind (x0 . y0) drag-offset
@@ -1143,8 +1197,8 @@ block found, or nil if none is found."
 				(add-object self drag drop-x drop-y))))))
 	      ;; select the dropped block
 	      (progn 
-;		(select self drag)
-;		(toggle-halo drag)
+					;		(select self drag)
+					;		(toggle-halo drag)
 		(setf focused-block (find-uuid drag)))))
 	  ;;
 	  ;; we were clicking instead of dragging
@@ -1170,23 +1224,24 @@ block found, or nil if none is found."
 		   (scroll-down it))
 		  ;; horizontal scrolling with shift-mousewheel
 		  ((and (= button 4)
-		        (holding-shift))
+			(holding-shift))
 		   (scroll-left it))
 		  ((and (= button 5)
-		        (holding-shift))
+			(holding-shift))
 		   (scroll-right it))
 		  ;; plain old click
 		  (t 
 		   (tap it x y))))
-		;;(select self focused-block))
+	      ;;(select self focused-block))
 	      (setf click-start nil))))
       ;; clean up bookeeping
       (clear-drag-data self)
       (invalidate-layout self))))
 
 ;; SHIFT-click actions for buffers
-
-(define-method tap buffer (x y) ())
+  
+(define-method tap buffer (x y) ()
+  (clear-region self))
 
 (define-method alternate-tap buffer (x y)
   (let ((entry (new 'expression)))

@@ -1686,14 +1686,20 @@ control the size of the individual frames or subimages."
       (merge-hashes *database* database))))
 
 (defun make-database-resource (&optional (database *database*))
-  (let ((database2 (make-hash-table :test 'equal)))
+  (let ((database2 (make-hash-table :test 'equal))
+	(garbage 0)
+	(saved 0))
     (message "Serializing database...")
     (labels ((store (uuid object)
 	       ;; don't save prototypes 
-	       (when (and (null (object-name object))
-			  (not (%garbagep object)))
-		 (setf (gethash uuid database2) object))))
+	       (when (null (object-name object))
+		 (if (%garbagep object)
+		     (incf garbage)
+		     (progn 
+		       (setf (gethash uuid database2) object)
+		       (incf saved))))))
       (maphash #'store database) ;; copy into database2
+      (message "Saving ~S objects (skipping ~S garbage)..." saved garbage)
       (values (make-resource :name "--database--"
 			     :type :database
 			     :data (serialize database2))

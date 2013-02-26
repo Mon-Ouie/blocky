@@ -274,6 +274,7 @@ initialized with BLOCKS as inputs."
   (when %parent 
     (unplug-from-parent self))
   (remove-thing-maybe (current-buffer) self)
+  (setf %garbagep t)
   (remove-object-from-database self))
 
 (define-method dismiss block ()
@@ -1799,11 +1800,14 @@ Note that the center-points of the objects are used for comparison."
   (with-fields (method target arguments clock finished) self
     (cond 
       ;; if finished, quit now.
-      (finished nil)
+      (finished (prog1 nil (destroy self)))
       ;; countdown exists and is finished.
       ((and (integerp clock)
 	    (zerop clock))
-       (prog1 nil (evaluate self)))
+       (prog1 nil 
+	 (evaluate self)
+	 (destroy self)
+	      ))
       ;; countdown not finished. tell manager to keep running, 
       ;; but don't evaluate at this time
       ((and (integerp clock)
