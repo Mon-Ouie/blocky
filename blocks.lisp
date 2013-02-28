@@ -270,6 +270,7 @@ initialized with BLOCKS as inputs."
 (define-method destroy block ()
   "Throw away this block."
   (mapc #'destroy %inputs)
+  (mapc #'destroy %tasks)
   (when %halo (destroy %halo))
   (when %parent 
     (unplug-from-parent self))

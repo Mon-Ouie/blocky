@@ -975,6 +975,7 @@ slowdown. See also quadtree.lisp")
       (layout *minibuffer*))))
   
 (define-method handle-event buffer (event)
+  (clear-deleted-program-objects self)
   (with-field-values (cursor quadtree focused-block) self
     (with-buffer self
       (or (block%handle-event self event)
