@@ -118,16 +118,16 @@ More instructions for Mac and Windows will be available soon.
       (push #p"/path/to/blocky/" asdf:*central-registry*)
       (asdf:load-system :blocky)
 
-6.   The work-in-progress game PLONG is written with Blocky, and can
+6.   The work-in-progress game 2X0NG is written with Blocky, and can
      be downloaded via git:
 
-      	  git clone git@github.com:dto/plong.git
+      	  git clone git@github.com:dto/2x0ng.git
 
       Then in SBCL:
       
-      (push #p"~/plong/" asdf:*central-registry*)
-      (asdf:load-system :plong)
-      (plong:plong)
+      (push #p"~/2x0ng/" asdf:*central-registry*)
+      (asdf:load-system :2x0ng)
+      (2x0ng:2x0ng)
 
 7. Getting help and reporting bugs 
 
