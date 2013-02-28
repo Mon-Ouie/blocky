@@ -129,6 +129,8 @@ More instructions for Mac and Windows will be available soon.
       (asdf:load-system :2x0ng)
       (2x0ng:2x0ng)
 
+      Then, in-game: Arrow keys to move, Z to fire, Control R to reset
+
 7. Getting help and reporting bugs 
 
    When reporting bugs, please use the issue reporting system at
