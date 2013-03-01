@@ -1074,10 +1074,12 @@ binary image.")
   
 (defparameter *current-directory* #P"./")
 
-(eval-when (:load-toplevel) (setf *current-directory*
-				  (make-pathname
-				   :directory
-				   (pathname-directory *load-truename*))))
+(eval-when (:load-toplevel) 
+  (setf *current-directory*
+	(make-pathname
+	 :directory (pathname-directory #.#P"./"))))
+	 
+	 ;; (pathname-directory *load-truename*))))
 
 (defun current-directory () *current-directory*)
 
