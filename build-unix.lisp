@@ -12,6 +12,7 @@
 				      (sb-posix:putenv
 				       (format nil "SBCL_HOME=~A" 
 					       #.(sb-ext:posix-getenv "SBCL_HOME")))
+				      (setf blocky::*executable* t)
 				      (2x0ng:2x0ng)
 				      0)
 			  :executable t)

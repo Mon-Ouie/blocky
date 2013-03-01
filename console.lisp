@@ -1072,30 +1072,29 @@ binary image.")
 
 ;;; The blocky installation dir
   
-(defun blocky-directory ()
-  (if *executable*
-      (make-pathname :directory 
-		     (pathname-directory 
-		      (car #+sbcl sb-ext:*posix-argv*
-			   #+clozure ccl:*command-line-argument-list*)))
-      (make-pathname :directory 
-		     (pathname-directory 
-		      (make-pathname
-		       :host (pathname-host #.(or *compile-file-truename*
-						  *load-truename*))
-		       :device (pathname-device #.(or *compile-file-truename*
-						      *load-truename*))
-		       :directory (pathname-directory #.(or *compile-file-truename*
-							    *load-truename*)))))))
+(defparameter *current-directory* #P"./")
 
-(defparameter *projects-directory* ".blocky")
+(eval-when (:load-toplevel) (setf *current-directory*
+				  (make-pathname
+				   :directory
+				   (pathname-directory *load-truename*))))
+
+(defun current-directory () *current-directory*)
+
+(defun blocky-directory ()
+  (make-pathname :directory 
+  		     (pathname-directory 
+  		      (make-pathname
+  		       :host (pathname-host #.(or *compile-file-truename*
+  						  *load-truename*))
+  		       :device (pathname-device #.(or *compile-file-truename*
+  						      *load-truename*))
+  		       :directory (pathname-directory #.(or *compile-file-truename*
+  							    *load-truename*))))))
 
 (defun projects-directory ()
   (user-homedir-pathname))
-   ;; (cl-fad:pathname-as-directory 
-   ;;  (make-pathname :name *projects-directory*
-   ;; 		   :defaults
-   
+
 (defun project-directory-name (project)
   (assert (stringp project))
   (remove #\Space project))
@@ -1106,7 +1105,6 @@ binary image.")
    (make-pathname 
     :name (project-directory-name project)
     :defaults (projects-directory)
-;   :defaults (user-homedir-pathname)
     :type :unspecific)))
 
 (defun make-directory-maybe (name)
@@ -1116,11 +1114,12 @@ binary image.")
 		  (cl-fad:pathname-as-directory name))))
 			     
 (defun default-project-directories () 
-  (let ((projects (projects-directory)))
-;    (make-directory-maybe projects)
-    (list (blocky-directory) projects)))
+    (list 
+     (current-directory)
+     (blocky-directory)
+     (projects-directory)))
 
-(defvar *project-directories* nil
+(defvar *project-directories* (default-project-directories)
   "List of directories where BLOCKY will search for projects.
 Directories are searched in list order.")
 
