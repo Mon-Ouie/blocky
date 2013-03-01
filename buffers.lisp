@@ -846,7 +846,8 @@ slowdown. See also quadtree.lisp")
 	(draw drag))
       (when *minibuffer*
 	(draw *minibuffer*))
-      (draw-cursor %cursor)
+      (when (blockyp %cursor)
+	(draw-cursor %cursor))
       ;; draw focus
       (when focused-block
 	(when (blockyp focused-block))
