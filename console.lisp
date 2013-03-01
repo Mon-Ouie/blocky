@@ -1123,12 +1123,14 @@ binary image.")
   "List of directories where BLOCKY will search for projects.
 Directories are searched in list order.")
 
+;; (append (list (user-homedir-pathname)
+;; 			    (asdf:system-relative-pathname 'blocky ""))
+;; 		      *project-directories*)))
+
 (defun search-project-path (project)
   "Search the `*project-directories*' path for a directory with the
 name PROJECT. Returns the pathname if found, otherwise nil."
-  (let ((dirs (append (list (user-homedir-pathname)
-			    (asdf:system-relative-pathname 'blocky ""))
-		      *project-directories*)))
+  (let ((dirs (default-project-directories)))
     (assert (stringp project))
     (or 
      (loop 
