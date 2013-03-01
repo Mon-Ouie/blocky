@@ -1578,7 +1578,8 @@ objects after reconstruction, wherever present."
 (defun find-buffer (name &key create prototype noerror)
   (or (gethash name *buffers*)
       (if create
-	  (add-buffer name (new (or prototype 'buffer) :name name))
+	  (let ((buffer (new (or prototype 'buffer) name)))
+	    (prog1 buffer (add-buffer name buffer)))
 	  (unless noerror
 	    (error "Cannot find buffer ~S" name)))))
 
