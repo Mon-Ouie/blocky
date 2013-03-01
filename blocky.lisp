@@ -164,7 +164,7 @@ find-texture *default-super* clear-text-image-cache *token-types* text
 direction-heading verify *serif* *use-antialiased-text* *sans*
 *monospace* toggle-debug *debug-on-error* *block-categories*
 *block-colors* input paste arrange-beside arrange-below
-load-variable-resource translate save-variable-resource
+load-variable-resource translate save-variable-resource window-x window-y
 *persistent-variables* with-new-buffer with-border with-blank-buffer
 with-buffer-prototype with-buffer remove-trailing-space
 *buffer-prototype* step-coordinates *default-frame-rate*

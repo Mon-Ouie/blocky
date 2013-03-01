@@ -1,8 +1,15 @@
 (in-package :cl-user)
 
+(require 'sb-posix)
+
+(push (merge-pathnames "lib/" (values *default-pathname-defaults*))
+      asdf:*central-registry*)
+
+(push #p"~/2x0ng/" asdf:*central-registry*)
+
 (defvar *dll-pathname* #p"z:/home/dto/blocky/win32/")
-(defvar *game* "xalcyon")
-(defvar *executable* #p"z:/home/dto/blocky/xalcyon.exe")
+(defvar *game* "2x0ng")
+(defvar *executable* #p"z:/home/dto/blocky/2x0ng.exe")
 (defvar *base-pathname* (make-pathname :name nil :type nil :defaults *load-pathname*))
 
 (pushnew (translate-pathname *base-pathname* "**/" "**/site/cffi_0.10.3/") asdf:*central-registry*)

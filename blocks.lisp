@@ -771,7 +771,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
 
 (define-method remove-task block (task)
   (assert (blockyp task))
-  (setf %tasks (delete task %tasks :test 'equal)))
+  (setf %tasks (delete task %tasks :test 'equal))
+  (destroy task))
 
 (define-method run block ()) ;; stub for with-turtle
 

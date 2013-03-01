@@ -77,7 +77,7 @@
 ;		    ((:p :control) :paste)
 ;		    ((:return) :enter)
 		    ((:escape) :cancel)
-		    ((:f1) :help)
+;		    ((:f1) :help)
 		    ((:h :control) :help)
 		    ((:x :control) :edit-cut)
 		    ((:c :control) :edit-copy)
@@ -568,6 +568,8 @@ slowdown. See also quadtree.lisp")
     (setf width new-width)
     (when quadtree
       (install-quadtree self))))
+
+(define-method reset buffer ())
 
 (define-method trim buffer ()
   (prog1 self
