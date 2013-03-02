@@ -464,6 +464,10 @@ or,
 	       (16 . :downright)
 	       (14 . :upleft)
 	       (13 . :upright)
+	       (14 . :b)
+	       (13 . :a)
+	       (15 . :y)
+	       (12 . :x)
 	       (0 . :select)
 	       (3 . :start)))))
 
