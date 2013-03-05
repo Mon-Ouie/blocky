@@ -1974,7 +1974,7 @@ found."
 	   (get-memo-table 'find-text-image))
   (clear-memoize 'find-text-image))
 
-(defvar *clear-cached-images-on-resize* nil)
+(defvar *clear-cached-images-on-resize* t)
 
 ;;; Custom audio generation
 
