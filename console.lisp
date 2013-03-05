@@ -2417,7 +2417,7 @@ of the music."
 	*random-state* (make-random-state t))
   (reset-forth-interpreter)
   (sdl:init-sdl :video t :audio t :joystick t)
-  (load-user-init-file) ;; this step may override *project-directories* and so on 
+;  (load-user-init-file) ;; this step may override *project-directories* and so on 
   (initialize-resource-table)
   (initialize-textures-maybe :force)
   (initialize-colors)
