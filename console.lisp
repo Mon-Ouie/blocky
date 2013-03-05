@@ -1121,9 +1121,9 @@ binary image.")
 			     
 (defun default-project-directories () 
     (list 
-     (current-directory)
      (blocky-directory)
-     (projects-directory)))
+     (projects-directory)
+     (current-directory)))
 
 (defvar *project-directories* (default-project-directories)
   "List of directories where BLOCKY will search for projects.
@@ -1142,11 +1142,9 @@ name PROJECT. Returns the pathname if found, otherwise nil."
      (loop 
        for dir in dirs for path
 	 = (cl-fad:directory-exists-p 
-	    (cl-fad:pathname-as-directory
-	     (make-pathname 
-	      :name (project-directory-name project)
-	      :defaults dir
-	      :type :unspecific)))
+	    (cl-fad:merge-pathnames-as-directory
+	     dir (cl-fad:pathname-as-directory 
+		  (project-directory-name project))))
        when path return path)
      (prog1 nil
        (message "Cannot find project ~s in paths ~S. Try checking your *PROJECTS-DIRECTORIES* settings in the BLOCKY-INIT.LISP configuration file. Continuing..."
