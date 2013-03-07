@@ -884,6 +884,10 @@ display."
 	     #+(and sbcl (not sb-thread)) (restartably
 					   (sb-sys:serve-all-events 0))	 
 	     (sdl:with-timestep (do-update))
+	     ;; load pending resources
+	     ;; (dolist (plist *pending-resources*)
+	     ;;   (index-resource (apply #'make-resource plist)))
+	     ;; (setf *pending-resources* nil)
 	     (restartably
 	       (gl:clear-color 0 0 0 1)
 	       (gl:clear)

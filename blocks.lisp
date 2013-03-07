@@ -61,6 +61,7 @@ Web at:
   (field-collection-type :initform :list)
   ;;
   (cursor-clock :initform 0)
+  (hearing-distance :initform nil)
   ;; general information
   (inputs :initform nil)
   (focused-p :initform nil)
@@ -1556,7 +1557,11 @@ The following block fields will control sprite drawing:
 (define-method play-sound block 
     ((name string :default "chirp"))
     "Play the sample named NAME."
-  (play-sample name))
+  (when (or (null (cursor))
+	    (and (cursor) (%hearing-distance (cursor))))
+    (when (<= (distance-to-cursor self)
+	      (%hearing-distance (cursor)))
+      (play-sample name))))
 
 ;;; Collision detection and UI hit testing
 
