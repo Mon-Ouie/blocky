@@ -132,25 +132,26 @@ initialize-console joystick-axis-value poll-joystick-button
 joystick-button-state reset-joysticks *device-profiles*
 button-to-symbol symbol-to-button find-device-profile set-screen-width
 *play-args* set-screen-height genseq save-objects enable-timer
-draw-box *resizable* *resize-hook* draw-rectangle cursorp
-switch-to-buffer *after-load-project-hook* *mission* mission-variable
-find-bounding-box combine stack-vertically set-mission-variable
-horizontal-extent vertical-extent flip-horizontally flip-vertically
-mirror-horizontally mirror-vertically buffer with-mission-locals
-with-empty-buffer define-turtle stack-horizontally *background-color*
-combine-beside combine-below get-ticks *block-font* quit reset
-seek-music make-keyword object field-value make-queue find-parent
-set-field-value find-super *font* set-field-options field-options
-field-documentation set-field-option-value field-option-value
-*lookup-failure* no-such-field has-field has-method send send-queue
-send-super serialize deserialize initialize-method-cache
-*send-super-depth* initialize-documentation-tables null-parent queue
-unqueue empty-queue *message-queue* queue-message make-non-keyword
-with-fields queue-count queue-head method-documentation
-set-method-documentation method-arglist method-arglist-for-swank
-set-method-arglist queued-messages-p with-field-values with-fields-ex
-unqueue-message unqueue-and-send-message with-message-queue
-message-symbol operation-symbol *sender* message-reader transform-tree
+save-buffer load-buffer draw-box *resizable* *resize-hook*
+draw-rectangle cursorp switch-to-buffer *after-load-project-hook*
+*mission* mission-variable find-bounding-box combine stack-vertically
+set-mission-variable horizontal-extent vertical-extent
+flip-horizontally flip-vertically mirror-horizontally
+mirror-vertically buffer with-mission-locals with-empty-buffer
+define-turtle stack-horizontally *background-color* combine-beside
+combine-below get-ticks *block-font* quit reset seek-music
+make-keyword object field-value make-queue find-parent set-field-value
+find-super *font* set-field-options field-options field-documentation
+set-field-option-value field-option-value *lookup-failure*
+no-such-field has-field has-method send send-queue send-super
+serialize deserialize initialize-method-cache *send-super-depth*
+initialize-documentation-tables null-parent queue unqueue empty-queue
+*message-queue* queue-message make-non-keyword with-fields queue-count
+queue-head method-documentation set-method-documentation
+method-arglist method-arglist-for-swank set-method-arglist
+queued-messages-p with-field-values with-fields-ex unqueue-message
+unqueue-and-send-message with-message-queue message-symbol
+operation-symbol *sender* message-reader transform-tree
 field-reference-p transform-field-reference transform-method-body
 object-parent object-name object-fields define-method
 *joystick-dead-zone* define-prototype new object-p self percent-gray

@@ -1170,6 +1170,7 @@ name PROJECT. Returns the pathname if found, otherwise nil."
     ("wav" :sample)
     ("ogg" :music)
     ("xm" :music)
+    ("blx" :buffer)
     ("lisp" :lisp)
     ("ttf" :ttf)))
 
@@ -1421,6 +1422,12 @@ OBJECT as the resource data."
 	     (list resource))
   (setf (resource-data resource) nil))
 
+(defun save-buffer (&optional (buffer (current-buffer)))
+  (save-object-resource 
+   (make-resource :name (%buffer-name buffer)
+		  :data (serialize (find-object buffer))
+		  :type :buffer)))
+
 (defun special-resource-p (resource)
   (string= "*" (string (aref (resource-name resource) 0))))
 
@@ -1478,6 +1485,12 @@ also the documentation for DESERIALIZE."
     (assert (object-p object))
     (setf (resource-data resource) nil) ;; no longer needed
     object))
+
+(defun load-buffer (name)
+  (load-object-resource
+   (first 
+    (load-resource-file
+     (concatenate 'string name *resource-file-extension*)))))
 
 ;;; Loading images and textures
 
@@ -1818,6 +1831,7 @@ control the size of the individual frames or subimages."
   (list :image #'load-image-resource
 	;; :variable #'load-variable-resource
 	:lisp #'load-lisp-resource
+	:buffer #'load-object-resource
 	:object #'load-object-resource
 	:database #'load-database-resource
 	:sprite-sheet #'load-sprite-sheet-resource

@@ -1342,9 +1342,10 @@ block found, or nil if none is found."
 
 (define-method after-deserialize buffer ()
   (after-deserialize%super self)
+  (when %buffer-name (add-buffer %buffer-name self))
   (clear-drag-data self)
   (clear-deleted-program-objects self)
-;;  (cl ear-deleted-objects self)
+  ;; (clear-deleted-objects self)
   (add-minibuffer-maybe self :force))
 
 ;;; Help
