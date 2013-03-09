@@ -50,9 +50,7 @@ So 2d6+2 would be (roll 2 6 2)."
 	(delta-y (- y2 y1)))
     (sqrt (+ (* delta-x delta-x) (* delta-y delta-y)))))
 
-(defvar *directions* (list :up :down :right :left
-				   :upright :downright
-				   :upleft :downleft)
+(defvar *directions* (list :right :upright :up :upleft :left :downleft :down :downright)
   "List of keywords representing the eight compass directions.")
 
 (defvar *opposites* (list :up :down
@@ -108,11 +106,27 @@ DIRECTION."
      (:up -90)
      (:down 90)
      (:right 0)
-     (:left 180)
+     (:left -180)
      (:upright -45)
      (:upleft -135) 
      (:downright 45)
      (:downleft 135))))
+
+(defun heading-direction (heading)
+  (flet ((pointing (direction)
+  	   (when (<= (abs (- heading
+  			    (direction-heading direction)))
+		     (/ pi 7))
+  	     direction)))
+    (some #'pointing *directions*)))
+
+
+  ;; (flet ((pointing (direction)
+  ;; 	   (when (< (abs (- heading
+  ;; 			    (direction-heading direction)))
+  ;; 		    (radian-angle 18))
+  ;; 	     direction)))
+  ;;   (some #'pointing *directions*)))
 
 (defun step-in-direction (x y direction &optional (n 1))
   "Return the point X Y moved by n squares in DIRECTION."
