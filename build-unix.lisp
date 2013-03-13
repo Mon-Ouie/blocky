@@ -15,7 +15,7 @@
 
 (asdf:oos 'asdf:load-op '2x0ng)
 
-(sb-ext:save-lisp-and-die "2x0ng.exe"
+(sb-ext:save-lisp-and-die "2x0ng.bin"
 			  :toplevel (lambda ()
 				      (sb-posix:putenv
 				       (format nil "SBCL_HOME=~A" 
