@@ -271,7 +271,7 @@
 	  (forward-char self)
 	  (backward-delete-char self)))))
 
-(define-method insert text (key)       
+(define-method insert-string text (key)       
   (with-fields (buffer point-row point-column) self
     (if (null buffer)
 	(progn

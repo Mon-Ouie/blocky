@@ -283,6 +283,21 @@
   (when %cursor
     (move-window-to-object self %cursor)))
 
+(define-method snap-window-to-object buffer (object)
+  (multiple-value-bind (top left right bottom) 
+      (bounding-box object)
+    (declare (ignore right bottom))
+    (move-window-to 
+     self 
+     (min (- %width (+ %window-x *gl-screen-width*))
+	  (max 0 (- left (/ *gl-screen-width* 2))))
+     (min (- %height (+ %window-y *gl-screen-height*))
+	  (max 0 (- top (/ *gl-screen-width* 2)))))))
+
+(define-method snap-window-to-cursor buffer ()
+  (when %cursor
+    (snap-window-to-object self %cursor)))
+
 (define-method move-window buffer (dx dy &optional dz)
   (incf %window-x dx)
   (incf %window-y dy)
@@ -939,6 +954,10 @@ slowdown. See also quadtree.lisp")
 		  (when (blockyp object)
 		    (run-tasks object)))
 		(remhash object %objects)))
+	  ;; detect collisions
+	  (loop for object being the hash-values in objects do
+	    (unless (eq :passive (field-value :collision-type object))
+	      (quadtree-collide object)))
 	  ;; update window movement
 	  (let ((thing (or 
 			%followed-object
@@ -946,11 +965,7 @@ slowdown. See also quadtree.lisp")
 			cursor)))
 	    (when (blockyp thing)
 	      (glide-follow self thing)
-	      (update-window-glide self)))
-	  ;; detect collisions
-	  (loop for object being the hash-values in objects do
-	    (unless (eq :passive (field-value :collision-type object))
-	      (quadtree-collide object))))))
+	      (update-window-glide self))))))
     ;; now outside the quadtree,
     ;; possibly update the program layer
     (with-buffer self

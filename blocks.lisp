@@ -543,7 +543,7 @@ function."
 			   (not (member :alt (rest event)))
 			   (not (member :control (rest event))))
 		    (prog1 t
-		      (send :insert self unicode))))
+		      (send :insert-string self unicode))))
 	  (prog1 t (invalidate-layout self)))))))
   
 (defun bind-event-to-method (block event-name modifiers method-name)
@@ -595,9 +595,12 @@ See `keys.lisp' for the full table of key and modifier symbols.
 
 (defun bind-event-to-text-insertion (self key mods text)
   (bind-event-to-task self key mods 
-			 (new 'task :insert self (list text))))
+			 (new 'task :insert-string self (list text))))
     
-(define-method insert block (string)
+(define-method insert block (&optional x y)
+  (drop-object (current-buffer) self x y))
+
+(define-method insert-string block (string)
   (declare (ignore string))
   nil)
 

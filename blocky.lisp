@@ -83,7 +83,7 @@ draw-textured-rectangle default-project-directories
 *colors* *buffer* make-directory-maybe load-user-init-file
 *project-directories* resource-to-plist *osx* *linux* make-resource
 make-object-resource make-event *blocks* bind-event-to-text-insertion
-make-field-initializer clone make-field-initializer-body
+make-field-initializer clone make-field-initializer-body 
 make-key-modifier-symbol make-key-string normalize-event make-keyword
 make-object queue-head queue-max queue-count *sender*
 field-reference-p null-next object-eq *x11-color-data* object-name

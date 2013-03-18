@@ -50,7 +50,7 @@
 (defvar *author* nil)
 
 (defvar *copyright-notice*
-"Welcome to the Blocky multimedia programming language.
+"Welcome to Blocky.
 Copyright (C) 2006-2013 by David T O'Toole <dto@ioforms.org>
 http://blocky.io/
 
@@ -84,8 +84,8 @@ This program includes the free DejaVu fonts family in the subdirectory
 ./standard/. For more information, see the file named
 DEJAVU-FONTS-LICENSE in that subdirectory.
 
-Please see the included text file CREDITS for more information on the
-technology behind Blocky.
+Please see the included text files \"COPYING\" and \"CREDITS\" for
+more information.
 ")
 
 ;;; Extended argument lists

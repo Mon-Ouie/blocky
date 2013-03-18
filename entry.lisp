@@ -88,7 +88,7 @@
 (define-method backward-char prompt ()
   (setf %point (max 0 (1- %point))))
 
-(define-method insert prompt (string)
+(define-method insert-string prompt (string)
   (setf %line (concatenate 'string
 			    (subseq %line 0 %point)
 			    string
