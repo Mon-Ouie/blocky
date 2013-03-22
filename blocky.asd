@@ -8,7 +8,7 @@
 
 (asdf:defsystem blocky
   :name "blocky"
-  :version "0.991"
+  :version "1.01"
   :maintainer "David T O'Toole <dto@ioforms.org>"
   :author "David T O'Toole <dto@ioforms.org>"
   :license "General Public License (GPL) Version 3"
