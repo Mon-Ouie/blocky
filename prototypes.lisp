@@ -51,7 +51,7 @@
 
 (defvar *copyright-notice*
 "Welcome to Blocky.
-Copyright (C) 2006-2013 by David T O'Toole <dto@ioforms.org>
+Copyright (C) 2006-2013 by David T O'Toole <dto@blocky.io>
 http://blocky.io/
 
 This program is free software: you can redistribute it and/or modify
