@@ -71,9 +71,9 @@ formatted-string-height formatted-string-width get-color create-image
 draw-image blocky edit define-prototype has-field *target* with-target
 define-buffer set-field-options *user-joystick-profile*
 field-option-value index-resource *default-joystick-profile*
-joystick-profile visit find-project-path index-project
-load-image-resource load-lisp-resource *executable* *screen-height*
-cursor *screen-width* blockyp *nominal-screen-width*
+joystick-profile visit find-project-path index-project image-height
+image-width load-image-resource load-lisp-resource *executable*
+*screen-height* cursor *screen-width* blockyp *nominal-screen-width*
 *nominal-screen-height* *gl-screen-width* *gl-screen-height*
 *message-function* dash holding-shift get-button-index
 message-to-standard-output reset-message-function
@@ -83,7 +83,7 @@ draw-textured-rectangle default-project-directories
 *colors* *buffer* make-directory-maybe load-user-init-file
 *project-directories* resource-to-plist *osx* *linux* make-resource
 make-object-resource make-event *blocks* bind-event-to-text-insertion
-make-field-initializer clone make-field-initializer-body 
+make-field-initializer clone make-field-initializer-body
 make-key-modifier-symbol make-key-string normalize-event make-keyword
 make-object queue-head queue-max queue-count *sender*
 field-reference-p null-next object-eq *x11-color-data* object-name

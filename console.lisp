@@ -2429,7 +2429,6 @@ of the music."
 	*minibuffer* nil
 	*minibuffer-open-p* nil
 	*message-hook* nil
-	*window-title* "Blocky"
 	*updates* 0
 	*resizable* t
 	*random-state* (make-random-state t))
