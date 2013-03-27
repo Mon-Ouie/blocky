@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2006-2013 David O'Toole
 
-;; Author: David O'Toole <dto@ioforms.org> 
+;; Author: David O'Toole <dto@ioforms.org>
 ;; Keywords: multimedia, games
 
 ;; This file is free software; you can redistribute it and/or modify
@@ -37,7 +37,7 @@
 ;; for his excellent cl-opengl tutorials:
 ;; http://3bb.cc/tutorials/cl-opengl/
 
-(in-package :blocky) 
+(in-package :blocky)
 
 (defsetf point set-point)
 
@@ -81,7 +81,7 @@
 	 (entry2 (find (second entry) *sdl-key-modifiers* :key #'second)))
     (first entry2)))
 
-(defun keyboard-held-p (key) 
+(defun keyboard-held-p (key)
   "Returns the duration in seconds that the key has been depressed over a number of game loops."
   (sdl:key-held-p (keyboard-id key)))
 
@@ -117,7 +117,7 @@
 		 (first entry2)))))
     (mapcar #'translate (sdl:keys-down-p))))
 
-(defun keyboard-modifiers () 
+(defun keyboard-modifiers ()
   "Returns a list of the modifier keys that are depressed."
   (labels ((translate (mod)
 	     (let ((entry (find mod *sdl-key-modifiers* :key #'first)))
@@ -160,7 +160,7 @@
 `*message-function'. When the variable `*message-logging*' is nil,
 this output is disabled."
     (let ((message-string (apply #'format nil format-string args)))
-      (when *message-logging* 
+      (when *message-logging*
 	(funcall *message-function* message-string))
       (dolist (hook *message-hook*)
 	(funcall hook))
@@ -173,7 +173,7 @@ this output is disabled."
 (defun genseq (&optional (x 0))
   "Generate an all-purpose sequence number."
   (+ x (incf *sequence-number*)))
-   
+
 ;;; Hooks
 
 (defun add-to-list (list element)
@@ -182,7 +182,7 @@ this output is disabled."
   (setf (symbol-value list)
 	(append (symbol-value list)
 		(list element))))
-	 
+
 (defun add-hook (hook func)
   "Hooks are special variables whose names are of the form
 `*foo-hook*' and whose values are lists of functions taking no
@@ -203,11 +203,11 @@ This function arranges for FUNC to be invoked whenever HOOK is triggered with
   (dolist (func (symbol-value hook))
     (funcall func)))
 
-;;; The active blocks list 
+;;; The active blocks list
 
 ;; see also blocks.lisp
 
-(defvar *blocks* nil "List of active block objects. 
+(defvar *blocks* nil "List of active block objects.
 These blocks receive input events and are rendered to the screen by
 the console. See also `send-event'.
 
@@ -223,7 +223,7 @@ Do not set this variable directly from a project; instead, call
 	(let ((parent (find-if #'try blocks :from-end t)))
 	  (when parent
 	    (try parent)))))))
-  
+
 (defun draw-blocks ()
   "Draw the active blocks to the screen."
   (dolist (block *blocks*)
@@ -244,7 +244,7 @@ and the like."
 
 (defun key-repeat-p () *key-repeat-p*)
 
-(defun enable-key-repeat (&optional (delay *key-repeat-delay*) 
+(defun enable-key-repeat (&optional (delay *key-repeat-delay*)
 				    (interval *key-repeat-interval*))
   (let ((delay-milliseconds (truncate (* delay (/ 1000.0 *frame-rate*))))
   	(interval-milliseconds (truncate (* interval (/ 1000.0 *frame-rate*)))))
@@ -286,7 +286,7 @@ equality with `equal' and used as hashtable keys.")
 
 (defun send-event (event)
   (if (null *event-handler-function*)
-      (error "No event handler function installed. 
+      (error "No event handler function installed.
 Please set the variable blocky:*event-handler-function*")
       (funcall *event-handler-function* event)))
 
@@ -346,12 +346,12 @@ key event symbols."
 	;; fix for windows
 	(:SDL-KEY-MOD-NUM nil)
 	(:SDL-KEY-CAPS :caps-lock)
-	(:SDL-KEY-MOD-CAPS :caps-lock) ;; macintosh 
+	(:SDL-KEY-MOD-CAPS :caps-lock) ;; macintosh
 	(:SDL-KEY-MODE nil)
 	(:SDL-KEY-MOD-MODE :mode)
 	(:SDL-KEY-RESERVED nil)
 	)))
-  
+
 (defun make-key-symbol (sdl-key)
   "Translate from :SDL-KEY-X to the symbol :X ."
   (let ((prefix "SDL-KEY-")
@@ -371,10 +371,10 @@ The argument CODE may be one of:
 
    - an integer whose value is the unicode character code from SDL
 
-or, 
+or,
 
    - a cons of the form (key unicode) will be passed through
-     unaltered." 
+     unaltered."
   (assert code)
   ;; pass through joystick events unaltered
   (if (joystick-event-p (cons code modifiers))
@@ -408,11 +408,11 @@ or,
 
 (defvar *user-joystick-profile* nil)
 
-(defvar *joystick-device* nil 
+(defvar *joystick-device* nil
   "The SDL device id of the current joystick.")
 
 (defparameter *joystick-profiles* nil)
-  ;; '(("DragonRise Inc.   Generic   USB  Joystick  " 
+  ;; '(("DragonRise Inc.   Generic   USB  Joystick  "
   ;;    :name "Generic USB Gamepad" :type :joystick
   ;;    :left-analog-stick (0 1)
   ;;    :right-analog-stick (3 2)
@@ -440,8 +440,8 @@ or,
   ;; 	       (9 . :start)
   ;; 	       (6 . :left-trigger)
   ;; 	       (7 . :right-trigger)))
-  ;;   ("USB Dance Pa" 
-  ;;    :name "Generic USB Dance Pad" :type :dance 
+  ;;   ("USB Dance Pa"
+  ;;    :name "Generic USB Dance Pad" :type :dance
   ;;    :buttons  ((12 . :up)
   ;; 		(15 . :left)
   ;; 		(13 . :right)
@@ -452,7 +452,7 @@ or,
   ;; 		(1 . :upright)
   ;; 		(8 . :select)
   ;; 		(9 . :start)))
-  ;;   ("GASIA CORP. PS(R) Gamepad Adaptor" 
+  ;;   ("GASIA CORP. PS(R) Gamepad Adaptor"
   ;;    :name "Generic USB Gamepad" :type :joystick
   ;;    :left-analog-stick (0 1)
   ;;    :right-analog-stick (2 3)
@@ -486,7 +486,7 @@ or,
 (defun joystick-name (&optional (profile (joystick-profile)))
   (getf (find-joystick-profile profile) :name))
 
-(defun joystick-type (&optional (profile (joystick-profile))) 
+(defun joystick-type (&optional (profile (joystick-profile)))
   (getf (find-joystick-profile profile) :type))
 
 (defun joystick-buttons (&optional (profile (joystick-profile)))
@@ -506,7 +506,7 @@ or,
 			 (when (eq sym (cdr x))
 			   x))
 		     (joystick-buttons))))
-    (when entry 
+    (when entry
       (car entry))))
 
 ;; Analog sticks
@@ -523,7 +523,7 @@ or,
 (defun joystick-axis-raw-value (axis)
   (aref *joystick-axis-values* axis))
 
-(defun joystick-axis-pressed-p (axis) 
+(defun joystick-axis-pressed-p (axis)
   (< *joystick-dead-zone* (abs (joystick-axis-raw-value axis))))
 
 (defun joystick-axis-value (axis)
@@ -531,7 +531,7 @@ or,
      *joystick-axis-size*))
 
 (defun find-heading (x0 y0 x1 y1)
-  (atan (- y1 y0) 
+  (atan (- y1 y0)
 	(- x1 x0)))
 
 (defun opposite-heading (heading)
@@ -551,10 +551,10 @@ or,
 (defun analog-stick-heading (&optional (stick (joystick-left-analog-stick)))
   (destructuring-bind (horizontal vertical) stick
     (when (analog-stick-pressed-p stick)
-      (find-heading 0 0 
+      (find-heading 0 0
 		    (joystick-axis-raw-value horizontal)
 		    (joystick-axis-raw-value vertical)))))
-      
+
 (defun analog-stick-pressure (&optional (stick (joystick-left-analog-stick)))
   (destructuring-bind (horizontal vertical) stick
     (if (or (joystick-axis-pressed-p horizontal)
@@ -579,7 +579,7 @@ or,
   (analog-stick-pressure (joystick-right-analog-stick)))
 
 ;; Joystick buttons
-	
+
 (defvar *joystick-button-states* nil)
 
 (defun poll-joystick-button (button)
@@ -596,10 +596,10 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 ;;  (aref *joystick-button-states* button))
 
 (defun joystick-button-pressed-p (button)
-  (let ((button-number (if (integerp button) 
+  (let ((button-number (if (integerp button)
 			   button
 			   (symbol-to-button button))))
-    (when button-number 
+    (when button-number
       (= 1 (joystick-button-state button-number)))))
 
 (defun reset-joysticks ()
@@ -639,10 +639,10 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 (defvar *next-update-hook* nil)
 
 (defmacro at-next-update (&body body)
-  `(prog1 nil 
+  `(prog1 nil
      (add-hook '*next-update-hook*
 	       #'(lambda () ,@body))))
-		 
+
 (defun update-blocks ()
   (run-hook '*next-update-hook*)
   (setf *next-update-hook* nil)
@@ -651,8 +651,8 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 
 (defvar *update-function* #'update-blocks)
 
-(defun do-update (&rest args) 
-  (handler-case 
+(defun do-update (&rest args)
+  (handler-case
       (when (functionp *update-function*)
 	(incf *updates*)
 	(apply *update-function* args))
@@ -663,7 +663,7 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 
 ;;; Screen dimensions
 
-(defparameter *screen-width* 640 "Physical width of the window, in pixels.") 
+(defparameter *screen-width* 640 "Physical width of the window, in pixels.")
 (defparameter *screen-height* 480 "Physical height of the window, in pixels.")
 
 ;; The nominal size of of the window in pixels, in case we just want
@@ -682,7 +682,7 @@ the BUTTON. STATE should be either 1 (on) or 0 (off)."
 window size. Otherwise (the default) one onscreen pixel equals one
 unit of buffer space, so that more of the buffer shows if the window
 becomes larger.")
- 
+
 (defparameter *z-near* 0)
 (defparameter *z-far* 100)
 
@@ -733,7 +733,7 @@ becomes larger.")
 
 (defun window-pointer-y (&optional (y *pointer-y*))
   (+ y *window-y*))
-  
+
 (defun transform-window (&key (x 0) (y 0) (z 0) (scale-x 1.0) (scale-y 1.0) (scale-z 1.0))
   (setf *window-x* x)
   (setf *window-y* y)
@@ -767,19 +767,19 @@ becomes larger.")
   "Initialize the console, open a window, and play.
 We want to process all inputs, update the game state, then update the
 display."
-  (let ((fps (make-instance 'sdl:fps-mixed 
+  (let ((fps (make-instance 'sdl:fps-mixed
 			    :dt (setf *dt* (truncate (/ 1000 *frame-rate*))))))
     (message "Simulation update time set to ~d milliseconds." *dt*)
     (message "Creating OpenGL window...")
     (cond (*fullscreen*
 	   (sdl:window *screen-width* *screen-height*
-		       :fps fps 
+		       :fps fps
 		       :title-caption *window-title*
 		       :flags (logior sdl:SDL-FULLSCREEN sdl:SDL-OPENGL)
 		       :position *window-position*))
 	  (*resizable*
 	   	   (sdl:window *screen-width* *screen-height*
-		       :fps fps 
+		       :fps fps
 		       :title-caption *window-title*
 		       :flags (logior sdl:SDL-RESIZABLE sdl:SDL-OPENGL)
 		       :position *window-position*))
@@ -807,7 +807,7 @@ display."
     (message "Finished initializing Blocky for project ~A." *project*)
     (sdl:with-events ()
       (:quit-event () (prog1 t (sdl:quit-sdl :force t)))
-      (:video-resize-event (:w w :h h)  
+      (:video-resize-event (:w w :h h)
 			   (setf *screen-width* w
 				 *screen-height* h)
 ;			   (run-hook '*resize-hook*)
@@ -824,7 +824,7 @@ display."
       (:mouse-motion-event (:x x :y y)
 			   (setf *pointer-x* x *pointer-y* y)
 			   (let ((block (hit-blocks (window-pointer-x)
-						    (window-pointer-y) 
+						    (window-pointer-y)
 						    *blocks*)))
 			     (when block
 			       (send :handle-point-motion block
@@ -832,7 +832,7 @@ display."
 				     (window-pointer-y)))))
       (:mouse-button-down-event (:button button :x x :y y)
 				(setf *pointer-x* x *pointer-y* y)
-				(let ((block (hit-blocks 
+				(let ((block (hit-blocks
 					      (window-pointer-x)
 					      (window-pointer-y)
 					      *blocks*)))
@@ -843,7 +843,7 @@ display."
 					  button))))
       (:mouse-button-up-event (:button button :x x :y y)
 			      (setf *pointer-x* x *pointer-y* y)
-			      (let ((block (hit-blocks 					  
+			      (let ((block (hit-blocks
 					    (window-pointer-x)
 					    (window-pointer-y)
 					    *blocks*)))
@@ -857,21 +857,21 @@ display."
 		      (when (assoc button (joystick-buttons))
 			(update-joystick-button button state)
 			(send-event (make-event :joystick
-						(list (button-to-symbol button) 
+						(list (button-to-symbol button)
 						      :button-down)))))
-      (:joy-button-up-event (:button button :state state)  
+      (:joy-button-up-event (:button button :state state)
 			    (send-event (make-event :raw-joystick (list button :button-up)))
 			    (when (assoc button (joystick-buttons))
 			      (update-joystick-button button state)
 			      (send-event (make-event :joystick
-						      (list (button-to-symbol button) 
+						      (list (button-to-symbol button)
 							    :button-up)))))
       (:joy-axis-motion-event (:axis axis :value value)
 			      (update-joystick-axis axis value))
       (:video-expose-event () (sdl:update-display))
       (:key-down-event (:key key :mod-key mod :unicode unicode)
 		       (send-event
-			(make-event 
+			(make-event
 			 ;; translate data items from SDL format to internal
 			 (cons (make-key-symbol key)
 			       (when (not (zerop unicode))
@@ -882,7 +882,7 @@ display."
 	     ;; this lets slime keep working while the main loop is running
 	     ;; in sbcl using the :fd-handler swank:*communication-style*
 	     #+(and sbcl (not sb-thread)) (restartably
-					   (sb-sys:serve-all-events 0))	 
+					   (sb-sys:serve-all-events 0))
 	     (sdl:with-timestep (do-update))
 	     ;; load pending resources
 	     ;; (dolist (plist *pending-resources*)
@@ -926,7 +926,7 @@ A 'resource record' defines a resource. A resource record is a
 structure with the following elements:
 
  :NAME    A string; the name of the resource.
-          The colon character : is reserved and used to specify 
+          The colon character : is reserved and used to specify
           resource transformations; see below.
  :TYPE    A keyword symbol identifying the data type.
           Corresponding handlers are the responsibility of the client.
@@ -939,15 +939,15 @@ structure with the following elements:
           The special type :alias is used to provide multiple names
           for a resource. The :DATA field contains the name of the
           target resource. This name can specify resource
-          transformations, see below. 
+          transformations, see below.
 
  :PROPERTIES  Property list with extra data; for example :copyright,
-              :license, :author. 
+              :license, :author.
               The special property :AUTOLOAD, when non-nil causes
-              the resource to be loaded automatically upon startup 
+              the resource to be loaded automatically upon startup
               (the default is to load resources on demand.)
 
- :FILE    Name of file to load data from, if any. 
+ :FILE    Name of file to load data from, if any.
           Relative to directory of BLX file.
  :DATA    Lisp data encoding the resource itself, if any.
 
@@ -957,13 +957,13 @@ well.
 
 The string '()' is a valid .BLX file; it contains no resources.")
 
-(defstruct resource 
+(defstruct resource
   name type properties file data object system-p)
 
 ;; The extra `object' field is not saved in .BLX files; it is used to
 ;; store driver-dependent loaded resources (i.e. SDL image surface
 ;; objects and so on). This is used in the resource table.
-;; The system-p field is likewise not stored. 
+;; The system-p field is likewise not stored.
 
 (defun resource-to-plist (res)
   "Convert the resource record RES into a property list.
@@ -982,11 +982,11 @@ This prepares it for printing as part of a BLX file."
 
 (defun write-sexp-to-file (filename sexp)
   (message "Writing data to file ~S" filename)
-  (with-open-file (file filename :direction :output 
+  (with-open-file (file filename :direction :output
 			:if-exists :supersede
 			:if-does-not-exist :create)
     (let ((*package* *keyword-package*))
-      (with-standard-io-syntax 
+      (with-standard-io-syntax
 	(print sexp file))))
       ;;(format file "~S" sexp)))
   (message "Writing data to file ~S... Done." filename))
@@ -1027,7 +1027,7 @@ This prepares it for printing as part of a BLX file."
 
 ;;; Resources and projects
 
-(defvar *resources* nil 
+(defvar *resources* nil
   "A hash table mapping resource names to resource records. All loaded
 resources go in this one hash table.
 
@@ -1055,7 +1055,7 @@ A lookup failure results in an error. See `find-resource'.")
 
 (defparameter *project-directory-extension* ".blocky")
 
-(defvar *project-path* nil "The pathname of the currently opened project. 
+(defvar *project-path* nil "The pathname of the currently opened project.
 This is where all saved objects are stored.")
 
 (defvar *after-load-project-hook* nil)
@@ -1079,21 +1079,21 @@ binary image.")
   (string= project *untitled*))
 
 ;;; The blocky installation dir
-  
+
 (defparameter *current-directory* #P"./")
 
-(eval-when (:load-toplevel) 
+(eval-when (:load-toplevel)
   (setf *current-directory*
 	(make-pathname
 	 :directory (pathname-directory #.#P"./"))))
-	 
+
 	 ;; (pathname-directory *load-truename*))))
 
 (defun current-directory () *current-directory*)
 
 (defun blocky-directory ()
-  (make-pathname :directory 
-  		     (pathname-directory 
+  (make-pathname :directory
+  		     (pathname-directory
   		      (make-pathname
   		       :host (pathname-host #.(or *compile-file-truename*
   						  *load-truename*))
@@ -1111,20 +1111,20 @@ binary image.")
 
 (defun default-project-pathname (project)
   (assert (stringp project))
-  (cl-fad:pathname-as-directory 
-   (make-pathname 
+  (cl-fad:pathname-as-directory
+   (make-pathname
     :name (project-directory-name project)
     :defaults (projects-directory)
     :type :unspecific)))
 
 (defun make-directory-maybe (name)
-  (ensure-directories-exist 
+  (ensure-directories-exist
    (make-pathname :name "NAME" :type :unspecific
-		  :defaults 
+		  :defaults
 		  (cl-fad:pathname-as-directory name))))
-			     
-(defun default-project-directories () 
-    (list 
+
+(defun default-project-directories ()
+    (list
      (blocky-directory)
      (projects-directory)
      (current-directory)))
@@ -1140,14 +1140,14 @@ Directories are searched in list order.")
 (defun search-project-path (project)
   "Search the `*project-directories*' path for a directory with the
 name PROJECT. Returns the pathname if found, otherwise nil."
-  (let ((dirs (default-project-directories)))
+  (let ((dirs *project-directories*))
     (assert (stringp project))
-    (or 
-     (loop 
+    (or
+     (loop
        for dir in dirs for path
-	 = (cl-fad:directory-exists-p 
+	 = (cl-fad:directory-exists-p
 	    (cl-fad:merge-pathnames-as-directory
-	     dir (cl-fad:pathname-as-directory 
+	     dir (cl-fad:pathname-as-directory
 		  (project-directory-name project))))
        when path return path)
      (prog1 nil
@@ -1179,7 +1179,7 @@ name PROJECT. Returns the pathname if found, otherwise nil."
     (when extension
       (car (cdr (assoc extension *resource-extensions* :test 'equal))))))
 
-(defun sample-filename-p (name) 
+(defun sample-filename-p (name)
   (eq :sample (resource-type-from-name name)))
 
 (defun index-resource (resource)
@@ -1189,13 +1189,13 @@ if the resource is an :alias, just the string name of the target
 resource is stored; see also `find-resource'."
   (set-resource-pathname resource)
   (setf (gethash (resource-name resource)
-		 *resources*) 
+		 *resources*)
 	resource))
 
 (defun expand-resource-description (plist)
-  (destructuring-bind 
+  (destructuring-bind
       (&key name type file properties &allow-other-keys) plist
-    (list :name name 
+    (list :name name
 	  :type (or type (resource-type-from-name name))
 	  :properties properties
 	  :file (or file name))))
@@ -1205,17 +1205,17 @@ resource is stored; see also `find-resource'."
     ;; variable
     ((and (symbolp (first entries))
 	  (boundp (first entries)))
-     (mapcar #'expand-resource-description 
+     (mapcar #'expand-resource-description
 	     (symbol-value (first entries))))
     ;; short form: (defresource "file.ext" &rest PROPERTIES)
     ((stringp (first entries))
-     (list 
-      (expand-resource-description 
+     (list
+      (expand-resource-description
 	  (list :name (first entries)
 		:properties (rest entries)))))
     ;; inline: (defresource :name ...)
     ((keywordp (first entries))
-     (list 
+     (list
       (expand-resource-description entries)))
     ;; list of property lists
     ((every #'consp entries)
@@ -1223,24 +1223,24 @@ resource is stored; see also `find-resource'."
 
 (defmacro defresource (&rest entries)
   `(eval-when (:load-toplevel)
-     (blocky:add-resources 
+     (blocky:add-resources
       (resource-entries-to-plists ',entries))))
 
 (defun directory-samples (dir)
-  (remove-if-not #'sample-filename-p 
+  (remove-if-not #'sample-filename-p
 		 (directory-files dir)))
 
 (defun project-samples ()
   (directory-samples (find-project-path)))
 
 (defun add-file-resource (filename)
-  (add-resource (expand-resource-description 
+  (add-resource (expand-resource-description
 		 (list filename))))
 
 (defun load-all-samples ()
   (dolist (sample (project-samples))
     (add-file-resource sample)))
- 
+
 (defun find-project-path (&optional (project-name *project*))
   "Return the current project path."
   (assert (not (null project-name)))
@@ -1277,10 +1277,10 @@ resource is stored; see also `find-resource'."
       (let* ((directory (or parent (projects-directory)))
 	     (dirs (mapcar #'string-upcase (find-directories directory))))
 	(if (find project dirs :test 'equal)
-	    (prog1 nil 
+	    (prog1 nil
 	      (message "Cannot create project ~A, because a folder with this name already exists in ~A"
 		       project directory))
-	    (let ((dir (if folder-name 
+	    (let ((dir (if folder-name
 			   (default-project-pathname folder-name)
 			   (default-project-pathname project))))
 	      (message "Creating new project ~A in directory ~A..." project dir)
@@ -1299,7 +1299,7 @@ resource is stored; see also `find-resource'."
   (setf *project* project)
   (setf *project-path* (search-project-path project))
   ;; check path
-  (message "Set project path to ~A" (namestring *project-path*)) 
+  (message "Set project path to ~A" (namestring *project-path*))
   ;; load any .blx files
   (index-project project)
   ;; TODO support :with-database arg as well
@@ -1309,11 +1309,11 @@ resource is stored; see also `find-resource'."
   (when without-database
     (message "Starting without database or variables loading, due to user command."))
   (message "Started up successfully. Indexed ~A resources." (hash-table-count *resources*)))
- 
+
 (defun load-project (&optional (project *project*) parameters)
   ;; don't load database by default
   (destructuring-bind (&key (without-database t) with-database) parameters
-    (load-project-image project 
+    (load-project-image project
 			:without-database without-database
 			:with-database with-database)
     ;; load any pending resource defs
@@ -1331,7 +1331,7 @@ resource is stored; see also `find-resource'."
       (index-resource (apply #'make-resource plist)))
   (start-session)
   (shut-down))
-  
+
 (defun directory-is-project-p (dir)
   "Test whether a directory has the .blocky suffix."
   (let ((index-filename (concatenate 'string
@@ -1372,7 +1372,7 @@ table. File names are relative to the project PROJECT-NAME."
 	  ;; we're including another blx file. if :data is specified,
 	  ;; take this as the name of the project where to look for
 	  ;; that blx file and its resources.
-	  (let ((include-project (or (resource-data res) 
+	  (let ((include-project (or (resource-data res)
 				     project-name)))
 	    (index-resource-file include-project (find-project-file include-project
 							  (resource-file res))))
@@ -1407,7 +1407,7 @@ table."
   "Make an object resource named NAME (a string) with the Lisp object
 OBJECT as the resource data."
   (message "Creating new object resource ~S." name)
-  (let ((resource (make-resource :name name 
+  (let ((resource (make-resource :name name
 				 :type :object
 				 :object object)))
     (prog1 resource
@@ -1416,14 +1416,14 @@ OBJECT as the resource data."
 (defun save-object-resource (resource &optional (project *project*))
   "Save an object resource to disk as {PROJECT-NAME}/{RESOURCE-NAME}.BLX."
   (setf (resource-data resource) (serialize (resource-object resource)))
-  (save-resource-file (find-project-file project 
+  (save-resource-file (find-project-file project
 				(concatenate 'string (resource-name resource)
 					     *resource-file-extension*))
 	     (list resource))
   (setf (resource-data resource) nil))
 
 (defun save-buffer (&optional (buffer (current-buffer)))
-  (save-object-resource 
+  (save-object-resource
    (make-resource :name (%buffer-name buffer)
 		  :data (serialize (find-object buffer))
 		  :type :buffer)))
@@ -1432,15 +1432,15 @@ OBJECT as the resource data."
   (string= "*" (string (aref (resource-name resource) 0))))
 
 (defun make-resource-link (resource)
-  (make-resource :type :blx 
+  (make-resource :type :blx
 		 :file (concatenate 'string
 				    (resource-name resource)
 				    *resource-file-extension*)))
-  
+
 (defun save-resource (name resource)
   (let ((pathname (resource-file resource))
 	(link (make-resource-link resource)))
-    (prog1 link 
+    (prog1 link
       (if (eq :object (resource-type resource))
 	  ;; we want to index them all, whether or not we save them all.
 	  ;; make a link resource (i.e. of type :blx) to pull this in later
@@ -1478,7 +1478,7 @@ OBJECT as the resource data."
 ;;;  Resource object loading handlers
 
 (defun load-object-resource (resource)
-  "Loads a serialized :OBJECT resource from the Lisp data in the 
+  "Loads a serialized :OBJECT resource from the Lisp data in the
 :DATA field of the RESOURCE argument. Returns the rebuilt object. See
 also the documentation for DESERIALIZE."
   (let ((object (deserialize (resource-data resource))))
@@ -1488,14 +1488,14 @@ also the documentation for DESERIALIZE."
 
 (defun load-buffer (name)
   (load-object-resource
-   (first 
+   (first
     (load-resource-file
      (concatenate 'string name *resource-file-extension*)))))
 
 ;;; Loading images and textures
 
 (defun set-blending-mode (mode)
-  (ecase mode 
+  (ecase mode
     (:additive (gl:blend-func :src-alpha :one))
     (:source (gl:blend-func :src-color :zero))
     (:alpha2 (gl:blend-func :one :one-minus-src-alpha))
@@ -1511,12 +1511,12 @@ also the documentation for DESERIALIZE."
   (case filter
     (:linear (gl:tex-parameter :texture-2d :texture-min-filter :linear)
      (gl:tex-parameter :texture-2d :texture-mag-filter :linear))
-    (:mipmap (gl:tex-parameter :texture-2d :generate-mipmap t) 
+    (:mipmap (gl:tex-parameter :texture-2d :generate-mipmap t)
      (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear))
     (:nearest (gl:tex-parameter :texture-2d :texture-min-filter :nearest)
      (gl:tex-parameter :texture-2d :texture-mag-filter :nearest))))
 
-(defun load-texture 
+(defun load-texture
     (surface &key source-format (internal-format :rgba)
 		  (filter *default-texture-filter*))
   ;; don't make any bogus textures
@@ -1579,13 +1579,13 @@ also the documentation for DESERIALIZE."
   (assert (stringp name))
   (initialize-textures-maybe)
   ;; make sure underlying image is loaded by SDL
-  (find-resource name) 
+  (find-resource name)
   ;; see if we need to pump it to the video card
   (or (gethash name *textures*)
       ;; store the new texture and return it
-      (setf (gethash name *textures*) 
+      (setf (gethash name *textures*)
 	    (cache-image-texture name))))
-  
+
 (defun load-image-resource (resource)
   "Loads an :IMAGE-type BLX resource from a :FILE on disk."
   (initialize-textures-maybe)
@@ -1629,7 +1629,7 @@ control the size of the individual frames or subimages."
   ;; 						  :color-key (apply #'sdl:color color-key)
   ;; 						  :filename (resource-file resource)
   ;; 						  :pad-x 0 :pad-y 0))))))
-    
+
 (defun load-text-resource (resource)
   (with-open-file (file (resource-file resource)
 			:direction :input
@@ -1639,7 +1639,7 @@ control the size of the individual frames or subimages."
 
 (defun load-formatted-text-resource (resource)
   (read-sexp-from-file (resource-file resource)))
-    
+
 (defun load-lisp-resource (resource)
   (let* ((source (resource-file resource))
 	 (fasl (compile-file-pathname source)))
@@ -1647,11 +1647,11 @@ control the size of the individual frames or subimages."
     (if (cl-fad:file-exists-p fasl)
     	(if (> (file-write-date source)
     	       (file-write-date fasl))
-	    ;; recompile. 
+	    ;; recompile.
     	    (load (compile-file source))
     	    ;; no, just load the fasl
     	    (load fasl))
-	;; create the fasl for the first time. 
+	;; create the fasl for the first time.
 	(load (compile-file source)))))
 
 (defun load-canvas-resource (resource)
@@ -1672,8 +1672,8 @@ control the size of the individual frames or subimages."
     (sdl:color :r red :g green :b blue)))
 
 (defun load-font-resource (resource)
-  (let ((font-name (string-upcase (concatenate 'string 
-					       "*font-" 
+  (let ((font-name (string-upcase (concatenate 'string
+					       "*font-"
 					       (resource-data resource)
 					       "*"))))
     (sdl:initialise-font (symbol-value (intern font-name :lispbuilder-sdl)))))
@@ -1713,11 +1713,11 @@ control the size of the individual frames or subimages."
 	(saved 0))
     (message "Serializing database...")
     (labels ((store (uuid object)
-	       ;; don't save prototypes 
+	       ;; don't save prototypes
 	       (when (null (object-name object))
 		 (if (%garbagep object)
 		     (incf garbage)
-		     (progn 
+		     (progn
 		       (setf (gethash uuid database2) object)
 		       (incf saved))))))
       (maphash #'store database) ;; copy into database2
@@ -1739,16 +1739,16 @@ control the size of the individual frames or subimages."
 (defun save-database (&optional (database *database*))
   (assert (hash-table-p database))
   (let ((file (database-file)))
-    (message "Scanning ~S objects in database..." 
+    (message "Scanning ~S objects in database..."
 	     (hash-table-count database))
     (multiple-value-bind (resource count)
 	(make-database-resource database)
-      (message "Saving ~S objects from database into ~A..." 
+      (message "Saving ~S objects from database into ~A..."
 	       count
 	       (namestring file))
       (save-resource-file file (list resource))
       (message "Finished saving database into ~A. Continuing..." file))))
-      
+
 (defun load-database (&optional (file (database-file)))
   (message "Looking for object database ~A..." file)
   (if (cl-fad:file-exists-p file)
@@ -1766,15 +1766,15 @@ control the size of the individual frames or subimages."
 
 (defvar *safe-variables* '(*frame-rate* *updates* *screen-width*
 *screen-height* *buffer* *blocks* *dt* *pointer-x* *author* *project*
-*joystick-profile* *user-joystick-profile* *joystick-axis-size* 
+*joystick-profile* *user-joystick-profile* *joystick-axis-size*
 *joystick-dead-zone* *pointer-y* *resizable* *window-title* *buffers*
 *scale-output-to-window* *persistent-variables*))
 
-(defvar *persistent-variables* '(*frame-rate* *updates* 
-				 
+(defvar *persistent-variables* '(*frame-rate* *updates*
+
 				 ;; *screen-width* *screen-height*
-				 *buffer* *blocks* *dt* *pointer-x* *author* 
-				 *project* *buffers* *scale-output-to-window* 
+				 *buffer* *blocks* *dt* *pointer-x* *author*
+				 *project* *buffers* *scale-output-to-window*
 				 *pointer-y* *resizable*
 				 *window-title*
 				 ;; notice that THIS variable is also
@@ -1818,16 +1818,16 @@ control the size of the individual frames or subimages."
   (with-standard-io-syntax
     (let ((file (persistent-variables-file)))
       (if (cl-fad:file-exists-p file)
-	  (progn 
+	  (progn
 	    (message "Loading system variables from ~A..." file)
-	    (mapc #'load-variable-resource 
+	    (mapc #'load-variable-resource
 		  (load-resource-file file))
 	    (message "Finished loading system variables."))
 	  (message "No system variables file found in this project. Continuing...")))))
-  
+
 ;;; Handling different resource types automatically
 
-(defparameter *resource-handlers* 
+(defparameter *resource-handlers*
   (list :image #'load-image-resource
 	;; :variable #'load-variable-resource
 	:lisp #'load-lisp-resource
@@ -1861,13 +1861,13 @@ of the record.")
 
 (defun next-transformation (name)
   (assert (transformable-resource-p name))
-  (let ((delimiter-pos (position *resource-transformation-delimiter* 
+  (let ((delimiter-pos (position *resource-transformation-delimiter*
 				 (subseq name 1))))
-    (when delimiter-pos 
+    (when delimiter-pos
       (let* ((*read-eval* nil)
 	     (xform-command (subseq name 1 (1+ delimiter-pos))))
-	(read-from-string (concatenate 'string 
-				       "(" 
+	(read-from-string (concatenate 'string
+				       "("
 				       xform-command
 				       ")"))))))
 
@@ -1896,7 +1896,7 @@ of the record.")
 ;; 				    :surface (resource-object image)
 ;; 				    :smooth nil))
 
-(defvar *resource-transformations* 
+(defvar *resource-transformations*
   (list :rotate #'rotate-image
 	:subimage #'subsect-image
 	:scale #'scale-image))
@@ -1916,18 +1916,18 @@ so that it can be fed to the console."
       (assert (resource-object resource)))
     (when (null (resource-object resource))
       (error "Failed to load resource ~S." (resource-name resource)))))
-	;; (message "Loaded resource ~S with result type ~S." 
+	;; (message "Loaded resource ~S with result type ~S."
 	;; 	 (resource-name resource)
 	;; 	 (type-of (resource-object resource))))))
-	   
+
 ;; (defun make-file-resource-automatically (name &optional properties)
 ;;   (let ((type (resource-type-from-name name)))
 ;;     (make-resource :name name :file name :type type :properties properties)
 
 ;; (defun index-resource-automatically (parameters)
 ;;   (let ((res (make-file-resource-automatically name properties)))
-;;     (index-resource 
-;;      (or res (apply #'make-resource :name name 
+;;     (index-resource
+;;      (or res (apply #'make-resource :name name
 
 ;; (defun load-resource-automatically (name)
 ;;   (load-resource (index-resource-automatically name)))
@@ -1936,7 +1936,7 @@ so that it can be fed to the console."
   "Obtain the resource named NAME, performing any necessary
 loading. Unless NOERROR is non-nil, signal an error when NAME cannot
 be found."
-  ;; can we find the resource straight off? 
+  ;; can we find the resource straight off?
   (let ((res (gethash name *resources*)))
     (if (resource-p res)
 	;; yes, return it and possibly load on demand
@@ -1973,11 +1973,11 @@ found."
 		 (:music (sdl-mixer:free object))
 		 (:sample (sdl-mixer:free object)))))
 	   (initialize-resource-table)))
-	   
+
 (defun clear-cached-images ()
   (loop for resource being the hash-values in *resources*
 	do (let ((object (resource-object resource)))
-	     (when (and object 
+	     (when (and object
 			(eq :image (resource-type resource)))
 	       (sdl:free object)
 	       (setf (resource-object resource) nil))))
@@ -2018,7 +2018,7 @@ of the music."
 	  (volume (find-resource-property music-name :volume)))
       (assert (eq :music (resource-type resource)))
       (set-music-volume (or volume 255))
-      (apply #'sdl-mixer:play-music 
+      (apply #'sdl-mixer:play-music
 	     (resource-object resource)
 	     args))))
 
@@ -2037,7 +2037,7 @@ of the music."
 ;      (load-resource resource)
       (assert (eq :sample (resource-type resource)))
       (assert (not (null (resource-object resource))))
-      (apply #'sdl-mixer:play-sample 
+      (apply #'sdl-mixer:play-sample
 	     (resource-object resource)
 	     args))))
 
@@ -2107,11 +2107,11 @@ of the music."
   (find-resource-property image :width))
 
 ;; &optional (u1 0) (v1 0) (u2 1) (v2 1))
-(defun draw-textured-rectangle (x y z width height texture 
+(defun draw-textured-rectangle (x y z width height texture
 				&key (blend :alpha) (opacity 1.0) (vertex-color "white"))
   (if (null blend)
       (gl:disable :blend)
-      (progn (enable-texture-blending)	
+      (progn (enable-texture-blending)
 	     (set-blending-mode blend)))
   (gl:bind-texture :texture-2d texture)
   (set-vertex-color vertex-color opacity)
@@ -2134,11 +2134,11 @@ of the music."
 (defun draw-image (name x y &key (z 0.0) (blend :alpha) (opacity 1.0) height width)
   (let ((image (find-resource-object name)))
     (draw-textured-rectangle
-     x y z 
+     x y z
      (or width (sdl:width image))
      (or height (sdl:height image))
      (find-texture name)
-     :blend blend 
+     :blend blend
      :opacity (or *image-opacity* opacity))))
 
 ;;; Indicators
@@ -2148,12 +2148,12 @@ of the music."
 
 (defun indicator-size () (* 0.37 (font-height *font*)))
 
-(defparameter *indicators* 
+(defparameter *indicators*
   '(:asterisk :bang :top-left-triangle :bottom-right-triangle
     :down-triangle-open :down-triangle-closed :copy :paste :cut
     :menu :collapse :move :resize :define :close))
 
-(defparameter *indicator-images* 
+(defparameter *indicator-images*
   '(:asterisk "asterisk"
     :bang "bang"
     :top-left-triangle "top-left-triangle-indicator"
@@ -2168,7 +2168,7 @@ of the music."
     :drop "downright"
     :pick-up "upleft"
     :resize "resize"
-    :define "define" 
+    :define "define"
     :close "close"
     :bottom-right-triangle "bottom-right-triangle-indicator"))
 
@@ -2187,7 +2187,7 @@ of the music."
     (draw-textured-rectangle x y 0 (* scale size) (* scale size)
 			     (find-indicator-texture indicator)
 			     :blend :alpha
-			     :vertex-color 
+			     :vertex-color
 			     (or color (ecase state
 					 (:active *active-indicator-color*)
 					 (:inactive *inactive-indicator-color*))))))
@@ -2196,8 +2196,8 @@ of the music."
 
 ;; A bitmap font resource looks like this:
 
-;; (:name "font" 
-;;        :type :font 
+;; (:name "font"
+;;        :type :font
 ;;        :properties (:height 14 :width 7) ;; monospace only
 ;;        :data "7x14")
 
@@ -2226,7 +2226,7 @@ of the music."
   (sdl:get-font-size string :size :w :font (find-resource-object font)))
 
 (defun font-text-extents (string font)
-  (let ((resource (find-resource font)))  
+  (let ((resource (find-resource font)))
     (ecase (resource-type resource)
       (:font (* (length string)
 		(font-width font)))
@@ -2246,7 +2246,7 @@ of the music."
 			#'sdl:draw-string-blended-*
 			#'sdl:draw-string-solid-*)))
       (prog1 texture
-	(funcall renderer string 0 0 
+	(funcall renderer string 0 0
 		 :color (find-resource-object "white")
 		 :font (find-resource-object font)
 		 :surface surface)
@@ -2256,14 +2256,14 @@ of the music."
 	  (gl:tex-image-2d :texture-2d 0 :alpha width height 0 :alpha :unsigned-byte (sdl-base::pixel-data buffer)))
 	(sdl:free surface)))))
 
-(defun-memo find-text-image (font string) 
+(defun-memo find-text-image (font string)
   (:key #'identity :test 'equal)
   (make-text-image font string))
-  
+
 (defun clear-text-image-cache (&key (delete-textures t))
   (let ((table (get-memo-table 'find-text-image)))
     (when table
-      (when delete-textures 
+      (when delete-textures
 	(loop for texture being the hash-values in table
 	      do (gl:delete-textures (list texture)))
       (clrhash table)))))
@@ -2278,7 +2278,7 @@ of the music."
 
 (defun set-vertex-color (color &optional (alpha 1))
   (assert (stringp color))
-  (destructuring-bind (red green blue) 
+  (destructuring-bind (red green blue)
       (gl-color-values color)
     (gl:color red green blue alpha)))
 
@@ -2286,22 +2286,22 @@ of the music."
 				    (font *font*)
 				    (z 0))
   (let ((texture (find-text-image font string)))
-    (multiple-value-bind (width height) 
+    (multiple-value-bind (width height)
 	(font-text-extents string font)
       (draw-textured-rectangle x y z width height texture :vertex-color color))))
 
 ;;; Drawing shapes and other primitives
 
-(defun draw-line (x0 y0 x1 y1 
-		     &key 
+(defun draw-line (x0 y0 x1 y1
+		     &key
 		     (color "white"))
   (gl:disable :texture-2d)
   (set-vertex-color color)
-  (gl:with-primitive :lines 
+  (gl:with-primitive :lines
     (gl:vertex x0 (+ y0))
     (gl:vertex x1 (+ y1))))
 
-(defun draw-box (x y width height		
+(defun draw-box (x y width height
  		 &key (color "black") (alpha 1))
   (set-vertex-color color alpha)
   (gl:disable :texture-2d)
@@ -2313,21 +2313,21 @@ of the music."
       (gl:vertex x1 y)
       (gl:vertex x y))))
 
-;; (defun draw-rectangle (x y width height &key color) 
+;; (defun draw-rectangle (x y width height &key color)
 ;;   (let ((x1 (+ x width))
 ;; 	(y1 (+ y height)))
 ;;     (draw-line x y x1 y1 :color color)))
 
-(defparameter *circle-textures* 
+(defparameter *circle-textures*
   '(:outline "circle-outline-flat-128"
     :solid "circle-flat-128"))
 
-(defparameter *circle-mask-textures* 
+(defparameter *circle-mask-textures*
   '(:outline "circle-outline-flat-128-mask"
     :solid "circle-flat-128-mask"))
 
-(defun draw-circle (x y radius 
-		    &key (color "white") 
+(defun draw-circle (x y radius
+		    &key (color "white")
 			 (type :outline)
 			 (blend :alpha)
 			 (z 0))
@@ -2344,7 +2344,7 @@ of the music."
 ;;; Engine status
 
 (defun quit (&optional shutdown)
-  (when shutdown 
+  (when shutdown
     (setf *quitting* t))
   (setf *project* nil)
   (sdl:push-quit-event))
@@ -2434,7 +2434,7 @@ of the music."
 	*random-state* (make-random-state t))
   (reset-forth-interpreter)
   (sdl:init-sdl :video t :audio t :joystick t)
-;  (load-user-init-file) ;; this step may override *project-directories* and so on 
+;  (load-user-init-file) ;; this step may override *project-directories* and so on
   (initialize-resource-table)
   (initialize-textures-maybe :force)
   (initialize-colors)
@@ -2473,7 +2473,7 @@ of the music."
   (start-up))
 
 (defmacro with-session (&rest body)
-  `(progn 
+  `(progn
      (start-up)
      ,@body
      (shut-down)))
@@ -2482,7 +2482,7 @@ of the music."
 ;;   ;; deprecated
 ;;   (destructuring-bind (&key without-database with-database) parameters
 ;;     (with-session
-;; 	(load-project-image project 
+;; 	(load-project-image project
 ;; 			    :without-database without-database
 ;; 			    :with-database with-database)
 ;;       (when (null *blocks*)
@@ -2505,14 +2505,14 @@ of the music."
 (defun back ()
   (let ((name (pop *buffer-history*)))
     (when name
-      (at-next-update 
+      (at-next-update
        (start-alone (find-buffer name))))))
 
 (defun current-buffer () *buffer*)
 
 (defun switch-to-buffer (thing)
   ;; accept both names and buffers
-  (let ((buffer (if (blockyp thing) 
+  (let ((buffer (if (blockyp thing)
 		    thing
 		    ;; just create a new buffer
 		    (find-buffer thing :create t))))
@@ -2569,7 +2569,7 @@ of the music."
   (eval-in-emacs '(glass-hide)))
 
 (defun glass-show-at (x y)
-  (eval-in-emacs 
+  (eval-in-emacs
    `(glass-show :x ,x :y ,y)))
 
 (defun exit-blocky () (shut-down))
